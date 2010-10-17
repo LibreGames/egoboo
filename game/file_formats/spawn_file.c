@@ -50,7 +50,7 @@ spawn_file_info_t * spawn_file_info_init( spawn_file_info_t *pinfo )
 //--------------------------------------------------------------------------------------------
 spawn_file_info_t * spawn_file_info_reinit( spawn_file_info_t *pinfo )
 {
-    CHR_REF old_parent;
+    REF_T old_parent;
 
     if ( NULL == pinfo ) return pinfo;
 

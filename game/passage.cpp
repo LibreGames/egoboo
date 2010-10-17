@@ -87,7 +87,7 @@ void PassageStack_free_all()
 //--------------------------------------------------------------------------------------------
 int PassageStack_get_free()
 {
-    int ipass = ( PASS_REF ) MAX_PASS;
+    int ipass = MAX_PASS;
 
     if ( PassageStack.count < MAX_PASS )
     {
@@ -99,7 +99,7 @@ int PassageStack_get_free()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PassageStack_open( const PASS_REF by_reference passage )
+bool_t PassageStack_open( const PASS_REF & passage )
 {
     /// @details ZZ@> This function makes a passage passable
 
@@ -109,7 +109,7 @@ bool_t PassageStack_open( const PASS_REF by_reference passage )
 }
 
 //--------------------------------------------------------------------------------------------
-void PassageStack_flash( const PASS_REF by_reference passage, Uint8 color )
+void PassageStack_flash( const PASS_REF & passage, Uint8 color )
 {
     /// @details ZZ@> This function makes a passage flash white
 
@@ -120,7 +120,7 @@ void PassageStack_flash( const PASS_REF by_reference passage, Uint8 color )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PassageStack_point_is_inside( const PASS_REF by_reference passage, float xpos, float ypos )
+bool_t PassageStack_point_is_inside( const PASS_REF & passage, float xpos, float ypos )
 {
     /// @details ZZ@> This function makes a passage passable
     bool_t useful = bfalse;
@@ -131,7 +131,7 @@ bool_t PassageStack_point_is_inside( const PASS_REF by_reference passage, float 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PassageStack_object_is_inside( const PASS_REF by_reference passage, float xpos, float ypos, float radius )
+bool_t PassageStack_object_is_inside( const PASS_REF & passage, float xpos, float ypos, float radius )
 {
     /// @details ZZ@> This function makes a passage passable
     bool_t useful = bfalse;
@@ -141,12 +141,12 @@ bool_t PassageStack_object_is_inside( const PASS_REF by_reference passage, float
     return ego_passage::object_is_in( PassageStack.lst + passage, xpos, ypos, radius );
 }
 //--------------------------------------------------------------------------------------------
-CHR_REF PassageStack_who_is_blocking( const PASS_REF by_reference passage, const CHR_REF by_reference isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item )
+CHR_REF PassageStack_who_is_blocking( const PASS_REF & passage, const CHR_REF & isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item )
 {
     /// @details ZZ@> This function makes a passage passable
 
     // Skip invalid passages
-    if ( INVALID_PASSAGE( passage ) ) return ( CHR_REF )MAX_CHR;
+    if ( INVALID_PASSAGE( passage ) ) return CHR_REF(MAX_CHR);
 
     return ego_passage::who_is_blocking( PassageStack.lst + passage, isrc, idsz, targeting_bits, require_item );
 }
@@ -170,7 +170,7 @@ void PassageStack_check_music()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PassageStack_close_one( const PASS_REF by_reference passage )
+bool_t PassageStack_close_one( const PASS_REF & passage )
 {
     // Skip invalid passages
     if ( INVALID_PASSAGE( passage ) ) return bfalse;
@@ -210,7 +210,7 @@ void ShopStack_free_all()
 //--------------------------------------------------------------------------------------------
 int ShopStack_get_free()
 {
-    int ishop = ( PASS_REF ) MAX_PASS;
+    int ishop = MAX_PASS;
 
     if ( ShopStack.count < MAX_PASS )
     {
@@ -222,7 +222,7 @@ int ShopStack_get_free()
 }
 
 //--------------------------------------------------------------------------------------------
-void ShopStack_add_one( const CHR_REF by_reference owner, const PASS_REF by_reference passage )
+void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
 {
     /// @details ZZ@> This function creates a shop passage
 
@@ -246,7 +246,7 @@ void ShopStack_add_one( const CHR_REF by_reference owner, const PASS_REF by_refe
         ego_chr * pchr;
 
         if ( !INGAME_CHR( ichr ) ) continue;
-        pchr = ChrList.lst + ichr;
+        pchr = ChrList.get_valid_ptr(ichr);
 
         if ( pchr->isitem )
         {
@@ -422,7 +422,7 @@ bool_t ego_passage::object_is_in( ego_passage * ppass, float xpos, float ypos, f
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF by_reference isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item )
+CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item )
 {
     /// @details ZZ@> This function returns MAX_CHR if there is no character in the passage,
     ///    otherwise the index of the first character found is returned...
@@ -432,20 +432,20 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF by_refe
     CHR_REF character, foundother;
     ego_chr *psrc;
 
-    if ( NULL == ppass ) return ( CHR_REF )MAX_CHR;
+    if ( NULL == ppass ) return CHR_REF(MAX_CHR);
 
     // Skip if the one who is looking doesn't exist
-    if ( !INGAME_CHR( isrc ) ) return ( CHR_REF )MAX_CHR;
-    psrc = ChrList.lst + isrc;
+    if ( !INGAME_CHR( isrc ) ) return CHR_REF(MAX_CHR);
+    psrc = ChrList.get_valid_ptr(isrc);
 
     // Look at each character
-    foundother = ( CHR_REF )MAX_CHR;
+    foundother = CHR_REF(MAX_CHR);
     for ( character = 0; character < MAX_CHR; character++ )
     {
         ego_chr * pchr;
 
         if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrList.lst + character;
+        pchr = ChrList.get_valid_ptr(character);
 
         // don't do scenery objects unless we allow items
         if ( !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) && pchr->phys.weight == INFINITE_WEIGHT ) continue;
@@ -503,7 +503,7 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF by_refe
 bool_t ego_passage::check_music( ego_passage * ppass )
 {
     bool_t retval = bfalse;
-    CHR_REF character = ( CHR_REF )MAX_CHR;
+    CHR_REF character = CHR_REF(MAX_CHR);
     PASS_REF passage;
 
     PLA_REF ipla;
@@ -525,7 +525,7 @@ bool_t ego_passage::check_music( ego_passage * ppass )
         character = ppla->index;
 
         if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrList.lst + character;
+        pchr = ChrList.get_valid_ptr(character);
 
         if ( !VALID_PLA( pchr->is_which_player ) || !pchr->alive || pchr->pack.is_packed ) continue;
 
@@ -567,7 +567,7 @@ bool_t ego_passage::close( ego_passage * ppass )
             ego_chr *pchr;
 
             if ( !INGAME_CHR( character ) ) continue;
-            pchr = ChrList.lst + character;
+            pchr = ChrList.get_valid_ptr(character);
 
             // Don't do held items
             if ( IS_ATTACHED_PCHR( pchr ) ) continue;

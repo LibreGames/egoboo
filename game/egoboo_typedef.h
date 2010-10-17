@@ -36,6 +36,7 @@ extern "C"
 // portable definition of assert. the c++ version can be activated below.
 
 #include <assert.h>
+
 #define C_EGOBOO_ASSERT(X) assert(X)
 
 //--------------------------------------------------------------------------------------------
@@ -47,19 +48,6 @@ extern "C"
 typedef unsigned char bool_t;
 #define btrue  1
 #define bfalse 0
-
-//#if defined __cplusplus
-//#   define bool_t bool
-//#   define btrue  true
-//#   define bfalse false
-//#else
-//    enum e_bool
-//    {
-//        btrue  = ( 1 == 1 ),
-//        bfalse = ( !btrue )
-//    };
-//    typedef enum e_bool bool_t;
-//#endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -196,28 +184,28 @@ typedef unsigned char bool_t;
 // PAIR AND RANGE
 
 // Specifies a value between "base" and "base + rand"
-    struct s_pair
-    {
-        int base, rand;
-    };
-    typedef struct s_pair IPair;
+struct s_pair
+{
+    int base, rand;
+};
+typedef struct s_pair IPair;
 
 // Specifies a value from "from" to "to"
-    struct s_range
-    {
-        float from, to;
-    };
-    typedef struct s_range FRange;
+struct s_range
+{
+    float from, to;
+};
+typedef struct s_range FRange;
 
-    void pair_to_range( IPair pair, FRange * prange );
-    void range_to_pair( FRange range, IPair * ppair );
+void pair_to_range( IPair pair, FRange * prange );
+void range_to_pair( FRange range, IPair * ppair );
 
-    void ints_to_range( int base, int rand, FRange * prange );
-    void floats_to_pair( float vmin, float vmax, IPair * ppair );
+void ints_to_range( int base, int rand, FRange * prange );
+void floats_to_pair( float vmin, float vmax, IPair * ppair );
 
 //--------------------------------------------------------------------------------------------
 // IDSZ
-    typedef Uint32 IDSZ;
+typedef Uint32 IDSZ;
 
 #define IDSZ_DEFINED
 
@@ -234,11 +222,11 @@ typedef unsigned char bool_t;
 #define IDSZ_NONE            MAKE_IDSZ('N','O','N','E')       ///< [NONE]
 #define IDSZ_BOOK            MAKE_IDSZ('B','O','O','K')       ///< [BOOK]
 
-    const char * undo_idsz( IDSZ idsz );
+const char * undo_idsz( IDSZ idsz );
 
 //--------------------------------------------------------------------------------------------
 // STRING
-    typedef char STRING[256];
+typedef char STRING[256];
 
 //--------------------------------------------------------------------------------------------
 
@@ -251,22 +239,22 @@ typedef unsigned char bool_t;
 //--------------------------------------------------------------------------------------------
 
 /// The basic 2d latch
-    struct s_latch_2d
-    {
-        float     dir[2];
-        BIT_FIELD b;         ///< the raw bits corresponding to various buttons
-    };
-    typedef struct s_latch_2d latch_2d_t;
+struct s_latch_2d
+{
+    float     dir[2];
+    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+};
+typedef struct s_latch_2d latch_2d_t;
 
 #define LATCH_2D_INIT { {0.0f,0.0f}, EMPTY_BIT_FIELD }
 
 /// The basic 3d latch
-    struct s_latch_3d
-    {
-        float     dir[3];
-        BIT_FIELD b;         ///< the raw bits corresponding to various buttons
-    };
-    typedef struct s_latch_3d latch_3d_t;
+struct s_latch_3d
+{
+    float     dir[3];
+    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+};
+typedef struct s_latch_3d latch_3d_t;
 
 #define LATCH_3D_INIT { {0.0f,0.0f,0.0f}, EMPTY_BIT_FIELD }
 
@@ -295,7 +283,7 @@ typedef unsigned char bool_t;
 //--------------------------------------------------------------------------------------------
 // definition of the c-type reference
 
-#define C_DECLARE_REF( NAME ) typedef REF_T NAME
+//#define C_DECLARE_REF( NAME ) typedef REF_T NAME
 
 //--------------------------------------------------------------------------------------------
 // reference conversions
@@ -317,64 +305,48 @@ typedef unsigned char bool_t;
 
 #define INVALID_UPDATE_GUID ((unsigned)(~((unsigned)0)))
 
-    struct s_list_object_state
-    {
-        size_t index;        ///< what is the index position in the object list?
-        bool_t allocated;    ///< The object has been allocated
-        bool_t in_free_list; ///< the object is currently in the free list
-        bool_t in_used_list; ///< the object is currently in the used list
-    };
-    typedef struct s_list_object_state list_object_state;
-
-    list_object_state * list_object_state_ctor( list_object_state *, size_t index );
-    list_object_state * list_object_state_dtor( list_object_state * );
-    list_object_state * list_object_state_clear( list_object_state * );
-    list_object_state * list_object_set_allocated( list_object_state *, bool_t val );
-    list_object_state * list_object_set_used( list_object_state *, bool_t val );
-    list_object_state * list_object_set_free( list_object_state *, bool_t val );
-
-#define C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT) \
-    struct s_c_list__##TYPE__##NAME           \
-    {                                         \
-        unsigned update_guid;                 \
-        size_t   used_count;                  \
-        size_t   free_count;                  \
-        size_t   used_ref[COUNT];             \
-        size_t   free_ref[COUNT];             \
-        C_DECLARE_T_ARY(TYPE, lst, COUNT);    \
-    }
-
-#define C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)   \
-    C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT);        \
-    extern struct s_c_list__##TYPE__##NAME NAME
-
-#define C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT) \
-    C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT);        \
-    static struct s_c_list__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0, 0}
-
-#define C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT) ACCESS struct s_c_list__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0, 0}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-// a simple stack structure
-
-#define C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT) \
-    struct s_c_stack__##TYPE__##NAME           \
-    {                                          \
-        unsigned update_guid;                  \
-        int  count;                            \
-        C_DECLARE_T_ARY(TYPE, lst, COUNT);     \
-    }
-
-#define C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT) \
-    C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT);       \
-    extern struct s_c_stack__##TYPE__##NAME NAME
-
-#define C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT) \
-    C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT);       \
-    static struct s_c_stack__##TYPE__##NAME NAME = {0}
-
-#define C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) ACCESS struct s_c_stack__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0}
+//#define C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT) \
+//    struct s_c_list__##TYPE__##NAME           \
+//    {                                         \
+//        unsigned update_guid;                 \
+//        size_t   used_count;                  \
+//        size_t   free_count;                  \
+//        size_t   used_ref[COUNT];             \
+//        size_t   free_ref[COUNT];             \
+//        C_DECLARE_T_ARY(TYPE, lst, COUNT);    \
+//    }
+//
+//#define C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)   \
+//    C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT);        \
+//    extern struct s_c_list__##TYPE__##NAME NAME
+//
+//#define C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT) \
+//    C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT);        \
+//    static struct s_c_list__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0, 0}
+//
+//#define C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT) ACCESS struct s_c_list__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0, 0}
+//
+////--------------------------------------------------------------------------------------------
+////--------------------------------------------------------------------------------------------
+//// a simple stack structure
+//
+//#define C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT) \
+//    struct s_c_stack__##TYPE__##NAME           \
+//    {                                          \
+//        unsigned update_guid;                  \
+//        int  count;                            \
+//        C_DECLARE_T_ARY(TYPE, lst, COUNT);     \
+//    }
+//
+//#define C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT) \
+//    C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT);       \
+//    extern struct s_c_stack__##TYPE__##NAME NAME
+//
+//#define C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT) \
+//    C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT);       \
+//    static struct s_c_stack__##TYPE__##NAME NAME = {0}
+//
+//#define C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) ACCESS struct s_c_stack__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -473,9 +445,9 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 // implementation of forward declaration of references
 
-#if defined(__cplusplus) && defined(DEBUG_CPP_LISTS)
+#if defined(__cplusplus)
 
-#   define REF_TO_INT(X)  REF_TO_INT(X)
+#   define REF_TO_INT(X)  CPP_REF_TO_INT(X)
 #   define _REF_TO_INT(X) C_REF_TO_INT(X)
 
 #   define DECLARE_T_ARY(TYPE, NAME, COUNT)              CPP_DECLARE_T_ARY(TYPE, NAME, COUNT)
@@ -499,15 +471,27 @@ extern "C"
 #    define _INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
 #    define _INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
 
-    typedef struct s_team ego_team;
-    typedef struct s_player ego_player;
-    typedef struct ego_pip ego_pip;
-    typedef struct ego_passage ego_passage;
-    typedef struct ego_shop ego_shop;
     typedef struct s_oglx_texture oglx_texture_t;
-    typedef struct s_looped_sound_data ego_looped_sound_data;
-    typedef struct s_mnu_module mnu_module;
-    typedef struct ego_tx_request ego_tx_request;
+
+    struct ego_cap;
+    struct ego_chr;
+    struct ego_team;
+    struct ego_eve;
+    struct ego_enc;
+    struct ego_mad;
+    struct ego_player;
+    struct ego_pip;
+    struct ego_prt;
+    struct ego_passage;
+    struct ego_shop;
+    struct ego_pro;
+    struct s_oglx_texture;
+    struct ego_billboard_data;
+    struct snd_looped_sound_data;
+    struct mnu_module;
+    struct ego_tx_request;
+
+    typedef s_oglx_texture oglx_texture_t;
 
     CPP_DECLARE_REF( ego_cap, CAP_REF );
     CPP_DECLARE_REF( ego_chr, CHR_REF );
@@ -523,66 +507,69 @@ extern "C"
     CPP_DECLARE_REF( ego_pro, PRO_REF );
     CPP_DECLARE_REF( oglx_texture_t, TX_REF );
     CPP_DECLARE_REF( ego_billboard_data, BBOARD_REF );
-    CPP_DECLARE_REF( ego_looped_sound_data, LOOP_REF );
+    CPP_DECLARE_REF( snd_looped_sound_data, LOOP_REF );
     CPP_DECLARE_REF( mnu_module, MOD_REF );
     CPP_DECLARE_REF( MOD_REF, MOD_REF_REF );
     CPP_DECLARE_REF( ego_tx_request, TREQ_REF );
 
-#else
-
-#   define REF_TO_INT(X)  C_REF_TO_INT(X)
-#   define _REF_TO_INT(X) C_REF_TO_INT(X)
-
-#   define DECLARE_T_ARY(TYPE, NAME, COUNT)              C_DECLARE_T_ARY(TYPE, NAME, COUNT)
-
-#   define DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)        C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)
-#   define INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)     C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)
-#   define INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)     C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)
-
-#    define DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)
-#    define INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
-#    define INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
-
-// use an underscore to force the c implementation
-#   define _DECLARE_T_ARY(TYPE, NAME, COUNT)              C_DECLARE_T_ARY(TYPE, NAME, COUNT)
-
-#   define _DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)        C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)
-#   define _INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)     C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)
-#   define _INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)     C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)
-
-#    define _DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)
-#    define _INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
-#    define _INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
-
-    C_DECLARE_REF( CAP_REF );
-    C_DECLARE_REF( CHR_REF );
-    C_DECLARE_REF( TEAM_REF );
-    C_DECLARE_REF( EVE_REF );
-    C_DECLARE_REF( ENC_REF );
-    C_DECLARE_REF( MAD_REF );
-    C_DECLARE_REF( PLA_REF );
-    C_DECLARE_REF( PIP_REF );
-    C_DECLARE_REF( PRT_REF );
-    C_DECLARE_REF( PASS_REF );
-    C_DECLARE_REF( SHOP_REF );
-    C_DECLARE_REF( PRO_REF );
-    C_DECLARE_REF( TX_REF );
-    C_DECLARE_REF( BBOARD_REF );
-    C_DECLARE_REF( LOOP_REF );
-    C_DECLARE_REF( MOD_REF );
-    C_DECLARE_REF( TREQ_REF );
-    C_DECLARE_REF( MOD_REF_REF );
+//#else
+//
+//#   define REF_TO_INT(X)  C_REF_TO_INT(X)
+//#   define _REF_TO_INT(X) C_REF_TO_INT(X)
+//
+//#   define DECLARE_T_ARY(TYPE, NAME, COUNT)              C_DECLARE_T_ARY(TYPE, NAME, COUNT)
+//
+//#   define DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)        C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)
+//#   define INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)     C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)
+//#   define INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)     C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)
+//
+//#    define DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)
+//#    define INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
+//#    define INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
+//
+//// use an underscore to force the c implementation
+//#   define _DECLARE_T_ARY(TYPE, NAME, COUNT)              C_DECLARE_T_ARY(TYPE, NAME, COUNT)
+//
+//#   define _DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)        C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)
+//#   define _INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)     C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)
+//#   define _INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)     C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)
+//
+//#    define _DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)
+//#    define _INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
+//#    define _INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
+//
+//    C_DECLARE_REF( CAP_REF );
+//    C_DECLARE_REF( CHR_REF );
+//    C_DECLARE_REF( TEAM_REF );
+//    C_DECLARE_REF( EVE_REF );
+//    C_DECLARE_REF( ENC_REF );
+//    C_DECLARE_REF( MAD_REF );
+//    C_DECLARE_REF( PLA_REF );
+//    C_DECLARE_REF( PIP_REF );
+//    C_DECLARE_REF( PRT_REF );
+//    C_DECLARE_REF( PASS_REF );
+//    C_DECLARE_REF( SHOP_REF );
+//    C_DECLARE_REF( PRO_REF );
+//    C_DECLARE_REF( TX_REF );
+//    C_DECLARE_REF( BBOARD_REF );
+//    C_DECLARE_REF( LOOP_REF );
+//    C_DECLARE_REF( MOD_REF );
+//    C_DECLARE_REF( TREQ_REF );
+//    C_DECLARE_REF( MOD_REF_REF );
 #endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // forward declaration of standard dynamic array types
+#if defined(__cplusplus)
 
-    DECLARE_DYNAMIC_ARY( char_ary,   char )
-    DECLARE_DYNAMIC_ARY( short_ary,  short )
-    DECLARE_DYNAMIC_ARY( int_ary,    int )
-    DECLARE_DYNAMIC_ARY( float_ary,  float )
-    DECLARE_DYNAMIC_ARY( double_ary, double )
+DECLARE_DYNAMIC_ARY( char_ary,   char )
+DECLARE_DYNAMIC_ARY( short_ary,  short )
+DECLARE_DYNAMIC_ARY( int_ary,    int )
+DECLARE_DYNAMIC_ARY( float_ary,  float )
+DECLARE_DYNAMIC_ARY( double_ary, double )
+
+#endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

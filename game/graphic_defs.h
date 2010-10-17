@@ -34,7 +34,7 @@ extern "C"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#define DOLIST_SIZE (MAX_CHR + TOTAL_MAX_PRT)
+#define DOLIST_SIZE (MAX_CHR + MAX_PRT)
 
 #define MAXMESHRENDER             1024                       ///< Max number of tiles to draw
 

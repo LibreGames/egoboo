@@ -127,13 +127,6 @@ struct ego_ChoosePlayer_element
     ego_chop_definition chop;      ///< put this here so we can generate a name without loading an entire profile
 };
 
-#define PLAYER_ELEMENT_INIT \
-    { \
-        /* cap_ref */ MAX_CAP,             \
-        /* tx_ref  */ INVALID_TX_TEXTURE,  \
-        /* chop    */ CHOP_DEFINITION_INIT \
-    }
-
 //--------------------------------------------------------------------------------------------
 
 /// The data that menu.c uses to store the users' choice of players
@@ -141,9 +134,12 @@ struct ego_ChoosePlayer_profiles
 {
     int count;                                                 ///< the profiles that have been loaded
     ego_ChoosePlayer_element pro_data[MAXIMPORTPERPLAYER + 1];   ///< the profile data
-};
 
-#define PLAYER_PROFILES_INIT { 0, {PLAYER_ELEMENT_INIT} }
+    ego_ChoosePlayer_profiles()
+    {
+        count = 0;
+    }
+};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -268,11 +264,11 @@ static int     mnu_Selected_get_loadplayer( int loadplayer_idx );
 
 // implementation of "private" TxTitleImage functions
 static void             TxTitleImage_clear_data();
-static void             TxTitleImage_release_one( const TX_REF by_reference index );
+static void             TxTitleImage_release_one( const TX_REF & index );
 static void             TxTitleImage_ctor();
 static void             TxTitleImage_release_all();
 static void             TxTitleImage_dtor();
-static oglx_texture_t * TxTitleImage_get_ptr( const TX_REF by_reference itex );
+static oglx_texture_t * TxTitleImage_get_ptr( const TX_REF & itex );
 
 // tipText functions
 static void tipText_set_position( TTF_Font * font, const char * text, int spacing );
@@ -292,7 +288,7 @@ static bool_t mnu_GameTip_load_local_vfs();
 static void   mnu_load_all_module_info();
 
 // "private" asset function
-static TX_REF mnu_get_icon_ref( const CAP_REF by_reference icap, const TX_REF by_reference default_ref );
+static TX_REF mnu_get_icon_ref( const CAP_REF & icap, const TX_REF & default_ref );
 
 // implementation of the autoformatting
 static void autoformat_init_slidy_buttons();
@@ -300,7 +296,7 @@ static void autoformat_init_tip_text();
 static void autoformat_init_copyright_text();
 
 // misc other stuff
-static void mnu_release_one_module( const MOD_REF by_reference imod );
+static void mnu_release_one_module( const MOD_REF & imod );
 static void mnu_load_all_module_images_vfs();
 
 //--------------------------------------------------------------------------------------------
@@ -1921,6 +1917,13 @@ struct ego_doChoosePlayer_stats_info
     int                     player;
     int                     player_last;
     display_item_t        * item_ptr;
+
+    ego_doChoosePlayer_stats_info()
+    {
+        player      = -1;
+        player_last = -1;
+        item_ptr    = NULL;
+    }
 };
 
 #define PLAYER_STATS_INFO_INIT                  \
@@ -2326,7 +2329,7 @@ int doChoosePlayer( float deltaTime )
 
     static int mnu_selectedPlayerCount_old = -1;
 
-    static ego_doChoosePlayer_stats_info stats_info = PLAYER_STATS_INFO_INIT;
+    static ego_doChoosePlayer_stats_info stats_info;
 
     int result = 0;
     int i, j, x, y;
@@ -5879,11 +5882,11 @@ int doOptionsVideo( float deltaTime )
             ui_Widget::Run( w_labels + lab_maxlights );
             if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_maxlights ) )
             {
-                cfg.dyna_count_req = CLIP( cfg.dyna_count_req, 8, TOTAL_MAX_DYNA - 1 );
+                cfg.dyna_count_req = CLIP( cfg.dyna_count_req, 8, MAX_DYNA - 1 );
 
                 cfg.dyna_count_req += 8;
 
-                if ( cfg.dyna_count_req > TOTAL_MAX_DYNA ) cfg.dyna_count_req = 8;
+                if ( cfg.dyna_count_req > MAX_DYNA ) cfg.dyna_count_req = 8;
 
                 doVideoOptions_update_max_lights( w_buttons + but_maxlights, cfg.dyna_count_req );
             }
@@ -5929,11 +5932,11 @@ int doOptionsVideo( float deltaTime )
             ui_Widget::Run( w_labels + lab_maxparticles );
             if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_maxparticles ) )
             {
-                cfg.particle_count_req = CLIP( cfg.particle_count_req, 128, TOTAL_MAX_PRT - 1 );
+                cfg.particle_count_req = CLIP( cfg.particle_count_req, 128, MAX_PRT - 1 );
 
                 cfg.particle_count_req += 128;
 
-                if ( cfg.particle_count_req > TOTAL_MAX_PRT ) cfg.particle_count_req = 256;
+                if ( cfg.particle_count_req > MAX_PRT ) cfg.particle_count_req = 256;
 
                 doVideoOptions_update_max_particles( w_buttons + but_maxparticles, cfg.particle_count_req );
             }
@@ -7223,7 +7226,7 @@ void mnu_load_all_module_images_vfs()
 }
 
 //--------------------------------------------------------------------------------------------
-TX_REF mnu_get_icon_ref( const CAP_REF by_reference icap, const TX_REF by_reference default_ref )
+TX_REF mnu_get_icon_ref( const CAP_REF & icap, const TX_REF & default_ref )
 {
     /// @details BB@> This function gets the proper icon for a an object profile.
     //
@@ -7294,7 +7297,7 @@ int mnu_get_mod_number( const char *szModName )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_len, char * buffer )
+bool_t mnu_test_by_index( const MOD_REF & modnumber, size_t buffer_len, char * buffer )
 {
     int            cnt;
     mnu_module * pmod;
@@ -7420,7 +7423,7 @@ void mnu_load_all_module_info()
 }
 
 //--------------------------------------------------------------------------------------------
-void mnu_release_one_module( const MOD_REF by_reference imod )
+void mnu_release_one_module( const MOD_REF & imod )
 {
     mnu_module * pmod;
 
@@ -7529,7 +7532,7 @@ void TxTitleImage_ctor()
 }
 
 //--------------------------------------------------------------------------------------------
-void TxTitleImage_release_one( const TX_REF by_reference index )
+void TxTitleImage_release_one( const TX_REF & index )
 {
     if ( index < 0 || index >= MAX_MODULE ) return;
 
@@ -7592,7 +7595,7 @@ TX_REF TxTitleImage_load_one_vfs( const char *szLoadName )
 }
 
 //--------------------------------------------------------------------------------------------
-oglx_texture_t * TxTitleImage_get_ptr( const TX_REF by_reference itex )
+oglx_texture_t * TxTitleImage_get_ptr( const TX_REF & itex )
 {
     if ( itex >= TxTitleImage.count || itex >= MAX_MODULE ) return NULL;
 

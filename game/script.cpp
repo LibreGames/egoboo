@@ -279,7 +279,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
 
         if ( pchr->ismount && INGAME_CHR( rider_ref ) )
         {
-            ego_chr * prider = ChrList.lst + rider_ref;
+            ego_chr * prider = ChrList.get_valid_ptr(rider_ref);
 
             // Mount
             pchr->latch.raw_valid = prider->latch.raw_valid;
@@ -956,12 +956,12 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
     if ( DEFINED_CHR( pself->target ) )
     {
-        ptarget = ChrList.lst + pself->target;
+        ptarget = ChrList.get_valid_ptr(pself->target);
     }
 
     if ( DEFINED_CHR( pself->owner ) )
     {
-        powner = ChrList.lst + pself->owner;
+        powner = ChrList.get_valid_ptr(pself->owner);
     }
 
     // get the operator
@@ -1461,7 +1461,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARTARGETTEAM:
                 varname = "TARGETTEAM";
-                iTmp = ( NULL == ptarget ) ? 0 : ptarget->team;
+                iTmp = ( NULL == ptarget ) ? 0 : REF_TO_INT(ptarget->team);
                 //iTmp = REF_TO_INT( ego_chr::get_iteam( pself->target ) );
                 break;
 
@@ -1829,7 +1829,7 @@ void set_alerts( ego_ai_bundle * pbdl_ai )
 }
 
 //--------------------------------------------------------------------------------------------
-void issue_order( const CHR_REF by_reference character, Uint32 value )
+void issue_order( const CHR_REF & character, Uint32 value )
 {
     /// @details ZZ@> This function issues an value for help to all teammates
 
@@ -1896,16 +1896,16 @@ ego_ai_state * ego_ai_state::reconstruct( ego_ai_state * pself )
     // set everything to safe values
     memset( pself, 0, sizeof( *pself ) );
 
-    pself->index      = ( CHR_REF )MAX_CHR;
-    pself->target     = ( CHR_REF )MAX_CHR;
-    pself->owner      = ( CHR_REF )MAX_CHR;
-    pself->child      = ( CHR_REF )MAX_CHR;
-    pself->target_old = ( CHR_REF )MAX_CHR;
+    pself->index      = CHR_REF(MAX_CHR);
+    pself->target     = CHR_REF(MAX_CHR);
+    pself->owner      = CHR_REF(MAX_CHR);
+    pself->child      = CHR_REF(MAX_CHR);
+    pself->target_old = CHR_REF(MAX_CHR);
     pself->poof_time  = -1;
 
-    pself->bumplast   = ( CHR_REF )MAX_CHR;
-    pself->attacklast = ( CHR_REF )MAX_CHR;
-    pself->hitlast    = ( CHR_REF )MAX_CHR;
+    pself->bumplast   = CHR_REF(MAX_CHR);
+    pself->attacklast = CHR_REF(MAX_CHR);
+    pself->hitlast    = CHR_REF(MAX_CHR);
 
     return pself;
 }
@@ -1960,7 +1960,7 @@ ego_ai_bundle * ego_ai_bundle::validate( ego_ai_bundle * pbundle )
     // get the character info from the reference or the pointer
     if ( VALID_CHR( pbundle->chr_ref ) )
     {
-        pbundle->chr_ptr = ChrList.lst + pbundle->chr_ref;
+        pbundle->chr_ptr = ChrList.get_valid_ptr(pbundle->chr_ref);
     }
     else if ( NULL != pbundle->chr_ptr )
     {

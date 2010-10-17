@@ -81,12 +81,12 @@
     return returncode;
 
 #define SET_TARGET_0(ITARGET)         pself->target = ITARGET;
-#define SET_TARGET_1(ITARGET,PTARGET) if( NULL != PTARGET ) { PTARGET = INGAME_CHR(ITARGET) ? ChrList.lst + ITARGET : NULL; }
+#define SET_TARGET_1(ITARGET,PTARGET) if( NULL != PTARGET ) { PTARGET = (!INGAME_CHR(ITARGET) ? NULL : ChrList.get_valid_ptr(ITARGET) ); }
 #define SET_TARGET(ITARGET,PTARGET)   SET_TARGET_0( ITARGET ); SET_TARGET_1(ITARGET,PTARGET)
 
 #define SCRIPT_REQUIRE_TARGET(PTARGET) \
     if( !INGAME_CHR(pself->target) ) return bfalse; \
-    PTARGET = ChrList.lst + pself->target;
+    PTARGET = ChrList.get_valid_ptr(pself->target);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -556,7 +556,7 @@ Uint8 scr_FindPath( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     {
         float fx, fy;
 
-        ego_chr * pself_target = ChrList.lst + pself->target;
+        ego_chr * pself_target = ChrList.get_valid_ptr(pself->target);
 
         if ( pstate->distance != MOVE_FOLLOW )
         {
@@ -1127,9 +1127,9 @@ Uint8 scr_DropWeapons( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
             ChrList.lst[ichr].vel.z    = DISMOUNTZVEL;
             ChrList.lst[ichr].jump_time = JUMP_DELAY;
 
-            tmp_pos = ego_chr::get_pos( ChrList.lst + ichr );
+            tmp_pos = ego_chr::get_pos( ChrList.get_valid_ptr(ichr ));
             tmp_pos.z += DISMOUNTZVEL;
-            ego_chr::set_pos( ChrList.lst + ichr, tmp_pos.v );
+            ego_chr::set_pos( ChrList.get_valid_ptr(ichr), tmp_pos.v );
         }
     }
 
@@ -1144,9 +1144,9 @@ Uint8 scr_DropWeapons( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
             ChrList.lst[ichr].vel.z    = DISMOUNTZVEL;
             ChrList.lst[ichr].jump_time = JUMP_DELAY;
 
-            tmp_pos = ego_chr::get_pos( ChrList.lst + ichr );
+            tmp_pos = ego_chr::get_pos( ChrList.get_valid_ptr(ichr ));
             tmp_pos.z += DISMOUNTZVEL;
-            ego_chr::set_pos( ChrList.lst + ichr, tmp_pos.v );
+            ego_chr::set_pos( ChrList.get_valid_ptr(ichr), tmp_pos.v );
         }
     }
 
@@ -1166,7 +1166,7 @@ Uint8 scr_TargetDoAction( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     returncode = bfalse;
     if ( INGAME_CHR( pself->target ) )
     {
-        ego_chr * pself_target = ChrList.lst + pself->target;
+        ego_chr * pself_target = ChrList.get_valid_ptr(pself->target);
 
         if ( pself_target->alive )
         {
@@ -1842,7 +1842,7 @@ Uint8 scr_SpawnCharacter( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     pos.y = pstate->y;
     pos.z = 0;
 
-    ichr = spawn_one_character( pos, pchr->profile_ref, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, ( CHR_REF )MAX_CHR );
+    ichr = spawn_one_character( pos, pchr->profile_ref, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF(MAX_CHR) );
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
@@ -1852,13 +1852,13 @@ Uint8 scr_SpawnCharacter( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     }
     else
     {
-        ego_chr * pchild = ChrList.lst + ichr;
+        ego_chr * pchild = ChrList.get_valid_ptr(ichr);
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
         {
             ego_chr::request_terminate( ichr );
-            ichr = ( CHR_REF )MAX_CHR;
+            ichr = CHR_REF(MAX_CHR);
         }
         else
         {
@@ -2106,17 +2106,17 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
         ichr = pchr->attachedto;
     }
 
-    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
 
     returncode = VALID_PRT( iprt );
     if ( returncode )
     {
         fvec3_t tmp_pos;
-        ego_prt * pprt = PrtList.lst + iprt;
+        ego_prt * pprt = PrtList.get_valid_ptr(iprt);
 
         // attach the particle
         place_particle_at_vertex( pprt, pself->index, pstate->distance );
-        pprt->attachedto_ref = ( CHR_REF )MAX_CHR;
+        pprt->attachedto_ref = CHR_REF(MAX_CHR);
 
         tmp_pos = ego_prt::get_pos( pprt );
 
@@ -3876,7 +3876,7 @@ Uint8 scr_SpawnAttachedParticle( ego_script_state * pstate, ego_ai_bundle * pbdl
         ichr = iholder;
     }
 
-    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
 
     returncode = VALID_PRT( iprt );
 
@@ -3902,7 +3902,7 @@ Uint8 scr_SpawnExactParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_se
 
     {
         fvec3_t vtmp = VECT3( pstate->x, pstate->y, pstate->distance );
-        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ( CHR_REF )MAX_CHR, 0, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF(MAX_CHR), 0, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
     }
 
     returncode = VALID_PRT( iprt );
@@ -4302,7 +4302,7 @@ Uint8 scr_ChildDoActionOverride( ego_script_state * pstate, ego_ai_bundle * pbdl
     {
         int action;
 
-        ego_chr * pchild = ChrList.lst + pself->child;
+        ego_chr * pchild = ChrList.get_valid_ptr(pself->child);
 
         action = mad_get_action( pchild->inst.imad, pstate->argument );
 
@@ -4393,12 +4393,12 @@ Uint8 scr_SpawnAttachedSizedParticle( ego_script_state * pstate, ego_ai_bundle *
         ichr = pchr->attachedto;
     }
 
-    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
     returncode = bfalse;
 
     if ( VALID_PRT( iprt ) )
     {
-        returncode = ego_prt::set_size( PrtList.lst + iprt, pstate->turn );
+        returncode = ego_prt::set_size( PrtList.get_valid_ptr(iprt), pstate->turn );
     }
 
     SCRIPT_FUNCTION_END();
@@ -4503,7 +4503,7 @@ Uint8 scr_SpawnAttachedFacedParticle( ego_script_state * pstate, ego_ai_bundle *
         ichr = pchr->attachedto;
     }
 
-    iprt = spawn_one_particle( pchr->pos, CLIP_TO_16BITS( pstate->turn ), pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+    iprt = spawn_one_particle( pchr->pos, CLIP_TO_16BITS( pstate->turn ), pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
 
     returncode = VALID_PRT( iprt );
 
@@ -4885,7 +4885,7 @@ Uint8 scr_SpawnAttachedHolderParticle( ego_script_state * pstate, ego_ai_bundle 
         ichr = pchr->attachedto;
     }
 
-    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ichr, pstate->distance, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ichr, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
 
     returncode = VALID_PRT( iprt );
 
@@ -5252,7 +5252,7 @@ Uint8 scr_SpawnCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     pos.y = pstate->y;
     pos.z = pstate->distance;
 
-    ichr = spawn_one_character( pos, pchr->profile_ref, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, ( CHR_REF )MAX_CHR );
+    ichr = spawn_one_character( pos, pchr->profile_ref, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF(MAX_CHR) );
 
     if ( !INGAME_CHR( ichr ) )
     {
@@ -5263,13 +5263,13 @@ Uint8 scr_SpawnCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     }
     else
     {
-        ego_chr * pchild = ChrList.lst + ichr;
+        ego_chr * pchild = ChrList.get_valid_ptr(ichr);
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
         {
             ego_chr::request_terminate( ichr );
-            ichr = ( CHR_REF )MAX_CHR;
+            ichr = CHR_REF(MAX_CHR);
         }
         else
         {
@@ -5307,7 +5307,7 @@ Uint8 scr_SpawnExactCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbd
     pos.y = pstate->y;
     pos.z = pstate->distance;
 
-    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, ( CHR_REF )MAX_CHR );
+    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF(MAX_CHR) );
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
@@ -5319,13 +5319,13 @@ Uint8 scr_SpawnExactCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbd
     }
     else
     {
-        ego_chr * pchild = ChrList.lst + ichr;
+        ego_chr * pchild = ChrList.get_valid_ptr(ichr);
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
         {
             ego_chr::request_terminate( ichr );
-            ichr = ( CHR_REF )MAX_CHR;
+            ichr = CHR_REF(MAX_CHR);
         }
         else
         {
@@ -5399,7 +5399,7 @@ Uint8 scr_SpawnExactChaseParticle( ego_script_state * pstate, ego_ai_bundle * pb
 
     {
         fvec3_t vtmp = VECT3( pstate->x, pstate->y, pstate->distance );
-        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ( CHR_REF )MAX_CHR, 0, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF(MAX_CHR), 0, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
     }
 
     returncode = VALID_PRT( iprt );
@@ -5547,7 +5547,7 @@ Uint8 scr_TargetDoActionSetFrame( ego_script_state * pstate, ego_ai_bundle * pbd
     if ( INGAME_CHR( pself->target ) )
     {
         int action;
-        ego_chr * pself_target = ChrList.lst + pself->target;
+        ego_chr * pself_target = ChrList.get_valid_ptr(pself->target);
 
         action = mad_get_action( pself_target->inst.imad, pstate->argument );
 
@@ -6379,7 +6379,7 @@ Uint8 scr_TargetPayForArmor( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
     if ( !INGAME_CHR( pself->target ) ) return bfalse;
 
-    pself_target = ChrList.lst + pself->target;
+    pself_target = ChrList.get_valid_ptr(pself->target);
 
     pcap = ego_chr::get_pcap( pself->target );         // The Target's model
     if ( NULL == pcap )  return bfalse;
@@ -6522,7 +6522,7 @@ Uint8 scr_SpawnExactParticleEndSpawn( ego_script_state * pstate, ego_ai_bundle *
 
     {
         fvec3_t vtmp = VECT3( pstate->x, pstate->y, pstate->distance );
-        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ( CHR_REF )MAX_CHR, 0, pchr->team, ichr, ( PRT_REF )TOTAL_MAX_PRT, 0, ( CHR_REF )MAX_CHR );
+        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF(MAX_CHR), 0, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
     }
 
     returncode = VALID_PRT( iprt );
@@ -6889,7 +6889,7 @@ Uint8 scr_Backstabbed( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     if ( HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
     {
         // Who is the dirty backstabber?
-        ego_chr * pattacker = ChrList.lst + pself->attacklast;
+        ego_chr * pattacker = ChrList.get_valid_ptr(pself->attacklast);
         if ( !ACTIVE_PCHR( pattacker ) ) return bfalse;
 
         // Only if hit from behind
@@ -7163,7 +7163,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
     pos.y = pstate->y;
     pos.z = pstate->distance;
 
-    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, FACE_NORTH, NULL, ( CHR_REF )MAX_CHR );
+    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, FACE_NORTH, NULL, CHR_REF(MAX_CHR) );
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
@@ -7175,7 +7175,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
     }
     else
     {
-        ego_chr * pchild = ChrList.lst + ichr;
+        ego_chr * pchild = ChrList.get_valid_ptr(ichr);
 
         Uint8 grip = ( Uint8 )CLIP( pstate->distance, ATTACH_INVENTORY, ATTACH_RIGHT );
 
@@ -7190,7 +7190,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
                 pchild->attachedto = pself->target;  // Make grab work
                 scr_run_chr_script( ego_ai_bundle::set( &tmp_bdl_ai, pchild ) );  // Empty the grabbed messages
 
-                pchild->attachedto = ( CHR_REF )MAX_CHR;  // Fix grab
+                pchild->attachedto = CHR_REF(MAX_CHR);  // Fix grab
 
                 // Set some AI values
                 pself->child = ichr;
@@ -7202,7 +7202,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
             else
             {
                 ego_chr::request_terminate( ichr );
-                ichr = ( CHR_REF )MAX_CHR;
+                ichr = CHR_REF(MAX_CHR);
             }
         }
         else if ( grip == ATTACH_LEFT || grip == ATTACH_RIGHT )
@@ -7228,7 +7228,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
             else
             {
                 ego_chr::request_terminate( ichr );
-                ichr = ( CHR_REF )MAX_CHR;
+                ichr = CHR_REF(MAX_CHR);
             }
         }
         else
@@ -7240,7 +7240,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
             if ( !ego_chr::get_safe( pchild, NULL ) )
             {
                 ego_chr::request_terminate( ichr );
-                ichr = ( CHR_REF )MAX_CHR;
+                ichr = CHR_REF(MAX_CHR);
             }
         }
     }
@@ -7828,7 +7828,7 @@ Uint8 scr_GiveSkillToTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, const PASS_REF by_reference passage, int *ptilex, int *ptiley )
+bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, const PASS_REF & passage, int *ptilex, int *ptiley )
 {
     /// @details ZZ@> This function breaks the tiles of a passage if there is a character standing
     ///               on 'em.  Turns the tiles into damage terrain if it reaches last frame.
@@ -7944,7 +7944,7 @@ Uint8 _append_end_text( ego_chr * pchr, const int message, ego_script_state * ps
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, const PASS_REF by_reference passage, int *px1, int *py1 )
+Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, const PASS_REF & passage, int *px1, int *py1 )
 {
     /// @details ZZ@> This function finds the next tile in the passage, x0 and y0
     ///    must be set first, and are set on a find.  Returns btrue or bfalse
@@ -8008,7 +8008,7 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 _display_message( const CHR_REF by_reference ichr, const PRO_REF by_reference iprofile, int message, ego_script_state * pstate )
+Uint8 _display_message( const CHR_REF & ichr, const PRO_REF & iprofile, int message, ego_script_state * pstate )
 {
     /// @details ZZ@> This function sticks a message_offset in the display queue and sets its timer
 

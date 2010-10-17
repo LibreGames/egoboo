@@ -101,10 +101,10 @@ INLINE CHR_REF team_get_ileader( const TEAM_REF by_reference iteam )
 {
     CHR_REF ichr;
 
-    if ( iteam >= TEAM_MAX ) return ( CHR_REF )MAX_CHR;
+    if ( iteam >= TEAM_MAX ) return CHR_REF(MAX_CHR);
 
     ichr = TeamStack.lst[iteam].leader;
-    if ( !DEFINED_CHR( ichr ) ) return ( CHR_REF )MAX_CHR;
+    if ( !DEFINED_CHR( ichr ) ) return CHR_REF(MAX_CHR);
 
     return ichr;
 }
@@ -119,7 +119,7 @@ INLINE ego_chr  * team_get_pleader( const TEAM_REF by_reference iteam )
     ichr = TeamStack.lst[iteam].leader;
     if ( !DEFINED_CHR( ichr ) ) return NULL;
 
-    return ChrList.lst + ichr;
+    return ChrList.get_valid_ptr(ichr);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ INLINE PRO_REF ego_chr::get_ipro( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return ( PRO_REF )MAX_PROFILE;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     if ( !LOADED_PRO( pchr->profile_ref ) ) return ( PRO_REF )MAX_PROFILE;
 
@@ -152,7 +152,7 @@ INLINE CAP_REF ego_chr::get_icap( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return ( CAP_REF )MAX_CAP;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return pro_get_icap( pchr->profile_ref );
 }
@@ -163,7 +163,7 @@ INLINE EVE_REF ego_chr::get_ieve( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return ( EVE_REF )MAX_EVE;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return pro_get_ieve( pchr->profile_ref );
 }
@@ -174,7 +174,7 @@ INLINE PIP_REF ego_chr::get_ipip( const CHR_REF by_reference ichr, int ipip )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return ( PIP_REF )MAX_PIP;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return pro_get_ipip( pchr->profile_ref, ipip );
 }
@@ -186,7 +186,7 @@ INLINE TEAM_REF ego_chr::get_iteam( const CHR_REF by_reference ichr )
     int iteam;
 
     if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_DAMAGE;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     iteam = REF_TO_INT( pchr->team );
     iteam = CLIP( iteam, 0, TEAM_MAX );
@@ -201,7 +201,7 @@ INLINE TEAM_REF ego_chr::get_iteam_base( const CHR_REF by_reference ichr )
     int iteam;
 
     if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_MAX;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     iteam = REF_TO_INT( pchr->baseteam );
     iteam = CLIP( iteam, 0, TEAM_MAX );
@@ -215,7 +215,7 @@ INLINE ego_pro * ego_chr::get_ppro( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     if ( !LOADED_PRO( pchr->profile_ref ) ) return NULL;
 
@@ -228,7 +228,7 @@ INLINE ego_cap * ego_chr::get_pcap( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return pro_get_pcap( pchr->profile_ref );
 }
@@ -239,7 +239,7 @@ INLINE ego_eve * ego_chr::get_peve( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return pro_get_peve( pchr->profile_ref );
 }
@@ -250,7 +250,7 @@ INLINE ego_pip * ego_chr::get_ppip( const CHR_REF by_reference ichr, int ipip )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return pro_get_ppip( pchr->profile_ref, ipip );
 }
@@ -261,7 +261,7 @@ INLINE Mix_Chunk * ego_chr::get_chunk( const CHR_REF by_reference ichr, int inde
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return pro_get_chunk( pchr->profile_ref, index );
 }
@@ -280,7 +280,7 @@ INLINE ego_team * ego_chr::get_pteam( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     if ( pchr->team < 0 && pchr->team >= TEAM_MAX ) return NULL;
 
@@ -293,7 +293,7 @@ INLINE ego_team * ego_chr::get_pteam_base( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     if ( pchr->baseteam < 0 || pchr->baseteam >= TEAM_MAX ) return NULL;
 
@@ -306,7 +306,7 @@ INLINE ego_ai_state * ego_chr::get_pai( const CHR_REF by_reference ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return &( pchr->ai );
 }
@@ -317,7 +317,7 @@ INLINE ego_chr_instance * ego_chr::get_pinstance( const CHR_REF by_reference ich
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return &( pchr->inst );
 }

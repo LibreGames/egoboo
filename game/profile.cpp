@@ -208,7 +208,7 @@ bool_t pro_init( ego_pro * pobj )
 //--------------------------------------------------------------------------------------------
 // The "private" ProList management functions
 //--------------------------------------------------------------------------------------------
-int ProList_search_free( const PRO_REF by_reference iobj )
+int ProList_search_free( const PRO_REF & iobj )
 {
     /// @details BB@> if an object of index iobj exists on the free list, return the free list index
     ///     otherwise return -1
@@ -267,7 +267,7 @@ size_t ProList_pop_free( int idx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ProList_push_free( const PRO_REF by_reference iobj )
+bool_t ProList_push_free( const PRO_REF & iobj )
 {
     /// @details BB@> push an object onto the free stack
 
@@ -316,7 +316,7 @@ void ProList_init()
 }
 
 //--------------------------------------------------------------------------------------------
-size_t ProList_get_free( const PRO_REF by_reference override )
+size_t ProList_get_free( const PRO_REF & override )
 {
     /// @details ZZ@> This function returns the next free character or MAX_PROFILE if there are none
 
@@ -347,7 +347,7 @@ size_t ProList_get_free( const PRO_REF by_reference override )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ProList_free_one( const PRO_REF by_reference iobj )
+bool_t ProList_free_one( const PRO_REF & iobj )
 {
     /// @details ZZ@> This function sticks an object back on the free object stack
 
@@ -364,7 +364,7 @@ bool_t ProList_free_one( const PRO_REF by_reference iobj )
 // object functions
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t release_one_profile_textures( const PRO_REF by_reference iobj )
+bool_t release_one_profile_textures( const PRO_REF & iobj )
 {
     int tnc;
     ego_pro  * pobj;
@@ -414,7 +414,7 @@ void release_all_profile_textures()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t release_one_pro_data( const PRO_REF by_reference iobj )
+bool_t release_one_pro_data( const PRO_REF & iobj )
 {
     int cnt;
     ego_pro * pobj;
@@ -436,7 +436,7 @@ bool_t release_one_pro_data( const PRO_REF by_reference iobj )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t release_one_pro( const PRO_REF by_reference iobj )
+bool_t release_one_pro( const PRO_REF & iobj )
 {
     ego_pro * pobj;
 
@@ -487,7 +487,7 @@ void release_all_pro_data()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int load_profile_skins_vfs( const char * tmploadname, const PRO_REF by_reference object )
+int load_profile_skins_vfs( const char * tmploadname, const PRO_REF & object )
 {
     TX_REF min_skin_tx, min_icon_tx;
     int    max_skin, max_icon, max_tex;
@@ -618,7 +618,7 @@ void get_message( vfs_FILE* fileread )
 }
 
 //--------------------------------------------------------------------------------------------
-void load_all_messages_vfs( const char *loadname, const PRO_REF by_reference object )
+void load_all_messages_vfs( const char *loadname, const PRO_REF & object )
 {
     /// @details ZZ@> This function loads all of an objects messages
     vfs_FILE *fileread;
@@ -639,7 +639,7 @@ void load_all_messages_vfs( const char *loadname, const PRO_REF by_reference obj
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t release_one_local_pips( const PRO_REF by_reference iobj )
+bool_t release_one_local_pips( const PRO_REF & iobj )
 {
     int cnt;
     ego_pro * pobj;
@@ -903,7 +903,7 @@ void reset_messages()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-const char * pro_create_chop( const PRO_REF by_reference iprofile )
+const char * pro_create_chop( const PRO_REF & iprofile )
 {
     /// BB@> use the profile's chop to generate a name. Return "*NONE*" on a failure.
 
@@ -941,7 +941,7 @@ const char * pro_create_chop( const PRO_REF by_reference iprofile )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t pro_load_chop_vfs( const PRO_REF by_reference iprofile, const char *szLoadname )
+bool_t pro_load_chop_vfs( const PRO_REF & iprofile, const char *szLoadname )
 {
     /// BB@> load the chop for the given profile
     ego_pro * ppro;
@@ -1269,7 +1269,7 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
     {
         // some kind of error. re-initialize the data.
         pleaf->data      = pchr;
-        pleaf->index     = GET_INDEX_PCHR( pchr );
+        pleaf->index     = GET_IDX_PCHR( pchr );
         pleaf->data_type = LEAF_CHR;
     };
 
@@ -1341,7 +1341,7 @@ bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_prt_bundle * pbdl_prt )
     {
         // some kind of error. re-initialize the data.
         pleaf->data      = loc_pprt;
-        pleaf->index     = GET_INDEX_PPRT( loc_pprt );
+        pleaf->index     = GET_IDX_PPRT( loc_pprt );
         pleaf->data_type = LEAF_PRT;
     };
 
@@ -1384,7 +1384,7 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
 
     // unlink all used particle nodes
     ego_obj_BSP::prt_count = 0;
-    for ( iprt = 0; iprt < TOTAL_MAX_PRT; iprt++ )
+    for ( iprt = 0; iprt < MAX_PRT; iprt++ )
     {
         PrtList.lst[iprt].bsp_leaf.next     = NULL;
         PrtList.lst[iprt].bsp_leaf.inserted = bfalse;
@@ -1404,9 +1404,9 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
     {
         // reset a couple of things here
         pchr->holdingweight             = 0;
-        pchr->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+        pchr->targetplatform_ref     = CHR_REF(MAX_CHR);
         pchr->targetplatform_overlap = 0.0f;
-        pchr->targetmount_ref        = ( CHR_REF )MAX_CHR;
+        pchr->targetmount_ref        = CHR_REF(MAX_CHR);
         pchr->targetmount_overlap    = 0.0f;
 
         // try to insert the character
@@ -1422,7 +1422,7 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
     PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         // reset a couple of things here
-        prt_bdl.prt_ptr->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+        prt_bdl.prt_ptr->targetplatform_ref     = CHR_REF(MAX_CHR);
         prt_bdl.prt_ptr->targetplatform_overlap = 0.0f;
 
         // try to insert the particle

@@ -186,6 +186,9 @@
 				RelativePath=".\egoboo_typedef.cpp">
 			</File>
 			<File
+				RelativePath=".\egoboo_typedef_cpp.inl">
+			</File>
+			<File
 				RelativePath=".\font_bmp.cpp">
 			</File>
 			<File
@@ -313,6 +316,12 @@
 				RelativePath=".\egoboo.cpp">
 			</File>
 			<File
+				RelativePath=".\egoboo_object_list.cpp">
+			</File>
+			<File
+				RelativePath=".\egoboo_object_list.inl">
+			</File>
+			<File
 				RelativePath=".\egoboo_rpc.cpp">
 			</File>
 			<File
@@ -418,6 +427,9 @@
 			</File>
 			<File
 				RelativePath=".\egoboo.h">
+			</File>
+			<File
+				RelativePath=".\egoboo_object_list.h">
 			</File>
 			<File
 				RelativePath=".\egoboo_rpc.h">

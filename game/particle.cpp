@@ -60,7 +60,7 @@ INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_pip, PipStack, MAX_PIP );
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-static int prt_do_end_spawn( const PRT_REF by_reference iprt );
+static int prt_do_end_spawn( const PRT_REF & iprt );
 static int prt_do_contspawn( ego_prt_bundle * pbdl_prt );
 static ego_prt_bundle * prt_do_bump_damage( ego_prt_bundle * pbdl_prt );
 
@@ -80,7 +80,7 @@ static ego_prt_bundle * move_one_particle_do_floor( ego_prt_bundle * pbdl_prt );
 
 // private functions to request the "deletion" of particles
 static bool_t    _prt_request_terminate( ego_prt_bundle * pbdl_prt );
-static bool_t    _prt_request_terminate_ref( const PRT_REF by_reference iprt );
+static bool_t    _prt_request_terminate_ref( const PRT_REF & iprt );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ bool_t ego_prt::dealloc( ego_prt * pprt )
     if ( !ego_prt_data::dealloc( pprt ) ) return bfalse;
 
     // do not allow this if you are inside a particle loop
-    EGOBOO_ASSERT( 0 == prt_loop_depth );
+    EGOBOO_ASSERT( 0 == PrtList.loop_depth );
 
     if ( TERMINATED_PPRT( pprt ) ) return btrue;
 
@@ -123,15 +123,15 @@ ego_prt_data * ego_prt_data::ctor( ego_prt_data * pdata )
     pdata->pip_ref      = MAX_PIP;
     pdata->profile_ref  = MAX_PROFILE;
 
-    pdata->attachedto_ref = ( CHR_REF )MAX_CHR;
-    pdata->owner_ref      = ( CHR_REF )MAX_CHR;
-    pdata->target_ref     = ( CHR_REF )MAX_CHR;
-    pdata->parent_ref     = TOTAL_MAX_PRT;
+    pdata->attachedto_ref = CHR_REF(MAX_CHR);
+    pdata->owner_ref      = CHR_REF(MAX_CHR);
+    pdata->target_ref     = CHR_REF(MAX_CHR);
+    pdata->parent_ref     = MAX_PRT;
     pdata->parent_guid    = 0xFFFFFFFF;
 
-    pdata->onwhichplatform_ref    = ( CHR_REF )MAX_CHR;
+    pdata->onwhichplatform_ref    = CHR_REF(MAX_CHR);
     pdata->onwhichplatform_update = 0;
-    pdata->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+    pdata->targetplatform_ref     = CHR_REF(MAX_CHR);
 
     return pdata;
 }
@@ -175,19 +175,19 @@ ego_prt * ego_prt::ctor( ego_prt * pprt )
     pprt->pip_ref      = MAX_PIP;
     pprt->profile_ref  = MAX_PROFILE;
 
-    pprt->attachedto_ref = ( CHR_REF )MAX_CHR;
-    pprt->owner_ref      = ( CHR_REF )MAX_CHR;
-    pprt->target_ref     = ( CHR_REF )MAX_CHR;
-    pprt->parent_ref     = TOTAL_MAX_PRT;
+    pprt->attachedto_ref = CHR_REF(MAX_CHR);
+    pprt->owner_ref      = CHR_REF(MAX_CHR);
+    pprt->target_ref     = CHR_REF(MAX_CHR);
+    pprt->parent_ref     = MAX_PRT;
     pprt->parent_guid    = 0xFFFFFFFF;
 
-    pprt->onwhichplatform_ref    = ( CHR_REF )MAX_CHR;
+    pprt->onwhichplatform_ref    = CHR_REF(MAX_CHR);
     pprt->onwhichplatform_update = 0;
-    pprt->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+    pprt->targetplatform_ref     = CHR_REF(MAX_CHR);
 
     // initialize the bsp node for this particle
     ego_BSP_leaf::ctor( &( pprt->bsp_leaf ), 3, pprt, 2 );
-    pprt->bsp_leaf.index = GET_INDEX_PPRT( pprt );
+    pprt->bsp_leaf.index = GET_IDX_PPRT( pprt );
 
     ego_object::end_constructing( POBJ_GET_PBASE( pprt ) );
 
@@ -211,21 +211,14 @@ ego_prt * ego_prt::dtor( ego_prt * pprt )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int PrtList_count_free()
-{
-    return PrtList.free_count;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-void play_particle_sound( const PRT_REF by_reference particle, Sint8 sound )
+void play_particle_sound( const PRT_REF & particle, Sint8 sound )
 {
     /// ZZ@> This function plays a sound effect for a particle
 
     ego_prt * pprt;
 
     if ( !DEFINED_PRT( particle ) ) return;
-    pprt = PrtList.lst + particle;
+    pprt = PrtList.get_valid_ptr(particle);
 
     if ( !VALID_SND( sound ) ) return;
 
@@ -240,7 +233,7 @@ void play_particle_sound( const PRT_REF by_reference particle, Sint8 sound )
 }
 
 //--------------------------------------------------------------------------------------------
-void free_one_particle_in_game( const PRT_REF by_reference particle )
+void free_one_particle_in_game( const PRT_REF & particle )
 {
     /// @details ZZ@> This function sticks a particle back on the free particle stack and
     ///    plays the sound associated with the particle
@@ -253,7 +246,7 @@ void free_one_particle_in_game( const PRT_REF by_reference particle )
     ego_prt * pprt;
 
     if ( !VALID_PRT( particle ) ) return;
-    pprt = PrtList.lst + particle;
+    pprt = PrtList.get_valid_ptr(particle);
 
     if ( DEFINED_PRT( particle ) )
     {
@@ -261,7 +254,7 @@ void free_one_particle_in_game( const PRT_REF by_reference particle )
 
         if ( pprt->spawncharacterstate )
         {
-            child = spawn_one_character( ego_prt::get_pos( pprt ), pprt->profile_ref, pprt->team, 0, pprt->facing, NULL, ( CHR_REF )MAX_CHR );
+            child = spawn_one_character( ego_prt::get_pos( pprt ), pprt->profile_ref, pprt->team, 0, pprt->facing, NULL, CHR_REF(MAX_CHR) );
             if ( INGAME_CHR( child ) )
             {
                 ego_chr::get_pai( child )->state = pprt->spawncharacterstate;
@@ -300,7 +293,7 @@ ego_prt * ego_prt::do_init( ego_prt * pprt )
 
     if ( NULL == pprt ) return NULL;
     pdata = &( pprt->spawn_data );
-    iprt  = GET_INDEX_PPRT( pprt );
+    iprt  = GET_IDX_PPRT( pprt );
 
     // Convert from local pdata->ipip to global pdata->ipip
     if ( !LOADED_PIP( pdata->ipip ) )
@@ -685,7 +678,7 @@ ego_prt * ego_prt::run_object_initialize( ego_prt * pprt, int max_iterations )
 //--------------------------------------------------------------------------------------------
 ego_prt * ego_prt::run_object_activate( ego_prt * pprt, int max_iterations )
 {
-    int                 iterations;
+    int          iterations;
     ego_object * pbase;
 
     pbase = POBJ_GET_PBASE( pprt );
@@ -709,7 +702,7 @@ ego_prt * ego_prt::run_object_activate( ego_prt * pprt, int max_iterations )
     EGOBOO_ASSERT( pbase->state.action == ego_object_processing );
     if ( pbase->state.action == ego_object_processing )
     {
-        PrtList_add_used( GET_INDEX_PPRT( pprt ) );
+        PrtList.add_used( GET_REF_PPRT( pprt ) );
     }
 
     return pprt;
@@ -880,13 +873,13 @@ ego_prt * ego_prt::do_object_initializing( ego_prt * pprt )
     pbase->req.turn_me_on = btrue;
 
     // do something about being turned on
-    if ( 0 == prt_loop_depth )
+    if ( 0 == PrtList.loop_depth )
     {
         ego_object::grant_on( pbase );
     }
     else
     {
-        PrtList_add_activation( GET_INDEX_PPRT( pprt ) );
+        PrtList.add_activation( GET_REF_PPRT( pprt ) );
     }
 
     // move on to the next action
@@ -990,12 +983,12 @@ ego_prt * ego_prt::do_object_destructing( ego_prt * pprt )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_reference iprofile, int pip_index,
-                            const CHR_REF by_reference chr_attach, Uint16 vrt_offset, const TEAM_REF by_reference team,
-                            const CHR_REF by_reference chr_origin, const PRT_REF by_reference prt_origin, int multispawn, const CHR_REF by_reference oldtarget )
+PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofile, int pip_index,
+                            const CHR_REF & chr_attach, Uint16 vrt_offset, const TEAM_REF & team,
+                            const CHR_REF & chr_origin, const PRT_REF & prt_origin, int multispawn, const CHR_REF & oldtarget )
 {
     /// @details ZZ@> This function spawns a new particle.
-    ///               Returns the index of that particle or TOTAL_MAX_PRT on a failure.
+    ///               Returns the index of that particle or MAX_PRT on a failure.
 
     PIP_REF ipip;
     PRT_REF iprt;
@@ -1012,14 +1005,14 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
                    REF_TO_INT( ipip ), REF_TO_INT( chr_origin ), INGAME_CHR( chr_origin ) ? ChrList.lst[chr_origin].name : "INVALID",
                    REF_TO_INT( iprofile ), LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
 
-        return ( PRT_REF )TOTAL_MAX_PRT;
+        return PRT_REF(MAX_PRT);
     }
     ppip = PipStack.lst + ipip;
 
     // count all the requests for this particle type
     ppip->prt_request_count++;
 
-    iprt = PrtList_allocate( ppip->force );
+    iprt = PrtList.allocate( ppip->force );
     if ( !DEFINED_PRT( iprt ) )
     {
 #if EGO_DEBUG && defined(DEBUG_PRT_LIST)
@@ -1029,9 +1022,9 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
                    iprofile, LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
 #endif
 
-        return ( PRT_REF )TOTAL_MAX_PRT;
+        return PRT_REF(MAX_PRT);
     }
-    pprt = PrtList.lst + iprt;
+    pprt = PrtList.get_valid_ptr(iprt);
 
     pprt->spawn_data.pos        = pos;
     pprt->spawn_data.facing     = facing;
@@ -1217,7 +1210,7 @@ void update_all_particles()
     {
         if ( !VALID_PRT( iprt ) ) continue;
 
-        ego_prt_bundle::set( &prt_bdl, PrtList.lst + iprt );
+        ego_prt_bundle::set( &prt_bdl, PrtList.get_valid_ptr(iprt ));
 
         prt_update( &prt_bdl );
     }
@@ -1325,7 +1318,7 @@ ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, e
 
         fvec3_t   platform_up;
 
-        ego_chr::get_MatUp( ChrList.lst + loc_pprt->onwhichplatform_ref, &platform_up );
+        ego_chr::get_MatUp( ChrList.get_valid_ptr(loc_pprt->onwhichplatform_ref), &platform_up );
         fvec3_self_normalize( platform_up.v );
 
         penviro->traction = ABS( platform_up.z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
@@ -1449,7 +1442,7 @@ ego_prt_bundle * move_one_particle_do_homing( ego_prt_bundle * pbdl_prt )
     {
         goto move_one_particle_do_homing_fail;
     }
-    ptarget = ChrList.lst + loc_pprt->target_ref;
+    ptarget = ChrList.get_valid_ptr(loc_pprt->target_ref);
 
     if ( !ptarget->alive )
     {
@@ -1616,7 +1609,7 @@ ego_prt_bundle * move_one_particle_do_floor( ego_prt_bundle * pbdl_prt )
     // determine the surface normal for the particle's "floor"
     if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
     {
-        ego_chr::get_MatUp( ChrList.lst + loc_pprt->onwhichplatform_ref, &vup );
+        ego_chr::get_MatUp( ChrList.get_valid_ptr(loc_pprt->onwhichplatform_ref), &vup );
     }
     else if ( TWIST_FLAT != loc_penviro->grid_twist )
     {
@@ -1637,7 +1630,7 @@ ego_prt_bundle * move_one_particle_do_floor( ego_prt_bundle * pbdl_prt )
         temp_friction_xy = 1.0f;
         if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
         {
-            ego_chr * pplat = ChrList.lst + loc_pprt->onwhichplatform_ref;
+            ego_chr * pplat = ChrList.get_valid_ptr(loc_pprt->onwhichplatform_ref);
 
             temp_friction_xy = platstick;
 
@@ -1796,7 +1789,7 @@ void particle_system_begin()
     /// @details ZZ@> This function sets up particle data
 
     // Reset the allocation table
-    PrtList_init();
+    PrtList.init();
 
     init_all_pip();
 }
@@ -1806,11 +1799,11 @@ void particle_system_end()
 {
     release_all_pip();
 
-    PrtList_dtor();
+    PrtList.dtor();
 }
 
 //--------------------------------------------------------------------------------------------
-int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by_reference particle )
+int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
 {
     /// @details ZZ@> This function is for catching characters on fire and such
 
@@ -1828,7 +1821,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
     ego_cap * pcap;
 
     if ( !INGAME_PRT( particle ) ) return 0;
-    pprt = PrtList.lst + particle;
+    pprt = PrtList.get_valid_ptr(particle);
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return 0;
     ppip = PipStack.lst + pprt->pip_ref;
@@ -1838,7 +1831,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
     amount = ppip->bumpspawn_amount;
 
     if ( !INGAME_CHR( character ) ) return 0;
-    pchr = ChrList.lst + character;
+    pchr = ChrList.get_valid_ptr(character);
 
     pmad = ego_chr::get_pmad( character );
     if ( NULL == pmad ) return 0;
@@ -1858,7 +1851,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
         // Spawn new enchantments
         if ( ppip->spawnenchant )
         {
-            spawn_one_enchant( pprt->owner_ref, character, ( CHR_REF )MAX_CHR, ( ENC_REF )MAX_ENC, pprt->profile_ref );
+            spawn_one_enchant( pprt->owner_ref, character, CHR_REF(MAX_CHR), ( ENC_REF )MAX_ENC, pprt->profile_ref );
         }
 
         // Spawn particles - this has been modded to maximize the visual effect
@@ -1920,7 +1913,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
                            ABS( z - pchr->inst.vrt_lst[vertices-cnt-1].pos[ZZ] );
 
                     vertex_distance[cnt] = dist;
-                    vertex_occupied[cnt] = TOTAL_MAX_PRT;
+                    vertex_occupied[cnt] = MAX_PRT;
                 }
 
                 // determine if some of the vertex sites are already occupied
@@ -1947,7 +1940,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
 
                     for ( cnt = 0; cnt < vertices; cnt++ )
                     {
-                        if ( vertex_occupied[cnt] != TOTAL_MAX_PRT )
+                        if ( vertex_occupied[cnt] != MAX_PRT )
                             continue;
 
                         if ( vertex_distance[cnt] < bestdistance )
@@ -1996,7 +1989,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_is_over_water( const PRT_REF by_reference iprt )
+bool_t prt_is_over_water( const PRT_REF & iprt )
 {
     /// ZZ@> This function returns btrue if the particle is over a water tile
     Uint32 fan;
@@ -2027,7 +2020,7 @@ PIP_REF PipStack_get_free()
 }
 
 //--------------------------------------------------------------------------------------------
-PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF by_reference pip_override )
+PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & pip_override )
 {
     /// @details ZZ@> This function loads a particle template, returning bfalse if the file wasn't
     ///    found
@@ -2196,7 +2189,7 @@ void release_all_pip()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t release_one_pip( const PIP_REF by_reference ipip )
+bool_t release_one_pip( const PIP_REF & ipip )
 {
     ego_pip * ppip;
 
@@ -2230,17 +2223,17 @@ bool_t _prt_request_terminate( ego_prt_bundle * pbdl_prt )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t _prt_request_terminate_ref( const PRT_REF by_reference iprt )
+bool_t _prt_request_terminate_ref( const PRT_REF & iprt )
 {
     /// @details BB@> Tell the game to get rid of this object and treat it
     ///               as if it was already dead
     ///
     /// @note _prt_request_terminate() will force the game to
-    ///       (eventually) call PrtList_free_one() on this particle
+    ///       (eventually) call PrtList.free_one() on this particle
 
     if ( !VALID_PRT( iprt ) || TERMINATED_PRT( iprt ) ) return bfalse;
 
-    POBJ_REQUEST_TERMINATE( PrtList.lst + iprt );
+    POBJ_REQUEST_TERMINATE( PrtList.get_valid_ptr(iprt ));
 
     return btrue;
 }
@@ -2262,7 +2255,7 @@ bool_t prt_request_free( ego_prt_bundle * pbdl_prt )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_request_free_ref( const PRT_REF by_reference iprt )
+bool_t prt_request_free_ref( const PRT_REF & iprt )
 {
     /// @details BB@> Tell the game to get rid of this object and treat it
     ///               as if it was already dead
@@ -2273,9 +2266,9 @@ bool_t prt_request_free_ref( const PRT_REF by_reference iprt )
     ego_prt * pprt = NULL;
 
     if ( !VALID_PRT( iprt ) || TERMINATED_PRT( iprt ) ) return bfalse;
-    pprt  = PrtList.lst + iprt;
+    pprt  = PrtList.get_valid_ptr(iprt);
 
-    // wait for PrtList_cleanup() to work its magic
+    // wait for PrtList.cleanup() to work its magic
     ego_object::begin_waiting( POBJ_GET_PBASE( pprt ) );
 
     // tell
@@ -2285,17 +2278,17 @@ bool_t prt_request_free_ref( const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-int prt_do_end_spawn( const PRT_REF by_reference iprt )
+int prt_do_end_spawn( const PRT_REF & iprt )
 {
     int end_spawn_count = 0;
     ego_prt * pprt;
 
     if ( !VALID_PRT( iprt ) ) return end_spawn_count;
 
-    pprt = PrtList.lst + iprt;
+    pprt = PrtList.get_valid_ptr(iprt);
 
     // Spawn new particles if time for old one is up
-    if ( pprt->end_spawn_amount > 0 && LOADED_PIP( pprt->end_spawn_pip ) )
+    if ( pprt->end_spawn_amount > 0 && pprt->end_spawn_pip > 0 && LOADED_PIP( PIP_REF(pprt->end_spawn_pip) ) )
     {
         FACING_T facing;
         int      tnc;
@@ -2306,8 +2299,8 @@ int prt_do_end_spawn( const PRT_REF by_reference iprt )
             // we have been given the absolute pip reference when the particle was spawned
             // so, set the profile reference to (PRO_REF)MAX_PROFILE, so that the
             // value of pprt->end_spawn_pip will be used directly
-            PRT_REF spawned_prt = spawn_one_particle( pprt->pos_old, facing, ( PRO_REF )MAX_PROFILE, REF_TO_INT( pprt->end_spawn_pip ),
-                                  ( CHR_REF )MAX_CHR, GRIP_LAST, pprt->team, ego_prt::get_iowner( iprt, 0 ), iprt, tnc, pprt->target_ref );
+            PRT_REF spawned_prt = spawn_one_particle( pprt->pos_old, facing, ( PRO_REF )MAX_PROFILE, pprt->end_spawn_pip,
+                                  CHR_REF(MAX_CHR), GRIP_LAST, pprt->team, ego_prt::get_iowner( iprt, 0 ), iprt, tnc, pprt->target_ref );
 
             if ( VALID_PRT( spawned_prt ) )
             {
@@ -2340,7 +2333,7 @@ void cleanup_all_particles()
 
         bool_t prt_allocated;
 
-        pprt  = PrtList.lst + iprt;
+        pprt  = PrtList.get_valid_ptr(iprt);
         pbase = POBJ_GET_PBASE( pprt );
 
         prt_allocated = FLAG_VALID_PBASE( pbase );
@@ -2350,7 +2343,7 @@ void cleanup_all_particles()
         {
             // now that the object is in the "killed" state,
             // actually put it back into the free store
-            PrtList_free_one( GET_REF_PPRT( pprt ) );
+            PrtList.free_one( GET_REF_PPRT( pprt ) );
         }
         else if ( STATE_WAITING_PBASE( pbase ) )
         {
@@ -2376,7 +2369,7 @@ void increment_all_particle_update_counters()
     {
         ego_object * pbase;
 
-        pbase = POBJ_GET_PBASE( PrtList.lst + cnt );
+        pbase = POBJ_GET_PBASE( PrtList.get_valid_ptr(cnt ));
         if ( !ACTIVE_PBASE( pbase ) ) continue;
 
         pbase->update_count++;
@@ -2473,7 +2466,7 @@ int prt_do_contspawn( ego_prt_bundle * pbdl_prt )
         for ( tnc = 0; tnc < loc_ppip->contspawn_amount; tnc++ )
         {
             PRT_REF prt_child = spawn_one_particle( ego_prt::get_pos( loc_pprt ), facing, loc_pprt->profile_ref, loc_ppip->contspawn_pip,
-                                                    ( CHR_REF )MAX_CHR, GRIP_LAST, loc_pprt->team, loc_pprt->owner_ref, pbdl_prt->prt_ref, tnc, loc_pprt->target_ref );
+                                                    CHR_REF(MAX_CHR), GRIP_LAST, loc_pprt->team, loc_pprt->owner_ref, pbdl_prt->prt_ref, tnc, loc_pprt->target_ref );
 
             if ( VALID_PRT( prt_child ) )
             {
@@ -2706,7 +2699,7 @@ ego_prt_bundle * prt_update_ingame( ego_prt_bundle * pbdl_prt )
     // clear out the attachment if the attached character doesn't exist
     if ( !DEFINED_CHR( loc_pprt->attachedto_ref ) )
     {
-        loc_pprt->attachedto_ref = ( CHR_REF )MAX_CHR;
+        loc_pprt->attachedto_ref = CHR_REF(MAX_CHR);
     }
 
     // update some particle states
@@ -2800,7 +2793,7 @@ ego_prt_bundle * prt_update_limbo( ego_prt_bundle * pbdl_prt )
     // clear out the attachment if the character doesn't exist at all
     if ( !DEFINED_CHR( loc_pprt->attachedto_ref ) )
     {
-        loc_pprt->attachedto_ref = ( CHR_REF )MAX_CHR;
+        loc_pprt->attachedto_ref = CHR_REF(MAX_CHR);
     }
 
     // determine whether the pbdl_prt->prt_ref is hidden
@@ -3015,7 +3008,7 @@ ego_prt_bundle * ego_prt_bundle::ctor( ego_prt_bundle * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
-    pbundle->prt_ref = ( PRT_REF ) TOTAL_MAX_PRT;
+    pbundle->prt_ref = ( PRT_REF ) MAX_PRT;
     pbundle->prt_ptr = NULL;
 
     pbundle->pip_ref = ( PIP_REF ) MAX_PIP;
@@ -3031,7 +3024,7 @@ ego_prt_bundle * ego_prt_bundle::validate( ego_prt_bundle * pbundle )
 
     if ( VALID_PRT( pbundle->prt_ref ) )
     {
-        pbundle->prt_ptr = PrtList.lst + pbundle->prt_ref;
+        pbundle->prt_ptr = PrtList.get_valid_ptr(pbundle->prt_ref);
     }
     else if ( NULL != pbundle->prt_ptr )
     {
@@ -3039,7 +3032,7 @@ ego_prt_bundle * ego_prt_bundle::validate( ego_prt_bundle * pbundle )
     }
     else
     {
-        pbundle->prt_ref = TOTAL_MAX_PRT;
+        pbundle->prt_ref = MAX_PRT;
         pbundle->prt_ptr = NULL;
     }
 
@@ -3692,7 +3685,7 @@ egoboo_rv particle_physics_finalize_one( ego_prt_bundle * pbdl, float dt )
         }
         else if ( INGAME_CHR( loc_pprt->target_ref ) )
         {
-            ego_chr * ptarget =  ChrList.lst +  loc_pprt->target_ref;
+            ego_chr * ptarget =  ChrList.get_valid_ptr( loc_pprt->target_ref);
 
             // face your target
             loc_pprt->facing = vec_to_facing( ptarget->pos.x - test_pos.x , ptarget->pos.y - test_pos.y );
@@ -4001,7 +3994,7 @@ void particle_physics_finalize_all( float dt )
 //        }
 //        else if ( INGAME_CHR( loc_pprt->target_ref ) )
 //        {
-//            ego_chr * ptarget =  ChrList.lst +  loc_pprt->target_ref;
+//            ego_chr * ptarget =  ChrList.get_valid_ptr( loc_pprt->target_ref);
 //
 //            // face your target
 //            loc_pprt->facing = vec_to_facing( ptarget->pos.x - tmp_pos.x , ptarget->pos.y - tmp_pos.y );

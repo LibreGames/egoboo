@@ -46,7 +46,7 @@ float ptex_wscale[2] = {1.0f, 1.0f};
 float ptex_hscale[2] = {1.0f, 1.0f};
 
 //--------------------------------------------------------------------------------------------
-int get_prt_texture_style( const TX_REF by_reference itex )
+int get_prt_texture_style( const TX_REF & itex )
 {
     int index;
 
@@ -66,7 +66,7 @@ int get_prt_texture_style( const TX_REF by_reference itex )
 }
 
 //--------------------------------------------------------------------------------------------
-void set_prt_texture_params( const TX_REF by_reference itex )
+void set_prt_texture_params( const TX_REF & itex )
 {
     int index;
     oglx_texture_t * ptex;
@@ -95,7 +95,7 @@ struct ego_prt_registry_entity
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void prt_instance_update( ego_camera * pcam, const PRT_REF by_reference particle, Uint8 trans, bool_t do_lighting );
+static void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 trans, bool_t do_lighting );
 static void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, float size, bool_t do_reflect );
 static int  cmp_prt_registry_entity( const void * vlhs, const void * vrhs );
 
@@ -186,7 +186,7 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], s
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_prt_solid( const PRT_REF by_reference iprt )
+bool_t render_one_prt_solid( const PRT_REF & iprt )
 {
     /// @details BB@> Render the solid version of the particle
 
@@ -197,7 +197,7 @@ bool_t render_one_prt_solid( const PRT_REF by_reference iprt )
     ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtList.lst + iprt;
+    pprt = PrtList.get_valid_ptr(iprt);
     pinst = &( pprt->inst );
 
     // if the particle instance data is not valid, do not continue
@@ -266,7 +266,7 @@ void render_all_prt_solid( ego_camera * pcam, ego_prt_registry_entity reg[], siz
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_prt_trans( const PRT_REF by_reference iprt )
+bool_t render_one_prt_trans( const PRT_REF & iprt )
 {
     /// @details BB@> do all kinds of transparent sprites next
 
@@ -276,7 +276,7 @@ bool_t render_one_prt_trans( const PRT_REF by_reference iprt )
     ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtList.lst + iprt;
+    pprt = PrtList.get_valid_ptr(iprt);
     pinst = &( pprt->inst );
 
     // if the particle instance data is not valid, do not continue
@@ -385,10 +385,10 @@ void render_all_particles( ego_camera * pcam )
 {
     /// @details ZZ@> This function draws the sprites for particle systems
 
-    ego_prt_registry_entity reg[TOTAL_MAX_PRT];
+    ego_prt_registry_entity reg[MAX_PRT];
     size_t numparticle;
 
-    numparticle = render_all_prt_begin( pcam, reg, TOTAL_MAX_PRT );
+    numparticle = render_all_prt_begin( pcam, reg, MAX_PRT );
 
     render_all_prt_solid( pcam, reg, numparticle );
     render_all_prt_trans( pcam, reg, numparticle );
@@ -443,7 +443,7 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_prt_ref( const PRT_REF by_reference iprt )
+bool_t render_one_prt_ref( const PRT_REF & iprt )
 {
     /// @details BB@> render one particle
 
@@ -455,7 +455,7 @@ bool_t render_one_prt_ref( const PRT_REF by_reference iprt )
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
 
-    pprt = PrtList.lst + iprt;
+    pprt = PrtList.get_valid_ptr(iprt);
     pinst = &( pprt->inst );
     if ( !pinst->valid ) return bfalse;
 
@@ -568,10 +568,10 @@ void render_prt_ref( ego_camera * pcam )
 {
     /// @details ZZ@> This function draws sprites reflected in the floor
 
-    ego_prt_registry_entity reg[TOTAL_MAX_PRT];
+    ego_prt_registry_entity reg[MAX_PRT];
     size_t numparticle;
 
-    numparticle = render_all_prt_ref_begin( pcam, reg, TOTAL_MAX_PRT );
+    numparticle = render_all_prt_ref_begin( pcam, reg, MAX_PRT );
     render_all_prt_ref( pcam, reg, numparticle );
 }
 
@@ -729,7 +729,7 @@ void prt_draw_attached_point( ego_prt_bundle * pbdl_prt )
     if ( !INGAME_PPRT_BASE( loc_pprt ) ) return;
 
     if ( !INGAME_CHR( loc_pprt->attachedto_ref ) ) return;
-    pholder = ChrList.lst + loc_pprt->attachedto_ref;
+    pholder = ChrList.get_valid_ptr(loc_pprt->attachedto_ref);
 
     pholder_cap = pro_get_pcap( pholder->profile_ref );
     if ( NULL == pholder_cap ) return;
@@ -897,7 +897,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
     {
         ego_chr_instance * cinst = ego_chr::get_pinstance( pprt->attachedto_ref );
 
-        if ( ego_chr::matrix_valid( ChrList.lst + pprt->attachedto_ref ) )
+        if ( ego_chr::matrix_valid( ChrList.get_valid_ptr(pprt->attachedto_ref )) )
         {
             // use the character matrix to orient the particle
             // assume that the particle "up" is in the z-direction in the object's
@@ -1150,13 +1150,13 @@ void prt_instance_update_lighting( ego_prt_instance * pinst, ego_prt * pprt, Uin
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_instance_update( ego_camera * pcam, const PRT_REF by_reference particle, Uint8 trans, bool_t do_lighting )
+void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 trans, bool_t do_lighting )
 {
     ego_prt * pprt;
     ego_prt_instance * pinst;
 
     if ( !INGAME_PRT_BASE( particle ) ) return;
-    pprt = PrtList.lst + particle;
+    pprt = PrtList.get_valid_ptr(particle);
     pinst = &( pprt->inst );
 
     // make sure that the vertices are interpolated

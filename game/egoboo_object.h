@@ -119,6 +119,10 @@ struct ego_object
 
     unsigned       update_guid;   ///< a value that lets you know if an reference in synch with its object list
 
+
+    bool_t in_free_list() { return lst_state.in_free_list; }
+    bool_t in_used_list() { return lst_state.in_used_list; }
+
     /// A variable to hold the object guid counter
     static Uint32 guid_counter;
 
@@ -258,12 +262,16 @@ struct ego_object
 /// Grab a pointer to the ego_object of an object that "inherits" this data
 #define POBJ_GET_PBASE( POBJ )   ( (NULL == (POBJ)) ? NULL : &((POBJ)->obj_base) )
 
+/// Grab the index value of ego_object pointer
+#define GET_IDX_PBASE( PBASE, FAIL_VALUE ) ( (NULL == (PBASE) || !VALID_PBASE( PBASE ) ) ? FAIL_VALUE : (PBASE)->lst_state.index )
+#define GET_REF_PBASE( PBASE, FAIL_VALUE ) ((REF_T)GET_IDX_PBASE( PBASE, FAIL_VALUE ))
+
 /// Grab the index value of object that "inherits" from ego_object
-#define GET_INDEX_POBJ( POBJ, FAIL_VALUE )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_GET_PBASE( (POBJ) ) ) ) ? FAIL_VALUE : (POBJ)->obj_base.lst_state.index )
-#define GET_REF_POBJ( POBJ, FAIL_VALUE )    ((REF_T)GET_INDEX_POBJ( POBJ, FAIL_VALUE ))
+#define GET_IDX_POBJ( POBJ, FAIL_VALUE )  GET_IDX_PBASE(POBJ_GET_PBASE( POBJ ), FAIL_VALUE)
+#define GET_REF_POBJ( POBJ, FAIL_VALUE )  ((REF_T)GET_IDX_POBJ( POBJ, FAIL_VALUE ))
 
 /// Grab the state of object that "inherits" from ego_object
-#define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_GET_PBASE( (POBJ) ) ) ) ? ego_object_nothing : (POBJ)->obj_base.lst_state.index )
+#define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_GET_PBASE( POBJ ) ) ) ? ego_object_nothing : (POBJ)->obj_base.lst_state.index )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

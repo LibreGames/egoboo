@@ -82,9 +82,12 @@ struct ego_chop_section
 {
     int size;     ///< Number of choices, 0
     int start;    ///< A reference to a specific offset in the ego_chop_data buffer
-};
 
-#define CHOP_SECTION_INIT { /* size */ -1, /* start */ -1 }
+    ego_chop_section()
+    {
+        size = start = -1;
+    }
+};
 
 //--------------------------------------------------------------------------------------------
 
@@ -95,8 +98,6 @@ struct ego_chop_definition
 };
 
 ego_chop_definition * chop_definition_init( ego_chop_definition * pdefinition );
-
-#define CHOP_DEFINITION_INIT { {CHOP_SECTION_INIT} }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

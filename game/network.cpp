@@ -1141,7 +1141,7 @@ void sv_talkToRemotes()
 }
 
 //--------------------------------------------------------------------------------------------
-void pla_add_tlatch( const PLA_REF by_reference iplayer, Uint32 time, latch_input_t net_latch )
+void pla_add_tlatch( const PLA_REF & iplayer, Uint32 time, latch_input_t net_latch )
 {
     ego_player * ppla;
 
@@ -1820,7 +1820,7 @@ void unbuffer_one_player_latch_download( ego_player * ppla )
     if ( NULL == ppla ) return;
 
     if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrList.lst + ppla->index;
+    pchr = ChrList.get_valid_ptr(ppla->index);
 
     pchr->latch.raw_valid = btrue;
     pchr->latch.raw.dir[kX] = ppla->net_latch.raw[kX];
@@ -1842,7 +1842,7 @@ void unbuffer_one_player_latch_do_respawn( ego_player * ppla )
     if ( NULL == ppla ) return;
 
     if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrList.lst + ppla->index;
+    pchr = ChrList.get_valid_ptr(ppla->index);
 
     if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans.b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
     {
@@ -2250,20 +2250,20 @@ bool_t net_instance_init( ego_net_instance * pnet )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CHR_REF pla_get_ichr( const PLA_REF by_reference iplayer )
+CHR_REF pla_get_ichr( const PLA_REF & iplayer )
 {
     ego_player * pplayer;
 
-    if ( !VALID_PLA( iplayer ) ) return ( CHR_REF )MAX_CHR;
+    if ( !VALID_PLA( iplayer ) ) return CHR_REF(MAX_CHR);
     pplayer = PlaStack.lst + iplayer;
 
-    if ( !INGAME_CHR( pplayer->index ) ) return ( CHR_REF )MAX_CHR;
+    if ( !INGAME_CHR( pplayer->index ) ) return CHR_REF(MAX_CHR);
 
     return pplayer->index;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_player* net_get_ppla( const CHR_REF by_reference ichr )
+ego_player* net_get_ppla( const CHR_REF & ichr )
 {
     PLA_REF iplayer;
 
@@ -2276,7 +2276,7 @@ ego_player* net_get_ppla( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr  * pla_get_pchr( const PLA_REF by_reference iplayer )
+ego_chr  * pla_get_pchr( const PLA_REF & iplayer )
 {
     ego_player * pplayer;
 
@@ -2285,11 +2285,11 @@ ego_chr  * pla_get_pchr( const PLA_REF by_reference iplayer )
 
     if ( !INGAME_CHR( pplayer->index ) ) return NULL;
 
-    return ChrList.lst + pplayer->index;
+    return ChrList.get_valid_ptr(pplayer->index);
 }
 
 //--------------------------------------------------------------------------------------------
-latch_2d_t pla_convert_latch_2d( const PLA_REF by_reference iplayer, const latch_2d_t by_reference src )
+latch_2d_t pla_convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src )
 {
     latch_2d_t dst = LATCH_2D_INIT;
     ego_player * ppla;
@@ -2300,7 +2300,7 @@ latch_2d_t pla_convert_latch_2d( const PLA_REF by_reference iplayer, const latch
     // is there a valid character?
     if ( !DEFINED_CHR( ppla->index ) ) return dst;
 
-    return ego_chr::convert_latch_2d( ChrList.lst + ppla->index, src );
+    return ego_chr::convert_latch_2d( ChrList.get_valid_ptr(ppla->index), src );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2355,7 +2355,7 @@ ego_player * pla_dtor( ego_player * ppla )
 
     // turn off the player
     ppla->valid       = bfalse;
-    ppla->index       = ( CHR_REF )MAX_CHR;
+    ppla->index       = CHR_REF(MAX_CHR);
     ppla->device.bits = INPUT_BITS_NONE;
 
     return ppla;
@@ -2368,7 +2368,7 @@ ego_player * pla_ctor( ego_player * ppla )
 
     memset( ppla, 0, sizeof( *ppla ) );
 
-    ppla->index       = ( CHR_REF )MAX_CHR;
+    ppla->index       = CHR_REF(MAX_CHR);
 
     // initialize the device
     input_device_init( &( ppla->device ) );

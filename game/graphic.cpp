@@ -109,7 +109,7 @@ static float                   cornerhighy;
 
 static float       dyna_distancetobeat;           // The number to beat
 static int         dyna_list_count = 0;           // Number of dynamic lights
-static ego_dynalight dyna_list[TOTAL_MAX_DYNA];
+static ego_dynalight dyna_list[MAX_DYNA];
 
 // Interface stuff
 static ego_irect_t         iconrect;                   // The 32x32 icon rectangle
@@ -638,7 +638,7 @@ bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pc
     pgfx->draw_background = pcfg->background_allowed && water.background_req;
     pgfx->draw_overlay    = pcfg->overlay_allowed && water.overlay_req;
 
-    pgfx->dyna_list_max = CLIP( pcfg->dyna_count_req, 0, TOTAL_MAX_DYNA );
+    pgfx->dyna_list_max = CLIP( pcfg->dyna_count_req, 0, MAX_DYNA );
 
     pgfx->draw_water_0 = !pgfx->draw_overlay && ( water.layer_count > 0 );
     pgfx->clearson     = !pgfx->draw_background;
@@ -771,7 +771,7 @@ void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_icon( const TX_REF by_reference icontype, float x, float y, Uint8 sparkle )
+void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
 {
     /// @details ZZ@> This function draws an icon
 
@@ -1231,7 +1231,7 @@ int draw_wrap_string( const char *szText, float x, float y, int maxx )
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_character_icon( const CHR_REF by_reference item, float x, float y, bool_t draw_ammo )
+void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t draw_ammo )
 {
     /// @details BB@> Draw an icon for the given item at the position <x,y>.
     ///     If the object is invalid, draw the null icon instead of failing
@@ -1239,7 +1239,7 @@ void draw_one_character_icon( const CHR_REF by_reference item, float x, float y,
     TX_REF icon_ref;
     Uint8  draw_sparkle;
 
-    ego_chr * pitem = !INGAME_CHR( item ) ? NULL : ChrList.lst + item;
+    ego_chr * pitem = !INGAME_CHR( item ) ? NULL : ChrList.get_valid_ptr(item);
 
     // grab the icon reference
     icon_ref = ego_chr::get_icon_ref( item );
@@ -1265,13 +1265,13 @@ void draw_one_character_icon( const CHR_REF by_reference item, float x, float y,
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_character_xp_bar( const CHR_REF by_reference character, float x, float y )
+int draw_character_xp_bar( const CHR_REF & character, float x, float y )
 {
     ego_chr * pchr;
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return y;
-    pchr = ChrList.lst + character;
+    pchr = ChrList.get_valid_ptr(character);
 
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return y;
@@ -1293,7 +1293,7 @@ int draw_character_xp_bar( const CHR_REF by_reference character, float x, float 
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_status( const CHR_REF by_reference character, float x, float y )
+int draw_status( const CHR_REF & character, float x, float y )
 {
     /// @details ZZ@> This function shows a character's icon, status and inventory
     ///    The x,y coordinates are the top left point of the image to draw
@@ -1309,7 +1309,7 @@ int draw_status( const CHR_REF by_reference character, float x, float y )
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return y;
-    pchr = ChrList.lst + character;
+    pchr = ChrList.get_valid_ptr(character);
 
     pcap = ego_chr::get_pcap( character );
     if ( NULL == pcap ) return y;
@@ -1425,7 +1425,7 @@ void draw_map()
                 ego_cap * pcap;
 
                 if ( !INGAME_CHR( ichr ) ) continue;
-                pchr = ChrList.lst + ichr;
+                pchr = ChrList.get_valid_ptr(ichr);
 
                 pcap = ego_chr::get_pcap( ichr );
                 if ( NULL == pcap ) continue;
@@ -1470,7 +1470,7 @@ void draw_map()
 
                 if ( INPUT_BITS_NONE != ppla->device.bits && INGAME_CHR( ppla->index ) )
                 {
-                    ego_chr * pchr = ChrList.lst + ppla->index;
+                    ego_chr * pchr = ChrList.get_valid_ptr(ppla->index);
                     if ( pchr->alive )
                     {
                         draw_blip( 0.75f, COLOR_WHITE, pchr->pos.x, pchr->pos.y, btrue );
@@ -1510,7 +1510,7 @@ int draw_fps( int y )
 #if EGO_DEBUG
 
 #    if defined(DEBUG_BSP) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtList_count_free() );
+        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtList.count_free() );
         y = _draw_string_raw( 0, y, "BSP collisions %d", CHashList_inserted );
         y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", chr_stoppedby_tests + chr_pressure_tests, prt_stoppedby_tests + prt_pressure_tests );
 #    endif
@@ -1597,7 +1597,7 @@ int draw_debug_character( CHR_REF ichr, int y )
     ego_chr   *pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return y;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
 
     return y;
 }
@@ -1613,7 +1613,7 @@ int draw_debug_player( PLA_REF ipla, int y )
     if ( DEFINED_CHR( ppla->index ) )
     {
         CHR_REF ichr = ppla->index;
-        ego_chr  *pchr = ChrList.lst + ichr;
+        ego_chr  *pchr = ChrList.get_valid_ptr(ichr);
 
         y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", REF_TO_INT( ipla ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
@@ -1645,7 +1645,7 @@ int draw_debug( int y )
         ego_player * ppla = PlaStack.lst + ipla;
         if ( DEFINED_CHR( ppla->index ) )
         {
-            ego_chr * pchr = ChrList.lst + ppla->index;
+            ego_chr * pchr = ChrList.get_valid_ptr(ppla->index);
 
             y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", REF_TO_INT( ipla ), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
         }
@@ -1665,7 +1665,7 @@ int draw_debug( int y )
         STRING text;
 
         y = _draw_string_raw( 0, y, "!!!DEBUG MODE-6!!!" );
-        y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtList_count_free() );
+        y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtList.count_free() );
         y = _draw_string_raw( 0, y, "~~FREECHR %d", chr_count_free() );
         y = _draw_string_raw( 0, y, "~~MACHINE %d", local_machine );
         if ( PMod->exportvalid ) snprintf( text, SDL_arraysize( text ), "~~EXPORT: TRUE" );
@@ -1957,7 +1957,7 @@ void render_shadow_sprite( float intensity, ego_GLvertex v[] )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_shadow( const CHR_REF by_reference character )
+void render_shadow( const CHR_REF & character )
 {
     /// @details ZZ@> This function draws a NIFTY shadow
     ego_GLvertex v[4];
@@ -1973,7 +1973,7 @@ void render_shadow( const CHR_REF by_reference character )
     ego_chr * pchr;
 
     if ( IS_ATTACHED_CHR( character ) ) return;
-    pchr = ChrList.lst + character;
+    pchr = ChrList.get_valid_ptr(character);
 
     // if the character is hidden, not drawn at all, so no shadow
     if ( pchr->is_hidden || 0 == pchr->shadow_size ) return;
@@ -2089,7 +2089,7 @@ void render_shadow( const CHR_REF by_reference character )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_bad_shadow( const CHR_REF by_reference character )
+void render_bad_shadow( const CHR_REF & character )
 {
     /// @details ZZ@> This function draws a sprite shadow
 
@@ -2102,7 +2102,7 @@ void render_bad_shadow( const CHR_REF by_reference character )
     ego_chr * pchr;
 
     if ( IS_ATTACHED_CHR( character ) ) return;
-    pchr = ChrList.lst + character;
+    pchr = ChrList.get_valid_ptr(character);
 
     // if the character is hidden, not drawn at all, so no shadow
     if ( pchr->is_hidden || pchr->shadow_size == 0 ) return;
@@ -2191,7 +2191,7 @@ void update_all_chr_instance()
         ego_chr * pchr;
 
         if ( !INGAME_CHR( cnt ) ) continue;
-        pchr = ChrList.lst + cnt;
+        pchr = ChrList.get_valid_ptr(cnt);
 
         if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
 
@@ -2382,7 +2382,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                 // this must be done with a signed iterator or it will fail horribly
                 for ( rcnt = (( signed )dolist_count ) - 1; rcnt >= 0; rcnt-- )
                 {
-                    if ( TOTAL_MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
+                    if ( MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
                     {
                         CHR_REF ichr;
                         Uint32 itile;
@@ -2547,7 +2547,7 @@ void render_scene_solid()
 
         GL_DEBUG( glDisable )( GL_CULL_FACE );
 
-        if ( TOTAL_MAX_PRT == dolist[cnt].iprt )
+        if ( MAX_PRT == dolist[cnt].iprt )
         {
             GLXvector4f tint;
             ego_chr_instance * pinst = ego_chr::get_pinstance( dolist[cnt].ichr );
@@ -2592,10 +2592,10 @@ void render_scene_trans()
     // this must be iterated with a signed variable or it fails horribly
     for ( rcnt = (( signed )dolist_count ) - 1; rcnt >= 0; rcnt-- )
     {
-        if ( TOTAL_MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
+        if ( MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
         {
             CHR_REF  ichr = dolist[rcnt].ichr;
-            ego_chr * pchr = ChrList.lst + ichr;
+            ego_chr * pchr = ChrList.get_valid_ptr(ichr);
             ego_chr_instance * pinst = &( pchr->inst );
 
             GL_DEBUG( glEnable )( GL_CULL_FACE );         // GL_ENABLE_BIT
@@ -2717,7 +2717,7 @@ void render_scene( ego_mpd   * pmesh, ego_camera * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_world_background( const TX_REF by_reference texture )
+void render_world_background( const TX_REF & texture )
 {
     /// @details ZZ@> This function draws the large background
     ego_GLvertex vtlist[4];
@@ -2873,7 +2873,7 @@ void render_world_background( const TX_REF by_reference texture )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_world_overlay( const TX_REF by_reference texture )
+void render_world_overlay( const TX_REF & texture )
 {
     /// @details ZZ@> This function draws the large foreground
 
@@ -3350,7 +3350,7 @@ ego_billboard_data * ego_billboard_data::init( ego_billboard_data * pbb )
     memset( pbb, 0, sizeof( *pbb ) );
 
     pbb->tex_ref = INVALID_TX_TEXTURE;
-    pbb->ichr    = ( CHR_REF )MAX_CHR;
+    pbb->ichr    = CHR_REF(MAX_CHR);
 
     pbb->tint[RR] = pbb->tint[GG] = pbb->tint[BB] = pbb->tint[AA] = 1.0f;
     pbb->tint_add[AA] -= 1.0f / 100.0f;
@@ -3386,7 +3386,7 @@ bool_t ego_billboard_data::update( ego_billboard_data * pbb )
     if ( NULL == pbb || !pbb->valid ) return bfalse;
 
     if ( !INGAME_CHR( pbb->ichr ) ) return bfalse;
-    pchr = ChrList.lst + pbb->ichr;
+    pchr = ChrList.get_valid_ptr(pbb->ichr);
 
     // determine where the new position should be
     ego_chr::get_MatUp( pchr, &vup );
@@ -3520,7 +3520,7 @@ void BillboardList_update_all()
             is_invalid = btrue;
         }
 
-        if ( !INGAME_CHR( pbb->ichr ) || IS_ATTACHED_PCHR( ChrList.lst + pbb->ichr ) )
+        if ( !INGAME_CHR( pbb->ichr ) || IS_ATTACHED_PCHR( ChrList.get_valid_ptr(pbb->ichr )) )
         {
             is_invalid = btrue;
         }
@@ -3636,7 +3636,7 @@ bool_t BillboardList_free_one( size_t ibb )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb )
+ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF &  ibb )
 {
     if ( !VALID_BILLBOARD( ibb ) ) return NULL;
 
@@ -3658,7 +3658,7 @@ bool_t render_billboard( ego_camera * pcam, ego_billboard_data * pbb, float scal
     if ( NULL == pbb || !pbb->valid ) return bfalse;
 
     // do not display for objects that are mounted or being held
-    if ( INGAME_CHR( pbb->ichr ) && IS_ATTACHED_PCHR( ChrList.lst + pbb->ichr ) ) return bfalse;
+    if ( INGAME_CHR( pbb->ichr ) && IS_ATTACHED_PCHR( ChrList.get_valid_ptr(pbb->ichr )) ) return bfalse;
 
     ptex = TxTexture_get_ptr( pbb->tex_ref );
 
@@ -4056,7 +4056,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
 //--------------------------------------------------------------------------------------------
 // GRAPHICS OPTIMIZATIONS
 //--------------------------------------------------------------------------------------------
-bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr )
+bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr )
 {
     /// ZZ@> This function puts a character in the list
     Uint32 itile;
@@ -4067,7 +4067,7 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr )
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
 
     if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr  = ChrList.lst + ichr;
+    pchr  = ChrList.get_valid_ptr(ichr);
     pinst = &( pchr->inst );
 
     if ( pinst->indolist ) return btrue;
@@ -4081,7 +4081,7 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr )
     if ( pmesh->tmem.tile_list[itile].inrenderlist )
     {
         dolist[dolist_count].ichr = ichr;
-        dolist[dolist_count].iprt = TOTAL_MAX_PRT;
+        dolist[dolist_count].iprt = MAX_PRT;
         dolist_count++;
 
         pinst->indolist = btrue;
@@ -4091,7 +4091,7 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr )
         // Double check for large/special objects
 
         dolist[dolist_count].ichr = ichr;
-        dolist[dolist_count].iprt = TOTAL_MAX_PRT;
+        dolist[dolist_count].iprt = MAX_PRT;
         dolist_count++;
 
         pinst->indolist = btrue;
@@ -4108,7 +4108,7 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF by_reference iprt )
+bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt )
 {
     /// ZZ@> This function puts a character in the list
     ego_prt * pprt;
@@ -4117,14 +4117,14 @@ bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF by_reference iprt )
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtList.lst + iprt;
+    pprt = PrtList.get_valid_ptr(iprt);
     pinst = &( pprt->inst );
 
     if ( pinst->indolist ) return btrue;
 
     if ( 0 == pinst->size || pprt->is_hidden || !mesh_grid_is_valid( pmesh, pprt->onwhichgrid ) ) return bfalse;
 
-    dolist[dolist_count].ichr = ( CHR_REF )MAX_CHR;
+    dolist[dolist_count].ichr = CHR_REF(MAX_CHR);
     dolist[dolist_count].iprt = iprt;
     dolist_count++;
 
@@ -4144,11 +4144,11 @@ void dolist_make( ego_mpd   * pmesh )
     // Remove everyone from the dolist
     for ( cnt = 0; cnt < dolist_count; cnt++ )
     {
-        if ( TOTAL_MAX_PRT == dolist[cnt].iprt && MAX_CHR != dolist[cnt].ichr )
+        if ( MAX_PRT == dolist[cnt].iprt && MAX_CHR != dolist[cnt].ichr )
         {
             ChrList.lst[ dolist[cnt].ichr ].inst.indolist = bfalse;
         }
-        else if ( MAX_CHR == dolist[cnt].ichr && TOTAL_MAX_PRT != dolist[cnt].iprt )
+        else if ( MAX_CHR == dolist[cnt].ichr && MAX_PRT != dolist[cnt].iprt )
         {
             PrtList.lst[ dolist[cnt].iprt ].inst.indolist = bfalse;
         }
@@ -4161,7 +4161,7 @@ void dolist_make( ego_mpd   * pmesh )
         ego_chr * pchr;
 
         if ( !INGAME_CHR( ichr ) ) continue;
-        pchr = ChrList.lst + ichr;
+        pchr = ChrList.get_valid_ptr(ichr);
 
         if ( !pchr->pack.is_packed )
         {
@@ -4201,7 +4201,7 @@ void dolist_sort( ego_camera * pcam, bool_t do_reflect )
         fvec3_t   vtmp;
         float dist;
 
-        if ( TOTAL_MAX_PRT == dolist[cnt].iprt && INGAME_CHR( dolist[cnt].ichr ) )
+        if ( MAX_PRT == dolist[cnt].iprt && INGAME_CHR( dolist[cnt].ichr ) )
         {
             CHR_REF ichr;
             fvec3_t pos_tmp;
@@ -4931,7 +4931,7 @@ void do_chr_flashing()
 }
 
 //--------------------------------------------------------------------------------------------
-void flash_character( const CHR_REF by_reference character, Uint8 value )
+void flash_character( const CHR_REF & character, Uint8 value )
 {
     /// @details ZZ@> This function sets a character's lighting
 
@@ -5500,7 +5500,7 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
     lighting_vector_t global_lighting;
 
     int                  reg_count;
-    ego_dynalight_registry reg[TOTAL_MAX_DYNA];
+    ego_dynalight_registry reg[MAX_DYNA];
 
     ego_frect_t mesh_bound, light_bound;
 

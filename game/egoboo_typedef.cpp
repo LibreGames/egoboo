@@ -21,7 +21,7 @@
 /// @brief Implementation of the support functions for Egoboo's special datatypes
 /// @details
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.inl"
 #include "egoboo_math.inl"
 
 #include "log.h"
@@ -34,6 +34,62 @@ IMPLEMENT_DYNAMIC_ARY( short_ary,  short );
 IMPLEMENT_DYNAMIC_ARY( int_ary,    int );
 IMPLEMENT_DYNAMIC_ARY( float_ary,  float );
 IMPLEMENT_DYNAMIC_ARY( double_ary, double );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+list_object_state * list_object_state::ctor( list_object_state * ptr, size_t idx )
+{
+    return list_object_state::clear( ptr, idx );
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state * list_object_state::dtor( list_object_state * ptr )
+{
+    return list_object_state::clear( ptr );
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state * list_object_state::clear( list_object_state * ptr, size_t idx )
+{
+    if ( NULL == ptr ) return ptr;
+
+    memset( ptr, 0, sizeof( *ptr ) );
+
+    ptr->index = idx;
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state * list_object_state::set_allocated( list_object_state * ptr, bool_t val )
+{
+    if ( NULL == ptr ) return ptr;
+
+    ptr->allocated = val;
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state * list_object_state::set_used( list_object_state * ptr, bool_t val )
+{
+    if ( NULL == ptr ) return ptr;
+
+    ptr->in_used_list = val;
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+list_object_state * list_object_state::set_free( list_object_state * ptr, bool_t val )
+{
+    if ( NULL == ptr ) return ptr;
+
+    ptr->in_free_list = val;
+
+    return ptr;
+}
+
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -209,68 +265,4 @@ void floats_to_pair( float vmin, float vmax, IPair * ppair )
     range_tmp.to   = vmax;
 
     range_to_pair( range_tmp, ppair );
-}
-
-//--------------------------------------------------------------------------------------------
-list_object_state * list_object_state_ctor( list_object_state * ptr, size_t index )
-{
-    if ( NULL == ptr ) return ptr;
-
-    list_object_state_clear( ptr );
-
-    ptr->index = index;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-list_object_state * list_object_state_dtor( list_object_state * ptr )
-{
-    if ( NULL == ptr ) return ptr;
-
-    list_object_state_clear( ptr );
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-list_object_state * list_object_state_clear( list_object_state * ptr )
-{
-    if ( NULL == ptr ) return ptr;
-
-    memset( ptr, 0, sizeof( *ptr ) );
-
-    ptr->index = ( size_t )( ~0L );
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-list_object_state * list_object_set_allocated( list_object_state * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr->allocated = val;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-list_object_state * list_object_set_used( list_object_state * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr->in_used_list = val;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-list_object_state * list_object_set_free( list_object_state * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr->in_free_list = val;
-
-    return ptr;
 }

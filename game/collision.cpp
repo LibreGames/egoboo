@@ -85,17 +85,17 @@ struct ego_bumplist
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//static bool_t add_chr_chr_interaction( CHashList_t * pclst, const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst );
-//static bool_t add_chr_prt_interaction( CHashList_t * pclst, const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst );
+//static bool_t add_chr_chr_interaction( CHashList_t * pclst, const CHR_REF & ichr_a, const CHR_REF & ichr_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst );
+//static bool_t add_chr_prt_interaction( CHashList_t * pclst, const CHR_REF & ichr_a, const PRT_REF & iprt_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst );
 
-static bool_t detect_chr_chr_interaction_valid( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
-static bool_t detect_chr_prt_interaction_valid( const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b );
+static bool_t detect_chr_chr_interaction_valid( const CHR_REF & ichr_a, const CHR_REF & ichr_b );
+static bool_t detect_chr_prt_interaction_valid( const CHR_REF & ichr_a, const PRT_REF & iprt_b );
 
-//static bool_t detect_chr_chr_interaction( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
-//static bool_t detect_chr_prt_interaction( const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b );
+//static bool_t detect_chr_chr_interaction( const CHR_REF & ichr_a, const CHR_REF & ichr_b );
+//static bool_t detect_chr_prt_interaction( const CHR_REF & ichr_a, const PRT_REF & iprt_b );
 
-static bool_t do_chr_platform_detection( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
-static bool_t do_prt_platform_detection( const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b );
+static bool_t do_chr_platform_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b );
+static bool_t do_prt_platform_detection( const PRT_REF & iprt_a, const CHR_REF & ichr_b );
 
 static bool_t attach_chr_to_platform( ego_chr * pchr, ego_chr * pplat );
 static bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat );
@@ -110,7 +110,7 @@ static bool_t    bump_all_mounts( CoNode_ary_t * pcn_ary );
 static bool_t    bump_all_collisions( CoNode_ary_t * pcn_ary );
 //static void      bump_end();
 
-//static bool_t do_mounts( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
+//static bool_t do_mounts( const CHR_REF & ichr_a, const CHR_REF & ichr_b );
 static egoboo_rv do_chr_platform_physics( ego_CoNode * d, ego_chr_bundle *pbdl_item, ego_chr_bundle *pbdl_plat );
 static float  estimate_chr_prt_normal( ego_chr * pchr, ego_prt * pprt, fvec3_base_t nrm, fvec3_base_t vdiff );
 static bool_t do_chr_chr_collision( ego_CoNode * d );
@@ -212,12 +212,12 @@ ego_CoNode * CoNode_ctor( ego_CoNode * n )
     memset( n, 0, sizeof( *n ) );
 
     // the "colliding" objects
-    n->chra = ( CHR_REF )MAX_CHR;
-    n->prta = TOTAL_MAX_PRT;
+    n->chra = CHR_REF(MAX_CHR);
+    n->prta = MAX_PRT;
 
     // the "collided with" objects
-    n->chrb  = ( CHR_REF )MAX_CHR;
-    n->prtb  = TOTAL_MAX_PRT;
+    n->chrb  = CHR_REF(MAX_CHR);
+    n->prtb  = MAX_PRT;
     n->tileb = FANOFF;
 
     // initialize the time
@@ -404,7 +404,7 @@ bool_t CHashList_insert_unique( CHashList_t * pchlst, ego_CoNode * pdata, CoNode
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t detect_chr_chr_interaction_valid( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b )
+bool_t detect_chr_chr_interaction_valid( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
 {
     ego_chr *pchr_a, *pchr_b;
 
@@ -413,11 +413,11 @@ bool_t detect_chr_chr_interaction_valid( const CHR_REF by_reference ichr_a, cons
 
     // Ignore invalid characters
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrList.lst + ichr_a;
+    pchr_a = ChrList.get_valid_ptr(ichr_a);
 
     // Ignore invalid characters
     if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrList.lst + ichr_b;
+    pchr_b = ChrList.get_valid_ptr(ichr_b);
 
     // don't interact if there is no interaction
     if ( 0.0f == pchr_a->bump_stt.size || 0.0f == pchr_b->bump_stt.size ) return bfalse;
@@ -432,18 +432,18 @@ bool_t detect_chr_chr_interaction_valid( const CHR_REF by_reference ichr_a, cons
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t detect_chr_prt_interaction_valid( const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b )
+bool_t detect_chr_prt_interaction_valid( const CHR_REF & ichr_a, const PRT_REF & iprt_b )
 {
     ego_chr * pchr_a;
     ego_prt * pprt_b;
 
     // Ignore invalid characters
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrList.lst + ichr_a;
+    pchr_a = ChrList.get_valid_ptr(ichr_a);
 
     // Ignore invalid characters
     if ( !INGAME_PRT( iprt_b ) ) return bfalse;
-    pprt_b = PrtList.lst + iprt_b;
+    pprt_b = PrtList.get_valid_ptr(iprt_b);
 
     // reject characters that are hidden
     if ( pchr_a->is_hidden || pprt_b->is_hidden ) return bfalse;
@@ -526,7 +526,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
                     {
                         bool_t found = bfalse;
 
-                        ego_chr * pchr_b = ChrList.lst + ichr_b;
+                        ego_chr * pchr_b = ChrList.get_valid_ptr(ichr_b);
 
                         CoNode_ctor( &tmp_codata );
 
@@ -573,7 +573,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
                     {
                         bool_t found = bfalse;
 
-                        ego_prt * pprt_b = PrtList.lst + iprt_b;
+                        ego_prt * pprt_b = PrtList.get_valid_ptr(iprt_b);
 
                         CoNode_ctor( &tmp_codata );
 
@@ -714,7 +714,7 @@ bool_t fill_bumplists( ego_obj_BSP * pbsp )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b )
+bool_t do_chr_mount_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
 {
     size_t cnt;
 
@@ -738,11 +738,11 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
 
     // make sure that A is valid
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrList.lst + ichr_a;
+    pchr_a = ChrList.get_valid_ptr(ichr_a);
 
     // make sure that B is valid
     if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrList.lst + ichr_b;
+    pchr_b = ChrList.get_valid_ptr(ichr_b);
 
     // only check possible rider-mount interactions
     mount_a = chr_can_mount( ichr_b, ichr_a ) && !INGAME_CHR( pchr_b->attachedto );
@@ -869,7 +869,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_platform_detection( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b )
+bool_t do_chr_platform_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
 {
     int cnt;
 
@@ -890,11 +890,11 @@ bool_t do_chr_platform_detection( const CHR_REF by_reference ichr_a, const CHR_R
 
     // make sure that A is valid
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrList.lst + ichr_a;
+    pchr_a = ChrList.get_valid_ptr(ichr_a);
 
     // make sure that B is valid
     if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrList.lst + ichr_b;
+    pchr_b = ChrList.get_valid_ptr(ichr_b);
 
     // if you are mounted, only your mount is affected by platforms
     if ( IS_ATTACHED_PCHR( pchr_a ) || IS_ATTACHED_PCHR( pchr_b ) ) return bfalse;
@@ -1016,7 +1016,7 @@ bool_t do_chr_platform_detection( const CHR_REF by_reference ichr_a, const CHR_R
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_prt_platform_detection( const PRT_REF by_reference iprt_a, const CHR_REF by_reference ichr_b )
+bool_t do_prt_platform_detection( const PRT_REF & iprt_a, const CHR_REF & ichr_b )
 {
     int cnt;
 
@@ -1037,11 +1037,11 @@ bool_t do_prt_platform_detection( const PRT_REF by_reference iprt_a, const CHR_R
 
     // make sure that A is valid
     if ( !DEFINED_PRT( iprt_a ) ) return bfalse;
-    pprt_a = PrtList.lst + iprt_a;
+    pprt_a = PrtList.get_valid_ptr(iprt_a);
 
     // make sure that B is valid
     if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrList.lst + ichr_b;
+    pchr_b = ChrList.get_valid_ptr(ichr_b);
 
     // if you are mounted, only your mount is affected by platforms
     if ( DEFINED_CHR( pprt_a->attachedto_ref ) || IS_ATTACHED_PCHR( pchr_b ) ) return bfalse;
@@ -1144,7 +1144,7 @@ bool_t attach_chr_to_platform( ego_chr * pchr, ego_chr * pplat )
     }
 
     // blank out the targetplatform_ref, so we know we are done searching
-    pchr->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+    pchr->targetplatform_ref     = CHR_REF(MAX_CHR);
     pchr->targetplatform_overlap = 0.0f;
 
     return btrue;
@@ -1168,7 +1168,7 @@ bool_t detach_character_from_platform( ego_chr * pchr )
     pplat = NULL;
     if ( ACTIVE_CHR( pchr->onwhichplatform_ref ) )
     {
-        pplat = ChrList.lst + pchr->onwhichplatform_ref;
+        pplat = ChrList.get_valid_ptr(pchr->onwhichplatform_ref);
     }
 
     // undo the attachment
@@ -1222,7 +1222,7 @@ bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat )
     }
 
     // blank the targetplatform_* stuff so we know we are done searching
-    pprt->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+    pprt->targetplatform_ref     = CHR_REF(MAX_CHR);
     pprt->targetplatform_overlap = 0.0f;
 
     return btrue;
@@ -1303,19 +1303,19 @@ bool_t bump_all_platforms( CoNode_ary_t * pcn_ary )
         d = pcn_ary->ary + cnt;
 
         // only look at character-platform or particle-platform interactions interactions
-        if ( TOTAL_MAX_PRT != d->prta && TOTAL_MAX_PRT != d->prtb ) continue;
+        if ( MAX_PRT != d->prta && MAX_PRT != d->prtb ) continue;
 
         if ( MAX_CHR != d->chra && MAX_CHR != d->chrb )
         {
             do_chr_platform_detection( d->chra, d->chrb );
         }
-        else if ( MAX_CHR != d->chra && TOTAL_MAX_PRT != d->prtb )
+        else if ( MAX_CHR != d->chra && MAX_PRT != d->prtb )
         {
-            do_prt_platform_detection( d->chra, d->prtb );
+            do_prt_platform_detection( d->prtb, d->chra );
         }
-        if ( TOTAL_MAX_PRT != d->prta && MAX_CHR != d->chrb )
+        if ( MAX_PRT != d->prta && MAX_CHR != d->chrb )
         {
-            do_prt_platform_detection( d->chrb, d->prta );
+            do_prt_platform_detection( d->prta, d->chrb );
         }
     }
 
@@ -1329,7 +1329,7 @@ bool_t bump_all_platforms( CoNode_ary_t * pcn_ary )
         d = pcn_ary->ary + cnt;
 
         // only look at character-character interactions
-        //if ( TOTAL_MAX_PRT != d->prta && TOTAL_MAX_PRT != d->prtb ) continue;
+        //if ( MAX_PRT != d->prta && MAX_PRT != d->prtb ) continue;
 
         if ( MAX_CHR != d->chra && MAX_CHR != d->chrb )
         {
@@ -1337,32 +1337,32 @@ bool_t bump_all_platforms( CoNode_ary_t * pcn_ary )
             {
                 if ( ChrList.lst[d->chra].targetplatform_overlap > 0.0f && ChrList.lst[d->chra].targetplatform_ref == d->chrb )
                 {
-                    attach_chr_to_platform( ChrList.lst + d->chra, ChrList.lst + d->chrb );
+                    attach_chr_to_platform( ChrList.get_valid_ptr(d->chra), ChrList.get_valid_ptr(d->chrb ));
                 }
                 else if ( ChrList.lst[d->chrb].targetplatform_overlap > 0.0f && ChrList.lst[d->chrb].targetplatform_ref == d->chra )
                 {
-                    attach_chr_to_platform( ChrList.lst + d->chrb, ChrList.lst + d->chra );
+                    attach_chr_to_platform( ChrList.get_valid_ptr(d->chrb), ChrList.get_valid_ptr(d->chra ));
                 }
 
             }
         }
-        else if ( MAX_CHR != d->chra && TOTAL_MAX_PRT != d->prtb )
+        else if ( MAX_CHR != d->chra && MAX_PRT != d->prtb )
         {
             if ( INGAME_CHR( d->chra ) && INGAME_PRT( d->prtb ) )
             {
                 if ( PrtList.lst[d->prtb].targetplatform_overlap > 0.0f && PrtList.lst[d->prtb].targetplatform_ref == d->chra )
                 {
-                    attach_prt_to_platform( PrtList.lst + d->prtb, ChrList.lst + d->chra );
+                    attach_prt_to_platform( PrtList.get_valid_ptr(d->prtb), ChrList.get_valid_ptr(d->chra ));
                 }
             }
         }
-        else if ( MAX_CHR != d->chrb && TOTAL_MAX_PRT != d->prta )
+        else if ( MAX_CHR != d->chrb && MAX_PRT != d->prta )
         {
             if ( INGAME_CHR( d->chrb ) && INGAME_PRT( d->prta ) )
             {
                 if ( PrtList.lst[d->prta].targetplatform_overlap > 0.0f &&  PrtList.lst[d->prta].targetplatform_ref == d->chrb )
                 {
-                    attach_prt_to_platform( PrtList.lst + d->prta, ChrList.lst + d->chrb );
+                    attach_prt_to_platform( PrtList.get_valid_ptr(d->prta), ChrList.get_valid_ptr(d->chrb ));
                 }
             }
         }
@@ -1474,7 +1474,7 @@ bool_t bump_all_mounts( CoNode_ary_t * pcn_ary )
         d = pcn_ary->ary + cnt;
 
         // only look at character-mount or particle-mount interactions interactions
-        if ( TOTAL_MAX_PRT != d->prta && TOTAL_MAX_PRT != d->prtb ) continue;
+        if ( MAX_PRT != d->prta && MAX_PRT != d->prtb ) continue;
 
         if ( MAX_CHR != d->chra && MAX_CHR != d->chrb )
         {
@@ -1524,7 +1524,7 @@ bool_t bump_all_mounts( CoNode_ary_t * pcn_ary )
 //        d = pcn_ary->ary + cnt;
 //
 //        // only look at character-character interactions
-//        if ( TOTAL_MAX_PRT != d->prtb ) continue;
+//        if ( MAX_PRT != d->prtb ) continue;
 //
 //        do_mounts( d->chra, d->chrb );
 //    }
@@ -2193,10 +2193,10 @@ bool_t do_chr_chr_collision( ego_CoNode * d )
     if ( NULL == d ) return bfalse;
 
     // make sure it is the correct type of collision node
-    if ( TOTAL_MAX_PRT != d->prta || TOTAL_MAX_PRT != d->prtb || FANOFF != d->tileb ) return bfalse;
+    if ( MAX_PRT != d->prta || MAX_PRT != d->prtb || FANOFF != d->tileb ) return bfalse;
 
     if ( !INGAME_CHR( d->chra ) ) return bfalse;
-    if ( NULL == ego_chr_bundle::set( &bdl_a, ChrList.lst + d->chra ) ) return bfalse;
+    if ( NULL == ego_chr_bundle::set( &bdl_a, ChrList.get_valid_ptr(d->chra )) ) return bfalse;
 
     // make some aliases for easier notation
     ichr_a = bdl_a.chr_ref;
@@ -2207,7 +2207,7 @@ bool_t do_chr_chr_collision( ego_CoNode * d )
     if ( pchr_a->pack.is_packed ) return bfalse;
 
     if ( !INGAME_CHR( d->chrb ) ) return bfalse;
-    if ( NULL == ego_chr_bundle::set( &bdl_b, ChrList.lst + d->chrb ) ) return bfalse;
+    if ( NULL == ego_chr_bundle::set( &bdl_b, ChrList.get_valid_ptr(d->chrb )) ) return bfalse;
 
     // make some aliases for easier notation
     ichr_b = bdl_b.chr_ref;
@@ -2496,8 +2496,8 @@ bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, ego_chr_prt
                 // Now we have the block rating and know the enemy
                 if ( INGAME_CHR( pprt->owner_ref ) && using_shield )
                 {
-                    ego_chr *pshield = ChrList.lst + item;
-                    ego_chr *pattacker = ChrList.lst + pprt->owner_ref;
+                    ego_chr *pshield = ChrList.get_valid_ptr(item);
+                    ego_chr *pattacker = ChrList.get_valid_ptr(pprt->owner_ref);
                     int total_block_rating;
 
                     // use the character block skill plus the base block rating of the shield and adjust for strength
@@ -2644,14 +2644,14 @@ bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
         iholder = ego_chr::get_lowest_attachment( pprt->attachedto_ref, bfalse );
         if ( INGAME_CHR( iholder ) )
         {
-            ptarget = ChrList.lst + iholder;
+            ptarget = ChrList.get_valid_ptr(iholder);
         }
         else
         {
             iholder = ego_chr::get_lowest_attachment( pprt->owner_ref, bfalse );
             if ( INGAME_CHR( iholder ) )
             {
-                ptarget = ChrList.lst + iholder;
+                ptarget = ChrList.get_valid_ptr(iholder);
             }
         }
 
@@ -2733,7 +2733,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
         prt_needs_impact = pdata->ppip->rotatetoface || INGAME_CHR( pprt->attachedto_ref );
         if ( INGAME_CHR( pprt->owner_ref ) )
         {
-            ego_chr * powner = ChrList.lst + pprt->owner_ref;
+            ego_chr * powner = ChrList.get_valid_ptr(pprt->owner_ref);
             ego_cap * powner_cap = pro_get_pcap( powner->profile_ref );
 
             if ( powner_cap->isranged ) prt_needs_impact = btrue;
@@ -2753,7 +2753,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
             {
                 CHR_REF item;
                 int drain;
-                ego_chr * powner = ChrList.lst + pprt->owner_ref;
+                ego_chr * powner = ChrList.get_valid_ptr(pprt->owner_ref);
 
                 // Apply intelligence/wisdom bonus damage for particles with the [IDAM] and [WDAM] expansions (Low ability gives penalty)
                 // +2% bonus for every point of intelligence and/or wisdom above 14. Below 14 gives -2% instead!
@@ -2945,7 +2945,7 @@ bool_t do_chr_prt_collision_handle_bump( ego_chr * pchr, ego_prt * pprt, ego_chr
             // Let mounts collect money for their riders
             if ( pchr->ismount && INGAME_CHR( pchr->holdingwhich[SLOT_LEFT] ) )
             {
-                pcollector = ChrList.lst + pchr->holdingwhich[SLOT_LEFT];
+                pcollector = ChrList.get_valid_ptr(pchr->holdingwhich[SLOT_LEFT]);
 
                 // if the mount's rider can't get money, the mount gets to keep the money!
                 if ( !pcollector->cangrabmoney )
@@ -3035,13 +3035,13 @@ bool_t do_chr_prt_collision( ego_CoNode * d )
 
     ego_chr_prt_collsion_data cn_lst;
 
-    if ( NULL == d || TOTAL_MAX_PRT != d->prta || MAX_CHR != d->chrb ) return bfalse;
+    if ( NULL == d || MAX_PRT != d->prta || MAX_CHR != d->chrb ) return bfalse;
     ichr_a = d->chra;
     iprt_b = d->prtb;
 
     // make sure that it is on
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrList.lst + ichr_a;
+    pchr_a = ChrList.get_valid_ptr(ichr_a);
 
     // skip dead objects
     if ( !pchr_a->alive ) return bfalse;
@@ -3050,7 +3050,7 @@ bool_t do_chr_prt_collision( ego_CoNode * d )
     if ( pchr_a->pack.is_packed ) return bfalse;
 
     if ( !INGAME_PRT( iprt_b ) ) return bfalse;
-    pprt_b = PrtList.lst + iprt_b;
+    pprt_b = PrtList.get_valid_ptr(iprt_b);
 
     if ( ichr_a == pprt_b->attachedto_ref ) return bfalse;
 
@@ -3155,7 +3155,7 @@ bool_t update_chr_platform_attachment( ego_chr * pchr )
 
     if ( !DEFINED_PCHR( pchr ) || !INGAME_CHR( pchr->onwhichplatform_ref ) ) return bfalse;
 
-    pplat = ChrList.lst + pchr->onwhichplatform_ref;
+    pplat = ChrList.get_valid_ptr(pchr->onwhichplatform_ref);
 
     // add the weight to the platform based on the new zlerp
     if ( pchr->enviro.walk_lerp < pchr->enviro.grid_lerp )
@@ -3188,7 +3188,7 @@ ego_prt_bundle * update_prt_platform_attachment( ego_prt_bundle * pbdl )
 
     if ( !INGAME_CHR( loc_pprt->onwhichplatform_ref ) ) return pbdl;
 
-    pplat = ChrList.lst + loc_pprt->onwhichplatform_ref;
+    pplat = ChrList.get_valid_ptr(loc_pprt->onwhichplatform_ref);
 
     return pbdl;
 }
@@ -3329,7 +3329,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t add_chr_chr_interaction( CHashList_t * pchlst, const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst )
+//bool_t add_chr_chr_interaction( CHashList_t * pchlst, const CHR_REF & ichr_a, const CHR_REF & ichr_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst )
 //{
 //    Uint32 hashval = 0;
 //    int count;
@@ -3394,7 +3394,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
 //}
 
 //--------------------------------------------------------------------------------------------
-//bool_t add_chr_prt_interaction( CHashList_t * pchlst, const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst )
+//bool_t add_chr_prt_interaction( CHashList_t * pchlst, const CHR_REF & ichr_a, const PRT_REF & iprt_b, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst )
 //{
 //    bool_t found;
 //    int    count;
@@ -3454,7 +3454,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
 //}
 
 ////--------------------------------------------------------------------------------------------
-//bool_t do_mounts( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b )
+//bool_t do_mounts( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
 //{
 //    float xa, ya, za;
 //    float xb, yb, zb;
@@ -3474,14 +3474,14 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
 //
 //    // make sure that A is valid
 //    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-//    pchr_a = ChrList.lst + ichr_a;
+//    pchr_a = ChrList.get_valid_ptr(ichr_a);
 //
 //    pcap_a = ego_chr::get_pcap( ichr_a );
 //    if ( NULL == pcap_a ) return bfalse;
 //
 //    // make sure that B is valid
 //    if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-//    pchr_b = ChrList.lst + ichr_b;
+//    pchr_b = ChrList.get_valid_ptr(ichr_b);
 //
 //    pcap_b = ego_chr::get_pcap( ichr_b );
 //    if ( NULL == pcap_b ) return bfalse;

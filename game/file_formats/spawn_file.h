@@ -59,10 +59,10 @@ extern "C"
         fvec3_t    pos;
         int        passage, content, money, level, skin;
         bool_t     stat;
-        TEAM_REF   team;
+        REF_T      team;
         FACING_T   facing;
-        CHR_REF    attach;
-        CHR_REF    parent;
+        REF_T      attach;
+        REF_T      parent;
     };
     typedef struct s_spawn_file_info spawn_file_info_t;
 

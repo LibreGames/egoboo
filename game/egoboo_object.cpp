@@ -46,7 +46,7 @@ ego_object * ego_object::ctor( ego_object * pbase, size_t index )
     memset( pbase, 0, sizeof( *pbase ) );
 
     // construct the
-    list_object_state_ctor( lst_obj_ptr, index );
+    list_object_state::ctor( lst_obj_ptr, index );
 
     ego_object_state::ctor( ego_obj_ptr );
 
@@ -67,7 +67,7 @@ ego_object * ego_object::dtor( ego_object * pbase )
     ego_obj_ptr = &( pbase->state );
     ego_req_ptr = &( pbase->req );
 
-    list_object_state_dtor( lst_obj_ptr );
+    list_object_state::dtor( lst_obj_ptr );
 
     ego_object_state::dtor( ego_obj_ptr );
 
@@ -95,7 +95,7 @@ ego_object * ego_object::allocate( ego_object * pbase, size_t index )
     pbase->lst_state = tmp_lst_state;
 
     // set it to allocated
-    list_object_set_allocated( &( pbase->lst_state ), btrue );
+    list_object_state::set_allocated( &( pbase->lst_state ), btrue );
 
     // validate the object
     return ego_object::validate( pbase );
@@ -107,7 +107,7 @@ ego_object * ego_object::deallocate( ego_object * pbase )
     if ( NULL == pbase ) return pbase;
 
     // set it to not allocated
-    list_object_set_allocated( &( pbase->lst_state ), bfalse );
+    list_object_state::set_allocated( &( pbase->lst_state ), bfalse );
 
     // invalidate the object
     return ego_object::invalidate( pbase );

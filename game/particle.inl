@@ -31,7 +31,7 @@ INLINE PIP_REF ego_prt::get_ipip( const PRT_REF by_reference iprt )
     ego_prt * pprt;
 
     if ( !DEFINED_PRT( iprt ) ) return ( PIP_REF )MAX_PIP;
-    pprt = PrtList.lst + iprt;
+    pprt = PrtList.get_valid_ptr(iprt);
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return ( PIP_REF )MAX_PIP;
 
@@ -44,7 +44,7 @@ INLINE ego_pip * ego_prt::get_ppip( const PRT_REF by_reference iprt )
     ego_prt * pprt;
 
     if ( !DEFINED_PRT( iprt ) ) return NULL;
-    pprt = PrtList.lst + iprt;
+    pprt = PrtList.get_valid_ptr(iprt);
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return NULL;
 
@@ -127,15 +127,15 @@ INLINE CHR_REF ego_prt::get_iowner( const PRT_REF by_reference iprt, int depth )
     ///      @note this function should be completely trivial for anything other than
     ///       namage particles created by an explosion
 
-    CHR_REF iowner = ( CHR_REF )MAX_CHR;
+    CHR_REF iowner = CHR_REF(MAX_CHR);
 
     ego_prt * pprt;
 
     // be careful because this can be recursive
-    if ( depth > ( signed )maxparticles - ( signed )PrtList.free_count ) return ( CHR_REF )MAX_CHR;
+    if ( depth > ( signed )maxparticles - ( signed )PrtList.free_count ) return CHR_REF(MAX_CHR);
 
-    if ( !DEFINED_PRT( iprt ) ) return ( CHR_REF )MAX_CHR;
-    pprt = PrtList.lst + iprt;
+    if ( !DEFINED_PRT( iprt ) ) return CHR_REF(MAX_CHR);
+    pprt = PrtList.get_valid_ptr(iprt);
 
     if ( DEFINED_CHR( pprt->owner_ref ) )
     {
@@ -146,10 +146,10 @@ INLINE CHR_REF ego_prt::get_iowner( const PRT_REF by_reference iprt, int depth )
         // make a check for a stupid looping structure...
         // cannot be sure you could never get a loop, though
 
-        if ( !VALID_CHR( pprt->parent_ref ) )
+        if ( !VALID_PRT( pprt->parent_ref ) )
         {
             // make sure that a non valid parent_ref is marked as non-valid
-            pprt->parent_ref = TOTAL_MAX_PRT;
+            pprt->parent_ref = MAX_PRT;
             pprt->parent_guid = 0xFFFFFFFF;
         }
         else
@@ -170,7 +170,7 @@ INLINE CHR_REF ego_prt::get_iowner( const PRT_REF by_reference iprt, int depth )
             {
                 // the parent particle doesn't exist anymore
                 // fix the reference
-                pprt->parent_ref = TOTAL_MAX_PRT;
+                pprt->parent_ref = MAX_PRT;
                 pprt->parent_guid = 0xFFFFFFFF;
             }
         }

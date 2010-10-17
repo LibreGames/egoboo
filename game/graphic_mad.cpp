@@ -62,7 +62,7 @@ static egoboo_rv chr_instance_update_vlst_cache( ego_chr_instance * pinst, int v
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f tint, Uint32 bits )
+bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint32 bits )
 {
     /// @details ZZ@> This function draws an environment mapped model
 
@@ -77,7 +77,7 @@ bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f 
     oglx_texture_t   * ptex;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr  = ChrList.lst + character;
+    pchr  = ChrList.get_valid_ptr(character);
     pinst = &( pchr->inst );
 
     if ( !LOADED_MAD( pinst->imad ) ) return bfalse;
@@ -246,7 +246,7 @@ else
 */
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tint, Uint32 bits )
+bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, Uint32 bits )
 {
     /// @details ZZ@> This function draws a model
 
@@ -262,7 +262,7 @@ bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tin
     oglx_texture_t   * ptex;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr  = ChrList.lst + character;
+    pchr  = ChrList.get_valid_ptr(character);
     pinst = &( pchr->inst );
 
     if ( !LOADED_MAD( pinst->imad ) ) return bfalse;
@@ -423,7 +423,7 @@ bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tin
 */
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, BIT_FIELD bits )
+bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
 {
     /// @details ZZ@> This function picks the actual function to use
 
@@ -431,7 +431,7 @@ bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, B
     bool_t retval;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrList.lst + character;
+    pchr = ChrList.get_valid_ptr(character);
 
     if ( pchr->is_hidden ) return bfalse;
 
@@ -460,7 +460,7 @@ bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, B
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_ref( const CHR_REF by_reference ichr )
+bool_t render_one_mad_ref( const CHR_REF & ichr )
 {
     /// @details ZZ@> This function draws characters reflected in the floor
 
@@ -469,7 +469,7 @@ bool_t render_one_mad_ref( const CHR_REF by_reference ichr )
     GLXvector4f tint;
 
     if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr = ChrList.lst + ichr;
+    pchr = ChrList.get_valid_ptr(ichr);
     pinst = &( pchr->inst );
 
     if ( pchr->is_hidden ) return bfalse;
@@ -781,7 +781,7 @@ void chr_draw_attached_grip( ego_chr * pchr )
     if ( !ACTIVE_PCHR( pchr ) ) return;
 
     if ( !DEFINED_CHR( pchr->attachedto ) ) return;
-    pholder = ChrList.lst + pchr->attachedto;
+    pholder = ChrList.get_valid_ptr(pchr->attachedto);
 
     pholder_cap = pro_get_pcap( pholder->profile_ref );
     if ( NULL == pholder_cap ) return;
@@ -1488,7 +1488,7 @@ egoboo_rv chr_instance_increment_action( ego_chr_instance * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_increment_frame( ego_chr_instance * pinst, ego_mad * pmad, const CHR_REF by_reference imount )
+egoboo_rv chr_instance_increment_frame( ego_chr_instance * pinst, ego_mad * pmad, const CHR_REF & imount )
 {
     /// @details BB@> all the code necessary to move on to the next frame of the animation
 

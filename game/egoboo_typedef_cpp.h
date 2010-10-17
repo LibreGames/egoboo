@@ -1,10 +1,58 @@
 #pragma once
 
+//********************************************************************************************
+//*
+//*    This file is part of Egoboo.
+//*
+//*    Egoboo is free software: you can redistribute it and/or modify it
+//*    under the terms of the GNU General Public License as published by
+//*    the Free Software Foundation, either version 3 of the License, or
+//*    (at your option) any later version.
+//*
+//*    Egoboo is distributed in the hope that it will be useful, but
+//*    WITHOUT ANY WARRANTY; without even the implied warranty of
+//*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//*    General Public License for more details.
+//*
+//*    You should have received a copy of the GNU General Public License
+//*    along with Egoboo.  If not, see <http://www.gnu.org/licenses/>.
+//*
+//********************************************************************************************
+
+/// @file egoboo_typedef_cpp.h
+/// @details cpp-only definitions
+
 #if !defined(__cplusplus)
 #    error egoboo_typedef_cpp.h should only be included if you are compling as c++
 #endif
 
 #include <exception>
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct list_object_state
+{
+    size_t index;        ///< what is the index position in the object list?
+    bool_t allocated;    ///< The object has been allocated
+    bool_t in_free_list; ///< the object is currently in the free list
+    bool_t in_used_list; ///< the object is currently in the used list
+
+    list_object_state( size_t index = ( size_t )( ~0L ) ) 
+    { 
+        list_object_state::ctor( this, index ); 
+    }
+    ~list_object_state() 
+    { 
+        list_object_state::dtor( this ); 
+    }
+
+    static list_object_state * ctor( list_object_state *, size_t index = ( size_t )( ~0L ) );
+    static list_object_state * dtor( list_object_state * );
+    static list_object_state * clear( list_object_state *, size_t index = ( size_t )( ~0L ) );
+    static list_object_state * set_allocated( list_object_state *, bool_t val );
+    static list_object_state * set_used( list_object_state *, bool_t val );
+    static list_object_state * set_free( list_object_state *, bool_t val );
+};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -26,8 +74,9 @@ class egoboo_exception : public std::exception
 template <typename _ty> class t_reference
 {
     protected:
-        REF_T    ref;
-        _ty    * ptr;          // unused, needed to allow for template specilization?
+        REF_T    ref;          ///< the reference
+        _ty    * ptr;          ///< not yet used, needed to allow for template specilization?
+        unsigned update_guid;  ///< the list guid at the time the reference was generated
 
     public:
 
@@ -72,6 +121,8 @@ template <typename _ty> class t_reference
 
 #define CPP_DECLARE_REF( TYPE, NAME ) typedef t_reference<TYPE> NAME
 
+#define CPP_REF_TO_INT(X) ((X).get_value())
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // a simple array template
@@ -96,15 +147,40 @@ public:
 template < typename _ty, size_t _sz >
 struct t_cpp_list
 {
-    int    used_count;
-    int    free_count;
-    size_t used_ref[_sz];
-    size_t free_ref[_sz];
+    unsigned update_guid;
+    size_t   used_count;
+    size_t   free_count;
+    size_t   used_ref[_sz];
+    size_t   free_ref[_sz];
 
     CPP_DECLARE_T_ARY( _ty, lst, _sz );
 
-    t_cpp_list() { used_count = free_count = 0; }
+    t_cpp_list() { used_count = free_count = 0; update_guid = 0; }
+
+    _ty * get_ptr( const t_reference<_ty> & ref );
+
+    size_t           count_free() { return free_count; }
+    size_t           count_used() { return used_count; }
+
+    bool_t validate_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
+
+    bool_t    add_free( const t_reference<_ty> & ref );
+    bool_t    add_used( const t_reference<_ty> & ref );
+
+    bool_t    remove_free( const t_reference<_ty> & ref );
+    bool_t    remove_used( const t_reference<_ty> & ref );
+
+    egoboo_rv free_one( const t_reference<_ty> & ichr );
+    egoboo_rv get_free( size_t index = (~0) );
+
+protected:
+    int get_used_list_index( const t_reference<_ty> & ref );
+    int get_free_list_index( const t_reference<_ty> & ref );
+
+    bool_t remove_free_index( int index );
+    bool_t remove_used_index( int index );
 };
+
 
 #define CPP_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)    extern t_cpp_list<TYPE, COUNT> NAME
 #define CPP_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT) static t_cpp_list<TYPE, COUNT> NAME
@@ -117,15 +193,17 @@ struct t_cpp_list
 template < typename _ty, size_t _sz >
 struct t_cpp_stack
 {
-    int   count;
+    unsigned update_guid;
+    int      count;
     CPP_DECLARE_T_ARY( _ty, lst, _sz );
 
-    t_cpp_stack() { count = 0; }
+    t_cpp_stack() { count = 0; update_guid = 0; }
 };
 
 #define CPP_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      extern t_cpp_stack<TYPE, COUNT> NAME
 #define CPP_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  static t_cpp_stack<TYPE, COUNT> NAME
 #define CPP_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) ACCESS t_cpp_stack<TYPE, COUNT> NAME
+
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

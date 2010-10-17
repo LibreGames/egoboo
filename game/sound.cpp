@@ -44,19 +44,19 @@
 #define LOOPED_COUNT 256
 
 /// Data needed to store and manipulate a looped sound
-struct ego_looped_sound_data
+struct snd_looped_sound_data
 {
     int         channel;
     Mix_Chunk * chunk;
     CHR_REF     object;
 };
 
-INSTANTIATE_LIST_STATIC( ego_looped_sound_data, LoopedList, LOOPED_COUNT );
+INSTANTIATE_LIST_STATIC( snd_looped_sound_data, LoopedList, LOOPED_COUNT );
 
 //#if !defined(DEBUG_CPP_LISTS)
 //
 //#elif defined(__cplusplus)
-//    INSTANTIATE_LIST( static, ego_looped_sound_data, LoopedList, LOOPED_COUNT );
+//    INSTANTIATE_LIST( static, snd_looped_sound_data, LoopedList, LOOPED_COUNT );
 //#endif
 
 static void   LoopedList_init();
@@ -65,7 +65,7 @@ static bool_t LoopedList_free_one( size_t index );
 static size_t LoopedList_get_free();
 
 static bool_t LoopedList_validate();
-static size_t LoopedList_add( Mix_Chunk * sound, int loops, const CHR_REF by_reference  object );
+static size_t LoopedList_add( Mix_Chunk * sound, int loops, const CHR_REF &  object );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -565,7 +565,7 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff )
 }
 
 //--------------------------------------------------------------------------------------------
-int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const CHR_REF by_reference owner )
+int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const CHR_REF & owner )
 {
     /// ZF@> This function plays a specified sound and returns which channel its using
     int channel = INVALID_SOUND_CHANNEL;
@@ -884,11 +884,11 @@ void   LoopedList_init()
     for ( cnt = 0; cnt < LOOPED_COUNT; cnt++ )
     {
         // clear out all of the data
-        memset( LoopedList.lst + cnt, 0, sizeof( ego_looped_sound_data ) );
+        memset( LoopedList.lst + cnt, 0, sizeof( snd_looped_sound_data ) );
 
         LoopedList.lst[cnt].channel = INVALID_SOUND_CHANNEL;
         LoopedList.lst[cnt].chunk   = NULL;
-        LoopedList.lst[cnt].object  = ( CHR_REF )MAX_CHR;
+        LoopedList.lst[cnt].object  = CHR_REF(MAX_CHR);
 
         tnc = REF_TO_INT( cnt );
         LoopedList.used_ref[tnc] = LOOPED_COUNT;
@@ -951,7 +951,7 @@ bool_t LoopedList_free_one( size_t index )
     ref = ( LOOP_REF )index;
     LoopedList.lst[ref].channel = INVALID_SOUND_CHANNEL;
     LoopedList.lst[ref].chunk   = NULL;
-    LoopedList.lst[ref].object  = ( CHR_REF )MAX_CHR;
+    LoopedList.lst[ref].object  = CHR_REF(MAX_CHR);
 
     return btrue;
 }
@@ -993,7 +993,7 @@ void LoopedList_clear()
             // clear out the data
             LoopedList.lst[cnt].channel = INVALID_SOUND_CHANNEL;
             LoopedList.lst[cnt].chunk   = NULL;
-            LoopedList.lst[cnt].object  = ( CHR_REF )MAX_CHR;
+            LoopedList.lst[cnt].object  = CHR_REF(MAX_CHR);
         }
     }
 
@@ -1001,7 +1001,7 @@ void LoopedList_clear()
 }
 
 //--------------------------------------------------------------------------------------------
-size_t LoopedList_add( Mix_Chunk * sound, int channel, const CHR_REF by_reference  ichr )
+size_t LoopedList_add( Mix_Chunk * sound, int channel, const CHR_REF &  ichr )
 {
     /// @details BB@> add a looped sound to the list
 
@@ -1081,7 +1081,7 @@ void looped_update_all_sound()
         fvec3_t   diff;
         size_t    index;
         LOOP_REF   ref;
-        ego_looped_sound_data * plooped;
+        snd_looped_sound_data * plooped;
 
         index = LoopedList.used_ref[cnt];
         if ( index < 0 || index >= LOOPED_COUNT ) continue;
@@ -1109,7 +1109,7 @@ void looped_update_all_sound()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t looped_stop_object_sounds( const CHR_REF by_reference  ichr )
+bool_t looped_stop_object_sounds( const CHR_REF &  ichr )
 {
     /// @details BB@> free any looped sound(s) being made by a certain character
     int    freed;

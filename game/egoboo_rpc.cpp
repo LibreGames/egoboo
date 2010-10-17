@@ -162,19 +162,20 @@ int rpc_system_get_guid()
 //--------------------------------------------------------------------------------------------
 void TxReqList_ctor()
 {
-    TREQ_REF cnt;
+    TREQ_REF ireq;
+    size_t   idx;
 
     TxReqList.free_count = 0;
     TxReqList.used_count = 0;
-    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
+    for ( idx = 0; idx < MAX_ENC; idx++ )
     {
-        TxReqList.free_ref[cnt] = MAX_TX_TEXTURE_REQ;
-        TxReqList.used_ref[cnt] = MAX_TX_TEXTURE_REQ;
+        TxReqList.free_ref[idx] = MAX_TX_TEXTURE_REQ;
+        TxReqList.used_ref[idx] = MAX_TX_TEXTURE_REQ;
     }
 
-    for ( cnt = 0; cnt < MAX_TX_TEXTURE_REQ; cnt++ )
+    for ( ireq = 0; ireq < MAX_TX_TEXTURE_REQ; ireq++ )
     {
-        ego_tx_request * preq = TxReqList.lst + cnt;
+        ego_tx_request * preq = TxReqList.lst + ireq;
 
         // blank out all the data, including the obj_base data
         memset( preq, 0, sizeof( *preq ) );
@@ -183,7 +184,7 @@ void TxReqList_ctor()
         ego_tx_request::ctor( preq, -1 );
 
         // set the index
-        preq->index = REF_TO_INT( cnt );
+        preq->index = REF_TO_INT( ireq );
 
         // push the characters onto the free stack
         TxReqList.free_ref[TxReqList.free_count] = TxReqList.free_count;
@@ -196,20 +197,21 @@ void TxReqList_ctor()
 //--------------------------------------------------------------------------------------------
 void TxReqList_dtor()
 {
-    TREQ_REF cnt;
+    TREQ_REF ireq;
+    size_t   idx;
 
-    for ( cnt = 0; cnt < MAX_TX_TEXTURE_REQ; cnt++ )
+    for ( ireq = 0; ireq < MAX_TX_TEXTURE_REQ; ireq++ )
     {
         // character "constructor"
-        ego_tx_request::dtor( TxReqList.lst + cnt );
+        ego_tx_request::dtor( TxReqList.lst + ireq );
     }
 
     TxReqList.free_count = 0;
     TxReqList.used_count = 0;
-    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
+    for ( idx = 0; idx < MAX_ENC; idx++ )
     {
-        TxReqList.free_ref[cnt] = MAX_TX_TEXTURE_REQ;
-        TxReqList.used_ref[cnt] = MAX_TX_TEXTURE_REQ;
+        TxReqList.free_ref[idx] = MAX_TX_TEXTURE_REQ;
+        TxReqList.used_ref[idx] = MAX_TX_TEXTURE_REQ;
     }
 }
 

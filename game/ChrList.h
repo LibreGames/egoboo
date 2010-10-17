@@ -23,26 +23,26 @@
 /// @brief Routines for character list management
 
 #include "egoboo_object.h"
-
 #include "char.h"
 
+#include "egoboo_object_list.inl"
+
 //--------------------------------------------------------------------------------------------
-// list definitions
+// MACROS
 //--------------------------------------------------------------------------------------------
 
-DECLARE_LIST_EXTERN( ego_chr, ChrList, MAX_CHR );
+#define VALID_CHR_IDX( INDX )      ( ((INDX) >= 0) && ((INDX) < MAX_CHR) )
+#define VALID_CHR_REF( ICHR )      ChrList.validate_ref(ICHR)
+#define ALLOCATED_CHR( ICHR )      ( VALID_CHR_REF( ICHR ) && ALLOCATED_PBASE ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
+#define VALID_CHR( ICHR )          ( VALID_CHR_REF( ICHR ) && VALID_PBASE     ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
+#define DEFINED_CHR( ICHR )        ( VALID_CHR_REF( ICHR ) && VALID_PBASE     ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) && !TERMINATED_PBASE ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
+#define ACTIVE_CHR( ICHR )         ( VALID_CHR_REF( ICHR ) && ACTIVE_PBASE    ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
+#define WAITING_CHR( ICHR )        ( VALID_CHR_REF( ICHR ) && WAITING_PBASE   ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
+#define TERMINATED_CHR( ICHR )     ( VALID_CHR_REF( ICHR ) && TERMINATED_PBASE( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
 
-#define VALID_CHR_RANGE( ICHR )    ( ((ICHR) >= 0) && ((ICHR) < MAX_CHR) )
-#define ALLOCATED_CHR( ICHR )      ( VALID_CHR_RANGE( ICHR ) && ALLOCATED_PBASE ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
-#define VALID_CHR( ICHR )          ( VALID_CHR_RANGE( ICHR ) && VALID_PBASE     ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
-#define DEFINED_CHR( ICHR )        ( VALID_CHR_RANGE( ICHR ) && VALID_PBASE     ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) && !TERMINATED_PBASE ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
-#define ACTIVE_CHR( ICHR )         ( VALID_CHR_RANGE( ICHR ) && ACTIVE_PBASE    ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
-#define WAITING_CHR( ICHR )        ( VALID_CHR_RANGE( ICHR ) && WAITING_PBASE   ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
-#define TERMINATED_CHR( ICHR )     ( VALID_CHR_RANGE( ICHR ) && TERMINATED_PBASE( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
-
-#define GET_INDEX_PCHR( PCHR )      ((size_t)GET_INDEX_POBJ( PCHR, MAX_CHR ))
-#define GET_REF_PCHR( PCHR )        ((CHR_REF)GET_INDEX_PCHR( PCHR ))
-#define VALID_CHR_PTR( PCHR )       ( (NULL != (PCHR)) && VALID_CHR_RANGE( GET_REF_POBJ( PCHR, MAX_CHR) ) )
+#define GET_IDX_PCHR( PCHR )        ((size_t)GET_IDX_POBJ( PCHR, MAX_CHR ))
+#define GET_REF_PCHR( PCHR )        ((CHR_REF)GET_REF_POBJ( PCHR, MAX_CHR ))
+#define VALID_CHR_PTR( PCHR )       ( (NULL != (PCHR)) && VALID_CHR_REF( GET_REF_PCHR( PCHR ) ) )
 #define ALLOCATED_PCHR( PCHR )      ( VALID_CHR_PTR( PCHR ) && ALLOCATED_PBASE( POBJ_GET_PBASE(PCHR) ) )
 #define VALID_PCHR( PCHR )          ( VALID_CHR_PTR( PCHR ) && VALID_PBASE( POBJ_GET_PBASE(PCHR) ) )
 #define DEFINED_PCHR( PCHR )        ( VALID_CHR_PTR( PCHR ) && VALID_PBASE ( POBJ_GET_PBASE(PCHR) ) && !TERMINATED_PBASE ( POBJ_GET_PBASE(PCHR) ) )
@@ -51,37 +51,26 @@ DECLARE_LIST_EXTERN( ego_chr, ChrList, MAX_CHR );
 
 // Macros automate looping through the ChrList. This hides code which defers the creation and deletion of
 // objects until the loop terminates, so that the length of the list will not change during the loop.
-#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {size_t IT##_internal; int chr_loop_start_depth = chr_loop_depth; chr_loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.lst + IT;
-#define CHR_BEGIN_LOOP_BSP(IT, PCHR)     {size_t IT##_internal; int chr_loop_start_depth = chr_loop_depth; chr_loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.lst + IT; if( !PCHR->bsp_leaf.inserted ) continue;
-#define CHR_END_LOOP() } chr_loop_depth--; if(chr_loop_start_depth != chr_loop_depth) EGOBOO_ASSERT(bfalse); ChrList_cleanup(); }
+#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {size_t IT##_internal; int chr_loop_start_depth = ChrList.loop_depth; ChrList.loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.get_valid_ptr(IT);
+#define CHR_BEGIN_LOOP_BSP(IT, PCHR)     {size_t IT##_internal; int chr_loop_start_depth = ChrList.loop_depth; ChrList.loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.get_valid_ptr(IT); if( !PCHR->bsp_leaf.inserted ) continue;
+#define CHR_END_LOOP() } ChrList.loop_depth--; if(chr_loop_start_depth != ChrList.loop_depth) EGOBOO_ASSERT(bfalse); ChrList.cleanup(); }
 
-extern int chr_loop_depth;
 
 // Macros to determine whether the character is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"
-#define INGAME_CHR_BASE(ICHR)       ( VALID_CHR_RANGE( ICHR ) && ACTIVE_PBASE( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) && ON_PBASE( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
+#define INGAME_CHR_BASE(ICHR)       ( VALID_CHR_REF( ICHR ) && ACTIVE_PBASE( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) && ON_PBASE( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
 #define INGAME_PCHR_BASE(PCHR)      ( VALID_CHR_PTR( PCHR ) && ACTIVE_PBASE( POBJ_GET_PBASE(PCHR) ) && ON_PBASE( POBJ_GET_PBASE(PCHR) ) )
 
 #define INGAME_CHR(ICHR)            ( (ego_object::spawn_depth) > 0 ? DEFINED_CHR(ICHR) : INGAME_CHR_BASE(ICHR) )
 #define INGAME_PCHR(PCHR)           ( (ego_object::spawn_depth) > 0 ? DEFINED_PCHR(PCHR) : INGAME_PCHR_BASE(PCHR) )
 
 //--------------------------------------------------------------------------------------------
+// list declaration
+//--------------------------------------------------------------------------------------------
+extern t_ego_obj_lst<ego_chr,MAX_CHR> ChrList;
+
+//--------------------------------------------------------------------------------------------
 // Function prototypes
 //--------------------------------------------------------------------------------------------
 
-void    ChrList_init();
-void    ChrList_dtor();
-
-CHR_REF ChrList_allocate( const CHR_REF by_reference override );
-
-egoboo_rv  ChrList_free_one( const CHR_REF by_reference ichr );
-void    ChrList_free_all();
-
-bool_t  ChrList_add_used( const CHR_REF by_reference ichr );
-
-void    ChrList_update_used();
-
-void    ChrList_cleanup();
-
-bool_t ChrList_add_activation( CHR_REF ichr );
-egoboo_rv ChrList_add_termination( CHR_REF ichr );
+#define _ChrList_h

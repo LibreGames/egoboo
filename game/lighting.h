@@ -74,7 +74,7 @@ bool_t             lighting_cache_max_light( ego_lighting_cache * cache );
 bool_t             lighting_cache_blend( ego_lighting_cache * cache, ego_lighting_cache * cnew, float keep );
 //--------------------------------------------------------------------------------------------
 #define MAXDYNADIST                     2700        // Leeway for offscreen lights
-#define TOTAL_MAX_DYNA                    64          // Absolute max number of dynamic lights
+#define MAX_DYNA                    64          // Absolute max number of dynamic lights
 
 /// A definition of a single in-game dynamic light
 struct ego_dynalight
