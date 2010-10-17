@@ -36,13 +36,42 @@ struct ego_gfx_config;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-/// a process that controls the menu system
-struct ego_menu_process : public ego_process
+struct ego_menu_process_data
 {
     bool_t was_active;
     bool_t escape_requested, escape_latch;
 
     int    ticks_next, ticks_now;
+
+    static ego_menu_process_data * ctor( ego_menu_process_data * ptr )
+    {
+        if( NULL == ptr ) return NULL;
+
+        memset(ptr,0,sizeof(*ptr) );
+
+        return ptr;
+    }
+};
+
+/// a process that controls the menu system
+struct ego_menu_process : public ego_menu_process_data, public ego_process
+{
+
+    static ego_menu_process * ctor(ego_menu_process * ptr)
+    {
+        ego_process::ctor( ptr );
+        ego_menu_process_data::ctor( ptr );
+
+        return ptr;
+    }
+
+    // "process" management
+    static int Run( ego_menu_process * mproc, double frameDuration );
+
+    static int do_beginning( ego_menu_process * mproc );
+    static int do_running( ego_menu_process * mproc );
+    static int do_leaving( ego_menu_process * mproc );
+    
 };
 
 //--------------------------------------------------------------------------------------------
@@ -140,10 +169,6 @@ const char *        mnu_ModList_get_name( int imod );
 int    mnu_get_mod_number( const char *szModName );
 bool_t mnu_test_by_name( const char *szModName );
 bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_len, char * buffer );
-
-// "public" menu process hooks
-int                  do_menu_proc_run( ego_menu_process * mproc, double frameDuration );
-ego_menu_process     * menu_process_init( ego_menu_process * mproc );
 
 // "public" reset of the autoformatting
 void autoformat_init( ego_gfx_config * pgfx );

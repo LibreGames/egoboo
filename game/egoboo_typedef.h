@@ -41,18 +41,25 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 // BOOLEAN
 
-#if defined __cplusplus
-#   define bool_t bool
-#   define btrue  true
-#   define bfalse false
-#else
-    enum e_bool
-    {
-        btrue  = ( 1 == 1 ),
-        bfalse = ( !btrue )
-    };
-    typedef enum e_bool bool_t;
-#endif
+// we must have the same definition in c and c++ otherwise,
+// structs with items of type bool will be different sizes
+// in different modules!
+typedef unsigned char bool_t;
+#define btrue  1
+#define bfalse 0
+
+//#if defined __cplusplus
+//#   define bool_t bool
+//#   define btrue  true
+//#   define bfalse false
+//#else
+//    enum e_bool
+//    {
+//        btrue  = ( 1 == 1 ),
+//        bfalse = ( !btrue )
+//    };
+//    typedef enum e_bool bool_t;
+//#endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

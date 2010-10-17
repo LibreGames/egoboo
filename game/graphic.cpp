@@ -5050,11 +5050,11 @@ void do_clear_screen()
     bool_t try_clear;
 
     try_clear = bfalse;
-    if ( ego_process::running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_beginning )
+    if ( ego_process::running( GProc ) && GProc->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
-    else if ( ego_process::running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_beginning )
+    else if ( ego_process::running( MProc ) && MProc->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
@@ -5070,8 +5070,8 @@ void do_clear_screen()
         GL_DEBUG( glClear )( GL_DEPTH_BUFFER_BIT );
 
         // clear the color buffer only if necessary
-        game_needs_clear = gfx.clearson && ego_process::running( PROC_PBASE( GProc ) );
-        menu_needs_clear = mnu_draw_background && ego_process::running( PROC_PBASE( MProc ) );
+        game_needs_clear = gfx.clearson && ego_process::running( GProc );
+        menu_needs_clear = mnu_draw_background && ego_process::running( MProc );
 
         if ( game_needs_clear || menu_needs_clear )
         {
@@ -5086,11 +5086,11 @@ void do_flip_pages()
     bool_t try_flip;
 
     try_flip = bfalse;
-    if ( ego_process::running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_beginning )
+    if ( ego_process::running( GProc ) && GProc->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }
-    else if ( ego_process::running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_beginning )
+    else if ( ego_process::running( MProc ) && MProc->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }

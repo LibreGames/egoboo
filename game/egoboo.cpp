@@ -57,11 +57,6 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-static int do_ego_proc_beginning( ego_main_process * eproc );
-static int do_ego_proc_running( ego_main_process * eproc );
-static int do_ego_proc_leaving( ego_main_process * eproc );
-static int do_ego_proc_run( ego_main_process * eproc, double frameDuration );
-
 static void memory_cleanUp( void );
 static int  ego_init_SDL();
 static void console_begin();
@@ -71,8 +66,6 @@ static void object_systems_begin( void );
 static void object_systems_end( void );
 
 static void _quit_game( ego_main_process * pgame );
-
-static ego_main_process * ego_process_init( ego_main_process * eproc, int argc, char **argv );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -92,7 +85,7 @@ ego_local_shared_stats local_stats;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int do_ego_proc_beginning( ego_main_process * eproc )
+int ego_main_process::do_beginning( ego_main_process * eproc )
 {
     // initialize the virtual filesystem first
     vfs_init();
@@ -162,20 +155,20 @@ int do_ego_proc_beginning( ego_main_process * eproc )
     atexit( memory_cleanUp );
 
     // initialize the game process (not active)
-    game_process_init( GProc );
+    ego_game_process::ctor( GProc );
 
     // initialize the menu process (active)
-    menu_process_init( MProc );
-    ego_process::start( PROC_PBASE( MProc ) );
+    ego_menu_process::ctor( MProc );
+    ego_process::start( MProc );
 
     // Initialize the process
-    ego_process::start( PROC_PBASE( eproc ) );
+    ego_process::start( eproc );
 
     return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-int do_ego_proc_running( ego_main_process * eproc )
+int ego_main_process::do_running( ego_main_process * eproc )
 {
     static bool_t _explore_mode_keyready = btrue;
     static bool_t _wizard_mode_keyready  = btrue;
@@ -184,21 +177,21 @@ int do_ego_proc_running( ego_main_process * eproc )
     bool_t menu_valid, game_valid;
     bool_t mod_ctrl = bfalse, mod_shift = bfalse;
 
-    if ( !ego_process::validate( PROC_PBASE( eproc ) ) ) return -1;
+    if ( !ego_process::validate( eproc ) ) return -1;
 
     eproc->was_active  = eproc->valid;
 
-    menu_valid = ego_process::validate( PROC_PBASE( MProc ) );
-    game_valid = ego_process::validate( PROC_PBASE( GProc ) );
+    menu_valid = ego_process::validate( MProc );
+    game_valid = ego_process::validate( GProc );
     if ( !menu_valid && !game_valid )
     {
-        ego_process::kill( PROC_PBASE( eproc ) );
+        ego_process::kill( eproc );
         return 1;
     }
 
     if ( eproc->paused ) return 0;
 
-    if ( ego_process::running( PROC_PBASE( MProc ) ) )
+    if ( ego_process::running( MProc ) )
     {
         // menu settings
         SDL_WM_GrabInput( SDL_GRAB_OFF );
@@ -220,7 +213,7 @@ int do_ego_proc_running( ego_main_process * eproc )
     mod_ctrl  = SDLKEYDOWN( SDLK_LCTRL ) || SDLKEYDOWN( SDLK_RCTRL );
     mod_shift = SDLKEYDOWN( SDLK_LSHIFT ) || SDLKEYDOWN( SDLK_RSHIFT );
 
-    if ( pickedmodule_ready && !ego_process::running( PROC_PBASE( MProc ) ) )
+    if ( pickedmodule_ready && !ego_process::running( MProc ) )
     {
         // a new module has been picked
 
@@ -228,14 +221,14 @@ int do_ego_proc_running( ego_main_process * eproc )
         pickedmodule_ready = bfalse;
 
         // start the game process
-        ego_process::start( PROC_PBASE( GProc ) );
+        ego_process::start( GProc );
     }
 
     // Test the panic button
     if ( SDLKEYDOWN( SDLK_q ) && mod_ctrl )
     {
         // terminate the program
-        ego_process::kill( PROC_PBASE( eproc ) );
+        ego_process::kill( eproc );
     }
 
     if ( cfg.dev_mode )
@@ -362,20 +355,20 @@ int do_ego_proc_running( ego_main_process * eproc )
         // use the escape key to get out of single frame mode
         single_frame_mode = bfalse;
 
-        if ( ego_process::running( PROC_PBASE( GProc ) ) )
+        if ( ego_process::running( GProc ) )
         {
             GProc->escape_requested = btrue;
         }
 
-        if ( ego_process::running( PROC_PBASE( MProc ) ) )
+        if ( ego_process::running( MProc ) )
         {
             MProc->escape_requested = btrue;
         }
     }
 
     // run the sub-processes
-    do_game_proc_run( GProc, EProc->frameDuration );
-    do_menu_proc_run( MProc, EProc->frameDuration );
+    ego_game_process::Run( GProc, EProc->frameDuration );
+    ego_menu_process::Run( MProc, EProc->frameDuration );
 
     // a heads up display that can be used to debug values that are used by both the menu and the game
     // do_game_hud();
@@ -384,24 +377,24 @@ int do_ego_proc_running( ego_main_process * eproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_ego_proc_leaving( ego_main_process * eproc )
+int ego_main_process::do_leaving( ego_main_process * eproc )
 {
-    if ( !ego_process::validate( PROC_PBASE( eproc ) ) ) return -1;
+    if ( !ego_process::validate( eproc ) ) return -1;
 
     // make sure that the
     if ( !GProc->terminated )
     {
-        do_game_proc_run( GProc, eproc->frameDuration );
+        ego_game_process::Run( GProc, eproc->frameDuration );
     }
 
     if ( !MProc->terminated )
     {
-        do_menu_proc_run( MProc, eproc->frameDuration );
+        ego_menu_process::Run( MProc, eproc->frameDuration );
     }
 
     if ( GProc->terminated && MProc->terminated )
     {
-        ego_process::terminate( PROC_PBASE( eproc ) );
+        ego_process::terminate( eproc );
     }
 
     if ( eproc->terminated )
@@ -419,63 +412,63 @@ int do_ego_proc_leaving( ego_main_process * eproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_ego_proc_run( ego_main_process * eproc, double frameDuration )
-{
-    int result = 0, proc_result = 0;
-
-    if ( !ego_process::validate( PROC_PBASE( eproc ) ) ) return -1;
-    eproc->dtime = frameDuration;
-
-    if ( !eproc->paused ) return 0;
-
-    if ( eproc->killme )
-    {
-        eproc->state = proc_leaving;
-    }
-
-    switch ( eproc->state )
-    {
-        case proc_beginning:
-            proc_result = do_ego_proc_beginning( eproc );
-
-            if ( 1 == proc_result )
-            {
-                eproc->state = proc_entering;
-            }
-            break;
-
-        case proc_entering:
-            // proc_result = do_ego_proc_entering( eproc );
-
-            eproc->state = proc_running;
-            break;
-
-        case proc_running:
-            proc_result = do_ego_proc_running( eproc );
-
-            if ( 1 == proc_result )
-            {
-                eproc->state = proc_leaving;
-            }
-            break;
-
-        case proc_leaving:
-            proc_result = do_ego_proc_leaving( eproc );
-
-            if ( 1 == proc_result )
-            {
-                eproc->state  = proc_finishing;
-                eproc->killme = bfalse;
-            }
-            break;
-
-        case proc_finishing:
-            ego_process::terminate( PROC_PBASE( eproc ) );
-            break;
-    }
-
-    return result;
-}
+//int ego_main_process::Run( ego_main_process * eproc, double frameDuration )
+//{
+//    int result = 0, proc_result = 0;
+//
+//    if ( !ego_process::validate( eproc ) ) return -1;
+//    eproc->dtime = frameDuration;
+//
+//    if ( !eproc->paused ) return 0;
+//
+//    if ( eproc->killme )
+//    {
+//        eproc->state = proc_leaving;
+//    }
+//
+//    switch ( eproc->state )
+//    {
+//        case proc_beginning:
+//            proc_result = ego_main_process::do_beginning( eproc );
+//
+//            if ( 1 == proc_result )
+//            {
+//                eproc->state = proc_entering;
+//            }
+//            break;
+//
+//        case proc_entering:
+//            // proc_result = ego_main_process::do_entering( eproc );
+//
+//            eproc->state = proc_running;
+//            break;
+//
+//        case proc_running:
+//            proc_result = ego_main_process::do_running( eproc );
+//
+//            if ( 1 == proc_result )
+//            {
+//                eproc->state = proc_leaving;
+//            }
+//            break;
+//
+//        case proc_leaving:
+//            proc_result = ego_main_process::do_leaving( eproc );
+//
+//            if ( 1 == proc_result )
+//            {
+//                eproc->state  = proc_finishing;
+//                eproc->killme = bfalse;
+//            }
+//            break;
+//
+//        case proc_finishing:
+//            ego_process::terminate( eproc );
+//            break;
+//    }
+//
+//    return result;
+//}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -485,11 +478,13 @@ int SDL_main( int argc, char **argv )
 
     int result = 0;
 
+    ego_main_process::ctor( EProc );
+
     // initialize the process
-    ego_process_init( EProc, argc, argv );
+    ego_main_process::init( EProc, argc, argv );
 
     // turn on all basic services
-    do_ego_proc_beginning( EProc );
+    ego_main_process::do_beginning( EProc );
 
     // run the processes
     request_clear_screen();
@@ -505,7 +500,7 @@ int SDL_main( int argc, char **argv )
         // clear the screen if needed
         do_clear_screen();
 
-        do_ego_proc_running( EProc );
+        ego_main_process::do_running( EProc );
 
         // flip the graphics page if need be
         do_flip_pages();
@@ -515,11 +510,11 @@ int SDL_main( int argc, char **argv )
     }
 
     // terminate the game and menu processes
-    ego_process::kill( PROC_PBASE( GProc ) );
-    ego_process::kill( PROC_PBASE( MProc ) );
+    ego_process::kill( GProc );
+    ego_process::kill( MProc );
     while ( !EProc->terminated )
     {
-        result = do_ego_proc_leaving( EProc );
+        result = ego_main_process::do_leaving( EProc );
     }
 
     return result;
@@ -709,15 +704,11 @@ void _quit_game( ego_main_process * pgame )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_main_process * ego_process_init( ego_main_process * eproc, int argc, char **argv )
+ego_main_process * ego_main_process::init( ego_main_process * eproc, int argc, char **argv )
 {
     if ( NULL == eproc ) return NULL;
 
-    memset( eproc, 0, sizeof( *eproc ) );
-
-    ego_process::init( PROC_PBASE( eproc ) );
-
-    eproc->screenshot_keyready = btrue;
+    ego_main_process::ctor( eproc );
 
     eproc->argv0 = ( argc > 0 ) ? argv[0] : NULL;
 

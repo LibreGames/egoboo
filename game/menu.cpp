@@ -284,11 +284,6 @@ static void copyrightText_set_position( TTF_Font * font, const char * text, int 
 static void mnu_ModList_release_images();
 void        mnu_ModList_release_all();
 
-// "process" management
-static int do_menu_proc_beginning( ego_menu_process * mproc );
-static int do_menu_proc_running( ego_menu_process * mproc );
-static int do_menu_proc_leaving( ego_menu_process * mproc );
-
 // the hint system
 static void   mnu_GameTip_load_global_vfs();
 static bool_t mnu_GameTip_load_local_vfs();
@@ -365,7 +360,7 @@ void mnu_stack_clear()
 //--------------------------------------------------------------------------------------------
 // The implementation of the menu process
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_beginning( ego_menu_process * mproc )
+int ego_menu_process::do_beginning( ego_menu_process * mproc )
 {
     // play some music
     sound_play_song( MENU_SONG, 0, -1 );
@@ -384,30 +379,30 @@ int do_menu_proc_beginning( ego_menu_process * mproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_running( ego_menu_process * mproc )
+int ego_menu_process::do_running( ego_menu_process * mproc )
 {
     int menuResult;
 
-    if ( !ego_process::validate( PROC_PBASE( mproc ) ) ) return -1;
+    if ( !ego_process::validate( mproc ) ) return -1;
 
     mproc->was_active = mproc->valid;
 
     if ( mproc->paused ) return 0;
 
     // play the menu music
-    mnu_draw_background = !ego_process::running( PROC_PBASE( GProc ) );
+    mnu_draw_background = !ego_process::running( GProc );
     menuResult          = game_do_menu( mproc );
 
     switch ( menuResult )
     {
         case MENU_SELECT:
             // go ahead and start the game
-            ego_process::pause( PROC_PBASE( mproc ) );
+            ego_process::pause( mproc );
             break;
 
         case MENU_QUIT:
             // the user selected "quit"
-            ego_process::kill( PROC_PBASE( mproc ) );
+            ego_process::kill( mproc );
             break;
     }
 
@@ -418,16 +413,16 @@ int do_menu_proc_running( ego_menu_process * mproc )
 
         // We have exited the menu and restarted the game
         GProc->mod_paused = bfalse;
-        ego_process::pause( PROC_PBASE( MProc ) );
+        ego_process::pause( MProc );
     }
 
     return 0;
 }
 
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_leaving( ego_menu_process * mproc )
+int ego_menu_process::do_leaving( ego_menu_process * mproc )
 {
-    if ( !ego_process::validate( PROC_PBASE( mproc ) ) ) return -1;
+    if ( !ego_process::validate( mproc ) ) return -1;
 
     // terminate the menu system
     menu_system_end();
@@ -439,11 +434,11 @@ int do_menu_proc_leaving( ego_menu_process * mproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_run( ego_menu_process * mproc, double frameDuration )
+int ego_menu_process::Run( ego_menu_process * mproc, double frameDuration )
 {
     int result = 0, proc_result = 0;
 
-    if ( !ego_process::validate( PROC_PBASE( mproc ) ) ) return -1;
+    if ( !ego_process::validate( mproc ) ) return -1;
     mproc->dtime = frameDuration;
 
     if ( mproc->paused ) return 0;
@@ -456,7 +451,7 @@ int do_menu_proc_run( ego_menu_process * mproc, double frameDuration )
     switch ( mproc->state )
     {
         case proc_beginning:
-            proc_result = do_menu_proc_beginning( mproc );
+            proc_result = ego_menu_process::do_beginning( mproc );
 
             if ( 1 == proc_result )
             {
@@ -465,13 +460,13 @@ int do_menu_proc_run( ego_menu_process * mproc, double frameDuration )
             break;
 
         case proc_entering:
-            // proc_result = do_menu_proc_entering( mproc );
+            // proc_result = ego_menu_process::do_entering( mproc );
 
             mproc->state = proc_running;
             break;
 
         case proc_running:
-            proc_result = do_menu_proc_running( mproc );
+            proc_result = ego_menu_process::do_running( mproc );
 
             if ( 1 == proc_result )
             {
@@ -480,7 +475,7 @@ int do_menu_proc_run( ego_menu_process * mproc, double frameDuration )
             break;
 
         case proc_leaving:
-            proc_result = do_menu_proc_leaving( mproc );
+            proc_result = ego_menu_process::do_leaving( mproc );
 
             if ( 1 == proc_result )
             {
@@ -490,7 +485,7 @@ int do_menu_proc_run( ego_menu_process * mproc, double frameDuration )
             break;
 
         case proc_finishing:
-            ego_process::terminate( PROC_PBASE( mproc ) );
+            ego_process::terminate( mproc );
             break;
 
         default:
@@ -499,18 +494,6 @@ int do_menu_proc_run( ego_menu_process * mproc, double frameDuration )
     }
 
     return result;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_menu_process * menu_process_init( ego_menu_process * mproc )
-{
-    if ( NULL == mproc ) return NULL;
-
-    memset( mproc, 0, sizeof( *mproc ) );
-
-    ego_process::init( PROC_PBASE( mproc ) );
-
-    return mproc;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -6854,7 +6837,7 @@ int doShowEndgame( float deltaTime )
                 {
                     game_finish_module();
                     pickedmodule_index = -1;
-                    ego_process::kill( PROC_PBASE( GProc ) );
+                    ego_process::kill( GProc );
                 }
 
                 // free the widgets
@@ -7032,7 +7015,7 @@ int doMenu( float deltaTime )
                     if ( !reloaded )
                     {
                         game_finish_module();
-                        ego_process::kill( PROC_PBASE( GProc ) );
+                        ego_process::kill( GProc );
                     }
 
                     result = MENU_QUIT;

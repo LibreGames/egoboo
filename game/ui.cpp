@@ -1111,10 +1111,19 @@ ui_buttonValues ui_Widget::Run( ui_Widget * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::copy( ui_Widget * pw2, ui_Widget * pw1 )
+bool_t ui_Widget::copy( ui_Widget * pdst, ui_Widget * psrc )
 {
-    if ( NULL == pw2 || NULL == pw1 ) return bfalse;
-    return NULL != memcpy( pw2, pw1, sizeof( ui_Widget ) );
+    void * rv_ptr = NULL;
+
+    if ( NULL == pdst || NULL == psrc ) return bfalse;
+
+    rv_ptr = memcpy( pdst, psrc, sizeof( ui_Widget ) );
+
+    // we do not own these, even if the source does
+    pdst->img_own = bfalse;
+    pdst->tx_own = bfalse;
+
+    return NULL != rv_ptr;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1136,37 +1145,34 @@ bool_t ui_Widget::shrink( ui_Widget * pw2, ui_Widget * pw1, float pixels )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight )
-{
-    if ( NULL == pw ) return bfalse;
-
-    // use the default ui font?
-    if ( NULL == ttf_ptr )
-    {
-        ttf_ptr = ui_getFont();
-    }
-
-    pw->id            = id;
-    pw->vx            = vx;
-    pw->vy            = vy;
-    pw->vwidth        = vwidth;
-    pw->vheight       = vheight;
-    pw->latch_state   = 0;
-    pw->timeout       = 0;
-    pw->latch_mask    = 0;
-    pw->display_mask  = UI_DISPLAY_BUTTON;
-
-    // construct the text display list
-    pw->tx_lst = display_list_ctor( pw->tx_lst, MAX_WIDGET_TEXT );
-
-    // set any image
-    ui_Widget::set_img( pw, ui_just_centered, img );
-
-    // set any text
-    ui_Widget::set_text( pw, ui_just_topcenter, ttf_ptr, text );
-
-    return btrue;
-}
+//bool_t ui_Widget::init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight )
+//{
+//    if ( NULL == pw ) return bfalse;
+//
+//    // use the default ui font?
+//    if ( NULL == ttf_ptr )
+//    {
+//        ttf_ptr = ui_getFont();
+//    }
+//
+//    pw->id            = id;
+//    pw->vx            = vx;
+//    pw->vy            = vy;
+//    pw->vwidth        = vwidth;
+//    pw->vheight       = vheight;
+//    pw->latch_state   = 0;
+//    pw->timeout       = 0;
+//    pw->latch_mask    = 0;
+//    pw->display_mask  = UI_DISPLAY_BUTTON;
+//
+//    // set any image
+//    ui_Widget::set_img( pw, ui_just_centered, img );
+//
+//    // set any text
+//    ui_Widget::set_text( pw, ui_just_topcenter, ttf_ptr, text );
+//
+//    return btrue;
+//}
 
 //--------------------------------------------------------------------------------------------
 bool_t ui_Widget::LatchMask_Add( ui_Widget * pw, BIT_FIELD mbits )
@@ -1401,7 +1407,7 @@ bool_t ui_Widget::set_id( ui_Widget * pw, ui_id_t id )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::set_img( ui_Widget * pw, const ego_ui_Just just, oglx_texture_t *img )
+bool_t ui_Widget::set_img( ui_Widget * pw, const ego_ui_Just & just, oglx_texture_t *img, bool_t own )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1413,6 +1419,7 @@ bool_t ui_Widget::set_img( ui_Widget * pw, const ego_ui_Just just, oglx_texture_
     // set the image
     pw->img      = img;
     pw->img_just = just;
+    pw->img_own  = own;
 
     // tell the ui to display the image
     ui_Widget::DisplayMask_Add( pw, UI_DISPLAY_IMAGE );
@@ -1534,14 +1541,26 @@ bool_t ui_Widget::update_text_pos( ui_Widget * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-ui_Widget * ui_Widget::ctor( ui_Widget * pw, ui_id_t id )
+ui_Widget * ui_Widget::clear( ui_Widget * pw, ui_id_t id )
 {
     if ( NULL == pw ) return pw;
 
+    // blank the data
     memset( pw, 0, sizeof( *pw ) );
+
+    // set the id (probably UI_Nothing)
     pw->id = id;
 
+    // assume it is a button
+    pw->display_mask  = UI_DISPLAY_BUTTON;
+
     return pw;
+}
+
+//--------------------------------------------------------------------------------------------
+ui_Widget * ui_Widget::ctor( ui_Widget * pw, ui_id_t id )
+{
+    return ui_Widget::clear( pw, id );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1560,12 +1579,20 @@ bool_t ui_Widget::dealloc( ui_Widget * pw )
 {
     if ( NULL == pw ) return bfalse;
 
-    if ( NULL != pw->tx_lst )
+    if ( NULL != pw->tx_lst && pw->tx_own )
     {
         pw->tx_lst = display_list_dtor( pw->tx_lst, btrue );
+        pw->tx_own = bfalse;
     }
 
-    memset( pw, 0, sizeof( *pw ) );
+    if ( NULL != pw->img && pw->img_own )
+    {
+        oglx_texture_Release( pw->img );
+        pw->img     = NULL;
+        pw->img_own = bfalse;
+    }
+
+    ui_Widget::clear( pw );
 
     return btrue;
 }
@@ -1623,7 +1650,7 @@ bool_t ui_Widget::set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, ... )
+bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font * ttf_ptr, const char * format, ... )
 {
     /// @details BB@> render the text string to a ogl texture
 
@@ -1641,6 +1668,9 @@ bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just just, TTF_Font * t
     va_end( args );
 
     ui_Widget::update_text_pos( pw );
+
+    // we own this text
+    pw->tx_own = btrue;
 
     return retval;
 }

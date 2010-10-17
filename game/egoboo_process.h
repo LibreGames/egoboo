@@ -58,7 +58,10 @@ struct ego_process
     process_state_t state;
     double          dtime;
 
-    static ego_process * init( ego_process * proc );
+    ego_process() { ego_process::ctor(this); }
+
+    static ego_process * ctor( ego_process * proc );
+
     static bool_t        start( ego_process * proc );
     static bool_t        kill( ego_process * proc );
     static bool_t        validate( ego_process * proc );

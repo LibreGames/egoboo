@@ -93,10 +93,12 @@ struct ui_Widget
     // text info
     ego_ui_Just      tx_just;
     display_list_t * tx_lst;
+    bool_t           tx_own;
 
     // image info
     ego_ui_Just     img_just;
     oglx_texture_t *img;
+    bool_t          img_own;
 
     // which latches to keep track of
     BIT_FIELD       latch_mask;
@@ -115,14 +117,15 @@ struct ui_Widget
     static ui_Widget * ctor( ui_Widget * pw, ui_id_t id = UI_Nothing );
     static ui_Widget * dtor( ui_Widget * pw );
 
-    static bool_t dealloc( ui_Widget * pw );
+    static ui_Widget * clear( ui_Widget * pw, ui_id_t id = UI_Nothing );
+    static bool_t      dealloc( ui_Widget * pw );
 
     static ui_buttonValues Behavior( ui_Widget * pw );
     static ui_buttonValues Run( ui_Widget * pw );
 
     static bool_t copy( ui_Widget * pw2, ui_Widget * pw1 );
     static bool_t shrink( ui_Widget * pw2, ui_Widget * pw1, float pixels );
-    static bool_t init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float x, float y, float width, float height );
+    //static bool_t init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float x, float y, float width, float height );
 
     static bool_t    LatchMask_Add( ui_Widget * pw, BIT_FIELD mbits );
     static bool_t    LatchMask_Remove( ui_Widget * pw, BIT_FIELD mbits );
@@ -134,8 +137,8 @@ struct ui_Widget
     static bool_t    DisplayMask_Set( ui_Widget * pw, BIT_FIELD mbits );
     static BIT_FIELD DisplayMask_Test( ui_Widget * pw, BIT_FIELD mbits );
 
-    static bool_t set_text( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, ... );
-    static bool_t set_img( ui_Widget * pw, const ego_ui_Just just, oglx_texture_t *img );
+    static bool_t set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font * ttf_ptr, const char * format, ... );
+    static bool_t set_img( ui_Widget * pw, const ego_ui_Just & just, oglx_texture_t *img, bool_t own = bfalse );
     static bool_t set_bound( ui_Widget * pw, float x, float y, float w, float h );
     static bool_t set_button( ui_Widget * pw, float x, float y, float w, float h );
     static bool_t set_pos( ui_Widget * pw, float x, float y );

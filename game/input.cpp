@@ -141,7 +141,7 @@ void input_read_mouse()
 {
     int x, y, b;
 
-    if ( ego_process::running( PROC_PBASE( MProc ) ) )
+    if ( ego_process::running( MProc ) )
     {
         b = SDL_GetMouseState( &x, &y );
     }

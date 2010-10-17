@@ -77,8 +77,7 @@ enum e_targeting_bits
 
 //--------------------------------------------------------------------------------------------
 
-/// a process that controls a single game
-struct ego_game_process : public ego_process
+struct ego_game_process_data
 {
     double frameDuration;
     bool_t mod_paused, pause_key_ready;
@@ -90,6 +89,32 @@ struct ego_game_process : public ego_process
     int    fps_ticks_next, fps_ticks_now;
     int    ups_ticks_next, ups_ticks_now;
 
+    static ego_game_process_data * ctor( ego_game_process_data * ptr )
+    {
+        if( NULL == ptr ) return NULL;
+
+        memset(ptr,0,sizeof(*ptr) );
+
+        ptr->menu_depth = -1;
+        ptr->pause_key_ready = btrue;
+
+        return ptr;
+    }
+};
+
+/// a process that controls a single game
+struct ego_game_process : public ego_game_process_data, public ego_process
+{
+
+    static ego_game_process * ctor(ego_game_process * ptr);
+
+    // "process" management
+    static int Run( ego_game_process * gproc, double frameDuration );
+
+    static int do_beginning( ego_game_process * gproc );
+    static int do_running( ego_game_process * gproc );
+    static int do_grunning( ego_game_process * gproc );
+    static int do_leaving( ego_game_process * gproc );
 };
 
 extern ego_game_process * GProc;
@@ -352,8 +377,7 @@ bool_t make_water( ego_water_instance * pinst, struct s_wawalite_water * pdata )
 
 bool_t game_choose_module( int imod, int seed );
 
-int                  game_do_menu( struct ego_menu_process * mproc );
-ego_game_process     * game_process_init( ego_game_process * gproc );
+int game_do_menu( struct ego_menu_process * mproc );
 
 void expand_escape_codes( const CHR_REF by_reference ichr, struct ego_script_state * pstate, char * src, char * src_end, char * dst, char * dst_end );
 
@@ -384,8 +408,6 @@ bool_t do_item_pickup( const CHR_REF by_reference ichr, const CHR_REF by_referen
 bool_t get_chr_regeneration( struct ego_chr * pchr, int *pliferegen, int * pmanaregen );
 
 float get_chr_level( struct ego_mpd * pmesh, struct ego_chr * pchr );
-
-int do_game_proc_run( ego_game_process * gproc, double frameDuration );
 
 egoboo_rv move_water( ego_water_instance * pwater );
 

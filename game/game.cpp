@@ -189,11 +189,6 @@ static void   game_reset_players();
 // Model stuff
 static void log_madused_vfs( const char *savename );
 
-// "process" management
-static int do_game_proc_beginning( ego_game_process * gproc );
-static int do_game_proc_running( ego_game_process * gproc );
-static int do_game_proc_leaving( ego_game_process * gproc );
-
 // misc
 static bool_t game_begin_menu( ego_menu_process * mproc, which_menu_t which );
 static void   game_end_menu( ego_menu_process * mproc );
@@ -367,7 +362,7 @@ void export_all_players( bool_t require_local )
     CHR_REF character, item;
 
     // Don't export if the module isn't running
-    if ( !ego_process::running( PROC_PBASE( GProc ) ) ) return;
+    if ( !ego_process::running( GProc ) ) return;
 
     // Stop if export isn't valid
     if ( !PMod->exportvalid ) return;
@@ -931,7 +926,7 @@ void game_update_timers()
     ticks_now  = egoboo_get_ticks();
 
     // check to make sure that the game is running
-    if ( !ego_process::running( PROC_PBASE( GProc ) ) || GProc->mod_paused )
+    if ( !ego_process::running( GProc ) || GProc->mod_paused )
     {
         // for a local game, force the function to ignore the accumulation of time
         // until you re-join the game
@@ -1049,18 +1044,18 @@ int game_do_menu( ego_menu_process * mproc )
         // force the menu to be displayed immediately when the game stops
         mproc->dtime = 1.0f / ( float )cfg.framelimit;
     }
-    else if ( !ego_process::running( PROC_PBASE( GProc ) ) )
+    else if ( !ego_process::running( GProc ) )
     {
         // the menu's frame rate is controlled by a timer
         mproc->ticks_now = SDL_GetTicks();
         if ( mproc->ticks_now > mproc->ticks_next )
         {
             // FPS limit
-            float  frameskip = ( float )TICKS_PER_SEC / ( float )cfg.framelimit;
+            float frameskip = float(TICKS_PER_SEC) / float(cfg.framelimit);
             mproc->ticks_next = mproc->ticks_now + frameskip;
 
             need_menu = btrue;
-            mproc->dtime = 1.0f / ( float )cfg.framelimit;
+            mproc->dtime = 1.0f / float(cfg.framelimit);
         }
     }
 
@@ -1080,7 +1075,31 @@ int game_do_menu( ego_menu_process * mproc )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int do_game_proc_beginning( ego_game_process * gproc )
+ego_game_process * ego_game_process::ctor( ego_game_process * gproc )
+{
+    if ( NULL == gproc ) return NULL;
+
+    ego_process::ctor( gproc );
+    ego_game_process_data::ctor( gproc );
+
+    // initialize all the profile variables
+    PROFILE_INIT( game_update_loop );
+    PROFILE_INIT( game_single_update );
+    PROFILE_INIT( gfx_loop );
+
+    PROFILE_INIT( talk_to_remotes );
+    PROFILE_INIT( listen_for_packets );
+    PROFILE_INIT( check_stats );
+    PROFILE_INIT( set_local_latches );
+    PROFILE_INIT( PassageStack_check_music );
+    PROFILE_INIT( cl_talkToHost );
+
+    return gproc;
+}
+
+
+//--------------------------------------------------------------------------------------------
+int ego_game_process::do_beginning( ego_game_process * gproc )
 {
     BillboardList_init_all();
 
@@ -1116,8 +1135,8 @@ int do_game_proc_beginning( ego_game_process * gproc )
     if ( !game_begin_module( pickedmodule_path, ( Uint32 )~0 ) )
     {
         // failure - kill the game process
-        ego_process::kill( PROC_PBASE( gproc ) );
-        ego_process::resume( PROC_PBASE( MProc ) );
+        ego_process::kill( gproc );
+        ego_process::resume( MProc );
     }
 
     // Initialize the process
@@ -1163,11 +1182,11 @@ int do_game_proc_beginning( ego_game_process * gproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_game_proc_running( ego_game_process * gproc )
+int ego_game_process::do_running( ego_game_process * gproc )
 {
     int update_loops = 0;
 
-    if ( !ego_process::validate( PROC_PBASE( gproc ) ) ) return -1;
+    if ( !ego_process::validate( gproc ) ) return -1;
 
     gproc->was_active  = gproc->valid;
 
@@ -1319,15 +1338,15 @@ int do_game_proc_running( ego_game_process * gproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_game_proc_leaving( ego_game_process * gproc )
+int ego_game_process::do_leaving( ego_game_process * gproc )
 {
-    if ( !ego_process::validate( PROC_PBASE( gproc ) ) ) return -1;
+    if ( !ego_process::validate( gproc ) ) return -1;
 
     // get rid of all module data
     game_quit_module();
 
     // resume the menu
-    ego_process::resume( PROC_PBASE( MProc ) );
+    ego_process::resume( MProc );
 
     // deallocate any dynamically allocated collision memory
     collision_system_end();
@@ -1362,11 +1381,11 @@ int do_game_proc_leaving( ego_game_process * gproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_game_proc_run( ego_game_process * gproc, double frameDuration )
+int ego_game_process::Run( ego_game_process * gproc, double frameDuration )
 {
     int result = 0, proc_result = 0;
 
-    if ( !ego_process::validate( PROC_PBASE( gproc ) ) ) return -1;
+    if ( !ego_process::validate( gproc ) ) return -1;
     gproc->dtime = frameDuration;
 
     if ( gproc->paused ) return 0;
@@ -1379,7 +1398,7 @@ int do_game_proc_run( ego_game_process * gproc, double frameDuration )
     switch ( gproc->state )
     {
         case proc_beginning:
-            proc_result = do_game_proc_beginning( gproc );
+            proc_result = ego_game_process::do_beginning( gproc );
 
             if ( 1 == proc_result )
             {
@@ -1388,13 +1407,13 @@ int do_game_proc_run( ego_game_process * gproc, double frameDuration )
             break;
 
         case proc_entering:
-            // proc_result = do_game_proc_entering( gproc );
+            // proc_result = ego_game_process::do_entering( gproc );
 
             gproc->state = proc_running;
             break;
 
         case proc_running:
-            proc_result = do_game_proc_running( gproc );
+            proc_result = ego_game_process::do_running( gproc );
 
             if ( 1 == proc_result )
             {
@@ -1403,7 +1422,7 @@ int do_game_proc_run( ego_game_process * gproc, double frameDuration )
             break;
 
         case proc_leaving:
-            proc_result = do_game_proc_leaving( gproc );
+            proc_result = ego_game_process::do_leaving( gproc );
 
             if ( 1 == proc_result )
             {
@@ -1413,8 +1432,8 @@ int do_game_proc_run( ego_game_process * gproc, double frameDuration )
             break;
 
         case proc_finishing:
-            ego_process::terminate( PROC_PBASE( gproc ) );
-            ego_process::resume( PROC_PBASE( MProc ) );
+            ego_process::terminate( gproc );
+            ego_process::resume( MProc );
             break;
     }
 
@@ -3739,14 +3758,14 @@ bool_t game_begin_menu( ego_menu_process * mproc, which_menu_t which )
 {
     if ( NULL == mproc ) return bfalse;
 
-    if ( !ego_process::running( PROC_PBASE( mproc ) ) )
+    if ( !ego_process::running( mproc ) )
     {
         GProc->menu_depth = mnu_get_menu_depth();
     }
 
     if ( mnu_begin_menu( which ) )
     {
-        ego_process::start( PROC_PBASE( mproc ) );
+        ego_process::start( mproc );
     }
 
     return btrue;
@@ -3759,7 +3778,7 @@ void game_end_menu( ego_menu_process * mproc )
 
     if ( mnu_get_menu_depth() <= GProc->menu_depth )
     {
-        ego_process::resume( PROC_PBASE( MProc ) );
+        ego_process::resume( mproc );
         GProc->menu_depth = -1;
     }
 }
@@ -4188,33 +4207,6 @@ bool_t game_choose_module( int imod, int seed )
     }
 
     return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_game_process * game_process_init( ego_game_process * gproc )
-{
-    if ( NULL == gproc ) return NULL;
-
-    memset( gproc, 0, sizeof( *gproc ) );
-
-    ego_process::init( PROC_PBASE( gproc ) );
-
-    gproc->menu_depth = -1;
-    gproc->pause_key_ready = btrue;
-
-    // initialize all the profile variables
-    PROFILE_INIT( game_update_loop );
-    PROFILE_INIT( game_single_update );
-    PROFILE_INIT( gfx_loop );
-
-    PROFILE_INIT( talk_to_remotes );
-    PROFILE_INIT( listen_for_packets );
-    PROFILE_INIT( check_stats );
-    PROFILE_INIT( set_local_latches );
-    PROFILE_INIT( PassageStack_check_music );
-    PROFILE_INIT( cl_talkToHost );
-
-    return gproc;
 }
 
 //--------------------------------------------------------------------------------------------

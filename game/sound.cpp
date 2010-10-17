@@ -575,7 +575,7 @@ int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const C
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
 
     // only play sound effects if the game is running
-    if ( !ego_process::running( PROC_PBASE( GProc ) ) )  return INVALID_SOUND_CHANNEL;
+    if ( !ego_process::running( GProc ) )  return INVALID_SOUND_CHANNEL;
 
     // measure the distance in tiles
     diff = fvec3_sub( pos.v, PCamera->track_pos.v );
@@ -617,7 +617,7 @@ int sound_play_chunk_full( Mix_Chunk * pchunk )
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
 
     // only play sound effects if the game is running
-    if ( !ego_process::running( PROC_PBASE( GProc ) ) )  return INVALID_SOUND_CHANNEL;
+    if ( !ego_process::running( GProc ) )  return INVALID_SOUND_CHANNEL;
 
     // play the sound
     channel = Mix_PlayChannel( -1, pchunk, 0 );
