@@ -51,9 +51,9 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-mouse_t           mous;
-keyboard_t        keyb;
-device_joystick_t joy[MAXJOYSTICK];
+ego_mouse           mous;
+ego_keyboard        keyb;
+ego_device_joystick joy[MAXJOYSTICK];
 
 ego_cursor cursor = {0, 0, bfalse, bfalse, bfalse, bfalse};
 
@@ -67,7 +67,7 @@ static void input_read_joystick( int which );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void input_device_init( input_device_t * pdevice )
+void input_device_init( ego_input_device * pdevice )
 {
     if ( NULL == pdevice ) return;
 
@@ -106,7 +106,7 @@ void input_init_joysticks()
 
     for ( i = 0; i < MAXJOYSTICK; i++ )
     {
-        memset( joy + i, 0, sizeof( device_joystick_t ) );
+        memset( joy + i, 0, sizeof( ego_device_joystick ) );
 
         if ( i < SDL_NumJoysticks() )
         {
@@ -172,7 +172,7 @@ void input_read_joystick( int which )
 {
     int dead_zone = 0x8000 / 10;
     int i, button_count, x, y;
-    device_joystick_t * pjoy;
+    ego_device_joystick * pjoy;
     if ( which < 0 || ( Uint32 )( which + INPUT_DEVICE_JOY ) > input_device_count ) return;
     if ( !joy[which].on ) return;
 
@@ -270,7 +270,7 @@ void input_read()
                     // The ui will handle its own issues.
 
                     // grab all the new SDL screen info
-                    SDLX_Get_Screen_Info( &sdl_scr, (SDL_bool)bfalse );
+                    SDLX_Get_Screen_Info( &sdl_scr, ( SDL_bool )bfalse );
 
                     // fix the camera rotation angles to estimate what is in-view
                     ego_camera::rotmesh_init();

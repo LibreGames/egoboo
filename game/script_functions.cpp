@@ -1367,7 +1367,7 @@ Uint8 scr_AddIDSZ( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    if( module_add_idsz_vfs( pickedmodule_name, pstate->argument, 0, NULL ) )
+    if ( module_add_idsz_vfs( pickedmodule_name, pstate->argument, 0, NULL ) )
     {
         // we need to invalidate the module list
         module_list_valid = bfalse;
@@ -2776,7 +2776,7 @@ Uint8 scr_GiveExperienceToTarget( ego_script_state * pstate, ego_ai_bundle * pbd
 
     SCRIPT_FUNCTION_BEGIN();
 
-    give_experience( pself->target, pstate->argument, (xp_type)pstate->distance, bfalse );
+    give_experience( pself->target, pstate->argument, ( xp_type )pstate->distance, bfalse );
 
     SCRIPT_FUNCTION_END();
 }
@@ -2821,7 +2821,7 @@ Uint8 scr_GiveExperienceToTargetTeam( ego_script_state * pstate, ego_ai_bundle *
 
     SCRIPT_FUNCTION_BEGIN();
 
-    give_team_experience( ego_chr::get_iteam( pself->target ), pstate->argument, (xp_type)pstate->distance );
+    give_team_experience( ego_chr::get_iteam( pself->target ), pstate->argument, ( xp_type )pstate->distance );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6592,7 +6592,7 @@ Uint8 scr_GiveExperienceToGoodTeam( ego_script_state * pstate, ego_ai_bundle * p
 
     SCRIPT_FUNCTION_BEGIN();
 
-    give_team_experience(( TEAM_REF )TEAM_GOOD, pstate->argument, (xp_type)pstate->distance );
+    give_team_experience(( TEAM_REF )TEAM_GOOD, pstate->argument, ( xp_type )pstate->distance );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6942,7 +6942,7 @@ Uint8 scr_AddQuest( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ipla = pself_target->is_which_player;
     if ( VALID_PLA( ipla ) )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         quest_level = quest_add( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, 0 );
     }
@@ -6967,7 +6967,7 @@ Uint8 scr_BeatQuestAllPlayers( ego_script_state * pstate, ego_ai_bundle * pbdl_s
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         CHR_REF ichr;
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -7002,7 +7002,7 @@ Uint8 scr_TargetHasQuest( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ipla = pchr->is_which_player;
     if ( VALID_PLA( ipla ) )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument );
     }
@@ -7036,7 +7036,7 @@ Uint8 scr_set_QuestLevel( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     if ( VALID_PLA( ipla ) && pstate->distance != 0 )
     {
         int        quest_level = QUEST_NONE;
-        player_t * ppla        = PlaStack.lst + ipla;
+        ego_player * ppla        = PlaStack.lst + ipla;
 
         quest_level = quest_adjust_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, pstate->distance );
 
@@ -7062,7 +7062,7 @@ Uint8 scr_AddQuestAllPlayers( ego_script_state * pstate, ego_ai_bundle * pbdl_se
     for ( player_count = 0, success_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         int quest_level;
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         if ( !ppla->valid || !INGAME_CHR( ppla->index ) ) continue;
         player_count++;

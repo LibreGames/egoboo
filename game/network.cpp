@@ -50,9 +50,9 @@ static int  numfilesent = 0;                            // For network copy
 static int  numfileexpected = 0;                        // For network copy
 static int  numplayerrespond = 0;
 
-static net_instance_t _gnet = { bfalse, bfalse, bfalse, bfalse, bfalse };
+static ego_net_instance _gnet = { bfalse, bfalse, bfalse, bfalse, bfalse };
 
-static bool_t net_instance_init( net_instance_t * pnet );
+static bool_t net_instance_init( ego_net_instance * pnet );
 
 static void PlaStack_init();
 static void PlaStack_reinit();
@@ -66,7 +66,7 @@ static void net_startNewPacket();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, player_t, PlaStack, MAX_PLAYER );
+INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_player, PlaStack, MAX_PLAYER );
 
 int         lag  = 3;                       // Lag tolerance
 Uint32      numplatimes = 0;
@@ -194,9 +194,9 @@ void network_system_end( void )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-const net_instance_t * network_get_instance()
+const ego_net_instance * network_get_instance()
 {
-    net_instance_t * retval = NULL;
+    ego_net_instance * retval = NULL;
 
     if ( !_network_system_init ) return NULL;
 
@@ -1004,7 +1004,7 @@ void cl_talkToHost()
     {
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
-            player_t * ppla = PlaStack.lst + player;
+            ego_player * ppla = PlaStack.lst + player;
             if ( !ppla->valid ) continue;
 
             if ( INPUT_BITS_NONE != ppla->device.bits )
@@ -1022,7 +1022,7 @@ void cl_talkToHost()
 
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
-            player_t * ppla = PlaStack.lst + player;
+            ego_player * ppla = PlaStack.lst + player;
             if ( !ppla->valid ) continue;
 
             // Find the local players
@@ -1072,7 +1072,7 @@ void sv_talkToRemotes()
             // Send all player latches...
             for ( player = 0; player < MAX_PLAYER; player++ )
             {
-                player_t * ppla = PlaStack.lst + player;
+                ego_player * ppla = PlaStack.lst + player;
 
                 if ( !ppla->valid ) continue;
 
@@ -1102,14 +1102,14 @@ void sv_talkToRemotes()
         {
             int index;
             Uint32 cnt;
-            player_t * ppla = PlaStack.lst + player;
+            ego_player * ppla = PlaStack.lst + player;
 
             if ( !ppla->valid ) continue;
 
             index = ppla->tlatch_count;
             if ( index < MAXLAG )
             {
-                time_latch_t * ptlatch = ppla->tlatch + index;
+                ego_time_latch * ptlatch = ppla->tlatch + index;
 
                 ptlatch->button = ppla->local_latch.b;
 
@@ -1143,7 +1143,7 @@ void sv_talkToRemotes()
 //--------------------------------------------------------------------------------------------
 void pla_add_tlatch( const PLA_REF by_reference iplayer, Uint32 time, latch_input_t net_latch )
 {
-    player_t * ppla;
+    ego_player * ppla;
 
     if ( !VALID_PLA( iplayer ) ) return;
     ppla = PlaStack.lst + iplayer;
@@ -1607,7 +1607,7 @@ void net_handlePacket( ENetEvent *event )
                         player = packet_readUnsignedByte();
                         if ( VALID_PLA( player ) )
                         {
-                            player_t * ppla = PlaStack.lst + player;
+                            ego_player * ppla = PlaStack.lst + player;
 
                             ppla->tlatch[time].raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
                             ppla->tlatch[time].raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
@@ -1688,13 +1688,13 @@ void listen_for_packets()
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_do_network( player_t * ppla )
+void unbuffer_one_player_latch_do_network( ego_player * ppla )
 {
     // get the "network" latch for each valid player
 
     Uint32 latch_count, tnc;
     latch_input_t tmp_latch;
-    time_latch_t * tlatch_list;
+    ego_time_latch * tlatch_list;
 
     if ( NULL == ppla ) return;
 
@@ -1813,7 +1813,7 @@ void unbuffer_one_player_latch_do_network( player_t * ppla )
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_download( player_t * ppla )
+void unbuffer_one_player_latch_download( ego_player * ppla )
 {
     ego_chr * pchr;
 
@@ -1835,7 +1835,7 @@ void unbuffer_one_player_latch_download( player_t * ppla )
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_do_respawn( player_t * ppla )
+void unbuffer_one_player_latch_do_respawn( ego_player * ppla )
 {
     ego_chr * pchr;
 
@@ -1874,7 +1874,7 @@ void unbuffer_all_player_latches()
     numplatimes = 0;
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
         if ( !ppla->valid ) continue;
 
         unbuffer_one_player_latch_do_network( ppla );
@@ -1883,7 +1883,7 @@ void unbuffer_all_player_latches()
     // set the player latch
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
         if ( !ppla->valid ) continue;
 
         unbuffer_one_player_latch_download( ppla );
@@ -1892,7 +1892,7 @@ void unbuffer_all_player_latches()
     // Let players respawn
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
         if ( !ppla->valid ) continue;
 
         unbuffer_one_player_latch_do_respawn( ppla );
@@ -2239,7 +2239,7 @@ void net_send_message()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t net_instance_init( net_instance_t * pnet )
+bool_t net_instance_init( ego_net_instance * pnet )
 {
     if ( NULL == pnet ) return bfalse;
 
@@ -2252,7 +2252,7 @@ bool_t net_instance_init( net_instance_t * pnet )
 //--------------------------------------------------------------------------------------------
 CHR_REF pla_get_ichr( const PLA_REF by_reference iplayer )
 {
-    player_t * pplayer;
+    ego_player * pplayer;
 
     if ( !VALID_PLA( iplayer ) ) return ( CHR_REF )MAX_CHR;
     pplayer = PlaStack.lst + iplayer;
@@ -2263,7 +2263,7 @@ CHR_REF pla_get_ichr( const PLA_REF by_reference iplayer )
 }
 
 //--------------------------------------------------------------------------------------------
-player_t* net_get_ppla( const CHR_REF by_reference ichr )
+ego_player* net_get_ppla( const CHR_REF by_reference ichr )
 {
     PLA_REF iplayer;
 
@@ -2278,7 +2278,7 @@ player_t* net_get_ppla( const CHR_REF by_reference ichr )
 //--------------------------------------------------------------------------------------------
 ego_chr  * pla_get_pchr( const PLA_REF by_reference iplayer )
 {
-    player_t * pplayer;
+    ego_player * pplayer;
 
     if ( !VALID_PLA( iplayer ) ) return NULL;
     pplayer = PlaStack.lst + iplayer;
@@ -2292,7 +2292,7 @@ ego_chr  * pla_get_pchr( const PLA_REF by_reference iplayer )
 latch_2d_t pla_convert_latch_2d( const PLA_REF by_reference iplayer, const latch_2d_t by_reference src )
 {
     latch_2d_t dst = LATCH_2D_INIT;
-    player_t * ppla;
+    ego_player * ppla;
 
     if ( !VALID_PLA( iplayer ) ) return dst;
     ppla = PlaStack.lst + iplayer;
@@ -2313,7 +2313,7 @@ void net_reset_players()
 }
 
 //--------------------------------------------------------------------------------------------
-void tlatch_ary_init( time_latch_t ary[], size_t len )
+void tlatch_ary_init( ego_time_latch ary[], size_t len )
 {
     size_t cnt;
 
@@ -2332,7 +2332,7 @@ void tlatch_ary_init( time_latch_t ary[], size_t len )
 }
 
 //--------------------------------------------------------------------------------------------
-player_t * pla_reinit( player_t * ppla )
+ego_player * pla_reinit( ego_player * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
@@ -2345,7 +2345,7 @@ player_t * pla_reinit( player_t * ppla )
 }
 
 //--------------------------------------------------------------------------------------------
-player_t * pla_dtor( player_t * ppla )
+ego_player * pla_dtor( ego_player * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
@@ -2362,7 +2362,7 @@ player_t * pla_dtor( player_t * ppla )
 }
 
 //--------------------------------------------------------------------------------------------
-player_t * pla_ctor( player_t * ppla )
+ego_player * pla_ctor( ego_player * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
@@ -2385,7 +2385,7 @@ player_t * pla_ctor( player_t * ppla )
 
 //--------------------------------------------------------------------------------------------
 // Sustain old movements to smooth play
-void input_device_add_latch( input_device_t * pdevice, latch_input_t latch )
+void input_device_add_latch( ego_input_device * pdevice, latch_input_t latch )
 {
     float dist;
 
@@ -2471,7 +2471,7 @@ void PlaStack_toggle_all_explore()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -2486,7 +2486,7 @@ void PlaStack_toggle_all_wizard()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -2502,7 +2502,7 @@ bool_t PlaStack_has_explore()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -2524,7 +2524,7 @@ bool_t PlaStack_has_wizard()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         if ( !ppla->valid ) continue;
 

@@ -47,7 +47,7 @@ struct s_display_item;
 //--------------------------------------------------------------------------------------------
 
 /// An element of the do-list, an all encompassing list of all objects to be drawn by the renderer
-struct do_list_data_t
+struct ego_do_list_data
 {
     float   dist;
     CHR_REF chr;
@@ -56,7 +56,7 @@ struct do_list_data_t
 //--------------------------------------------------------------------------------------------
 
 /// Structure for sorting both particles and characters based on their position from the camera
-struct obj_registry_entity_t
+struct ego_obj_registry_entity
 {
     CHR_REF ichr;
     PRT_REF iprt;
@@ -88,7 +88,7 @@ struct ego_GLvertex
 //--------------------------------------------------------------------------------------------
 
 // Which tiles are to be drawn, arranged by MPDFX_* bits
-struct renderlist_t
+struct ego_renderlist
 {
     ego_mpd   * pmesh;
 
@@ -110,7 +110,7 @@ struct renderlist_t
     Uint32  wat[MAXMESHRENDER];                      ///< ..., draws a water tile
 };
 
-extern renderlist_t renderlist;
+extern ego_renderlist renderlist;
 
 //--------------------------------------------------------------------------------------------
 //extern Uint8           lightdirectionlookup[65536];                        ///< For lighting characters
@@ -125,13 +125,13 @@ extern float           lighttoenviroy[256];                                ///< 
 extern int    msgtimechange;
 
 /// A display messages
-struct msg_t
+struct ego_msg
 {
     int             time;                            ///< The time for this message
     char            textdisplay[MESSAGESIZE];        ///< The displayed text
 };
 
-DECLARE_STATIC_ARY_TYPE( DisplayMsgAry, msg_t, MAX_MESSAGE );
+DECLARE_STATIC_ARY_TYPE( DisplayMsgAry, ego_msg, MAX_MESSAGE );
 
 DECLARE_EXTERN_STATIC_ARY( DisplayMsgAry, DisplayMsg );
 
@@ -162,7 +162,7 @@ extern ego_gfx_config gfx;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-extern obj_registry_entity_t dolist[DOLIST_SIZE];             ///< List of which characters to draw
+extern ego_obj_registry_entity dolist[DOLIST_SIZE];             ///< List of which characters to draw
 extern size_t                dolist_count;                  ///< How many in the list
 
 // Minimap stuff
@@ -237,14 +237,14 @@ ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb )
 
 #define LINE_COUNT 100
 
-struct line_data_t
+struct ego_line_data
 {
     fvec3_t   dst;
     fvec4_t   src, color;
     int time;
 };
 
-extern line_data_t line_list[LINE_COUNT];
+extern ego_line_data line_list[LINE_COUNT];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -328,7 +328,7 @@ int debug_printf( const char *format, ... );
 void renderlist_reset();
 void renderlist_make( ego_mpd   * pmesh, struct ego_camera * pcam );
 
-bool_t grid_lighting_interpolate( ego_mpd   * pmesh, lighting_cache_t * dst, float fx, float fy );
+bool_t grid_lighting_interpolate( ego_mpd   * pmesh, ego_lighting_cache * dst, float fx, float fy );
 float  grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff );
 
 int  get_free_line();

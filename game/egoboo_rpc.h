@@ -61,7 +61,7 @@ struct ego_rpc
 
 struct ego_tx_request : public ego_rpc
 {
-     // the function call parameters
+    // the function call parameters
     STRING filename;
     TX_REF itex_src;
     Uint32 key;
@@ -75,7 +75,7 @@ struct ego_tx_request : public ego_rpc
     static ego_tx_request * load_TxTexture( const char *filename, int itex_src, Uint32 key );
     static ego_tx_request * load_TxTitleImage( const char *filename );
 
-    static ego_rpc * get_rpc( ego_tx_request * ptr ) { return static_cast<ego_rpc *>(ptr); }
+    static ego_rpc * get_rpc( ego_tx_request * ptr ) { return static_cast<ego_rpc *>( ptr ); }
 };
 
 //--------------------------------------------------------------------------------------------

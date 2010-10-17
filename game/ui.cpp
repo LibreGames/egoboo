@@ -38,18 +38,18 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-extern const ui_Just_t ui_just_nothing    = { UI_JUST_NON, UI_JUST_NON };
-extern const ui_Just_t ui_just_topleft    = { UI_JUST_LOW, UI_JUST_LOW };
-extern const ui_Just_t ui_just_topcenter  = { UI_JUST_LOW, UI_JUST_MID };
-extern const ui_Just_t ui_just_topright   = { UI_JUST_LOW, UI_JUST_HGH };
-extern const ui_Just_t ui_just_centered   = { UI_JUST_MID, UI_JUST_MID };
-extern const ui_Just_t ui_just_centerleft = { UI_JUST_MID, UI_JUST_LOW };
+extern const ego_ui_Just ui_just_nothing    = { UI_JUST_NON, UI_JUST_NON };
+extern const ego_ui_Just ui_just_topleft    = { UI_JUST_LOW, UI_JUST_LOW };
+extern const ego_ui_Just ui_just_topcenter  = { UI_JUST_LOW, UI_JUST_MID };
+extern const ego_ui_Just ui_just_topright   = { UI_JUST_LOW, UI_JUST_HGH };
+extern const ego_ui_Just ui_just_centered   = { UI_JUST_MID, UI_JUST_MID };
+extern const ego_ui_Just ui_just_centerleft = { UI_JUST_MID, UI_JUST_LOW };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 #define UI_MAX_JOYSTICKS 8
 #define UI_CONTROL_TIMER 100
-struct ui_control_info_t
+struct ego_ui_control_info
 {
     int    timer;
     float  scr[2];
@@ -64,9 +64,9 @@ struct UiContext
     ui_id_t hot;
 
     // info on the mouse control
-    ui_control_info_t mouse;
-    ui_control_info_t joy;
-    ui_control_info_t joys[UI_MAX_JOYSTICKS];
+    ego_ui_control_info mouse;
+    ego_ui_control_info joy;
+    ego_ui_control_info joys[UI_MAX_JOYSTICKS];
 
     // Basic cursor state
     float cursor_X, cursor_Y;
@@ -109,8 +109,6 @@ static void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy )
 static void ui_joy_init();
 static void ui_cursor_update();
 static bool_t ui_joy_set( SDL_JoyAxisEvent * evt_ptr );
-
-static bool_t ui_Widget_update_text_pos( ui_Widget_t * pw );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -385,7 +383,7 @@ void ui_sethot( ui_id_t id )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_Widget_setActive( ui_Widget_t * pw )
+void ui_Widget::setActive( ui_Widget * pw )
 {
     if ( NULL == pw )
     {
@@ -396,7 +394,7 @@ void ui_Widget_setActive( ui_Widget_t * pw )
         ui_context.active = pw->id;
 
         pw->timeout = egoboo_get_ticks() + 100;
-        if ( ui_Widget_LatchMaskTest( pw, UI_LATCH_CLICKED ) )
+        if ( ui_Widget::LatchMask_Test( pw, UI_LATCH_CLICKED ) )
         {
             // use exclusive or to flip the bit
             pw->latch_state ^= UI_LATCH_CLICKED;
@@ -405,7 +403,7 @@ void ui_Widget_setActive( ui_Widget_t * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_Widget_setHot( ui_Widget_t * pw )
+void ui_Widget::setHot( ui_Widget * pw )
 {
     if ( NULL == pw )
     {
@@ -417,7 +415,7 @@ void ui_Widget_setHot( ui_Widget_t * pw )
         {
             pw->timeout = egoboo_get_ticks() + 100;
 
-            if ( ui_Widget_LatchMaskTest( pw, UI_LATCH_MOUSEOVER ) && ui_context.hot != pw->id )
+            if ( ui_Widget::LatchMask_Test( pw, UI_LATCH_MOUSEOVER ) && ui_context.hot != pw->id )
             {
                 pw->latch_state |= UI_LATCH_MOUSEOVER;
             };
@@ -479,7 +477,7 @@ ui_buttonValues ui_buttonBehavior( ui_id_t id, float vx, float vy, float vwidth,
 }
 
 //--------------------------------------------------------------------------------------------
-ui_buttonValues ui_Widget_Behavior( ui_Widget_t * pWidget )
+ui_buttonValues ui_Widget::Behavior( ui_Widget * pWidget )
 {
     ui_buttonValues result = BUTTON_NOCHANGE;
 
@@ -490,7 +488,7 @@ ui_buttonValues ui_Widget_Behavior( ui_Widget_t * pWidget )
     // If the mouse is over the button, try and set hotness so that it can be cursor_clicked
     if ( ui_mouseInside( pWidget->vx, pWidget->vy, pWidget->vwidth, pWidget->vheight ) )
     {
-        ui_Widget_setHot( pWidget );
+        ui_Widget::setHot( pWidget );
     }
 
     // Check to see if the button gets cursor_clicked on
@@ -499,7 +497,7 @@ ui_buttonValues ui_Widget_Behavior( ui_Widget_t * pWidget )
         if ( 1 == ui_context.cursor_Released )
         {
             // mouse button up
-            ui_Widget_setActive( NULL );
+            ui_Widget::setActive( NULL );
             result = BUTTON_UP;
         }
     }
@@ -508,7 +506,7 @@ ui_buttonValues ui_Widget_Behavior( ui_Widget_t * pWidget )
         if ( 1 == ui_context.cursor_Pressed )
         {
             // mouse button down
-            ui_Widget_setActive( pWidget );
+            ui_Widget::setActive( pWidget );
             result = BUTTON_DOWN;
         }
     }
@@ -615,7 +613,7 @@ void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vw
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_Widget_drawButton( ui_Widget_t * pw )
+void ui_Widget::drawButton( ui_Widget * pw )
 {
     const GLfloat * pcolor = NULL;
     bool_t ui_active, ui_hot;
@@ -634,8 +632,8 @@ void ui_Widget_drawButton( ui_Widget_t * pw )
 
         bool_t st_active, st_hot;
 
-        st_active = 0 != ( ui_Widget_LatchMaskTest( pw, UI_LATCH_CLICKED ) & pw->latch_state );
-        st_hot    = 0 != ( ui_Widget_LatchMaskTest( pw, UI_LATCH_MOUSEOVER ) & pw->latch_state );
+        st_active = 0 != ( ui_Widget::LatchMask_Test( pw, UI_LATCH_CLICKED ) & pw->latch_state );
+        st_hot    = 0 != ( ui_Widget::LatchMask_Test( pw, UI_LATCH_MOUSEOVER ) & pw->latch_state );
 
         if ( ui_active || st_active )
         {
@@ -672,7 +670,7 @@ void ui_Widget_drawButton( ui_Widget_t * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_Widget_drawImage( ui_Widget_t * pw )
+void ui_Widget::drawImage( ui_Widget * pw )
 {
     if ( NULL != pw && NULL != pw->img )
     {
@@ -809,7 +807,7 @@ display_list_t * ui_updateTextBox_literal( display_list_t * tx_lst, TTF_Font * t
     bool_t  local_dspl_lst;
 
     // clear out any existing tx_lst
-    if ( NULL != tx_lst ) tx_lst = display_list_clear( tx_lst );
+    if ( NULL != tx_lst ) tx_lst = display_list_dealloc( tx_lst );
 
     // use the default ui font?
     if ( NULL == ttf_ptr ) ttf_ptr = ui_getFont();
@@ -848,7 +846,7 @@ display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr,
     char text[4096];
 
     // clear out any existing tx_lst
-    if ( NULL != tx_lst ) tx_lst = display_list_clear( tx_lst );
+    if ( NULL != tx_lst ) tx_lst = display_list_dealloc( tx_lst );
 
     // convert the text string
     vsnprintf_rv = vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
@@ -1069,41 +1067,41 @@ ui_buttonValues ui_doImageButtonWithText( ui_id_t id, display_item_t * tx_ptr, o
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ui_buttonValues ui_doWidget( ui_Widget_t * pw )
+ui_buttonValues ui_Widget::Run( ui_Widget * pw )
 {
     ui_buttonValues result;
 
     float img_w;
 
     // Do all the logic type work for the button
-    result = ui_Widget_Behavior( pw );
+    result = ui_Widget::Behavior( pw );
 
     // Draw the button part of the button
-    if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_BUTTON ) )
+    if ( 0 != ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_BUTTON ) )
     {
-        ui_Widget_drawButton( pw );
+        ui_Widget::drawButton( pw );
     }
 
     // draw any image on the left hand side of the button
     img_w = 0;
-    if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
+    if ( 0 != ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
     {
-        ui_Widget_t wtmp;
+        ui_Widget wtmp;
 
         // Draw the image part
         GL_DEBUG( glColor3f )( 1, 1, 1 );
 
-        ui_Widget_shrink( &wtmp, pw, 5 );
+        ui_Widget::shrink( &wtmp, pw, 5 );
         wtmp.vwidth = wtmp.vheight;
 
-        ui_Widget_drawImage( &wtmp );
+        ui_Widget::drawImage( &wtmp );
 
         // get the non-virtual image width
         img_w = pw->img->imgW * ui_context.aw;
     }
 
     // And draw the text on the right hand side of any image
-    if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_TEXT ) && NULL != pw->tx_lst )
+    if ( 0 != ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_TEXT ) && NULL != pw->tx_lst )
     {
         GL_DEBUG( glColor3f )( 1, 1, 1 );
         display_list_draw( pw->tx_lst );
@@ -1113,18 +1111,18 @@ ui_buttonValues ui_doWidget( ui_Widget_t * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_copy( ui_Widget_t * pw2, ui_Widget_t * pw1 )
+bool_t ui_Widget::copy( ui_Widget * pw2, ui_Widget * pw1 )
 {
     if ( NULL == pw2 || NULL == pw1 ) return bfalse;
-    return NULL != memcpy( pw2, pw1, sizeof( ui_Widget_t ) );
+    return NULL != memcpy( pw2, pw1, sizeof( ui_Widget ) );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_shrink( ui_Widget_t * pw2, ui_Widget_t * pw1, float pixels )
+bool_t ui_Widget::shrink( ui_Widget * pw2, ui_Widget * pw1, float pixels )
 {
     if ( NULL == pw2 || NULL == pw1 ) return bfalse;
 
-    if ( !ui_Widget_copy( pw2, pw1 ) ) return bfalse;
+    if ( !ui_Widget::copy( pw2, pw1 ) ) return bfalse;
 
     pw2->vx += pixels;
     pw2->vy += pixels;
@@ -1138,7 +1136,7 @@ bool_t ui_Widget_shrink( ui_Widget_t * pw2, ui_Widget_t * pw1, float pixels )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_init( ui_Widget_t * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight )
+bool_t ui_Widget::init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1162,16 +1160,16 @@ bool_t ui_Widget_init( ui_Widget_t * pw, ui_id_t id, TTF_Font * ttf_ptr, const c
     pw->tx_lst = display_list_ctor( pw->tx_lst, MAX_WIDGET_TEXT );
 
     // set any image
-    ui_Widget_set_img( pw, ui_just_centered, img );
+    ui_Widget::set_img( pw, ui_just_centered, img );
 
     // set any text
-    ui_Widget_set_text( pw, ui_just_topcenter, ttf_ptr, text );
+    ui_Widget::set_text( pw, ui_just_topcenter, ttf_ptr, text );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_LatchMaskAdd( ui_Widget_t * pw, BIT_FIELD mbits )
+bool_t ui_Widget::LatchMask_Add( ui_Widget * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1182,7 +1180,7 @@ bool_t ui_Widget_LatchMaskAdd( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_LatchMaskRemove( ui_Widget_t * pw, BIT_FIELD mbits )
+bool_t ui_Widget::LatchMask_Remove( ui_Widget * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1193,7 +1191,7 @@ bool_t ui_Widget_LatchMaskRemove( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_LatchMaskSet( ui_Widget_t * pw, BIT_FIELD mbits )
+bool_t ui_Widget::LatchMask_Set( ui_Widget * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1204,7 +1202,7 @@ bool_t ui_Widget_LatchMaskSet( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-BIT_FIELD ui_Widget_LatchMaskTest( ui_Widget_t * pw, BIT_FIELD mbits )
+BIT_FIELD ui_Widget::LatchMask_Test( ui_Widget * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1212,7 +1210,7 @@ BIT_FIELD ui_Widget_LatchMaskTest( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_DisplayMaskAdd( ui_Widget_t * pw, BIT_FIELD mbits )
+bool_t ui_Widget::DisplayMask_Add( ui_Widget * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1222,7 +1220,7 @@ bool_t ui_Widget_DisplayMaskAdd( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_DisplayMaskRemove( ui_Widget_t * pw, BIT_FIELD mbits )
+bool_t ui_Widget::DisplayMask_Remove( ui_Widget * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1232,7 +1230,7 @@ bool_t ui_Widget_DisplayMaskRemove( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_DisplayMaskSet( ui_Widget_t * pw, BIT_FIELD mbits )
+bool_t ui_Widget::DisplayMask_Set( ui_Widget * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1242,7 +1240,7 @@ bool_t ui_Widget_DisplayMaskSet( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-BIT_FIELD ui_Widget_DisplayMaskTest( ui_Widget_t * pw, BIT_FIELD mbits )
+BIT_FIELD ui_Widget::DisplayMask_Test( ui_Widget * pw, BIT_FIELD mbits )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1250,7 +1248,7 @@ BIT_FIELD ui_Widget_DisplayMaskTest( ui_Widget_t * pw, BIT_FIELD mbits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_update_bound( ui_Widget_t * pw, frect_t * pbound )
+bool_t ui_Widget::update_bound( ui_Widget * pw, frect_t * pbound )
 {
     int   cnt_w = 0;
     float img_w, img_h;
@@ -1262,7 +1260,7 @@ bool_t ui_Widget_update_bound( ui_Widget_t * pw, frect_t * pbound )
     // grab the existing image pbound
     img_w = 0.0f;
     img_h = 0.0f;
-    if ( ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
+    if ( ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
     {
         img_w = pw->img->imgW;
         img_h = pw->img->imgH;
@@ -1273,7 +1271,7 @@ bool_t ui_Widget_update_bound( ui_Widget_t * pw, frect_t * pbound )
     // grab the existing text pbound
     txt_w = 0.0f;
     txt_h = 0.0f;
-    if ( ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_TEXT ) && NULL != pw->tx_lst )
+    if ( ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_TEXT ) && NULL != pw->tx_lst )
     {
         frect_t tmp;
 
@@ -1288,7 +1286,7 @@ bool_t ui_Widget_update_bound( ui_Widget_t * pw, frect_t * pbound )
     // grab the existing button bound, if there is nothing else in the widget
     but_w = 30.0f;
     but_h = 30.0f;
-    if ( 0 == cnt_w && ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_BUTTON ) )
+    if ( 0 == cnt_w && ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_BUTTON ) )
     {
         but_w = MAX( but_w, pw->vwidth );
         but_h = MAX( but_h, pw->vheight );
@@ -1320,7 +1318,7 @@ bool_t ui_Widget_update_bound( ui_Widget_t * pw, frect_t * pbound )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_bound( ui_Widget_t * pw, float x, float y, float w, float h )
+bool_t ui_Widget::set_bound( ui_Widget * pw, float x, float y, float w, float h )
 {
     /// @details BB@> render the text string to a SDL_Surface
 
@@ -1339,7 +1337,7 @@ bool_t ui_Widget_set_bound( ui_Widget_t * pw, float x, float y, float w, float h
     {
         frect_t tmp;
 
-        ui_Widget_update_bound( pw, &tmp );
+        ui_Widget::update_bound( pw, &tmp );
 
         if ( w <= 0 ) size.w = tmp.w;
         if ( h <= 0 ) size.h = tmp.h;
@@ -1352,21 +1350,21 @@ bool_t ui_Widget_set_bound( ui_Widget_t * pw, float x, float y, float w, float h
     pw->vheight = MAX( 30, size.h );
 
     // update the text position
-    ui_Widget_update_text_pos( pw );
+    ui_Widget::update_text_pos( pw );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_button( ui_Widget_t * pw, float x, float y, float w, float h )
+bool_t ui_Widget::set_button( ui_Widget * pw, float x, float y, float w, float h )
 {
     bool_t rv;
 
     rv = bfalse;
-    if ( ui_Widget_set_bound( pw, x, y, w, h ) )
+    if ( ui_Widget::set_bound( pw, x, y, w, h ) )
     {
         // tell the button to display
-        ui_Widget_DisplayMaskAdd( pw, UI_DISPLAY_BUTTON );
+        ui_Widget::DisplayMask_Add( pw, UI_DISPLAY_BUTTON );
 
         rv = btrue;
     }
@@ -1375,7 +1373,7 @@ bool_t ui_Widget_set_button( ui_Widget_t * pw, float x, float y, float w, float 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_pos( ui_Widget_t * pw, float x, float y )
+bool_t ui_Widget::set_pos( ui_Widget * pw, float x, float y )
 {
     float  dx, dy;
 
@@ -1391,7 +1389,7 @@ bool_t ui_Widget_set_pos( ui_Widget_t * pw, float x, float y )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_id( ui_Widget_t * pw, ui_id_t id )
+bool_t ui_Widget::set_id( ui_Widget * pw, ui_id_t id )
 {
     /// @details BB@>
 
@@ -1403,12 +1401,12 @@ bool_t ui_Widget_set_id( ui_Widget_t * pw, ui_id_t id )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_img( ui_Widget_t * pw, const ui_Just_t just, oglx_texture_t *img )
+bool_t ui_Widget::set_img( ui_Widget * pw, const ego_ui_Just just, oglx_texture_t *img )
 {
     if ( NULL == pw ) return bfalse;
 
     // tell the widget not to dosplay an image
-    ui_Widget_DisplayMaskRemove( pw, UI_DISPLAY_IMAGE );
+    ui_Widget::DisplayMask_Remove( pw, UI_DISPLAY_IMAGE );
 
     if ( NULL == img ) return btrue;
 
@@ -1417,13 +1415,13 @@ bool_t ui_Widget_set_img( ui_Widget_t * pw, const ui_Just_t just, oglx_texture_t
     pw->img_just = just;
 
     // tell the ui to display the image
-    ui_Widget_DisplayMaskAdd( pw, UI_DISPLAY_IMAGE );
+    ui_Widget::DisplayMask_Add( pw, UI_DISPLAY_IMAGE );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
+bool_t ui_Widget::update_text_pos( ui_Widget * pw )
 {
     int   just;
     float diff, new_x, new_y;
@@ -1442,14 +1440,14 @@ bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
     w_vbound.h = pw->vheight;
 
     // adjust the available region so that it is to the left of any image
-    if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
+    if ( 0 != ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
     {
         w_vbound.x += 5 + pw->img->imgW;
         w_vbound.w -= 5 + pw->img->imgW;
     }
 
     // shrink this region to make a 5 pixel border
-    if ( 0 != ui_Widget_DisplayMaskTest( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
+    if ( 0 != ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
     {
         w_vbound.x +=  5;
         w_vbound.w -= 10;
@@ -1536,7 +1534,29 @@ bool_t ui_Widget_update_text_pos( ui_Widget_t * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_free( ui_Widget_t * pw )
+ui_Widget * ui_Widget::ctor( ui_Widget * pw, ui_id_t id )
+{
+    if ( NULL == pw ) return pw;
+
+    memset( pw, 0, sizeof( *pw ) );
+    pw->id = id;
+
+    return pw;
+}
+
+//--------------------------------------------------------------------------------------------
+ui_Widget * ui_Widget::dtor( ui_Widget * pw )
+{
+    if ( NULL == pw ) return pw;
+
+    dealloc( pw );
+    ui_Widget::ctor( pw );
+
+    return pw;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ui_Widget::dealloc( ui_Widget * pw )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1551,7 +1571,7 @@ bool_t ui_Widget_free( ui_Widget_t * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_vtext( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * ttf_ptr, const char * format, va_list args )
+bool_t ui_Widget::set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, va_list args )
 {
     int lines = 0;
 
@@ -1567,7 +1587,7 @@ bool_t ui_Widget_set_vtext( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * t
     pw->tx_lst = display_list_dtor( pw->tx_lst, btrue );
 
     // tell the widget not to dosplay text
-    ui_Widget_DisplayMaskRemove( pw, UI_DISPLAY_TEXT );
+    ui_Widget::DisplayMask_Remove( pw, UI_DISPLAY_TEXT );
     pw->tx_just.horz = UI_JUST_NON;
     pw->tx_just.vert = UI_JUST_NON;
 
@@ -1590,20 +1610,20 @@ bool_t ui_Widget_set_vtext( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * t
         pw->tx_just = just;
 
         // adjust the text position
-        ui_Widget_update_text_pos( pw );
+        ui_Widget::update_text_pos( pw );
     }
 
     // set the visibility of this component
     if ( lines > 0 )
     {
-        ui_Widget_DisplayMaskAdd( pw, UI_DISPLAY_TEXT );
+        ui_Widget::DisplayMask_Add( pw, UI_DISPLAY_TEXT );
     }
 
     return lines > 0;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget_set_text( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * ttf_ptr, const char * format, ... )
+bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, ... )
 {
     /// @details BB@> render the text string to a ogl texture
 
@@ -1617,10 +1637,10 @@ bool_t ui_Widget_set_text( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * tt
     }
 
     va_start( args, format );
-    retval = ui_Widget_set_vtext( pw, just, ttf_ptr, format, args );
+    retval = ui_Widget::set_vtext( pw, just, ttf_ptr, format, args );
     va_end( args );
 
-    ui_Widget_update_text_pos( pw );
+    ui_Widget::update_text_pos( pw );
 
     return retval;
 }
@@ -1722,12 +1742,12 @@ void ui_joy_init()
 
     for ( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
     {
-        memset( ui_context.joys + cnt, 0, sizeof( ui_control_info_t ) );
+        memset( ui_context.joys + cnt, 0, sizeof( ego_ui_control_info ) );
     }
 
-    memset( &( ui_context.joy ), 0, sizeof( ui_control_info_t ) );
+    memset( &( ui_context.joy ), 0, sizeof( ego_ui_control_info ) );
 
-    memset( &( ui_context.mouse ), 0, sizeof( ui_control_info_t ) );
+    memset( &( ui_context.mouse ), 0, sizeof( ego_ui_control_info ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1735,7 +1755,7 @@ void ui_cursor_update()
 {
     int   cnt;
 
-    ui_control_info_t * pctrl = NULL;
+    ego_ui_control_info * pctrl = NULL;
 
     // assume no one is in control
     pctrl = NULL;
@@ -1743,7 +1763,7 @@ void ui_cursor_update()
     // find the best most controlling joystick
     for ( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
     {
-        ui_control_info_t * pinfo = ui_context.joys + cnt;
+        ego_ui_control_info * pinfo = ui_context.joys + cnt;
 
         if ( pinfo->timer <= 0 ) continue;
 
@@ -1784,7 +1804,7 @@ void ui_cursor_update()
     // decrement the joy timers
     for ( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
     {
-        ui_control_info_t * pinfo = ui_context.joys + cnt;
+        ego_ui_control_info * pinfo = ui_context.joys + cnt;
 
         if ( pinfo->timer > 0 )
         {
@@ -1812,7 +1832,7 @@ bool_t ui_joy_set( SDL_JoyAxisEvent * evt_ptr )
     const int   dead_zone = 0x8000 >> 4;
     const float sensitivity = 10.0f;
 
-    ui_control_info_t * pctrl   = NULL;
+    ego_ui_control_info * pctrl   = NULL;
     bool_t          updated = bfalse;
     int             value   = 0;
 

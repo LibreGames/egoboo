@@ -72,30 +72,30 @@ enum e_ui_just
     UI_JUST_HGH
 };
 
-struct ui_Just_t
+struct ego_ui_Just
 {
     unsigned horz: 2;
     unsigned vert: 2;
 };
 
-extern const ui_Just_t ui_just_nothing;
-extern const ui_Just_t ui_just_topleft;
-extern const ui_Just_t ui_just_topcenter;
-extern const ui_Just_t ui_just_topright;
-extern const ui_Just_t ui_just_centered;
-extern const ui_Just_t ui_just_centerleft;
+extern const ego_ui_Just ui_just_nothing;
+extern const ego_ui_Just ui_just_topleft;
+extern const ego_ui_Just ui_just_topcenter;
+extern const ego_ui_Just ui_just_topright;
+extern const ego_ui_Just ui_just_centered;
+extern const ego_ui_Just ui_just_centerleft;
 
 /// The data describing the state of a UI widget
-struct ui_Widget_t
+struct ui_Widget
 {
     ui_id_t         id;
 
     // text info
-    ui_Just_t        tx_just;
+    ego_ui_Just      tx_just;
     display_list_t * tx_lst;
 
     // image info
-    ui_Just_t       img_just;
+    ego_ui_Just     img_just;
     oglx_texture_t *img;
 
     // which latches to keep track of
@@ -108,29 +108,51 @@ struct ui_Widget_t
     // virtual screen coordinates
     float         vx, vy;
     float         vwidth, vheight;
+
+    ui_Widget()  { ui_Widget::ctor( this ); }
+    ~ui_Widget() { ui_Widget::dtor( this ); }
+
+    static ui_Widget * ctor( ui_Widget * pw, ui_id_t id = UI_Nothing );
+    static ui_Widget * dtor( ui_Widget * pw );
+
+    static bool_t dealloc( ui_Widget * pw );
+
+    static ui_buttonValues Behavior( ui_Widget * pw );
+    static ui_buttonValues Run( ui_Widget * pw );
+
+    static bool_t copy( ui_Widget * pw2, ui_Widget * pw1 );
+    static bool_t shrink( ui_Widget * pw2, ui_Widget * pw1, float pixels );
+    static bool_t init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float x, float y, float width, float height );
+
+    static bool_t    LatchMask_Add( ui_Widget * pw, BIT_FIELD mbits );
+    static bool_t    LatchMask_Remove( ui_Widget * pw, BIT_FIELD mbits );
+    static bool_t    LatchMask_Set( ui_Widget * pw, BIT_FIELD mbits );
+    static BIT_FIELD LatchMask_Test( ui_Widget * pw, BIT_FIELD mbits );
+
+    static bool_t    DisplayMask_Add( ui_Widget * pw, BIT_FIELD mbits );
+    static bool_t    DisplayMask_Remove( ui_Widget * pw, BIT_FIELD mbits );
+    static bool_t    DisplayMask_Set( ui_Widget * pw, BIT_FIELD mbits );
+    static BIT_FIELD DisplayMask_Test( ui_Widget * pw, BIT_FIELD mbits );
+
+    static bool_t set_text( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, ... );
+    static bool_t set_img( ui_Widget * pw, const ego_ui_Just just, oglx_texture_t *img );
+    static bool_t set_bound( ui_Widget * pw, float x, float y, float w, float h );
+    static bool_t set_button( ui_Widget * pw, float x, float y, float w, float h );
+    static bool_t set_pos( ui_Widget * pw, float x, float y );
+    static bool_t set_id( ui_Widget * pw, ui_id_t id );
+
+private:
+    static void   setActive( ui_Widget * pw );
+    static void   setHot( ui_Widget * pw );
+
+    static void drawButton( ui_Widget * pw );
+    static void drawImage( ui_Widget * pw );
+
+    static bool_t update_text_pos( ui_Widget * pw );
+    static bool_t update_bound( ui_Widget * pw, frect_t * pbound );
+    static bool_t set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, va_list args );
 };
 
-bool_t ui_Widget_free( ui_Widget_t * pw );
-bool_t ui_Widget_copy( ui_Widget_t * pw2, ui_Widget_t * pw1 );
-bool_t ui_Widget_shrink( ui_Widget_t * pw2, ui_Widget_t * pw1, float pixels );
-bool_t ui_Widget_init( ui_Widget_t * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float x, float y, float width, float height );
-
-bool_t    ui_Widget_LatchMaskAdd( ui_Widget_t * pw, BIT_FIELD mbits );
-bool_t    ui_Widget_LatchMaskRemove( ui_Widget_t * pw, BIT_FIELD mbits );
-bool_t    ui_Widget_LatchMaskSet( ui_Widget_t * pw, BIT_FIELD mbits );
-BIT_FIELD ui_Widget_LatchMaskTest( ui_Widget_t * pw, BIT_FIELD mbits );
-
-bool_t    ui_Widget_DisplayMaskAdd( ui_Widget_t * pw, BIT_FIELD mbits );
-bool_t    ui_Widget_DisplayMaskRemove( ui_Widget_t * pw, BIT_FIELD mbits );
-bool_t    ui_Widget_DisplayMaskSet( ui_Widget_t * pw, BIT_FIELD mbits );
-BIT_FIELD ui_Widget_DisplayMaskTest( ui_Widget_t * pw, BIT_FIELD mbits );
-
-bool_t ui_Widget_set_text( ui_Widget_t * pw, const ui_Just_t just, TTF_Font * ttf_ptr, const char * format, ... );
-bool_t ui_Widget_set_img( ui_Widget_t * pw, const ui_Just_t just, oglx_texture_t *img );
-bool_t ui_Widget_set_bound( ui_Widget_t * pw, float x, float y, float w, float h );
-bool_t ui_Widget_set_button( ui_Widget_t * pw, float x, float y, float w, float h );
-bool_t ui_Widget_set_pos( ui_Widget_t * pw, float x, float y );
-bool_t ui_Widget_set_id( ui_Widget_t * pw, ui_id_t id );
 
 // Initialize or shut down the ui system
 int  ui_begin( const char *default_font, int default_font_size );
@@ -145,7 +167,6 @@ void ui_beginFrame( float deltaTime );
 void ui_endFrame();
 
 // UI controls
-ui_buttonValues ui_doWidget( ui_Widget_t * pWidget );
 ui_buttonValues ui_doButton( ui_id_t id, display_item_t * tx_ptr, const char *text, float x, float y, float width, float height );
 ui_buttonValues ui_doImageButton( ui_id_t id, oglx_texture_t *img, float x, float y, float width, float height, GLXvector3f image_tint );
 ui_buttonValues ui_doImageButtonWithText( ui_id_t id, display_item_t * tx_ptr, oglx_texture_t *img, const char *text, float x, float y, float width, float height );
@@ -165,7 +186,6 @@ TTF_Font * ui_setFont( TTF_Font * font );
 
 // Behaviors
 ui_buttonValues  ui_buttonBehavior( ui_id_t id, float x, float y, float width, float height );
-ui_buttonValues  ui_Widget_Behavior( ui_Widget_t * pw );
 
 // Drawing
 void   ui_drawButton( ui_id_t id, float x, float y, float width, float height, const GLXvector4f pcolor );

@@ -64,21 +64,21 @@ struct ego_object_state
 
     ego_object_actions_t action;      ///< What action is it performing?
 
-    static ego_object_state * ctor(  ego_object_state * );
-    static ego_object_state * dtor(  ego_object_state * );
-    static ego_object_state * clear(  ego_object_state * ptr );
+    static ego_object_state * ctor( ego_object_state * );
+    static ego_object_state * dtor( ego_object_state * );
+    static ego_object_state * clear( ego_object_state * ptr );
 
-    static ego_object_state * set_valid(  ego_object_state *, bool_t val );
+    static ego_object_state * set_valid( ego_object_state *, bool_t val );
 
-    static ego_object_state * end_constructing(  ego_object_state * );
-    static ego_object_state * end_initialization(  ego_object_state * );
-    static ego_object_state * end_processing(  ego_object_state * );
-    static ego_object_state * end_deinitializing(  ego_object_state * );
-    static ego_object_state * end_destructing(  ego_object_state * );
-    static ego_object_state * end_killing(  ego_object_state * );
-    static ego_object_state * invalidate(  ego_object_state * );
+    static ego_object_state * end_constructing( ego_object_state * );
+    static ego_object_state * end_initialization( ego_object_state * );
+    static ego_object_state * end_processing( ego_object_state * );
+    static ego_object_state * end_deinitializing( ego_object_state * );
+    static ego_object_state * end_destructing( ego_object_state * );
+    static ego_object_state * end_killing( ego_object_state * );
+    static ego_object_state * invalidate( ego_object_state * );
 
-    static ego_object_state * begin_waiting(  ego_object_state * );
+    static ego_object_state * begin_waiting( ego_object_state * );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -124,28 +124,28 @@ struct ego_object
 
     static Uint32 spawn_depth;
 
-    static ego_object * ctor(  ego_object * pbase, size_t index );
-    static ego_object * dtor(  ego_object * pbase );
+    static ego_object * ctor( ego_object * pbase, size_t index );
+    static ego_object * dtor( ego_object * pbase );
 
-    static ego_object * allocate(  ego_object * pbase, size_t index );
-    static ego_object * deallocate(  ego_object * pbase );
-    static ego_object * invalidate(  ego_object * );
-    static ego_object * end_constructing(  ego_object * );
-    static ego_object * end_initializing(  ego_object * );
-    static ego_object * end_processing(  ego_object * );
-    static ego_object * end_deinitializing(  ego_object * );
-    static ego_object * end_destructing(  ego_object * );
-    static ego_object * end_killing(  ego_object * );
+    static ego_object * allocate( ego_object * pbase, size_t index );
+    static ego_object * deallocate( ego_object * pbase );
+    static ego_object * invalidate( ego_object * );
+    static ego_object * end_constructing( ego_object * );
+    static ego_object * end_initializing( ego_object * );
+    static ego_object * end_processing( ego_object * );
+    static ego_object * end_deinitializing( ego_object * );
+    static ego_object * end_destructing( ego_object * );
+    static ego_object * end_killing( ego_object * );
 
-    static ego_object * begin_processing(  ego_object *, const char * name );
-    static ego_object * validate(  ego_object * pbase );
-    static ego_object * begin_waiting(  ego_object * pbase );
+    static ego_object * begin_processing( ego_object *, const char * name );
+    static ego_object * validate( ego_object * pbase );
+    static ego_object * begin_waiting( ego_object * pbase );
 
-    static ego_object * req_terminate(  ego_object * pbase );
-    static ego_object * grant_terminate(  ego_object * pbase );
-    static ego_object * set_spawning(  ego_object * pbase, bool_t val );
+    static ego_object * req_terminate( ego_object * pbase );
+    static ego_object * grant_terminate( ego_object * pbase );
+    static ego_object * set_spawning( ego_object * pbase, bool_t val );
 
-    static ego_object * grant_on(  ego_object * pbase );
+    static ego_object * grant_on( ego_object * pbase );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -175,7 +175,7 @@ struct ego_object
             ego_object::spawn_depth++;\
         }\
     }\
-
+     
 #define POBJ_END_SPAWN( PDATA ) \
     if( (NULL != (PDATA)) && FLAG_VALID_PBASE(POBJ_GET_PBASE(PDATA)) ) \
     {\
@@ -185,7 +185,7 @@ struct ego_object
             ego_object::spawn_depth--;\
         }\
     }\
-
+     
 /// Is the object flagged as allocated?
 #define FLAG_ALLOCATED_PBASE( PBASE ) ( (PBASE)->lst_state.allocated )
 /// Is the object allocated?

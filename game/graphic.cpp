@@ -83,7 +83,7 @@
 //--------------------------------------------------------------------------------------------
 
 /// Structure for keeping track of which dynalights are visible
-struct dynalight_registry_t
+struct ego_dynalight_registry
 {
     int         reference;
     ego_frect_t bound;
@@ -109,7 +109,7 @@ static float                   cornerhighy;
 
 static float       dyna_distancetobeat;           // The number to beat
 static int         dyna_list_count = 0;           // Number of dynamic lights
-static dynalight_t dyna_list[TOTAL_MAX_DYNA];
+static ego_dynalight dyna_list[TOTAL_MAX_DYNA];
 
 // Interface stuff
 static ego_irect_t         iconrect;                   // The 32x32 icon rectangle
@@ -181,9 +181,9 @@ SDLX_video_parameters_t sdl_vparam;
 oglx_video_parameters_t ogl_vparam;
 
 size_t                dolist_count = 0;
-obj_registry_entity_t dolist[DOLIST_SIZE];
+ego_obj_registry_entity dolist[DOLIST_SIZE];
 
-renderlist_t     renderlist = {0, 0, 0, 0, 0, 0};         // zero all the counters at startup
+ego_renderlist     renderlist = {0, 0, 0, 0, 0, 0};         // zero all the counters at startup
 
 float            indextoenvirox[EGO_NORMAL_COUNT];
 float            lighttoenviroy[256];
@@ -206,7 +206,7 @@ int     msgtimechange = 0;
 
 INSTANTIATE_STATIC_ARY( DisplayMsgAry, DisplayMsg );
 
-line_data_t line_list[LINE_COUNT];
+ego_line_data line_list[LINE_COUNT];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -239,8 +239,8 @@ static void gfx_disable_texturing();
 static void gfx_begin_2d( void );
 static void gfx_end_2d( void );
 
-static void light_fans( renderlist_t * prlist );
-static void render_water( renderlist_t * prlist );
+static void light_fans( ego_renderlist * prlist );
+static void render_water( ego_renderlist * prlist );
 
 static void gfx_make_dynalist( ego_camera * pcam );
 
@@ -250,7 +250,7 @@ static void gfx_make_dynalist( ego_camera * pcam );
 
 gfx_config_data_t * gfx_get_config()
 {
-    return static_cast<gfx_config_data_t *>(&gfx);
+    return static_cast<gfx_config_data_t *>( &gfx );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -263,7 +263,7 @@ void _debug_print( const char *text )
     int          slot;
     const char * src;
     char       * dst, * dst_end;
-    msg_t      * pmsg;
+    ego_msg      * pmsg;
 
     if ( INVALID_CSTR( text ) ) return;
 
@@ -650,7 +650,7 @@ bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pc
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_config_data_init(gfx_config_data_t * pgfx)
+bool_t gfx_config_data_init( gfx_config_data_t * pgfx )
 {
     if ( NULL == pgfx ) return bfalse;
 
@@ -1465,7 +1465,7 @@ void draw_map()
             PLA_REF iplayer;
             for ( iplayer = 0; iplayer < MAX_PLAYER; iplayer++ )
             {
-                player_t * ppla = PlaStack.lst + iplayer;
+                ego_player * ppla = PlaStack.lst + iplayer;
                 if ( !ppla->valid ) continue;
 
                 if ( INPUT_BITS_NONE != ppla->device.bits && INGAME_CHR( ppla->index ) )
@@ -1605,7 +1605,7 @@ int draw_debug_character( CHR_REF ichr, int y )
 //--------------------------------------------------------------------------------------------
 int draw_debug_player( PLA_REF ipla, int y )
 {
-    player_t * ppla;
+    ego_player * ppla;
 
     if ( !VALID_PLA( ipla ) ) return y;
     ppla = PlaStack.lst + ipla;
@@ -1642,7 +1642,7 @@ int draw_debug( int y )
     ipla = ( PLA_REF )0;
     if ( VALID_PLA( ipla ) )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
         if ( DEFINED_CHR( ppla->index ) )
         {
             ego_chr * pchr = ChrList.lst + ppla->index;
@@ -2297,7 +2297,7 @@ void render_scene_init( ego_mpd   * pmesh, ego_camera * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_scene_mesh( renderlist_t * prlist )
+void render_scene_mesh( ego_renderlist * prlist )
 {
     /// @details BB@> draw the mesh and any reflected objects
 
@@ -2550,7 +2550,7 @@ void render_scene_solid()
         if ( TOTAL_MAX_PRT == dolist[cnt].iprt )
         {
             GLXvector4f tint;
-            chr_instance_t * pinst = ego_chr::get_pinstance( dolist[cnt].ichr );
+            ego_chr_instance * pinst = ego_chr::get_pinstance( dolist[cnt].ichr );
 
             if ( NULL != pinst && pinst->alpha == 255 && pinst->light == 255 )
             {
@@ -2596,7 +2596,7 @@ void render_scene_trans()
         {
             CHR_REF  ichr = dolist[rcnt].ichr;
             ego_chr * pchr = ChrList.lst + ichr;
-            chr_instance_t * pinst = &( pchr->inst );
+            ego_chr_instance * pinst = &( pchr->inst );
 
             GL_DEBUG( glEnable )( GL_CULL_FACE );         // GL_ENABLE_BIT
             GL_DEBUG( glFrontFace )( GL_CW );             // GL_POLYGON_BIT
@@ -3223,7 +3223,7 @@ float grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, 
     float u, v;
 
     ego_grid_info  * glist;
-    lighting_cache_t * cache_list[4];
+    ego_lighting_cache * cache_list[4];
 
     if ( NULL == pmesh ) return bfalse;
     glist = pmesh->gmem.grid_list;
@@ -3252,14 +3252,14 @@ float grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t grid_lighting_interpolate( ego_mpd   * pmesh, lighting_cache_t * dst, float fx, float fy )
+bool_t grid_lighting_interpolate( ego_mpd   * pmesh, ego_lighting_cache * dst, float fx, float fy )
 {
     int ix, iy, cnt;
     Uint32 fan[4];
     float u, v;
 
     ego_grid_info  * glist;
-    lighting_cache_t * cache_list[4];
+    ego_lighting_cache * cache_list[4];
 
     if ( NULL == pmesh ) return bfalse;
     glist = pmesh->gmem.grid_list;
@@ -4062,7 +4062,7 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr )
     Uint32 itile;
     ego_chr * pchr;
     ego_cap * pcap;
-    chr_instance_t * pinst;
+    ego_chr_instance * pinst;
 
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
 
@@ -4112,7 +4112,7 @@ bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF by_reference iprt )
 {
     /// ZZ@> This function puts a character in the list
     ego_prt * pprt;
-    prt_instance_t * pinst;
+    ego_prt_instance * pinst;
 
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
 
@@ -4249,14 +4249,14 @@ void dolist_sort( ego_camera * pcam, bool_t do_reflect )
     dolist_count = count;
 
     // use qsort to sort the list in-place
-    qsort( dolist, dolist_count, sizeof( obj_registry_entity_t ), obj_registry_entity_cmp );
+    qsort( dolist, dolist_count, sizeof( ego_obj_registry_entity ), obj_registry_entity_cmp );
 }
 
 //--------------------------------------------------------------------------------------------
 int obj_registry_entity_cmp( const void * pleft, const void * pright )
 {
-    obj_registry_entity_t * dleft  = ( obj_registry_entity_t * ) pleft;
-    obj_registry_entity_t * dright = ( obj_registry_entity_t * ) pright;
+    ego_obj_registry_entity * dleft  = ( ego_obj_registry_entity * ) pleft;
+    ego_obj_registry_entity * dright = ( ego_obj_registry_entity * ) pright;
 
     int   rv;
     float diff;
@@ -4935,7 +4935,7 @@ void flash_character( const CHR_REF by_reference character, Uint8 value )
 {
     /// @details ZZ@> This function sets a character's lighting
 
-    chr_instance_t * pinst = ego_chr::get_pinstance( character );
+    ego_chr_instance * pinst = ego_chr::get_pinstance( character );
 
     if ( NULL != pinst )
     {
@@ -5148,7 +5148,7 @@ void _flip_pages()
 //--------------------------------------------------------------------------------------------
 // LIGHTING FUNCTIONS
 //--------------------------------------------------------------------------------------------
-void light_fans( renderlist_t * prlist )
+void light_fans( ego_renderlist * prlist )
 {
     int    entry;
     Uint8  type;
@@ -5500,7 +5500,7 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
     lighting_vector_t global_lighting;
 
     int                  reg_count;
-    dynalight_registry_t reg[TOTAL_MAX_DYNA];
+    ego_dynalight_registry reg[TOTAL_MAX_DYNA];
 
     ego_frect_t mesh_bound, light_bound;
 
@@ -5554,7 +5554,7 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
         float radius;
         ego_frect_t ftmp;
 
-        dynalight_t * pdyna = dyna_list + cnt;
+        ego_dynalight * pdyna = dyna_list + cnt;
 
         if ( pdyna->falloff <= 0 ) continue;
 
@@ -5614,8 +5614,8 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
 
         if ( !resist_lighting_calculation )
         {
-            lighting_cache_t * pcache_old;
-            lighting_cache_t   cache_new;
+            ego_lighting_cache * pcache_old;
+            ego_lighting_cache   cache_new;
 
             int    dynalight_count = 0;
 
@@ -5656,7 +5656,7 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
                         for ( cnt = 0; cnt < reg_count; cnt++ )
                         {
                             fvec3_t       nrm;
-                            dynalight_t * pdyna;
+                            ego_dynalight * pdyna;
 
                             // does this dynamic light intersects this grid?
                             if ( fgrid_rect.xmin > reg[cnt].bound.xmax || fgrid_rect.xmax < reg[cnt].bound.xmin ) continue;
@@ -5692,7 +5692,7 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_water( renderlist_t * prlist )
+void render_water( ego_renderlist * prlist )
 {
     /// @details ZZ@> This function draws all of the water fans
 

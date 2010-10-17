@@ -62,15 +62,15 @@ INLINE bool_t get_depth_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bu
 INLINE bool_t get_depth_close_1( ego_oct_bb   cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, oct_vec_t depth );
 INLINE bool_t get_depth_close_2( ego_oct_bb   cv_a,   fvec3_t pos_a, ego_oct_bb     cv_b, fvec3_t pos_b, bool_t break_out, oct_vec_t depth );
 
-INLINE void phys_data_blank_accumulators( phys_data_t * pdata );
+INLINE void phys_data_blank_accumulators( ego_phys_data * pdata );
 
-INLINE bool_t phys_data_accumulate_apos_coll( phys_data_t * pdata, const fvec3_base_t acc );
-INLINE bool_t phys_data_accumulate_apos_plat( phys_data_t * pdata, const fvec3_base_t acc );
-INLINE bool_t phys_data_accumulate_avel( phys_data_t * pdata, const fvec3_base_t acc );
+INLINE bool_t phys_data_accumulate_apos_coll( ego_phys_data * pdata, const fvec3_base_t acc );
+INLINE bool_t phys_data_accumulate_apos_plat( ego_phys_data * pdata, const fvec3_base_t acc );
+INLINE bool_t phys_data_accumulate_avel( ego_phys_data * pdata, const fvec3_base_t acc );
 
-INLINE bool_t phys_data_accumulate_apos_coll_index( phys_data_t * pdata, const float acc, const int index );
-INLINE bool_t phys_data_accumulate_apos_plat_index( phys_data_t * pdata, const float acc, const int index );
-INLINE bool_t phys_data_accumulate_avel_index( phys_data_t * pdata, const float acc, const int index );
+INLINE bool_t phys_data_accumulate_apos_coll_index( ego_phys_data * pdata, const float acc, const int index );
+INLINE bool_t phys_data_accumulate_apos_plat_index( ego_phys_data * pdata, const float acc, const int index );
+INLINE bool_t phys_data_accumulate_avel_index( ego_phys_data * pdata, const float acc, const int index );
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
@@ -341,7 +341,7 @@ INLINE bool_t get_depth_2( ego_oct_bb   cv_a, fvec3_t pos_a, ego_oct_bb   cv_b, 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE void phys_data_blank_accumulators( phys_data_t * pdata )
+INLINE void phys_data_blank_accumulators( ego_phys_data * pdata )
 {
     if ( NULL == pdata ) return;
 
@@ -351,7 +351,7 @@ INLINE void phys_data_blank_accumulators( phys_data_t * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t phys_data_accumulate_avel( phys_data_t * pdata, const fvec3_base_t acc )
+INLINE bool_t phys_data_accumulate_avel( ego_phys_data * pdata, const fvec3_base_t acc )
 {
     if ( NULL == pdata ) return bfalse;
 
@@ -362,7 +362,7 @@ INLINE bool_t phys_data_accumulate_avel( phys_data_t * pdata, const fvec3_base_t
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t phys_data_accumulate_apos_coll( phys_data_t * pdata, const fvec3_base_t acc )
+INLINE bool_t phys_data_accumulate_apos_coll( ego_phys_data * pdata, const fvec3_base_t acc )
 {
     if ( NULL == pdata ) return bfalse;
 
@@ -373,7 +373,7 @@ INLINE bool_t phys_data_accumulate_apos_coll( phys_data_t * pdata, const fvec3_b
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t phys_data_accumulate_apos_plat( phys_data_t * pdata, const fvec3_base_t acc )
+INLINE bool_t phys_data_accumulate_apos_plat( ego_phys_data * pdata, const fvec3_base_t acc )
 {
     if ( NULL == pdata ) return bfalse;
 
@@ -384,7 +384,7 @@ INLINE bool_t phys_data_accumulate_apos_plat( phys_data_t * pdata, const fvec3_b
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t phys_data_accumulate_avel_index( phys_data_t * pdata, const float acc, const int index )
+INLINE bool_t phys_data_accumulate_avel_index( ego_phys_data * pdata, const float acc, const int index )
 {
     bool_t retval = bfalse;
 
@@ -405,7 +405,7 @@ INLINE bool_t phys_data_accumulate_avel_index( phys_data_t * pdata, const float 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t phys_data_accumulate_apos_coll_index( phys_data_t * pdata, const float acc, const int index )
+INLINE bool_t phys_data_accumulate_apos_coll_index( ego_phys_data * pdata, const float acc, const int index )
 {
     bool_t retval = bfalse;
 
@@ -426,7 +426,7 @@ INLINE bool_t phys_data_accumulate_apos_coll_index( phys_data_t * pdata, const f
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t phys_data_accumulate_apos_plat_index( phys_data_t * pdata, const float acc, const int index )
+INLINE bool_t phys_data_accumulate_apos_plat_index( ego_phys_data * pdata, const float acc, const int index )
 {
     bool_t retval = bfalse;
 

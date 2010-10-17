@@ -23,7 +23,8 @@
 #include <SDL_endian.h>
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 #if defined(_APPLE_)
@@ -32,7 +33,7 @@ extern "C" {
 
 /// define a ENDIAN_FLOAT() "function" to work on both big and little endian systems
 #if SDL_BYTEORDER != SDL_LIL_ENDIAN
-extern float ENDIAN_FLOAT( float X );
+    extern float ENDIAN_FLOAT( float X );
 #else
 #    define ENDIAN_FLOAT( X ) ( X )
 #endif

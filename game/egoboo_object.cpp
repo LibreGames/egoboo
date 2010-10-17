@@ -81,7 +81,7 @@ ego_object * ego_object::allocate( ego_object * pbase, size_t index )
 {
     list_object_state tmp_lst_state;
 
-    if( NULL == pbase ) return pbase;
+    if ( NULL == pbase ) return pbase;
 
     // we don't want to overwrite the list_object_state values since some of them belong to the
     // ChrList/PrtList/EncList rather than to the list_object_state

@@ -457,11 +457,11 @@ bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, ego_chr * pchr )
+ego_breadcrumb * breadcrumb_init_chr( ego_breadcrumb * bc, ego_chr * pchr )
 {
     if ( NULL == bc ) return bc;
 
-    memset( bc, 0, sizeof( breadcrumb_t ) );
+    memset( bc, 0, sizeof( ego_breadcrumb ) );
     bc->time = update_wld;
 
     if ( NULL == pchr ) return bc;
@@ -481,14 +481,14 @@ breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, ego_prt * pprt )
+ego_breadcrumb * breadcrumb_init_prt( ego_breadcrumb * bc, ego_prt * pprt )
 {
     BIT_FIELD bits = 0;
     ego_pip * ppip;
 
     if ( NULL == bc ) return bc;
 
-    memset( bc, 0, sizeof( breadcrumb_t ) );
+    memset( bc, 0, sizeof( ego_breadcrumb ) );
     bc->time = update_wld;
 
     if ( NULL == pprt ) return bc;
@@ -520,8 +520,8 @@ int breadcrumb_cmp( const void * lhs, const void * rhs )
     // comparison to sort from oldest to newest
     int retval;
 
-    breadcrumb_t * bc_lhs = ( breadcrumb_t * )lhs;
-    breadcrumb_t * bc_rhs = ( breadcrumb_t * )rhs;
+    ego_breadcrumb * bc_lhs = ( ego_breadcrumb * )lhs;
+    ego_breadcrumb * bc_rhs = ( ego_breadcrumb * )rhs;
 
     retval = ( signed )(( Sint64 )bc_rhs->time - ( Sint64 )bc_lhs->time );
 
@@ -535,7 +535,7 @@ int breadcrumb_cmp( const void * lhs, const void * rhs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t breadcrumb_list_full( breadcrumb_list_t *  lst )
+bool_t breadcrumb_list_full( ego_breadcrumb_list *  lst )
 {
     if ( NULL == lst || !lst->on ) return btrue;
 
@@ -545,7 +545,7 @@ bool_t breadcrumb_list_full( breadcrumb_list_t *  lst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t breadcrumb_list_empty( breadcrumb_list_t * lst )
+bool_t breadcrumb_list_empty( ego_breadcrumb_list * lst )
 {
     if ( NULL == lst || !lst->on ) return btrue;
 
@@ -555,7 +555,7 @@ bool_t breadcrumb_list_empty( breadcrumb_list_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-void breadcrumb_list_compact( breadcrumb_list_t * lst )
+void breadcrumb_list_compact( ego_breadcrumb_list * lst )
 {
     int cnt, tnc;
 
@@ -564,14 +564,14 @@ void breadcrumb_list_compact( breadcrumb_list_t * lst )
     // compact the list of breadcrumbs
     for ( cnt = 0, tnc = 0; cnt < lst->count; cnt ++ )
     {
-        breadcrumb_t * bc_src = lst->lst + cnt;
-        breadcrumb_t * bc_dst = lst->lst + tnc;
+        ego_breadcrumb * bc_src = lst->lst + cnt;
+        ego_breadcrumb * bc_dst = lst->lst + tnc;
 
         if ( bc_src->valid )
         {
             if ( bc_src != bc_dst )
             {
-                memcpy( bc_dst, bc_src, sizeof( breadcrumb_t ) );
+                memcpy( bc_dst, bc_src, sizeof( ego_breadcrumb ) );
             }
 
             tnc++;
@@ -581,7 +581,7 @@ void breadcrumb_list_compact( breadcrumb_list_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-void breadcrumb_list_validate( breadcrumb_list_t * lst )
+void breadcrumb_list_validate( ego_breadcrumb_list * lst )
 {
     int cnt, invalid_cnt;
 
@@ -590,7 +590,7 @@ void breadcrumb_list_validate( breadcrumb_list_t * lst )
     // invalidate all bad breadcrumbs
     for ( cnt = 0, invalid_cnt = 0; cnt < lst->count; cnt ++ )
     {
-        breadcrumb_t * bc = lst->lst + cnt;
+        ego_breadcrumb * bc = lst->lst + cnt;
 
         if ( !bc->valid )
         {
@@ -615,14 +615,14 @@ void breadcrumb_list_validate( breadcrumb_list_t * lst )
     // sort the values from lowest to highest
     if ( lst->count > 1 )
     {
-        qsort( lst->lst, lst->count, sizeof( breadcrumb_t ), breadcrumb_cmp );
+        qsort( lst->lst, lst->count, sizeof( ego_breadcrumb ), breadcrumb_cmp );
     }
 }
 
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_list_last_valid( breadcrumb_list_t * lst )
+ego_breadcrumb * breadcrumb_list_last_valid( ego_breadcrumb_list * lst )
 {
-    breadcrumb_t * retval = NULL;
+    ego_breadcrumb * retval = NULL;
 
     if ( NULL == lst || !lst->on ) return NULL;
 
@@ -637,18 +637,18 @@ breadcrumb_t * breadcrumb_list_last_valid( breadcrumb_list_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_list_newest( breadcrumb_list_t * lst )
+ego_breadcrumb * breadcrumb_list_newest( ego_breadcrumb_list * lst )
 {
     int cnt;
 
     Uint32         old_time = 0xFFFFFFFF;
-    breadcrumb_t * old_ptr = NULL;
+    ego_breadcrumb * old_ptr = NULL;
 
     if ( NULL == lst || !lst->on ) return NULL;
 
     for ( cnt = 0; cnt < lst->count; cnt ++ )
     {
-        breadcrumb_t * bc = lst->lst + cnt;
+        ego_breadcrumb * bc = lst->lst + cnt;
 
         if ( !bc->valid ) continue;
 
@@ -664,7 +664,7 @@ breadcrumb_t * breadcrumb_list_newest( breadcrumb_list_t * lst )
     for ( cnt++; cnt < lst->count; cnt++ )
     {
         int tmp;
-        breadcrumb_t * bc = lst->lst + cnt;
+        ego_breadcrumb * bc = lst->lst + cnt;
 
         if ( !bc->valid ) continue;
 
@@ -683,18 +683,18 @@ breadcrumb_t * breadcrumb_list_newest( breadcrumb_list_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_list_oldest( breadcrumb_list_t * lst )
+ego_breadcrumb * breadcrumb_list_oldest( ego_breadcrumb_list * lst )
 {
     int cnt;
 
     Uint32         old_time = 0xFFFFFFFF;
-    breadcrumb_t * old_ptr = NULL;
+    ego_breadcrumb * old_ptr = NULL;
 
     if ( NULL == lst || !lst->on ) return NULL;
 
     for ( cnt = 0; cnt < lst->count; cnt ++ )
     {
-        breadcrumb_t * bc = lst->lst + cnt;
+        ego_breadcrumb * bc = lst->lst + cnt;
 
         if ( !bc->valid ) continue;
 
@@ -710,7 +710,7 @@ breadcrumb_t * breadcrumb_list_oldest( breadcrumb_list_t * lst )
     for ( cnt++; cnt < lst->count; cnt++ )
     {
         int tmp;
-        breadcrumb_t * bc = lst->lst + cnt;
+        ego_breadcrumb * bc = lst->lst + cnt;
 
         if ( !bc->valid ) continue;
 
@@ -729,18 +729,18 @@ breadcrumb_t * breadcrumb_list_oldest( breadcrumb_list_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_list_oldest_grid( breadcrumb_list_t * lst, Uint32 match_grid )
+ego_breadcrumb * breadcrumb_list_oldest_grid( ego_breadcrumb_list * lst, Uint32 match_grid )
 {
     int cnt;
 
     Uint32         old_time = 0xFFFFFFFF;
-    breadcrumb_t * old_ptr = NULL;
+    ego_breadcrumb * old_ptr = NULL;
 
     if ( NULL == lst || !lst->on ) return NULL;
 
     for ( cnt = 0; cnt < lst->count; cnt ++ )
     {
-        breadcrumb_t * bc = lst->lst + cnt;
+        ego_breadcrumb * bc = lst->lst + cnt;
 
         if ( !bc->valid ) continue;
 
@@ -757,7 +757,7 @@ breadcrumb_t * breadcrumb_list_oldest_grid( breadcrumb_list_t * lst, Uint32 matc
     {
         int tmp;
 
-        breadcrumb_t * bc = lst->lst + cnt;
+        ego_breadcrumb * bc = lst->lst + cnt;
 
         if ( !bc->valid ) continue;
 
@@ -776,9 +776,9 @@ breadcrumb_t * breadcrumb_list_oldest_grid( breadcrumb_list_t * lst, Uint32 matc
 }
 
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_list_alloc( breadcrumb_list_t * lst )
+ego_breadcrumb * breadcrumb_list_alloc( ego_breadcrumb_list * lst )
 {
-    breadcrumb_t * retval = NULL;
+    ego_breadcrumb * retval = NULL;
 
     if ( breadcrumb_list_full( lst ) )
     {
@@ -800,12 +800,12 @@ breadcrumb_t * breadcrumb_list_alloc( breadcrumb_list_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t breadcrumb_list_add( breadcrumb_list_t * lst, breadcrumb_t * pnew )
+bool_t breadcrumb_list_add( ego_breadcrumb_list * lst, ego_breadcrumb * pnew )
 {
     int cnt, invalid_cnt;
 
     bool_t retval;
-    breadcrumb_t * pold, *ptmp;
+    ego_breadcrumb * pold, *ptmp;
 
     if ( NULL == lst || !lst->on ) return bfalse;
 
@@ -813,7 +813,7 @@ bool_t breadcrumb_list_add( breadcrumb_list_t * lst, breadcrumb_t * pnew )
 
     for ( cnt = 0, invalid_cnt = 0; cnt < lst->count; cnt ++ )
     {
-        breadcrumb_t * bc = lst->lst + cnt;
+        ego_breadcrumb * bc = lst->lst + cnt;
 
         if ( !bc->valid )
         {
@@ -973,7 +973,7 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, phys_data_t * pdata, float dt )
+bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, ego_phys_data * pdata, float dt )
 {
     fvec3_t loc_pos = ZERO_VECT3;
     fvec3_t loc_vel = ZERO_VECT3;
@@ -1013,7 +1013,7 @@ bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, phys_da
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc )
+bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc )
 {
     /// @details BB@> break the acceleration up into parts that are parallel and perpendicular to the floor
     /// and partially kill the acceleration perpendicular to the ground.

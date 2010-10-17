@@ -72,7 +72,7 @@ struct ego_BSP_leaf
 };
 
 //--------------------------------------------------------------------------------------------
-DECLARE_DYNAMIC_ARY( ego_BSP_leaf_ary, ego_BSP_leaf   );
+DECLARE_DYNAMIC_ARY( ego_BSP_leaf_ary, ego_BSP_leaf );
 DECLARE_DYNAMIC_ARY( ego_BSP_leaf_pary, ego_BSP_leaf   * );
 
 //--------------------------------------------------------------------------------------------
@@ -112,10 +112,11 @@ struct ego_BSP_branch
 
 private:
     static bool_t             collide( ego_BSP_branch   * pbranch, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst );
+    static bool_t             dealloc_nodes( ego_BSP_branch   * B, bool_t recursive );
 };
 
 //--------------------------------------------------------------------------------------------
-DECLARE_DYNAMIC_ARY( ego_BSP_branch_ary, ego_BSP_branch   );
+DECLARE_DYNAMIC_ARY( ego_BSP_branch_ary, ego_BSP_branch );
 DECLARE_DYNAMIC_ARY( ego_BSP_branch_pary, ego_BSP_branch * );
 
 //--------------------------------------------------------------------------------------------

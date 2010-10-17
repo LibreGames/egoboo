@@ -79,13 +79,13 @@ enum e_menu_states
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // "Slidy" buttons used in some of the menus.  They're shiny.
-struct SlidyButtonState_t
+struct mnu_SlidyButtons
 {
     // string data
     const char ** but_text;
 
     // widget data
-    ui_Widget_t * but;
+    ui_Widget * but;
     size_t        but_count;
 
     // time
@@ -94,17 +94,37 @@ struct SlidyButtonState_t
     // formatting
     int top;
     int left;
+
+    mnu_SlidyButtons() { ctor( this ); }
+    ~mnu_SlidyButtons() { dtor( this ); }
+
+    static mnu_SlidyButtons * ctor( mnu_SlidyButtons * ps ) { return mnu_SlidyButtons::clear( ps ); }
+    static mnu_SlidyButtons * dtor( mnu_SlidyButtons * ps ) { return mnu_SlidyButtons::clear( ps ); }
+
+    static mnu_SlidyButtons * clear( mnu_SlidyButtons * ps )
+    {
+        if ( NULL == ps ) return NULL;
+
+        memset( ps, 0, sizeof( *ps ) );
+
+        return ps;
+    }
+
+    static mnu_SlidyButtons * init( mnu_SlidyButtons * pstate, float lerp, int id_start, const char *button_text[], ui_Widget * button_widget );
+    static mnu_SlidyButtons * update_all( mnu_SlidyButtons * pstate, float deltaTime );
+    static mnu_SlidyButtons * draw_all( mnu_SlidyButtons * pstate );
 };
+
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// the data to display a chosen player in the load player menu
-struct ChoosePlayer_element_t
+struct ego_ChoosePlayer_element
 {
     CAP_REF           cap_ref;   ///< the index of the ego_cap
     TX_REF            tx_ref;    ///< the index of the icon texture
-    chop_definition_t chop;      ///< put this here so we can generate a name without loading an entire profile
+    ego_chop_definition chop;      ///< put this here so we can generate a name without loading an entire profile
 };
 
 #define PLAYER_ELEMENT_INIT \
@@ -117,10 +137,10 @@ struct ChoosePlayer_element_t
 //--------------------------------------------------------------------------------------------
 
 /// The data that menu.c uses to store the users' choice of players
-struct ChoosePlayer_profiles_t
+struct ego_ChoosePlayer_profiles
 {
     int count;                                                 ///< the profiles that have been loaded
-    ChoosePlayer_element_t pro_data[MAXIMPORTPERPLAYER + 1];   ///< the profile data
+    ego_ChoosePlayer_element pro_data[MAXIMPORTPERPLAYER + 1];   ///< the profile data
 };
 
 #define PLAYER_PROFILES_INIT { 0, {PLAYER_ELEMENT_INIT} }
@@ -129,7 +149,7 @@ struct ChoosePlayer_profiles_t
 //--------------------------------------------------------------------------------------------
 
 /// the module data that the menu system needs
-struct mnu_module_t
+struct mnu_module
 {
     EGO_PROFILE_STUFF;                           ///< the "base class" of a profile obbject
 
@@ -146,13 +166,13 @@ struct mnu_module_t
 #define VALID_MOD( IMOD )       ( VALID_MOD_RANGE( IMOD ) && IMOD < mnu_ModList.count && mnu_ModList.lst[IMOD].loaded )
 #define INVALID_MOD( IMOD )     ( !VALID_MOD_RANGE( IMOD ) || IMOD >= mnu_ModList.count || !mnu_ModList.lst[IMOD].loaded )
 
-INSTANTIATE_STACK_STATIC( mnu_module_t, mnu_ModList, MAX_MODULE );
+INSTANTIATE_STACK_STATIC( mnu_module, mnu_ModList, MAX_MODULE );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// The data that menu.c uses to store the users' choice of players
-struct GameTips_t
+struct ego_GameTips
 {
     // These are loaded only once
     Uint8  count;                         //< Number of global tips loaded
@@ -174,12 +194,12 @@ static which_menu_t mnu_whichMenu = emnu_Main;
 
 static module_filter_t mnu_moduleFilter = FILTER_OFF;
 
-static ui_Widget_t mnu_widgetList[WIDGET_MAX];
+static ui_Widget mnu_widgetList[WIDGET_MAX];
 
 static int selectedModule = -1;
 
 /* Copyright text variables.  Change these to change how the copyright text appears */
-static const char * copyrightText = "Welcome to Egoboo!\nhttp://egoboo.sourceforge.net\nVersion " VERSION "\n";
+static const char * copyrightText = "Welcome to Egoboo!\nhttp://egoboo.sourceforge.net\nVersion " VERSION;
 static int  copyrightLeft = 0;
 static int  copyrightTop  = 0;
 static display_list_t * copyrightText_tx_ptr = NULL;
@@ -202,7 +222,7 @@ static int     mnu_selectedPlayerCount = 0;
 static Uint32  mnu_selectedInput[MAX_PLAYER] = {0};
 static int     mnu_selectedPlayer[MAX_PLAYER] = {0};
 
-static GameTips_t mnu_GameTip = { 0 };
+static ego_GameTips mnu_GameTip = { 0 };
 
 //--------------------------------------------------------------------------------------------
 // declaration of public variables
@@ -237,11 +257,6 @@ static bool_t       mnu_stack_push( which_menu_t menu );
 static which_menu_t mnu_stack_pop();
 static which_menu_t mnu_stack_peek();
 static void         mnu_stack_clear();
-
-// Implementation of the mnu_SlidyButton array
-static SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float lerp, int id_start, const char *button_text[], ui_Widget_t * button_widget );
-static SlidyButtonState_t * SlidyButtonState_update_all( SlidyButtonState_t * pstate, float deltaTime );
-static SlidyButtonState_t * SlidyButtonState_draw_all( SlidyButtonState_t * pstate );
 
 // implementation of the mnu_Selected* arrays
 static bool_t  mnu_Selected_check_loadplayer( int loadplayer_idx );
@@ -590,11 +605,11 @@ int mnu_get_menu_depth()
     oglx_texture_t background
 
 #define MENU_BUTTONS(CNT)            \
-    ui_Widget_t    w_buttons[CNT];   \
+    ui_Widget    w_buttons[CNT];   \
     const char    *sz_buttons[CNT+1]
 
 #define MENU_LABELS(CNT)             \
-    ui_Widget_t    w_labels[CNT];    \
+    ui_Widget    w_labels[CNT];    \
     const char    *sz_labels[CNT+1]
 
 //--------------------------------------------------------------------------------------------
@@ -685,7 +700,7 @@ int doMainMenu( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static oglx_texture_t logo;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
     static int menuChoice = 0;
     static SDL_Rect bg_rect, logo_rect;
 
@@ -702,7 +717,7 @@ int doMainMenu( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget w_buttons[but_count];
 
     // Button labels.  Defined here for consistency's sake, rather than leaving them as constants
     static const char *sz_buttons[but_sz_count] =
@@ -727,8 +742,7 @@ int doMainMenu( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
                 }
 
                 // load the menu image
@@ -755,7 +769,7 @@ int doMainMenu( float deltaTime )
                 logo_rect.w = logo.imgW * fmin;
                 logo_rect.h = logo.imgH * fmin;
 
-                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
 
                 // "Copyright" text
                 copyrightText_set_position( menuFont, copyrightText, 20 );
@@ -779,8 +793,8 @@ int doMainMenu( float deltaTime )
                 // "Copyright" text
                 display_list_draw( copyrightText_tx_ptr );
 
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, -deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, -deltaTime );
 
                 // Let lerp wind down relative to the time elapsed
                 if ( but_state.lerp <= 0.0f )
@@ -807,22 +821,22 @@ int doMainMenu( float deltaTime )
                 display_list_draw( copyrightText_tx_ptr );
 
                 // Buttons
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_new ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_new ) )
                 {
                     // begin single player stuff
                     menuChoice = 1;
                 }
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_load ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_load ) )
                 {
                     // begin multi player stuff
                     menuChoice = 2;
                 }
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_options ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_options ) )
                 {
                     // go to options menu
                     menuChoice = 3;
                 }
-                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_quit ) )
+                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_quit ) )
                 {
                     // quit game
                     menuChoice = 4;
@@ -830,7 +844,7 @@ int doMainMenu( float deltaTime )
                 if ( menuChoice != 0 )
                 {
                     menuState = MM_Leaving;
-                    SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
+                    mnu_SlidyButtons::init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
                 }
             }
             break;
@@ -852,8 +866,8 @@ int doMainMenu( float deltaTime )
                 display_list_draw( copyrightText_tx_ptr );
 
                 // Buttons
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, deltaTime );
                 if ( but_state.lerp >= 1.0f )
                 {
                     menuState = MM_Finish;
@@ -869,7 +883,7 @@ int doMainMenu( float deltaTime )
                 // free the widgets
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 // Set the next menu to load
@@ -976,7 +990,7 @@ int doSinglePlayerMenu( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
 
     enum e_buttons
     {
@@ -988,7 +1002,7 @@ int doSinglePlayerMenu( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget w_buttons[but_count];
 
     static const char *sz_buttons[but_sz_count] =
     {
@@ -1011,14 +1025,13 @@ int doSinglePlayerMenu( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
                 }
 
                 // Load resources for this menu
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_advent", TRANSCOLOR );
 
-                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
 
                 // "Copyright" text
                 copyrightText_set_position( menuFont, copyrightText, 20 );
@@ -1040,8 +1053,8 @@ int doSinglePlayerMenu( float deltaTime )
                 // "Copyright" text
                 display_list_draw( copyrightText_tx_ptr );
 
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, -deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, -deltaTime );
                 if ( but_state.lerp <= 0.0f )
                 {
                     menuState = MM_Running;
@@ -1061,22 +1074,22 @@ int doSinglePlayerMenu( float deltaTime )
             display_list_draw( copyrightText_tx_ptr );
 
             // Buttons
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_new ) )
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_new ) )
             {
                 menuChoice = 1;
             }
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_load ) )
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_load ) )
             {
                 menuChoice = 2;
             }
-            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_back ) )
+            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_back ) )
             {
                 menuChoice = 3;     // back
             }
             if ( menuChoice != 0 )
             {
                 menuState = MM_Leaving;
-                SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
             }
             break;
 
@@ -1094,8 +1107,8 @@ int doSinglePlayerMenu( float deltaTime )
                 // "Copyright" text
                 display_list_draw( copyrightText_tx_ptr );
 
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, deltaTime );
                 if ( but_state.lerp >= 1.0f )
                 {
                     menuState = MM_Finish;
@@ -1111,7 +1124,7 @@ int doSinglePlayerMenu( float deltaTime )
                 // free the widgets
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 // Set the next menu to load
@@ -1270,7 +1283,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doChooseModule_update_description( ui_Widget_t * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule )
+bool_t doChooseModule_update_description( ui_Widget * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule )
 {
     int i;
 
@@ -1278,7 +1291,7 @@ bool_t doChooseModule_update_description( ui_Widget_t * lab_ptr, MOD_REF validMo
 
     if ( selectedModule < 0 || ( size_t )selectedModule >= validModules_size || validModules[selectedModule] <= 0 || selectedModule > validModules[selectedModule] )
     {
-        ui_Widget_set_text( lab_ptr, ui_just_topleft, menuFont, NULL );
+        ui_Widget::set_text( lab_ptr, ui_just_topleft, menuFont, NULL );
     }
     else
     {
@@ -1334,27 +1347,27 @@ bool_t doChooseModule_update_description( ui_Widget_t * lab_ptr, MOD_REF validMo
 
         // Draw a text box
         GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-        ui_Widget_set_text( lab_ptr, ui_just_topleft, menuFont, buffer );
+        ui_Widget::set_text( lab_ptr, ui_just_topleft, menuFont, buffer );
     }
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doChooseModule_update_filter_label( ui_Widget_t * lab_ptr, int which )
+bool_t doChooseModule_update_filter_label( ui_Widget * lab_ptr, int which )
 {
     if ( NULL == lab_ptr ) return bfalse;
 
     switch ( which )
     {
-        case FILTER_MAIN:    ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Main Quest" );       break;
-        case FILTER_SIDE:    ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Sidequests" );       break;
-        case FILTER_TOWN:    ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Towns and Cities" ); break;
-        case FILTER_FUN:     ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Fun Modules" );      break;
-        case FILTER_DEBUG:   ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Debugging" );        break;
-        case FILTER_STARTER: ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "Starter Modules" );  break;
+        case FILTER_MAIN:    ui_Widget::set_text( lab_ptr, ui_just_centerleft, menuFont, "Main Quest" );       break;
+        case FILTER_SIDE:    ui_Widget::set_text( lab_ptr, ui_just_centerleft, menuFont, "Sidequests" );       break;
+        case FILTER_TOWN:    ui_Widget::set_text( lab_ptr, ui_just_centerleft, menuFont, "Towns and Cities" ); break;
+        case FILTER_FUN:     ui_Widget::set_text( lab_ptr, ui_just_centerleft, menuFont, "Fun Modules" );      break;
+        case FILTER_DEBUG:   ui_Widget::set_text( lab_ptr, ui_just_centerleft, menuFont, "Debugging" );        break;
+        case FILTER_STARTER: ui_Widget::set_text( lab_ptr, ui_just_centerleft, menuFont, "Starter Modules" );  break;
         default:
-        case FILTER_OFF:     ui_Widget_set_text( lab_ptr, ui_just_centerleft, menuFont, "All Modules" );      break;
+        case FILTER_OFF:     ui_Widget::set_text( lab_ptr, ui_just_centerleft, menuFont, "All Modules" );      break;
     }
 
     return btrue;
@@ -1418,8 +1431,8 @@ int doChooseModule( float deltaTime )
         NULL
     };
 
-    static ui_Widget_t w_buttons[but_count];
-    static ui_Widget_t w_labels [lab_count];
+    static ui_Widget w_buttons[but_count];
+    static ui_Widget w_labels [lab_count];
 
     static int    selectedModule_old    = -1;
     static bool_t selectedModule_update = bfalse;
@@ -1464,19 +1477,19 @@ int doChooseModule( float deltaTime )
                 // initialize the buttons
                 for ( i = 0; i < but_count; i++ )
                 {
-                    memset( w_buttons + i, 0, sizeof( ui_Widget_t ) );
+                    memset( w_buttons + i, 0, sizeof( ui_Widget ) );
 
-                    ui_Widget_set_id( w_buttons + i, i );
-                    ui_Widget_set_text( w_buttons + i, ui_just_centerleft, NULL, sz_buttons[i] );
+                    ui_Widget::set_id( w_buttons + i, i );
+                    ui_Widget::set_text( w_buttons + i, ui_just_centerleft, NULL, sz_buttons[i] );
                 }
 
                 // initialize the labels
                 for ( i = 0; i < lab_count; i++ )
                 {
-                    memset( w_labels + i, 0, sizeof( ui_Widget_t ) );
+                    memset( w_labels + i, 0, sizeof( ui_Widget ) );
 
-                    ui_Widget_set_id( w_labels + i, UI_Nothing );
-                    ui_Widget_set_text( w_labels + i, ui_just_centerleft, NULL, sz_labels[i] );
+                    ui_Widget::set_id( w_labels + i, UI_Nothing );
+                    ui_Widget::set_text( w_labels + i, ui_just_centerleft, NULL, sz_labels[i] );
                 }
 
                 // Figure out at what offset we want to draw the module menu.
@@ -1487,15 +1500,15 @@ int doChooseModule( float deltaTime )
                 moduleMenuOffsetY = MAX( 0, moduleMenuOffsetY );
 
                 // set the widget positions
-                ui_Widget_set_button( w_buttons + but_bck, moduleMenuOffsetX + 20, moduleMenuOffsetY + 74, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_fwd, moduleMenuOffsetX + 590, moduleMenuOffsetY + 74, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_exit, moduleMenuOffsetX + 327, moduleMenuOffsetY + 208, 200, 30 );
-                ui_Widget_set_button( w_buttons + but_select, moduleMenuOffsetX + 327, moduleMenuOffsetY + 173, 200, 30 );
-                ui_Widget_set_button( w_buttons + but_filter_fwd, moduleMenuOffsetX + 532, moduleMenuOffsetY + 390, -1, -1 );
+                ui_Widget::set_button( w_buttons + but_bck, moduleMenuOffsetX + 20, moduleMenuOffsetY + 74, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_fwd, moduleMenuOffsetX + 590, moduleMenuOffsetY + 74, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_exit, moduleMenuOffsetX + 327, moduleMenuOffsetY + 208, 200, 30 );
+                ui_Widget::set_button( w_buttons + but_select, moduleMenuOffsetX + 327, moduleMenuOffsetY + 173, 200, 30 );
+                ui_Widget::set_button( w_buttons + but_filter_fwd, moduleMenuOffsetX + 532, moduleMenuOffsetY + 390, -1, -1 );
 
                 // set the label positions
-                ui_Widget_set_bound( w_labels + lab_filter, moduleMenuOffsetX + 327, moduleMenuOffsetY + 390, 200, 30 );
-                ui_Widget_set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 250 );
+                ui_Widget::set_bound( w_labels + lab_filter, moduleMenuOffsetX + 327, moduleMenuOffsetY + 390, 200, 30 );
+                ui_Widget::set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 250 );
 
                 // initialize the module description
                 doChooseModule_update_description( w_labels + lab_description, validModules, SDL_arraysize( validModules ), selectedModule );
@@ -1588,7 +1601,7 @@ int doChooseModule( float deltaTime )
                 }
 
                 // set the position of the module description "button"
-                ui_Widget_set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
+                ui_Widget::set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
             }
             menuState = MM_Running;
             // fall through for now...
@@ -1652,11 +1665,11 @@ int doChooseModule( float deltaTime )
                 // Draw the arrows to pick modules
                 if ( numValidModules > 3 )
                 {
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_bck ) )
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_bck ) )
                     {
                         startIndex--;
                     }
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_fwd ) )
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_fwd ) )
                     {
                         startIndex++;
                     }
@@ -1709,12 +1722,12 @@ int doChooseModule( float deltaTime )
                 }
 
                 // draw the description
-                ui_doWidget( w_labels + lab_description );
+                ui_Widget::Run( w_labels + lab_description );
 
                 // And draw the next & back buttons
                 if ( selectedModule > -1 )
                 {
-                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_doWidget( w_buttons + but_select ) )
+                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_select ) )
                     {
                         // go to the next menu with this module selected
                         selectedModule = REF_TO_INT( validModules[selectedModule] );
@@ -1722,7 +1735,7 @@ int doChooseModule( float deltaTime )
                     }
                 }
 
-                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_exit ) )
+                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_exit ) )
                 {
                     // Signal doMenu to go back to the previous menu
                     selectedModule = -1;
@@ -1735,10 +1748,10 @@ int doChooseModule( float deltaTime )
                     bool_t click_button;
 
                     // display the filter name
-                    ui_doWidget( w_labels + lab_filter );
+                    ui_Widget::Run( w_labels + lab_filter );
 
                     // use the ">" button to change since we are already using arrows to indicate "spin control"-like widgets
-                    click_button = ( BUTTON_UP == ui_doWidget( w_buttons + but_filter_fwd ) );
+                    click_button = ( BUTTON_UP == ui_Widget::Run( w_buttons + but_filter_fwd ) );
 
                     if ( click_button )
                     {
@@ -1749,14 +1762,14 @@ int doChooseModule( float deltaTime )
                         if ( cfg.dev_mode )
                         {
                             mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_SPECIAL_END );
-                            mnu_moduleFilter = (module_filter_t)(mnu_moduleFilter + 1);
-                            if( mnu_moduleFilter > FILTER_SPECIAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
+                            mnu_moduleFilter = ( module_filter_t )( mnu_moduleFilter + 1 );
+                            if ( mnu_moduleFilter > FILTER_SPECIAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
                         }
                         else
                         {
                             mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_NORMAL_END );
-                            mnu_moduleFilter = (module_filter_t)(mnu_moduleFilter + 1);
-                            if( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
+                            mnu_moduleFilter = ( module_filter_t )( mnu_moduleFilter + 1 );
+                            if ( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
                         }
 
                         doChooseModule_update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
@@ -1780,13 +1793,13 @@ int doChooseModule( float deltaTime )
                 // initialize dthe buttons
                 for ( i = 0; i < but_count; i++ )
                 {
-                    ui_Widget_free( w_buttons + i );
+                    ui_Widget::dealloc( w_buttons + i );
                 }
 
                 // initialize the labels
                 for ( i = 0; i < lab_count; i++ )
                 {
-                    ui_Widget_free( w_labels + i );
+                    ui_Widget::dealloc( w_labels + i );
                 }
 
                 // free all other textures
@@ -1839,12 +1852,12 @@ int doChooseModule( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doChoosePlayer_load_profiles( int player, ChoosePlayer_profiles_t * pro_list )
+bool_t doChoosePlayer_load_profiles( int player, ego_ChoosePlayer_profiles * pro_list )
 {
     int    i;
     CAP_REF ref_temp;
     STRING  szFilename;
-    ChoosePlayer_element_t * pdata;
+    ego_ChoosePlayer_element * pdata;
 
     // release all of the temporary profiles
     release_all_profiles();
@@ -1919,9 +1932,9 @@ bool_t doChoosePlayer_load_profiles( int player, ChoosePlayer_profiles_t * pro_l
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct doChoosePlayer_stats_info_t
+struct ego_doChoosePlayer_stats_info
 {
-    ChoosePlayer_profiles_t objects;
+    ego_ChoosePlayer_profiles objects;
     int                     player;
     int                     player_last;
     display_item_t        * item_ptr;
@@ -1936,11 +1949,11 @@ struct doChoosePlayer_stats_info_t
     }
 
 //--------------------------------------------------------------------------------------------
-doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_ctor( doChoosePlayer_stats_info_t * ptr )
+ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_ctor( ego_doChoosePlayer_stats_info * ptr )
 {
     if ( NULL == ptr )
     {
-        ptr = EGOBOO_NEW( doChoosePlayer_stats_info_t );
+        ptr = EGOBOO_NEW( ego_doChoosePlayer_stats_info );
     }
 
     // clear the data
@@ -1954,7 +1967,7 @@ doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_ctor( doChoosePlayer_sta
 }
 
 //--------------------------------------------------------------------------------------------
-doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_dtor( doChoosePlayer_stats_info_t * ptr, bool_t owner )
+ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlayer_stats_info * ptr, bool_t owner )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -2055,7 +2068,7 @@ doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_dtor( doChoosePlayer_sta
 //};
 
 //--------------------------------------------------------------------------------------------
-doChoosePlayer_stats_info_t * doChoosePlayer_load_stats( doChoosePlayer_stats_info_t * ptr, int player, int mode )
+ego_doChoosePlayer_stats_info * doChoosePlayer_load_stats( ego_doChoosePlayer_stats_info * ptr, int player, int mode )
 {
     if ( NULL == ptr )
     {
@@ -2097,7 +2110,7 @@ doChoosePlayer_stats_info_t * doChoosePlayer_load_stats( doChoosePlayer_stats_in
 }
 
 //--------------------------------------------------------------------------------------------
-doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_info_t * ptr, int x, int y, int width, int height )
+ego_doChoosePlayer_stats_info * doChoosePlayer_render_stats( ego_doChoosePlayer_stats_info * ptr, int x, int y, int width, int height )
 {
     int i, x1, y1;
 
@@ -2195,7 +2208,7 @@ doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_
 
                 if ( ptr->objects.count > 1 )
                 {
-                    ChoosePlayer_element_t * pdata;
+                    ego_ChoosePlayer_element * pdata;
 
                     y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Inventory" );
 
@@ -2248,7 +2261,7 @@ doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_
 }
 
 //--------------------------------------------------------------------------------------------
-void doChoosePlayer_update_players( int numVertical, int startIndex, ui_Widget_t lst[], size_t lst_size )
+void doChoosePlayer_update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size )
 {
     int lplayer, splayer;
     int i;
@@ -2264,29 +2277,29 @@ void doChoosePlayer_update_players( int numVertical, int startIndex, ui_Widget_t
         splayer = mnu_Selected_get_loadplayer( lplayer );
 
         // set the character image
-        ui_Widget_set_img( lst + m, ui_just_centered, TxTexture_get_ptr( loadplayer[lplayer].tx_ref ) );
+        ui_Widget::set_img( lst + m, ui_just_centered, TxTexture_get_ptr( loadplayer[lplayer].tx_ref ) );
 
         // set the character name
-        ui_Widget_set_text( lst + m, ui_just_centered, menuFont, loadplayer[lplayer].name );
+        ui_Widget::set_text( lst + m, ui_just_centered, menuFont, loadplayer[lplayer].name );
     }
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doChoosePlayer_update_select_button( ui_Widget_t * but_ptr, int count )
+bool_t doChoosePlayer_update_select_button( ui_Widget * but_ptr, int count )
 {
     if ( NULL == but_ptr ) return bfalse;
 
     if ( count <= 0 )
     {
-        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, NULL );
+        ui_Widget::set_text( but_ptr, ui_just_centered, NULL, NULL );
     }
     else if ( 1 == count )
     {
-        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, "Select Player" );
+        ui_Widget::set_text( but_ptr, ui_just_centered, NULL, "Select Player" );
     }
     else
     {
-        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, "Select Players" );
+        ui_Widget::set_text( but_ptr, ui_just_centered, NULL, "Select Players" );
     }
 
     return btrue;
@@ -2297,7 +2310,7 @@ int doChoosePlayer( float deltaTime )
 {
     static int menuState = MM_Begin;
     static oglx_texture_t background;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
 
     static int    startIndex_old = 0, startIndex = 0;
     static int    last_player_old = -1;
@@ -2319,7 +2332,7 @@ int doChoosePlayer( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget_t  w_buttons[but_count];
+    static ui_Widget  w_buttons[but_count];
 
     static const char * sz_buttons[but_sz_count] =
     {
@@ -2330,7 +2343,7 @@ int doChoosePlayer( float deltaTime )
 
     static int mnu_selectedPlayerCount_old = -1;
 
-    static doChoosePlayer_stats_info_t stats_info = PLAYER_STATS_INFO_INIT;
+    static ego_doChoosePlayer_stats_info stats_info = PLAYER_STATS_INFO_INIT;
 
     int result = 0;
     int i, j, x, y;
@@ -2348,15 +2361,14 @@ int doChoosePlayer( float deltaTime )
 
                 for ( cnt = 0; cnt < WIDGET_MAX; cnt++ )
                 {
-                    memset( mnu_widgetList + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( mnu_widgetList + cnt, 1000 + cnt );
+                    memset( mnu_widgetList + cnt, 0, sizeof( ui_Widget ) );
+                    ui_Widget::set_id( mnu_widgetList + cnt, 1000 + cnt );
                 }
 
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, cnt );
-                    ui_Widget_set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 TxTexture_free_one(( TX_REF )TX_BARS );
@@ -2393,9 +2405,9 @@ int doChoosePlayer( float deltaTime )
                 mnu_player_check_import( "mp_players", btrue );
 
                 // reset but_select, or it will mess up the menu.
-                // must do it before SlidyButtonState_init()
+                // must do it before mnu_SlidyButtons::init()
                 sz_buttons[but_select] = "N/A";
-                SlidyButtonState_init( &but_state, 0.0f, but_select, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, but_select, sz_buttons, w_buttons );
 
                 // how many players can we pack into the available screen area?
                 numVertical   = ( buttonTop - y0 ) / button_repeat - 1;
@@ -2410,17 +2422,17 @@ int doChoosePlayer( float deltaTime )
 
                     if ( player >= loadplayer_count ) continue;
 
-                    ui_Widget_set_button( mnu_widgetList + m, x, y, text_width, icon_size );
-                    ui_Widget_LatchMaskAdd( mnu_widgetList + m, UI_LATCH_CLICKED );
+                    ui_Widget::set_button( mnu_widgetList + m, x, y, text_width, icon_size );
+                    ui_Widget::LatchMask_Add( mnu_widgetList + m, UI_LATCH_CLICKED );
 
                     for ( j = 0, m++; j < 4; j++, m++ )
                     {
                         int k = ICON_KEYB + j;
                         oglx_texture_t * img = TxTexture_get_ptr(( TX_REF )k );
 
-                        ui_Widget_set_button( mnu_widgetList + m, x + text_width + j*icon_size, y, icon_size, icon_size );
-                        ui_Widget_set_img( mnu_widgetList + m, ui_just_centered, img );
-                        ui_Widget_LatchMaskAdd( mnu_widgetList + m, UI_LATCH_CLICKED );
+                        ui_Widget::set_button( mnu_widgetList + m, x + text_width + j*icon_size, y, icon_size, icon_size );
+                        ui_Widget::set_img( mnu_widgetList + m, ui_just_centered, img );
+                        ui_Widget::LatchMask_Add( mnu_widgetList + m, UI_LATCH_CLICKED );
                     };
 
                     y += button_repeat;
@@ -2454,8 +2466,8 @@ int doChoosePlayer( float deltaTime )
                     ui_drawImage( 0, &background, x, y, 0, 0, NULL );
                 }
 
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, -deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, -deltaTime );
 
                 // Let lerp wind down relative to the time elapsed
                 if ( but_state.lerp <= 0.0f )
@@ -2536,7 +2548,7 @@ int doChoosePlayer( float deltaTime )
                         REMOVE_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED );
                     }
 
-                    if ( BUTTON_DOWN == ui_doWidget( mnu_widgetList + m ) )
+                    if ( BUTTON_DOWN == ui_Widget::Run( mnu_widgetList + m ) )
                     {
                         //if ( HAS_SOME_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) && !mnu_Selected_check_loadplayer( player ) )
                         //{
@@ -2582,7 +2594,7 @@ int doChoosePlayer( float deltaTime )
 
                             // draw the widget, even though it will not do anything
                             // the menu would looks funny if odd columns missing
-                            ui_doWidget( mnu_widgetList + m );
+                            ui_Widget::Run( mnu_widgetList + m );
                         }
 
                         // make the button states reflect the chosen input devices
@@ -2595,7 +2607,7 @@ int doChoosePlayer( float deltaTime )
                             ADD_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED );
                         }
 
-                        if ( BUTTON_DOWN == ui_doWidget( mnu_widgetList + m ) )
+                        if ( BUTTON_DOWN == ui_Widget::Run( mnu_widgetList + m ) )
                         {
                             if ( HAS_SOME_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) )
                             {
@@ -2648,19 +2660,19 @@ int doChoosePlayer( float deltaTime )
                 // Continue
                 if ( mnu_selectedPlayerCount != 0 )
                 {
-                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_doWidget( w_buttons + but_select ) )
+                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_select ) )
                     {
                         menuState = MM_Leaving;
-                        SlidyButtonState_init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
+                        mnu_SlidyButtons::init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
                     }
                 }
 
                 // Back
-                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_back ) )
+                if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_back ) )
                 {
                     mnu_selectedPlayerCount = 0;
                     menuState = MM_Leaving;
-                    SlidyButtonState_init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
+                    mnu_SlidyButtons::init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
                 }
 
                 // has the player been updated?
@@ -2735,8 +2747,8 @@ int doChoosePlayer( float deltaTime )
                 }
 
                 // Buttons
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, deltaTime );
                 if ( but_state.lerp >= 1.0f )
                 {
                     menuState = MM_Finish;
@@ -2757,12 +2769,12 @@ int doChoosePlayer( float deltaTime )
 
                 for ( cnt = 0; cnt < WIDGET_MAX; cnt++ )
                 {
-                    ui_Widget_free( mnu_widgetList + cnt );
+                    ui_Widget::dealloc( mnu_widgetList + cnt );
                 }
 
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 if ( 0 == mnu_selectedPlayerCount )
@@ -2913,7 +2925,7 @@ int doOptions( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice = 0;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
 
     enum e_buttons
     {
@@ -2927,7 +2939,7 @@ int doOptions( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget w_buttons[but_count];
 
     static const char *sz_buttons[but_sz_count] =
     {
@@ -2951,8 +2963,7 @@ int doOptions( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
                 }
 
                 // set up menu variables
@@ -2960,7 +2971,7 @@ int doOptions( float deltaTime )
 
                 tipText_set_position( menuFont, "Change your audio, input and video\nsettings here.", 20 );
 
-                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
             }
 
             // let this fall through into MM_Entering
@@ -2978,8 +2989,8 @@ int doOptions( float deltaTime )
                     ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
                 }
 
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, -deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, -deltaTime );
 
                 // Let lerp wind down relative to the time elapsed
                 if ( but_state.lerp <= 0.0f )
@@ -3003,31 +3014,31 @@ int doOptions( float deltaTime )
             display_list_draw( tipText_tx );
 
             // Buttons
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_game ) )
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_game ) )
             {
                 // game options
                 menuChoice = 5;
             }
 
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_audio ) )
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_audio ) )
             {
                 // audio options
                 menuChoice = 1;
             }
 
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_input ) )
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_input ) )
             {
                 // input options
                 menuChoice = 2;
             }
 
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_video ) )
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_video ) )
             {
                 // video options
                 menuChoice = 3;
             }
 
-            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_doWidget( w_buttons + but_back ) )
+            if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_back ) )
             {
                 // back to main menu
                 menuChoice = 4;
@@ -3036,7 +3047,7 @@ int doOptions( float deltaTime )
             if ( menuChoice != 0 )
             {
                 menuState = MM_Leaving;
-                SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
             }
             break;
 
@@ -3053,8 +3064,8 @@ int doOptions( float deltaTime )
                 }
 
                 // Buttons
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, deltaTime );
                 if ( but_state.lerp >= 1.0f )
                 {
                     menuState = MM_Finish;
@@ -3165,7 +3176,7 @@ int doOptions( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsInput_update_one_button( ui_Widget_t lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
+bool_t doOptionsInput_update_one_button( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
 {
     // update the name of a specific control
 
@@ -3181,13 +3192,13 @@ bool_t doOptionsInput_update_one_button( ui_Widget_t lab_lst[], size_t lab_lst_s
     }
 
     // set the label text
-    ui_Widget_set_text( lab_lst + which, ui_just_centered, menuFont, sz_tag );
+    ui_Widget::set_text( lab_lst + which, ui_just_centered, menuFont, sz_tag );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsInput_update_all_buttons( ui_Widget_t lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput )
+bool_t doOptionsInput_update_all_buttons( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput )
 {
     int i;
 
@@ -3205,7 +3216,7 @@ bool_t doOptionsInput_update_all_buttons( ui_Widget_t lab_lst[], size_t lab_lst_
 }
 
 //--------------------------------------------------------------------------------------------
-int doOptionsInput_update_control( ui_Widget_t lab_lst[], size_t lab_lst_size, int idevice, int which )
+int doOptionsInput_update_control( ui_Widget lab_lst[], size_t lab_lst_size, int idevice, int which )
 {
     // Grab the key/button input from the selected device
 
@@ -3316,7 +3327,7 @@ int doOptionsInput_update_control( ui_Widget_t lab_lst[], size_t lab_lst_size, i
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsInput_update_player( ui_Widget_t * but_ptr, int player )
+bool_t doOptionsInput_update_player( ui_Widget * but_ptr, int player )
 {
     Sint32              idevice, iicon;
     device_controls_t * pdevice;
@@ -3358,16 +3369,16 @@ bool_t doOptionsInput_update_player( ui_Widget_t * but_ptr, int player )
     {
         img = TxTexture_get_ptr(( TX_REF )( ICON_KEYB + iicon ) );
     }
-    ui_Widget_set_img( but_ptr, ui_just_centered, img );
+    ui_Widget::set_img( but_ptr, ui_just_centered, img );
 
     // The select button text
     if ( iicon < 0 )
     {
-        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, "Select Player..." );
+        ui_Widget::set_text( but_ptr, ui_just_centered, NULL, "Select Player..." );
     }
     else
     {
-        ui_Widget_set_text( but_ptr, ui_just_centered, NULL, "Player %i", player + 1 );
+        ui_Widget::set_text( but_ptr, ui_just_centered, NULL, "Player %i", player + 1 );
     }
 
     return btrue;
@@ -3379,7 +3390,7 @@ int doOptionsInput( float deltaTime )
     static int menuState = MM_Begin;
     static int menuChoice = 0;
     static int waitingforinput = -1;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
 
     enum e_buttons
     {
@@ -3428,7 +3439,7 @@ int doOptionsInput( float deltaTime )
         ""
     };
 
-    static ui_Widget_t w_buttons [but_count];
+    static ui_Widget w_buttons [but_count];
 
     enum e_labels
     {
@@ -3452,7 +3463,7 @@ int doOptionsInput( float deltaTime )
         lab_sz_count
     };
 
-    static ui_Widget_t w_labels  [lab_count];
+    static ui_Widget w_labels  [lab_count];
 
     static const char * sz_labels[lab_sz_count] =
     {
@@ -3507,22 +3518,20 @@ int doOptionsInput( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, cnt );
-                    ui_Widget_set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 // initialize the labels
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
                     // set up the w_labels
-                    memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_labels + cnt, UI_Nothing );
-                    ui_Widget_set_text( w_labels + cnt, ui_just_centered, menuFont, sz_labels[cnt] );
+                    ui_Widget::ctor( w_labels + cnt );
+                    ui_Widget::set_text( w_labels + cnt, ui_just_centered, menuFont, sz_labels[cnt] );
                 }
 
                 // set up the "slidy button"
-                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
                 tipText_set_position( menuFont, "Change input settings here.", 20 );
 
@@ -3538,56 +3547,56 @@ int doOptionsInput( float deltaTime )
             // background
             {
                 // set the positions for the active buttons
-                ui_Widget_set_bound( w_labels  + lab_luse,   buttonLeft + 000, GFX_HEIGHT - 490, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_luse,   buttonLeft + 150, GFX_HEIGHT - 490, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_luse,   buttonLeft + 000, GFX_HEIGHT - 490, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_luse,   buttonLeft + 150, GFX_HEIGHT - 490, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_lget,   buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_lget,   buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_lget,   buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_lget,   buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_lpack,  buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_lpack,  buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_lpack,  buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_lpack,  buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_ruse,   buttonLeft + 300, GFX_HEIGHT - 490, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_ruse,   buttonLeft + 450, GFX_HEIGHT - 490, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_ruse,   buttonLeft + 300, GFX_HEIGHT - 490, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_ruse,   buttonLeft + 450, GFX_HEIGHT - 490, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_rget,   buttonLeft + 300, GFX_HEIGHT - 455, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_rget,   buttonLeft + 450, GFX_HEIGHT - 455, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_rget,   buttonLeft + 300, GFX_HEIGHT - 455, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_rget,   buttonLeft + 450, GFX_HEIGHT - 455, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_rpack,  buttonLeft + 300, GFX_HEIGHT - 420, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_rpack,  buttonLeft + 450, GFX_HEIGHT - 420, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_rpack,  buttonLeft + 300, GFX_HEIGHT - 420, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_rpack,  buttonLeft + 450, GFX_HEIGHT - 420, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_jump,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_jump,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_jump,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_jump,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_up,     buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_up,     buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_up,     buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_up,     buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_down,   buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_down,   buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_down,   buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_down,   buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_left,   buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_left,   buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_left,   buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_left,   buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_right,  buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_right,  buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_right,  buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_right,  buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_cam,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_cam,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_cam,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_cam,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_cin,    buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_cin,    buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_cin,    buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_cin,    buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_cout,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_cout,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_cout,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_cout,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_cleft,  buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_cleft,  buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_cleft,  buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_cleft,  buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_cright, buttonLeft + 300, GFX_HEIGHT - 175, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_cright, buttonLeft + 450, GFX_HEIGHT - 175, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_cright, buttonLeft + 300, GFX_HEIGHT - 175, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_cright, buttonLeft + 450, GFX_HEIGHT - 175, 140, 30 );
 
                 // set the player button position
-                ui_Widget_set_button( w_buttons + but_player, buttonLeft + 300, GFX_HEIGHT -  90, 140, 50 );
+                ui_Widget::set_button( w_buttons + but_player, buttonLeft + 300, GFX_HEIGHT -  90, 140, 50 );
 
                 // set images for widgets
                 doOptionsInput_update_player( w_buttons + but_player, player );
@@ -3623,44 +3632,44 @@ int doOptionsInput( float deltaTime )
                 ui_drawTextBoxImmediate( NULL, buttonLeft, GFX_HEIGHT - 525, 20, "LEFT HAND", NULL );
                 if ( NULL != w_buttons[but_luse].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_luse );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_luse ) )
+                    ui_Widget::Run( w_labels + lab_luse );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_luse ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_luse;
-                        ui_Widget_set_text( w_buttons + but_luse, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_luse, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_lget].tx_lst )
                 {
 
-                    ui_doWidget( w_labels + lab_lget );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_lget ) )
+                    ui_Widget::Run( w_labels + lab_lget );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_lget ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_lget;
-                        ui_Widget_set_text( w_buttons + but_lget, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_lget, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_lpack].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_lpack );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_lpack ) )
+                    ui_Widget::Run( w_labels + lab_lpack );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_lpack ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_lpack;
-                        ui_Widget_set_text( w_buttons + but_lpack, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_lpack, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3668,44 +3677,44 @@ int doOptionsInput( float deltaTime )
                 ui_drawTextBoxImmediate( NULL, buttonLeft + 300, GFX_HEIGHT - 525, 20, "RIGHT HAND" );
                 if ( NULL != w_buttons[but_ruse].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_ruse );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_ruse ) )
+                    ui_Widget::Run( w_labels + lab_ruse );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_ruse ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_ruse;
-                        ui_Widget_set_text( w_buttons + but_ruse, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_ruse, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_rget].tx_lst )
                 {
 
-                    ui_doWidget( w_labels + lab_rget );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_rget ) )
+                    ui_Widget::Run( w_labels + lab_rget );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_rget ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_rget;
-                        ui_Widget_set_text( w_buttons + but_rget, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_rget, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_rpack].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_rpack );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_rpack ) )
+                    ui_Widget::Run( w_labels + lab_rpack );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_rpack ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_rpack;
-                        ui_Widget_set_text( w_buttons + but_rpack, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_rpack, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3713,71 +3722,71 @@ int doOptionsInput( float deltaTime )
                 ui_drawTextBoxImmediate( NULL, buttonLeft, GFX_HEIGHT - 350, 20, "CONTROLS" );
                 if ( NULL != w_buttons[but_jump].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_jump );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_jump ) )
+                    ui_Widget::Run( w_labels + lab_jump );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_jump ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_jump;
-                        ui_Widget_set_text( w_buttons + but_jump, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_jump, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_up].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_up );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_up ) )
+                    ui_Widget::Run( w_labels + lab_up );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_up ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_up;
-                        ui_Widget_set_text( w_buttons + but_up, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_up, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_down].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_down );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_down ) )
+                    ui_Widget::Run( w_labels + lab_down );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_down ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_down;
-                        ui_Widget_set_text( w_buttons + but_down, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_down, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_left].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_left );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_left ) )
+                    ui_Widget::Run( w_labels + lab_left );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_left ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_left;
-                        ui_Widget_set_text( w_buttons + but_left, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_left, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_right].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_right );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_right ) )
+                    ui_Widget::Run( w_labels + lab_right );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_right ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_right;
-                        ui_Widget_set_text( w_buttons + but_right, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_right, ui_just_centered, menuFont, "..." );
                     }
                 }
 
@@ -3786,75 +3795,75 @@ int doOptionsInput( float deltaTime )
                 if ( NULL != w_buttons[but_cam].tx_lst )
                 {
                     // single button camera control
-                    ui_doWidget( w_labels + lab_cam );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cam ) )
+                    ui_Widget::Run( w_labels + lab_cam );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cam ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cam;
-                        ui_Widget_set_text( w_buttons + but_cam, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_cam, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_cin].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_cin );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cin ) )
+                    ui_Widget::Run( w_labels + lab_cin );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cin ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cin;
-                        ui_Widget_set_text( w_buttons + but_cin, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_cin, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_cout].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_cout );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cout ) )
+                    ui_Widget::Run( w_labels + lab_cout );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cout ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cout;
-                        ui_Widget_set_text( w_buttons + but_cout, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_cout, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_cleft].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_cleft );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cleft ) )
+                    ui_Widget::Run( w_labels + lab_cleft );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cleft ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cleft;
-                        ui_Widget_set_text( w_buttons + but_cleft, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_cleft, ui_just_centered, menuFont, "..." );
                     }
                 }
 
                 if ( NULL != w_buttons[but_cright].tx_lst )
                 {
-                    ui_doWidget( w_labels + lab_cright );
-                    if ( BUTTON_UP == ui_doWidget( w_buttons + but_cright ) )
+                    ui_Widget::Run( w_labels + lab_cright );
+                    if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cright ) )
                     {
                         // update the previous button
                         doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cright;
-                        ui_Widget_set_text( w_buttons + but_cright, ui_just_centered, menuFont, "..." );
+                        ui_Widget::set_text( w_buttons + but_cright, ui_just_centered, menuFont, "..." );
                     }
                 }
 
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_player ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_player ) )
                 {
                     int new_player;
                     new_player = CLIP( player, -1, MAX( 0, ( int )input_device_count - 1 ) );
@@ -3886,7 +3895,7 @@ int doOptionsInput( float deltaTime )
                 }
 
                 // Save settings button
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_save ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
                 {
                     // save settings and go back
                     player = 0;
@@ -3915,12 +3924,12 @@ int doOptionsInput( float deltaTime )
                 // free the widgets
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    ui_Widget_free( w_labels + cnt );
+                    ui_Widget::dealloc( w_labels + cnt );
                 }
 
                 // Set the next menu to load
@@ -3941,12 +3950,12 @@ int doOptionsInput( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * desc_ptr, int difficulty );
-static bool_t doOptionsGame_update_message_count( ui_Widget_t * lab_ptr, int message_count );
-static bool_t doOptionsGame_update_message_duration( ui_Widget_t * lab_ptr, Uint16 duration );
-static bool_t doOptionsGame_update_cam_autoturn( ui_Widget_t * lab_ptr, Uint8 turn );
-static bool_t doOptionsGame_update_fps( ui_Widget_t * lab_ptr, bool_t allowed );
-static bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYPE type );
+static bool_t doOptionsGame_update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty );
+static bool_t doOptionsGame_update_message_count( ui_Widget * lab_ptr, int message_count );
+static bool_t doOptionsGame_update_message_duration( ui_Widget * lab_ptr, Uint16 duration );
+static bool_t doOptionsGame_update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn );
+static bool_t doOptionsGame_update_fps( ui_Widget * lab_ptr, bool_t allowed );
+static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE type );
 
 //--------------------------------------------------------------------------------------------
 //struct OptionsGameState_t
@@ -4030,7 +4039,7 @@ static bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYP
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * desc_ptr, int difficulty )
+bool_t doOptionsGame_update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty )
 {
     // Fill out the difficulty description, and the button caption
 
@@ -4042,43 +4051,43 @@ bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * des
     switch ( difficulty )
     {
         case GAME_EASY:
-            ui_Widget_set_text( but_ptr, ui_just_centerleft, menuFont, "Forgiving" );
-            ui_Widget_set_text( desc_ptr, ui_just_topleft, menuFont,
-                                "FORGIVING (Easy)\n"
-                                " - Players gain no bonus XP \n"
-                                " - 15%% XP loss upon death\n"
-                                " - Monsters take 25%% extra damage by players\n"
-                                " - Players take 25%% less damage by monsters\n"
-                                " - Halves the chance for Kursed items\n"
-                                " - Cannot unlock the final level in this mode\n"
-                                " - Life and Mana is refilled after quitting a module" );
+            ui_Widget::set_text( but_ptr, ui_just_centerleft, menuFont, "Forgiving" );
+            ui_Widget::set_text( desc_ptr, ui_just_topleft, menuFont,
+                                 "FORGIVING (Easy)\n"
+                                 " - Players gain no bonus XP \n"
+                                 " - 15%% XP loss upon death\n"
+                                 " - Monsters take 25%% extra damage by players\n"
+                                 " - Players take 25%% less damage by monsters\n"
+                                 " - Halves the chance for Kursed items\n"
+                                 " - Cannot unlock the final level in this mode\n"
+                                 " - Life and Mana is refilled after quitting a module" );
             break;
 
         case GAME_NORMAL:
-            ui_Widget_set_text( but_ptr, ui_just_centerleft, menuFont, "Challenging" );
-            ui_Widget_set_text( desc_ptr, ui_just_topleft, menuFont,
-                                "CHALLENGING (Normal)\n"
-                                " - Players gain 10%% bonus XP \n"
-                                " - 15%% XP loss upon death \n"
-                                " - 15%% money loss upon death" );
+            ui_Widget::set_text( but_ptr, ui_just_centerleft, menuFont, "Challenging" );
+            ui_Widget::set_text( desc_ptr, ui_just_topleft, menuFont,
+                                 "CHALLENGING (Normal)\n"
+                                 " - Players gain 10%% bonus XP \n"
+                                 " - 15%% XP loss upon death \n"
+                                 " - 15%% money loss upon death" );
             break;
 
         case GAME_HARD:
-            ui_Widget_set_text( but_ptr, ui_just_centerleft, menuFont, "Punishing" );
-            ui_Widget_set_text( desc_ptr, ui_just_topleft, menuFont,
-                                "PUNISHING (Hard)\n"
-                                " - Monsters award 20%% extra xp! \n"
-                                " - 15%% XP loss upon death\n"
-                                " - 15%% money loss upon death\n"
-                                " - No respawning\n"
-                                " - Channeling life can kill you\n"
-                                " - Players take 25%% more damage\n"
-                                " - Doubles the chance for Kursed items" );
+            ui_Widget::set_text( but_ptr, ui_just_centerleft, menuFont, "Punishing" );
+            ui_Widget::set_text( desc_ptr, ui_just_topleft, menuFont,
+                                 "PUNISHING (Hard)\n"
+                                 " - Monsters award 20%% extra xp! \n"
+                                 " - 15%% XP loss upon death\n"
+                                 " - 15%% money loss upon death\n"
+                                 " - No respawning\n"
+                                 " - Channeling life can kill you\n"
+                                 " - Players take 25%% more damage\n"
+                                 " - Doubles the chance for Kursed items" );
             break;
 
         default:
-            ui_Widget_set_text( but_ptr, ui_just_nothing, NULL, NULL );
-            ui_Widget_set_text( desc_ptr, ui_just_nothing, NULL, NULL );
+            ui_Widget::set_text( but_ptr, ui_just_nothing, NULL, NULL );
+            ui_Widget::set_text( desc_ptr, ui_just_nothing, NULL, NULL );
             retval = bfalse;
     }
 
@@ -4086,7 +4095,7 @@ bool_t doOptionsGame_update_difficulty( ui_Widget_t * but_ptr, ui_Widget_t * des
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_message_count( ui_Widget_t * lab_ptr, int message_count )
+bool_t doOptionsGame_update_message_count( ui_Widget * lab_ptr, int message_count )
 {
     bool_t retval;
 
@@ -4094,18 +4103,18 @@ bool_t doOptionsGame_update_message_count( ui_Widget_t * lab_ptr, int message_co
 
     if ( 0 == message_count )
     {
-        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "None" );
+        retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "None" );
     }
     else
     {
-        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "%i", message_count );
+        retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "%i", message_count );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_message_duration( ui_Widget_t * lab_ptr, Uint16 duration )
+bool_t doOptionsGame_update_message_duration( ui_Widget * lab_ptr, Uint16 duration )
 {
     bool_t retval;
 
@@ -4113,22 +4122,22 @@ bool_t doOptionsGame_update_message_duration( ui_Widget_t * lab_ptr, Uint16 dura
 
     if ( duration <= 100 )
     {
-        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Short" );
+        retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Short" );
     }
     else if ( duration <= 150 )
     {
-        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Normal" );
+        retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Normal" );
     }
     else
     {
-        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Long" );
+        retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Long" );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_cam_autoturn( ui_Widget_t * lab_ptr, Uint8 turn )
+bool_t doOptionsGame_update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn )
 {
     bool_t retval;
 
@@ -4136,30 +4145,30 @@ bool_t doOptionsGame_update_cam_autoturn( ui_Widget_t * lab_ptr, Uint8 turn )
 
     if ( CAM_TURN_GOOD == turn )
     {
-        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Off" );
+        retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else if ( turn )
     {
-        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Fast" );
+        retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Fast" );
     }
     else
     {
-        retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "On" );
+        retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "On" );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_fps( ui_Widget_t * lab_ptr, bool_t allowed )
+bool_t doOptionsGame_update_fps( ui_Widget * lab_ptr, bool_t allowed )
 {
     if ( NULL == lab_ptr ) return bfalse;
 
-    return ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, allowed ? "On" : "Off" );
+    return ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, allowed ? "On" : "Off" );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYPE type )
+bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE type )
 {
     bool_t retval;
 
@@ -4168,10 +4177,10 @@ bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYPE type 
     // Billboard feedback
     switch ( type )
     {
-        case FEEDBACK_OFF:    retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Disabled" ); break;
-        case FEEDBACK_TEXT:   retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Enabled" ); break;
-        case FEEDBACK_NUMBER: retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Debug" ); break;
-        default: retval = ui_Widget_set_text( lab_ptr, ui_just_centerleft, NULL, "Unknown" ); break;
+        case FEEDBACK_OFF:    retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Disabled" ); break;
+        case FEEDBACK_TEXT:   retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Enabled" ); break;
+        case FEEDBACK_NUMBER: retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Debug" ); break;
+        default: retval = ui_Widget::set_text( lab_ptr, ui_just_centerleft, NULL, "Unknown" ); break;
     }
 
     return retval;
@@ -4185,7 +4194,7 @@ int doOptionsGame( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice = 0;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
     static int difficulty_old = 0;
 
     int cnt;
@@ -4216,7 +4225,7 @@ int doOptionsGame( float deltaTime )
         ""
     };
 
-    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget w_buttons[but_count];
 
     enum e_labels
     {
@@ -4231,7 +4240,7 @@ int doOptionsGame( float deltaTime )
         lab_sz_count
     };
 
-    static ui_Widget_t w_labels [lab_count];
+    static ui_Widget w_labels [lab_count];
 
     static const char *sz_labels[lab_sz_count] =
     {
@@ -4258,17 +4267,15 @@ int doOptionsGame( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // set up the w_buttons
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, ( ui_id_t )cnt );
-                    ui_Widget_set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
                     // set up the w_labels
-                    memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_labels + cnt, UI_Nothing );
-                    ui_Widget_set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
+                    ui_Widget::ctor( w_labels + cnt );
+                    ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
                 // load the background image
@@ -4280,7 +4287,7 @@ int doOptionsGame( float deltaTime )
                 tipText_set_position( menuFont, "Change game settings here.", 20 );
 
                 // auto-format the slidy buttons
-                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
                 // set some special text
                 doOptionsGame_update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
@@ -4290,13 +4297,13 @@ int doOptionsGame( float deltaTime )
                 {
                     int j = GFX_HEIGHT - ( but_feedback - but_difficulty + 5 ) * 35 + i * 35;
 
-                    ui_Widget_set_button( w_buttons + i, buttonLeft + 515, j, 100, 30 );
-                    ui_Widget_set_bound( w_labels  + i, buttonLeft + 350, j, -1, -1 );
+                    ui_Widget::set_button( w_buttons + i, buttonLeft + 515, j, 100, 30 );
+                    ui_Widget::set_bound( w_labels  + i, buttonLeft + 350, j, -1, -1 );
                 }
 
                 // custom format buttons and labels
-                ui_Widget_set_bound( w_labels + lab_diff_desc,  buttonLeft + 150, 50, -1, -1 );
-                ui_Widget_set_bound( w_labels + lab_difficulty, buttonLeft,       50, -1, -1 );
+                ui_Widget::set_bound( w_labels + lab_diff_desc,  buttonLeft + 150, 50, -1, -1 );
+                ui_Widget::set_bound( w_labels + lab_difficulty, buttonLeft,       50, -1, -1 );
             }
 
             // let this fall through into MM_Entering
@@ -4337,10 +4344,10 @@ int doOptionsGame( float deltaTime )
                 }
 
                 // Module difficulty
-                ui_doWidget( w_labels + lab_difficulty );
-                ui_doWidget( w_labels + lab_diff_desc );
-                ui_doWidget( w_labels  + lab_difficulty );
-                if ( !PMod->active && BUTTON_UP == ui_doWidget( w_buttons + but_difficulty ) )
+                ui_Widget::Run( w_labels + lab_difficulty );
+                ui_Widget::Run( w_labels + lab_diff_desc );
+                ui_Widget::Run( w_labels  + lab_difficulty );
+                if ( !PMod->active && BUTTON_UP == ui_Widget::Run( w_buttons + but_difficulty ) )
                 {
                     cfg.difficulty = CLIP( cfg.difficulty, 0, GAME_HARD );
 
@@ -4353,8 +4360,8 @@ int doOptionsGame( float deltaTime )
                 }
 
                 // Text messages
-                ui_doWidget( w_labels + lab_msg_count );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_msg_count ) )
+                ui_Widget::Run( w_labels + lab_msg_count );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_msg_count ) )
                 {
                     cfg.message_count_req = CLIP( cfg.message_count_req, 0, MAX_MESSAGE - 1 );
 
@@ -4367,8 +4374,8 @@ int doOptionsGame( float deltaTime )
                 }
 
                 // Message time
-                ui_doWidget( w_labels + lab_msg_duration );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_msg_duration ) )
+                ui_Widget::Run( w_labels + lab_msg_duration );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_msg_duration ) )
                 {
                     cfg.message_duration = CLIP( cfg.message_duration, 0, 250 );
                     cfg.message_duration += 50;
@@ -4382,8 +4389,8 @@ int doOptionsGame( float deltaTime )
                 }
 
                 // Autoturn camera
-                ui_doWidget( w_labels + lab_autoturn );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_autoturn ) )
+                ui_Widget::Run( w_labels + lab_autoturn );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_autoturn ) )
                 {
                     if ( CAM_TURN_GOOD == cfg.autoturncamera )
                     {
@@ -4402,8 +4409,8 @@ int doOptionsGame( float deltaTime )
                 }
 
                 // Show the fps?
-                ui_doWidget( w_labels + lab_fps );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_fps ) )
+                ui_Widget::Run( w_labels + lab_fps );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_fps ) )
                 {
                     cfg.fps_allowed = !cfg.fps_allowed;
 
@@ -4411,10 +4418,10 @@ int doOptionsGame( float deltaTime )
                 }
 
                 // Feedback
-                ui_doWidget( w_labels + lab_feedback );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_feedback ) )
+                ui_Widget::Run( w_labels + lab_feedback );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_feedback ) )
                 {
-                    cfg.feedback = (FEEDBACK_TYPE)CLIP( cfg.feedback, 0, FEEDBACK_COUNT - 1 );
+                    cfg.feedback = ( FEEDBACK_TYPE )CLIP( cfg.feedback, 0, FEEDBACK_COUNT - 1 );
 
                     if ( cfg.dev_mode )
                     {
@@ -4440,7 +4447,7 @@ int doOptionsGame( float deltaTime )
                 }
 
                 // Save settings
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_save ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
                 {
                     // synchronize the config values with the various game subsystems
                     setup_synch( &cfg );
@@ -4482,16 +4489,16 @@ int doOptionsGame( float deltaTime )
                 // free the widgets
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    ui_Widget_free( w_labels  + cnt );
+                    ui_Widget::dealloc( w_labels  + cnt );
                 }
 
-                ui_Widget_free( w_labels + lab_diff_desc );
-                ui_Widget_free( w_labels + lab_difficulty );
+                ui_Widget::dealloc( w_labels + lab_diff_desc );
+                ui_Widget::dealloc( w_labels + lab_difficulty );
 
                 // Set the next menu to load
                 result = 1;
@@ -4592,67 +4599,67 @@ int doOptionsGame( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_sound_on( ui_Widget_t * but_ptr, bool_t val )
+bool_t doOptionsAudio_update_sound_on( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "On" : "Off" );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "On" : "Off" );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_sound_volume( ui_Widget_t * but_ptr, Uint8 val )
+bool_t doOptionsAudio_update_sound_volume( ui_Widget * but_ptr, Uint8 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_music_on( ui_Widget_t * but_ptr, bool_t val )
+bool_t doOptionsAudio_update_music_on( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "On" : "Off" );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "On" : "Off" );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_music_volume( ui_Widget_t * but_ptr, Uint8 val )
+bool_t doOptionsAudio_update_music_volume( ui_Widget * but_ptr, Uint8 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_sound_channels( ui_Widget_t * but_ptr, Uint16 val )
+bool_t doOptionsAudio_update_sound_channels( ui_Widget * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_buffer_size( ui_Widget_t * but_ptr, Uint16 val )
+bool_t doOptionsAudio_update_buffer_size( ui_Widget * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_quality( ui_Widget_t * but_ptr, bool_t val )
+bool_t doOptionsAudio_update_quality( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ?  "Normal" : "High" );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ?  "Normal" : "High" );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_footfall( ui_Widget_t * but_ptr, bool_t val )
+bool_t doOptionsAudio_update_footfall( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "Enabled" : "Disabled" );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "Enabled" : "Disabled" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4688,7 +4695,7 @@ int doOptionsAudio( float deltaTime )
     static int menuState = MM_Begin;
     static oglx_texture_t background;
     static int menuChoice = 0;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
 
     bool_t old_sound_allowed       = cfg.sound_allowed;
     Uint8  old_sound_volume        = cfg.sound_volume;
@@ -4729,7 +4736,7 @@ int doOptionsAudio( float deltaTime )
         ""
     };
 
-    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget w_buttons[but_count];
 
     // label widgets
     enum e_labels
@@ -4759,7 +4766,7 @@ int doOptionsAudio( float deltaTime )
         ""
     };
 
-    static ui_Widget_t w_labels[lab_count];
+    static ui_Widget w_labels[lab_count];
 
     int result = 0;
     int cnt;
@@ -4773,17 +4780,15 @@ int doOptionsAudio( float deltaTime )
                 // set up the w_buttons
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, cnt );
-                    ui_Widget_set_text( w_buttons + cnt, ui_just_centered, NULL, sz_buttons[cnt] );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::set_text( w_buttons + cnt, ui_just_centered, NULL, sz_buttons[cnt] );
                 }
 
                 // set up the w_labels
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_labels + cnt, UI_Nothing );
-                    ui_Widget_set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
+                    ui_Widget::ctor( w_labels + cnt );
+                    ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
                 // set up menu variables
@@ -4791,32 +4796,32 @@ int doOptionsAudio( float deltaTime )
 
                 tipText_set_position( menuFont, "Change audio settings here.", 20 );
 
-                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
                 // Format the buttons
-                ui_Widget_set_bound( w_labels  + lab_on,        buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_on,        buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_on,        buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_on,        buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_vol,       buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_vol,       buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_vol,       buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_vol,       buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_mus_on,    buttonLeft + 000, GFX_HEIGHT - 350, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_mus_on,    buttonLeft + 150, GFX_HEIGHT - 350, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_mus_on,    buttonLeft + 000, GFX_HEIGHT - 350, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_mus_on,    buttonLeft + 150, GFX_HEIGHT - 350, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_mus_vol,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_mus_vol,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_mus_vol,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_mus_vol,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_footsteps, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_footsteps, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_footsteps, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_footsteps, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_channels,  buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_channels,  buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_channels,  buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_channels,  buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_buffer,    buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_buffer,    buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_buffer,    buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_buffer,    buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_quality,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_quality,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_quality,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_quality,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
             }
 
             // let this fall through into MM_Entering
@@ -4863,8 +4868,8 @@ int doOptionsAudio( float deltaTime )
                 }
 
                 // Buttons
-                ui_doWidget( w_labels + lab_on );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_on ) )
+                ui_Widget::Run( w_labels + lab_on );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_on ) )
                 {
                     cfg.sound_allowed = !cfg.sound_allowed;
 
@@ -4875,8 +4880,8 @@ int doOptionsAudio( float deltaTime )
                     }
                 }
 
-                ui_doWidget( w_labels + lab_vol );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_vol ) )
+                ui_Widget::Run( w_labels + lab_vol );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_vol ) )
                 {
                     cfg.sound_volume += 5;
                     if ( cfg.sound_volume > 100 ) cfg.sound_volume = 0;
@@ -4888,8 +4893,8 @@ int doOptionsAudio( float deltaTime )
                     }
                 }
 
-                ui_doWidget( w_labels + lab_mus_on );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_mus_on ) )
+                ui_Widget::Run( w_labels + lab_mus_on );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_mus_on ) )
                 {
                     cfg.music_allowed = !cfg.music_allowed;
 
@@ -4900,8 +4905,8 @@ int doOptionsAudio( float deltaTime )
                     }
                 }
 
-                ui_doWidget( w_labels + lab_mus_vol );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_mus_vol ) )
+                ui_Widget::Run( w_labels + lab_mus_vol );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_mus_vol ) )
                 {
                     cfg.music_volume += 5;
                     if ( cfg.music_volume > 100 ) cfg.music_volume = 0;
@@ -4913,8 +4918,8 @@ int doOptionsAudio( float deltaTime )
                     }
                 }
 
-                ui_doWidget( w_labels + lab_channels );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_channels ) )
+                ui_Widget::Run( w_labels + lab_channels );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_channels ) )
                 {
                     if ( cfg.sound_channel_count < 8 )
                     {
@@ -4937,8 +4942,8 @@ int doOptionsAudio( float deltaTime )
                     }
                 }
 
-                ui_doWidget( w_labels + lab_buffer );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_buffer ) )
+                ui_Widget::Run( w_labels + lab_buffer );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_buffer ) )
                 {
                     if ( cfg.sound_buffer_size < 512 )
                     {
@@ -4961,8 +4966,8 @@ int doOptionsAudio( float deltaTime )
                     }
                 }
 
-                ui_doWidget( w_labels + lab_quality );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_quality ) )
+                ui_Widget::Run( w_labels + lab_quality );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_quality ) )
                 {
                     cfg.sound_highquality = !cfg.sound_highquality;
 
@@ -4973,8 +4978,8 @@ int doOptionsAudio( float deltaTime )
                     }
                 }
 
-                ui_doWidget( w_labels + lab_footsteps );
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_footsteps ) )
+                ui_Widget::Run( w_labels + lab_footsteps );
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_footsteps ) )
                 {
                     cfg.sound_footfall = !cfg.sound_footfall;
 
@@ -4986,7 +4991,7 @@ int doOptionsAudio( float deltaTime )
                 }
 
                 // Save settings
-                if ( BUTTON_UP == ui_doWidget( w_buttons + but_save ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
                 {
                     doOptionsAudio_update_settings( &cfg );
                     menuState = MM_Leaving;
@@ -5021,12 +5026,12 @@ int doOptionsAudio( float deltaTime )
                 // release the widgets
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    ui_Widget_free( w_labels + cnt );
+                    ui_Widget::dealloc( w_labels + cnt );
                 }
 
                 // Set the next menu to load
@@ -5279,7 +5284,7 @@ int doOptionsVideo_fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_scr
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_antialiasing( ui_Widget_t * but_ptr, Uint8 val )
+bool_t doVideoOptions_update_antialiasing( ui_Widget * but_ptr, Uint8 val )
 {
     bool_t retval = bfalse;
 
@@ -5287,18 +5292,18 @@ bool_t doVideoOptions_update_antialiasing( ui_Widget_t * but_ptr, Uint8 val )
 
     if ( 0 == val )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "X%i", val );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "X%i", val );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_texture_filter( ui_Widget_t * but_ptr, Uint8 val )
+bool_t doVideoOptions_update_texture_filter( ui_Widget * but_ptr, Uint8 val )
 {
     bool_t retval = bfalse;
 
@@ -5308,36 +5313,36 @@ bool_t doVideoOptions_update_texture_filter( ui_Widget_t * but_ptr, Uint8 val )
 
     if ( val >= TX_ANISOTROPIC )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Ansiotropic %i", val - TX_ANISOTROPIC );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Ansiotropic %i", val - TX_ANISOTROPIC );
     }
     else switch ( val )
         {
             case TX_UNFILTERED:
-                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Unfiltered" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Unfiltered" );
                 break;
 
             case TX_LINEAR:
-                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Linear" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Linear" );
                 break;
 
             case TX_MIPMAP:
-                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Mipmap" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Mipmap" );
                 break;
 
             case TX_BILINEAR:
-                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Bilinear" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Bilinear" );
                 break;
 
             case TX_TRILINEAR_1:
-                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Trilinear 1" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Trilinear 1" );
                 break;
 
             case TX_TRILINEAR_2:
-                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Trilinear 2" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Trilinear 2" );
                 break;
 
             default:
-                retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Unknown" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Unknown" );
                 break;
         }
 
@@ -5345,23 +5350,23 @@ bool_t doVideoOptions_update_texture_filter( ui_Widget_t * but_ptr, Uint8 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_dither( ui_Widget_t * but_ptr, bool_t val )
+bool_t doVideoOptions_update_dither( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "Yes" : "No" );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "Yes" : "No" );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_fullscreen( ui_Widget_t * but_ptr, bool_t val )
+bool_t doVideoOptions_update_fullscreen( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "True" : "False" );;
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "True" : "False" );;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_reflections( ui_Widget_t * but_ptr, bool_t allowed, bool_t do_prt, Uint8 fade )
+bool_t doVideoOptions_update_reflections( ui_Widget * but_ptr, bool_t allowed, bool_t do_prt, Uint8 fade )
 {
     bool_t retval = bfalse;
 
@@ -5369,26 +5374,26 @@ bool_t doVideoOptions_update_reflections( ui_Widget_t * but_ptr, bool_t allowed,
 
     if ( !allowed )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else if ( !do_prt )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Low" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Low" );
     }
     else if ( 0 == fade )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Medium" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Medium" );
     }
     else
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "High" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "High" );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_shadows( ui_Widget_t * but_ptr, bool_t allowed, bool_t sprite )
+bool_t doVideoOptions_update_shadows( ui_Widget * but_ptr, bool_t allowed, bool_t sprite )
 {
     bool_t retval = bfalse;
 
@@ -5396,38 +5401,38 @@ bool_t doVideoOptions_update_shadows( ui_Widget_t * but_ptr, bool_t allowed, boo
 
     if ( !allowed )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else if ( sprite )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Normal" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Normal" );
     }
     else
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Best" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Best" );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_z_buffer( ui_Widget_t * but_ptr, int val )
+bool_t doVideoOptions_update_z_buffer( ui_Widget * but_ptr, int val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%d", val );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "%d", val );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_max_lights( ui_Widget_t * but_ptr, int val )
+bool_t doVideoOptions_update_max_lights( ui_Widget * but_ptr, int val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_3d_effects( ui_Widget_t * but_ptr, bool_t use_phong, bool_t use_perspective, bool_t overlay_allowed, bool_t background_allowed )
+bool_t doVideoOptions_update_3d_effects( ui_Widget * but_ptr, bool_t use_phong, bool_t use_perspective, bool_t overlay_allowed, bool_t background_allowed )
 {
     bool_t retval = bfalse;
 
@@ -5435,54 +5440,54 @@ bool_t doVideoOptions_update_3d_effects( ui_Widget_t * but_ptr, bool_t use_phong
 
     if ( use_phong && use_perspective && overlay_allowed && background_allowed )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
     }
     else if ( !use_phong )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Okay" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Okay" );
     }
     else if ( !use_perspective && overlay_allowed && background_allowed )
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Superb" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Superb" );
     }
     else
     {
-        retval = ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "Good" );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Good" );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_water_quality( ui_Widget_t * but_ptr, bool_t val )
+bool_t doVideoOptions_update_water_quality( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "True" : "False" );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "True" : "False" );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_max_particles( ui_Widget_t * but_ptr, Uint16 val )
+bool_t doVideoOptions_update_max_particles( ui_Widget * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "%i", val );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_widescreen( ui_Widget_t * but_ptr, bool_t val )
+bool_t doVideoOptions_update_widescreen( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, val ? "X" : NULL );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "X" : NULL );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_resolution( ui_Widget_t * but_ptr, int x, int y )
+bool_t doVideoOptions_update_resolution( ui_Widget * but_ptr, int x, int y )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget_set_text( but_ptr, ui_just_centerleft, NULL, "%ix%i", x, y );
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "%ix%i", x, y );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5510,7 +5515,7 @@ int doOptionsVideo( float deltaTime )
 
     const int max_anisotropic = 16;
 
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
 
     enum e_buttons
     {
@@ -5532,7 +5537,7 @@ int doOptionsVideo( float deltaTime )
         but_sz_count
     };
 
-    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget w_buttons[but_count];
     static const char *sz_buttons[but_sz_count];
 
     enum e_labels
@@ -5555,7 +5560,7 @@ int doOptionsVideo( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget_t w_labels [lab_count];
+    static ui_Widget w_labels [lab_count];
     static const char *sz_labels[lab_sz_count] =
     {
         "Antialiasing:",            // lab_antialiasing
@@ -5603,18 +5608,15 @@ int doOptionsVideo( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-
-                    ui_Widget_set_id( w_buttons  + cnt, cnt );
-                    ui_Widget_set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 // set up the w_labels
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    memset( w_labels  + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_labels  + cnt, UI_Nothing );
-                    ui_Widget_set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
+                    ui_Widget::ctor( w_labels + cnt );
+                    ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
                 // set up menu variables
@@ -5622,46 +5624,46 @@ int doOptionsVideo( float deltaTime )
 
                 tipText_set_position( menuFont, "Change video settings here.", 20 );
 
-                ui_Widget_set_bound( w_labels  + lab_antialiasing, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_antialiasing, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_antialiasing, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_antialiasing, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_dither,       buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_dither,       buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_dither,       buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_dither,       buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_fullscreen,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_fullscreen,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_fullscreen,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_fullscreen,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_reflections,  buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_reflections,  buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_reflections,  buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_reflections,  buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_filtering,    buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_filtering,    buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_filtering,    buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_filtering,    buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_shadow,       buttonLeft + 000, GFX_HEIGHT - 385, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_shadow,       buttonLeft + 150, GFX_HEIGHT - 385, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_shadow,       buttonLeft + 000, GFX_HEIGHT - 385, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_shadow,       buttonLeft + 150, GFX_HEIGHT - 385, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_zbuffer,      buttonLeft + 300, GFX_HEIGHT - 350, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_zbuffer,      buttonLeft + 450, GFX_HEIGHT - 350, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_zbuffer,      buttonLeft + 300, GFX_HEIGHT - 350, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_zbuffer,      buttonLeft + 450, GFX_HEIGHT - 350, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_maxlights,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_maxlights,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_maxlights,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_maxlights,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_3dfx,         buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_3dfx,         buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_3dfx,         buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_3dfx,         buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_multiwater,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_multiwater,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_multiwater,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_multiwater,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_maxparticles, buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_maxparticles, buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_maxparticles, buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_maxparticles, buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_widescreen,   buttonLeft + 300, GFX_HEIGHT - 105, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_widescreen,   buttonLeft + 450, GFX_HEIGHT - 105, 30, 30 );
+                ui_Widget::set_bound( w_labels  + lab_widescreen,   buttonLeft + 300, GFX_HEIGHT - 105, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_widescreen,   buttonLeft + 450, GFX_HEIGHT - 105, 30, 30 );
 
-                ui_Widget_set_bound( w_labels  + lab_screensize,   buttonLeft + 300, GFX_HEIGHT - 140, -1, 30 );
-                ui_Widget_set_button( w_buttons + but_screensize,   buttonLeft + 450, GFX_HEIGHT - 140, 140, 30 );
+                ui_Widget::set_bound( w_labels  + lab_screensize,   buttonLeft + 300, GFX_HEIGHT - 140, -1, 30 );
+                ui_Widget::set_button( w_buttons + but_screensize,   buttonLeft + 450, GFX_HEIGHT - 140, 140, 30 );
 
-                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
             }
 
             // let this fall through into MM_Entering
@@ -5682,7 +5684,7 @@ int doOptionsVideo( float deltaTime )
                 // make the but_maxparticles inactive if the module is running
                 if ( PMod->active )
                 {
-                    ui_Widget_set_id( w_buttons + but_maxparticles, UI_Nothing );
+                    ui_Widget::set_id( w_buttons + but_maxparticles, UI_Nothing );
                 }
 
                 // limit some initial values
@@ -5755,8 +5757,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Antialiasing Button
-            ui_doWidget( w_labels + lab_antialiasing );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_antialiasing ) )
+            ui_Widget::Run( w_labels + lab_antialiasing );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_antialiasing ) )
             {
                 // make the multi-sampling even
 
@@ -5781,8 +5783,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Dithering
-            ui_doWidget( w_labels + lab_dither );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_dither ) )
+            ui_Widget::Run( w_labels + lab_dither );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_dither ) )
             {
                 cfg.use_dither = !cfg.use_dither;
 
@@ -5790,8 +5792,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Fullscreen
-            ui_doWidget( w_labels + lab_fullscreen );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_fullscreen ) )
+            ui_Widget::Run( w_labels + lab_fullscreen );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_fullscreen ) )
             {
                 cfg.fullscreen_req = !cfg.fullscreen_req;
 
@@ -5799,8 +5801,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Reflection
-            ui_doWidget( w_labels + lab_reflections );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_reflections ) )
+            ui_Widget::Run( w_labels + lab_reflections );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_reflections ) )
             {
                 if ( cfg.reflect_allowed && cfg.reflect_fade == 0 && cfg.reflect_prt )
                 {
@@ -5828,8 +5830,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Texture Filtering
-            ui_doWidget( w_labels + lab_filtering );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_filtering ) )
+            ui_Widget::Run( w_labels + lab_filtering );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_filtering ) )
             {
                 cfg.texturefilter_req = CLIP( cfg.texturefilter_req, TX_UNFILTERED, TX_ANISOTROPIC + max_anisotropic );
 
@@ -5844,8 +5846,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Shadows
-            ui_doWidget( w_labels + lab_shadow );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_shadow ) )
+            ui_Widget::Run( w_labels + lab_shadow );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_shadow ) )
             {
                 if ( cfg.shadow_allowed && !cfg.shadow_sprite )
                 {
@@ -5869,8 +5871,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Z bit
-            ui_doWidget( w_labels + lab_zbuffer );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_zbuffer ) )
+            ui_Widget::Run( w_labels + lab_zbuffer );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_zbuffer ) )
             {
                 if ( cfg.scrz_req < 0 )
                 {
@@ -5891,8 +5893,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Max dynamic lights
-            ui_doWidget( w_labels + lab_maxlights );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_maxlights ) )
+            ui_Widget::Run( w_labels + lab_maxlights );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_maxlights ) )
             {
                 cfg.dyna_count_req = CLIP( cfg.dyna_count_req, 8, TOTAL_MAX_DYNA - 1 );
 
@@ -5904,8 +5906,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Perspective correction, overlay, underlay and Phong mapping
-            ui_doWidget( w_labels + lab_3dfx );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_3dfx ) )
+            ui_Widget::Run( w_labels + lab_3dfx );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_3dfx ) )
             {
                 if ( cfg.use_phong && cfg.use_perspective && cfg.overlay_allowed && cfg.background_allowed )
                 {
@@ -5932,8 +5934,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Water Quality
-            ui_doWidget( w_labels + lab_multiwater );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_multiwater ) )
+            ui_Widget::Run( w_labels + lab_multiwater );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_multiwater ) )
             {
                 cfg.twolayerwater_allowed = !cfg.twolayerwater_allowed;
 
@@ -5941,8 +5943,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Max particles
-            ui_doWidget( w_labels + lab_maxparticles );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_maxparticles ) )
+            ui_Widget::Run( w_labels + lab_maxparticles );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_maxparticles ) )
             {
                 cfg.particle_count_req = CLIP( cfg.particle_count_req, 128, TOTAL_MAX_PRT - 1 );
 
@@ -5954,8 +5956,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Widescreen
-            ui_doWidget( w_labels + lab_widescreen );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_widescreen ) )
+            ui_Widget::Run( w_labels + lab_widescreen );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_widescreen ) )
             {
                 bool_t old_widescreen = widescreen;
 
@@ -5984,8 +5986,8 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Screen Resolution
-            ui_doWidget( w_labels + lab_screensize );
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_screensize ) )
+            ui_Widget::Run( w_labels + lab_screensize );
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_screensize ) )
             {
                 float req_area;
 
@@ -6028,7 +6030,7 @@ int doOptionsVideo( float deltaTime )
             }
 
             // Save settings button
-            if ( BUTTON_UP == ui_doWidget( w_buttons + but_save ) )
+            if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
             {
                 doOptionsVideo_update_settings( &cfg );
 
@@ -6038,7 +6040,7 @@ int doOptionsVideo( float deltaTime )
             if ( menuChoice != 0 )
             {
                 menuState = MM_Leaving;
-                SlidyButtonState_init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
             }
 
             // tool-tip text
@@ -6070,12 +6072,12 @@ int doOptionsVideo( float deltaTime )
                 // free the widgets
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    ui_Widget_free( w_labels  + cnt );
+                    ui_Widget::dealloc( w_labels  + cnt );
                 }
 
                 // Set the next menu to load
@@ -6253,15 +6255,15 @@ int doShowResults( float deltaTime )
                     ui_drawTextBoxImmediate( menuFont, GFX_WIDTH / 2 - text_w / 2, GFX_HEIGHT - 110, 20, game_hint );
                 }
 
-				//ZF> Disabling this counter will speed up load times quite a bit...
+                //ZF> Disabling this counter will speed up load times quite a bit...
                 // keep track of the iterations through this section for a timer
                 /*
-				count++;
+                count++;
                 if ( count > UPDATE_SKIP )
                 {
                     menuState  = MM_Leaving;
                 }
-				*/
+                */
                 menuState  = MM_Leaving;
             }
             break;
@@ -6376,7 +6378,7 @@ int doNotImplemented( float deltaTime )
     int x, y;
     int w, h;
 
-    ui_Widget_t w_buttons[1];
+    ui_Widget w_buttons[1];
     char notImplementedMessage[] = "Not implemented yet!  Check back soon!";
 
     fnt_getTextSize( ui_getFont(), &w, &h, notImplementedMessage );
@@ -6385,11 +6387,11 @@ int doNotImplemented( float deltaTime )
     x = GFX_WIDTH  / 2 - w / 2;
     y = GFX_HEIGHT / 2 - 17;
 
-    ui_Widget_set_id( w_buttons + 0, 0 );
-    ui_Widget_set_text( w_buttons + 0, ui_just_centered, menuFont, notImplementedMessage );
-    ui_Widget_set_button( w_buttons + 0, x, y, w, -1 );
+    ui_Widget::set_id( w_buttons + 0, 0 );
+    ui_Widget::set_text( w_buttons + 0, ui_just_centered, menuFont, notImplementedMessage );
+    ui_Widget::set_button( w_buttons + 0, x, y, w, -1 );
 
-    if ( BUTTON_UP == ui_doWidget( w_buttons + 0 ) )
+    if ( BUTTON_UP == ui_Widget::Run( w_buttons + 0 ) )
     {
         return 1;
     }
@@ -6484,7 +6486,7 @@ int doGamePaused( float deltaTime )
 {
     static int menuState = MM_Begin;
     static int menuChoice = 0;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
 
     enum
     {
@@ -6497,7 +6499,7 @@ int doGamePaused( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget w_buttons[but_count];
 
     static const char * sz_buttons[but_sz_count] =
     {
@@ -6521,14 +6523,13 @@ int doGamePaused( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
                 }
 
                 if ( PMod->exportvalid && !local_stats.allpladead ) sz_buttons[0] = "Save and Exit";
                 else                                                sz_buttons[0] = "Quit Module";
 
-                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
             }
 
             // let this fall through into MM_Entering
@@ -6536,8 +6537,8 @@ int doGamePaused( float deltaTime )
 
         case MM_Entering:
             {
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, -deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, -deltaTime );
 
                 // Let lerp wind down relative to the time elapsed
                 if ( but_state.lerp <= 0.0f )
@@ -6555,7 +6556,7 @@ int doGamePaused( float deltaTime )
             // Buttons
             for ( cnt = 0; cnt < 4; cnt ++ )
             {
-                if ( BUTTON_UP == ui_doWidget( w_buttons + cnt ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + cnt ) )
                 {
                     // audio options
                     menuChoice = cnt + 1;
@@ -6568,7 +6569,7 @@ int doGamePaused( float deltaTime )
             if ( menuChoice != 0 )
             {
                 menuState = MM_Leaving;
-                SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
             }
             break;
 
@@ -6579,8 +6580,8 @@ int doGamePaused( float deltaTime )
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 // Buttons
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, deltaTime );
                 if ( but_state.lerp >= 1.0f )
                 {
                     menuState = MM_Finish;
@@ -6595,7 +6596,7 @@ int doGamePaused( float deltaTime )
                 // free the widgets
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 // Set the next menu to load
@@ -6702,7 +6703,7 @@ int doShowEndgame( float deltaTime )
     static int menuState = MM_Begin;
     static int menuChoice = 0;
     static int x, y, w, h;
-    static SlidyButtonState_t but_state = { NULL };
+    static mnu_SlidyButtons but_state;
 
     enum
     {
@@ -6712,7 +6713,7 @@ int doShowEndgame( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget_t w_buttons[but_count];
+    static ui_Widget w_buttons[but_count];
 
     static const char * sz_buttons[but_sz_count] =
     {
@@ -6730,11 +6731,10 @@ int doShowEndgame( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    memset( w_buttons + cnt, 0, sizeof( ui_Widget_t ) );
-                    ui_Widget_set_id( w_buttons + cnt, cnt );
+                    ui_Widget::ctor( w_buttons + cnt, cnt );
                 }
 
-                SlidyButtonState_init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
 
                 if ( PMod->exportvalid )
                 {
@@ -6760,9 +6760,9 @@ int doShowEndgame( float deltaTime )
 
                 menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
                 ui_drawTextBox( menuTextureList_ptr, x, y, w, h );
-                SlidyButtonState_draw_all( &but_state );
+                mnu_SlidyButtons::draw_all( &but_state );
 
-                SlidyButtonState_update_all( &but_state, -deltaTime );
+                mnu_SlidyButtons::update_all( &but_state, -deltaTime );
 
                 // Let lerp wind down relative to the time elapsed
                 if ( but_state.lerp <= 0.0f )
@@ -6778,7 +6778,7 @@ int doShowEndgame( float deltaTime )
             // Buttons
             for ( cnt = 0; cnt < 1; cnt ++ )
             {
-                if ( BUTTON_UP == ui_doWidget( w_buttons + cnt ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + cnt ) )
                 {
                     // audio options
                     menuChoice = cnt + 1;
@@ -6791,7 +6791,7 @@ int doShowEndgame( float deltaTime )
             {
                 menuChoice = 1;
                 menuState = MM_Leaving;
-                SlidyButtonState_init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
+                mnu_SlidyButtons::init( &but_state, 0.0f, 0, sz_buttons, w_buttons );
             }
 
             menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
@@ -6809,8 +6809,8 @@ int doShowEndgame( float deltaTime )
                 ui_drawTextBox( menuTextureList_ptr, x, y, w, h );
 
                 // Buttons
-                SlidyButtonState_draw_all( &but_state );
-                SlidyButtonState_update_all( &but_state, deltaTime );
+                mnu_SlidyButtons::draw_all( &but_state );
+                mnu_SlidyButtons::update_all( &but_state, deltaTime );
                 if ( but_state.lerp >= 1.0f )
                 {
                     menuState = MM_Finish;
@@ -6860,7 +6860,7 @@ int doShowEndgame( float deltaTime )
                 // free the widgets
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget_free( w_buttons + cnt );
+                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 // Set the next menu to load
@@ -7100,7 +7100,7 @@ void autoformat_init_slidy_buttons()
 {
     // Figure out where to draw the buttons
     buttonLeft = 40;
-    buttonTop = GFX_HEIGHT - 20;
+    buttonTop  = GFX_HEIGHT - 20;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7314,7 +7314,7 @@ int mnu_get_mod_number( const char *szModName )
 bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_len, char * buffer )
 {
     int            cnt;
-    mnu_module_t * pmod;
+    mnu_module * pmod;
     bool_t         allowed;
 
     if ( INVALID_MOD( modnumber ) ) return bfalse;
@@ -7375,7 +7375,7 @@ bool_t mnu_test_by_name( const char *szModName )
 }
 
 //--------------------------------------------------------------------------------------------
-void mnu_module_init( mnu_module_t * pmod )
+void mnu_module_init( mnu_module * pmod )
 {
     if ( NULL == pmod ) return;
 
@@ -7402,7 +7402,7 @@ void mnu_load_all_module_info()
 
     while ( NULL != ctxt && VALID_CSTR( vfs_ModPath ) && mnu_ModList.count < MAX_MODULE )
     {
-        mnu_module_t * pmod = mnu_ModList.lst + ( MOD_REF )mnu_ModList.count;
+        mnu_module * pmod = mnu_ModList.lst + ( MOD_REF )mnu_ModList.count;
 
         // clear the module
         mnu_module_init( pmod );
@@ -7439,7 +7439,7 @@ void mnu_load_all_module_info()
 //--------------------------------------------------------------------------------------------
 void mnu_release_one_module( const MOD_REF by_reference imod )
 {
-    mnu_module_t * pmod;
+    mnu_module * pmod;
 
     if ( !VALID_MOD( imod ) ) return;
     pmod = mnu_ModList.lst + imod;
@@ -7495,7 +7495,7 @@ void mnu_ModList_release_all()
             mnu_release_one_module( cnt );
         }
 
-        memset( mnu_ModList.lst + cnt, 0, sizeof( mnu_module_t ) );
+        memset( mnu_ModList.lst + cnt, 0, sizeof( mnu_module ) );
     }
 
     mnu_ModList.count = 0;
@@ -7720,14 +7720,14 @@ bool_t mnu_GameTip_load_local_vfs()
 //--------------------------------------------------------------------------------------------
 // Implementation of the mnu_SlidyButton array
 //--------------------------------------------------------------------------------------------
-SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float lerp, int id_start, const char *button_text[], ui_Widget_t * button_widget )
+mnu_SlidyButtons * mnu_SlidyButtons::init( mnu_SlidyButtons * pstate, float lerp, int id_start, const char *button_text[], ui_Widget * button_widget )
 {
     size_t i, count;
 
     if ( NULL == pstate ) return pstate;
 
     // clear the state
-    memset( pstate, 0, sizeof( *pstate ) );
+    mnu_SlidyButtons::clear( pstate );
 
     autoformat_init_slidy_buttons();
 
@@ -7755,16 +7755,16 @@ SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float l
         // automatically configure the widgets
         for ( i = 0; i < count; i++ )
         {
-            size_t          j = i + id_start;
-            ui_Widget_t * pw  = button_widget + j;
-            const char *  txt = ( NULL == button_text ) ? NULL : button_text[j];
+            size_t       j   = i + id_start;
+            ui_Widget  * pw  = button_widget + j;
+            const char * txt = ( NULL == button_text ) ? NULL : button_text[j];
 
             float x = buttonLeft - ( 360 - i * 35 )  * pstate->lerp;
             float y = buttonTop + i * 35;
 
-            ui_Widget_set_id( pw, j );
-            ui_Widget_set_button( pw, x, y, 200, 30 );
-            ui_Widget_set_text( pw, ui_just_centered, NULL, txt );
+            ui_Widget::set_id( pw, j );
+            ui_Widget::set_button( pw, x, y, 200, 30 );
+            ui_Widget::set_text( pw, ui_just_centered, NULL, txt );
         }
     }
 
@@ -7772,7 +7772,7 @@ SlidyButtonState_t * SlidyButtonState_init( SlidyButtonState_t * pstate, float l
 }
 
 //--------------------------------------------------------------------------------------------
-SlidyButtonState_t * SlidyButtonState_update_all( SlidyButtonState_t * pstate, float deltaTime )
+mnu_SlidyButtons * mnu_SlidyButtons::update_all( mnu_SlidyButtons * pstate, float deltaTime )
 {
     size_t i;
 
@@ -7782,19 +7782,19 @@ SlidyButtonState_t * SlidyButtonState_update_all( SlidyButtonState_t * pstate, f
 
     for ( i = 0; i < pstate->but_count; i++ )
     {
-        ui_Widget_t * pw = pstate->but + i;
+        ui_Widget * pw = pstate->but + i;
 
         float x = buttonLeft - ( 360 - i * 35 )  * pstate->lerp;
         float y = pw->vy;
 
-        ui_Widget_set_pos( pw, x, y );
+        ui_Widget::set_pos( pw, x, y );
     }
 
     return pstate;
 }
 
 //--------------------------------------------------------------------------------------------
-SlidyButtonState_t * SlidyButtonState_draw_all( SlidyButtonState_t * pstate )
+mnu_SlidyButtons * mnu_SlidyButtons::draw_all( mnu_SlidyButtons * pstate )
 {
     size_t i;
 
@@ -7802,7 +7802,7 @@ SlidyButtonState_t * SlidyButtonState_draw_all( SlidyButtonState_t * pstate )
 
     for ( i = 0; i < pstate->but_count; i++ )
     {
-        ui_doWidget( pstate->but + i );
+        ui_Widget::Run( pstate->but + i );
     }
 
     return pstate;

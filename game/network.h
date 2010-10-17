@@ -74,7 +74,7 @@
 /// A latch with a time attached
 /// @details This is recieved over the network, or inserted into the list by the local system to simulate
 ///  network traffic
-struct time_latch_t
+struct ego_time_latch
 {
     float     raw[2];
 
@@ -85,7 +85,7 @@ struct time_latch_t
 };
 
 //--------------------------------------------------------------------------------------------
-struct input_device_t
+struct ego_input_device
 {
     bool_t                  on;              ///< Is it alive?
     BIT_FIELD               bits;
@@ -97,14 +97,14 @@ struct input_device_t
     latch_input_t           latch_old;       ///< For sustain
 };
 
-void input_device_init( input_device_t * pdevice );
-void input_device_add_latch( input_device_t * pdevice, latch_input_t latch );
+void input_device_init( ego_input_device * pdevice );
+void input_device_add_latch( ego_input_device * pdevice, latch_input_t latch );
 
 //--------------------------------------------------------------------------------------------
 #define INVALID_PLAYER MAX_PLAYER
 
 /// The state of a player
-struct player_t
+struct ego_player
 {
     bool_t                  valid;                    ///< Player used?
     CHR_REF                 index;                    ///< Which character?
@@ -114,7 +114,7 @@ struct player_t
     bool_t explore_mode;
 
     /// the buffered input from the local input devices
-    input_device_t          device;
+    ego_input_device          device;
 
     /// Local latch, set by set_one_player_latch(), read by sv_talkToRemotes()
     latch_input_t           local_latch;
@@ -127,33 +127,33 @@ struct player_t
 
     // Timed latches
     Uint32                  tlatch_count;
-    time_latch_t            tlatch[MAXLAG];
+    ego_time_latch            tlatch[MAXLAG];
 
     /// Network latch, set by unbuffer_all_player_latches(), used to set the local character's latch
     latch_input_t           net_latch;
 };
 
-DECLARE_STACK_EXTERN( player_t, PlaStack, MAX_PLAYER );                         ///< Stack for keeping track of players
+DECLARE_STACK_EXTERN( ego_player, PlaStack, MAX_PLAYER );                         ///< Stack for keeping track of players
 extern int local_numlpla;                                   ///< Number of local players
 
 #define VALID_PLA_RANGE(IPLA) ( ((IPLA) >= 0) && ((IPLA) < MAX_PLAYER) )
 #define VALID_PLA(IPLA)       ( VALID_PLA_RANGE(IPLA) && ((IPLA) < PlaStack.count) && PlaStack.lst[IPLA].valid )
 #define INVALID_PLA(IPLA)     ( !VALID_PLA_RANGE(IPLA) || ((IPLA) >= PlaStack.count)|| !PlaStack.lst[IPLA].valid )
 
-player_t *     pla_ctor( player_t * ppla );
-player_t *     pla_dtor( player_t * ppla );
-player_t *     pla_reinit( player_t * ppla );
+ego_player *     pla_ctor( ego_player * ppla );
+ego_player *     pla_dtor( ego_player * ppla );
+ego_player *     pla_reinit( ego_player * ppla );
 CHR_REF        pla_get_ichr( const PLA_REF by_reference iplayer );
 struct ego_chr * pla_get_pchr( const PLA_REF by_reference iplayer );
 latch_2d_t     pla_convert_latch_2d( const PLA_REF by_reference iplayer, const latch_2d_t by_reference src );
 
-player_t*      net_get_ppla( const CHR_REF by_reference ichr );
+ego_player*      net_get_ppla( const CHR_REF by_reference ichr );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// The state of the network code used in old-egoboo
-struct net_instance_t
+struct ego_net_instance
 {
     bool_t  initialized;             ///< Is Networking initialized?
     bool_t  serviceon;               ///< Do I need to free the interface?
@@ -194,7 +194,7 @@ extern Uint32                  numplatimes;
 // Networking functions
 //--------------------------------------------------------------------------------------------
 
-const net_instance_t * network_get_instance();
+const ego_net_instance * network_get_instance();
 bool_t                 network_initialized();
 bool_t                 network_get_host_active();
 bool_t                 network_set_host_active( bool_t state );
@@ -244,7 +244,7 @@ void stop_players_from_joining();
 
 void net_reset_players();
 
-void tlatch_ary_init( time_latch_t ary[], size_t len );
+void tlatch_ary_init( ego_time_latch ary[], size_t len );
 
 void   PlaStack_toggle_all_explore();
 void   PlaStack_toggle_all_wizard();

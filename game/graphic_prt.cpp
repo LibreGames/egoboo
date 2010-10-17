@@ -87,7 +87,7 @@ void set_prt_texture_params( const TX_REF by_reference itex )
 //--------------------------------------------------------------------------------------------
 
 /// The data values necessary to sort particles by their position to the camera
-struct prt_registry_entity_t
+struct ego_prt_registry_entity
 {
     PRT_REF index;
     float   dist;
@@ -96,10 +96,10 @@ struct prt_registry_entity_t
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 static void prt_instance_update( ego_camera * pcam, const PRT_REF by_reference particle, Uint8 trans, bool_t do_lighting );
-static void calc_billboard_verts( ego_GLvertex vlst[], prt_instance_t * pinst, float size, bool_t do_reflect );
+static void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, float size, bool_t do_reflect );
 static int  cmp_prt_registry_entity( const void * vlhs, const void * vrhs );
 
-static void draw_one_attachment_point( chr_instance_t * pinst, ego_mad * pmad, int vrt_offset );
+static void draw_one_attachment_point( ego_chr_instance * pinst, ego_mad * pmad, int vrt_offset );
 static void prt_draw_attached_point( ego_prt_bundle * pbdl_prt );
 
 static void render_prt_bbox( ego_prt_bundle * pbdl_prt );
@@ -112,12 +112,12 @@ Uint32  instance_update = ( Uint32 )~0;
 //--------------------------------------------------------------------------------------------
 int cmp_prt_registry_entity( const void * vlhs, const void * vrhs )
 {
-    const prt_registry_entity_t * lhs, * rhs;
+    const ego_prt_registry_entity * lhs, * rhs;
     float diff;
     int   retval;
 
-    lhs = ( prt_registry_entity_t * ) vlhs;
-    rhs = ( prt_registry_entity_t * ) vrhs;
+    lhs = ( ego_prt_registry_entity * ) vlhs;
+    rhs = ( ego_prt_registry_entity * ) vrhs;
 
     diff = lhs->dist - rhs->dist;
 
@@ -136,7 +136,7 @@ int cmp_prt_registry_entity( const void * vlhs, const void * vrhs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-size_t render_all_prt_begin( ego_camera * pcam, prt_registry_entity_t reg[], size_t reg_count )
+size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], size_t reg_count )
 {
     fvec3_t vfwd, vcam;
     size_t  numparticle;
@@ -150,7 +150,7 @@ size_t render_all_prt_begin( ego_camera * pcam, prt_registry_entity_t reg[], siz
     numparticle = 0;
     PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
-        prt_instance_t * pinst;
+        ego_prt_instance * pinst;
 
         if ( numparticle >= reg_count ) break;
 
@@ -180,7 +180,7 @@ size_t render_all_prt_begin( ego_camera * pcam, prt_registry_entity_t reg[], siz
     PRT_END_LOOP();
 
     // sort the particles from close to far
-    qsort( reg, numparticle, sizeof( prt_registry_entity_t ), cmp_prt_registry_entity );
+    qsort( reg, numparticle, sizeof( ego_prt_registry_entity ), cmp_prt_registry_entity );
 
     return numparticle;
 }
@@ -194,7 +194,7 @@ bool_t render_one_prt_solid( const PRT_REF by_reference iprt )
     int i;
 
     ego_prt * pprt;
-    prt_instance_t * pinst;
+    ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
     pprt = PrtList.lst + iprt;
@@ -244,7 +244,7 @@ bool_t render_one_prt_solid( const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_all_prt_solid( ego_camera * pcam, prt_registry_entity_t reg[], size_t numparticle )
+void render_all_prt_solid( ego_camera * pcam, ego_prt_registry_entity reg[], size_t numparticle )
 {
     /// @details BB@> do solid sprites first
 
@@ -273,7 +273,7 @@ bool_t render_one_prt_trans( const PRT_REF by_reference iprt )
     ego_GLvertex vtlist[4];
     int i;
     ego_prt * pprt;
-    prt_instance_t * pinst;
+    ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
     pprt = PrtList.lst + iprt;
@@ -361,7 +361,7 @@ bool_t render_one_prt_trans( const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_all_prt_trans( ego_camera * pcam, prt_registry_entity_t reg[], size_t numparticle )
+void render_all_prt_trans( ego_camera * pcam, ego_prt_registry_entity reg[], size_t numparticle )
 {
     /// @details BB@> do all kinds of transparent sprites next
 
@@ -385,7 +385,7 @@ void render_all_particles( ego_camera * pcam )
 {
     /// @details ZZ@> This function draws the sprites for particle systems
 
-    prt_registry_entity_t reg[TOTAL_MAX_PRT];
+    ego_prt_registry_entity reg[TOTAL_MAX_PRT];
     size_t numparticle;
 
     numparticle = render_all_prt_begin( pcam, reg, TOTAL_MAX_PRT );
@@ -396,7 +396,7 @@ void render_all_particles( ego_camera * pcam )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-size_t render_all_prt_ref_begin( ego_camera * pcam, prt_registry_entity_t reg[], size_t reg_count )
+size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[], size_t reg_count )
 {
     fvec3_t vfwd, vcam;
     size_t  numparticle;
@@ -410,7 +410,7 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, prt_registry_entity_t reg[],
     numparticle = 0;
     PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
-        prt_instance_t * pinst;
+        ego_prt_instance * pinst;
 
         if ( numparticle >= reg_count ) break;
 
@@ -437,7 +437,7 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, prt_registry_entity_t reg[],
     PRT_END_LOOP();
 
     // sort the particles from close to far
-    qsort( reg, numparticle, sizeof( prt_registry_entity_t ), cmp_prt_registry_entity );
+    qsort( reg, numparticle, sizeof( ego_prt_registry_entity ), cmp_prt_registry_entity );
 
     return numparticle;
 }
@@ -451,7 +451,7 @@ bool_t render_one_prt_ref( const PRT_REF by_reference iprt )
     int startalpha;
     int i;
     ego_prt * pprt;
-    prt_instance_t * pinst;
+    ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
 
@@ -544,7 +544,7 @@ bool_t render_one_prt_ref( const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_all_prt_ref( ego_camera * pcam, prt_registry_entity_t reg[], size_t numparticle )
+void render_all_prt_ref( ego_camera * pcam, ego_prt_registry_entity reg[], size_t numparticle )
 {
     size_t cnt;
     PRT_REF prt;
@@ -568,7 +568,7 @@ void render_prt_ref( ego_camera * pcam )
 {
     /// @details ZZ@> This function draws sprites reflected in the floor
 
-    prt_registry_entity_t reg[TOTAL_MAX_PRT];
+    ego_prt_registry_entity reg[TOTAL_MAX_PRT];
     size_t numparticle;
 
     numparticle = render_all_prt_ref_begin( pcam, reg, TOTAL_MAX_PRT );
@@ -577,7 +577,7 @@ void render_prt_ref( ego_camera * pcam )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void calc_billboard_verts( ego_GLvertex vlst[], prt_instance_t * pinst, float size, bool_t do_reflect )
+void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, float size, bool_t do_reflect )
 {
     // Calculate the position of the four corners of the billboard
     // used to display the particle.
@@ -673,7 +673,7 @@ void render_all_prt_bbox()
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_attachment_point( chr_instance_t * pinst, ego_mad * pmad, int vrt_offset )
+void draw_one_attachment_point( ego_chr_instance * pinst, ego_mad * pmad, int vrt_offset )
 {
     /// @details BB@> a function that will draw some of the vertices of the given character.
     ///     The original idea was to use this to debug the grip for attached items.
@@ -753,7 +753,7 @@ void prt_instance_update_all( ego_camera * pcam )
 
     PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
-        prt_instance_t * pinst;
+        ego_prt_instance * pinst;
 
         pinst = &( prt_bdl.prt_ptr->inst );
 
@@ -775,7 +775,7 @@ void prt_instance_update_all( ego_camera * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_instance_update_vertices( ego_camera * pcam, prt_instance_t * pinst, ego_prt * pprt )
+void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, ego_prt * pprt )
 {
     ego_pip * ppip;
 
@@ -895,7 +895,7 @@ void prt_instance_update_vertices( ego_camera * pcam, prt_instance_t * pinst, eg
     }
     else if ( INGAME_CHR( pprt->attachedto_ref ) )
     {
-        chr_instance_t * cinst = ego_chr::get_pinstance( pprt->attachedto_ref );
+        ego_chr_instance * cinst = ego_chr::get_pinstance( pprt->attachedto_ref );
 
         if ( ego_chr::matrix_valid( ChrList.lst + pprt->attachedto_ref ) )
         {
@@ -1080,7 +1080,7 @@ void prt_instance_update_vertices( ego_camera * pcam, prt_instance_t * pinst, eg
 }
 
 //--------------------------------------------------------------------------------------------
-fmat_4x4_t prt_instance_make_matrix( prt_instance_t * pinst )
+fmat_4x4_t prt_instance_make_matrix( ego_prt_instance * pinst )
 {
     fmat_4x4_t mat = IdentityMatrix();
 
@@ -1100,11 +1100,11 @@ fmat_4x4_t prt_instance_make_matrix( prt_instance_t * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_instance_update_lighting( prt_instance_t * pinst, ego_prt * pprt, Uint8 trans, bool_t do_lighting )
+void prt_instance_update_lighting( ego_prt_instance * pinst, ego_prt * pprt, Uint8 trans, bool_t do_lighting )
 {
     Uint32 alpha;
     Sint16  self_light;
-    lighting_cache_t global_light, loc_light;
+    ego_lighting_cache global_light, loc_light;
     float amb, dir;
     fmat_4x4_t mat;
 
@@ -1153,7 +1153,7 @@ void prt_instance_update_lighting( prt_instance_t * pinst, ego_prt * pprt, Uint8
 void prt_instance_update( ego_camera * pcam, const PRT_REF by_reference particle, Uint8 trans, bool_t do_lighting )
 {
     ego_prt * pprt;
-    prt_instance_t * pinst;
+    ego_prt_instance * pinst;
 
     if ( !INGAME_PRT_BASE( particle ) ) return;
     pprt = PrtList.lst + particle;

@@ -21,7 +21,7 @@
 
 /// @file char.h
 /// @note You will routinely include "char.h" only in headers (*.h) files where you need to declare an
-///       object of team_t or ego_chr. In *.inl files or *.c/*.cpp files you will routinely include "char.inl", instead.
+///       object of ego_team or ego_chr. In *.inl files or *.c/*.cpp files you will routinely include "char.inl", instead.
 
 #include "character_defs.h"
 
@@ -74,7 +74,7 @@ struct ego_ai_state;
 //--------------------------------------------------------------------------------------------
 
 /// The description of a single team
-struct team_t
+struct ego_team
 {
     bool_t   hatesteam[TEAM_MAX];    ///< Don't damage allies...
     Uint16   morale;                 ///< Number of characters on team
@@ -100,7 +100,7 @@ struct ego_cap : public ego_cap_data
 //--------------------------------------------------------------------------------------------
 
 /// The latch used by the characters/ai's in the game
-struct latch_game_t
+struct ego_latch_game
 {
     bool_t     raw_valid; ///< does this latch have any valid data in it?
     latch_2d_t raw;       ///< the raw control settings
@@ -109,13 +109,13 @@ struct latch_game_t
     latch_3d_t trans;       ///< the translated control values, relative to the camera
 };
 
-void latch_game_init( latch_game_t * platch );
+void latch_game_init( ego_latch_game * platch );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// Everything that is necessary to compute the character's interaction with the environment
-struct chr_environment_t
+struct ego_chr_environment
 {
     // floor stuff
     float   grid_level;           ///< Height the current grid
@@ -151,7 +151,7 @@ struct chr_environment_t
 };
 
 //--------------------------------------------------------------------------------------------
-struct pack_t
+struct ego_pack
 {
     bool_t         is_packed;    ///< Is it in the inventory?
     bool_t         was_packed;   ///< Temporary thing...
@@ -159,8 +159,8 @@ struct pack_t
     int            count;       ///< How many
 };
 
-bool_t pack_add_item( pack_t * ppack, CHR_REF item );
-bool_t pack_remove_item( pack_t * ppack, CHR_REF iparent, CHR_REF iitem );
+bool_t pack_add_item( ego_pack * ppack, CHR_REF item );
+bool_t pack_remove_item( ego_pack * ppack, CHR_REF iparent, CHR_REF iitem );
 
 #define PACK_BEGIN_LOOP(IT,INIT) IT = INIT; while( MAX_CHR != IT ) { CHR_REF IT##_internal = ChrList.lst[IT].pack.next;
 #define PACK_END_LOOP(IT) IT = IT##_internal; }
@@ -168,7 +168,7 @@ bool_t pack_remove_item( pack_t * ppack, CHR_REF iparent, CHR_REF iitem );
 //--------------------------------------------------------------------------------------------
 
 /// the data used to define the spawning of a character
-struct chr_spawn_data_t
+struct ego_chr_spawn_data
 {
     fvec3_t     pos;
     PRO_REF     profile;
@@ -187,7 +187,7 @@ struct ego_chr_data
 {
     // character state
     ego_ai_state     ai;              ///< ai data
-    latch_game_t   latch;           ///< the latch data
+    ego_latch_game   latch;           ///< the latch data
 
     // character stats
     STRING         name;            ///< My name
@@ -213,7 +213,7 @@ struct ego_chr_data
     Uint32         experience;                    ///< Experience
     Uint8          experiencelevel;               ///< Experience Level
 
-    pack_t         pack;             ///< what the character is holding
+    ego_pack         pack;             ///< what the character is holding
 
     Sint16         money;            ///< Money
     Uint8          ammomax;          ///< Ammo stuff
@@ -324,7 +324,7 @@ struct ego_chr_data
     PRO_REF        basemodel_ref;                     ///< The true form
     Uint8          alpha_base;
     Uint8          light_base;
-    chr_instance_t inst;                          ///< the render data
+    ego_chr_instance inst;                          ///< the render data
 
     // Skills
     int           darkvision_level;
@@ -355,11 +355,11 @@ struct ego_chr_data
     fvec3_t        pos_stt;                       ///< Starting position
     fvec3_t        pos;                           ///< Character's position
     fvec3_t        vel;                           ///< Character's velocity
-    orientation_t  ori;                           ///< Character's orientation
+    ego_orientation  ori;                           ///< Character's orientation
 
     fvec3_t        pos_old;                       ///< Character's last position
     fvec3_t        vel_old;                       ///< Character's last velocity
-    orientation_t  ori_old;                       ///< Character's last orientation
+    ego_orientation  ori_old;                       ///< Character's last orientation
 
     Uint32         onwhichgrid;                   ///< Where the char is
     Uint32         onwhichblock;                  ///< The character's collision block
@@ -382,8 +382,8 @@ struct ego_chr_data
     float          fly_height;                     ///< Height to stabilize at
 
     // data for doing the physics in bump_all_objects()
-    phys_data_t       phys;
-    chr_environment_t enviro;
+    ego_phys_data       phys;
+    ego_chr_environment enviro;
 
     float             targetmount_overlap;
     CHR_REF           targetmount_ref;
@@ -395,10 +395,10 @@ struct ego_chr_data
     Uint32         safe_time;                     ///< the last "safe" time
     Uint32         safe_grid;                     ///< the last "safe" grid
 
-    breadcrumb_list_t crumbs;                     ///< a list of previous valid positions that the object has passed through
+    ego_breadcrumb_list crumbs;                     ///< a list of previous valid positions that the object has passed through
 
-    ego_chr_data()  { ego_chr_data::ctor(this); };
-    ~ego_chr_data() { ego_chr_data::dtor(this); };
+    ego_chr_data()  { ego_chr_data::ctor( this ); };
+    ~ego_chr_data() { ego_chr_data::dtor( this ); };
 
     static ego_chr_data * ctor( ego_chr_data * );
     static ego_chr_data * dtor( ego_chr_data * );
@@ -409,7 +409,7 @@ struct ego_chr_data
 struct ego_chr : public ego_chr_data
 {
     ego_object        obj_base;
-    chr_spawn_data_t  spawn_data;
+    ego_chr_spawn_data  spawn_data;
 
     ego_BSP_leaf      bsp_leaf;
 
@@ -436,7 +436,7 @@ struct ego_chr : public ego_chr_data
     static ego_chr *  update_hide( ego_chr * pchr );
     static egoboo_rv  update_collision_size( ego_chr * pchr, bool_t update_matrix );
     static bool_t     matrix_valid( ego_chr * pchr );
-    static bool_t     get_matrix_cache( ego_chr * pchr, matrix_cache_t * mc_tmp );
+    static bool_t     get_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp );
 
     // generic accessors
     static void set_enviro_grid_level( ego_chr * pchr, float level );
@@ -478,7 +478,7 @@ struct ego_chr : public ego_chr_data
     // functions related to stored positions
     static bool_t  update_breadcrumb_raw( ego_chr * pchr );
     static bool_t  update_breadcrumb( ego_chr * pchr, bool_t force );
-    static breadcrumb_t * get_last_breadcrumb( ego_chr * pchr );
+    static ego_breadcrumb * get_last_breadcrumb( ego_chr * pchr );
 
     static bool_t  update_safe_raw( ego_chr * pchr );
     static bool_t  update_safe( ego_chr * pchr, bool_t force );
@@ -500,10 +500,10 @@ struct ego_chr : public ego_chr_data
 
     static INLINE Mix_Chunk      * get_chunk_ptr( ego_chr * pchr, int index );
     static INLINE Mix_Chunk      * get_chunk( const CHR_REF by_reference ichr, int index );
-    static INLINE team_t         * get_pteam( const CHR_REF by_reference ichr );
-    static INLINE team_t         * get_pteam_base( const CHR_REF by_reference ichr );
+    static INLINE ego_team         * get_pteam( const CHR_REF by_reference ichr );
+    static INLINE ego_team         * get_pteam_base( const CHR_REF by_reference ichr );
     static INLINE ego_ai_state     * get_pai( const CHR_REF by_reference ichr );
-    static INLINE chr_instance_t * get_pinstance( const CHR_REF by_reference ichr );
+    static INLINE ego_chr_instance * get_pinstance( const CHR_REF by_reference ichr );
 
     static INLINE IDSZ       get_idsz( const CHR_REF by_reference ichr, int type );
     static INLINE latch_2d_t convert_latch_2d( const ego_chr * pchr, const latch_2d_t by_reference src );
@@ -541,7 +541,7 @@ private:
 // list definitions
 //--------------------------------------------------------------------------------------------
 
-DECLARE_STACK_EXTERN( team_t, TeamStack, TEAM_MAX );
+DECLARE_STACK_EXTERN( ego_team, TeamStack, TEAM_MAX );
 
 #define VALID_TEAM_RANGE( ITEAM ) ( ((ITEAM) >= 0) && ((ITEAM) < TEAM_MAX) )
 
@@ -666,7 +666,7 @@ bool_t release_one_cap( const CAP_REF by_reference icap );
 
 void reset_teams();
 
-bool_t apply_reflection_matrix( chr_instance_t * pinst, float grid_level );
+bool_t apply_reflection_matrix( ego_chr_instance * pinst, float grid_level );
 
 // generic helper functions
 bool_t  chr_teleport( const CHR_REF by_reference ichr, float x, float y, float z, FACING_T facing_z );
@@ -677,7 +677,7 @@ bool_t  chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_re
 bool_t  chr_can_mount( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
 bool_t  chr_is_attacking( ego_chr *pchr );
 bool_t  chr_calc_environment( ego_chr * pchr );
-void    chr_instance_get_tint( chr_instance_t * pinst, GLfloat * tint, Uint32 bits );
+void    chr_instance_get_tint( ego_chr_instance * pinst, GLfloat * tint, Uint32 bits );
 int     convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
 int     convert_grip_to_global_points( const CHR_REF by_reference iholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
 

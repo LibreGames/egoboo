@@ -56,7 +56,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct chr_anim_data_t
+struct ego_chr_anim_data
 {
     bool_t allowed;
     int    action;
@@ -73,19 +73,19 @@ static IDSZ    inventory_idsz[INVEN_COUNT];
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_cap, CapStack, MAX_PROFILE );
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, team_t, TeamStack, TEAM_MAX );
+INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_team, TeamStack, TEAM_MAX );
 
 int chr_stoppedby_tests = 0;
 int chr_pressure_tests = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static chr_instance_t * chr_instance_ctor( chr_instance_t * pinst );
-static chr_instance_t * chr_instance_dtor( chr_instance_t * pinst );
-static bool_t           chr_instance_alloc( chr_instance_t * pinst, size_t vlst_size );
-static bool_t           chr_instance_free( chr_instance_t * pinst );
-static bool_t           chr_spawn_instance( chr_instance_t * pinst, const PRO_REF by_reference profile, Uint8 skin );
-static bool_t           chr_instance_set_mad( chr_instance_t * pinst, const MAD_REF by_reference imad );
+static ego_chr_instance * chr_instance_ctor( ego_chr_instance * pinst );
+static ego_chr_instance * chr_instance_dtor( ego_chr_instance * pinst );
+static bool_t           chr_instance_alloc( ego_chr_instance * pinst, size_t vlst_size );
+static bool_t           chr_instance_free( ego_chr_instance * pinst );
+static bool_t           chr_spawn_instance( ego_chr_instance * pinst, const PRO_REF by_reference profile, Uint8 skin );
+static bool_t           chr_instance_set_mad( ego_chr_instance * pinst, const MAD_REF by_reference imad );
 
 static CHR_REF chr_pack_has_a_stack( const CHR_REF by_reference item, const CHR_REF by_reference character );
 static bool_t  chr_pack_add_item( const CHR_REF by_reference item, const CHR_REF by_reference character );
@@ -100,8 +100,8 @@ static ego_chr * resize_one_character( ego_chr * pchr );
 
 static int get_grip_verts( Uint16 grip_verts[], const CHR_REF by_reference imount, int vrt_offset );
 
-bool_t apply_one_character_matrix( ego_chr * pchr, matrix_cache_t * mcache );
-bool_t apply_one_weapon_matrix( ego_chr * pweap, matrix_cache_t * mcache );
+bool_t apply_one_character_matrix( ego_chr * pchr, ego_matrix_cache * mcache );
+bool_t apply_one_weapon_matrix( ego_chr * pweap, ego_matrix_cache * mcache );
 
 // definition that is consistent with using it as a callback in qsort() or some similar function
 static int  cmp_matrix_cache( const void * vlhs, const void * vrhs );
@@ -110,7 +110,7 @@ static bool_t chr_upload_cap( ego_chr * pchr, ego_cap * pcap );
 
 void cleanup_one_character( ego_chr * pchr );
 
-static bool_t chr_instance_update_ref( chr_instance_t * pinst, float grid_level, bool_t need_matrix );
+static bool_t chr_instance_update_ref( ego_chr_instance * pinst, float grid_level, bool_t need_matrix );
 
 static void chr_log_script_time( const CHR_REF by_reference ichr );
 
@@ -118,7 +118,7 @@ static bool_t update_chr_darkvision( const CHR_REF by_reference character );
 
 static const float traction_min = 0.2f;
 
-static ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, chr_environment_t * penviro );
+static ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_chr_environment * penviro );
 static ego_chr_bundle * move_one_character_do_fluid_friction( ego_chr_bundle * pbdl );
 static ego_chr_bundle * move_one_character_do_voluntary_flying( ego_chr_bundle * pbdl );
 static ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl );
@@ -130,7 +130,7 @@ static ego_chr_bundle * move_one_character_limit_flying( ego_chr_bundle * pbdl )
 static ego_chr_bundle * move_one_character_do_jump( ego_chr_bundle * pbdl );
 static ego_chr_bundle * move_one_character_do_floor( ego_chr_bundle * pbdl );
 
-static bool_t pack_validate( pack_t * ppack );
+static bool_t pack_validate( ego_pack * ppack );
 
 static fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure );
 static float   get_mesh_pressure( ego_chr * pchr, float test_pos[] );
@@ -154,14 +154,14 @@ void character_system_end()
 //--------------------------------------------------------------------------------------------
 bool_t ego_chr::dealloc( ego_chr * pchr )
 {
-    if( !ego_chr_data::dealloc( pchr ) ) return bfalse;
+    if ( !ego_chr_data::dealloc( pchr ) ) return bfalse;
 
     // do some list clean-up
     remove_all_character_enchants( GET_REF_PCHR( pchr ) );
 
     ego_BSP_leaf::dtor( &( pchr->bsp_leaf ) );
 
-    return pchr;
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ bool_t ego_chr_data::dealloc( ego_chr_data * pdata )
 {
     /// Free all allocated memory
 
-    if ( NULL == pdata) return bfalse;
+    if ( NULL == pdata ) return bfalse;
 
     // deallocate
     BillboardList_free_one( REF_TO_INT( pdata->ibillboard ) );
@@ -196,7 +196,7 @@ ego_chr_data * ego_chr_data::ctor( ego_chr_data * pdata )
     if ( NULL == pdata ) return pdata;
 
     // deallocate any existing data
-    if( NULL == ego_chr_data::dealloc( pdata ) ) return NULL;
+    if ( NULL == ego_chr_data::dealloc( pdata ) ) return NULL;
 
     // clear out all data
     memset( pdata, 0, sizeof( *pdata ) );
@@ -311,11 +311,11 @@ ego_chr * ego_chr::ctor( ego_chr * pchr )
     if ( VALID_PCHR( pchr ) )
     {
         // call the dtor
-        if( NULL == ego_chr::dtor( pchr ) ) return NULL;
+        if ( NULL == ego_chr::dtor( pchr ) ) return NULL;
     }
 
     // call the data ctor
-    if( NULL == ego_chr_data::ctor( pchr ) ) return NULL;
+    if ( NULL == ego_chr_data::ctor( pchr ) ) return NULL;
 
     // start the character out in the "dance" animation
     ego_chr::start_anim( pchr, ACTION_DA, btrue, btrue );
@@ -367,7 +367,7 @@ void flash_character_height( const CHR_REF by_reference character, Uint8 valuelo
     Sint16 z;
 
     ego_mad * pmad;
-    chr_instance_t * pinst;
+    ego_chr_instance * pinst;
 
     pinst = ego_chr::get_pinstance( character );
     if ( NULL == pinst ) return;
@@ -491,7 +491,7 @@ void make_one_character_matrix( const CHR_REF by_reference ichr )
     /// @details ZZ@> This function sets one character's matrix
 
     ego_chr * pchr;
-    chr_instance_t * pinst;
+    ego_chr_instance * pinst;
 
     if ( !INGAME_CHR( ichr ) ) return;
     pchr = ChrList.lst + ichr;
@@ -1550,7 +1550,7 @@ bool_t drop_all_items( const CHR_REF by_reference character )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct grab_data_t
+struct ego_grab_data
 {
     CHR_REF ichr;
     float  dist;
@@ -1562,8 +1562,8 @@ int grab_data_cmp( const void * pleft, const void * pright )
     int rv;
     float diff;
 
-    grab_data_t * dleft  = ( grab_data_t * )pleft;
-    grab_data_t * dright = ( grab_data_t * )pright;
+    ego_grab_data * dleft  = ( ego_grab_data * )pleft;
+    ego_grab_data * dright = ( ego_grab_data * )pright;
 
     diff = dleft->dist - dright->dist;
 
@@ -1606,11 +1606,11 @@ bool_t character_grab_stuff( const CHR_REF by_reference ichr_a, grip_offset_t gr
 
     // valid objects that can be grabbed
     int         grab_count = 0;
-    grab_data_t grab_list[MAX_CHR];
+    ego_grab_data grab_list[MAX_CHR];
 
     // valid objects that cannot be grabbed
     int         ungrab_count = 0;
-    grab_data_t ungrab_list[MAX_CHR];
+    ego_grab_data ungrab_list[MAX_CHR];
 
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
     pchr_a = ChrList.lst + ichr_a;
@@ -1713,7 +1713,7 @@ bool_t character_grab_stuff( const CHR_REF by_reference ichr_a, grip_offset_t gr
     // sort the grab list
     if ( grab_count > 1 )
     {
-        qsort( grab_list, grab_count, sizeof( grab_data_t ), grab_data_cmp );
+        qsort( grab_list, grab_count, sizeof( ego_grab_data ), grab_data_cmp );
     }
 
     // try to grab something
@@ -1786,7 +1786,7 @@ bool_t character_grab_stuff( const CHR_REF by_reference ichr_a, grip_offset_t gr
             // sort the ungrab list
             if ( ungrab_count > 1 )
             {
-                qsort( ungrab_list, ungrab_count, sizeof( grab_data_t ), grab_data_cmp );
+                qsort( ungrab_list, ungrab_count, sizeof( ego_grab_data ), grab_data_cmp );
             }
 
             for ( cnt = 0; cnt < ungrab_count; cnt++ )
@@ -2304,7 +2304,7 @@ ego_chr * resize_one_character( ego_chr * pchr )
 egoboo_rv export_one_character_quest_vfs( const char *szSaveName, const CHR_REF by_reference character )
 {
     /// @details ZZ@> This function makes the naming.txt file for the character
-    player_t *ppla;
+    ego_player *ppla;
 
     if ( !INGAME_CHR( character ) ) return rv_fail;
 
@@ -4276,7 +4276,7 @@ int chr_change_skin( const CHR_REF by_reference character, Uint32 skin )
     ego_chr * pchr;
     ego_pro * ppro;
     ego_mad * pmad;
-    chr_instance_t * pinst;
+    ego_chr_instance * pinst;
 
     if ( !INGAME_CHR( character ) ) return 0;
     pchr  = ChrList.lst + character;
@@ -4454,7 +4454,7 @@ bool_t set_weapongrip( const CHR_REF by_reference iitem, const CHR_REF by_refere
     bool_t needs_update;
     Uint16 grip_verts[GRIP_VERTS];
 
-    matrix_cache_t * mcache;
+    ego_matrix_cache * mcache;
     ego_chr * pitem;
 
     needs_update = bfalse;
@@ -5280,7 +5280,7 @@ ego_chr_bundle * chr_do_latch_button( ego_chr_bundle * pbdl )
 
     CHR_REF       loc_ichr;
     ego_chr       * loc_pchr;
-    phys_data_t * loc_pphys;
+    ego_phys_data * loc_pphys;
     ego_ai_state  * loc_pai;
 
     CHR_REF item;
@@ -5607,8 +5607,8 @@ int cmp_chr_anim_data( void const * vp_lhs, void const * vp_rhs )
     /// @details BB@> Sort MOD REF values based on the rank of the module that they point to.
     ///               Trap all stupid values.
 
-    chr_anim_data_t * plhs = ( chr_anim_data_t * )vp_lhs;
-    chr_anim_data_t * prhs = ( chr_anim_data_t * )vp_rhs;
+    ego_chr_anim_data * plhs = ( ego_chr_anim_data * )vp_lhs;
+    ego_chr_anim_data * prhs = ( ego_chr_anim_data * )vp_rhs;
 
     int retval = 0;
 
@@ -5649,7 +5649,7 @@ float set_character_animation_rate( ego_chr * pchr )
     int           frame_count;
     ego_MD2_Frame * frame_list, * pframe_nxt;
 
-    chr_instance_t * pinst;
+    ego_chr_instance * pinst;
     ego_mad          * pmad;
     CHR_REF          ichr;
 
@@ -5719,7 +5719,7 @@ float set_character_animation_rate( ego_chr * pchr )
     if ( ABS( speed ) > 1.0f )
     {
         int             anim_count;
-        chr_anim_data_t anim_info[CHR_MOVEMENT_COUNT];
+        ego_chr_anim_data anim_info[CHR_MOVEMENT_COUNT];
         int    cnt;
 
         //---- set up the anim_info structure
@@ -5799,7 +5799,7 @@ float set_character_animation_rate( ego_chr * pchr )
         }
 
         // sort the allowed movement(s) data
-        qsort( anim_info, CHR_MOVEMENT_COUNT, sizeof( chr_anim_data_t ), cmp_chr_anim_data );
+        qsort( anim_info, CHR_MOVEMENT_COUNT, sizeof( ego_chr_anim_data ), cmp_chr_anim_data );
 
         // handle a special case
         if ( 1 == anim_count )
@@ -5934,13 +5934,13 @@ bool_t chr_calc_environment( ego_chr * pchr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, chr_environment_t * penviro )
+ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_chr_environment * penviro )
 {
     Uint32 itile = INVALID_TILE;
 
     ego_chr             * loc_pchr;
-    phys_data_t       * loc_pphys;
-    chr_environment_t * loc_penviro;
+    ego_phys_data       * loc_pphys;
+    ego_chr_environment * loc_penviro;
     ego_ai_state        * loc_pai;
 
     float   grid_level, water_level;
@@ -6168,8 +6168,8 @@ ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, chr_
 ego_chr_bundle * move_one_character_do_fluid_friction( ego_chr_bundle * pbdl )
 {
     ego_chr             * loc_pchr;
-    chr_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_chr_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
@@ -6201,8 +6201,8 @@ ego_chr_bundle * move_one_character_do_fluid_friction( ego_chr_bundle * pbdl )
 ego_chr_bundle * move_one_character_do_voluntary_flying( ego_chr_bundle * pbdl )
 {
     ego_chr             * loc_pchr;
-    chr_environment_t * loc_penviro;
-    orientation_t     * loc_pori;
+    ego_chr_environment * loc_penviro;
+    ego_orientation     * loc_pori;
 
     float lift, throttle, maxspeed, speed_lerp, jump_lerp, tmp_flt, throttle_scale;
     float max_control, max_throttle, max_lift;
@@ -6339,8 +6339,8 @@ ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl )
     // do voluntary motion
 
     ego_chr             * loc_pchr;
-    phys_data_t       * loc_pphys;
-    chr_environment_t * loc_penviro;
+    ego_phys_data       * loc_pphys;
+    ego_chr_environment * loc_penviro;
 
     bool_t is_player, use_latch;
 
@@ -6402,7 +6402,7 @@ ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl )
     if ( is_player )
     {
         // determine whether the user is hitting the "sneak button"
-        player_t * ppla = PlaStack.lst + loc_pchr->is_which_player;
+        ego_player * ppla = PlaStack.lst + loc_pchr->is_which_player;
 
         if ( HAS_SOME_BITS( ppla->device.bits, INPUT_BITS_KEYBOARD ) )
         {
@@ -6436,7 +6436,7 @@ ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl )
         if ( is_player )
         {
             float dv;
-            player_t * ppla = PlaStack.lst + loc_pchr->is_which_player;
+            ego_player * ppla = PlaStack.lst + loc_pchr->is_which_player;
 
             dv = SQRT( dv2 );
             if ( dv < 1.0f )
@@ -6556,7 +6556,7 @@ ego_chr_bundle * move_one_character_do_involuntary( ego_chr_bundle * pbdl )
     bool_t use_latch;
 
     ego_chr             * loc_pchr;
-    chr_environment_t * loc_penviro;
+    ego_chr_environment * loc_penviro;
 
     if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
@@ -6635,7 +6635,7 @@ ego_chr_bundle * move_one_character_do_orientation( ego_chr_bundle * pbdl )
 
     CHR_REF             loc_ichr;
     ego_chr             * loc_pchr;
-    chr_environment_t * loc_penviro;
+    ego_chr_environment * loc_penviro;
     ego_ai_state        * loc_pai;
 
     bool_t can_control_direction;
@@ -6910,8 +6910,8 @@ ego_chr_bundle * move_one_character_do_orientation( ego_chr_bundle * pbdl )
 ego_chr_bundle * move_one_character_do_z_motion( ego_chr_bundle * pbdl )
 {
     ego_chr             * loc_pchr;
-    phys_data_t       * loc_pphys;
-    chr_environment_t * loc_penviro;
+    ego_phys_data       * loc_pphys;
+    ego_chr_environment * loc_penviro;
 
     if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
@@ -6939,7 +6939,7 @@ ego_chr_bundle * move_one_character_do_animation( ego_chr_bundle * pbdl )
     float dflip, flip_diff;
 
     ego_chr          * loc_pchr;
-    chr_instance_t * loc_pinst;
+    ego_chr_instance * loc_pinst;
     CHR_REF          loc_ichr;
 
     if ( NULL == pbdl || !INGAME_PCHR( pbdl->chr_ptr ) ) return pbdl;
@@ -7027,8 +7027,8 @@ ego_chr_bundle * move_one_character_limit_flying( ego_chr_bundle * pbdl )
     fvec3_t total_acc;
 
     ego_chr             * loc_pchr;
-    chr_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_chr_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     return pbdl;
 
@@ -7118,8 +7118,8 @@ ego_chr_bundle * move_one_character_limit_flying( ego_chr_bundle * pbdl )
 ego_chr_bundle * move_one_character_do_jump( ego_chr_bundle * pbdl )
 {
     ego_chr             * loc_pchr;
-    chr_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_chr_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     fvec3_t total_acc, total_acc_para, total_acc_perp;
     float coeff_para, coeff_perp;
@@ -7175,8 +7175,8 @@ ego_chr_bundle * move_one_character_do_jump( ego_chr_bundle * pbdl )
 ego_chr_bundle * move_one_character_do_flying( ego_chr_bundle * pbdl )
 {
     ego_chr             * loc_pchr;
-    chr_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_chr_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
@@ -7206,8 +7206,8 @@ ego_chr_bundle * move_one_character_do_floor( ego_chr_bundle * pbdl )
     const float friction_magnification = 4.0f;
 
     ego_chr             * loc_pchr;
-    chr_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_chr_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     ego_chr             * pplatform = NULL;
 
@@ -7583,7 +7583,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF by_reference cha
 }
 
 //--------------------------------------------------------------------------------------------
-chr_reflection_cache_t * chr_reflection_cache_init( chr_reflection_cache_t * pcache )
+ego_chr_reflection_cache * chr_reflection_cache_init( ego_chr_reflection_cache * pcache )
 {
     if ( NULL == pcache ) return pcache;
 
@@ -7596,7 +7596,7 @@ chr_reflection_cache_t * chr_reflection_cache_init( chr_reflection_cache_t * pca
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_instance_clear_cache( chr_instance_t * pinst )
+void chr_instance_clear_cache( ego_chr_instance * pinst )
 {
     /// @details BB@> force chr_instance_update_vertices() recalculate the vertices the next time
     ///     the function is called
@@ -7612,7 +7612,7 @@ void chr_instance_clear_cache( chr_instance_t * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_instance_t * chr_instance_dtor( chr_instance_t * pinst )
+ego_chr_instance * chr_instance_dtor( ego_chr_instance * pinst )
 {
     if ( NULL == pinst ) return pinst;
 
@@ -7626,7 +7626,7 @@ chr_instance_t * chr_instance_dtor( chr_instance_t * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_instance_t * chr_instance_ctor( chr_instance_t * pinst )
+ego_chr_instance * chr_instance_ctor( ego_chr_instance * pinst )
 {
     Uint32 cnt;
 
@@ -7668,7 +7668,7 @@ chr_instance_t * chr_instance_ctor( chr_instance_t * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_free( chr_instance_t * pinst )
+bool_t chr_instance_free( ego_chr_instance * pinst )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -7679,7 +7679,7 @@ bool_t chr_instance_free( chr_instance_t * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_alloc( chr_instance_t * pinst, size_t vlst_size )
+bool_t chr_instance_alloc( ego_chr_instance * pinst, size_t vlst_size )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -7697,7 +7697,7 @@ bool_t chr_instance_alloc( chr_instance_t * pinst, size_t vlst_size )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_set_mad( chr_instance_t * pinst, const MAD_REF by_reference imad )
+bool_t chr_instance_set_mad( ego_chr_instance * pinst, const MAD_REF by_reference imad )
 {
     /// @details BB@> try to set the model used by the character instance.
     ///     If this fails, it leaves the old data. Just to be safe it
@@ -7752,7 +7752,7 @@ bool_t chr_instance_set_mad( chr_instance_t * pinst, const MAD_REF by_reference 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_update_ref( chr_instance_t * pinst, float grid_level, bool_t need_matrix )
+bool_t chr_instance_update_ref( ego_chr_instance * pinst, float grid_level, bool_t need_matrix )
 {
     int trans_temp;
 
@@ -7793,7 +7793,7 @@ bool_t chr_instance_update_ref( chr_instance_t * pinst, float grid_level, bool_t
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_spawn_instance( chr_instance_t * pinst, const PRO_REF by_reference profile, Uint8 skin )
+bool_t chr_spawn_instance( ego_chr_instance * pinst, const PRO_REF by_reference profile, Uint8 skin )
 {
     Sint8 greensave = 0, redsave = 0, bluesave = 0;
 
@@ -8701,7 +8701,7 @@ bool_t ego_ai_state::set_changed( ego_ai_state * pai )
 }
 
 //--------------------------------------------------------------------------------------------
-matrix_cache_t * matrix_cache_init( matrix_cache_t * mcache )
+ego_matrix_cache * matrix_cache_init( ego_matrix_cache * mcache )
 {
     /// @details BB@> clear out the matrix cache data
 
@@ -8793,7 +8793,7 @@ int get_grip_verts( Uint16 grip_verts[], const CHR_REF by_reference imount, int 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::get_matrix_cache( ego_chr * pchr, matrix_cache_t * mc_tmp )
+bool_t ego_chr::get_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp )
 {
     /// @details BB@> grab the matrix cache data for a given character and put it into mc_tmp.
 
@@ -8824,7 +8824,7 @@ bool_t ego_chr::get_matrix_cache( ego_chr * pchr, matrix_cache_t * mc_tmp )
         ego_chr::update_matrix( ptarget, btrue );
 
         // grab the matrix cache into from the character we are overlaying
-        memcpy( mc_tmp, &( ptarget->inst.matrix_cache ), sizeof( matrix_cache_t ) );
+        memcpy( mc_tmp, &( ptarget->inst.matrix_cache ), sizeof( ego_matrix_cache ) );
 
         // just in case the overlay's matrix cannot be corrected
         // then treat it as if it is not an overlay
@@ -8959,7 +8959,7 @@ int convert_grip_to_global_points( const CHR_REF by_reference iholder, Uint16 gr
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t apply_one_weapon_matrix( ego_chr * pweap, matrix_cache_t * mc_tmp )
+bool_t apply_one_weapon_matrix( ego_chr * pweap, ego_matrix_cache * mc_tmp )
 {
     /// @details ZZ@> Request that the data in the matrix cache be used to create a "character matrix".
     ///               i.e. a matrix that is not being held by anything.
@@ -8968,7 +8968,7 @@ bool_t apply_one_weapon_matrix( ego_chr * pweap, matrix_cache_t * mc_tmp )
     int       iweap_points;
 
     ego_chr * pholder;
-    matrix_cache_t * pweap_mcache;
+    ego_matrix_cache * pweap_mcache;
 
     if ( NULL == mc_tmp || !mc_tmp->valid || 0 == ( MAT_WEAPON & mc_tmp->type_bits ) ) return bfalse;
 
@@ -8993,7 +8993,7 @@ bool_t apply_one_weapon_matrix( ego_chr * pweap, matrix_cache_t * mc_tmp )
         // update the weapon position
         ego_chr::set_pos( pweap, nupoint[3].v );
 
-        memcpy( &( pweap->inst.matrix_cache ), mc_tmp, sizeof( matrix_cache_t ) );
+        memcpy( &( pweap->inst.matrix_cache ), mc_tmp, sizeof( ego_matrix_cache ) );
 
         pweap_mcache->matrix_valid = btrue;
     }
@@ -9020,7 +9020,7 @@ bool_t apply_one_weapon_matrix( ego_chr * pweap, matrix_cache_t * mc_tmp )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t apply_one_character_matrix( ego_chr * pchr, matrix_cache_t * mc_tmp )
+bool_t apply_one_character_matrix( ego_chr * pchr, ego_matrix_cache * mc_tmp )
 {
     /// @details ZZ@> Request that the matrix cache data be used to create a "weapon matrix".
     ///               i.e. a matrix that is attached to a specific grip.
@@ -9047,7 +9047,7 @@ bool_t apply_one_character_matrix( ego_chr * pchr, matrix_cache_t * mc_tmp )
                             mc_tmp->pos.x, mc_tmp->pos.y, mc_tmp->pos.z );
     }
 
-    memcpy( &( pchr->inst.matrix_cache ), mc_tmp, sizeof( matrix_cache_t ) );
+    memcpy( &( pchr->inst.matrix_cache ), mc_tmp, sizeof( ego_matrix_cache ) );
 
     pchr->inst.matrix_cache.matrix_valid = btrue;
 
@@ -9055,7 +9055,7 @@ bool_t apply_one_character_matrix( ego_chr * pchr, matrix_cache_t * mc_tmp )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t apply_reflection_matrix( chr_instance_t * pinst, float grid_level )
+bool_t apply_reflection_matrix( ego_chr_instance * pinst, float grid_level )
 {
     /// @details BB@> Generate the extra data needed to display a reflection for this character
 
@@ -9081,7 +9081,7 @@ bool_t apply_reflection_matrix( chr_instance_t * pinst, float grid_level )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t apply_matrix_cache( ego_chr * pchr, matrix_cache_t * mc_tmp )
+bool_t apply_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp )
 {
     /// @details BB@> request that the info in the matrix cache mc_tmp, be used to
     ///               make a matrix for the character pchr.
@@ -9099,7 +9099,7 @@ bool_t apply_matrix_cache( ego_chr * pchr, matrix_cache_t * mc_tmp )
         }
         else
         {
-            matrix_cache_t * mcache = &( pchr->inst.matrix_cache );
+            ego_matrix_cache * mcache = &( pchr->inst.matrix_cache );
 
             // !!!the mc_tmp was mis-labeled as a MAT_WEAPON!!!
             make_one_character_matrix( GET_REF_PCHR( pchr ) );
@@ -9144,7 +9144,7 @@ bool_t apply_matrix_cache( ego_chr * pchr, matrix_cache_t * mc_tmp )
 int cmp_matrix_cache( const void * vlhs, const void * vrhs )
 {
     /// @details BB@> check for differences between the data pointed to
-    ///     by vlhs and vrhs, assuming that they point to matrix_cache_t data.
+    ///     by vlhs and vrhs, assuming that they point to ego_matrix_cache data.
     ///
     ///    The function is implemented this way so that in principle
     ///    if could be used in a function like qsort().
@@ -9155,8 +9155,8 @@ int cmp_matrix_cache( const void * vlhs, const void * vrhs )
     int   itmp, cnt;
     float ftmp;
 
-    matrix_cache_t * plhs = ( matrix_cache_t * )vlhs;
-    matrix_cache_t * prhs = ( matrix_cache_t * )vrhs;
+    ego_matrix_cache * plhs = ( ego_matrix_cache * )vlhs;
+    ego_matrix_cache * prhs = ( ego_matrix_cache * )vrhs;
 
     // handle problems with pointers
     if ( plhs == prhs )
@@ -9251,11 +9251,11 @@ cmp_matrix_cache_end:
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv matrix_cache_needs_update( ego_chr * pchr, matrix_cache_t * pmc )
+egoboo_rv matrix_cache_needs_update( ego_chr * pchr, ego_matrix_cache * pmc )
 {
     /// @details BB@> determine whether a matrix cache has become invalid and needs to be updated
 
-    matrix_cache_t local_mc;
+    ego_matrix_cache local_mc;
     bool_t needs_cache_update;
 
     if ( !DEFINED_PCHR( pchr ) ) return rv_error;
@@ -9282,8 +9282,8 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
     egoboo_rv      retval;
     bool_t         needs_update = bfalse;
     bool_t         applied      = bfalse;
-    matrix_cache_t mc_tmp;
-    matrix_cache_t *pchr_mc = NULL;
+    ego_matrix_cache mc_tmp;
+    ego_matrix_cache *pchr_mc = NULL;
 
     if ( !DEFINED_PCHR( pchr ) ) return rv_error;
     pchr_mc = &( pchr->inst.matrix_cache );
@@ -9669,7 +9669,7 @@ void ego_chr::set_jump_number_reset( ego_chr * pchr, int number )
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_instance_get_tint( chr_instance_t * pinst, GLfloat * tint, BIT_FIELD bits )
+void chr_instance_get_tint( ego_chr_instance * pinst, GLfloat * tint, BIT_FIELD bits )
 {
     int i;
     float weight_sum;
@@ -10270,8 +10270,8 @@ bool_t chr_bump_mesh( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel,
 {
     ego_chr             * loc_pchr;
     ego_cap             * loc_pcap;
-    phys_data_t       * loc_pphys;
-    chr_environment_t * loc_penviro;
+    ego_phys_data       * loc_pphys;
+    ego_chr_environment * loc_penviro;
 
     fvec3_t save_apos_plat;
     fvec3_t save_avel;
@@ -10352,8 +10352,8 @@ bool_t chr_bump_grid( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel,
 {
     ego_chr             * loc_pchr;
     ego_cap             * loc_pcap;
-    phys_data_t       * loc_pphys;
-    chr_environment_t * loc_penviro;
+    ego_phys_data       * loc_pphys;
+    ego_chr_environment * loc_penviro;
 
     fvec3_t save_apos_plat, save_avel;
     float   pressure;
@@ -10371,7 +10371,7 @@ bool_t chr_bump_grid( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel,
     bool_t  found_diff = bfalse;
     fvec2_t diff       = ZERO_VECT2;
 
-    breadcrumb_t * bc         = NULL;
+    ego_breadcrumb * bc         = NULL;
 
     // does the bundle exist?
     if ( NULL == pbdl ) return bfalse;
@@ -10608,7 +10608,7 @@ void character_physics_finalize_one( ego_chr_bundle * pbdl, float dt )
 
     // aliases for easier notation
     ego_chr * loc_pchr;
-    phys_data_t * loc_pphys;
+    ego_phys_data * loc_pphys;
 
     if ( NULL == pbdl ) return;
 
@@ -10711,7 +10711,7 @@ void character_physics_finalize_all( float dt )
 //--------------------------------------------------------------------------------------------
 bool_t ego_chr::update_breadcrumb_raw( ego_chr * pchr )
 {
-    breadcrumb_t bc;
+    ego_breadcrumb bc;
     bool_t retval = bfalse;
 
     if ( !VALID_PCHR( pchr ) ) return bfalse;
@@ -10732,7 +10732,7 @@ bool_t ego_chr::update_breadcrumb( ego_chr * pchr, bool_t force )
     Uint32 new_grid;
     bool_t retval = bfalse;
     bool_t needs_update = bfalse;
-    breadcrumb_t * bc_ptr, bc;
+    ego_breadcrumb * bc_ptr, bc;
 
     if ( !VALID_PCHR( pchr ) ) return bfalse;
 
@@ -10775,7 +10775,7 @@ bool_t ego_chr::update_breadcrumb( ego_chr * pchr, bool_t force )
 }
 
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * ego_chr::get_last_breadcrumb( ego_chr * pchr )
+ego_breadcrumb * ego_chr::get_last_breadcrumb( ego_chr * pchr )
 {
     if ( !VALID_PCHR( pchr ) ) return NULL;
 
@@ -10869,7 +10869,7 @@ bool_t ego_chr::get_safe( ego_chr * pchr, fvec3_base_t pos_v )
 
     if ( !found )
     {
-        breadcrumb_t * bc;
+        ego_breadcrumb * bc;
 
         bc = breadcrumb_list_last_valid( &( pchr->crumbs ) );
 
@@ -10891,7 +10891,7 @@ bool_t ego_chr::get_safe( ego_chr * pchr, fvec3_base_t pos_v )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void latch_game_init( latch_game_t * platch )
+void latch_game_init( ego_latch_game * platch )
 {
     if ( NULL == platch ) return;
 
@@ -10900,10 +10900,10 @@ void latch_game_init( latch_game_t * platch )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t pack_validate( pack_t * ppack )
+bool_t pack_validate( ego_pack * ppack )
 {
     int      cnt;
-    pack_t * parent_pack_ptr;
+    ego_pack * parent_pack_ptr;
     CHR_REF  item_ref;
 
     if ( NULL == ppack ) return bfalse;
@@ -10918,7 +10918,7 @@ bool_t pack_validate( pack_t * ppack )
     for ( cnt = 0; cnt < ppack->count && DEFINED_CHR( item_ref ); cnt++ )
     {
         ego_chr  * item_ptr      = ChrList.lst + item_ref;
-        pack_t * item_pack_ptr = &( item_ptr->pack );
+        ego_pack * item_pack_ptr = &( item_ptr->pack );
 
         // make sure that the item "pack" is working as a stored item and not a
         // sub-pack
@@ -10926,23 +10926,23 @@ bool_t pack_validate( pack_t * ppack )
         item_pack_ptr->is_packed = btrue;
 
         // is this item allowed to be packed?
-		//Everything is allowed to be packed. Some monsters hide in chests
-		//and don't pop out until the chest is opened. This is true even if they
-		//aren't items, so allow non-items in packs.
-/*        if ( !item_ptr->isitem )
-        {
-            // how did this get in a pack?
-            log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", item_ptr->obj_base.base_name );
+        //Everything is allowed to be packed. Some monsters hide in chests
+        //and don't pop out until the chest is opened. This is true even if they
+        //aren't items, so allow non-items in packs.
+        /*        if ( !item_ptr->isitem )
+                {
+                    // how did this get in a pack?
+                    log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", item_ptr->obj_base.base_name );
 
-            // remove the item from the pack
-            parent_pack_ptr->next     = item_pack_ptr->next;
+                    // remove the item from the pack
+                    parent_pack_ptr->next     = item_pack_ptr->next;
 
-            // re-initialize the item's "pack"
-            item_pack_ptr->next       = ( CHR_REF )MAX_CHR;
-            item_pack_ptr->was_packed = item_pack_ptr->is_packed;
-            item_pack_ptr->is_packed  = bfalse;
-        }
-        else*/
+                    // re-initialize the item's "pack"
+                    item_pack_ptr->next       = ( CHR_REF )MAX_CHR;
+                    item_pack_ptr->was_packed = item_pack_ptr->is_packed;
+                    item_pack_ptr->is_packed  = bfalse;
+                }
+                else*/
 
         {
             parent_pack_ptr = item_pack_ptr;
@@ -10988,10 +10988,10 @@ bool_t pack_validate( pack_t * ppack )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t pack_add_item( pack_t * ppack, CHR_REF item )
+bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
 {
     ego_chr  * pitem;
-    pack_t * pitem_pack;
+    ego_pack * pitem_pack;
 
     // make sure the pack is valid
     if ( !pack_validate( ppack ) ) return bfalse;
@@ -11036,7 +11036,7 @@ bool_t pack_add_item( pack_t * ppack, CHR_REF item )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t pack_remove_item( pack_t * ppack, CHR_REF iparent, CHR_REF iitem )
+bool_t pack_remove_item( ego_pack * ppack, CHR_REF iparent, CHR_REF iitem )
 {
     CHR_REF old_next;
     ego_chr * pitem, * pparent;
@@ -11247,7 +11247,7 @@ bool_t chr_pack_add_item( const CHR_REF by_reference item, const CHR_REF by_refe
 
     ego_chr  * pchr, * pitem;
     ego_cap  * pchr_cap,  * pitem_cap;
-    pack_t * pchr_pack, * pitem_pack;
+    ego_pack * pchr_pack, * pitem_pack;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
     pchr      = ChrList.lst + character;
@@ -11344,7 +11344,7 @@ bool_t chr_pack_add_item( const CHR_REF by_reference item, const CHR_REF by_refe
 bool_t chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem )
 {
     ego_chr  * pchr;
-    pack_t * pchr_pack;
+    ego_pack * pchr_pack;
 
     bool_t removed;
 
@@ -11371,7 +11371,7 @@ CHR_REF chr_pack_get_item( const CHR_REF by_reference chr_ref, grip_offset_t gri
 
     CHR_REF tmp_ref, item_ref, parent_ref;
     ego_chr  * pchr, * item_ptr, *parent_ptr;
-    pack_t * chr_pack_ptr, * item_pack_ptr, *parent_pack_ptr;
+    ego_pack * chr_pack_ptr, * item_pack_ptr, *parent_pack_ptr;
 
     // does the chr_ref exist?
     if ( !DEFINED_CHR( chr_ref ) ) return bfalse;
@@ -11516,7 +11516,7 @@ bool_t chr_copy_enviro( ego_chr * chr_psrc, ego_chr * chr_pdst )
 {
     /// BB@> do a deep copy on the character's enviro data
 
-    chr_environment_t * psrc, * pdst;
+    ego_chr_environment * psrc, * pdst;
 
     if ( NULL == chr_psrc || NULL == chr_pdst ) return bfalse;
 

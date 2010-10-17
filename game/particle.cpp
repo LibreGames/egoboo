@@ -72,7 +72,7 @@ static ego_prt_bundle * prt_update_ingame( ego_prt_bundle * pbdl_prt );
 static ego_prt_bundle * prt_update_limbo( ego_prt_bundle * pbdl_prt );
 static ego_prt_bundle * prt_update( ego_prt_bundle * pbdl_prt );
 
-static ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, prt_environment_t * penviro );
+static ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, ego_prt_environment * penviro );
 static ego_prt_bundle * move_one_particle_do_fluid_friction( ego_prt_bundle * pbdl_prt );
 static ego_prt_bundle * move_one_particle_do_homing( ego_prt_bundle * pbdl_prt );
 static ego_prt_bundle * move_one_particle_do_z_motion( ego_prt_bundle * pbdl_prt );
@@ -92,7 +92,7 @@ bool_t ego_prt_data::dealloc( ego_prt_data * pdata )
 //--------------------------------------------------------------------------------------------
 bool_t ego_prt::dealloc( ego_prt * pprt )
 {
-    if ( !ego_prt_data::dealloc(pprt) ) return bfalse;
+    if ( !ego_prt_data::dealloc( pprt ) ) return bfalse;
 
     // do not allow this if you are inside a particle loop
     EGOBOO_ASSERT( 0 == prt_loop_depth );
@@ -111,7 +111,7 @@ ego_prt_data * ego_prt_data::ctor( ego_prt_data * pdata )
     /// BB@> Set all particle parameters to safe values.
     ///      @details The c equivalent of the particle prt::new() function.
 
-    if( NULL == pdata ) return pdata;
+    if ( NULL == pdata ) return pdata;
 
     memset( pdata, 0, sizeof( *pdata ) );
 
@@ -284,7 +284,7 @@ ego_prt * ego_prt::do_init( ego_prt * pprt )
 {
     PRT_REF            iprt;
     ego_pip            * ppip;
-    prt_spawn_data_t * pdata;
+    ego_prt_spawn_data * pdata;
 
     int     velocity;
     fvec3_t vel;
@@ -1257,7 +1257,7 @@ ego_prt_bundle * prt_calc_environment( ego_prt_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, prt_environment_t * penviro )
+ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, ego_prt_environment * penviro )
 {
     /// @details BB@> A helper function that gets all of the information about the particle's
     ///               environment (like friction, etc.) that will be necessary for the other
@@ -1386,8 +1386,8 @@ ego_prt_bundle * move_one_particle_do_fluid_friction( ego_prt_bundle * pbdl_prt 
 
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_prt_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     fvec3_t fluid_acc;
 
@@ -1433,8 +1433,8 @@ ego_prt_bundle * move_one_particle_do_homing( ego_prt_bundle * pbdl_prt )
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_prt_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     if ( NULL == pbdl_prt ) return NULL;
     loc_pprt    = pbdl_prt->prt_ptr;
@@ -1536,8 +1536,8 @@ ego_prt_bundle * move_one_particle_do_z_motion( ego_prt_bundle * pbdl_prt )
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_prt_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     if ( NULL == pbdl_prt ) return NULL;
     loc_pprt    = pbdl_prt->prt_ptr;
@@ -1601,8 +1601,8 @@ ego_prt_bundle * move_one_particle_do_floor( ego_prt_bundle * pbdl_prt )
 
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_prt_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     if ( NULL == pbdl_prt ) return NULL;
     loc_pprt     = pbdl_prt->prt_ptr;
@@ -1720,7 +1720,7 @@ bool_t move_one_particle( ego_prt_bundle * pbdl_prt )
     /// @details BB@> The master function for controlling a particle's motion
 
     ego_prt             * loc_pprt;
-    prt_environment_t * loc_penviro;
+    ego_prt_environment * loc_penviro;
 
     if ( NULL == pbdl_prt ) return bfalse;
     loc_pprt     = pbdl_prt->prt_ptr;
@@ -2512,7 +2512,7 @@ ego_prt_bundle * prt_update_do_water( ego_prt_bundle * pbdl_prt )
 
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * penviro;
+    ego_prt_environment * penviro;
 
     if ( NULL == pbdl_prt ) return NULL;
     loc_pprt = pbdl_prt->prt_ptr;
@@ -2834,7 +2834,7 @@ ego_prt_bundle * prt_update( ego_prt_bundle * pbdl_prt )
 {
     ego_prt             * loc_pprt, * tmp_pprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * penviro;
+    ego_prt_environment * penviro;
 
     if ( NULL == pbdl_prt ) return NULL;
     loc_pprt = pbdl_prt->prt_ptr;
@@ -3101,7 +3101,7 @@ ego_prt_bundle * prt_bump_mesh_attached( ego_prt_bundle * pbdl, fvec3_t test_pos
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
+    ego_prt_environment * loc_penviro;
 
     if ( NULL == pbdl ) return NULL;
     loc_iprt = pbdl->prt_ref;
@@ -3151,7 +3151,7 @@ ego_prt_bundle * prt_bump_grid_attached( ego_prt_bundle * pbdl, fvec3_t test_pos
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
+    ego_prt_environment * loc_penviro;
 
     if ( NULL == pbdl ) return NULL;
     loc_pprt = pbdl->prt_ptr;
@@ -3223,8 +3223,8 @@ ego_prt_bundle *  prt_bump_mesh( ego_prt_bundle * pbdl, fvec3_t test_pos, fvec3_
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_prt_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     fvec3_t final_vel, final_pos;
     fvec3_t save_apos_plat, save_avel;
@@ -3421,8 +3421,8 @@ ego_prt_bundle *  prt_bump_grid( ego_prt_bundle * pbdl, fvec3_t test_pos, fvec3_
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_prt_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     fvec3_t final_vel, final_pos;
     fvec3_t save_apos_plat, save_avel;
@@ -3609,8 +3609,8 @@ egoboo_rv particle_physics_finalize_one( ego_prt_bundle * pbdl, float dt )
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
     ego_pip             * loc_ppip;
-    prt_environment_t * loc_penviro;
-    phys_data_t       * loc_pphys;
+    ego_prt_environment * loc_penviro;
+    ego_phys_data       * loc_pphys;
 
     bool_t bumped_mesh = bfalse, bumped_grid = bfalse, needs_update = bfalse;
 
@@ -3752,7 +3752,7 @@ void particle_physics_finalize_all( float dt )
 //    ego_prt             * loc_pprt;
 //    PRT_REF             loc_iprt;
 //    ego_pip             * loc_ppip;
-//    prt_environment_t * penviro;
+//    ego_prt_environment * penviro;
 //
 //    if( NULL == pbdl_prt ) return NULL;
 //    loc_pprt = pbdl_prt->prt_ptr;
@@ -4027,7 +4027,7 @@ void particle_physics_finalize_all( float dt )
 //    ego_prt             * loc_pprt;
 //    PRT_REF             loc_iprt;
 //    ego_pip             * loc_ppip;
-//    prt_environment_t * penviro;
+//    ego_prt_environment * penviro;
 //
 //    if( NULL == pbdl_prt ) return NULL;
 //    loc_pprt = pbdl_prt->prt_ptr;

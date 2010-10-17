@@ -69,9 +69,9 @@ struct mpd_BSP
     ego_BSP_leaf_ary_t nodes;
     ego_BSP_tree       tree;
 
-    mpd_BSP  ();
-    mpd_BSP  ( ego_mpd   * pmesh );
-    ~mpd_BSP  ();
+    mpd_BSP();
+    mpd_BSP( ego_mpd   * pmesh );
+    ~mpd_BSP();
 
     static mpd_BSP root;
 
@@ -124,7 +124,7 @@ struct ego_grid_info
 
     // the lighting info in the upper left hand corner of a grid
     Uint8            a, l;                     ///< the raw mesh lighting... pretty much ignored
-    lighting_cache_t cache;                    ///< the per-grid lighting info
+    ego_lighting_cache cache;                    ///< the per-grid lighting info
 
     ego_grid_info() { memset( this, 0, sizeof( *this ) ); }
 };

@@ -24,14 +24,14 @@
 /// this is totally not in use yet.
 
 /// A mockup of the struct that could be used to store the server state
-struct ServerState_t
+struct ego_ServerState
 {
     int dummy;
 // GameState gameState;
 };
 
 /// Globally accessible server state
-extern ServerState_t ServerState;
+extern ego_ServerState ServerState;
 
 int  sv_init();
 void sv_shutDown();

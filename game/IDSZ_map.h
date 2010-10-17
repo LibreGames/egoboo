@@ -25,7 +25,8 @@
 #include "egoboo_typedef.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -38,20 +39,20 @@ extern "C" {
 //--------------------------------------------------------------------------------------------
 
 /// The definition of a single IDSZ element in a IDSZ map
-struct s_IDSZ_node
-{
-    IDSZ id;
-    int  level;
-};
-typedef struct s_IDSZ_node IDSZ_node_t;
+    struct s_IDSZ_node
+    {
+        IDSZ id;
+        int  level;
+    };
+    typedef struct s_IDSZ_node IDSZ_node_t;
 
 // Public functions
-IDSZ_node_t* idsz_map_init( IDSZ_node_t pidsz_map[] );
-egoboo_rv    idsz_map_add( IDSZ_node_t idsz_map[], const size_t idsz_map_len, const IDSZ idsz, const int level );
+    IDSZ_node_t* idsz_map_init( IDSZ_node_t pidsz_map[] );
+    egoboo_rv    idsz_map_add( IDSZ_node_t idsz_map[], const size_t idsz_map_len, const IDSZ idsz, const int level );
 
-IDSZ_node_t* idsz_map_get( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, const IDSZ idsz );
-IDSZ_node_t* idsz_map_iterate( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, int *iterator );
-egoboo_rv    idsz_map_copy( const IDSZ_node_t pcopy_from[], const size_t idsz_map_len, IDSZ_node_t pcopy_to[] );
+    IDSZ_node_t* idsz_map_get( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, const IDSZ idsz );
+    IDSZ_node_t* idsz_map_iterate( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, int *iterator );
+    egoboo_rv    idsz_map_copy( const IDSZ_node_t pcopy_from[], const size_t idsz_map_len, IDSZ_node_t pcopy_to[] );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

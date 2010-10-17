@@ -93,7 +93,7 @@ struct ego_load_player_info
     TX_REF tx_ref;                                ///< the index of the texture
     IDSZ_node_t quest_log[MAX_IDSZ_MAP_SIZE];    ///< all the quests this player has
 
-    chop_definition_t chop;   ///< put this here so we can generate a name without loading an entire profile
+    ego_chop_definition chop;   ///< put this here so we can generate a name without loading an entire profile
 };
 
 extern int                  loadplayer_count;

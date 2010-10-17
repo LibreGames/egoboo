@@ -44,19 +44,19 @@
 #define LOOPED_COUNT 256
 
 /// Data needed to store and manipulate a looped sound
-struct looped_sound_data_t
+struct ego_looped_sound_data
 {
     int         channel;
     Mix_Chunk * chunk;
     CHR_REF     object;
 };
 
-INSTANTIATE_LIST_STATIC( looped_sound_data_t, LoopedList, LOOPED_COUNT );
+INSTANTIATE_LIST_STATIC( ego_looped_sound_data, LoopedList, LOOPED_COUNT );
 
 //#if !defined(DEBUG_CPP_LISTS)
 //
 //#elif defined(__cplusplus)
-//    INSTANTIATE_LIST( static, looped_sound_data_t, LoopedList, LOOPED_COUNT );
+//    INSTANTIATE_LIST( static, ego_looped_sound_data, LoopedList, LOOPED_COUNT );
 //#endif
 
 static void   LoopedList_init();
@@ -112,7 +112,7 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff );
 
 snd_config_data_t * snd_get_config()
 {
-    return static_cast<snd_config_data_t*>(&snd);
+    return static_cast<snd_config_data_t*>( &snd );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -123,13 +123,13 @@ snd_config_data_t * snd_get_config()
 static int music_stack_depth = 0;
 
 /// The data needed to store a single music track on the music_stack[]
-struct music_stack_element_t
+struct ego_music_stack_element
 {
     Mix_Music * mus;
     int         number;
 };
 
-static music_stack_element_t music_stack[MUSIC_STACK_COUNT];
+static ego_music_stack_element music_stack[MUSIC_STACK_COUNT];
 
 static bool_t music_stack_pop( Mix_Music ** mus, int * song );
 
@@ -884,7 +884,7 @@ void   LoopedList_init()
     for ( cnt = 0; cnt < LOOPED_COUNT; cnt++ )
     {
         // clear out all of the data
-        memset( LoopedList.lst + cnt, 0, sizeof( looped_sound_data_t ) );
+        memset( LoopedList.lst + cnt, 0, sizeof( ego_looped_sound_data ) );
 
         LoopedList.lst[cnt].channel = INVALID_SOUND_CHANNEL;
         LoopedList.lst[cnt].chunk   = NULL;
@@ -1081,7 +1081,7 @@ void looped_update_all_sound()
         fvec3_t   diff;
         size_t    index;
         LOOP_REF   ref;
-        looped_sound_data_t * plooped;
+        ego_looped_sound_data * plooped;
 
         index = LoopedList.used_ref[cnt];
         if ( index < 0 || index >= LOOPED_COUNT ) continue;

@@ -38,11 +38,11 @@ struct ego_oct_bb  ;
 
 /// element for storing pair-wise "collision" data
 /// @note this does not use the "standard" method of inheritance from ego_hash_node, where an
-/// instance of ego_hash_node is embedded inside CoNode_t as CoNode_t::base or something.
+/// instance of ego_hash_node is embedded inside ego_CoNode as ego_CoNode::base or something.
 /// Instead, a separate lists of free hash_nodes and free CoNodes are kept, and they are
 /// associated through the ego_hash_node::data pointer when the hash node is added to the
 /// ego_hash_list
-struct CoNode_t
+struct ego_CoNode
 {
     // the "colliding" objects
     CHR_REF chra;
@@ -58,13 +58,13 @@ struct CoNode_t
     ego_oct_bb   cv;
 };
 
-CoNode_t * CoNode_ctor( CoNode_t * );
-Uint8      CoNode_generate_hash( CoNode_t * coll );
+ego_CoNode * CoNode_ctor( ego_CoNode * );
+Uint8      CoNode_generate_hash( ego_CoNode * coll );
 int        CoNode_cmp( const void * pleft, const void * pright );
 
 //--------------------------------------------------------------------------------------------
-// a template-like definition of a dynamically allocated array of CoNode_t elements
-DECLARE_DYNAMIC_ARY( CoNode_ary, CoNode_t );
+// a template-like definition of a dynamically allocated array of ego_CoNode elements
+DECLARE_DYNAMIC_ARY( CoNode_ary, ego_CoNode );
 
 //--------------------------------------------------------------------------------------------
 // a template-like definition of a dynamically allocated array of ego_hash_node elements
@@ -77,7 +77,7 @@ typedef ego_hash_list CHashList_t;
 
 CHashList_t * CHashList_ctor( CHashList_t * pchlst, int size );
 CHashList_t * CHashList_dtor( CHashList_t * pchlst );
-bool_t        CHashList_insert_unique( CHashList_t * pchlst, CoNode_t * pdata, CoNode_ary_t * cdata, HashNode_ary_t * hnlst );
+bool_t        CHashList_insert_unique( CHashList_t * pchlst, ego_CoNode * pdata, CoNode_ary_t * cdata, HashNode_ary_t * hnlst );
 
 CHashList_t * CHashList_get_Instance( int size );
 

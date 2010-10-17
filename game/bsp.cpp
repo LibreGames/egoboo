@@ -29,10 +29,10 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-IMPLEMENT_DYNAMIC_ARY( ego_BSP_leaf_ary, ego_BSP_leaf   );
+IMPLEMENT_DYNAMIC_ARY( ego_BSP_leaf_ary, ego_BSP_leaf );
 IMPLEMENT_DYNAMIC_ARY( ego_BSP_leaf_pary, ego_BSP_leaf   * );
 
-IMPLEMENT_DYNAMIC_ARY( ego_BSP_branch_ary, ego_BSP_branch   );
+IMPLEMENT_DYNAMIC_ARY( ego_BSP_branch_ary, ego_BSP_branch );
 IMPLEMENT_DYNAMIC_ARY( ego_BSP_branch_pary, ego_BSP_branch   * );
 
 //--------------------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ ego_BSP_leaf   * ego_BSP_leaf::create( int dim, void * data, int type )
 {
     ego_BSP_leaf   * rv;
 
-    rv = EGOBOO_NEW( ego_BSP_leaf   );
+    rv = EGOBOO_NEW( ego_BSP_leaf );
     if ( NULL == rv ) return rv;
 
     return ego_BSP_leaf::ctor( rv, dim, data, type );
@@ -311,7 +311,7 @@ ego_BSP_branch   * ego_BSP_branch::create( size_t dim )
 {
     ego_BSP_branch   * rv;
 
-    rv = EGOBOO_NEW( ego_BSP_branch   );
+    rv = EGOBOO_NEW( ego_BSP_branch );
     if ( NULL == rv ) return rv;
 
     return ego_BSP_branch::ctor( rv, dim );
@@ -415,7 +415,7 @@ bool_t ego_BSP_branch::unlink( ego_BSP_branch   * B )
     if ( NULL == B ) return bfalse;
 
     // remove any nodes (from this branch only, not recursively)
-    ego_BSP_branch::free_nodes( B, bfalse );
+    ego_BSP_branch::dealloc_nodes( B, bfalse );
 
     // completely unlink the branch
     B->parent   = NULL;
@@ -484,7 +484,7 @@ bool_t ego_BSP_branch::clear_nodes( ego_BSP_branch   * B, bool_t recursive )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_branch::free_nodes( ego_BSP_branch   * B, bool_t recursive )
+bool_t ego_BSP_branch::dealloc_nodes( ego_BSP_branch   * B, bool_t recursive )
 {
     size_t cnt;
 
@@ -497,7 +497,7 @@ bool_t ego_BSP_branch::free_nodes( ego_BSP_branch   * B, bool_t recursive )
         {
             if ( NULL == B->child_lst[cnt] ) continue;
 
-            ego_BSP_branch::free_nodes( B->child_lst[cnt], btrue );
+            ego_BSP_branch::dealloc_nodes( B->child_lst[cnt], btrue );
         };
     }
 
@@ -951,7 +951,7 @@ bool_t ego_BSP_tree::dealloc_nodes( ego_BSP_tree   * t, bool_t recursive )
 
     if ( recursive )
     {
-        ego_BSP_branch::free_nodes( t->root, btrue );
+        ego_BSP_branch::dealloc_nodes( t->root, btrue );
     }
 
     // free the infinite nodes of the tree

@@ -43,14 +43,14 @@
 //--------------------------------------------------------------------------------------------
 
 /// The data describing where a script is in AisCompiled_buffer
-struct script_storage_info_t
+struct ego_script_storage_info
 {
     STRING szName;
     Uint32 iStartPosition;
     Uint32 iEndPosition;
 };
 
-DECLARE_STATIC_ARY_TYPE( AisStorageAry, script_storage_info_t, MAX_AI );
+DECLARE_STATIC_ARY_TYPE( AisStorageAry, ego_script_storage_info, MAX_AI );
 DECLARE_EXTERN_STATIC_ARY( AisStorageAry, AisStorage );
 
 #define AI_LOADED(IAI) ( ((IAI) >= 0) && ((IAI) < MAX_AI) && ((IAI) >= AisStorage.count) && (AisStorage.ary[IAI].iStartPosition != AisStorage.ary[IAI].iEndPosition) )
@@ -64,14 +64,14 @@ extern bool_t debug_scripts;
 extern FILE * debug_script_file;
 
 /// temporary data describing a single egoscript opcode
-struct opcode_data_t
+struct scr_opcode_data
 {
     Uint8  cType;
     Uint32 iValue;
     char   cName[MAXCODENAMESIZE];
 };
 
-DECLARE_STATIC_ARY_TYPE( OpListAry, opcode_data_t, MAX_OPCODE );
+DECLARE_STATIC_ARY_TYPE( OpListAry, scr_opcode_data, MAX_OPCODE );
 DECLARE_EXTERN_STATIC_ARY( OpListAry, OpList );
 
 //--------------------------------------------------------------------------------------------

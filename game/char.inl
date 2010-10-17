@@ -41,7 +41,7 @@ INLINE bool_t cap_is_type_idsz( const CAP_REF by_reference icap, IDSZ test_idsz 
 INLINE bool_t cap_has_idsz( const CAP_REF by_reference icap, IDSZ idsz );
 
 //--------------------------------------------------------------------------------------------
-// team_t accessor functions
+// ego_team accessor functions
 INLINE CHR_REF  team_get_ileader( const TEAM_REF by_reference iteam );
 INLINE ego_chr  * team_get_pleader( const TEAM_REF by_reference iteam );
 
@@ -275,7 +275,7 @@ INLINE Mix_Chunk * ego_chr::get_chunk_ptr( ego_chr * pchr, int index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE team_t * ego_chr::get_pteam( const CHR_REF by_reference ichr )
+INLINE ego_team * ego_chr::get_pteam( const CHR_REF by_reference ichr )
 {
     ego_chr * pchr;
 
@@ -288,7 +288,7 @@ INLINE team_t * ego_chr::get_pteam( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE team_t * ego_chr::get_pteam_base( const CHR_REF by_reference ichr )
+INLINE ego_team * ego_chr::get_pteam_base( const CHR_REF by_reference ichr )
 {
     ego_chr * pchr;
 
@@ -312,7 +312,7 @@ INLINE ego_ai_state * ego_chr::get_pai( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE chr_instance_t * ego_chr::get_pinstance( const CHR_REF by_reference ichr )
+INLINE ego_chr_instance * ego_chr::get_pinstance( const CHR_REF by_reference ichr )
 {
     ego_chr * pchr;
 

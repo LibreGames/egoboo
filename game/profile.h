@@ -43,7 +43,7 @@ struct ego_prt_bundle;
 //--------------------------------------------------------------------------------------------
 
 /// Placeholders used while importing profiles
-struct pro_import_t
+struct ego_pro_import
 {
     int   slot;
     int   player;
@@ -62,7 +62,7 @@ struct pro_import_t
 #define MAXSECTION                      4              ///< T-wi-n-k...  Most of 4 sections
 
 /// The buffer for the random naming data
-struct chop_data_t
+struct ego_chop_data
 {
     size_t  chop_count;             ///< The global number of name parts
 
@@ -71,17 +71,17 @@ struct chop_data_t
     int     start[MAXCHOP];         ///< The first character of each part
 };
 
-chop_data_t * chop_data_init( chop_data_t * pdata );
+ego_chop_data * chop_data_init( ego_chop_data * pdata );
 
 bool_t        chop_export_vfs( const char *szSaveName, const char * szChop );
 
 //--------------------------------------------------------------------------------------------
 
 /// Definition of a single chop section
-struct chop_section_t
+struct ego_chop_section
 {
     int size;     ///< Number of choices, 0
-    int start;    ///< A reference to a specific offset in the chop_data_t buffer
+    int start;    ///< A reference to a specific offset in the ego_chop_data buffer
 };
 
 #define CHOP_SECTION_INIT { /* size */ -1, /* start */ -1 }
@@ -89,12 +89,12 @@ struct chop_section_t
 //--------------------------------------------------------------------------------------------
 
 /// Definition of the chop info needed to create a name
-struct chop_definition_t
+struct ego_chop_definition
 {
-    chop_section_t  section[MAXSECTION];
+    ego_chop_section  section[MAXSECTION];
 };
 
-chop_definition_t * chop_definition_init( chop_definition_t * pdefinition );
+ego_chop_definition * chop_definition_init( ego_chop_definition * pdefinition );
 
 #define CHOP_DEFINITION_INIT { {CHOP_SECTION_INIT} }
 
@@ -123,7 +123,7 @@ struct ego_pro
     int     message_start;                    ///< The first message
 
     /// the random naming info
-    chop_definition_t chop;
+    ego_chop_definition chop;
 
     // sounds
     struct Mix_Chunk *  wavelist[MAX_WAVE];             ///< sounds in a object
@@ -180,8 +180,8 @@ struct ego_obj_BSP
 extern size_t  bookicon_count;
 extern TX_REF  bookicon_ref[MAX_SKIN];                      ///< The first book icon
 
-extern pro_import_t import_data;
-extern chop_data_t chop_mem;
+extern ego_pro_import import_data;
+extern ego_chop_data chop_mem;
 
 DECLARE_STATIC_ARY_TYPE( MessageOffsetAry, int, MAXTOTALMESSAGE );
 DECLARE_EXTERN_STATIC_ARY( MessageOffsetAry, MessageOffset );
@@ -208,5 +208,5 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override );
 
 void reset_messages();
 
-const char *  chop_create( chop_data_t * pdata, chop_definition_t * pdef );
-bool_t        chop_load_vfs( chop_data_t * pchop_data, const char *szLoadname, chop_definition_t * pchop_definition );
+const char *  chop_create( ego_chop_data * pdata, ego_chop_definition * pdef );
+bool_t        chop_load_vfs( ego_chop_data * pchop_data, const char *szLoadname, ego_chop_definition * pchop_definition );

@@ -36,7 +36,7 @@
 //-------------------------------------------------------------------------------------------
 
 /// The description of a single pre-defined egoscript token
-struct token_t
+struct scr_token
 {
     int    iLine;
     int    iIndex;
@@ -56,7 +56,7 @@ static char    cLineBuffer[MAXLINESIZE] = EMPTY_CSTR;
 static int     iLoadSize;
 static Uint8   cLoadBuffer[AISMAXLOADSIZE] = EMPTY_CSTR;
 
-static token_t Token;
+static scr_token Token;
 
 static const char * globalparsename = NULL;
 

@@ -48,7 +48,7 @@ static bool_t link_push_module();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct hero_spawn_data_t
+struct ego_hero_spawn_data
 {
     Uint32 object_index;
     fvec3_t   pos;
@@ -58,11 +58,11 @@ struct hero_spawn_data_t
 };
 
 /// A list of all the active links
-struct link_stack_entry_t
+struct ego_link_stack_entry
 {
     STRING            modname;
     int               hero_count;
-    hero_spawn_data_t hero[LINK_HEROES_MAX];
+    ego_hero_spawn_data hero[LINK_HEROES_MAX];
 
     // more module parameters, like whether it is beaten or some other things?
 };
@@ -72,7 +72,7 @@ struct link_stack_entry_t
 ego_link LinkList[LINK_COUNT];
 
 static int                link_stack_count = 0;
-static link_stack_entry_t link_stack[LINK_STACK_MAX];
+static ego_link_stack_entry link_stack[LINK_STACK_MAX];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -153,7 +153,7 @@ bool_t link_build_vfs( const char * fname, ego_link list[] )
 bool_t link_pop_module()
 {
     bool_t retval;
-    link_stack_entry_t * pentry;
+    ego_link_stack_entry * pentry;
 
     if ( link_stack_count <= 0 ) return bfalse;
     link_stack_count--;
@@ -171,7 +171,7 @@ bool_t link_pop_module()
         for ( i = 0; i < pentry->hero_count; i++ )
         {
             ego_chr * pchr;
-            hero_spawn_data_t * phero = pentry->hero + i;
+            ego_hero_spawn_data * phero = pentry->hero + i;
 
             pchr = NULL;
             for ( j = 0; j < MAX_CHR; j++ )
@@ -204,7 +204,7 @@ bool_t link_pop_module()
 bool_t link_push_module()
 {
     bool_t retval;
-    link_stack_entry_t * pentry;
+    ego_link_stack_entry * pentry;
     PLA_REF ipla;
 
     if ( link_stack_count >= MAX_PLAYER || pickedmodule_index < 0 ) return bfalse;
@@ -223,9 +223,9 @@ bool_t link_push_module()
         CHR_REF ichr;
         ego_chr * pchr;
 
-        hero_spawn_data_t * phero;
+        ego_hero_spawn_data * phero;
 
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -265,7 +265,7 @@ bool_t link_push_module()
 bool_t link_load_parent( const char * modname, fvec3_t   pos )
 {
     int i;
-    link_stack_entry_t * pentry;
+    ego_link_stack_entry * pentry;
     fvec3_t   pos_diff;
 
     if ( !VALID_CSTR( modname ) ) return bfalse;
@@ -284,7 +284,7 @@ bool_t link_load_parent( const char * modname, fvec3_t   pos )
     // adjust all the hero spawn points
     for ( i = 0; i < pentry->hero_count; i++ )
     {
-        hero_spawn_data_t * phero = pentry->hero + i;
+        ego_hero_spawn_data * phero = pentry->hero + i;
 
         phero->pos_stt.x += pos_diff.x;
         phero->pos_stt.y += pos_diff.y;

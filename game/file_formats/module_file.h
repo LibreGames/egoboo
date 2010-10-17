@@ -23,7 +23,8 @@
 #include "IDSZ_map.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 //------------------------------------
@@ -39,58 +40,58 @@ extern "C" {
 //--------------------------------------------------------------------------------------------
 
 /// All the possible filters for modules
-enum e_module_filter
-{
-    FILTER_OFF,                     ///< Display all modules
-    FILTER_MAIN,                    ///< Only main quest modules
-    FILTER_SIDE,                    ///< Only alternate sidequest modules
-    FILTER_TOWN,                    ///< Only display Town modules
-    FILTER_FUN,                     ///< Only fun modules (bumpercars!)
+    enum e_module_filter
+    {
+        FILTER_OFF,                     ///< Display all modules
+        FILTER_MAIN,                    ///< Only main quest modules
+        FILTER_SIDE,                    ///< Only alternate sidequest modules
+        FILTER_TOWN,                    ///< Only display Town modules
+        FILTER_FUN,                     ///< Only fun modules (bumpercars!)
 
-    // special filters
-    FILTER_DEBUG,                   ///< Only modules used for debugging
-    FILTER_HIDDEN,                  ///< Modules that can't be seen
-    FILTER_STARTER,                 ///< An extra filter for the starter modules
+        // special filters
+        FILTER_DEBUG,                   ///< Only modules used for debugging
+        FILTER_HIDDEN,                  ///< Modules that can't be seen
+        FILTER_STARTER,                 ///< An extra filter for the starter modules
 
-    // aliases
-    FILTER_NORMAL_BEGIN = FILTER_OFF,
-    FILTER_NORMAL_END   = FILTER_FUN,
-    FILTER_SPECIAL_END  = FILTER_STARTER
-};
-typedef enum e_module_filter module_filter_t;
+        // aliases
+        FILTER_NORMAL_BEGIN = FILTER_OFF,
+        FILTER_NORMAL_END   = FILTER_FUN,
+        FILTER_SPECIAL_END  = FILTER_STARTER
+    };
+    typedef enum e_module_filter module_filter_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// The internal representation of the *.mod file
-struct s_mod_file
-{
-    // data from menu.txt
-    char    rank[RANKSIZE];               ///< Number of stars
-    STRING  longname;                     ///< Module names
-    STRING  reference;                    ///< the module reference string
-    Uint8   importamount;                 ///< # of import characters
-    bool_t  allowexport;                  ///< Export characters?
-    Uint8   minplayers;                   ///< Number of players
-    Uint8   maxplayers;
-    bool_t  monstersonly;                           ///< Only allow monsters
-    Uint8   respawnvalid;                           ///< Allow respawn
-    Uint8   rtscontrol;                             ///< !! keep this in the file, even though it is not used in the game !!
-    int     numlines;                               ///< Lines in summary
-    char    summary[SUMMARYLINES][SUMMARYSIZE];     ///< Quest description
+    struct s_mod_file
+    {
+        // data from menu.txt
+        char    rank[RANKSIZE];               ///< Number of stars
+        STRING  longname;                     ///< Module names
+        STRING  reference;                    ///< the module reference string
+        Uint8   importamount;                 ///< # of import characters
+        bool_t  allowexport;                  ///< Export characters?
+        Uint8   minplayers;                   ///< Number of players
+        Uint8   maxplayers;
+        bool_t  monstersonly;                           ///< Only allow monsters
+        Uint8   respawnvalid;                           ///< Allow respawn
+        Uint8   rtscontrol;                             ///< !! keep this in the file, even though it is not used in the game !!
+        int     numlines;                               ///< Lines in summary
+        char    summary[SUMMARYLINES][SUMMARYSIZE];     ///< Quest description
 
-    IDSZ_node_t     unlockquest;                    ///< the quest required to unlock this module
-    module_filter_t moduletype;                     ///< Main quest, town, sidequest or whatever
-    bool_t          beaten;                         ///< The module has been marked with teh [BEAT] eapansion
-};
-typedef struct s_mod_file mod_file_t;
+        IDSZ_node_t     unlockquest;                    ///< the quest required to unlock this module
+        module_filter_t moduletype;                     ///< Main quest, town, sidequest or whatever
+        bool_t          beaten;                         ///< The module has been marked with teh [BEAT] eapansion
+    };
+    typedef struct s_mod_file mod_file_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int    module_has_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, char * buffer );
-bool_t module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, const char * buffer );
+    int    module_has_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, char * buffer );
+    bool_t module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, const char * buffer );
 
-mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod );
+    mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

@@ -210,7 +210,7 @@ ego_mpd   * mesh_create( ego_mpd   * pmesh, int tiles_x, int tiles_y )
 {
     if ( NULL == pmesh )
     {
-        pmesh = EGOBOO_NEW( ego_mpd   );
+        pmesh = EGOBOO_NEW( ego_mpd );
         pmesh = mesh_ctor( pmesh );
     }
 
@@ -1097,7 +1097,7 @@ bool_t mesh_make_normals( ego_mpd   * pmesh )
 bool_t grid_light_one_corner( ego_mpd   * pmesh, int fan, float height, float nrm[], float * plight )
 {
     bool_t             reflective;
-    lighting_cache_t * lighting;
+    ego_lighting_cache * lighting;
 
     if ( NULL == pmesh || NULL == plight || !mesh_grid_is_valid( pmesh, fan ) ) return bfalse;
 
@@ -1151,7 +1151,7 @@ bool_t mesh_test_one_corner( ego_mpd   * pmesh, GLXvector3f pos, float * pdelta 
 //--------------------------------------------------------------------------------------------
 bool_t mesh_light_one_corner( ego_mpd   * pmesh, int itile, GLXvector3f pos, GLXvector3f nrm, float * plight )
 {
-    lighting_cache_t grid_light;
+    ego_lighting_cache grid_light;
     bool_t reflective;
 
     if ( !mesh_grid_is_valid( pmesh, itile ) ) return bfalse;
@@ -1568,7 +1568,7 @@ float mesh_get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
                 }
                 else
                 {
-                    is_blocked = (0 != mesh_has_some_mpdfx( glist[itile].fx, bits ));
+                    is_blocked = ( 0 != mesh_has_some_mpdfx( glist[itile].fx, bits ) );
                 }
             }
 
@@ -1784,7 +1784,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
                 if ( mesh_grid_is_valid( pmesh, itile ) )
                 {
                     BIT_FIELD mpdfx   = data.glist[itile].fx;
-                    bool_t is_blocked = (0 != mesh_has_some_mpdfx( mpdfx, bits ));
+                    bool_t is_blocked = ( 0 != mesh_has_some_mpdfx( mpdfx, bits ) );
 
                     if ( is_blocked )
                     {
@@ -1973,9 +1973,9 @@ ego_tile_info * ego_tile_info_alloc_ary( size_t count )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-mpd_BSP  ::mpd_BSP  () { memset( this, 0, sizeof( *this ) ); }
-mpd_BSP  ::mpd_BSP  ( ego_mpd   * pmesh ) { mpd_BSP::ctor( this, pmesh ); }
-mpd_BSP  ::~mpd_BSP  ()  { mpd_BSP::dtor( this ); }
+mpd_BSP  ::mpd_BSP() { memset( this, 0, sizeof( *this ) ); }
+mpd_BSP  ::mpd_BSP( ego_mpd   * pmesh ) { mpd_BSP::ctor( this, pmesh ); }
+mpd_BSP  ::~mpd_BSP()  { mpd_BSP::dtor( this ); }
 
 mpd_BSP * mpd_BSP::ctor( mpd_BSP * pbsp, ego_mpd   * pmesh )
 {

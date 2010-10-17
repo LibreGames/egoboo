@@ -301,9 +301,9 @@ bool_t ego_hash_list::alloc( ego_hash_list * lst, int size )
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::renew( ego_hash_list * lst )
 {
-    /// @details BB@> renew the CoNode_t hash table.
+    /// @details BB@> renew the ego_CoNode hash table.
     ///
-    /// Since we are filling this list with pre-allocated CoNode_t's,
+    /// Since we are filling this list with pre-allocated ego_CoNode's,
     /// there is no need to delete any of the existing pchlst->sublist elements
 
     int cnt;

@@ -47,7 +47,7 @@ extern ego_cursor cursor;
 // MOUSE
 
 /// The internal representation of the mouse data
-struct mouse_t
+struct ego_mouse
 {
     bool_t                  on;              ///< Is it alive?
     float                   sense;           ///< Sensitivity threshold
@@ -60,7 +60,7 @@ struct mouse_t
 
 };
 
-extern mouse_t mous;
+extern ego_mouse mous;
 
 //--------------------------------------------------------------------------------------------
 // KEYBOARD
@@ -68,7 +68,7 @@ extern mouse_t mous;
 #define KEYB_BUFFER_SIZE 2048
 
 /// The internal representation of the keyboard data
-struct keyboard_t
+struct ego_keyboard
 {
     bool_t  on;                ///< Is the keyboard alive?
     int     count;
@@ -78,7 +78,7 @@ struct keyboard_t
     char    buffer[KEYB_BUFFER_SIZE];
 };
 
-extern keyboard_t keyb;
+extern ego_keyboard keyb;
 
 #define SDLKEYDOWN(k) ( !console_mode &&  (NULL != keyb.state_ptr) && (keyb.count > 0) && ((k) < (Uint32)keyb.count) && (0 != keyb.state_ptr[k]) )
 
@@ -87,7 +87,7 @@ extern keyboard_t keyb;
 #define JOYBUTTON           32                      ///< Maximum number of joystick buttons
 
 /// The internal representation of the joystick data
-struct device_joystick_t
+struct ego_device_joystick
 {
     bool_t  on;                ///< Is the holy joystick alive?
     float   x;
@@ -97,7 +97,7 @@ struct device_joystick_t
     SDL_Joystick * sdl_ptr;
 };
 
-extern device_joystick_t joy[MAXJOYSTICK];
+extern ego_device_joystick joy[MAXJOYSTICK];
 
 //--------------------------------------------------------------------------------------------
 

@@ -44,8 +44,8 @@
 //--------------------------------------------------------------------------------------------
 static bool_t _profile_initialized = bfalse;
 
-chop_data_t  chop_mem = {0, 0};
-pro_import_t import_data;
+ego_chop_data  chop_mem = {0, 0};
+ego_pro_import import_data;
 
 size_t bookicon_count   = 0;
 TX_REF bookicon_ref[MAX_SKIN];                      // The first book icon
@@ -957,7 +957,7 @@ bool_t pro_load_chop_vfs( const PRO_REF by_reference iprofile, const char *szLoa
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-chop_definition_t * chop_definition_init( chop_definition_t * pdefinition )
+ego_chop_definition * chop_definition_init( ego_chop_definition * pdefinition )
 {
     int cnt;
 
@@ -973,7 +973,7 @@ chop_definition_t * chop_definition_init( chop_definition_t * pdefinition )
 }
 
 //--------------------------------------------------------------------------------------------
-chop_data_t * chop_data_init( chop_data_t * pdata )
+ego_chop_data * chop_data_init( ego_chop_data * pdata )
 {
     /// @details ZZ@> This function prepares the name chopper for use
     ///          BB@> It may actually be useful to blank the chop buffer
@@ -987,7 +987,7 @@ chop_data_t * chop_data_init( chop_data_t * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-const char * chop_create( chop_data_t * pdata, chop_definition_t * pdefinition )
+const char * chop_create( ego_chop_data * pdata, ego_chop_definition * pdefinition )
 {
     /// @details ZZ@> This function generates a random name.  Return "Blah" on a failure.
 
@@ -1033,7 +1033,7 @@ const char * chop_create( chop_data_t * pdata, chop_definition_t * pdefinition )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chop_load_vfs( chop_data_t * pdata, const char *szLoadname, chop_definition_t * pdefinition )
+bool_t chop_load_vfs( ego_chop_data * pdata, const char *szLoadname, ego_chop_definition * pdefinition )
 {
     /// @details ZZ@> This function reads a naming.txt file into the chop data buffer and sets the
     ///               values of a chop definition
@@ -1042,7 +1042,7 @@ bool_t chop_load_vfs( chop_data_t * pdata, const char *szLoadname, chop_definiti
     STRING    tmp_buffer = EMPTY_CSTR;
     vfs_FILE *fileread;
 
-    chop_definition_t local_definition;
+    ego_chop_definition local_definition;
 
     if ( NULL == pdata || pdata->carat >= CHOPDATACHUNK ) return bfalse;
 

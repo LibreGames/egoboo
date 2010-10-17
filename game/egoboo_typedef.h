@@ -28,7 +28,8 @@
 #include "egoboo_mem.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -45,31 +46,31 @@ extern "C" {
 #   define btrue  true
 #   define bfalse false
 #else
-enum e_bool
-{
-    btrue  = ( 1 == 1 ),
-    bfalse = ( !btrue )
-};
-typedef enum e_bool bool_t;
+    enum e_bool
+    {
+        btrue  = ( 1 == 1 ),
+        bfalse = ( !btrue )
+    };
+    typedef enum e_bool bool_t;
 #endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// special return values
-enum e_egoboo_rv
-{
-    rv_error   = -1,
-    rv_fail    = bfalse,
-    rv_success = btrue
-};
-typedef enum e_egoboo_rv egoboo_rv;
+    enum e_egoboo_rv
+    {
+        rv_error   = -1,
+        rv_fail    = bfalse,
+        rv_success = btrue
+    };
+    typedef enum e_egoboo_rv egoboo_rv;
 
 //--------------------------------------------------------------------------------------------
 // 24.8 fixed point types
 
-typedef Uint32 UFP8_T;
-typedef Sint32 SFP8_T;
+    typedef Uint32 UFP8_T;
+    typedef Sint32 SFP8_T;
 
 // unsigned versions
 #define UFP8_TO_FLOAT(V1)  ( ((float)((unsigned)(V1))) * INV_0100 )
@@ -85,8 +86,8 @@ typedef Sint32 SFP8_T;
 
 //--------------------------------------------------------------------------------------------
 // the type for the 16-bit value used to stor angles
-typedef Uint16   FACING_T;
-typedef FACING_T TURN_T;
+    typedef Uint16   FACING_T;
+    typedef FACING_T TURN_T;
 
 #define TO_FACING(X) ((FACING_T)(X))
 #define TO_TURN(X)   ((TURN_T)((TO_FACING(X)>>2) & TRIG_TABLE_MASK))
@@ -94,15 +95,15 @@ typedef FACING_T TURN_T;
 //--------------------------------------------------------------------------------------------
 // 16.16 fixed point types
 
-typedef Uint32 UFP16_T;
-typedef Sint32 SFP16_T;
+    typedef Uint32 UFP16_T;
+    typedef Sint32 SFP16_T;
 
 #define FLOAT_TO_FP16( V1 )  ( (Uint32)((V1) * 0x00010000) )
 #define FP16_TO_FLOAT( V1 )  ( (float )((V1) * 0.0000152587890625f ) )
 
 //--------------------------------------------------------------------------------------------
 // BIT FIELDS
-typedef Uint32 BIT_FIELD;                                ///< A big string supporting 32 bits
+    typedef Uint32 BIT_FIELD;                                ///< A big string supporting 32 bits
 #define FULL_BIT_FIELD        ((BIT_FIELD)(~0))            ///< A bit string where all bits are flagged as 1
 #define EMPTY_BIT_FIELD         0                            ///< A bit string where all bits are flagged as 0
 #define FILL_BIT_FIELD(XX)    (XX) = FULL_BIT_FIELD        ///< Fills up all bits in a bit pattern
@@ -147,69 +148,69 @@ typedef Uint32 BIT_FIELD;                                ///< A big string suppo
 
 //--------------------------------------------------------------------------------------------
 // RECTANGLE
-struct s_irect
-{
-    float x, y;
-    float w, h;
-};
-typedef struct s_irect irect_t;
+    struct s_irect
+    {
+        float x, y;
+        float w, h;
+    };
+    typedef struct s_irect irect_t;
 
-struct s_frect
-{
-    float x, y;
-    float w, h;
-};
-typedef struct s_frect frect_t;
+    struct s_frect
+    {
+        float x, y;
+        float w, h;
+    };
+    typedef struct s_frect frect_t;
 
-bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst );
+    bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst );
 
 //--------------------------------------------------------------------------------------------
 // Rectangle types
 
-struct s_ego_irect
-{
-    int xmin, ymin;
-    int xmax, ymax;
-};
-typedef struct s_ego_irect ego_irect_t;
+    struct s_ego_irect
+    {
+        int xmin, ymin;
+        int xmax, ymax;
+    };
+    typedef struct s_ego_irect ego_irect_t;
 
-bool_t irect_point_inside( ego_irect_t * prect, int   ix, int   iy );
+    bool_t irect_point_inside( ego_irect_t * prect, int   ix, int   iy );
 
-struct s_ego_frect
-{
-    float xmin, ymin;
-    float xmax, ymax;
-};
-typedef struct s_ego_frect ego_frect_t;
+    struct s_ego_frect
+    {
+        float xmin, ymin;
+        float xmax, ymax;
+    };
+    typedef struct s_ego_frect ego_frect_t;
 
-bool_t frect_point_inside( ego_frect_t * prect, float fx, float fy );
+    bool_t frect_point_inside( ego_frect_t * prect, float fx, float fy );
 
 //--------------------------------------------------------------------------------------------
 // PAIR AND RANGE
 
 // Specifies a value between "base" and "base + rand"
-struct s_pair
-{
-    int base, rand;
-};
-typedef struct s_pair IPair;
+    struct s_pair
+    {
+        int base, rand;
+    };
+    typedef struct s_pair IPair;
 
 // Specifies a value from "from" to "to"
-struct s_range
-{
-    float from, to;
-};
-typedef struct s_range FRange;
+    struct s_range
+    {
+        float from, to;
+    };
+    typedef struct s_range FRange;
 
-void pair_to_range( IPair pair, FRange * prange );
-void range_to_pair( FRange range, IPair * ppair );
+    void pair_to_range( IPair pair, FRange * prange );
+    void range_to_pair( FRange range, IPair * ppair );
 
-void ints_to_range( int base, int rand, FRange * prange );
-void floats_to_pair( float vmin, float vmax, IPair * ppair );
+    void ints_to_range( int base, int rand, FRange * prange );
+    void floats_to_pair( float vmin, float vmax, IPair * ppair );
 
 //--------------------------------------------------------------------------------------------
 // IDSZ
-typedef Uint32 IDSZ;
+    typedef Uint32 IDSZ;
 
 #define IDSZ_DEFINED
 
@@ -226,11 +227,11 @@ typedef Uint32 IDSZ;
 #define IDSZ_NONE            MAKE_IDSZ('N','O','N','E')       ///< [NONE]
 #define IDSZ_BOOK            MAKE_IDSZ('B','O','O','K')       ///< [BOOK]
 
-const char * undo_idsz( IDSZ idsz );
+    const char * undo_idsz( IDSZ idsz );
 
 //--------------------------------------------------------------------------------------------
 // STRING
-typedef char STRING[256];
+    typedef char STRING[256];
 
 //--------------------------------------------------------------------------------------------
 
@@ -243,22 +244,22 @@ typedef char STRING[256];
 //--------------------------------------------------------------------------------------------
 
 /// The basic 2d latch
-struct s_latch_2d
-{
-    float     dir[2];
-    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
-};
-typedef struct s_latch_2d latch_2d_t;
+    struct s_latch_2d
+    {
+        float     dir[2];
+        BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+    };
+    typedef struct s_latch_2d latch_2d_t;
 
 #define LATCH_2D_INIT { {0.0f,0.0f}, EMPTY_BIT_FIELD }
 
 /// The basic 3d latch
-struct s_latch_3d
-{
-    float     dir[3];
-    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
-};
-typedef struct s_latch_3d latch_3d_t;
+    struct s_latch_3d
+    {
+        float     dir[3];
+        BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+    };
+    typedef struct s_latch_3d latch_3d_t;
 
 #define LATCH_3D_INIT { {0.0f,0.0f,0.0f}, EMPTY_BIT_FIELD }
 
@@ -266,23 +267,23 @@ typedef struct s_latch_3d latch_3d_t;
 //--------------------------------------------------------------------------------------------
 
 /// The latch used by the input system
-struct s_latch_input
-{
-    float     raw[2];    ///< the raw position of the "joystick axes"
-    BIT_FIELD b;         ///< the raw state of the "joystick buttons"
+    struct s_latch_input
+    {
+        float     raw[2];    ///< the raw position of the "joystick axes"
+        BIT_FIELD b;         ///< the raw state of the "joystick buttons"
 
-    float     dir[3];    ///< the translated direction relative to the camera
-};
-typedef struct s_latch_input latch_input_t;
+        float     dir[3];    ///< the translated direction relative to the camera
+    };
+    typedef struct s_latch_input latch_input_t;
 
-void latch_input_init( latch_input_t * platch );
+    void latch_input_init( latch_input_t * platch );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // References
 
 /// base reference type
-typedef Uint16 REF_T;
+    typedef Uint16 REF_T;
 
 //--------------------------------------------------------------------------------------------
 // definition of the c-type reference
@@ -309,21 +310,21 @@ typedef Uint16 REF_T;
 
 #define INVALID_UPDATE_GUID ((unsigned)(~((unsigned)0)))
 
-struct s_list_object_state
-{
-    size_t index;        ///< what is the index position in the object list?
-    bool_t allocated;    ///< The object has been allocated
-    bool_t in_free_list; ///< the object is currently in the free list
-    bool_t in_used_list; ///< the object is currently in the used list
-};
-typedef struct s_list_object_state list_object_state;
+    struct s_list_object_state
+    {
+        size_t index;        ///< what is the index position in the object list?
+        bool_t allocated;    ///< The object has been allocated
+        bool_t in_free_list; ///< the object is currently in the free list
+        bool_t in_used_list; ///< the object is currently in the used list
+    };
+    typedef struct s_list_object_state list_object_state;
 
-list_object_state * list_object_state_ctor( list_object_state *, size_t index );
-list_object_state * list_object_state_dtor( list_object_state * );
-list_object_state * list_object_state_clear( list_object_state * );
-list_object_state * list_object_set_allocated( list_object_state *, bool_t val );
-list_object_state * list_object_set_used( list_object_state *, bool_t val );
-list_object_state * list_object_set_free( list_object_state *, bool_t val );
+    list_object_state * list_object_state_ctor( list_object_state *, size_t index );
+    list_object_state * list_object_state_dtor( list_object_state * );
+    list_object_state * list_object_state_clear( list_object_state * );
+    list_object_state * list_object_set_allocated( list_object_state *, bool_t val );
+    list_object_state * list_object_set_used( list_object_state *, bool_t val );
+    list_object_state * list_object_set_free( list_object_state *, bool_t val );
 
 #define C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT) \
     struct s_c_list__##TYPE__##NAME           \
@@ -435,7 +436,8 @@ list_object_state * list_object_set_free( list_object_state *, bool_t val );
 
 #    include "egoboo_typedef_cpp.h"
 
-extern "C" {
+extern "C"
+{
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -490,34 +492,34 @@ extern "C" {
 #    define _INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
 #    define _INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
 
-typedef struct s_team team_t;
-typedef struct s_player player_t;
-typedef struct ego_pip ego_pip;
-typedef struct ego_passage ego_passage;
-typedef struct ego_shop ego_shop;
-typedef struct s_oglx_texture oglx_texture_t;
-typedef struct s_looped_sound_data looped_sound_data_t;
-typedef struct s_mnu_module mnu_module_t;
-typedef struct ego_tx_request ego_tx_request;
+    typedef struct s_team ego_team;
+    typedef struct s_player ego_player;
+    typedef struct ego_pip ego_pip;
+    typedef struct ego_passage ego_passage;
+    typedef struct ego_shop ego_shop;
+    typedef struct s_oglx_texture oglx_texture_t;
+    typedef struct s_looped_sound_data ego_looped_sound_data;
+    typedef struct s_mnu_module mnu_module;
+    typedef struct ego_tx_request ego_tx_request;
 
-CPP_DECLARE_REF( ego_cap, CAP_REF );
-CPP_DECLARE_REF( ego_chr, CHR_REF );
-CPP_DECLARE_REF( team_t, TEAM_REF );
-CPP_DECLARE_REF( ego_eve, EVE_REF );
-CPP_DECLARE_REF( ego_enc, ENC_REF );
-CPP_DECLARE_REF( ego_mad, MAD_REF );
-CPP_DECLARE_REF( player_t, PLA_REF );
-CPP_DECLARE_REF( ego_pip, PIP_REF );
-CPP_DECLARE_REF( ego_prt, PRT_REF );
-CPP_DECLARE_REF( ego_passage, PASS_REF );
-CPP_DECLARE_REF( ego_shop, SHOP_REF );
-CPP_DECLARE_REF( ego_pro, PRO_REF );
-CPP_DECLARE_REF( oglx_texture_t, TX_REF );
-CPP_DECLARE_REF( ego_billboard_data, BBOARD_REF );
-CPP_DECLARE_REF( looped_sound_data_t, LOOP_REF );
-CPP_DECLARE_REF( mnu_module_t, MOD_REF );
-CPP_DECLARE_REF( MOD_REF, MOD_REF_REF );
-CPP_DECLARE_REF( ego_tx_request, TREQ_REF );
+    CPP_DECLARE_REF( ego_cap, CAP_REF );
+    CPP_DECLARE_REF( ego_chr, CHR_REF );
+    CPP_DECLARE_REF( ego_team, TEAM_REF );
+    CPP_DECLARE_REF( ego_eve, EVE_REF );
+    CPP_DECLARE_REF( ego_enc, ENC_REF );
+    CPP_DECLARE_REF( ego_mad, MAD_REF );
+    CPP_DECLARE_REF( ego_player, PLA_REF );
+    CPP_DECLARE_REF( ego_pip, PIP_REF );
+    CPP_DECLARE_REF( ego_prt, PRT_REF );
+    CPP_DECLARE_REF( ego_passage, PASS_REF );
+    CPP_DECLARE_REF( ego_shop, SHOP_REF );
+    CPP_DECLARE_REF( ego_pro, PRO_REF );
+    CPP_DECLARE_REF( oglx_texture_t, TX_REF );
+    CPP_DECLARE_REF( ego_billboard_data, BBOARD_REF );
+    CPP_DECLARE_REF( ego_looped_sound_data, LOOP_REF );
+    CPP_DECLARE_REF( mnu_module, MOD_REF );
+    CPP_DECLARE_REF( MOD_REF, MOD_REF_REF );
+    CPP_DECLARE_REF( ego_tx_request, TREQ_REF );
 
 #else
 
@@ -545,35 +547,35 @@ CPP_DECLARE_REF( ego_tx_request, TREQ_REF );
 #    define _INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
 #    define _INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
 
-C_DECLARE_REF( CAP_REF );
-C_DECLARE_REF( CHR_REF );
-C_DECLARE_REF( TEAM_REF );
-C_DECLARE_REF( EVE_REF );
-C_DECLARE_REF( ENC_REF );
-C_DECLARE_REF( MAD_REF );
-C_DECLARE_REF( PLA_REF );
-C_DECLARE_REF( PIP_REF );
-C_DECLARE_REF( PRT_REF );
-C_DECLARE_REF( PASS_REF );
-C_DECLARE_REF( SHOP_REF );
-C_DECLARE_REF( PRO_REF );
-C_DECLARE_REF( TX_REF );
-C_DECLARE_REF( BBOARD_REF );
-C_DECLARE_REF( LOOP_REF );
-C_DECLARE_REF( MOD_REF );
-C_DECLARE_REF( TREQ_REF );
-C_DECLARE_REF( MOD_REF_REF );
+    C_DECLARE_REF( CAP_REF );
+    C_DECLARE_REF( CHR_REF );
+    C_DECLARE_REF( TEAM_REF );
+    C_DECLARE_REF( EVE_REF );
+    C_DECLARE_REF( ENC_REF );
+    C_DECLARE_REF( MAD_REF );
+    C_DECLARE_REF( PLA_REF );
+    C_DECLARE_REF( PIP_REF );
+    C_DECLARE_REF( PRT_REF );
+    C_DECLARE_REF( PASS_REF );
+    C_DECLARE_REF( SHOP_REF );
+    C_DECLARE_REF( PRO_REF );
+    C_DECLARE_REF( TX_REF );
+    C_DECLARE_REF( BBOARD_REF );
+    C_DECLARE_REF( LOOP_REF );
+    C_DECLARE_REF( MOD_REF );
+    C_DECLARE_REF( TREQ_REF );
+    C_DECLARE_REF( MOD_REF_REF );
 #endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // forward declaration of standard dynamic array types
 
-DECLARE_DYNAMIC_ARY( char_ary,   char )
-DECLARE_DYNAMIC_ARY( short_ary,  short )
-DECLARE_DYNAMIC_ARY( int_ary,    int )
-DECLARE_DYNAMIC_ARY( float_ary,  float )
-DECLARE_DYNAMIC_ARY( double_ary, double )
+    DECLARE_DYNAMIC_ARY( char_ary,   char )
+    DECLARE_DYNAMIC_ARY( short_ary,  short )
+    DECLARE_DYNAMIC_ARY( int_ary,    int )
+    DECLARE_DYNAMIC_ARY( float_ary,  float )
+    DECLARE_DYNAMIC_ARY( double_ary, double )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

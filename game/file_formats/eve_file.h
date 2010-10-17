@@ -25,144 +25,145 @@
 #include "egoboo_typedef.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 //--------------------------------------------------------------------------------------------
 
 /// Special modes for particle reflections from characters
-enum e_missile_treatment
-{
-    MISSILE_NORMAL   = 0,                           ///< Treat missiles normally
-    MISSILE_DEFLECT,                                ///< Deflect incoming missiles
-    MISSILE_REFLECT                                 ///< Reflect them back!
-};
+    enum e_missile_treatment
+    {
+        MISSILE_NORMAL   = 0,                           ///< Treat missiles normally
+        MISSILE_DEFLECT,                                ///< Deflect incoming missiles
+        MISSILE_REFLECT                                 ///< Reflect them back!
+    };
 
 //--------------------------------------------------------------------------------------------
 
 /// All the values that an enchant can override
-enum e_enchant_set
-{
-    SETMORPH = 0,           ///< Morph character?
-    ///< @details this must be first since the
-    ///< character must be morphed before adding any of the other enchants
+    enum e_enchant_set
+    {
+        SETMORPH = 0,           ///< Morph character?
+        ///< @details this must be first since the
+        ///< character must be morphed before adding any of the other enchants
 
-    SETDAMAGETYPE,          ///< Type of damage dealt
-    SETNUMBEROFJUMPS,       ///< Max number of jumps
-    SETLIFEBARCOLOR,        ///< Color of life bar
-    SETMANABARCOLOR,        ///< Color of mana bar
-    SETSLASHMODIFIER,       ///< Damage modifiers
-    SETCRUSHMODIFIER,
-    SETPOKEMODIFIER,
-    SETHOLYMODIFIER,
-    SETEVILMODIFIER,
-    SETFIREMODIFIER,
-    SETICEMODIFIER,
-    SETZAPMODIFIER,
-    SETFLASHINGAND,             ///< Flash rate
-    SETLIGHTBLEND,              ///< Transparency
-    SETALPHABLEND,              ///< Alpha
-    SETSHEEN,                   ///< Shinyness
-    SETFLYTOHEIGHT,             ///< Fly to this height
-    SETWALKONWATER,             ///< Walk on water?
-    SETCANSEEINVISIBLE,         ///< Can it see invisible?
-    SETMISSILETREATMENT,        ///< How to treat missiles
-    SETCOSTFOREACHMISSILE,      ///< Cost for each missile treat
-    SETCHANNEL,                 ///< Can channel life as mana?
-    MAX_ENCHANT_SET,
+        SETDAMAGETYPE,          ///< Type of damage dealt
+        SETNUMBEROFJUMPS,       ///< Max number of jumps
+        SETLIFEBARCOLOR,        ///< Color of life bar
+        SETMANABARCOLOR,        ///< Color of mana bar
+        SETSLASHMODIFIER,       ///< Damage modifiers
+        SETCRUSHMODIFIER,
+        SETPOKEMODIFIER,
+        SETHOLYMODIFIER,
+        SETEVILMODIFIER,
+        SETFIREMODIFIER,
+        SETICEMODIFIER,
+        SETZAPMODIFIER,
+        SETFLASHINGAND,             ///< Flash rate
+        SETLIGHTBLEND,              ///< Transparency
+        SETALPHABLEND,              ///< Alpha
+        SETSHEEN,                   ///< Shinyness
+        SETFLYTOHEIGHT,             ///< Fly to this height
+        SETWALKONWATER,             ///< Walk on water?
+        SETCANSEEINVISIBLE,         ///< Can it see invisible?
+        SETMISSILETREATMENT,        ///< How to treat missiles
+        SETCOSTFOREACHMISSILE,      ///< Cost for each missile treat
+        SETCHANNEL,                 ///< Can channel life as mana?
+        MAX_ENCHANT_SET,
 
-    ENC_SET_FIRST = SETMORPH,
-    ENC_SET_LAST  = SETCHANNEL
+        ENC_SET_FIRST = SETMORPH,
+        ENC_SET_LAST  = SETCHANNEL
 
-};
-typedef enum e_enchant_set enum_enchant_set;
+    };
+    typedef enum e_enchant_set enum_enchant_set;
 
 //--------------------------------------------------------------------------------------------
 
 /// A list of all the variables that can be affected by enchant add
-enum e_enchant_add
-{
-    ADDJUMPPOWER = 0,
-    ADDBUMPDAMPEN,
-    ADDBOUNCINESS,
-    ADDDAMAGE,
-    ADDSIZE,
-    ADDACCEL,
-    ADDRED,                        ///< Red shift
-    ADDGRN,                        ///< Green shift
-    ADDBLU,                        ///< Blue shift
-    ADDDEFENSE,                    ///< Defence adjustments
-    ADDMANA,
-    ADDLIFE,
-    ADDSTRENGTH,
-    ADDWISDOM,
-    ADDINTELLIGENCE,
-    ADDDEXTERITY,
-    MAX_ENCHANT_ADD,
+    enum e_enchant_add
+    {
+        ADDJUMPPOWER = 0,
+        ADDBUMPDAMPEN,
+        ADDBOUNCINESS,
+        ADDDAMAGE,
+        ADDSIZE,
+        ADDACCEL,
+        ADDRED,                        ///< Red shift
+        ADDGRN,                        ///< Green shift
+        ADDBLU,                        ///< Blue shift
+        ADDDEFENSE,                    ///< Defence adjustments
+        ADDMANA,
+        ADDLIFE,
+        ADDSTRENGTH,
+        ADDWISDOM,
+        ADDINTELLIGENCE,
+        ADDDEXTERITY,
+        MAX_ENCHANT_ADD,
 
-    ENC_ADD_FIRST = ADDJUMPPOWER,
-    ENC_ADD_LAST  = ADDDEXTERITY
+        ENC_ADD_FIRST = ADDJUMPPOWER,
+        ENC_ADD_LAST  = ADDDEXTERITY
 
-};
-typedef enum e_enchant_add enum_enchant_add;
+    };
+    typedef enum e_enchant_add enum_enchant_add;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// An enchantment profile, or "eve"
 /// @details An internal representation of the "enchant.txt" file
-struct s_eve_data
-{
-    EGO_PROFILE_STUFF;
+    struct s_eve_data
+    {
+        EGO_PROFILE_STUFF;
 
-    bool_t  override;                    ///< Override other enchants?
-    bool_t  removeoverridden;            ///< Remove other enchants?
-    bool_t  retarget;                    ///< Pick a weapon?
-    bool_t  killtargetonend;                   ///< Kill the target on end?
-    bool_t  poofonend;                   ///< Spawn a poof on end?
-    bool_t  endifcantpay;                ///< End on out of mana
-    bool_t  stayifnoowner;               ///< Stay if owner has died?
-    Sint16  time;                        ///< Time in seconds
-    Sint32  endmessage;                  ///< Message for end -1 for none
-    Uint8   dontdamagetype;              ///< Don't work if ...
-    Uint8   onlydamagetype;              ///< Only work if ...
-    IDSZ    removedbyidsz;               ///< By particle or [NONE]
-    Uint16  contspawn_delay;              ///< Spawn timer
-    Uint8   contspawn_amount;            ///< Spawn amount
-    Uint16  contspawn_facingadd;         ///< Spawn in circle
-    int     contspawn_pip;               ///< Spawn type ( local )
-    Sint16  endsound_index;              ///< Sound on end (-1 for none)
-    bool_t  spawn_overlay;               ///< Spawn an overlay?
-    bool_t  stayiftargetdead;            ///< Stay if target has died?
+        bool_t  override;                    ///< Override other enchants?
+        bool_t  removeoverridden;            ///< Remove other enchants?
+        bool_t  retarget;                    ///< Pick a weapon?
+        bool_t  killtargetonend;                   ///< Kill the target on end?
+        bool_t  poofonend;                   ///< Spawn a poof on end?
+        bool_t  endifcantpay;                ///< End on out of mana
+        bool_t  stayifnoowner;               ///< Stay if owner has died?
+        Sint16  time;                        ///< Time in seconds
+        Sint32  endmessage;                  ///< Message for end -1 for none
+        Uint8   dontdamagetype;              ///< Don't work if ...
+        Uint8   onlydamagetype;              ///< Only work if ...
+        IDSZ    removedbyidsz;               ///< By particle or [NONE]
+        Uint16  contspawn_delay;              ///< Spawn timer
+        Uint8   contspawn_amount;            ///< Spawn amount
+        Uint16  contspawn_facingadd;         ///< Spawn in circle
+        int     contspawn_pip;               ///< Spawn type ( local )
+        Sint16  endsound_index;              ///< Sound on end (-1 for none)
+        bool_t  spawn_overlay;               ///< Spawn an overlay?
+        bool_t  stayiftargetdead;            ///< Stay if target has died?
 
-    // Boost values
-    Sint16  owner_mana;
-    Sint16  owner_life;
-    Sint16  target_mana;
-    Sint16  target_life;
+        // Boost values
+        Sint16  owner_mana;
+        Sint16  owner_life;
+        Sint16  target_mana;
+        Sint16  target_life;
 
-    // the enchant values
-    bool_t  setyesno[MAX_ENCHANT_SET];    ///< Set this value?
-    float   setvalue[MAX_ENCHANT_SET];    ///< Value to use
+        // the enchant values
+        bool_t  setyesno[MAX_ENCHANT_SET];    ///< Set this value?
+        float   setvalue[MAX_ENCHANT_SET];    ///< Value to use
 
-    bool_t  addyesno[MAX_ENCHANT_ADD];    ///< Add this value?
-    float   addvalue[MAX_ENCHANT_ADD];    ///< The values to add
+        bool_t  addyesno[MAX_ENCHANT_ADD];    ///< Add this value?
+        float   addvalue[MAX_ENCHANT_ADD];    ///< The values to add
 
-    // other values that are enchanted
-    bool_t  seekurse;                    ///< Allow target to see kurses
+        // other values that are enchanted
+        bool_t  seekurse;                    ///< Allow target to see kurses
 
-    // debugging parameters
-    int ego_enc_request_count;                ///< a way to tell how popular this enchant is
-    int ego_enc_create_count;                 ///< if this number is significantly less than the ego_enc_request_count, there is a problem.
-};
-typedef struct s_eve_data eve_data_t;
+        // debugging parameters
+        int ego_enc_request_count;                ///< a way to tell how popular this enchant is
+        int ego_enc_create_count;                 ///< if this number is significantly less than the ego_enc_request_count, there is a problem.
+    };
+    typedef struct s_eve_data eve_data_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-eve_data_t *  load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * peve );
-bool_t        save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplateName, eve_data_t * peve );
+    eve_data_t *  load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * peve );
+    bool_t        save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplateName, eve_data_t * peve );
 
-eve_data_t *  eve_data_init( eve_data_t * peve );
+    eve_data_t *  eve_data_init( eve_data_t * peve );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

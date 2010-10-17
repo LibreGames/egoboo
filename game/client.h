@@ -24,13 +24,13 @@
 /// this is totally not in use yet.
 
 /// A mockup of an actual client state
-struct ClientState_t
+struct ego_ClientState
 {
     int dummy;
 };
 
 // Globally accesible client state
-extern ClientState_t ClientState;
+extern ego_ClientState ClientState;
 
 int  cl_init();
 void cl_shutDown();

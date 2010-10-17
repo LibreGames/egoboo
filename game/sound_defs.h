@@ -27,13 +27,14 @@
 #include <SDL_mixer.h>
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct s_ego_config_data;
+    struct s_ego_config_data;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -45,50 +46,50 @@ struct s_ego_config_data;
 #define MENU_SONG              0           ///< default music theme played when in the menu
 
 #define MIX_HIGH_QUALITY   44100        ///< frequency 44100 for 44.1KHz, which is CD audio rate.
-                                        /// @details Most games use 22050, because 44100 requires too much
-                                        /// CPU power on older computers.
+    /// @details Most games use 22050, because 44100 requires too much
+    /// CPU power on older computers.
 
 #define VALID_SND( ISND )       ( ISND >= 0 && ISND < MAX_WAVE )
 
 /// Pre defined global particle sounds
-typedef enum e_global_sounds
-{
-    GSND_GETCOIN = 0,
-    GSND_DEFEND,
-    GSND_WEATHER1,
-    GSND_WEATHER2,
-    GSND_COINFALL,
-    GSND_LEVELUP,
-    GSND_PITFALL,
-    GSND_SHIELDBLOCK,
-    GSND_COUNT
-}
-GSND_GLOBAL;
+    typedef enum e_global_sounds
+    {
+        GSND_GETCOIN = 0,
+        GSND_DEFEND,
+        GSND_WEATHER1,
+        GSND_WEATHER2,
+        GSND_COINFALL,
+        GSND_LEVELUP,
+        GSND_PITFALL,
+        GSND_SHIELDBLOCK,
+        GSND_COUNT
+    }
+    GSND_GLOBAL;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// The global variables for the sound module
-struct s_snd_config_data
-{
-    bool_t       soundvalid;           ///< Allow playing of sound?
-    Uint8        soundvolume;          ///< Volume of sounds played
+    struct s_snd_config_data
+    {
+        bool_t       soundvalid;           ///< Allow playing of sound?
+        Uint8        soundvolume;          ///< Volume of sounds played
 
-    bool_t       musicvalid;           ///< Allow music and loops?
-    Uint8        musicvolume;          ///< The sound volume of music
+        bool_t       musicvalid;           ///< Allow music and loops?
+        Uint8        musicvolume;          ///< The sound volume of music
 
-    int          maxsoundchannel;      ///< Max number of sounds playing at the same time
-    int          buffersize;           ///< Buffer size set in setup.txt
-    bool_t       highquality;          ///< Allow CD quality frequency sounds?
-};
+        int          maxsoundchannel;      ///< Max number of sounds playing at the same time
+        int          buffersize;           ///< Buffer size set in setup.txt
+        bool_t       highquality;          ///< Allow CD quality frequency sounds?
+    };
 
-typedef struct s_snd_config_data snd_config_data_t;
+    typedef struct s_snd_config_data snd_config_data_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-snd_config_data_t * snd_get_config();
+    snd_config_data_t * snd_get_config();
 
-bool_t snd_config_synch( snd_config_data_t * psnd, struct s_ego_config_data * pcfg );
+    bool_t snd_config_synch( snd_config_data_t * psnd, struct s_ego_config_data * pcfg );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

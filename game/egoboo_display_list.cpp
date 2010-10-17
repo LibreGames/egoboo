@@ -48,10 +48,39 @@ struct display_item
     // the index of a display list
     GLboolean   own_list;
     GLuint      list_name;
+
+    display_item();
+    ~display_item();
+
+    static display_item * clear( display_item * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        ptr->texture_name = INVALID_GL_ID;
+        ptr->list_name    = INVALID_GL_ID;
+
+        return ptr;
+    }
 };
 
 static GLboolean _display_item_invalidate_texture( display_item_t * item_ptr );
 static GLboolean _display_item_invalidate_list( display_item_t * item_ptr );
+
+//--------------------------------------------------------------------------------------------
+display_item::display_item()
+{
+    display_item::clear( this );
+}
+
+//--------------------------------------------------------------------------------------------
+display_item::~display_item()
+{
+    display_item_free( this, GL_FALSE );
+
+    display_item::clear( this );
+}
 
 //--------------------------------------------------------------------------------------------
 GLboolean _display_item_invalidate_texture( display_item_t * item_ptr )
@@ -104,15 +133,7 @@ GLboolean _display_item_invalidate_list( display_item_t * item_ptr )
 //--------------------------------------------------------------------------------------------
 display_item_t *display_item_new()
 {
-    display_item_t * retval = EGOBOO_NEW( display_item_t );
-    if ( NULL == retval ) return NULL;
-
-    memset( retval, 0, sizeof( *retval ) );
-
-    retval->texture_name = INVALID_GL_ID;
-    retval->list_name    = INVALID_GL_ID;
-
-    return retval;
+    return EGOBOO_NEW( display_item_t );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -409,7 +430,37 @@ struct display_list
     GLsizei           size;
     GLsizei           used;
     display_item_t ** ary;
+
+    display_list( GLsizei count = 0 );
+    ~display_list();
+
+    static display_list * clear( display_list * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        return ptr;
+    }
+
 };
+
+//--------------------------------------------------------------------------------------------
+display_list::display_list( GLsizei count )
+{
+    display_list::clear( this );
+
+    if ( 0 != count )
+    {
+        display_list_ctor( this, count );
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+display_list::~display_list()
+{
+    display_list_dtor( this, GL_FALSE );
+}
 
 //--------------------------------------------------------------------------------------------
 display_list_t * display_list_ctor( display_list_t * list_ptr, GLsizei count )
@@ -453,13 +504,13 @@ display_list_t * display_list_dtor( display_list_t * list_ptr, GLboolean owner )
     if ( NULL == list_ptr ) return list_ptr;
 
     // clear out any data in tha list_ptr
-    list_ptr = display_list_clear( list_ptr );
+    list_ptr = display_list_dealloc( list_ptr );
 
     // remove the ary
     EGOBOO_DELETE_ARY( list_ptr->ary );
 
     // clear all the variables
-    memset( list_ptr, 0, sizeof( *list_ptr ) );
+    display_list::clear( list_ptr );
 
     // if the caller this list_ptr, delete the struct completely
     if ( owner )
@@ -471,7 +522,7 @@ display_list_t * display_list_dtor( display_list_t * list_ptr, GLboolean owner )
 }
 
 //--------------------------------------------------------------------------------------------
-display_list_t * display_list_clear( display_list_t * list_ptr )
+display_list_t * display_list_dealloc( display_list_t * list_ptr )
 {
     GLsizei cnt;
 
@@ -536,7 +587,6 @@ GLboolean display_list_pbound( display_list_t * list_ptr, frect_t * ptmp )
 
     if ( NULL == list_ptr || NULL == ptmp ) return GL_FALSE;
 
-    list_ptr->used = list_ptr->used;
     if ( 0 == list_ptr->used ) return GL_FALSE;
 
     // find the first non-trivial rect

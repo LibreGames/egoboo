@@ -425,7 +425,7 @@ int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int
     // Split the passed in text into separate lines
     len = strlen( text );
     buffer = EGOBOO_NEW_ARY( char, len + 1 );
-    strncpy( buffer, text, len );
+    strncpy( buffer, text, len + 1 );
 
     // take care in case there is no '\n' at the end of the string
     line = strtok( buffer, "\n" );
@@ -433,7 +433,7 @@ int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int
 
     // initialize the loop
     cnt = 0;
-    while ( NULL != line && cnt < texture_lst_size )
+    while ( NULL != line && '\0' != line[0] && cnt < texture_lst_size )
     {
         fnt_append_append_text_literal( tx_lst, ttf_ptr, x, y, line );
         y += spacing;
@@ -443,7 +443,7 @@ int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int
     }
 
     // finish up the text, but don't store it
-    while ( NULL != line )
+    while ( NULL != line && '\0' != line[0] )
     {
         loc_display_ptr = fnt_convertText_literal( loc_display_ptr, ttf_ptr, line );
         display_item_set_pos( loc_display_ptr, x, y );

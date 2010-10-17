@@ -1026,6 +1026,12 @@
 			Filter="">
 			<File
 				RelativePath=".\Fluid_Studios_Memory_Manager\mmgr.cpp">
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\Fluid_Studios_Memory_Manager\mmgr.h">

@@ -53,7 +53,7 @@ void set_prt_texture_params( const TX_REF by_reference itex );
 //--------------------------------------------------------------------------------------------
 
 /// All the data necessary to display a partile
-struct prt_instance_t
+struct ego_prt_instance
 {
     bool_t valid;
 

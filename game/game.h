@@ -277,14 +277,14 @@ extern struct ego_camera          * PCamera;
 extern struct ego_game_module_data * PMod;
 
 /// Pitty stuff
-struct pit_info_t
+struct ego_pit_info
 {
     bool_t     kill;          ///< Do they kill?
     bool_t     teleport;      ///< Do they teleport?
     fvec3_t    teleport_pos;
 };
 
-extern pit_info_t pits;
+extern ego_pit_info pits;
 
 extern FACING_T  glo_useangle;                                        ///< actually still used
 

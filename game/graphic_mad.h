@@ -53,7 +53,7 @@ enum e_matrix_cache_type
 typedef enum e_matrix_cache_type matrix_cache_type_t;
 
 /// the data necessary to cache the last values required to create the character matrix
-struct matrix_cache_t
+struct ego_matrix_cache
 {
     // is the cache data valid?
     bool_t valid;
@@ -85,12 +85,12 @@ struct matrix_cache_t
     fvec3_t  self_scale;
 };
 
-matrix_cache_t * matrix_cache_init( matrix_cache_t * mcache );
+ego_matrix_cache * matrix_cache_init( ego_matrix_cache * mcache );
 
 //--------------------------------------------------------------------------------------------
 
 /// some pre-computed parameters for reflection
-struct chr_reflection_cache_t
+struct ego_chr_reflection_cache
 {
     fmat_4x4_t matrix;
     bool_t     matrix_valid;
@@ -107,7 +107,7 @@ struct chr_reflection_cache_t
 //--------------------------------------------------------------------------------------------
 
 /// the data to determine whether re-calculation of vlst is necessary
-struct vlst_cache_t
+struct ego_vlst_cache
 {
     bool_t valid;             ///< do we know whether this cache is valid or not?
 
@@ -121,16 +121,16 @@ struct vlst_cache_t
     Uint32 vert_wld;          ///< the update_wld the last time the vertices were updated
 };
 
-vlst_cache_t * vlst_cache_init( vlst_cache_t * );
+ego_vlst_cache * vlst_cache_init( ego_vlst_cache * );
 
 //--------------------------------------------------------------------------------------------
 
 /// All the data that the renderer needs to draw the character
-struct chr_instance_t
+struct ego_chr_instance
 {
     // position info
     fmat_4x4_t     matrix;           ///< Character's matrix
-    matrix_cache_t matrix_cache;     ///< Did we make one yet?
+    ego_matrix_cache matrix_cache;     ///< Did we make one yet?
 
     FACING_T       facing_z;
 
@@ -181,8 +181,8 @@ struct chr_instance_t
 
     // graphical optimizations
     bool_t                 indolist;               ///< Has it been added yet?
-    vlst_cache_t           save;                   ///< Do we need to re-calculate all or part of the vertex list
-    chr_reflection_cache_t ref;                    ///< pre-computing some reflection parameters
+    ego_vlst_cache           save;                   ///< Do we need to re-calculate all or part of the vertex list
+    ego_chr_reflection_cache ref;                    ///< pre-computing some reflection parameters
 
     // OBSOLETE
     // lighting
@@ -199,16 +199,16 @@ bool_t render_one_mad_ref( const CHR_REF by_reference tnc );
 
 void      update_all_chr_instance();
 egoboo_rv chr_update_instance( struct ego_chr * pchr );
-egoboo_rv chr_instance_update_bbox( chr_instance_t * pinst );
-egoboo_rv chr_instance_needs_update( chr_instance_t * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match );
-egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vmax, bool_t force );
-egoboo_rv chr_instance_update_grip_verts( chr_instance_t * pinst, Uint16 vrt_lst[], size_t vrt_count );
+egoboo_rv chr_instance_update_bbox( ego_chr_instance * pinst );
+egoboo_rv chr_instance_needs_update( ego_chr_instance * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match );
+egoboo_rv chr_instance_update_vertices( ego_chr_instance * pinst, int vmin, int vmax, bool_t force );
+egoboo_rv chr_instance_update_grip_verts( ego_chr_instance * pinst, Uint16 vrt_lst[], size_t vrt_count );
 
-egoboo_rv chr_instance_set_action( chr_instance_t * pinst, int action, bool_t action_ready, bool_t override_action );
-egoboo_rv chr_instance_set_frame( chr_instance_t * pinst, int frame );
-egoboo_rv chr_instance_start_anim( chr_instance_t * pinst, int action, bool_t action_ready, bool_t override_action );
-egoboo_rv chr_instance_set_anim( chr_instance_t * pinst, int action, int frame, bool_t action_ready, bool_t override_action );
+egoboo_rv chr_instance_set_action( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action );
+egoboo_rv chr_instance_set_frame( ego_chr_instance * pinst, int frame );
+egoboo_rv chr_instance_start_anim( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action );
+egoboo_rv chr_instance_set_anim( ego_chr_instance * pinst, int action, int frame, bool_t action_ready, bool_t override_action );
 
-egoboo_rv chr_instance_increment_action( chr_instance_t * pinst );
-egoboo_rv chr_instance_increment_frame( chr_instance_t * pinst, ego_mad * pmad, const CHR_REF by_reference imount );
-egoboo_rv chr_instance_play_action( chr_instance_t * pinst, int action, bool_t actionready );
+egoboo_rv chr_instance_increment_action( ego_chr_instance * pinst );
+egoboo_rv chr_instance_increment_frame( ego_chr_instance * pinst, ego_mad * pmad, const CHR_REF by_reference imount );
+egoboo_rv chr_instance_play_action( ego_chr_instance * pinst, int action, bool_t actionready );

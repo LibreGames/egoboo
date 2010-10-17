@@ -87,7 +87,7 @@
 //--------------------------------------------------------------------------------------------
 
 /// Data needed to specify a line-of-sight test
-struct line_of_sight_info_t
+struct ego_line_of_sight_info
 {
     float x0, y0, z0;
     float x1, y1, z1;
@@ -99,9 +99,9 @@ struct line_of_sight_info_t
     int     collide_y;
 };
 
-static bool_t collide_ray_with_mesh( line_of_sight_info_t * plos );
-static bool_t collide_ray_with_characters( line_of_sight_info_t * plos );
-static bool_t do_line_of_sight( line_of_sight_info_t * plos );
+static bool_t collide_ray_with_mesh( ego_line_of_sight_info * plos );
+static bool_t collide_ray_with_characters( ego_line_of_sight_info * plos );
+static bool_t do_line_of_sight( ego_line_of_sight_info * plos );
 
 //--------------------------------------------------------------------------------------------
 void do_weather_spawn_particles();
@@ -145,7 +145,7 @@ ego_camera          * PCamera = _camera + 0;
 ego_game_module_data     * PMod    = &gmod;
 ego_game_process    * GProc   = &_gproc;
 
-pit_info_t pits = { bfalse, bfalse, ZERO_VECT3 };
+ego_pit_info pits = { bfalse, bfalse, ZERO_VECT3 };
 
 FACING_T glo_useangle = 0;                                        // actually still used
 
@@ -377,7 +377,7 @@ void export_all_players( bool_t require_local )
     // Check each player
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
         if ( !ppla->valid ) continue;
 
         is_local = ( 0 != ppla->device.bits );
@@ -514,7 +514,7 @@ void statlist_sort()
 
     for ( ipla = 0; ipla < PlaStack.count; ipla++ )
     {
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
         if ( !ppla->valid ) continue;
 
         if ( INPUT_BITS_NONE != ppla->device.bits )
@@ -711,7 +711,7 @@ int update_game()
         {
             CHR_REF ichr;
             ego_chr * pchr;
-            player_t * ppla;
+            ego_player * ppla;
 
             // ignore ivalid players
             ppla = PlaStack.lst + ipla;
@@ -790,7 +790,7 @@ int update_game()
             CHR_REF ichr;
             ego_chr * pchr;
 
-            player_t * ppla = PlaStack.lst + ipla;
+            ego_player * ppla = PlaStack.lst + ipla;
             if ( !ppla->valid ) continue;
 
             if ( !INGAME_CHR( ppla->index ) ) continue;
@@ -1531,7 +1531,7 @@ bool_t check_target( ego_chr * psrc, const CHR_REF by_reference ichr_test, IDSZ 
     if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && VALID_PLA( ptst->is_which_player ) )
     {
         int quest_level = QUEST_NONE;
-        player_t * ppla = PlaStack.lst + ptst->is_which_player;
+        ego_player * ppla = PlaStack.lst + ptst->is_which_player;
 
         quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), idsz );
 
@@ -1591,7 +1591,7 @@ CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD ta
     /// @details ZF@> This is the new improved AI targeting system. Also includes distance in the Z direction.
     ///     If max_dist is 0 then it searches without a max limit.
 
-    line_of_sight_info_t los_info;
+    ego_line_of_sight_info los_info;
 
     Uint16 cnt;
     CHR_REF best_target = ( CHR_REF )MAX_CHR;
@@ -1609,7 +1609,7 @@ CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD ta
         PLA_REF ipla;
         for ( ipla = 0; ipla < MAX_PLAYER; ipla ++ )
         {
-            player_t * ppla = PlaStack.lst + ipla;
+            ego_player * ppla = PlaStack.lst + ipla;
 
             if ( !ppla->valid ) continue;
 
@@ -1860,7 +1860,7 @@ void do_weather_spawn_particles()
     {
         int        cnt;
         PLA_REF    weather_ipla = MAX_PLAYER;
-        player_t * weather_ppla = NULL;
+        ego_player * weather_ppla = NULL;
         ego_chr    * weather_pchr = NULL;
         PRT_REF    weather_iprt = TOTAL_MAX_PRT;
 
@@ -1875,7 +1875,7 @@ void do_weather_spawn_particles()
         weather_pchr = NULL;
         for ( cnt = 0; cnt < MAX_PLAYER; cnt++ )
         {
-            player_t * tmp_ppla = NULL;
+            ego_player * tmp_ppla = NULL;
             ego_chr    * tmp_pchr = NULL;
 
             weather_ipla = ( PLA_REF )(( REF_TO_INT( weather_ipla ) + 1 ) % MAX_PLAYER );
@@ -1956,8 +1956,8 @@ void set_one_player_latch( const PLA_REF by_reference player )
     latch_input_t sum;
 
     ego_chr          * pchr;
-    player_t       * ppla;
-    input_device_t * pdevice;
+    ego_player       * ppla;
+    ego_input_device * pdevice;
 
     if ( INVALID_PLA( player ) ) return;
     ppla = PlaStack.lst + player;
@@ -2275,7 +2275,7 @@ void check_stats()
         // Apply the cheat if valid
         if ( VALID_PLA( docheat ) )
         {
-            player_t * ppla = PlaStack.lst + docheat;
+            ego_player * ppla = PlaStack.lst + docheat;
             if ( INGAME_CHR( ppla->index ) )
             {
                 Uint32  xpgain;
@@ -2303,7 +2303,7 @@ void check_stats()
         // Apply the cheat if valid
         if ( VALID_PLA( docheat ) )
         {
-            player_t * ppla = PlaStack.lst + docheat;
+            ego_player * ppla = PlaStack.lst + docheat;
 
             if ( INGAME_CHR( ppla->index ) )
             {
@@ -3321,14 +3321,14 @@ void game_quit_module()
 
     // make sure that we have a cursor for the ui
     cursor_reset();
-	load_cursor();
+    load_cursor();
 
     // re-initialize all game/module data
     game_reset_module_data();
 
     // finish whatever in-game song is playing
     sound_finish_sound();
-	sound_play_song( MENU_SONG, 0, -1 );
+    sound_play_song( MENU_SONG, 0, -1 );
 
     // remove the module-dependent mount points from the vfs
     game_clear_vfs_paths();
@@ -3504,7 +3504,7 @@ egoboo_rv game_update_imports()
     for ( player = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         size_t     player_idx = MAX_PLAYER;
-        player_t * ppla       = PlaStack.lst + ipla;
+        ego_player * ppla       = PlaStack.lst + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -3634,7 +3634,7 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
 {
     /// @details ZZ@> This function adds a player, returning bfalse if it fails, btrue otherwise
 
-    player_t * ppla = NULL;
+    ego_player * ppla = NULL;
     ego_chr    * pchr = NULL;
 
     if ( !VALID_PLA_RANGE( player ) ) return bfalse;
@@ -4238,7 +4238,7 @@ void do_game_hud()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t collide_ray_with_mesh( line_of_sight_info_t * plos )
+bool_t collide_ray_with_mesh( ego_line_of_sight_info * plos )
 {
     Uint32 fan_last;
 
@@ -4366,7 +4366,7 @@ bool_t collide_ray_with_mesh( line_of_sight_info_t * plos )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t collide_ray_with_characters( line_of_sight_info_t * plos )
+bool_t collide_ray_with_characters( ego_line_of_sight_info * plos )
 {
 
     if ( NULL == plos ) return bfalse;
@@ -4381,7 +4381,7 @@ bool_t collide_ray_with_characters( line_of_sight_info_t * plos )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_line_of_sight( line_of_sight_info_t * plos )
+bool_t do_line_of_sight( ego_line_of_sight_info * plos )
 {
     bool_t mesh_hit = bfalse, chr_hit = bfalse;
     mesh_hit = collide_ray_with_mesh( plos );

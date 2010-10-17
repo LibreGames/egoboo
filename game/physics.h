@@ -49,7 +49,7 @@ enum s_leaf_data_type
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct orientation_t
+struct ego_orientation
 {
     FACING_T       facing_z;                        ///< Character's z-rotation 0 to 0xFFFF
     FACING_T       map_facing_y;                    ///< Character's y-rotation 0 to 0xFFFF
@@ -61,7 +61,7 @@ struct orientation_t
 
 /// Data for doing the physics in bump_all_objects()
 /// @details should prevent you from being bumped into a wall
-struct phys_data_t
+struct ego_phys_data
 {
     fvec3_t        apos_plat;                     ///< The accumulator for position shifts from platform interactions
     fvec3_t        apos_coll;                     ///< The accumulator for position shifts from "pressure" effects
@@ -73,7 +73,7 @@ struct phys_data_t
 };
 
 //--------------------------------------------------------------------------------------------
-struct breadcrumb_t
+struct ego_breadcrumb
 {
     bool_t         valid;                    /// is this position valid
     fvec3_t        pos;                      ///< A stored safe position
@@ -84,22 +84,22 @@ struct breadcrumb_t
     Uint32         id;                       ///< an id for differentiating the timing of several events at the same "time"
 };
 
-breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, ego_chr * pchr );
-breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, ego_prt * pprt );
+ego_breadcrumb * breadcrumb_init_chr( ego_breadcrumb * bc, ego_chr * pchr );
+ego_breadcrumb * breadcrumb_init_prt( ego_breadcrumb * bc, ego_prt * pprt );
 
 //--------------------------------------------------------------------------------------------
 #define MAX_BREADCRUMB 32
 
-struct breadcrumb_list_t
+struct ego_breadcrumb_list
 {
     bool_t       on;
     int          count;
-    breadcrumb_t lst[MAX_BREADCRUMB];
+    ego_breadcrumb lst[MAX_BREADCRUMB];
 };
 
-void           breadcrumb_list_validate( breadcrumb_list_t * lst );
-bool_t         breadcrumb_list_add( breadcrumb_list_t * lst, breadcrumb_t * pnew );
-breadcrumb_t * breadcrumb_list_last_valid( breadcrumb_list_t * lst );
+void           breadcrumb_list_validate( ego_breadcrumb_list * lst );
+bool_t         breadcrumb_list_add( ego_breadcrumb_list * lst, ego_breadcrumb * pnew );
+ego_breadcrumb * breadcrumb_list_last_valid( ego_breadcrumb_list * lst );
 
 //--------------------------------------------------------------------------------------------
 // the global physics/friction values
@@ -128,5 +128,5 @@ bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   
 bool_t phys_estimate_chr_chr_normal( oct_vec_t opos_a, oct_vec_t opos_b, oct_vec_t odepth, float exponent, fvec3_base_t nrm );
 bool_t phys_intersect_oct_bb( ego_oct_bb   src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb   src2, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax );
 
-bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, phys_data_t * pdata, float dt );
-bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc );
+bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, ego_phys_data * pdata, float dt );
+bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc );

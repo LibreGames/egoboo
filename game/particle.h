@@ -49,7 +49,7 @@ DECLARE_STACK_EXTERN( ego_pip, PipStack, MAX_PIP );
 //--------------------------------------------------------------------------------------------
 
 /// Everything that is necessary to compute the character's interaction with the environment
-struct prt_environment_t
+struct ego_prt_environment
 {
     // floor stuff
     float  grid_level;           ///< Height the current grid
@@ -75,7 +75,7 @@ struct prt_environment_t
 };
 
 //--------------------------------------------------------------------------------------------
-struct prt_spawn_data_t
+struct ego_prt_spawn_data
 {
     fvec3_t  pos;
     FACING_T facing;
@@ -173,9 +173,9 @@ struct ego_prt_data
     int               end_spawn_pip;           ///< The actual pip that will be spawned at the end
 
     dynalight_info_t  dynalight;              ///< Dynamic lighting...
-    prt_instance_t    inst;                   ///< Everything needed for rendering
-    prt_environment_t enviro;                 ///< the particle's environment
-    phys_data_t       phys;                   ///< the particle's physics data
+    ego_prt_instance    inst;                   ///< Everything needed for rendering
+    ego_prt_environment enviro;                 ///< the particle's environment
+    ego_phys_data       phys;                   ///< the particle's physics data
 
     bool_t         safe_valid;                ///< is the last "safe" position valid?
     fvec3_t        safe_pos;                  ///< the last "safe" position
@@ -199,7 +199,7 @@ struct ego_prt : public ego_prt_data
     ego_object obj_base;              ///< the "inheritance" from ego_object
     bool_t     obj_base_display;      ///< a variable that would be added to a custom ego_object
 
-    prt_spawn_data_t  spawn_data;
+    ego_prt_spawn_data  spawn_data;
 
     ego_BSP_leaf          bsp_leaf;
 

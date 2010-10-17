@@ -162,7 +162,7 @@ void PassageStack_check_music()
     // Check every music passage
     for ( passage = 0; passage < PassageStack.count; passage++ )
     {
-        if( ego_passage::check_music( PassageStack.lst + passage ) )
+        if ( ego_passage::check_music( PassageStack.lst + passage ) )
         {
             return;
         }
@@ -307,9 +307,9 @@ CHR_REF ShopStack_find_owner( int ix, int iy )
 //--------------------------------------------------------------------------------------------
 ego_passage * ego_passage::init( ego_passage * ppass, passage_data_t * pdata )
 {
-    if( NULL == ppass ) return NULL;
+    if ( NULL == ppass ) return NULL;
 
-    if( NULL != pdata )
+    if ( NULL != pdata )
     {
         ppass->area.xmin  = CLIP( pdata->area.xmin, 0, PMesh->info.tiles_x - 1 );
         ppass->area.ymin  = CLIP( pdata->area.ymin, 0, PMesh->info.tiles_y - 1 );
@@ -367,7 +367,7 @@ void ego_passage::flash( ego_passage * ppass, Uint8 color )
     int x, y, cnt;
     Uint32 fan;
 
-    if( NULL == ppass ) return;
+    if ( NULL == ppass ) return;
 
     for ( y = ppass->area.ymin; y <= ppass->area.ymax; y++ )
     {
@@ -392,7 +392,7 @@ bool_t ego_passage::point_is_in( ego_passage * ppass, float xpos, float ypos )
 
     ego_frect_t tmp_rect;
 
-     // Passage area
+    // Passage area
     tmp_rect.xmin = ppass->area.xmin * GRID_SIZE;
     tmp_rect.ymin = ppass->area.ymin * GRID_SIZE;
     tmp_rect.xmax = ( ppass->area.xmax + 1 ) * GRID_SIZE;
@@ -432,7 +432,7 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF by_refe
     CHR_REF character, foundother;
     ego_chr *psrc;
 
-    if( NULL == ppass ) return ( CHR_REF )MAX_CHR;
+    if ( NULL == ppass ) return ( CHR_REF )MAX_CHR;
 
     // Skip if the one who is looking doesn't exist
     if ( !INGAME_CHR( isrc ) ) return ( CHR_REF )MAX_CHR;
@@ -508,7 +508,7 @@ bool_t ego_passage::check_music( ego_passage * ppass )
 
     PLA_REF ipla;
 
-    if( NULL == ppass ) return bfalse;
+    if ( NULL == ppass ) return bfalse;
 
     if ( ppass->music == NO_MUSIC || ppass->music == get_current_song_playing() )
     {
@@ -520,7 +520,7 @@ bool_t ego_passage::check_music( ego_passage * ppass )
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         ego_chr * pchr;
-        player_t * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack.lst + ipla;
 
         character = ppla->index;
 
@@ -550,7 +550,7 @@ bool_t ego_passage::close( ego_passage * ppass )
     Uint32 fan, cnt;
     CHR_REF character;
 
-        if( NULL == ppass ) return bfalse;
+    if ( NULL == ppass ) return bfalse;
 
     // don't compute all of this for nothing
     if ( 0 == ppass->mask ) return btrue;

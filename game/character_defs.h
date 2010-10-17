@@ -26,7 +26,8 @@
 #include "file_formats/cap_file.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -56,17 +57,17 @@ extern "C" {
 #define RAISE               12                  ///< Helps correct z level
 
 /// The possible methods for characters to determine what direction they are facing
-typedef enum e_turn_modes
-{
-    TURNMODE_VELOCITY = 0,                       ///< Character gets rotation from velocity (normal)
-    TURNMODE_ACCELERATION,                              ///< For watch towers, look towards waypoint
-    TURNMODE_SPIN,                               ///< For spinning objects
-    TURNMODE_WATCHTARGET,                        ///< For combat intensive AI
-    TURNMODE_FLYING_JUMP,
-    TURNMODE_FLYING_PLATFORM,
-    TURNMODE_COUNT
-}
-TURN_MODE;
+    typedef enum e_turn_modes
+    {
+        TURNMODE_VELOCITY = 0,                       ///< Character gets rotation from velocity (normal)
+        TURNMODE_ACCELERATION,                              ///< For watch towers, look towards waypoint
+        TURNMODE_SPIN,                               ///< For spinning objects
+        TURNMODE_WATCHTARGET,                        ///< For combat intensive AI
+        TURNMODE_FLYING_JUMP,
+        TURNMODE_FLYING_PLATFORM,
+        TURNMODE_COUNT
+    }
+    TURN_MODE;
 
 #define MANARETURNSHIFT     44                    ///< ChrList.lst[ichr].manareturn/MANARETURNSHIFT = mana regen per second
 
@@ -76,21 +77,21 @@ TURN_MODE;
 #define SPINRATE            200                      ///< How fast spinners spin
 
 // The vertex offsets for the various grips
-enum e_grip_offset
-{
-    GRIP_ORIGIN    =               0,                ///< Spawn attachments at the center
-    GRIP_LAST      =               1,                ///< Spawn particles at the last vertex
-    GRIP_LEFT      = ( 1 * GRIP_VERTS ),             ///< Left weapon grip starts  4 from last
-    GRIP_RIGHT     = ( 2 * GRIP_VERTS ),             ///< Right weapon grip starts 8 from last
+    enum e_grip_offset
+    {
+        GRIP_ORIGIN    =               0,                ///< Spawn attachments at the center
+        GRIP_LAST      =               1,                ///< Spawn particles at the last vertex
+        GRIP_LEFT      = ( 1 * GRIP_VERTS ),             ///< Left weapon grip starts  4 from last
+        GRIP_RIGHT     = ( 2 * GRIP_VERTS ),             ///< Right weapon grip starts 8 from last
 
-    // aliases
-    GRIP_INVENTORY =               GRIP_ORIGIN,
-    GRIP_ONLY      =               GRIP_LEFT
-};
-typedef enum e_grip_offset grip_offset_t;
+        // aliases
+        GRIP_INVENTORY =               GRIP_ORIGIN,
+        GRIP_ONLY      =               GRIP_LEFT
+    };
+    typedef enum e_grip_offset grip_offset_t;
 
-grip_offset_t slot_to_grip_offset( slot_t slot );
-slot_t        grip_offset_to_slot( grip_offset_t grip );
+    grip_offset_t slot_to_grip_offset( slot_t slot );
+    slot_t        grip_offset_to_slot( grip_offset_t grip );
 
 #define PITDEPTH            -60                     ///< Depth to kill character
 #define NO_SKIN_OVERRIDE    -1                      ///< For import
@@ -149,44 +150,44 @@ slot_t        grip_offset_to_slot( grip_offset_t grip );
 #define SIZETIME            100                           ///< Time it takes to resize a character
 
 /// Bits used to control options for the ego_chr::get_name() function
-enum e_chr_name_bits
-{
-    CHRNAME_NONE     = 0,               ///< no options
-    CHRNAME_ARTICLE  = ( 1 << 0 ),      ///< use an article (a, an, the)
-    CHRNAME_DEFINITE = ( 1 << 1 ),      ///< if set, choose "the" else "a" or "an"
-    CHRNAME_CAPITAL  = ( 1 << 2 )       ///< capitalize the name
-};
+    enum e_chr_name_bits
+    {
+        CHRNAME_NONE     = 0,               ///< no options
+        CHRNAME_ARTICLE  = ( 1 << 0 ),      ///< use an article (a, an, the)
+        CHRNAME_DEFINITE = ( 1 << 1 ),      ///< if set, choose "the" else "a" or "an"
+        CHRNAME_CAPITAL  = ( 1 << 2 )       ///< capitalize the name
+    };
 
-enum e_chr_movement_idx
-{
-    CHR_MOVEMENT_STOP  = 0,
-    CHR_MOVEMENT_SNEAK,
-    CHR_MOVEMENT_WALK,
-    CHR_MOVEMENT_RUN,
-    CHR_MOVEMENT_COUNT
-};
+    enum e_chr_movement_idx
+    {
+        CHR_MOVEMENT_STOP  = 0,
+        CHR_MOVEMENT_SNEAK,
+        CHR_MOVEMENT_WALK,
+        CHR_MOVEMENT_RUN,
+        CHR_MOVEMENT_COUNT
+    };
 
-enum e_chr_movement_bits
-{
-    CHR_MOVEMENT_NONE  = 0,
-    CHR_MOVEMENT_BITS_STOP  = 1 << CHR_MOVEMENT_STOP,
-    CHR_MOVEMENT_BITS_SNEAK = 1 << CHR_MOVEMENT_SNEAK,
-    CHR_MOVEMENT_BITS_WALK  = 1 << CHR_MOVEMENT_WALK,
-    CHR_MOVEMENT_BITS_RUN   = 1 << CHR_MOVEMENT_RUN
-};
+    enum e_chr_movement_bits
+    {
+        CHR_MOVEMENT_NONE  = 0,
+        CHR_MOVEMENT_BITS_STOP  = 1 << CHR_MOVEMENT_STOP,
+        CHR_MOVEMENT_BITS_SNEAK = 1 << CHR_MOVEMENT_SNEAK,
+        CHR_MOVEMENT_BITS_WALK  = 1 << CHR_MOVEMENT_WALK,
+        CHR_MOVEMENT_BITS_RUN   = 1 << CHR_MOVEMENT_RUN
+    };
 
 //------------------------------------
 // Team variables
 //------------------------------------
-enum e_team_types
-{
-    TEAM_EVIL            = ( 'E' - 'A' ),        ///< Evil team
-    TEAM_GOOD            = ( 'G' - 'A' ),        ///< Good team
-    TEAM_NULL            = ( 'N' - 'A' ),        ///< Null or Neutral team
-    TEAM_ZIPPY           = ( 'Z' - 'A' ),        ///< Zippy Team?
-    TEAM_DAMAGE,                                 ///< For damage tiles
-    TEAM_MAX
-};
+    enum e_team_types
+    {
+        TEAM_EVIL            = ( 'E' - 'A' ),        ///< Evil team
+        TEAM_GOOD            = ( 'G' - 'A' ),        ///< Good team
+        TEAM_NULL            = ( 'N' - 'A' ),        ///< Null or Neutral team
+        TEAM_ZIPPY           = ( 'Z' - 'A' ),        ///< Zippy Team?
+        TEAM_DAMAGE,                                 ///< For damage tiles
+        TEAM_MAX
+    };
 
 #define NOLEADER            0xFFFF                   ///< If the team has no leader...
 

@@ -92,7 +92,7 @@ struct ego_camera
     float         swingamp;
 
     fvec3_t       pos;                       ///< Camera position (z = 500-1000)
-    orientation_t ori;
+    ego_orientation ori;
 
     float         zoom;                    ///< Distance from the trackee
     fvec3_t       track_pos;                  ///< Trackee position

@@ -23,13 +23,14 @@
 #include "extensions/ogl_include.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_ego_config_data;
-struct s_oglx_texture_parameters;
+    struct s_ego_config_data;
+    struct s_oglx_texture_parameters;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -62,61 +63,61 @@ struct s_oglx_texture_parameters;
 #define SHADOWRAISE                       5
 
 /// The supported colors of bars and blips
-enum e_color
-{
-    COLOR_WHITE = 0,
-    COLOR_RED,
-    COLOR_YELLOW,
-    COLOR_GREEN,
-    COLOR_BLUE,
-    COLOR_PURPLE,
-    COLOR_MAX,
-    NOSPARKLE = COLOR_MAX
-};
+    enum e_color
+    {
+        COLOR_WHITE = 0,
+        COLOR_RED,
+        COLOR_YELLOW,
+        COLOR_GREEN,
+        COLOR_BLUE,
+        COLOR_PURPLE,
+        COLOR_MAX,
+        NOSPARKLE = COLOR_MAX
+    };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // encapsulation of all graphics options
 
-struct s_gfx_config_data
-{
-    GLuint shading;
-    bool_t refon;
-    Uint8  reffadeor;
-    bool_t antialiasing;
-    bool_t dither;
-    bool_t perspective;
-    bool_t phongon;
-    bool_t shaon;
-    bool_t shasprite;
+    struct s_gfx_config_data
+    {
+        GLuint shading;
+        bool_t refon;
+        Uint8  reffadeor;
+        bool_t antialiasing;
+        bool_t dither;
+        bool_t perspective;
+        bool_t phongon;
+        bool_t shaon;
+        bool_t shasprite;
 
-    bool_t clearson;          ///< Do we clear every time?
-    bool_t draw_background;   ///< Do we draw the background image?
-    bool_t draw_overlay;      ///< Draw overlay?
-    bool_t draw_water_0;      ///< Do we draw water layer 1 (TX_WATER_LOW)
-    bool_t draw_water_1;      ///< Do we draw water layer 2 (TX_WATER_TOP)
+        bool_t clearson;          ///< Do we clear every time?
+        bool_t draw_background;   ///< Do we draw the background image?
+        bool_t draw_overlay;      ///< Draw overlay?
+        bool_t draw_water_0;      ///< Do we draw water layer 1 (TX_WATER_LOW)
+        bool_t draw_water_1;      ///< Do we draw water layer 2 (TX_WATER_TOP)
 
-    int    dyna_list_max;     ///< Max number of dynamic lights to draw
-    bool_t exploremode;       ///< fog of war mode for mesh display
-    bool_t usefaredge;        ///< Far edge maps? (Outdoor)
+        int    dyna_list_max;     ///< Max number of dynamic lights to draw
+        bool_t exploremode;       ///< fog of war mode for mesh display
+        bool_t usefaredge;        ///< Far edge maps? (Outdoor)
 
-    // virtual window parameters
-    float vw, vh;
-    float vdw, vdh;
-};
-typedef struct s_gfx_config_data gfx_config_data_t;
+        // virtual window parameters
+        float vw, vh;
+        float vdw, vdh;
+    };
+    typedef struct s_gfx_config_data gfx_config_data_t;
 
-bool_t gfx_config_data_init(gfx_config_data_t *);
+    bool_t gfx_config_data_init( gfx_config_data_t * );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// handle access to the gfx singleton for c modules
-gfx_config_data_t * gfx_get_config();
+    gfx_config_data_t * gfx_get_config();
 
-bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pcfg );
-bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_ego_config_data * pcfg );
-bool_t gfx_set_virtual_screen( gfx_config_data_t * pgfx );
+    bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pcfg );
+    bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_ego_config_data * pcfg );
+    bool_t gfx_set_virtual_screen( gfx_config_data_t * pgfx );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
