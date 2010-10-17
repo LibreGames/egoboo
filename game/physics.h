@@ -26,7 +26,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct ego_chr;
-struct ego_prt_data;
+struct ego_prt;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -84,8 +84,8 @@ struct breadcrumb_t
     Uint32         id;                       ///< an id for differentiating the timing of several events at the same "time"
 };
 
-breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, struct ego_chr * pchr );
-breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, struct ego_prt_data * pprt );
+breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, ego_chr * pchr );
+breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, ego_prt * pprt );
 
 //--------------------------------------------------------------------------------------------
 #define MAX_BREADCRUMB 32
@@ -122,8 +122,8 @@ extern const float ice_friction;            ///< estimte if the friction on ice
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t phys_expand_oct_bb( ego_oct_bb   src, fvec3_t vel, float tmin, float tmax, ego_oct_bb   * pdst );
-bool_t phys_expand_chr_bb( struct ego_chr * pchr, float tmin, float tmax, ego_oct_bb   * pdst );
-bool_t phys_expand_prt_bb( struct ego_prt_data * pprt, float tmin, float tmax, ego_oct_bb   * pdst );
+bool_t phys_expand_chr_bb( ego_chr * pchr, float tmin, float tmax, ego_oct_bb   * pdst );
+bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   * pdst );
 
 bool_t phys_estimate_chr_chr_normal( oct_vec_t opos_a, oct_vec_t opos_b, oct_vec_t odepth, float exponent, fvec3_base_t nrm );
 bool_t phys_intersect_oct_bb( ego_oct_bb   src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb   src2, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax );

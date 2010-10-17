@@ -31,7 +31,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_mod_file;
-struct s_gfx_config_data;
+struct ego_gfx_config;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ int                  do_menu_proc_run( ego_menu_process * mproc, double frameDur
 ego_menu_process     * menu_process_init( ego_menu_process * mproc );
 
 // "public" reset of the autoformatting
-void autoformat_init( struct s_gfx_config_data * pgfx );
+void autoformat_init( ego_gfx_config * pgfx );
 
 #define _egoboo_menu_h
 

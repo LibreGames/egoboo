@@ -30,6 +30,8 @@
 #include "ogl_debug.h"
 #include "SDL_extensions.h"
 
+#include "egoboo_display_list.h"
+
 #include <string.h>
 #include <SDL_opengl.h>
 

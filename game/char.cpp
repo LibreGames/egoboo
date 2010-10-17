@@ -98,14 +98,6 @@ static BBOARD_REF chr_add_billboard( const CHR_REF by_reference ichr, Uint32 lif
 
 static ego_chr * resize_one_character( ego_chr * pchr );
 
-static bool_t  chr_free( ego_chr * pchr );
-
-static ego_chr * chr_do_object_constructing( ego_chr * pchr );
-static ego_chr * chr_do_object_initializing( ego_chr * pchr );
-static ego_chr * chr_do_object_deinitializing( ego_chr * pchr );
-static ego_chr * chr_do_object_processing( ego_chr * pchr );
-static ego_chr * chr_do_object_destructing( ego_chr * pchr );
-
 static int get_grip_verts( Uint16 grip_verts[], const CHR_REF by_reference imount, int vrt_offset );
 
 bool_t apply_one_character_matrix( ego_chr * pchr, matrix_cache_t * mcache );
@@ -160,32 +152,151 @@ void character_system_end()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t chr_free( ego_chr * pchr )
+bool_t ego_chr::dealloc( ego_chr * pchr )
 {
-    /// Free all allocated memory
-
-    if ( !VALID_PCHR( pchr ) )
-    {
-        EGOBOO_ASSERT( NULL == pchr->inst.vrt_lst );
-        return bfalse;
-    }
+    if( !ego_chr_data::dealloc( pchr ) ) return bfalse;
 
     // do some list clean-up
     remove_all_character_enchants( GET_REF_PCHR( pchr ) );
 
-    // deallocate
-    BillboardList_free_one( REF_TO_INT( pchr->ibillboard ) );
-
-    LoopedList_remove( pchr->loopedsound_channel );
-
-    chr_instance_dtor( &( pchr->inst ) );
     ego_BSP_leaf::dtor( &( pchr->bsp_leaf ) );
-    ego_ai_state::dtor( &( pchr->ai ) );
 
-    EGOBOO_ASSERT( NULL == pchr->inst.vrt_lst );
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_chr_data::dealloc( ego_chr_data * pdata )
+{
+    /// Free all allocated memory
+
+    if ( NULL == pdata) return bfalse;
+
+    // deallocate
+    BillboardList_free_one( REF_TO_INT( pdata->ibillboard ) );
+
+    LoopedList_remove( pdata->loopedsound_channel );
+
+    chr_instance_dtor( &( pdata->inst ) );
+    ego_ai_state::dtor( &( pdata->ai ) );
+
+    EGOBOO_ASSERT( NULL == pdata->inst.vrt_lst );
 
     return btrue;
 }
+
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::ctor( ego_chr_data * pdata )
+{
+    /// @details BB@> initialize the character data to safe values
+    ///     since we use memset(..., 0, ...), everything == 0 == false == 0.0f
+    ///     statements are redundant
+
+    int cnt;
+
+    if ( NULL == pdata ) return pdata;
+
+    // deallocate any existing data
+    if( NULL == ego_chr_data::dealloc( pdata ) ) return NULL;
+
+    // clear out all data
+    memset( pdata, 0, sizeof( *pdata ) );
+
+    // IMPORTANT!!!
+    pdata->ibillboard = INVALID_BILLBOARD;
+    pdata->sparkle = NOSPARKLE;
+    pdata->loopedsound_channel = INVALID_SOUND_CHANNEL;
+
+    // Set up model stuff
+    pdata->inwhich_slot = SLOT_LEFT;
+    pdata->hitready = btrue;
+    pdata->boretime = BORETIME;
+    pdata->carefultime = CAREFULTIME;
+
+    // Enchant stuff
+    pdata->firstenchant = ( ENC_REF ) MAX_ENC;
+    pdata->undoenchant = ( ENC_REF ) MAX_ENC;
+    pdata->missiletreatment = MISSILE_NORMAL;
+
+    // Character stuff
+    pdata->turnmode = TURNMODE_VELOCITY;
+    pdata->alive = btrue;
+
+    // Jumping
+    pdata->jump_time = JUMP_DELAY;
+
+    // Grip info
+    pdata->attachedto = ( CHR_REF )MAX_CHR;
+    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
+    {
+        pdata->holdingwhich[cnt] = ( CHR_REF )MAX_CHR;
+    }
+
+    // pack/inventory info
+    pdata->pack.next = ( CHR_REF )MAX_CHR;
+    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
+    {
+        pdata->inventory[cnt] = ( CHR_REF )MAX_CHR;
+    }
+
+    // Set up position
+    pdata->ori.map_facing_y = MAP_TURN_OFFSET;  // These two mean on level surface
+    pdata->ori.map_facing_x = MAP_TURN_OFFSET;
+
+    // I think we have to set the dismount timer, otherwise objects that
+    // are spawned by chests will behave strangely...
+    // nope this did not fix it
+    // ZF@> If this is != 0 then scorpion claws and riders are dropped at spawn (non-item objects)
+    pdata->dismount_timer  = 0;
+    pdata->dismount_object = ( CHR_REF )MAX_CHR;
+
+    // set all of the integer references to invalid values
+    pdata->firstenchant = ( ENC_REF ) MAX_ENC;
+    pdata->undoenchant  = ( ENC_REF ) MAX_ENC;
+    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
+    {
+        pdata->holdingwhich[cnt] = ( CHR_REF )MAX_CHR;
+    }
+
+    pdata->pack.next = ( CHR_REF )MAX_CHR;
+    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
+    {
+        pdata->inventory[cnt] = ( CHR_REF )MAX_CHR;
+    }
+
+    pdata->onwhichplatform_ref    = ( CHR_REF )MAX_CHR;
+    pdata->onwhichplatform_update = 0;
+    pdata->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+    pdata->attachedto             = ( CHR_REF )MAX_CHR;
+
+    // all movements valid
+    pdata->movement_bits   = ( unsigned )( ~0 );
+
+    // not a player
+    pdata->is_which_player = MAX_PLAYER;
+
+
+    //---- call the constructors of the "has a" classes
+
+    // set the instance values to safe values
+    chr_instance_ctor( &( pdata->inst ) );
+
+    // initialize the ai_state
+    ego_ai_state::ctor( &( pdata->ai ) );
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::dtor( ego_chr_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    // destruct/free any allocated data
+    ego_chr_data::dealloc( pdata );
+
+    return pdata;
+}
+
 
 //--------------------------------------------------------------------------------------------
 ego_chr * ego_chr::ctor( ego_chr * pchr )
@@ -194,127 +305,27 @@ ego_chr * ego_chr::ctor( ego_chr * pchr )
     ///     since we use memset(..., 0, ...), everything == 0 == false == 0.0f
     ///     statements are redundant
 
-    int cnt;
-    ego_object save_base;
-    ego_object * pbase;
-
     if ( NULL == pchr ) return pchr;
 
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pchr );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    //---- construct the character object
-
-    // save the base object data
-    memcpy( &save_base, pbase, sizeof( ego_object ) );
-
+    // deallocate any existing data
     if ( VALID_PCHR( pchr ) )
     {
-        // deallocate any existing data
-        chr_free( pchr );
-
-        EGOBOO_ASSERT( NULL == pchr->inst.vrt_lst );
+        // call the dtor
+        if( NULL == ego_chr::dtor( pchr ) ) return NULL;
     }
 
-    // clear out all data
-    memset( pchr, 0, sizeof( *pchr ) );
-
-    // restore the base object data
-    memcpy( pbase, &save_base, sizeof( ego_object ) );
-
-    // IMPORTANT!!!
-    pchr->ibillboard = INVALID_BILLBOARD;
-    pchr->sparkle = NOSPARKLE;
-    pchr->loopedsound_channel = INVALID_SOUND_CHANNEL;
-
-    // Set up model stuff
-    pchr->inwhich_slot = SLOT_LEFT;
-    pchr->hitready = btrue;
-    pchr->boretime = BORETIME;
-    pchr->carefultime = CAREFULTIME;
-
-    // Enchant stuff
-    pchr->firstenchant = ( ENC_REF ) MAX_ENC;
-    pchr->undoenchant = ( ENC_REF ) MAX_ENC;
-    pchr->missiletreatment = MISSILE_NORMAL;
-
-    // Character stuff
-    pchr->turnmode = TURNMODE_VELOCITY;
-    pchr->alive = btrue;
-
-    // Jumping
-    pchr->jump_time = JUMP_DELAY;
-
-    // Grip info
-    pchr->attachedto = ( CHR_REF )MAX_CHR;
-    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
-    {
-        pchr->holdingwhich[cnt] = ( CHR_REF )MAX_CHR;
-    }
-
-    // pack/inventory info
-    pchr->pack.next = ( CHR_REF )MAX_CHR;
-    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
-    {
-        pchr->inventory[cnt] = ( CHR_REF )MAX_CHR;
-    }
-
-    // Set up position
-    pchr->ori.map_facing_y = MAP_TURN_OFFSET;  // These two mean on level surface
-    pchr->ori.map_facing_x = MAP_TURN_OFFSET;
+    // call the data ctor
+    if( NULL == ego_chr_data::ctor( pchr ) ) return NULL;
 
     // start the character out in the "dance" animation
     ego_chr::start_anim( pchr, ACTION_DA, btrue, btrue );
 
-    // I think we have to set the dismount timer, otherwise objects that
-    // are spawned by chests will behave strangely...
-    // nope this did not fix it
-    // ZF@> If this is != 0 then scorpion claws and riders are dropped at spawn (non-item objects)
-    pchr->dismount_timer  = 0;
-    pchr->dismount_object = ( CHR_REF )MAX_CHR;
-
-    // set all of the integer references to invalid values
-    pchr->firstenchant = ( ENC_REF ) MAX_ENC;
-    pchr->undoenchant  = ( ENC_REF ) MAX_ENC;
-    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
-    {
-        pchr->holdingwhich[cnt] = ( CHR_REF )MAX_CHR;
-    }
-
-    pchr->pack.next = ( CHR_REF )MAX_CHR;
-    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
-    {
-        pchr->inventory[cnt] = ( CHR_REF )MAX_CHR;
-    }
-
-    pchr->onwhichplatform_ref    = ( CHR_REF )MAX_CHR;
-    pchr->onwhichplatform_update = 0;
-    pchr->targetplatform_ref     = ( CHR_REF )MAX_CHR;
-    pchr->attachedto             = ( CHR_REF )MAX_CHR;
-
-    // all movements valid
-    pchr->movement_bits   = ( unsigned )( ~0 );
-
-    // not a player
-    pchr->is_which_player = MAX_PLAYER;
-
     // initialize the bsp node for this character
+    ego_BSP_leaf::ctor( &( pchr->bsp_leaf ), 3, pchr, 1 );
+
     pchr->bsp_leaf.data      = pchr;
     pchr->bsp_leaf.data_type = LEAF_CHR;
     pchr->bsp_leaf.index     = GET_INDEX_PCHR( pchr );
-
-    //---- call the constructors of the "has a" classes
-
-    // set the instance values to safe values
-    chr_instance_ctor( &( pchr->inst ) );
-
-    // initialize the ai_state
-    ego_ai_state::ctor( &( pchr->ai ) );
-
-    // initialize the bsp node for this character
-    ego_BSP_leaf::ctor( &( pchr->bsp_leaf ), 3, pchr, 1 );
-    pchr->bsp_leaf.index = GET_INDEX_PCHR( pchr );
 
     return pchr;
 }
@@ -325,7 +336,7 @@ ego_chr * ego_chr::dtor( ego_chr * pchr )
     if ( NULL == pchr ) return pchr;
 
     // destruct/free any allocated data
-    chr_free( pchr );
+    ego_chr::dealloc( pchr );
 
     // Destroy the base object.
     // Sets the state to ego_object_terminated automatically.
@@ -2224,7 +2235,7 @@ ego_chr * resize_one_character( ego_chr * pchr )
 {
     /// @details ZZ@> This function makes the characters get bigger or smaller, depending
     ///    on their fat_goto and fat_goto_time. Spellbooks do not resize
-    ///    BB@> assume that this will only be called from inside chr_do_processing(),
+    ///    BB@> assume that this will only be called from inside ego_chr::do_processing(),
     ///         so pchr is just right to be used here
 
     CHR_REF ichr;
@@ -3358,7 +3369,7 @@ void ego_ai_state::spawn( ego_ai_state * pself, const CHR_REF by_reference index
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_chr * chr_do_init( ego_chr * pchr )
+ego_chr * ego_chr::do_init( ego_chr * pchr )
 {
     CHR_REF  ichr;
     CAP_REF  icap;
@@ -3375,7 +3386,7 @@ ego_chr * chr_do_init( ego_chr * pchr )
     pcap = pro_get_pcap( pchr->spawn_data.profile );
     if ( NULL == pcap )
     {
-        log_debug( "chr_do_init() - cannot initialize character.\n" );
+        log_debug( "ego_chr::do_init() - cannot initialize character.\n" );
 
         return NULL;
     }
@@ -3565,7 +3576,7 @@ ego_chr * chr_do_init( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * chr_do_processing( ego_chr * pchr )
+ego_chr * ego_chr::do_processing( ego_chr * pchr )
 {
     ego_cap * pcap;
     int     ripand;
@@ -3730,7 +3741,7 @@ ego_chr * chr_do_processing( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * chr_do_deinit( ego_chr * pchr )
+ego_chr * ego_chr::do_deinit( ego_chr * pchr )
 {
     if ( NULL == pchr ) return pchr;
 
@@ -3911,23 +3922,23 @@ ego_chr * ego_chr::run_object( ego_chr * pchr )
             break;
 
         case ego_object_constructing:
-            pchr = chr_do_object_constructing( pchr );
+            pchr = ego_chr::do_object_constructing( pchr );
             break;
 
         case ego_object_initializing:
-            pchr = chr_do_object_initializing( pchr );
+            pchr = ego_chr::do_object_initializing( pchr );
             break;
 
         case ego_object_processing:
-            pchr = chr_do_object_processing( pchr );
+            pchr = ego_chr::do_object_processing( pchr );
             break;
 
         case ego_object_deinitializing:
-            pchr = chr_do_object_deinitializing( pchr );
+            pchr = ego_chr::do_object_deinitializing( pchr );
             break;
 
         case ego_object_destructing:
-            pchr = chr_do_object_destructing( pchr );
+            pchr = ego_chr::do_object_destructing( pchr );
             break;
 
         case ego_object_waiting:
@@ -3948,7 +3959,7 @@ ego_chr * ego_chr::run_object( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * chr_do_object_constructing( ego_chr * pchr )
+ego_chr * ego_chr::do_object_constructing( ego_chr * pchr )
 {
     /// @details BB@> initialize the character data to safe values
     ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
@@ -3974,7 +3985,7 @@ ego_chr * chr_do_object_constructing( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * chr_do_object_initializing( ego_chr * pchr )
+ego_chr * ego_chr::do_object_initializing( ego_chr * pchr )
 {
     ego_object * pbase;
 
@@ -3989,7 +4000,7 @@ ego_chr * chr_do_object_initializing( ego_chr * pchr )
     POBJ_BEGIN_SPAWN( pchr );
 
     // run the initialization routine
-    pchr = chr_do_init( pchr );
+    pchr = ego_chr::do_init( pchr );
     if ( NULL == pchr ) return NULL;
 
     // request that we be turned on
@@ -4026,7 +4037,7 @@ ego_chr * chr_do_object_initializing( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * chr_do_object_processing( ego_chr * pchr )
+ego_chr * ego_chr::do_object_processing( ego_chr * pchr )
 {
     // there's nothing to configure if the object is active...
 
@@ -4044,7 +4055,7 @@ ego_chr * chr_do_object_processing( ego_chr * pchr )
     POBJ_END_SPAWN( pchr );
 
     // run the main loop
-    pchr = chr_do_processing( pchr );
+    pchr = ego_chr::do_processing( pchr );
     if ( NULL == pchr ) return NULL;
 
     /* add stuff here */
@@ -4053,7 +4064,7 @@ ego_chr * chr_do_object_processing( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * chr_do_object_deinitializing( ego_chr * pchr )
+ego_chr * ego_chr::do_object_deinitializing( ego_chr * pchr )
 {
     /// @details BB@> deinitialize the character data
 
@@ -4070,7 +4081,7 @@ ego_chr * chr_do_object_deinitializing( ego_chr * pchr )
     POBJ_END_SPAWN( pchr );
 
     // run a deinitialization routine
-    pchr = chr_do_deinit( pchr );
+    pchr = ego_chr::do_deinit( pchr );
     if ( NULL == pchr ) return NULL;
 
     // move on to the next action
@@ -4083,7 +4094,7 @@ ego_chr * chr_do_object_deinitializing( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * chr_do_object_destructing( ego_chr * pchr )
+ego_chr * ego_chr::do_object_destructing( ego_chr * pchr )
 {
     /// @details BB@> deinitialize the character data
 

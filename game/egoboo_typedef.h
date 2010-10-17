@@ -27,6 +27,10 @@
 #include <SDL_types.h>
 #include "egoboo_mem.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 // portable definition of assert. the c++ version can be activated below.
 
@@ -427,7 +431,11 @@ list_object_state * list_object_set_free( list_object_state *, bool_t val );
 // place this include here so that the REF_T is defined for egoboo_typedef_cpp.h
 
 #if defined(__cplusplus)
+};
+
 #    include "egoboo_typedef_cpp.h"
+
+extern "C" {
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -569,5 +577,10 @@ DECLARE_DYNAMIC_ARY( double_ary, double )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
 #define _egoboo_typedef_h
 

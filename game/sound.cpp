@@ -109,6 +109,14 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+snd_config_data_t * snd_get_config()
+{
+    return static_cast<snd_config_data_t*>(&snd);
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 // define a little stack for interrupting music sounds with other music
 
 #define MUSIC_STACK_COUNT 20

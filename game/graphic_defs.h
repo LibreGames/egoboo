@@ -22,6 +22,10 @@
 #include "egoboo_typedef.h"
 #include "extensions/ogl_include.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_ego_config_data;
@@ -102,9 +106,23 @@ struct s_gfx_config_data
 };
 typedef struct s_gfx_config_data gfx_config_data_t;
 
+bool_t gfx_config_data_init(gfx_config_data_t *);
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+/// handle access to the gfx singleton for c modules
 gfx_config_data_t * gfx_get_config();
 
 bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pcfg );
 bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_ego_config_data * pcfg );
+bool_t gfx_set_virtual_screen( gfx_config_data_t * pgfx );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define graphics_defs_h

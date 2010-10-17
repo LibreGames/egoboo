@@ -30,28 +30,13 @@
 
 #include "egoboo_typedef.h"
 
-struct s_ClockState;
-
-typedef double( *clock_source_ptr_t )( void );
-typedef struct s_ClockState ClockState_t;
-typedef struct tm* EGO_TIME;
-
-void clk_init( void );                                 ///< Init the clock module
-void clk_shutdown( void );                             ///< Shut down the clock module
-//void clk_setTimeSource( clock_source_ptr_t tsrc );   ///< Specify where the clock gets its time values from
-
-ClockState_t * clk_create( const char * name, int size );
-bool_t         clk_destroy( ClockState_t ** cs );
-ClockState_t * clk_renew( ClockState_t * cs );
-
-void   clk_frameStep( ClockState_t * cs );          ///< Update the clock.
-double clk_getTime( ClockState_t * cs );            ///< Returns the current time.  The clock's time only updates when clk_frameStep() is called
-double clk_getFrameDuration( ClockState_t * cs );   ///< Return the length of the current frame. (Sort of.)
-Uint32 clk_getFrameNumber( ClockState_t * cs );     ///< Return which frame we're on
-float  clk_getFrameRate( ClockState_t * cs );       ///< Return the current instantaneous FPS
-EGO_TIME getCurrentTime();                          ///< Returns a structure containing current time and date
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 // macros to use the high resolution timer for profiling
 #define PROFILE_KEEP  0.9
 #define PROFILE_NEW  (1.0 - PROFILE_KEEP)
@@ -90,3 +75,39 @@ EGO_TIME getCurrentTime();                          ///< Returns a structure con
 #    define PROFILE_END2(XX)   clkcount_##XX += 1.0;
 
 #endif
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+struct s_ClockState;
+
+typedef double( *clock_source_ptr_t )( void );
+typedef struct s_ClockState ClockState_t;
+typedef struct tm* EGO_TIME;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+void clk_init( void );                                 ///< Init the clock module
+void clk_shutdown( void );                             ///< Shut down the clock module
+//void clk_setTimeSource( clock_source_ptr_t tsrc );   ///< Specify where the clock gets its time values from
+
+ClockState_t * clk_create( const char * name, int size );
+bool_t         clk_destroy( ClockState_t ** cs );
+ClockState_t * clk_renew( ClockState_t * cs );
+
+void   clk_frameStep( ClockState_t * cs );          ///< Update the clock.
+double clk_getTime( ClockState_t * cs );            ///< Returns the current time.  The clock's time only updates when clk_frameStep() is called
+double clk_getFrameDuration( ClockState_t * cs );   ///< Return the length of the current frame. (Sort of.)
+Uint32 clk_getFrameNumber( ClockState_t * cs );     ///< Return which frame we're on
+float  clk_getFrameRate( ClockState_t * cs );       ///< Return the current instantaneous FPS
+EGO_TIME getCurrentTime();                          ///< Returns a structure containing current time and date
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _clock_h

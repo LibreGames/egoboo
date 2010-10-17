@@ -32,6 +32,7 @@
 #include "egoboo_typedef.h"
 #include "egoboo_strutil.h"
 #include "egoboo_math.h"
+#include "egoboo_display_list.h"
 
 #include <stdlib.h>
 #include <stddef.h>

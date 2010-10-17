@@ -185,10 +185,12 @@ struct ego_prt_data
     float          buoyancy;                  ///< an estimate of the particle bouyancy in air
     float          air_resistance;            ///< an estimate of the particle's extra resistance to air motion
 
-    ego_BSP_leaf          bsp_leaf;
+    ego_prt_data() { ego_prt_data::ctor( this ); }
+    ~ego_prt_data() { ego_prt_data::dtor( this ); }
 
-    ego_prt_data();
-    ~ego_prt_data();
+    static ego_prt_data * ctor( ego_prt_data * );
+    static ego_prt_data * dtor( ego_prt_data * );
+    static bool_t         dealloc( ego_prt_data * pdata );
 };
 
 /// The definition of the particle object
@@ -198,6 +200,8 @@ struct ego_prt : public ego_prt_data
     bool_t     obj_base_display;      ///< a variable that would be added to a custom ego_object
 
     prt_spawn_data_t  spawn_data;
+
+    ego_BSP_leaf          bsp_leaf;
 
     ego_prt() { ego_prt::ctor( this ); }
     ~ego_prt() { ego_prt::dtor( this ); }
@@ -223,6 +227,19 @@ struct ego_prt : public ego_prt_data
     static INLINE CHR_REF    get_iowner( const PRT_REF by_reference iprt, int depth );
     static INLINE bool_t     set_size( ego_prt *, int size );
     static INLINE float      get_scale( ego_prt * pprt );
+
+private:
+    static bool_t  dealloc( ego_prt * pprt );
+
+    static ego_prt * do_object_constructing( ego_prt * pprt );
+    static ego_prt * do_object_initializing( ego_prt * pprt );
+    static ego_prt * do_object_processing( ego_prt * pprt );
+    static ego_prt * do_object_deinitializing( ego_prt * pprt );
+    static ego_prt * do_object_destructing( ego_prt * pprt );
+
+    static ego_prt * do_init( ego_prt * pprt );
+    static ego_prt * do_active( ego_prt * pprt );
+    static ego_prt * do_deinit( ego_prt * pprt );
 };
 
 // counters for debugging wall collisions

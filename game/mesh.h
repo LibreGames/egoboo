@@ -28,7 +28,7 @@
 //--------------------------------------------------------------------------------------------
 struct ego_mpd;
 
-struct s_mesh_wall_data;
+struct mesh_wall_data;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ struct mpd_BSP
 //--------------------------------------------------------------------------------------------
 
 /// The data describing an Egoboo tile
-struct ego_tile_info_t
+struct ego_tile_info
 {
     Uint8   type;                              ///< Tile type
     Uint16  img;                               ///< Get texture from this
@@ -107,11 +107,11 @@ struct ego_tile_info_t
     light_cache_t  d2_cache;                   ///< the estimated change in the light at the corner of the tile
 };
 
-ego_tile_info_t * ego_tile_info_alloc();
-ego_tile_info_t * ego_tile_info_init( ego_tile_info_t * ptr );
+ego_tile_info * ego_tile_info_alloc();
+ego_tile_info * ego_tile_info_init( ego_tile_info * ptr );
 
-ego_tile_info_t * ego_tile_info_alloc_ary( size_t count );
-ego_tile_info_t * ego_tile_info_init_ary( ego_tile_info_t * ptr, size_t count );
+ego_tile_info * ego_tile_info_alloc_ary( size_t count );
+ego_tile_info * ego_tile_info_init_ary( ego_tile_info * ptr, size_t count );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ struct ego_tile_mem
 
     // the per-tile info
     size_t           tile_count;                       ///< number of tiles
-    ego_tile_info_t* tile_list;                        ///< tile command info
+    ego_tile_info* tile_list;                        ///< tile command info
 
     // the per-vertex info to be presented to OpenGL
     size_t          vert_count;                        ///< number of vertices
@@ -207,13 +207,6 @@ struct ego_mpd
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-extern fvec3_t   map_twist_nrm[256];
-extern Uint32    map_twist_y[256];            ///< For surface normal of mesh
-extern Uint32    map_twist_x[256];
-extern float     map_twistvel_x[256];            ///< For sliding down steep hills
-extern float     map_twistvel_y[256];
-extern float     map_twistvel_z[256];
-extern Uint8     map_twist_flat[256];
 
 extern int mesh_mpdfx_tests;
 extern int mesh_bound_tests;
@@ -240,7 +233,7 @@ bool_t mesh_interpolate_vertex( ego_tile_mem * pmem, int itile, float pos[], flo
 bool_t grid_light_one_corner( ego_mpd   * pmesh, int fan, float height, float nrm[], float * plight );
 
 BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, float nrm[], float * pressure );
-bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, struct s_mesh_wall_data * private_data );
+bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, mesh_wall_data * private_data );
 
 float mesh_get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y );
 float mesh_get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xmin, float ymin, float xmax, float ymax );

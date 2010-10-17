@@ -2821,7 +2821,7 @@ Uint8 scr_GiveExperienceToTargetTeam( ego_script_state * pstate, ego_ai_bundle *
 
     SCRIPT_FUNCTION_BEGIN();
 
-    give_team_experience( ego_chr::get_iteam( pself->target ), pstate->argument, pstate->distance );
+    give_team_experience( ego_chr::get_iteam( pself->target ), pstate->argument, (xp_type)pstate->distance );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6592,7 +6592,7 @@ Uint8 scr_GiveExperienceToGoodTeam( ego_script_state * pstate, ego_ai_bundle * p
 
     SCRIPT_FUNCTION_BEGIN();
 
-    give_team_experience(( TEAM_REF )TEAM_GOOD, pstate->argument, pstate->distance );
+    give_team_experience(( TEAM_REF )TEAM_GOOD, pstate->argument, (xp_type)pstate->distance );
 
     SCRIPT_FUNCTION_END();
 }

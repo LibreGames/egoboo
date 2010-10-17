@@ -59,17 +59,6 @@ INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_pip, PipStack, MAX_PIP );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static bool_t  prt_free( ego_prt * pprt );
-
-static ego_prt * prt_do_object_constructing( ego_prt * pprt );
-static ego_prt * prt_do_object_initializing( ego_prt * pprt );
-static ego_prt * prt_do_object_processing( ego_prt * pprt );
-static ego_prt * prt_do_object_deinitializing( ego_prt * pprt );
-static ego_prt * prt_do_object_destructing( ego_prt * pprt );
-
-static ego_prt * prt_do_init( ego_prt * pprt );
-static ego_prt * prt_do_active( ego_prt * pprt );
-static ego_prt * prt_do_deinit( ego_prt * pprt );
 
 static int prt_do_end_spawn( const PRT_REF by_reference iprt );
 static int prt_do_contspawn( ego_prt_bundle * pbdl_prt );
@@ -95,9 +84,15 @@ static bool_t    _prt_request_terminate_ref( const PRT_REF by_reference iprt );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t prt_free( ego_prt * pprt )
+bool_t ego_prt_data::dealloc( ego_prt_data * pdata )
 {
-    if ( !VALID_PPRT( pprt ) ) return bfalse;
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_prt::dealloc( ego_prt * pprt )
+{
+    if ( !ego_prt_data::dealloc(pprt) ) return bfalse;
 
     // do not allow this if you are inside a particle loop
     EGOBOO_ASSERT( 0 == prt_loop_depth );
@@ -108,6 +103,48 @@ bool_t prt_free( ego_prt * pprt )
     ego_BSP_leaf::dtor( &( pprt->bsp_leaf ) );
 
     return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt_data * ego_prt_data::ctor( ego_prt_data * pdata )
+{
+    /// BB@> Set all particle parameters to safe values.
+    ///      @details The c equivalent of the particle prt::new() function.
+
+    if( NULL == pdata ) return pdata;
+
+    memset( pdata, 0, sizeof( *pdata ) );
+
+    // "no lifetime" = "eternal"
+    pdata->lifetime           = ( size_t )( ~0 );
+    pdata->lifetime_remaining = pdata->lifetime;
+    pdata->frames_remaining   = ( size_t )( ~0 );
+
+    pdata->pip_ref      = MAX_PIP;
+    pdata->profile_ref  = MAX_PROFILE;
+
+    pdata->attachedto_ref = ( CHR_REF )MAX_CHR;
+    pdata->owner_ref      = ( CHR_REF )MAX_CHR;
+    pdata->target_ref     = ( CHR_REF )MAX_CHR;
+    pdata->parent_ref     = TOTAL_MAX_PRT;
+    pdata->parent_guid    = 0xFFFFFFFF;
+
+    pdata->onwhichplatform_ref    = ( CHR_REF )MAX_CHR;
+    pdata->onwhichplatform_update = 0;
+    pdata->targetplatform_ref     = ( CHR_REF )MAX_CHR;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt_data * ego_prt_data::dtor( ego_prt_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    // destruct/free any allocated data
+    ego_prt_data::dealloc( pdata );
+
+    return pdata;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -163,7 +200,7 @@ ego_prt * ego_prt::dtor( ego_prt * pprt )
     if ( NULL == pprt ) return pprt;
 
     // destruct/free any allocated data
-    prt_free( pprt );
+    ego_prt::dealloc( pprt );
 
     // Destroy the base object.
     // Sets the state to ego_object_terminated automatically.
@@ -243,7 +280,7 @@ void free_one_particle_in_game( const PRT_REF by_reference particle )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_do_init( ego_prt * pprt )
+ego_prt * ego_prt::do_init( ego_prt * pprt )
 {
     PRT_REF            iprt;
     ego_pip            * ppip;
@@ -573,7 +610,7 @@ ego_prt * prt_do_init( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_do_active( ego_prt * pprt )
+ego_prt * ego_prt::do_active( ego_prt * pprt )
 {
     // is there ever a reason to change the state?
 
@@ -581,7 +618,7 @@ ego_prt * prt_do_active( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_do_deinit( ego_prt * pprt )
+ego_prt * ego_prt::do_deinit( ego_prt * pprt )
 {
     if ( NULL == pprt ) return pprt;
 
@@ -762,23 +799,23 @@ ego_prt * ego_prt::run_object( ego_prt * pprt )
             break;
 
         case ego_object_constructing:
-            pprt = prt_do_object_constructing( pprt );
+            pprt = ego_prt::do_object_constructing( pprt );
             break;
 
         case ego_object_initializing:
-            pprt = prt_do_object_initializing( pprt );
+            pprt = ego_prt::do_object_initializing( pprt );
             break;
 
         case ego_object_processing:
-            pprt = prt_do_object_processing( pprt );
+            pprt = ego_prt::do_object_processing( pprt );
             break;
 
         case ego_object_deinitializing:
-            pprt = prt_do_object_deinitializing( pprt );
+            pprt = ego_prt::do_object_deinitializing( pprt );
             break;
 
         case ego_object_destructing:
-            pprt = prt_do_object_destructing( pprt );
+            pprt = ego_prt::do_object_destructing( pprt );
             break;
 
         case ego_object_waiting:
@@ -799,7 +836,7 @@ ego_prt * ego_prt::run_object( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_do_object_constructing( ego_prt * pprt )
+ego_prt * ego_prt::do_object_constructing( ego_prt * pprt )
 {
     ego_object * pbase;
 
@@ -821,7 +858,7 @@ ego_prt * prt_do_object_constructing( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_do_object_initializing( ego_prt * pprt )
+ego_prt * ego_prt::do_object_initializing( ego_prt * pprt )
 {
     ego_object * pbase;
 
@@ -836,7 +873,7 @@ ego_prt * prt_do_object_initializing( ego_prt * pprt )
     POBJ_BEGIN_SPAWN( pprt );
 
     // run the initialization routine
-    pprt = prt_do_init( pprt );
+    pprt = ego_prt::do_init( pprt );
     if ( NULL == pprt ) return NULL;
 
     // request that we be turned on
@@ -870,7 +907,7 @@ ego_prt * prt_do_object_initializing( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_do_object_processing( ego_prt * pprt )
+ego_prt * ego_prt::do_object_processing( ego_prt * pprt )
 {
     // there's nothing to configure if the object is active...
 
@@ -888,7 +925,7 @@ ego_prt * prt_do_object_processing( ego_prt * pprt )
     POBJ_END_SPAWN( pprt );
 
     // run the main loop
-    pprt = prt_do_active( pprt );
+    pprt = ego_prt::do_active( pprt );
     if ( NULL == pprt ) return NULL;
 
     /* add stuff here */
@@ -897,7 +934,7 @@ ego_prt * prt_do_object_processing( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_do_object_deinitializing( ego_prt * pprt )
+ego_prt * ego_prt::do_object_deinitializing( ego_prt * pprt )
 {
     /// @details BB@> deinitialize the character data
 
@@ -914,7 +951,7 @@ ego_prt * prt_do_object_deinitializing( ego_prt * pprt )
     POBJ_END_SPAWN( pprt );
 
     // run a deinitialization routine
-    pprt = prt_do_deinit( pprt );
+    pprt = ego_prt::do_deinit( pprt );
     if ( NULL == pprt ) return NULL;
 
     // move on to the next action
@@ -927,7 +964,7 @@ ego_prt * prt_do_object_deinitializing( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_do_object_destructing( ego_prt * pprt )
+ego_prt * ego_prt::do_object_destructing( ego_prt * pprt )
 {
     ego_object * pbase;
 

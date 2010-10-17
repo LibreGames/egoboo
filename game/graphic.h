@@ -160,8 +160,6 @@ struct ego_gfx_config : public s_gfx_config_data
 
 extern ego_gfx_config gfx;
 
-bool_t gfx_set_virtual_screen( ego_gfx_config * pgfx );
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 extern obj_registry_entity_t dolist[DOLIST_SIZE];             ///< List of which characters to draw

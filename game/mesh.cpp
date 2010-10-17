@@ -291,7 +291,7 @@ bool_t mesh_recalc_twist( ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 bool_t mesh_set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image )
 {
-    ego_tile_info_t * ptile;
+    ego_tile_info * ptile;
     Uint16 tile_value, tile_upper, tile_lower;
 
     if ( !mesh_grid_is_valid( pmesh, tile ) ) return bfalse;
@@ -322,7 +322,7 @@ bool_t mesh_update_texture( ego_mpd   * pmesh, Uint32 tile )
     ego_tile_mem * ptmem;
     ego_grid_mem * pgmem;
     ego_mpd_info * pinfo;
-    ego_tile_info_t * ptile;
+    ego_tile_info * ptile;
 
     ptmem  = &( pmesh->tmem );
     pgmem = &( pmesh->gmem );
@@ -420,7 +420,7 @@ bool_t mesh_convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src )
     for ( cnt = 0; cnt < pinfo_dst->tiles_count; cnt++ )
     {
         tile_info_t     * ptile_src = pmem_src->tile_list  + cnt;
-        ego_tile_info_t * ptile_dst = ptmem_dst->tile_list + cnt;
+        ego_tile_info * ptile_dst = ptmem_dst->tile_list + cnt;
         ego_grid_info * pgrid_dst = pgmem_dst->grid_list + cnt;
 
         memset( ptile_dst, 0, sizeof( *ptile_dst ) );
@@ -839,7 +839,7 @@ bool_t mesh_make_bbox( ego_mpd   * pmesh )
     for ( cnt = 0; cnt < pmesh->info.tiles_count; cnt++ )
     {
         ego_oct_bb         * poct;
-        ego_tile_info_t * ptile;
+        ego_tile_info * ptile;
         Uint16 vertices;
         Uint8 type;
 
@@ -1371,22 +1371,22 @@ float grid_get_mix( float u0, float u, float v0, float v )
 }
 
 //--------------------------------------------------------------------------------------------
-struct mesh_wall_data_t
+struct mesh_wall_data
 {
     int   ix_min, ix_max, iy_min, iy_max;
     float fx_min, fx_max, fy_min, fy_max;
 
     ego_mpd_info  * pinfo;
-    ego_tile_info_t * tlist;
+    ego_tile_info * tlist;
     ego_grid_info * glist;
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, mesh_wall_data_t * pdata )
+bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, struct mesh_wall_data * pdata )
 {
     /// @details BB@> an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
 
-    mesh_wall_data_t loc_data;
+    mesh_wall_data loc_data;
 
     BIT_FIELD pass;
     int   ix, iy;
@@ -1487,7 +1487,7 @@ float mesh_get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
     float  loc_pressure;
 
     ego_mpd_info  * pinfo;
-    ego_tile_info_t * tlist;
+    ego_tile_info * tlist;
     ego_grid_info * glist;
 
     // deal with the optional parameters
@@ -1720,7 +1720,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
     bool_t needs_pressure = ( NULL != pressure );
     bool_t needs_nrm      = ( NULL != nrm );
 
-    mesh_wall_data_t data;
+    mesh_wall_data data;
 
     // deal with the optional parameters
     if ( NULL == pressure ) pressure = &loc_pressure;
@@ -1730,7 +1730,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
     nrm[kX] = nrm[kY] = 0.0f;
 
     // Do te simplest test.
-    // Initializes the shared mesh_wall_data_t struct, so no need to do it again
+    // Initializes the shared mesh_wall_data struct, so no need to do it again
     // Eliminates all cases of bad source data, so no need to test them again.
     if ( !mesh_test_wall( pmesh, pos, radius, bits, &data ) ) return 0;
 
@@ -1920,7 +1920,7 @@ float mesh_get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xm
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_tile_info_t * ego_tile_info_init( ego_tile_info_t * ptr )
+ego_tile_info * ego_tile_info_init( ego_tile_info * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -1935,18 +1935,18 @@ ego_tile_info_t * ego_tile_info_init( ego_tile_info_t * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tile_info_t * ego_tile_info_alloc()
+ego_tile_info * ego_tile_info_alloc()
 {
-    ego_tile_info_t * retval = NULL;
+    ego_tile_info * retval = NULL;
 
-    retval = EGOBOO_NEW( ego_tile_info_t );
+    retval = EGOBOO_NEW( ego_tile_info );
     if ( NULL == retval ) return NULL;
 
     return ego_tile_info_init( retval );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tile_info_t * ego_tile_info_init_ary( ego_tile_info_t * ptr, size_t count )
+ego_tile_info * ego_tile_info_init_ary( ego_tile_info * ptr, size_t count )
 {
     Uint32 cnt;
 
@@ -1961,11 +1961,11 @@ ego_tile_info_t * ego_tile_info_init_ary( ego_tile_info_t * ptr, size_t count )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tile_info_t * ego_tile_info_alloc_ary( size_t count )
+ego_tile_info * ego_tile_info_alloc_ary( size_t count )
 {
-    ego_tile_info_t * retval = NULL;
+    ego_tile_info * retval = NULL;
 
-    retval = EGOBOO_NEW_ARY( ego_tile_info_t, count );
+    retval = EGOBOO_NEW_ARY( ego_tile_info, count );
     if ( NULL == retval ) return NULL;
 
     return ego_tile_info_init_ary( retval, count );
@@ -2038,7 +2038,7 @@ bool_t mpd_BSP::alloc( mpd_BSP * pbsp, ego_mpd   * pmesh )
     for ( i = 0; i < pmesh->gmem.grid_count; i++ )
     {
         ego_BSP_leaf        * pleaf = pbsp->nodes.ary + i;
-        ego_tile_info_t * ptile = pmesh->tmem.tile_list + i;
+        ego_tile_info * ptile = pmesh->tmem.tile_list + i;
 
         // add the bounding volume for this tile to the bounding volume for the mesh
         ego_oct_bb::do_union( pbsp->volume, ptile->oct, &( pbsp->volume ) );
@@ -2072,14 +2072,14 @@ bool_t mpd_BSP::fill( mpd_BSP * pbsp )
 
     for ( tile = 0; tile < pbsp->nodes.top; tile++ )
     {
-        ego_tile_info_t * pdata;
+        ego_tile_info * pdata;
         ego_BSP_leaf        * pleaf = pbsp->nodes.ary + tile;
 
         // do not deal with uninitialized nodes
         if ( pleaf->data_type <= LEAF_UNKNOWN ) continue;
 
         // grab the leaf data, assume that it points to the correct data structure
-        pdata = ( ego_tile_info_t* ) pleaf->data;
+        pdata = ( ego_tile_info* ) pleaf->data;
         if ( NULL == pdata ) continue;
 
         // calculate the leaf's ego_BSP_aabb

@@ -162,6 +162,14 @@ typedef struct s_tile_definition tile_definition_t;
 //--------------------------------------------------------------------------------------------
 extern tile_definition_t tile_dict[MAXMESHTYPE];
 
+extern fvec3_t   map_twist_nrm[256];
+extern Uint32    map_twist_y[256];            ///< For surface normal of mesh
+extern Uint32    map_twist_x[256];
+extern float     map_twistvel_x[256];            ///< For sliding down steep hills
+extern float     map_twistvel_y[256];
+extern float     map_twistvel_z[256];
+extern Uint8     map_twist_flat[256];
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 

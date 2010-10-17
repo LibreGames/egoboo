@@ -57,6 +57,7 @@
 #include "egoboo_vfs.h"
 #include "egoboo_setup.h"
 #include "egoboo_strutil.h"
+#include "egoboo_display_list.h"
 
 #if defined(USE_LUA_CONSOLE)
 #    include "lua_console.h"
@@ -242,6 +243,15 @@ static void light_fans( renderlist_t * prlist );
 static void render_water( renderlist_t * prlist );
 
 static void gfx_make_dynalist( ego_camera * pcam );
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+gfx_config_data_t * gfx_get_config()
+{
+    return static_cast<gfx_config_data_t *>(&gfx);
+}
 
 //--------------------------------------------------------------------------------------------
 // MODULE "PRIVATE" FUNCTIONS
@@ -570,7 +580,7 @@ void gfx_init_SDL_graphics()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_set_virtual_screen( ego_gfx_config * pgfx )
+bool_t gfx_set_virtual_screen( gfx_config_data_t * pgfx )
 {
     float kx, ky;
 
@@ -604,10 +614,10 @@ bool_t gfx_set_virtual_screen( ego_gfx_config * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_config( ego_gfx_config * pgfx, ego_config_data_t * pcfg )
+bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pcfg )
 {
     // call ego_gfx_config::init(), even if the config data is invalid
-    if ( !ego_gfx_config::init( pgfx ) ) return bfalse;
+    if ( !gfx_config_data_init( pgfx ) ) return bfalse;
 
     // if there is no config data, do not proceed
     if ( NULL == pcfg ) return bfalse;
@@ -640,7 +650,7 @@ bool_t gfx_synch_config( ego_gfx_config * pgfx, ego_config_data_t * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_gfx_config::init( ego_gfx_config * pgfx )
+bool_t gfx_config_data_init(gfx_config_data_t * pgfx)
 {
     if ( NULL == pgfx ) return bfalse;
 
@@ -666,7 +676,15 @@ bool_t ego_gfx_config::init( ego_gfx_config * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_oglx_texture_parameters( oglx_texture_parameters_t * ptex, ego_config_data_t * pcfg )
+bool_t ego_gfx_config::init( ego_gfx_config * pgfx )
+{
+    /* put any additional initialization here */
+
+    return gfx_config_data_init( pgfx );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_ego_config_data * pcfg )
 {
     //// @details BB@> synch the texture parameters with the video mode
 
@@ -4271,7 +4289,7 @@ void renderlist_reset()
         int cnt;
 
         // clear out the inrenderlist flag for the old mesh
-        ego_tile_info_t * tlist = renderlist.pmesh->tmem.tile_list;
+        ego_tile_info * tlist = renderlist.pmesh->tmem.tile_list;
 
         for ( cnt = 0; cnt < renderlist.all_count; cnt++ )
         {
@@ -4307,7 +4325,7 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
     int x, stepx, divx, basex;
     int from, to;
 
-    ego_tile_info_t * tlist;
+    ego_tile_info * tlist;
 
     if ( 0 != ( frame_all & 7 ) ) return;
 
@@ -5178,7 +5196,7 @@ void light_fans( renderlist_t * prlist )
         bool_t needs_update;
         int fan;
         float delta;
-        ego_tile_info_t * ptile;
+        ego_tile_info * ptile;
 
         fan = prlist->all[entry];
         if ( !mesh_grid_is_valid( pmesh, fan ) ) continue;
@@ -5267,7 +5285,7 @@ void light_fans( renderlist_t * prlist )
         {
             int ivrt;
             Uint32 fan;
-            ego_tile_info_t * ptile;
+            ego_tile_info * ptile;
 
             fan = prlist->all[entry];
             if ( !mesh_grid_is_valid( pmesh, fan ) ) continue;

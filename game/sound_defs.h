@@ -26,6 +26,10 @@
 
 #include <SDL_mixer.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -85,3 +89,12 @@ typedef struct s_snd_config_data snd_config_data_t;
 snd_config_data_t * snd_get_config();
 
 bool_t snd_config_synch( snd_config_data_t * psnd, struct s_ego_config_data * pcfg );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define sound_defs_h

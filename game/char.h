@@ -384,7 +384,6 @@ struct ego_chr_data
     // data for doing the physics in bump_all_objects()
     phys_data_t       phys;
     chr_environment_t enviro;
-    ego_BSP_leaf          bsp_leaf;
 
     float             targetmount_overlap;
     CHR_REF           targetmount_ref;
@@ -398,20 +397,29 @@ struct ego_chr_data
 
     breadcrumb_list_t crumbs;                     ///< a list of previous valid positions that the object has passed through
 
-    ego_chr_data();
-    ~ego_chr_data();
+    ego_chr_data()  { ego_chr_data::ctor(this); };
+    ~ego_chr_data() { ego_chr_data::dtor(this); };
+
+    static ego_chr_data * ctor( ego_chr_data * );
+    static ego_chr_data * dtor( ego_chr_data * );
+
+    static bool_t         dealloc( ego_chr_data * pchr );
 };
 
 struct ego_chr : public ego_chr_data
 {
-    ego_object obj_base;
+    ego_object        obj_base;
     chr_spawn_data_t  spawn_data;
+
+    ego_BSP_leaf      bsp_leaf;
 
     ego_chr();
     ~ego_chr();
 
     static ego_chr * ctor( ego_chr * );
     static ego_chr * dtor( ego_chr * );
+
+    static bool_t dealloc( ego_chr * pchr );
 
     // global chr configuration functions
     static ego_chr * run_object( ego_chr * pchr );
@@ -516,6 +524,17 @@ struct ego_chr : public ego_chr_data
     static INLINE bool_t get_MatRight( ego_chr *pchr, fvec3_t   * pvec );
     static INLINE bool_t get_MatForward( ego_chr *pchr, fvec3_t   * pvec );
     static INLINE bool_t get_MatTranslate( ego_chr *pchr, fvec3_t   * pvec );
+
+    static ego_chr * do_object_constructing( ego_chr * pchr );
+    static ego_chr * do_object_initializing( ego_chr * pchr );
+    static ego_chr * do_object_deinitializing( ego_chr * pchr );
+    static ego_chr * do_object_processing( ego_chr * pchr );
+    static ego_chr * do_object_destructing( ego_chr * pchr );
+
+private:
+    static ego_chr * ego_chr::do_init( ego_chr * pchr );
+    static ego_chr * ego_chr::do_deinit( ego_chr * pchr );
+    static ego_chr * ego_chr::do_processing( ego_chr * pchr );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -545,7 +564,7 @@ void character_system_end();
 void drop_money( const CHR_REF by_reference character, int money );
 void call_for_help( const CHR_REF by_reference character );
 void give_experience( const CHR_REF by_reference character, int amount, xp_type xptype, bool_t override_invictus );
-void give_team_experience( const TEAM_REF by_reference team, int amount, Uint8 xptype );
+void give_team_experience( const TEAM_REF by_reference team, int amount, xp_type xptype );
 int  damage_character( const CHR_REF by_reference character, FACING_T direction,
                        IPair damage, Uint8 damagetype, TEAM_REF team,
                        CHR_REF attacker, BIT_FIELD effects, bool_t ignore_invictus );

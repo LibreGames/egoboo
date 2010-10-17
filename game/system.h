@@ -25,8 +25,13 @@
 
 #include <stdlib.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
 // Functions in this section are implemented separately on each platform. (Filesystem stuff
 // could go here as well.)
 
@@ -36,6 +41,13 @@ double sys_getTime( void );     ///< Return the current time, in seconds
 int    sys_frameStep( void );
 
 void   sys_popup( const char * popup_title, const char * warning, const char * format, va_list args );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
 
 #define _egoboo_system_h
 

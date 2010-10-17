@@ -28,6 +28,11 @@
 
 #include "egoboo_display_list.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -77,6 +82,13 @@ extern display_item_t * fnt_print( display_item_t * tx_ptr, TTF_Font * ttf_ptr, 
 extern display_list_t * fnt_vappend_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, va_list args );
 extern display_list_t * fnt_append_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, ... );
 extern display_list_t * fnt_append_text_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *text );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
 
 #define _font_ttf_h
 

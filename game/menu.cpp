@@ -51,6 +51,7 @@
 #include "egoboo_fileutil.h"
 #include "egoboo_setup.h"
 #include "egoboo_strutil.h"
+#include "egoboo_display_list.h"
 
 #include "egoboo.h"
 

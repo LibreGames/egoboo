@@ -68,7 +68,7 @@ bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
     Uint16 base_and, frame_and, frame_add;
     Uint8  type;
     ego_tile_mem  * ptmem;
-    ego_tile_info_t * ptile;
+    ego_tile_info * ptile;
 
     if ( NULL == pmesh ) return bfalse;
     ptmem  = &( pmesh->tmem );
@@ -121,7 +121,7 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
     int    texture;
 
     ego_tile_mem  * ptmem;
-    ego_tile_info_t * ptile;
+    ego_tile_info * ptile;
 
     if ( NULL == pmesh ) return;
     ptmem  = &( pmesh->tmem );
@@ -206,7 +206,7 @@ void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
 
     ego_mpd_info  * pinfo;
     ego_tile_mem      * ptmem;
-    ego_tile_info_t * ptile;
+    ego_tile_info * ptile;
     ego_grid_mem      * pgmem;
     ego_grid_info * pgrid;
 
@@ -294,7 +294,7 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
     ego_mpd_info * pinfo;
     ego_tile_mem     * ptmem;
     ego_grid_mem     * pgmem;
-    ego_tile_info_t    * ptile;
+    ego_tile_info    * ptile;
     oglx_texture_t   * ptex;
 
     if ( NULL == pmesh ) return;
