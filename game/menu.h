@@ -148,4 +148,5 @@ ego_menu_process     * menu_process_init( ego_menu_process * mproc );
 // "public" reset of the autoformatting
 void autoformat_init( struct s_gfx_config_data * pgfx );
 
-#define egoboo_Menu_h
+#define _egoboo_menu_h
+

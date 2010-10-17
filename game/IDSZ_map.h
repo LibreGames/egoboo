@@ -24,6 +24,10 @@
 
 #include "egoboo_typedef.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // Constants
@@ -48,3 +52,13 @@ egoboo_rv    idsz_map_add( IDSZ_node_t idsz_map[], const size_t idsz_map_len, co
 IDSZ_node_t* idsz_map_get( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, const IDSZ idsz );
 IDSZ_node_t* idsz_map_iterate( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, int *iterator );
 egoboo_rv    idsz_map_copy( const IDSZ_node_t pcopy_from[], const size_t idsz_map_len, IDSZ_node_t pcopy_to[] );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _IDSZ_map_h
+

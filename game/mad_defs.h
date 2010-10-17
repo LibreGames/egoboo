@@ -140,3 +140,5 @@ enum e_action
 
 #define ACTION_TYPE( CHR ) (ACTION_##CHR##A)
 #define ACTION_IS_TYPE( VAL, CHR ) ((VAL >= ACTION_##CHR##A) && (VAL <= ACTION_##CHR##D))
+
+int action_which( char cTmp );

@@ -22,13 +22,13 @@
 /// @details
 
 #include "mpd_file.h"
-#include "log.h"
 
-#include "egoboo_math.inl"
-#include "egoboo_typedef.h"
-#include "egoboo_fileutil.h"
-#include "egoboo_strutil.h"
-#include "egoboo.h"
+#include "..\log.h"
+
+#include "..\egoboo_math.inl"
+#include "..\egoboo_typedef.h"
+#include "..\egoboo_fileutil.h"
+#include "..\egoboo_strutil.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

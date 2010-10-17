@@ -137,4 +137,5 @@ struct ego_MD2_Model
     static void            scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, float scale_z );
 };
 
-#define EGOBOO_MD2_H
+#define _md2_h
+

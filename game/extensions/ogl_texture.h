@@ -34,6 +34,10 @@
 
 #include <SDL.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -110,3 +114,7 @@ GLuint    oglx_bind_to_tex_params( GLuint binding, GLenum target, GLint wrap_s, 
 
 void      ErrorImage_bind( GLenum target, GLuint id );
 GLuint    ErrorImage_get_binding();
+
+#if defined(__cplusplus)
+};
+#endif

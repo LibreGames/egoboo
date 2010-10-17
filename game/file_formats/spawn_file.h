@@ -25,6 +25,10 @@
 #include "egoboo_vfs.h"
 #include "egoboo_math.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -67,3 +71,14 @@ spawn_file_info_t * spawn_file_info_init( spawn_file_info_t *pinfo );
 spawn_file_info_t * spawn_file_info_reinit( spawn_file_info_t *pinfo );
 
 bool_t spawn_file_scan( vfs_FILE * fileread, spawn_file_info_t *pinfo );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _spawn_file_h
+
+

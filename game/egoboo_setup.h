@@ -21,6 +21,10 @@
 
 #include "egoboo_typedef.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -37,7 +41,6 @@ enum e_camera_turn_mode
 #define MAXTOTALMESSAGE     4096
 #define MESSAGESIZE         80
 #define MESSAGEBUFFERSIZE   (MAXTOTALMESSAGE*40)
-
 
 // set a value for the antialiasing multisamples
 #define EGO_MAX_MULTISAMPLES 32
@@ -154,3 +157,10 @@ bool_t setup_synch( ego_config_data_t * pcfg );
 
 bool_t input_settings_save_vfs( const char* whichfile );
 bool_t input_settings_load_vfs( const char *szFilename );
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _egoboo_setup_h
+

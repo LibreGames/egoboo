@@ -507,7 +507,6 @@ bool_t ego_BSP_branch::free_nodes( ego_BSP_branch   * B, bool_t recursive )
     return btrue;
 }
 
-
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::prune_one_branch( ego_BSP_tree   * t, ego_BSP_branch   * B, bool_t recursive )
 {

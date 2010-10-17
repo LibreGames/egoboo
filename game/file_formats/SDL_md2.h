@@ -11,6 +11,11 @@
 #include <SDL_opengl.h>
 #include <SDL_rwops.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -158,4 +163,11 @@ void              SDL_md2_free( SDL_md2_model_t * mdl );
 // SDL_md2_model_t * SDL_md2_load    ( const char *filename, SDL_md2_model_t * mdl );
 SDL_md2_model_t * SDL_md2_load_RW( SDL_RWops * rw,       SDL_md2_model_t * mdl );
 
-#define SDL_MD2_H
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+}
+#endif
+
+#define _SDL_md2_h

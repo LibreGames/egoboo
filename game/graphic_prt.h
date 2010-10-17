@@ -45,8 +45,8 @@ extern float ptex_hscale[2];
 #define CALCULATE_PRT_V0(IDX,CNT)  (((.05f+((CNT)>>4))/16.0f) * ((float)ptex_w[IDX]/(float)ptex_h[IDX])*ptex_hscale[IDX])
 #define CALCULATE_PRT_V1(IDX,CNT)  (((.95f+((CNT)>>4))/16.0f) * ((float)ptex_w[IDX]/(float)ptex_h[IDX])*ptex_hscale[IDX])
 
-int prt_get_texture_style( const TX_REF by_reference itex );
-void prt_set_texture_params( const TX_REF by_reference itex );
+int  get_prt_texture_style( const TX_REF by_reference itex );
+void set_prt_texture_params( const TX_REF by_reference itex );
 
 //--------------------------------------------------------------------------------------------
 // Particle graphic data

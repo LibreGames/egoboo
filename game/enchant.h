@@ -56,7 +56,6 @@ struct ego_eve : public ego_eve_data
     static ego_eve * init( ego_eve * ptr ) { ego_eve_data * rv = ego_eve_data::init( ptr ); return NULL == rv ? NULL : ptr; }
 };
 
-
 /// Enchantment template
 DECLARE_STACK_EXTERN( ego_eve, EveStack, MAX_EVE );
 
@@ -103,7 +102,6 @@ struct ego_enc_data
     bool_t  addyesno[MAX_ENCHANT_ADD];  ///< Was the value adjusted
     float   addsave[MAX_ENCHANT_ADD];   ///< The adjustment
 };
-
 
 //--------------------------------------------------------------------------------------------
 
@@ -161,7 +159,7 @@ private:
     static ego_enc * do_init( ego_enc * penc );
     static ego_enc * do_active( ego_enc * penc );
     static ego_enc * do_deinit( ego_enc * penc );
-    
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -188,4 +186,4 @@ ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * ego_enc
 
 #define  remove_all_character_enchants( ICHR ) remove_all_enchants_with_idsz( ICHR, IDSZ_NONE )
 
-#define ENCHANT_H
+#define _enchant_h

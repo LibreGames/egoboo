@@ -61,7 +61,7 @@ enum e_order
 //--------------------------------------------------------------------------------------------
 
 /// The bitmasks used by the check_target() function which is used in various character search
-/// functions like chr_find_target() or find_object_in_passage()
+/// functions like chr_find_target() or ego_passage::find_object_in()
 enum e_targeting_bits
 {
     TARGET_DEAD            = ( 1 << 0 ),        ///< Target dead stuff

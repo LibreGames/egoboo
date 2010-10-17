@@ -24,6 +24,10 @@
 
 #include "egoboo_typedef.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 
 /// Special modes for particle reflections from characters
@@ -159,3 +163,13 @@ eve_data_t *  load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * pe
 bool_t        save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplateName, eve_data_t * peve );
 
 eve_data_t *  eve_data_init( eve_data_t * peve );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _eve_file_h
+

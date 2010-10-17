@@ -124,7 +124,7 @@ PROFILE_DECLARE( talk_to_remotes );
 PROFILE_DECLARE( listen_for_packets );
 PROFILE_DECLARE( check_stats );
 PROFILE_DECLARE( set_local_latches );
-PROFILE_DECLARE( check_passage_music );
+PROFILE_DECLARE( PassageStack_check_music );
 PROFILE_DECLARE( cl_talkToHost );
 
 //--------------------------------------------------------------------------------------------
@@ -1132,7 +1132,7 @@ int do_game_proc_beginning( ego_game_process * gproc )
     PROFILE_RESET( listen_for_packets );
     PROFILE_RESET( check_stats );
     PROFILE_RESET( set_local_latches );
-    PROFILE_RESET( check_passage_music );
+    PROFILE_RESET( PassageStack_check_music );
     PROFILE_RESET( cl_talkToHost );
 
     stabilized_ups_sum    = 0.0f;
@@ -1227,11 +1227,11 @@ int do_game_proc_running( ego_game_process * gproc )
                 }
                 PROFILE_END2( set_local_latches );
 
-                PROFILE_BEGIN( check_passage_music );
+                PROFILE_BEGIN( PassageStack_check_music );
                 {
-                    check_passage_music();
+                    PassageStack_check_music();
                 }
-                PROFILE_END2( check_passage_music );
+                PROFILE_END2( PassageStack_check_music );
 
                 if ( network_waiting_for_players() )
                 {
@@ -1252,7 +1252,7 @@ int do_game_proc_running( ego_game_process * gproc )
         PROFILE_END2( game_update_loop );
 
         // estimate the main-loop update time is taking per inner-loop iteration
-        // do a kludge to average out the effects of functions like check_passage_music()
+        // do a kludge to average out the effects of functions like PassageStack_check_music()
         // even when the inner loop does not execute
         if ( update_loops > 0 )
         {
@@ -1355,7 +1355,7 @@ int do_game_proc_leaving( ego_game_process * gproc )
     PROFILE_FREE( listen_for_packets );
     PROFILE_FREE( check_stats );
     PROFILE_FREE( set_local_latches );
-    PROFILE_FREE( check_passage_music );
+    PROFILE_FREE( PassageStack_check_music );
     PROFILE_FREE( cl_talkToHost );
 
     return 1;
@@ -3579,7 +3579,7 @@ void game_release_module_data()
     release_all_ai_scripts();
 
     // deal with the mesh
-    clear_all_passages();
+    passage_system_clear();
 
     ptmp = PMesh;
     mesh_destroy( &ptmp );
@@ -4211,7 +4211,7 @@ ego_game_process * game_process_init( ego_game_process * gproc )
     PROFILE_INIT( listen_for_packets );
     PROFILE_INIT( check_stats );
     PROFILE_INIT( set_local_latches );
-    PROFILE_INIT( check_passage_music );
+    PROFILE_INIT( PassageStack_check_music );
     PROFILE_INIT( cl_talkToHost );
 
     return gproc;
@@ -4976,7 +4976,7 @@ bool_t do_shop_drop( const CHR_REF by_reference idropper, const CHR_REF by_refer
         int ix = pitem->pos.x / GRID_SIZE;
         int iy = pitem->pos.y / GRID_SIZE;
 
-        iowner = shop_get_owner( ix, iy );
+        iowner = ShopStack_find_owner( ix, iy );
         if ( INGAME_CHR( iowner ) )
         {
             int price;
@@ -5032,7 +5032,7 @@ bool_t do_shop_buy( const CHR_REF by_reference ipicker, const CHR_REF by_referen
         int ix = pitem->pos.x / GRID_SIZE;
         int iy = pitem->pos.y / GRID_SIZE;
 
-        iowner = shop_get_owner( ix, iy );
+        iowner = ShopStack_find_owner( ix, iy );
         if ( INGAME_CHR( iowner ) )
         {
             ego_chr * powner = ChrList.lst + iowner;
@@ -5111,7 +5111,7 @@ bool_t do_shop_steal( const CHR_REF by_reference ithief, const CHR_REF by_refere
         int ix = pitem->pos.x / GRID_SIZE;
         int iy = pitem->pos.y / GRID_SIZE;
 
-        iowner = shop_get_owner( ix, iy );
+        iowner = ShopStack_find_owner( ix, iy );
         if ( INGAME_CHR( iowner ) )
         {
             IPair  tmp_rand = {1, 100};
@@ -5154,7 +5154,7 @@ bool_t do_item_pickup( const CHR_REF by_reference ichr, const CHR_REF by_referen
 
     // assume that there is no shop so that the character can grab anything
     can_grab = btrue;
-    in_shop = INGAME_CHR( shop_get_owner( ix, iy ) );
+    in_shop = INGAME_CHR( ShopStack_find_owner( ix, iy ) );
 
     if ( in_shop )
     {

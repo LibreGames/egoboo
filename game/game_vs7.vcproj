@@ -264,6 +264,9 @@
 				RelativePath=".\input.h">
 			</File>
 			<File
+				RelativePath=".\input_defs.h">
+			</File>
+			<File
 				RelativePath=".\log.h">
 			</File>
 			<File
@@ -304,6 +307,9 @@
 			</File>
 			<File
 				RelativePath=".\egoboo.cpp">
+			</File>
+			<File
+				RelativePath=".\egoboo_rpc.cpp">
 			</File>
 			<File
 				RelativePath=".\enchant.cpp">
@@ -372,9 +378,6 @@
 				RelativePath=".\PrtList.cpp">
 			</File>
 			<File
-				RelativePath=".\rpc.cpp">
-			</File>
-			<File
 				RelativePath=".\server.cpp">
 			</File>
 			<File
@@ -398,6 +401,9 @@
 				RelativePath=".\char.h">
 			</File>
 			<File
+				RelativePath=".\character_defs.h">
+			</File>
+			<File
 				RelativePath=".\ChrList.h">
 			</File>
 			<File
@@ -408,6 +414,9 @@
 			</File>
 			<File
 				RelativePath=".\egoboo.h">
+			</File>
+			<File
+				RelativePath=".\egoboo_rpc.h">
 			</File>
 			<File
 				RelativePath=".\enchant.h">
@@ -474,9 +483,6 @@
 			</File>
 			<File
 				RelativePath=".\PrtList.h">
-			</File>
-			<File
-				RelativePath=".\rpc.h">
 			</File>
 			<File
 				RelativePath=".\server.h">
@@ -1013,6 +1019,19 @@
 			</File>
 			<File
 				RelativePath="..\basicdat\script.txt">
+			</File>
+		</Filter>
+		<Filter
+			Name="mmgr"
+			Filter="">
+			<File
+				RelativePath=".\Fluid_Studios_Memory_Manager\mmgr.cpp">
+			</File>
+			<File
+				RelativePath=".\Fluid_Studios_Memory_Manager\mmgr.h">
+			</File>
+			<File
+				RelativePath=".\Fluid_Studios_Memory_Manager\nommgr.h">
 			</File>
 		</Filter>
 	</Files>

@@ -25,6 +25,10 @@
 #include "egoboo_typedef.h"
 #include "egoboo_vfs.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -46,3 +50,14 @@ void template_put_range( vfs_FILE* filetemp, vfs_FILE* filewrite, FRange val );
 void template_put_string_under( vfs_FILE* filetemp, vfs_FILE* filewrite, const char* usename );
 void template_put_idsz( vfs_FILE* filetemp, vfs_FILE* filewrite, IDSZ idsz );
 void template_put_damage_modifier( vfs_FILE* filetemp, vfs_FILE* filewrite, Uint8 mod );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _template_file_h
+
+

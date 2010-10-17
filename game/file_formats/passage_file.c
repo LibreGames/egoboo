@@ -17,7 +17,7 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/passage_file.c
+/// @file file_formats/passage_data_file.c
 /// @brief A scanner for the passage file for a given module ( /modules/*.mod/basicdat/passages.txt )
 /// @details
 
@@ -25,10 +25,10 @@
 
 #include "mpd_file.h"
 
-#include "egoboo_fileutil.h"
+#include "..\egoboo_fileutil.h"
 
 //--------------------------------------------------------------------------------------------
-passage_t * passage_init( passage_t * ppass )
+passage_data_t * passage_data_init( passage_data_t * ppass )
 {
     if ( NULL == ppass ) return ppass;
 
@@ -40,7 +40,7 @@ passage_t * passage_init( passage_t * ppass )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t scan_passage_file( vfs_FILE * fileread, passage_t * ppass )
+bool_t scan_passage_data_file( vfs_FILE * fileread, passage_data_t * ppass )
 {
     /// @details ZZ@> This function reads the passage file
 
@@ -48,7 +48,7 @@ bool_t scan_passage_file( vfs_FILE * fileread, passage_t * ppass )
 
     if ( NULL == fileread || NULL == ppass ) return bfalse;
 
-    passage_init( ppass );
+    passage_data_init( ppass );
 
     found = bfalse;
     if ( goto_colon( NULL, fileread, btrue ) )

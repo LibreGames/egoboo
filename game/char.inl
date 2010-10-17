@@ -47,8 +47,6 @@ INLINE ego_chr  * team_get_pleader( const TEAM_REF by_reference iteam );
 
 INLINE bool_t team_hates_team( const TEAM_REF by_reference ipredator_team, const TEAM_REF by_reference iprey_team );
 
-
-
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
 //--------------------------------------------------------------------------------------------

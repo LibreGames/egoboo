@@ -82,6 +82,9 @@ struct ego_oct_bb
 
     static void         downgrade( ego_oct_bb * psrc, ego_bumper bump_stt, ego_bumper bump_base, ego_bumper * p_bump, ego_oct_bb   * pdst );
     static bool_t       add_vector( const ego_oct_bb src, const fvec3_base_t vec, ego_oct_bb   * pdst );
+
+    static egoboo_rv intersect_index( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax );
+    static egoboo_rv intersect_index_close( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax );
 };
 
 #define OCT_BB_INIT_VALS { OCT_VEC_INIT_VALS, OCT_VEC_INIT_VALS }
@@ -148,9 +151,9 @@ struct ego_OVolume
 };
 
 //--------------------------------------------------------------------------------------------
-struct ego_OTree 
-{ 
-    ego_OVolume leaf[8]; 
+struct ego_OTree
+{
+    ego_OVolume leaf[8];
 };
 
 //--------------------------------------------------------------------------------------------
@@ -174,10 +177,11 @@ struct ego_CVolume
 bool_t bumper_to_oct_bb_0( ego_bumper src, ego_oct_bb   * pdst );
 bool_t bumper_to_oct_bb_1( ego_bumper src, fvec3_t vel, ego_oct_bb   * pdst );
 
-
 int    oct_bb_to_points( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count );
 void   points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#define Egoboo_bbox_h
+
+#define _egoboo_bbox_h
+

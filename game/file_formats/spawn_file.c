@@ -22,11 +22,14 @@
 /// @details
 
 #include "spawn_file.h"
-#include "char.inl"
-#include "game.h"
 
-#include "egoboo_fileutil.h"
-#include "egoboo_strutil.h"
+#include "..\character_defs.h"
+#include "..\egoboo_fileutil.h"
+#include "..\egoboo_strutil.h"
+
+#include "mpd_file.h"
+
+#include "..\egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

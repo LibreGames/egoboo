@@ -29,6 +29,10 @@
 
 #include "egoboo_strutil.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 typedef enum ConfigFile_retval_enum ConfigFile_retval;
@@ -80,4 +84,11 @@ extern ConfigFile_retval ConfigFile_SetValue_Boolean( ConfigFilePtr_t pConfigFil
 extern ConfigFile_retval ConfigFile_SetValue_Int( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, int pInt );
 extern ConfigFile_retval ConfigFile_SetValue_Float( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, float pFloat );
 
-#define _CONFIGFILE_H_
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _configfile_h

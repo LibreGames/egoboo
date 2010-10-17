@@ -26,6 +26,10 @@
 
 #include <SDL.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_egoboo_console;
@@ -53,4 +57,14 @@ void egoboo_console_hide( egoboo_console_t * pcon );
 SDL_Event * egoboo_console_handle_events( SDL_Event * evt );
 
 void egoboo_console_fprint( egoboo_console_t * pcon, const char *format, ... );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _egoboo_console_h
+
 

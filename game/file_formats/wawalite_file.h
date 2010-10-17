@@ -24,6 +24,10 @@
 
 #include "egoboo_math.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 #define MAXWATERLAYER 2                             ///< Maximum water layers
@@ -188,3 +192,14 @@ extern wawalite_data_t wawalite_data;
 //--------------------------------------------------------------------------------------------
 bool_t            write_wawalite_file_vfs( wawalite_data_t * pdata );
 wawalite_data_t * read_wawalite_file_vfs( const char *filename, wawalite_data_t * pdata );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _wawalite_file_h
+
+

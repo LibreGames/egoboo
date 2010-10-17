@@ -42,4 +42,4 @@ void sv_frameStep();
 // int  sv_beginMultiPlayer(...)
 // int  sv_loadModule(...)
 
-#define egoboo_Server_h
+#define _server_h

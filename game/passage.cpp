@@ -37,8 +37,45 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, passage_t, PassageStack, MAX_PASS );
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, shop_t,    ShopStack, MAX_SHOP );
+INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_passage, PassageStack, MAX_PASS );
+INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_shop,    ShopStack, MAX_SHOP );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+static void PassageStack_free_all();
+static void ShopStack_free_all();
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void activate_passages_file_vfs()
+{
+    /// @details ZZ@> This function reads the passage file
+    ego_passage  tmp_passage;
+    vfs_FILE  *fileread;
+
+    // Reset all of the old passages
+    passage_system_clear();
+
+    // Load the file
+    fileread = vfs_openRead( "mp_data/passage.txt" );
+    if ( NULL == fileread ) return;
+
+    while ( scan_passage_data_file( fileread, &tmp_passage ) )
+    {
+        PassageStack_add_one( &tmp_passage );
+    }
+
+    vfs_close( fileread );
+}
+
+//--------------------------------------------------------------------------------------------
+void passage_system_clear()
+{
+    /// @details ZZ@> This function clears the passage list ( for doors )
+
+    PassageStack_free_all();
+    ShopStack_free_all();
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -48,7 +85,7 @@ void PassageStack_free_all()
 }
 
 //--------------------------------------------------------------------------------------------
-int PasageStack_get_free()
+int PassageStack_get_free()
 {
     int ipass = ( PASS_REF ) MAX_PASS;
 
@@ -59,6 +96,101 @@ int PasageStack_get_free()
     };
 
     return ipass;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PassageStack_open( const PASS_REF by_reference passage )
+{
+    /// @details ZZ@> This function makes a passage passable
+
+    if ( INVALID_PASSAGE( passage ) ) return bfalse;
+
+    return ego_passage::do_open( PassageStack.lst + passage );
+}
+
+//--------------------------------------------------------------------------------------------
+void PassageStack_flash( const PASS_REF by_reference passage, Uint8 color )
+{
+    /// @details ZZ@> This function makes a passage flash white
+
+    if ( !INVALID_PASSAGE( passage ) )
+    {
+        ego_passage::flash( PassageStack.lst + passage, color );
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PassageStack_point_is_inside( const PASS_REF by_reference passage, float xpos, float ypos )
+{
+    /// @details ZZ@> This function makes a passage passable
+    bool_t useful = bfalse;
+
+    if ( INVALID_PASSAGE( passage ) ) return useful;
+
+    return ego_passage::point_is_in( PassageStack.lst + passage, xpos, ypos );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PassageStack_object_is_inside( const PASS_REF by_reference passage, float xpos, float ypos, float radius )
+{
+    /// @details ZZ@> This function makes a passage passable
+    bool_t useful = bfalse;
+
+    if ( INVALID_PASSAGE( passage ) ) return useful;
+
+    return ego_passage::object_is_in( PassageStack.lst + passage, xpos, ypos, radius );
+}
+//--------------------------------------------------------------------------------------------
+CHR_REF PassageStack_who_is_blocking( const PASS_REF by_reference passage, const CHR_REF by_reference isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item )
+{
+    /// @details ZZ@> This function makes a passage passable
+
+    // Skip invalid passages
+    if ( INVALID_PASSAGE( passage ) ) return ( CHR_REF )MAX_CHR;
+
+    return ego_passage::who_is_blocking( PassageStack.lst + passage, isrc, idsz, targeting_bits, require_item );
+}
+
+//--------------------------------------------------------------------------------------------
+void PassageStack_check_music()
+{
+    /// @details ZF@> This function checks all passages if there is a player in it, if it is, it plays a specified
+    /// song set in by the AI script functions
+
+    PASS_REF passage;
+
+    // Check every music passage
+    for ( passage = 0; passage < PassageStack.count; passage++ )
+    {
+        if( ego_passage::check_music( PassageStack.lst + passage ) )
+        {
+            return;
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t PassageStack_close_one( const PASS_REF by_reference passage )
+{
+    // Skip invalid passages
+    if ( INVALID_PASSAGE( passage ) ) return bfalse;
+
+    return ego_passage::close( PassageStack.lst + passage );
+}
+
+//--------------------------------------------------------------------------------------------
+void PassageStack_add_one( ego_passage * pdata )
+{
+    /// @details ZZ@> This function creates a passage area
+
+    PASS_REF    ipass;
+
+    if ( NULL == pdata ) return;
+
+    ipass = PassageStack_get_free();
+    if ( ipass >= MAX_PASS ) return;
+
+    ego_passage::init( PassageStack.lst + ipass, pdata );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -90,18 +222,123 @@ int ShopStack_get_free()
 }
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-bool_t open_passage( const PASS_REF by_reference passage )
+void ShopStack_add_one( const CHR_REF by_reference owner, const PASS_REF by_reference passage )
 {
-    /// @details ZZ@> This function makes a passage passable
+    /// @details ZZ@> This function creates a shop passage
 
+    SHOP_REF ishop;
+    CHR_REF  ichr;
+
+    if ( !VALID_PASSAGE( passage ) ) return;
+
+    if ( !INGAME_CHR( owner ) || !ChrList.lst[owner].alive ) return;
+
+    ishop = ShopStack_get_free();
+    if ( !VALID_SHOP( ishop ) ) return;
+
+    // The passage exists...
+    ShopStack.lst[ishop].passage = passage;
+    ShopStack.lst[ishop].owner   = owner;
+
+    // flag every item in the shop as a shop item
+    for ( ichr = 0; ichr < MAX_CHR; ichr++ )
+    {
+        ego_chr * pchr;
+
+        if ( !INGAME_CHR( ichr ) ) continue;
+        pchr = ChrList.lst + ichr;
+
+        if ( pchr->isitem )
+        {
+            if ( PassageStack_object_is_inside( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+            {
+                pchr->isshopitem = btrue;               // Full value
+                pchr->iskursed   = bfalse;              // Shop items are never kursed
+
+                // Identify only cheap items in a shop
+                /// @note BB@> not all shop items should be identified.
+                /// I guess there could be a minor exploit with casters identifying a book, then
+                /// leaving the module and re-identifying the book.
+                /// An answer would be to reduce the XP based on the some quality of the book and the character's level?
+                /// Maybe give the spell books levels, and if your character's level is above the spellbook level, no XP for identifying it?
+
+                if ( ego_chr::get_price( ichr ) <= SHOP_IDENTIFY )
+                {
+                    pchr->nameknown  = btrue;
+                }
+            }
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+CHR_REF ShopStack_find_owner( int ix, int iy )
+{
+    /// ZZ@> This function returns the owner of a item in a shop
+
+    SHOP_REF cnt;
+    CHR_REF  owner = ( CHR_REF )SHOP_NOOWNER;
+
+    for ( cnt = 0; cnt < ShopStack.count; cnt++ )
+    {
+        PASS_REF    passage;
+        ego_passage * ppass;
+        ego_shop    * pshop;
+
+        pshop = ShopStack.lst + cnt;
+
+        passage = pshop->passage;
+
+        if ( INVALID_PASSAGE( passage ) ) continue;
+        ppass = PassageStack.lst + passage;
+
+        if ( irect_point_inside( &( ppass->area ), ix, iy ) )
+        {
+            // if there is SHOP_NOOWNER, someone has been murdered!
+            owner = pshop->owner;
+            break;
+        }
+    }
+
+    return owner;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_passage * ego_passage::init( ego_passage * ppass, passage_data_t * pdata )
+{
+    if( NULL == ppass ) return NULL;
+
+    if( NULL != pdata )
+    {
+        ppass->area.xmin  = CLIP( pdata->area.xmin, 0, PMesh->info.tiles_x - 1 );
+        ppass->area.ymin  = CLIP( pdata->area.ymin, 0, PMesh->info.tiles_y - 1 );
+
+        ppass->area.xmax  = CLIP( pdata->area.xmax, 0, PMesh->info.tiles_x - 1 );
+        ppass->area.ymax  = CLIP( pdata->area.ymax, 0, PMesh->info.tiles_y - 1 );
+
+        ppass->mask       = pdata->mask;
+        ppass->music      = pdata->music;
+
+        // Is it open or closed?
+        ppass->open       = btrue;
+        if ( !pdata->open )
+        {
+            ego_passage::close( ppass );
+        }
+    }
+
+    return ppass;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_passage::do_open( ego_passage * ppass )
+{
     int x, y;
     Uint32 fan;
     bool_t useful = bfalse;
-    passage_t * ppass;
 
-    if ( INVALID_PASSAGE( passage ) ) return useful;
-    ppass = PassageStack.lst + passage;
+    if ( NULL == ppass ) return useful;
 
     useful = !ppass->open;
     ppass->open = btrue;
@@ -125,16 +362,12 @@ bool_t open_passage( const PASS_REF by_reference passage )
 }
 
 //--------------------------------------------------------------------------------------------
-void flash_passage( const PASS_REF by_reference passage, Uint8 color )
+void ego_passage::flash( ego_passage * ppass, Uint8 color )
 {
-    /// @details ZZ@> This function makes a passage flash white
-
     int x, y, cnt;
     Uint32 fan;
-    passage_t * ppass;
 
-    if ( INVALID_PASSAGE( passage ) ) return;
-    ppass = PassageStack.lst + passage;
+    if( NULL == ppass ) return;
 
     for ( y = ppass->area.ymin; y <= ppass->area.ymax; y++ )
     {
@@ -153,36 +386,30 @@ void flash_passage( const PASS_REF by_reference passage, Uint8 color )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t point_is_in_passage( const PASS_REF by_reference passage, float xpos, float ypos )
+bool_t ego_passage::point_is_in( ego_passage * ppass, float xpos, float ypos )
 {
     /// @details ZF@> This return btrue if the specified X and Y coordinates are within the passage
 
-    passage_t * ppass;
     ego_frect_t tmp_rect;
 
-    if ( INVALID_PASSAGE( passage ) ) return bfalse;
-    ppass = PassageStack.lst + passage;
-
-    // Passage area
-    tmp_rect.xmin   = ppass->area.xmin * GRID_SIZE;
-    tmp_rect.ymin    = ppass->area.ymin * GRID_SIZE;
-    tmp_rect.xmax  = ( ppass->area.xmax + 1 ) * GRID_SIZE;
+     // Passage area
+    tmp_rect.xmin = ppass->area.xmin * GRID_SIZE;
+    tmp_rect.ymin = ppass->area.ymin * GRID_SIZE;
+    tmp_rect.xmax = ( ppass->area.xmax + 1 ) * GRID_SIZE;
     tmp_rect.ymax = ( ppass->area.ymax + 1 ) * GRID_SIZE;
 
     return frect_point_inside( &tmp_rect, xpos, ypos );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t object_is_in_passage( const PASS_REF by_reference passage, float xpos, float ypos, float radius )
+bool_t ego_passage::object_is_in( ego_passage * ppass, float xpos, float ypos, float radius )
 {
     /// @details ZF@> This return btrue if the specified X and Y coordinates are within the passage
     ///     radius is how much offset we allow outside the passage
 
-    passage_t * ppass;
     ego_frect_t tmp_rect;
 
-    if ( INVALID_PASSAGE( passage ) ) return bfalse;
-    ppass = PassageStack.lst + passage;
+    if ( NULL == ppass ) return bfalse;
 
     // Passage area
     radius += CLOSETOLERANCE;
@@ -195,7 +422,7 @@ bool_t object_is_in_passage( const PASS_REF by_reference passage, float xpos, fl
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_REF by_reference isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item )
+CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF by_reference isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item )
 {
     /// @details ZZ@> This function returns MAX_CHR if there is no character in the passage,
     ///    otherwise the index of the first character found is returned...
@@ -203,16 +430,13 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
     ///    Finds living ones, then items and corpses
 
     CHR_REF character, foundother;
-    passage_t * ppass;
     ego_chr *psrc;
+
+    if( NULL == ppass ) return ( CHR_REF )MAX_CHR;
 
     // Skip if the one who is looking doesn't exist
     if ( !INGAME_CHR( isrc ) ) return ( CHR_REF )MAX_CHR;
     psrc = ChrList.lst + isrc;
-
-    // Skip invalid passages
-    if ( INVALID_PASSAGE( passage ) ) return ( CHR_REF )MAX_CHR;
-    ppass = PassageStack.lst + passage;
 
     // Look at each character
     foundother = ( CHR_REF )MAX_CHR;
@@ -230,7 +454,7 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
         if ( !check_target( psrc, character, idsz, targeting_bits ) ) continue;
 
         // Now check if it actually is inside the passage area
-        if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+        if ( ego_passage::object_is_in( ppass, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
         {
             // Found a live one, do we need to check for required items as well?
             if ( IDSZ_NONE == require_item )
@@ -276,57 +500,57 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
 }
 
 //--------------------------------------------------------------------------------------------
-void check_passage_music()
+bool_t ego_passage::check_music( ego_passage * ppass )
 {
-    /// @details ZF@> This function checks all passages if there is a player in it, if it is, it plays a specified
-    /// song set in by the AI script functions
-
+    bool_t retval = bfalse;
     CHR_REF character = ( CHR_REF )MAX_CHR;
     PASS_REF passage;
 
-    // Check every music passage
-    for ( passage = 0; passage < PassageStack.count; passage++ )
+    PLA_REF ipla;
+
+    if( NULL == ppass ) return bfalse;
+
+    if ( ppass->music == NO_MUSIC || ppass->music == get_current_song_playing() )
     {
-        PLA_REF ipla;
-        passage_t * ppass = PassageStack.lst + passage;
+        return btrue;
+    }
 
-        if ( ppass->music == NO_MUSIC || ppass->music == get_current_song_playing() ) continue;
+    // Look at each player
+    retval = bfalse;
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        ego_chr * pchr;
+        player_t * ppla = PlaStack.lst + ipla;
 
-        // Look at each player
-        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        character = ppla->index;
+
+        if ( !INGAME_CHR( character ) ) continue;
+        pchr = ChrList.lst + character;
+
+        if ( !VALID_PLA( pchr->is_which_player ) || !pchr->alive || pchr->pack.is_packed ) continue;
+
+        // Is it in the passage?
+        if ( PassageStack_object_is_inside( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
         {
-            ego_chr * pchr;
-            player_t * ppla = PlaStack.lst + ipla;
-
-            character = ppla->index;
-
-            if ( !INGAME_CHR( character ) ) continue;
-            pchr = ChrList.lst + character;
-
-            if ( !VALID_PLA( pchr->is_which_player ) || !pchr->alive || pchr->pack.is_packed ) continue;
-
-            // Is it in the passage?
-            if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
-            {
-                // Found a player, start music track
-                sound_play_song( ppass->music, 0, -1 );
-                return;
-            }
+            // Found a player, start music track
+            sound_play_song( ppass->music, 0, -1 );
+            retval = btrue;
         }
     }
+
+    return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t close_passage( const PASS_REF by_reference passage )
+bool_t ego_passage::close( ego_passage * ppass )
 {
     /// @details ZZ@> This function makes a passage impassable, and returns btrue if it isn't blocked
+
     int x, y;
     Uint32 fan, cnt;
-    passage_t * ppass;
     CHR_REF character;
 
-    if ( INVALID_PASSAGE( passage ) ) return bfalse;
-    ppass = PassageStack.lst + passage;
+        if( NULL == ppass ) return bfalse;
 
     // don't compute all of this for nothing
     if ( 0 == ppass->mask ) return btrue;
@@ -350,7 +574,7 @@ bool_t close_passage( const PASS_REF by_reference passage )
 
             if ( 0.0f != pchr->bump_stt.size )
             {
-                if ( object_is_in_passage( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+                if ( ego_passage::object_is_in( ppass, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
                 {
                     if ( !pchr->canbecrushed )
                     {
@@ -388,150 +612,3 @@ bool_t close_passage( const PASS_REF by_reference passage )
     return btrue;
 }
 
-//--------------------------------------------------------------------------------------------
-void clear_all_passages()
-{
-    /// @details ZZ@> This function clears the passage list ( for doors )
-
-    PassageStack_free_all();
-    ShopStack_free_all();
-}
-
-//--------------------------------------------------------------------------------------------
-void add_shop_passage( const CHR_REF by_reference owner, const PASS_REF by_reference passage )
-{
-    /// @details ZZ@> This function creates a shop passage
-
-    SHOP_REF ishop;
-    CHR_REF  ichr;
-
-    if ( !VALID_PASSAGE( passage ) ) return;
-
-    if ( !INGAME_CHR( owner ) || !ChrList.lst[owner].alive ) return;
-
-    ishop = ShopStack_get_free();
-    if ( !VALID_SHOP( ishop ) ) return;
-
-    // The passage exists...
-    ShopStack.lst[ishop].passage = passage;
-    ShopStack.lst[ishop].owner   = owner;
-
-    // flag every item in the shop as a shop item
-    for ( ichr = 0; ichr < MAX_CHR; ichr++ )
-    {
-        ego_chr * pchr;
-
-        if ( !INGAME_CHR( ichr ) ) continue;
-        pchr = ChrList.lst + ichr;
-
-        if ( pchr->isitem )
-        {
-            if ( object_is_in_passage( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
-            {
-                pchr->isshopitem = btrue;               // Full value
-                pchr->iskursed   = bfalse;              // Shop items are never kursed
-
-                // Identify only cheap items in a shop
-                /// @note BB@> not all shop items should be identified.
-                /// I guess there could be a minor exploit with casters identifying a book, then
-                /// leaving the module and re-identifying the book.
-                /// An answer would be to reduce the XP based on the some quality of the book and the character's level?
-                /// Maybe give the spell books levels, and if your character's level is above the spellbook level, no XP for identifying it?
-
-                if ( ego_chr::get_price( ichr ) <= SHOP_IDENTIFY )
-                {
-                    pchr->nameknown  = btrue;
-                }
-            }
-        }
-    }
-}
-
-//--------------------------------------------------------------------------------------------
-void add_passage( passage_t * pdata )
-{
-    /// @details ZZ@> This function creates a passage area
-
-    PASS_REF    ipass;
-    passage_t * ppass;
-
-    if ( NULL == pdata ) return;
-
-    ipass = PasageStack_get_free();
-
-    if ( ipass >= MAX_PASS ) return;
-    ppass = PassageStack.lst + ipass;
-
-    ppass->area.xmin  = CLIP( pdata->area.xmin, 0, PMesh->info.tiles_x - 1 );
-    ppass->area.ymin  = CLIP( pdata->area.ymin, 0, PMesh->info.tiles_y - 1 );
-
-    ppass->area.xmax  = CLIP( pdata->area.xmax, 0, PMesh->info.tiles_x - 1 );
-    ppass->area.ymax  = CLIP( pdata->area.ymax, 0, PMesh->info.tiles_y - 1 );
-
-    ppass->mask       = pdata->mask;
-    ppass->music      = pdata->music;
-
-    // Is it open or closed?
-    if ( pdata->open )
-    {
-        ppass->open = btrue;
-    }
-    else
-    {
-        close_passage( ipass );
-    }
-}
-
-//--------------------------------------------------------------------------------------------
-void activate_passages_file_vfs()
-{
-    /// @details ZZ@> This function reads the passage file
-    passage_t  tmp_passage;
-    vfs_FILE  *fileread;
-
-    // Reset all of the old passages
-    clear_all_passages();
-
-    // Load the file
-    fileread = vfs_openRead( "mp_data/passage.txt" );
-    if ( NULL == fileread ) return;
-
-    while ( scan_passage_file( fileread, &tmp_passage ) )
-    {
-        add_passage( &tmp_passage );
-    }
-
-    vfs_close( fileread );
-}
-
-//--------------------------------------------------------------------------------------------
-CHR_REF shop_get_owner( int ix, int iy )
-{
-    /// ZZ@> This function returns the owner of a item in a shop
-
-    SHOP_REF cnt;
-    CHR_REF  owner = ( CHR_REF )SHOP_NOOWNER;
-
-    for ( cnt = 0; cnt < ShopStack.count; cnt++ )
-    {
-        PASS_REF    passage;
-        passage_t * ppass;
-        shop_t    * pshop;
-
-        pshop = ShopStack.lst + cnt;
-
-        passage = pshop->passage;
-
-        if ( INVALID_PASSAGE( passage ) ) continue;
-        ppass = PassageStack.lst + passage;
-
-        if ( irect_point_inside( &( ppass->area ), ix, iy ) )
-        {
-            // if there is SHOP_NOOWNER, someone has been murdered!
-            owner = pshop->owner;
-            break;
-        }
-    }
-
-    return owner;
-}

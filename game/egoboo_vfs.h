@@ -29,6 +29,13 @@
 #include "file_common.h"
 #include <SDL_types.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 struct s_vfs_search_context;
 typedef struct s_vfs_search_context vfs_search_context_t;
 
@@ -50,8 +57,14 @@ enum e_vfs_serach_bits
 // but if we change the package we are using, it might care...
 #define vfs_delete_directory vfs_delete_file
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 /// use this ugly thing, since there is no other way to hide the actual structure of the vfs_FILE...
 typedef struct vfs_FILE vfs_FILE;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 /// the initlization routing. there is no need to call the de-initialization. That
 /// will be called automatically at program termination
@@ -134,3 +147,14 @@ int vfs_add_mount_point( const char * dirname, const char * relative_path, const
 int vfs_remove_mount_point( const char * mount_point );
 
 void vfs_set_base_search_paths();
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _egoboo_vfs_h
+
+

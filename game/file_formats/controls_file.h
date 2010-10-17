@@ -24,7 +24,11 @@
 
 #include "egoboo_typedef.h"
 
-#include "input.h"
+#include "input_defs.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -148,3 +152,13 @@ extern Uint32 input_device_count;
 
 bool_t input_settings_load_vfs( const char *szFilename );
 bool_t input_settings_save_vfs( const char* szFilename );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _controls_file_h
+

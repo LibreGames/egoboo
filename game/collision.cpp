@@ -590,13 +590,13 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
                         // do the platform test first
                         if ( PHYS_CLOSE_TOLERANCE_NONE != test_platform && !found )
                         {
-                            found = phys_intersect_oct_bb( pchr_a->chr_max_cv, pchr_a->pos, pchr_a->vel, pprt_b->prt_cv, prt_get_pos( pprt_b ), pprt_b->vel, test_platform, NULL, &( tmp_codata.tmin ), &( tmp_codata.tmax ) );
+                            found = phys_intersect_oct_bb( pchr_a->chr_max_cv, pchr_a->pos, pchr_a->vel, pprt_b->prt_cv, ego_prt::get_pos( pprt_b ), pprt_b->vel, test_platform, NULL, &( tmp_codata.tmin ), &( tmp_codata.tmax ) );
                         }
 
                         // try the normal test if the platform test fails
                         if ( !found )
                         {
-                            found = phys_intersect_oct_bb( pchr_a->chr_min_cv, pchr_a->pos, pchr_a->vel, pprt_b->prt_cv, prt_get_pos( pprt_b ), pprt_b->vel, test_platform, &( tmp_codata.cv ), &( tmp_codata.tmin ), &( tmp_codata.tmax ) );
+                            found = phys_intersect_oct_bb( pchr_a->chr_min_cv, pchr_a->pos, pchr_a->vel, pprt_b->prt_cv, ego_prt::get_pos( pprt_b ), pprt_b->vel, test_platform, &( tmp_codata.cv ), &( tmp_codata.tmin ), &( tmp_codata.tmax ) );
                         }
 
                         if ( found )
@@ -1202,7 +1202,7 @@ bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat )
     if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
     if ( !ACTIVE_PCHR( pplat ) ) return bfalse;
 
-    pprt_pip = prt_get_ppip( GET_REF_PPRT( pprt ) );
+    pprt_pip = ego_prt::get_ppip( GET_REF_PPRT( pprt ) );
     if ( NULL == pprt_pip ) return bfalse;
 
     // check if they can be connected
@@ -1218,7 +1218,7 @@ bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat )
 
         pprt->onwhichplatform_ref    = GET_REF_PCHR( pplat );
 
-        prt_get_environment( ego_prt_bundle::set( &bdl, pprt ) );
+        prt_calc_environment( ego_prt_bundle::set( &bdl, pprt ) );
     }
 
     // blank the targetplatform_* stuff so we know we are done searching
@@ -1251,7 +1251,7 @@ bool_t detach_particle_from_platform( ego_prt * pprt )
     pprt->targetplatform_overlap   = 0.0f;
 
     // get the correct particle environment
-    prt_get_environment( &bdl_prt );
+    prt_calc_environment( &bdl_prt );
 
     return btrue;
 }
@@ -2312,7 +2312,7 @@ bool_t do_prt_platform_physics( ego_prt * pprt, ego_chr * pplat, chr_prt_collsio
     // Test to see whether the particle is in the right position to interact with the platform.
     // You have to be closer to a platform to interact with it than for a general object,
     // but the vertical distance is looser.
-    plat_collision = test_interaction_close_1( pplat->chr_max_cv, pplat->pos, pprt->bump_min, prt_get_pos( pprt ), btrue );
+    plat_collision = test_interaction_close_1( pplat->chr_max_cv, pplat->pos, pprt->bump_min, ego_prt::get_pos( pprt ), btrue );
 
     if ( !plat_collision ) return bfalse;
 
@@ -2886,7 +2886,7 @@ bool_t do_chr_prt_collision_bump( ego_chr * pchr, ego_prt * pprt, chr_prt_collsi
     if ( !prt_belongs_to_chr )
     {
         // no simple owner relationship. Check for something deeper.
-        CHR_REF prt_owner = prt_get_iowner( GET_REF_PPRT( pprt ), 0 );
+        CHR_REF prt_owner = ego_prt::get_iowner( GET_REF_PPRT( pprt ), 0 );
         if ( INGAME_CHR( prt_owner ) )
         {
             CHR_REF chr_wielder = ego_chr::get_lowest_attachment( GET_REF_PCHR( pchr ), btrue );
@@ -2995,7 +2995,7 @@ bool_t do_chr_prt_collision_init( ego_chr * pchr, ego_prt * pprt, chr_prt_collsi
     pdata->ppip = PipStack.lst + pprt->pip_ref;
 
     // measure the collision depth
-    full_collision = get_depth_1( pchr->chr_min_cv, pchr->pos, pprt->bump_padded, prt_get_pos( pprt ), btrue, pdata->odepth );
+    full_collision = get_depth_1( pchr->chr_min_cv, pchr->pos, pprt->bump_padded, ego_prt::get_pos( pprt ), btrue, pdata->odepth );
 
     //// measure the collision depth in the last update
     //// the objects were not touching last frame, so they must have collided this frame

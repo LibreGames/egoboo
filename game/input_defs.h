@@ -19,26 +19,28 @@
 //*
 //********************************************************************************************
 
-/// @file client.h
-/// @details Basic skeleton for the client portion of a client-server architecture,
-/// this is totally not in use yet.
+/// @file input_defs.h
+/// @details Keyboard, mouse, and joystick handling code.
 
-/// A mockup of an actual client state
-struct ClientState_t
+#include "egoboo_typedef.h"
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#define MAXJOYSTICK          2     ///<the maximum number of supported joysticks
+
+/// Which input control
+/// @details Used by the controls[] structure and the control_is_pressed() function to query the state of various controls.
+enum e_input_device
 {
-    int dummy;
+    INPUT_DEVICE_KEYBOARD = 0,
+    INPUT_DEVICE_MOUSE,
+    INPUT_DEVICE_JOY,
+
+    // aliases
+    INPUT_DEVICE_BEGIN = INPUT_DEVICE_KEYBOARD,
+    INPUT_DEVICE_END   = INPUT_DEVICE_JOY,
+    INPUT_DEVICE_JOY_A = INPUT_DEVICE_JOY + 0,
+    INPUT_DEVICE_JOY_B = INPUT_DEVICE_JOY + 1
 };
-
-// Globally accesible client state
-extern ClientState_t ClientState;
-
-int  cl_init();
-void cl_shutDown();
-void cl_frameStep();
-
-// Much more to come...
-// int  cl_connectToServer(...);
-// int  cl_loadModule(...);
-
-#define _client_h
-
+typedef enum  e_input_device INPUT_DEVICE;

@@ -71,7 +71,6 @@ struct ego_BSP_leaf
     static bool_t           dtor( ego_BSP_leaf   * t );
 };
 
-
 //--------------------------------------------------------------------------------------------
 DECLARE_DYNAMIC_ARY( ego_BSP_leaf_ary, ego_BSP_leaf   );
 DECLARE_DYNAMIC_ARY( ego_BSP_leaf_pary, ego_BSP_leaf   * );
@@ -194,5 +193,6 @@ private:
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#define Egoboo_bsp_h
+#define _bsp_h
+
 

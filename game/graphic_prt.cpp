@@ -46,7 +46,7 @@ float ptex_wscale[2] = {1.0f, 1.0f};
 float ptex_hscale[2] = {1.0f, 1.0f};
 
 //--------------------------------------------------------------------------------------------
-int prt_get_texture_style( const TX_REF by_reference itex )
+int get_prt_texture_style( const TX_REF by_reference itex )
 {
     int index;
 
@@ -66,12 +66,12 @@ int prt_get_texture_style( const TX_REF by_reference itex )
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_set_texture_params( const TX_REF by_reference itex )
+void set_prt_texture_params( const TX_REF by_reference itex )
 {
     int index;
     oglx_texture_t * ptex;
 
-    index = prt_get_texture_style( itex );
+    index = get_prt_texture_style( itex );
     if ( index < 0 ) return;
 
     ptex = TxTexture_get_ptr( itex );
@@ -792,11 +792,11 @@ void prt_instance_update_vertices( ego_camera * pcam, prt_instance_t * pinst, eg
     pinst->image_ref = UFP8_TO_UINT( pprt->image + pprt->image_stt );
 
     // set the position
-    pinst->pos         = prt_get_pos( pprt );
+    pinst->pos         = ego_prt::get_pos( pprt );
     pinst->orientation = ppip->orientation;
 
     // calculate the billboard vectors for the reflections
-    pinst->ref_pos      = prt_get_pos( pprt );
+    pinst->ref_pos      = ego_prt::get_pos( pprt );
     pinst->ref_pos.z    = 2 * pprt->enviro.grid_level - pinst->pos.z;
 
     // get the vector from the camera to the particle
@@ -1065,7 +1065,7 @@ void prt_instance_update_vertices( ego_camera * pcam, prt_instance_t * pinst, eg
     }
 
     // set some particle dependent properties
-    pinst->scale = prt_get_scale( pprt );
+    pinst->scale = ego_prt::get_scale( pprt );
     pinst->size  = UFP8_TO_FLOAT( pprt->size ) * pinst->scale;
 
     if ( cfg.dev_mode && SDLKEYDOWN( SDLK_F8 ) )

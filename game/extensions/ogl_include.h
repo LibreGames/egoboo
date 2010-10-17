@@ -1,4 +1,5 @@
 #pragma once
+
 //********************************************************************************************
 //*
 //*    This file is part of the opengl extensions library. This library is
@@ -113,4 +114,3 @@ extern "C"
 #if defined(__cplusplus)
 };
 #endif
-

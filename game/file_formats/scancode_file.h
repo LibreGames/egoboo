@@ -24,6 +24,10 @@
 
 #include "egoboo_typedef.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -54,3 +58,14 @@ extern scantag_t scantag[MAXTAG];
 void        scantag_read_all_vfs( const char *szFilename );
 int         scantag_get_value( const char *string );
 const char* scantag_get_string( Sint32 device, int tag, bool_t onlykeys );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _scancode_file_h
+
+

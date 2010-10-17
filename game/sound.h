@@ -46,7 +46,6 @@ struct snd_mix_ptr
     } ptr;
 };
 
-
 //--------------------------------------------------------------------------------------------
 struct ego_snd_config : public s_snd_config_data {};
 

@@ -174,7 +174,7 @@ int GFX_HEIGHT = 600;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-ego_gfx_config::data_t     gfx;
+ego_gfx_config     gfx;
 
 SDLX_video_parameters_t sdl_vparam;
 oglx_video_parameters_t ogl_vparam;
@@ -570,7 +570,7 @@ void gfx_init_SDL_graphics()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_set_virtual_screen( ego_gfx_config::data_t * pgfx )
+bool_t gfx_set_virtual_screen( ego_gfx_config * pgfx )
 {
     float kx, ky;
 
@@ -604,7 +604,7 @@ bool_t gfx_set_virtual_screen( ego_gfx_config::data_t * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_config( ego_gfx_config::data_t * pgfx, ego_config_data_t * pcfg )
+bool_t gfx_synch_config( ego_gfx_config * pgfx, ego_config_data_t * pcfg )
 {
     // call ego_gfx_config::init(), even if the config data is invalid
     if ( !ego_gfx_config::init( pgfx ) ) return bfalse;
@@ -640,7 +640,7 @@ bool_t gfx_synch_config( ego_gfx_config::data_t * pgfx, ego_config_data_t * pcfg
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_gfx_config::init( ego_gfx_config::data_t * pgfx )
+bool_t ego_gfx_config::init( ego_gfx_config * pgfx )
 {
     if ( NULL == pgfx ) return bfalse;
 
@@ -2011,7 +2011,7 @@ void render_shadow( const CHR_REF by_reference character )
     itex = TX_PARTICLE_LIGHT;
     oglx_texture_Bind( TxTexture_get_ptr( itex ) );
 
-    itex_style = prt_get_texture_style( itex );
+    itex_style = get_prt_texture_style( itex );
     if ( itex_style < 0 ) itex_style = 0;
 
     // GOOD SHADOW
@@ -2145,7 +2145,7 @@ void render_bad_shadow( const CHR_REF by_reference character )
     itex = TX_PARTICLE_LIGHT;
     oglx_texture_Bind( TxTexture_get_ptr( itex ) );
 
-    itex_style = prt_get_texture_style( itex );
+    itex_style = get_prt_texture_style( itex );
     if ( itex_style < 0 ) itex_style = 0;
 
     v[0].tex[SS] = CALCULATE_PRT_U0( itex_style, 236 );
@@ -4700,10 +4700,10 @@ void load_basic_textures( /* const char *modname */ )
 
     // Particle sprites
     TxTexture_load_one_vfs( "mp_data/particle_trans", ( TX_REF )TX_PARTICLE_TRANS, TRANSCOLOR );
-    prt_set_texture_params(( TX_REF )TX_PARTICLE_TRANS );
+    set_prt_texture_params(( TX_REF )TX_PARTICLE_TRANS );
 
     TxTexture_load_one_vfs( "mp_data/particle_light", ( TX_REF )TX_PARTICLE_LIGHT, INVALID_KEY );
-    prt_set_texture_params(( TX_REF )TX_PARTICLE_LIGHT );
+    set_prt_texture_params(( TX_REF )TX_PARTICLE_LIGHT );
 
     // Module background tiles
     TxTexture_load_one_vfs( "mp_data/tile0", ( TX_REF )TX_TILE_0, TRANSCOLOR );
@@ -5414,7 +5414,7 @@ void gfx_make_dynalist( ego_camera * pcam )
         // Set up the lights we need
         if ( !prt_bdl.prt_ptr->dynalight.on ) continue;
 
-        vdist = fvec3_sub( prt_get_pos_v( prt_bdl.prt_ptr ), pcam->track_pos.v );
+        vdist = fvec3_sub( ego_prt::get_pos_v( prt_bdl.prt_ptr ), pcam->track_pos.v );
 
         distance = vdist.x * vdist.x + vdist.y * vdist.y + vdist.z * vdist.z;
         if ( distance < dyna_distancetobeat )
@@ -5460,7 +5460,7 @@ void gfx_make_dynalist( ego_camera * pcam )
 
             if ( found )
             {
-                dyna_list[slot].pos     = prt_get_pos( prt_bdl.prt_ptr );
+                dyna_list[slot].pos     = ego_prt::get_pos( prt_bdl.prt_ptr );
                 dyna_list[slot].level   = prt_bdl.prt_ptr->dynalight.level;
                 dyna_list[slot].falloff = prt_bdl.prt_ptr->dynalight.falloff;
             }

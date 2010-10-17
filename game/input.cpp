@@ -55,7 +55,7 @@ mouse_t           mous;
 keyboard_t        keyb;
 device_joystick_t joy[MAXJOYSTICK];
 
-cursor_t cursor = {0, 0, bfalse, bfalse, bfalse, bfalse};
+ego_cursor cursor = {0, 0, bfalse, bfalse, bfalse, bfalse};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

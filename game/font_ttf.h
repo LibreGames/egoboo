@@ -78,4 +78,5 @@ extern display_list_t * fnt_vappend_text( display_list_t * tx_lst, TTF_Font * tt
 extern display_list_t * fnt_append_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, ... );
 extern display_list_t * fnt_append_text_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *text );
 
-#define egoboo_Font_h
+#define _font_ttf_h
+

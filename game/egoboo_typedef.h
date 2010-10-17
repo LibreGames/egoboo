@@ -157,7 +157,7 @@ struct s_frect
 };
 typedef struct s_frect frect_t;
 
-bool_t frect_union( const frect_t * src1, const frect_t * src2, frect_t * dst );
+bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst );
 
 //--------------------------------------------------------------------------------------------
 // Rectangle types
@@ -485,12 +485,12 @@ list_object_state * list_object_set_free( list_object_state *, bool_t val );
 typedef struct s_team team_t;
 typedef struct s_player player_t;
 typedef struct ego_pip ego_pip;
-typedef struct s_passage passage_t;
-typedef struct s_shop shop_t;
+typedef struct ego_passage ego_passage;
+typedef struct ego_shop ego_shop;
 typedef struct s_oglx_texture oglx_texture_t;
 typedef struct s_looped_sound_data looped_sound_data_t;
 typedef struct s_mnu_module mnu_module_t;
-typedef struct s_tx_request tx_request_t;
+typedef struct ego_tx_request ego_tx_request;
 
 CPP_DECLARE_REF( ego_cap, CAP_REF );
 CPP_DECLARE_REF( ego_chr, CHR_REF );
@@ -501,15 +501,15 @@ CPP_DECLARE_REF( ego_mad, MAD_REF );
 CPP_DECLARE_REF( player_t, PLA_REF );
 CPP_DECLARE_REF( ego_pip, PIP_REF );
 CPP_DECLARE_REF( ego_prt, PRT_REF );
-CPP_DECLARE_REF( passage_t, PASS_REF );
-CPP_DECLARE_REF( shop_t, SHOP_REF );
+CPP_DECLARE_REF( ego_passage, PASS_REF );
+CPP_DECLARE_REF( ego_shop, SHOP_REF );
 CPP_DECLARE_REF( ego_pro, PRO_REF );
 CPP_DECLARE_REF( oglx_texture_t, TX_REF );
 CPP_DECLARE_REF( ego_billboard_data, BBOARD_REF );
 CPP_DECLARE_REF( looped_sound_data_t, LOOP_REF );
 CPP_DECLARE_REF( mnu_module_t, MOD_REF );
 CPP_DECLARE_REF( MOD_REF, MOD_REF_REF );
-CPP_DECLARE_REF( tx_request_t, TREQ_REF );
+CPP_DECLARE_REF( ego_tx_request, TREQ_REF );
 
 #else
 
@@ -569,4 +569,5 @@ DECLARE_DYNAMIC_ARY( double_ary, double )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-#define egoboo_typedef_h
+#define _egoboo_typedef_h
+

@@ -2289,7 +2289,7 @@ ego_chr  * pla_get_pchr( const PLA_REF by_reference iplayer )
 }
 
 //--------------------------------------------------------------------------------------------
-latch_2d_t pla_convert_latch_2d( const PLA_REF by_reference iplayer, const by_reference latch_2d_t src )
+latch_2d_t pla_convert_latch_2d( const PLA_REF by_reference iplayer, const latch_2d_t by_reference src )
 {
     latch_2d_t dst = LATCH_2D_INIT;
     player_t * ppla;

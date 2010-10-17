@@ -111,7 +111,7 @@ bool_t prt_free( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_ctor( ego_prt * pprt )
+ego_prt * ego_prt::ctor( ego_prt * pprt )
 {
     /// BB@> Set all particle parameters to safe values.
     ///      @details The c equivalent of the particle prt::new() function.
@@ -158,7 +158,7 @@ ego_prt * prt_ctor( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_dtor( ego_prt * pprt )
+ego_prt * ego_prt::dtor( ego_prt * pprt )
 {
     if ( NULL == pprt ) return pprt;
 
@@ -171,11 +171,6 @@ ego_prt * prt_dtor( ego_prt * pprt )
 
     return pprt;
 }
-
-//--------------------------------------------------------------------------------------------
-ego_prt_data::ego_prt_data() { prt_ctor( this ); }
-//--------------------------------------------------------------------------------------------
-ego_prt_data::~ego_prt_data() { prt_dtor( this ); }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -199,11 +194,11 @@ void play_particle_sound( const PRT_REF by_reference particle, Sint8 sound )
 
     if ( LOADED_PRO( pprt->profile_ref ) )
     {
-        sound_play_chunk( prt_get_pos( pprt ), pro_get_chunk( pprt->profile_ref, sound ) );
+        sound_play_chunk( ego_prt::get_pos( pprt ), pro_get_chunk( pprt->profile_ref, sound ) );
     }
     else
     {
-        sound_play_chunk( prt_get_pos( pprt ), g_wavelist[sound] );
+        sound_play_chunk( ego_prt::get_pos( pprt ), g_wavelist[sound] );
     }
 }
 
@@ -229,7 +224,7 @@ void free_one_particle_in_game( const PRT_REF by_reference particle )
 
         if ( pprt->spawncharacterstate )
         {
-            child = spawn_one_character( prt_get_pos( pprt ), pprt->profile_ref, pprt->team, 0, pprt->facing, NULL, ( CHR_REF )MAX_CHR );
+            child = spawn_one_character( ego_prt::get_pos( pprt ), pprt->profile_ref, pprt->team, 0, pprt->facing, NULL, ( CHR_REF )MAX_CHR );
             if ( INGAME_CHR( child ) )
             {
                 ego_chr::get_pai( child )->state = pprt->spawncharacterstate;
@@ -294,7 +289,7 @@ ego_prt * prt_do_init( ego_prt * pprt )
     loc_chr_origin = pdata->chr_origin;
     if ( !DEFINED_CHR( pdata->chr_origin ) && DEFINED_PRT( pdata->prt_origin ) )
     {
-        loc_chr_origin = prt_get_iowner( pdata->prt_origin, 0 );
+        loc_chr_origin = ego_prt::get_iowner( pdata->prt_origin, 0 );
     }
 
     pprt->pip_ref     = pdata->ipip;
@@ -418,7 +413,7 @@ ego_prt * prt_do_init( ego_prt * pprt )
     tmp_pos.x = CLIP( tmp_pos.x, 0, PMesh->gmem.edge_x - 2 );
     tmp_pos.y = CLIP( tmp_pos.y, 0, PMesh->gmem.edge_y - 2 );
 
-    prt_set_pos( pprt, tmp_pos.v );
+    ego_prt::set_pos( pprt, tmp_pos.v );
     pprt->pos_old  = tmp_pos;
     pprt->pos_stt  = tmp_pos;
 
@@ -542,7 +537,7 @@ ego_prt * prt_do_init( ego_prt * pprt )
         pprt->air_resistance = CLIP( pprt->air_resistance, 0.0f, 1.0f );
     }
 
-    prt_set_size( pprt, ppip->size_base );
+    ego_prt::set_size( pprt, ppip->size_base );
 
 #if EGO_DEBUG && defined(DEBUG_PRT_LIST)
 
@@ -597,7 +592,7 @@ ego_prt * prt_do_deinit( ego_prt * pprt )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_run_object_construct( ego_prt * pprt, int max_iterations )
+ego_prt * ego_prt::run_object_construct( ego_prt * pprt, int max_iterations )
 {
     int                 iterations;
     ego_object * pbase;
@@ -608,14 +603,14 @@ ego_prt * prt_run_object_construct( ego_prt * pprt, int max_iterations )
     // if the particle is already beyond this stage, deconstruct it and start over
     if ( pbase->state.action > ( int )( ego_object_constructing + 1 ) )
     {
-        ego_prt * tmp_prt = prt_run_object_deconstruct( pprt, max_iterations );
+        ego_prt * tmp_prt = ego_prt::run_object_deconstruct( pprt, max_iterations );
         if ( tmp_prt == pprt ) return NULL;
     }
 
     iterations = 0;
     while ( NULL != pprt && pbase->state.action <= ego_object_constructing && iterations < max_iterations )
     {
-        ego_prt * ptmp = prt_run_object( pprt );
+        ego_prt * ptmp = ego_prt::run_object( pprt );
         if ( ptmp != pprt ) return NULL;
         iterations++;
     }
@@ -624,7 +619,7 @@ ego_prt * prt_run_object_construct( ego_prt * pprt, int max_iterations )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_run_object_initialize( ego_prt * pprt, int max_iterations )
+ego_prt * ego_prt::run_object_initialize( ego_prt * pprt, int max_iterations )
 {
     int                 iterations;
     ego_object * pbase;
@@ -635,14 +630,14 @@ ego_prt * prt_run_object_initialize( ego_prt * pprt, int max_iterations )
     // if the particle is already beyond this stage, deconstruct it and start over
     if ( pbase->state.action > ( int )( ego_object_initializing + 1 ) )
     {
-        ego_prt * tmp_prt = prt_run_object_deconstruct( pprt, max_iterations );
+        ego_prt * tmp_prt = ego_prt::run_object_deconstruct( pprt, max_iterations );
         if ( tmp_prt == pprt ) return NULL;
     }
 
     iterations = 0;
     while ( NULL != pprt && pbase->state.action <= ego_object_initializing && iterations < max_iterations )
     {
-        ego_prt * ptmp = prt_run_object( pprt );
+        ego_prt * ptmp = ego_prt::run_object( pprt );
         if ( ptmp != pprt ) return NULL;
         iterations++;
     }
@@ -651,7 +646,7 @@ ego_prt * prt_run_object_initialize( ego_prt * pprt, int max_iterations )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_run_object_activate( ego_prt * pprt, int max_iterations )
+ego_prt * ego_prt::run_object_activate( ego_prt * pprt, int max_iterations )
 {
     int                 iterations;
     ego_object * pbase;
@@ -662,14 +657,14 @@ ego_prt * prt_run_object_activate( ego_prt * pprt, int max_iterations )
     // if the particle is already beyond this stage, deconstruct it and start over
     if ( pbase->state.action > ( int )( ego_object_processing + 1 ) )
     {
-        ego_prt * tmp_prt = prt_run_object_deconstruct( pprt, max_iterations );
+        ego_prt * tmp_prt = ego_prt::run_object_deconstruct( pprt, max_iterations );
         if ( tmp_prt == pprt ) return NULL;
     }
 
     iterations = 0;
     while ( NULL != pprt && pbase->state.action < ego_object_processing && iterations < max_iterations )
     {
-        ego_prt * ptmp = prt_run_object( pprt );
+        ego_prt * ptmp = ego_prt::run_object( pprt );
         if ( ptmp != pprt ) return NULL;
         iterations++;
     }
@@ -684,7 +679,7 @@ ego_prt * prt_run_object_activate( ego_prt * pprt, int max_iterations )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_run_object_deinitialize( ego_prt * pprt, int max_iterations )
+ego_prt * ego_prt::run_object_deinitialize( ego_prt * pprt, int max_iterations )
 {
     int                 iterations;
     ego_object * pbase;
@@ -705,7 +700,7 @@ ego_prt * prt_run_object_deinitialize( ego_prt * pprt, int max_iterations )
     iterations = 0;
     while ( NULL != pprt && pbase->state.action <= ego_object_deinitializing && iterations < max_iterations )
     {
-        ego_prt * ptmp = prt_run_object( pprt );
+        ego_prt * ptmp = ego_prt::run_object( pprt );
         if ( ptmp != pprt ) return NULL;
         iterations++;
     }
@@ -714,7 +709,7 @@ ego_prt * prt_run_object_deinitialize( ego_prt * pprt, int max_iterations )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_run_object_deconstruct( ego_prt * pprt, int max_iterations )
+ego_prt * ego_prt::run_object_deconstruct( ego_prt * pprt, int max_iterations )
 {
     int                 iterations;
     ego_object * pbase;
@@ -736,7 +731,7 @@ ego_prt * prt_run_object_deconstruct( ego_prt * pprt, int max_iterations )
     iterations = 0;
     while ( NULL != pprt && pbase->state.action <= ego_object_destructing && iterations < max_iterations )
     {
-        ego_prt * ptmp = prt_run_object( pprt );
+        ego_prt * ptmp = ego_prt::run_object( pprt );
         if ( ptmp != pprt ) return NULL;
         iterations++;
     }
@@ -746,7 +741,7 @@ ego_prt * prt_run_object_deconstruct( ego_prt * pprt, int max_iterations )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_prt * prt_run_object( ego_prt * pprt )
+ego_prt * ego_prt::run_object( ego_prt * pprt )
 {
     ego_object * pbase;
 
@@ -816,7 +811,7 @@ ego_prt * prt_do_object_constructing( ego_prt * pprt )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pprt;
 
     // run the constructor
-    pprt = prt_ctor( pprt );
+    pprt = ego_prt::ctor( pprt );
     if ( NULL == pprt ) return NULL;
 
     // move on to the next action
@@ -947,7 +942,7 @@ ego_prt * prt_do_object_destructing( ego_prt * pprt )
     POBJ_END_SPAWN( pprt );
 
     // run the destructor
-    pprt = prt_dtor( pprt );
+    pprt = ego_prt::dtor( pprt );
     if ( NULL == pprt ) return pprt;
 
     // move on to the next action (dead)
@@ -1016,7 +1011,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
     pprt->spawn_data.oldtarget  = oldtarget;
 
     // actually force the character to spawn
-    pprt = prt_run_object_activate( pprt, 100 );
+    pprt = ego_prt::run_object_activate( pprt, 100 );
 
     // count out all the requests for this particle type
     if ( NULL != pprt )
@@ -1028,7 +1023,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
 }
 
 //--------------------------------------------------------------------------------------------
-float prt_get_mesh_pressure( ego_prt * pprt, float test_pos[] )
+float prt_calc_mesh_pressure( ego_prt * pprt, float test_pos[] )
 {
     float retval = 0.0f;
     BIT_FIELD  stoppedby;
@@ -1043,7 +1038,7 @@ float prt_get_mesh_pressure( ego_prt * pprt, float test_pos[] )
     if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
 
     // deal with the optional parameters
-    if ( NULL == test_pos ) test_pos = prt_get_pos_v( pprt );
+    if ( NULL == test_pos ) test_pos = ego_prt::get_pos_v( pprt );
     if ( NULL == test_pos ) return 0;
 
     mesh_mpdfx_tests = 0;
@@ -1059,7 +1054,7 @@ float prt_get_mesh_pressure( ego_prt * pprt, float test_pos[] )
 }
 
 //--------------------------------------------------------------------------------------------
-fvec2_t prt_get_diff( ego_prt * pprt, float test_pos[], float center_pressure )
+fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
 {
     fvec2_t        retval = ZERO_VECT2;
     float        radius;
@@ -1075,7 +1070,7 @@ fvec2_t prt_get_diff( ego_prt * pprt, float test_pos[], float center_pressure )
     if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
 
     // deal with the optional parameters
-    if ( NULL == test_pos ) test_pos = prt_get_pos_v( pprt );
+    if ( NULL == test_pos ) test_pos = ego_prt::get_pos_v( pprt );
     if ( NULL == test_pos ) return retval;
 
     // calculate the radius based on whether the particle is on camera
@@ -1120,7 +1115,7 @@ BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * p
     if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
 
     // deal with the optional parameters
-    if ( NULL == test_pos ) test_pos = prt_get_pos_v( pprt );
+    if ( NULL == test_pos ) test_pos = ego_prt::get_pos_v( pprt );
     if ( NULL == test_pos ) return 0;
 
     mesh_mpdfx_tests = 0;
@@ -1154,7 +1149,7 @@ bool_t prt_test_wall( ego_prt * pprt, float test_pos[] )
     if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
 
     // handle optional parameters
-    if ( NULL == test_pos ) test_pos = prt_get_pos_v( pprt );
+    if ( NULL == test_pos ) test_pos = ego_prt::get_pos_v( pprt );
     if ( NULL == test_pos ) return 0;
 
     // do the wall test
@@ -1175,7 +1170,7 @@ void update_all_particles()
 {
     /// @details BB@> main loop for updating particles. Do not use the
     ///               PRT_BEGIN_LOOP_* macro.
-    ///               Converted all the update functions to the prt_run_object() paradigm.
+    ///               Converted all the update functions to the ego_prt::run_object() paradigm.
 
     PRT_REF iprt;
     ego_prt_bundle prt_bdl;
@@ -1192,7 +1187,7 @@ void update_all_particles()
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_set_level( ego_prt * pprt, float level )
+void ego_prt::set_level( ego_prt * pprt, float level )
 {
     float loc_height;
 
@@ -1200,7 +1195,7 @@ void prt_set_level( ego_prt * pprt, float level )
 
     pprt->enviro.floor_level = level;
 
-    loc_height = prt_get_scale( pprt ) * MAX( UFP8_TO_FLOAT( pprt->size ), pprt->offset.z * 0.5 );
+    loc_height = ego_prt::get_scale( pprt ) * MAX( UFP8_TO_FLOAT( pprt->size ), pprt->offset.z * 0.5 );
 
     pprt->enviro.grid_adj  = pprt->enviro.grid_level;
     pprt->enviro.floor_adj = pprt->enviro.floor_level;
@@ -1219,7 +1214,7 @@ void prt_set_level( ego_prt * pprt, float level )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_prt_bundle * prt_get_environment( ego_prt_bundle * pbdl )
+ego_prt_bundle * prt_calc_environment( ego_prt_bundle * pbdl )
 {
     return move_one_particle_get_environment( pbdl, NULL );
 }
@@ -1254,7 +1249,7 @@ ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, p
     {
         loc_level = MAX( penviro->grid_level, ChrList.lst[loc_pprt->onwhichplatform_ref].pos.z + ChrList.lst[loc_pprt->onwhichplatform_ref].chr_min_cv.maxs[OCT_Z] );
     }
-    prt_set_level( loc_pprt, loc_level );
+    ego_prt::set_level( loc_pprt, loc_level );
 
     //---- the "twist" of the floor
     penviro->grid_twist = TWIST_FLAT;
@@ -1429,7 +1424,7 @@ ego_prt_bundle * move_one_particle_do_homing( ego_prt_bundle * pbdl_prt )
         float     vlen, min_length, uncertainty;
         fvec3_t   vdiff, vdither;
 
-        vdiff = fvec3_sub( ptarget->pos.v, prt_get_pos_v( loc_pprt ) );
+        vdiff = fvec3_sub( ptarget->pos.v, ego_prt::get_pos_v( loc_pprt ) );
         vdiff.z += ptarget->bump.height * 0.5f;
 
         min_length = ( 2 * 5 * 256 * ChrList.lst[loc_pprt->owner_ref].wisdom ) / PERFECTBIG;
@@ -1703,13 +1698,13 @@ bool_t move_one_particle( ego_prt_bundle * pbdl_prt )
     loc_penviro->acc = fvec3_sub( loc_pprt->vel.v, loc_pprt->vel_old.v );
 
     // Particle's old location
-    loc_pprt->pos_old = prt_get_pos( loc_pprt );
+    loc_pprt->pos_old = ego_prt::get_pos( loc_pprt );
     loc_pprt->vel_old = loc_pprt->vel;
 
     // determine the actual velocity for attached particles
     if ( INGAME_CHR( loc_pprt->attachedto_ref ) )
     {
-        loc_pprt->vel = fvec3_sub( prt_get_pos_v( loc_pprt ), loc_pprt->pos_old.v );
+        loc_pprt->vel = fvec3_sub( ego_prt::get_pos_v( loc_pprt ), loc_pprt->pos_old.v );
     }
 
     // what is the local environment like?
@@ -1869,7 +1864,7 @@ int spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by
 
                 // this could be done more easily with a quicksort....
                 // but I guess it doesn't happen all the time
-                dist = fvec3_dist_abs( prt_get_pos_v( pprt ), ego_chr::get_pos_v( pchr ) );
+                dist = fvec3_dist_abs( ego_prt::get_pos_v( pprt ), ego_chr::get_pos_v( pchr ) );
 
                 // clear the occupied list
                 z = pprt->pos.z - pchr->pos.z;
@@ -2275,7 +2270,7 @@ int prt_do_end_spawn( const PRT_REF by_reference iprt )
             // so, set the profile reference to (PRO_REF)MAX_PROFILE, so that the
             // value of pprt->end_spawn_pip will be used directly
             PRT_REF spawned_prt = spawn_one_particle( pprt->pos_old, facing, ( PRO_REF )MAX_PROFILE, REF_TO_INT( pprt->end_spawn_pip ),
-                                  ( CHR_REF )MAX_CHR, GRIP_LAST, pprt->team, prt_get_iowner( iprt, 0 ), iprt, tnc, pprt->target_ref );
+                                  ( CHR_REF )MAX_CHR, GRIP_LAST, pprt->team, ego_prt::get_iowner( iprt, 0 ), iprt, tnc, pprt->target_ref );
 
             if ( VALID_PRT( spawned_prt ) )
             {
@@ -2306,7 +2301,7 @@ void cleanup_all_particles()
         ego_object * pbase;
         ego_prt             * pprt;
 
-        bool_t prt_allocated, prt_waiting, prt_terminated;
+        bool_t prt_allocated;
 
         pprt  = PrtList.lst + iprt;
         pbase = POBJ_GET_PBASE( pprt );
@@ -2440,7 +2435,7 @@ int prt_do_contspawn( ego_prt_bundle * pbdl_prt )
         facing = loc_pprt->facing;
         for ( tnc = 0; tnc < loc_ppip->contspawn_amount; tnc++ )
         {
-            PRT_REF prt_child = spawn_one_particle( prt_get_pos( loc_pprt ), facing, loc_pprt->profile_ref, loc_ppip->contspawn_pip,
+            PRT_REF prt_child = spawn_one_particle( ego_prt::get_pos( loc_pprt ), facing, loc_pprt->profile_ref, loc_ppip->contspawn_pip,
                                                     ( CHR_REF )MAX_CHR, GRIP_LAST, loc_pprt->team, loc_pprt->owner_ref, pbdl_prt->prt_ref, tnc, loc_pprt->target_ref );
 
             if ( VALID_PRT( prt_child ) )
@@ -2591,7 +2586,7 @@ ego_prt_bundle * prt_update_animation( ego_prt_bundle * pbdl_prt )
         size_new = loc_pprt->size + loc_pprt->size_add;
         size_new = CLIP( size_new, 0, 0xFFFF );
 
-        prt_set_size( loc_pprt, size_new );
+        ego_prt::set_size( loc_pprt, size_new );
     }
 
     // spin the particle
@@ -2810,7 +2805,7 @@ ego_prt_bundle * prt_update( ego_prt_bundle * pbdl_prt )
     penviro  = &( loc_pprt->enviro );
 
     // do the next step in the particle configuration
-    tmp_pprt = prt_run_object( pbdl_prt->prt_ptr );
+    tmp_pprt = ego_prt::run_object( pbdl_prt->prt_ptr );
     if ( NULL == tmp_pprt ) { ego_prt_bundle::ctor( pbdl_prt ); return NULL; }
 
     if ( tmp_pprt != pbdl_prt->prt_ptr )
@@ -2846,16 +2841,16 @@ bool_t prt_update_safe_raw( ego_prt * pprt )
 {
     bool_t retval = bfalse;
 
-    bool_t hit_a_wall;
+    BIT_FIELD hit_a_wall;
     float  pressure;
 
     if ( !VALID_PPRT( pprt ) ) return bfalse;
 
     hit_a_wall = prt_hit_wall( pprt, NULL, NULL, &pressure );
-    if ( hit_a_wall && 0.0f == pressure )
+    if ( 0 != hit_a_wall && 0.0f == pressure )
     {
         pprt->safe_valid = btrue;
-        pprt->safe_pos   = prt_get_pos( pprt );
+        pprt->safe_pos   = ego_prt::get_pos( pprt );
         pprt->safe_time  = update_wld;
         pprt->safe_grid  = mesh_get_tile( PMesh, pprt->pos.x, pprt->pos.y );
 
@@ -2906,7 +2901,7 @@ bool_t prt_update_safe( ego_prt * pprt, bool_t force )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-fvec3_t prt_get_pos( ego_prt * pprt )
+fvec3_t ego_prt::get_pos( ego_prt * pprt )
 {
     fvec3_t vtmp = ZERO_VECT3;
 
@@ -2916,7 +2911,7 @@ fvec3_t prt_get_pos( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-float * prt_get_pos_v( ego_prt * pprt )
+float * ego_prt::get_pos_v( ego_prt * pprt )
 {
     static fvec3_t vtmp = ZERO_VECT3;
 
@@ -2943,7 +2938,7 @@ bool_t prt_update_pos( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_set_pos( ego_prt * pprt, fvec3_base_t pos )
+bool_t ego_prt::set_pos( ego_prt * pprt, fvec3_base_t pos )
 {
     bool_t retval = bfalse;
 
@@ -3221,7 +3216,7 @@ ego_prt_bundle *  prt_bump_mesh( ego_prt_bundle * pbdl, fvec3_t test_pos, fvec3_
     // save some parameters
     save_apos_plat = loc_pphys->apos_plat;
     save_avel      = loc_pphys->avel;
-    old_pos        = prt_get_pos( loc_pprt );
+    old_pos        = ego_prt::get_pos( loc_pprt );
 
     // assume no change
     final_vel = test_vel;
@@ -3423,7 +3418,7 @@ ego_prt_bundle *  prt_bump_grid( ego_prt_bundle * pbdl, fvec3_t test_pos, fvec3_
     // save some parameters
     save_apos_plat = loc_pphys->apos_plat;
     save_avel      = loc_pphys->avel;
-    old_pos        = prt_get_pos( loc_pprt );
+    old_pos        = ego_prt::get_pos( loc_pprt );
 
     // assume no change
     final_vel = test_vel;
@@ -3595,11 +3590,11 @@ egoboo_rv particle_physics_finalize_one( ego_prt_bundle * pbdl, float dt )
     loc_pphys   = &( loc_pprt->phys );
 
     // work on test_pos and test velocity instead of the actual particle position and velocity
-    test_pos = prt_get_pos( loc_pprt );
+    test_pos = ego_prt::get_pos( loc_pprt );
     test_vel = loc_pprt->vel;
 
     // do the "integration" of the accumulators
-    test_pos = prt_get_pos( loc_pprt );
+    test_pos = ego_prt::get_pos( loc_pprt );
     test_vel = loc_pprt->vel;
     phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
 
@@ -3619,7 +3614,7 @@ egoboo_rv particle_physics_finalize_one( ego_prt_bundle * pbdl, float dt )
     // to make sure that it does not go through the mesh
     if ( bumped_mesh )
     {
-        test_pos = prt_get_pos( loc_pprt );
+        test_pos = ego_prt::get_pos( loc_pprt );
         test_vel = loc_pprt->vel;
         phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
     }
@@ -3639,7 +3634,7 @@ egoboo_rv particle_physics_finalize_one( ego_prt_bundle * pbdl, float dt )
     // to make sure that it does not go through the grid
     if ( bumped_grid )
     {
-        test_pos = prt_get_pos( loc_pprt );
+        test_pos = ego_prt::get_pos( loc_pprt );
         test_vel = loc_pprt->vel;
         phys_data_integrate_accumulators( &test_pos, &test_vel, loc_pphys, dt );
     }
@@ -3671,7 +3666,7 @@ egoboo_rv particle_physics_finalize_one( ego_prt_bundle * pbdl, float dt )
     needs_update = bumped_mesh || bumped_grid;
 
     // update the particle's position and velocity
-    prt_set_pos( loc_pprt, test_pos.v );
+    ego_prt::set_pos( loc_pprt, test_pos.v );
     loc_pprt->vel = test_vel;
 
     // we need to test the validity of the current position every 8 frames or so,
@@ -3732,7 +3727,7 @@ void particle_physics_finalize_all( float dt )
 //    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return pbdl_prt;
 //
 //    // capture the position
-//    tmp_pos = prt_get_pos( loc_pprt );
+//    tmp_pos = ego_prt::get_pos( loc_pprt );
 //
 //    // no point in doing this if the particle thinks it's attached
 //    if( MAX_CHR != loc_pprt->attachedto_ref )
@@ -3976,7 +3971,7 @@ void particle_physics_finalize_all( float dt )
 //        }
 //    }
 //
-//    prt_set_pos( loc_pprt, tmp_pos.v );
+//    ego_prt::set_pos( loc_pprt, tmp_pos.v );
 //
 //    return pbdl_prt;
 //}
@@ -4007,7 +4002,7 @@ void particle_physics_finalize_all( float dt )
 //    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return pbdl_prt;
 //
 //    // capture the particle position
-//    tmp_pos = prt_get_pos( loc_pprt );
+//    tmp_pos = ego_prt::get_pos( loc_pprt );
 //
 //    // only deal with attached particles
 //    if( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl_prt;
@@ -4073,7 +4068,7 @@ void particle_physics_finalize_all( float dt )
 //        return NULL;
 //    }
 //
-//    prt_set_pos( loc_pprt, tmp_pos.v );
+//    ego_prt::set_pos( loc_pprt, tmp_pos.v );
 //
 //    return pbdl_prt;
 //}

@@ -24,10 +24,11 @@
 #include "eve_file.h"
 
 #include "template.h"
-#include "sound.h"
+#include "..\sound_defs.h"
 
-#include "egoboo_fileutil.h"
-#include "egoboo_vfs.h"
+#include "..\egoboo_math.h"
+#include "..\egoboo_fileutil.h"
+#include "..\egoboo_vfs.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

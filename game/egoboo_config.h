@@ -108,4 +108,5 @@
 #include "egoboo_platform.h"
 #include "egoboo_endian.h"
 
-#define EGOBOO_CONFIG_H
+#define _egoboo_config_h
+

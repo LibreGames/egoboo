@@ -195,9 +195,34 @@ struct ego_prt_data
 struct ego_prt : public ego_prt_data
 {
     ego_object obj_base;              ///< the "inheritance" from ego_object
-    bool_t            obj_base_display;      ///< a variable that would be added to a custom ego_object
+    bool_t     obj_base_display;      ///< a variable that would be added to a custom ego_object
 
     prt_spawn_data_t  spawn_data;
+
+    ego_prt() { ego_prt::ctor( this ); }
+    ~ego_prt() { ego_prt::dtor( this ); }
+
+    static ego_prt * ctor( ego_prt * pprt );
+    static ego_prt * dtor( ego_prt * pprt );
+
+    static ego_prt * run_object( ego_prt * pprt );
+    static ego_prt * run_object_construct( ego_prt * pprt, int max_iterations );
+    static ego_prt * run_object_initialize( ego_prt * pprt, int max_iterations );
+    static ego_prt * run_object_activate( ego_prt * pprt, int max_iterations );
+    static ego_prt * run_object_deinitialize( ego_prt * pprt, int max_iterations );
+    static ego_prt * run_object_deconstruct( ego_prt * pprt, int max_iterations );
+
+    static bool_t    set_pos( ego_prt * pprt, fvec3_base_t pos );
+    static float *   get_pos_v( ego_prt * pprt );
+    static fvec3_t   get_pos( ego_prt * pprt );
+    static void      set_level( ego_prt * pprt, float level );
+
+    // INLINE functions
+    static INLINE PIP_REF    get_ipip( const PRT_REF by_reference particle );
+    static INLINE ego_pip  * get_ppip( const PRT_REF by_reference particle );
+    static INLINE CHR_REF    get_iowner( const PRT_REF by_reference iprt, int depth );
+    static INLINE bool_t     set_size( ego_prt *, int size );
+    static INLINE float      get_scale( ego_prt * pprt );
 };
 
 // counters for debugging wall collisions
@@ -248,31 +273,18 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
 
 #define spawn_one_particle_global( pos, facing, ipip, multispawn ) spawn_one_particle( pos, facing, (PRO_REF)MAX_PROFILE, ipip, (CHR_REF)MAX_CHR, GRIP_LAST, (TEAM_REF)TEAM_NULL, (CHR_REF)MAX_CHR, (PRT_REF)TOTAL_MAX_PRT, multispawn, (CHR_REF)MAX_CHR );
 
-ego_prt *   prt_ctor( ego_prt * pprt );
-ego_prt *   prt_dtor( ego_prt * pprt );
 BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * pressure );
 bool_t    prt_test_wall( ego_prt * pprt, float test_pos[] );
 bool_t    prt_is_over_water( const PRT_REF by_reference particle );
 bool_t    prt_request_free( ego_prt_bundle * pbdl_prt );
 bool_t    prt_request_free_ref( const PRT_REF by_reference iprt );
-void      prt_set_level( ego_prt * pprt, float level );
 
 int     PrtList_count_free();
 
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF by_reference pip_override );
 void    reset_particles();
 
-ego_prt * prt_run_object( ego_prt * pprt );
-ego_prt * prt_run_object_construct( ego_prt * pprt, int max_iterations );
-ego_prt * prt_run_object_initialize( ego_prt * pprt, int max_iterations );
-ego_prt * prt_run_object_activate( ego_prt * pprt, int max_iterations );
-ego_prt * prt_run_object_deinitialize( ego_prt * pprt, int max_iterations );
-ego_prt * prt_run_object_deconstruct( ego_prt * pprt, int max_iterations );
+ego_prt_bundle * prt_calc_environment( ego_prt_bundle * pbdl );
 
-bool_t prt_set_pos( ego_prt * pprt, fvec3_base_t pos );
-float * prt_get_pos_v( ego_prt * pprt );
-fvec3_t prt_get_pos( ego_prt * pprt );
+#define _particle_h
 
-ego_prt_bundle * prt_get_environment( ego_prt_bundle * pbdl );
-
-#define PARTICLE_H

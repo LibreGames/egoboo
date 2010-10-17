@@ -26,6 +26,10 @@
 
 #include "IDSZ_map.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 #define MAXCAPNAMESIZE      32                      ///< Character class names
@@ -352,3 +356,13 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
 bool_t  save_one_cap_data_file_vfs( const char * szSaveName, const char * szTemplateFile, cap_data_t * pcap );
 
 cap_data_t * cap_data_init( cap_data_t * pcap );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _cap_file_h
+

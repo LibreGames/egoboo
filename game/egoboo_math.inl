@@ -35,6 +35,10 @@
 // FORWARD DECLARATIONS
 //--------------------------------------------------------------------------------------------
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 // conversion functions
 INLINE FACING_T vec_to_facing( float dx, float dy );
 INLINE void     facing_to_vec( FACING_T facing, float * dx, float * dy );
@@ -107,6 +111,10 @@ INLINE fvec3_t   mat_getCamRight( const fmat_4x4_t mat );
 INLINE fvec3_t   mat_getCamForward( const fmat_4x4_t mat );
 INLINE fvec3_t   mat_getTranslate( const fmat_4x4_t mat );
 INLINE float *   mat_getTranslate_v( const fmat_4x4_t mat );
+
+#if defined(__cplusplus)
+};
+#endif
 
 //--------------------------------------------------------------------------------------------
 // CONVERSION FUNCTIONS
@@ -1177,3 +1185,7 @@ INLINE void  TransformVertices( const fmat_4x4_t *pMatrix, const fvec4_t *pSourc
     }
 }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#define egoboo_math_inl

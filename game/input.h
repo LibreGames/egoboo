@@ -24,34 +24,13 @@
 
 #include "egoboo_typedef.h"
 
-#include <SDL.h>
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-#define MAXJOYSTICK          2     ///<the maximum number of supported joysticks
-
-/// Which input control
-/// @details Used by the controls[] structure and the control_is_pressed() function to query the state of various controls.
-enum e_input_device
-{
-    INPUT_DEVICE_KEYBOARD = 0,
-    INPUT_DEVICE_MOUSE,
-    INPUT_DEVICE_JOY,
-
-    // aliases
-    INPUT_DEVICE_BEGIN = INPUT_DEVICE_KEYBOARD,
-    INPUT_DEVICE_END   = INPUT_DEVICE_JOY,
-    INPUT_DEVICE_JOY_A = INPUT_DEVICE_JOY + 0,
-    INPUT_DEVICE_JOY_B = INPUT_DEVICE_JOY + 1
-};
-typedef enum  e_input_device INPUT_DEVICE;
+#include "input_defs.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// old user interface variables
-struct cursor_t
+struct ego_cursor
 {
     int     x;
     int     y;
@@ -62,7 +41,7 @@ struct cursor_t
     bool_t  wheel_event;
 };
 
-extern cursor_t cursor;
+extern ego_cursor cursor;
 
 //--------------------------------------------------------------------------------------------
 // MOUSE

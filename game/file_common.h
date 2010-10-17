@@ -23,6 +23,10 @@
 
 #include <stdio.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_win32_find_context;
@@ -95,3 +99,14 @@ const char *fs_findNextFile( fs_find_context_t * fs_search );
 void        fs_findClose( fs_find_context_t * fs_search );
 
 bool_t fs_ensureUserFile( const char * relative_filename, bool_t required );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _file_common_h
+
+

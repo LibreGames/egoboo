@@ -37,4 +37,5 @@ int    sys_frameStep( void );
 
 void   sys_popup( const char * popup_title, const char * warning, const char * format, va_list args );
 
-#define egoboo_System_h
+#define _egoboo_system_h
+

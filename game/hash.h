@@ -70,7 +70,6 @@ struct ego_hash_list
     static bool_t          insert_unique( ego_hash_list * phash, ego_hash_node * pnode );
 };
 
-
 //--------------------------------------------------------------------------------------------
 
 /// An iterator element for traversing the ego_hash_list

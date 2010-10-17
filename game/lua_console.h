@@ -21,6 +21,10 @@
 
 #include "egoboo_console.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_lua_console;
@@ -33,4 +37,13 @@ SDL_bool           lua_console_destroy( lua_console_t ** pcon );
 egoboo_console_t * lua_console_get_base( lua_console_t * pcon );
 
 SDL_Event * lua_console_handle_events( SDL_Event * evt );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _lua_console_h
 

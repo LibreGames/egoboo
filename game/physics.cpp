@@ -167,7 +167,7 @@ egoboo_rv ego_oct_bb::intersect_index( int index, ego_oct_bb   src1, oct_vec_t o
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_oct_bb::intersect_close_index( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
+egoboo_rv ego_oct_bb::intersect_index_close( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
 {
     egoboo_rv retval = rv_error;
     float     diff;
@@ -271,7 +271,7 @@ bool_t phys_intersect_oct_bb( ego_oct_bb   src1_orig, fvec3_t pos1, fvec3_t vel1
 
             if ( PHYS_CLOSE_TOLERANCE_NONE != test_platform )
             {
-                retval = ego_oct_bb::intersect_close_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
+                retval = ego_oct_bb::intersect_index_close( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
             }
             else
             {
@@ -447,7 +447,7 @@ bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   
 
     // add in the current position to the bounding volume
     {
-        fvec3_t _tmp_vec = prt_get_pos( pprt );
+        fvec3_t _tmp_vec = ego_prt::get_pos( pprt );
         ego_oct_bb::add_vector( pprt->prt_cv, _tmp_vec.v, &tmp_oct );
     }
 
@@ -493,7 +493,7 @@ breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, ego_prt * pprt )
 
     if ( NULL == pprt ) return bc;
 
-    ppip = prt_get_ppip( GET_REF_PPRT( pprt ) );
+    ppip = ego_prt::get_ppip( GET_REF_PPRT( pprt ) );
     if ( NULL == ppip ) return bc;
 
     bits = MPDFX_IMPASS;
@@ -502,7 +502,7 @@ breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, ego_prt * pprt )
     bc->bits   = bits;
     bc->radius = pprt->bump_real.size;
 
-    bc->pos = prt_get_pos( pprt );
+    bc->pos = ego_prt::get_pos( pprt );
     bc->pos.x  = ( floor( bc->pos.x / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
     bc->pos.y  = ( floor( bc->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
 
@@ -1101,7 +1101,7 @@ bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, fl
 //        egoboo_rv retval;
 //        float tmp_min, tmp_max;
 //
-//        retval = ego_oct_bb::intersect_close_index( index, src1, opos1, ovel1, src2, opos2, ovel2, test_platform, &tmp_min, &tmp_max );
+//        retval = ego_oct_bb::intersect_index_close( index, src1, opos1, ovel1, src2, opos2, ovel2, test_platform, &tmp_min, &tmp_max );
 //        if ( rv_fail == retval ) return bfalse;
 //
 //        if ( rv_success == retval )

@@ -36,6 +36,7 @@
 #include <string.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
+
 #include "egoboo_mem.h"
 
 //--------------------------------------------------------------------------------------------

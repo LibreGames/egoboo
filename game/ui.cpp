@@ -197,7 +197,7 @@ bool_t ui_handleSDLEvent( SDL_Event *evt )
                 // recalculated
 
                 // grab all the new SDL screen info
-                SDLX_Get_Screen_Info( &sdl_scr, bfalse );
+                SDLX_Get_Screen_Info( &sdl_scr, SDL_FALSE );
 
                 // set the ui's virtual screen size based on the graphic system's
                 // configuration
@@ -520,7 +520,7 @@ ui_buttonValues ui_Widget_Behavior( ui_Widget_t * pWidget )
 
 //--------------------------------------------------------------------------------------------
 // Drawing
-void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight, GLXvector4f pcolor )
+void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight, const GLXvector4f pcolor )
 {
     float x1, x2, y1, y2;
 
@@ -565,7 +565,7 @@ void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight,
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight, GLXvector4f image_tint )
+void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight, const GLXvector4f image_tint )
 {
     GLXvector4f tmp_tint = {1, 1, 1, 1};
 
@@ -615,7 +615,7 @@ void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vw
 //--------------------------------------------------------------------------------------------
 void ui_Widget_drawButton( ui_Widget_t * pw )
 {
-    GLfloat * pcolor = NULL;
+    const GLfloat * pcolor = NULL;
     bool_t ui_active, ui_hot;
 
     ui_active = ui_context.active == pw->id && ui_context.hot == pw->id;
@@ -795,7 +795,7 @@ bool_t ui_drawText( display_item_t * tx_ptr, float vx, float vy )
 
     display_item_set_pos( tx_ptr, x1, y1 );
 
-    return display_item_draw( tx_ptr );
+    return GL_TRUE == display_item_draw( tx_ptr );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -973,7 +973,7 @@ ui_buttonValues ui_doButton( ui_id_t id, display_item_t * tx_ptr, const char *te
                 display_item_set_bound( tx_ptr, text_x, text_y, text_w, text_h );
             }
 
-            convert_rv = display_item_draw( tx_ptr );
+            convert_rv = GL_TRUE == display_item_draw( tx_ptr );
         }
     }
 
@@ -1054,7 +1054,7 @@ ui_buttonValues ui_doImageButtonWithText( ui_id_t id, display_item_t * tx_ptr, o
             display_item_set_bound( tx_ptr, text_x, text_y, text_w, text_h );
         }
 
-        retval = display_item_draw( tx_ptr );
+        retval = GL_TRUE == display_item_draw( tx_ptr );
     }
 
     if ( !retval && loc_display )
@@ -1385,7 +1385,7 @@ bool_t ui_Widget_set_pos( ui_Widget_t * pw, float x, float y )
     pw->vx = x;
     pw->vy = y;
 
-    return display_list_adjust_bound( pw->tx_lst, dx, dy );
+    return GL_TRUE == display_list_adjust_bound( pw->tx_lst, dx, dy );
 }
 
 //--------------------------------------------------------------------------------------------

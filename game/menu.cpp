@@ -1748,13 +1748,13 @@ int doChooseModule( float deltaTime )
                         if ( cfg.dev_mode )
                         {
                             mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_SPECIAL_END );
-                            mnu_moduleFilter++;
+                            mnu_moduleFilter = (module_filter_t)(mnu_moduleFilter + 1);
                             if( mnu_moduleFilter > FILTER_SPECIAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
                         }
                         else
                         {
                             mnu_moduleFilter = CLIP( mnu_moduleFilter, FILTER_NORMAL_BEGIN, FILTER_NORMAL_END );
-                            mnu_moduleFilter++;
+                            mnu_moduleFilter = (module_filter_t)(mnu_moduleFilter + 1);
                             if( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
                         }
 
@@ -3084,84 +3084,84 @@ int doOptions( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct OptionsInputState_t
-{
-    BASE_MENU_STATE;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t *OptionsInputState_ctor( OptionsInputState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t *OptionsInputState_dtor( OptionsInputState_t * ps )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-}
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_begin( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    ps = OptionsInputState_ctor( ps );
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_entering( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_running( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_leaving( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    return ps;
-};
-
-//--------------------------------------------------------------------------------------------
-static OptionsInputState_t * doOptionsInput_finish( OptionsInputState_t * ps, float deltaTime )
-{
-    if ( NULL == ps ) return ps;
-
-    /* BLAH */
-
-    ps = OptionsInputState_ctor( ps );
-
-    return ps;
-};
+//struct OptionsInputState_t
+//{
+//    BASE_MENU_STATE;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsInputState_t *OptionsInputState_ctor( OptionsInputState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsInputState_t *OptionsInputState_dtor( OptionsInputState_t * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsInputState_t * doOptionsInput_begin( OptionsInputState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = OptionsInputState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsInputState_t * doOptionsInput_entering( OptionsInputState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsInputState_t * doOptionsInput_running( OptionsInputState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsInputState_t * doOptionsInput_leaving( OptionsInputState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static OptionsInputState_t * doOptionsInput_finish( OptionsInputState_t * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = OptionsInputState_ctor( ps );
+//
+//    return ps;
+//};
 
 //--------------------------------------------------------------------------------------------
 bool_t doOptionsInput_update_one_button( ui_Widget_t lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
@@ -4413,7 +4413,7 @@ int doOptionsGame( float deltaTime )
                 ui_doWidget( w_labels + lab_feedback );
                 if ( BUTTON_UP == ui_doWidget( w_buttons + but_feedback ) )
                 {
-                    cfg.feedback = CLIP( cfg.feedback, 0, FEEDBACK_COUNT - 1 );
+                    cfg.feedback = (FEEDBACK_TYPE)CLIP( cfg.feedback, 0, FEEDBACK_COUNT - 1 );
 
                     if ( cfg.dev_mode )
                     {
@@ -7082,7 +7082,7 @@ int doMenu( float deltaTime )
 //--------------------------------------------------------------------------------------------
 // Auto formatting functions
 //--------------------------------------------------------------------------------------------
-void autoformat_init( ego_gfx_config::data_t * pgfx )
+void autoformat_init( ego_gfx_config * pgfx )
 {
     autoformat_init_slidy_buttons();
     autoformat_init_tip_text();

@@ -117,15 +117,14 @@ struct ego_waypoint_list
     int          head;         ///< Where to stick next
     waypoint_t   pos[MAXWAY];  ///< Waypoint
 
-    bool_t push( ego_waypoint_list * plst, float x, float y, float z );
-    bool_t reset( ego_waypoint_list * plst );
-    bool_t clear( ego_waypoint_list * plst );
-    bool_t advance( ego_waypoint_list * plst );
-    bool_t peek( ego_waypoint_list * plst, waypoint_t wp );
-    bool_t empty( const ego_waypoint_list * plst );
-    bool_t finished( const ego_waypoint_list * plst );
+    static bool_t push( ego_waypoint_list * plst, float x, float y, float z );
+    static bool_t reset( ego_waypoint_list * plst );
+    static bool_t clear( ego_waypoint_list * plst );
+    static bool_t advance( ego_waypoint_list * plst );
+    static bool_t peek( ego_waypoint_list * plst, waypoint_t wp );
+    static bool_t empty( const ego_waypoint_list * plst );
+    static bool_t finished( const ego_waypoint_list * plst );
 };
-
 
 /// the state variables for a script / AI
 struct ego_ai_state
@@ -183,13 +182,15 @@ struct ego_ai_state
 
     static ego_ai_state * ctor( ego_ai_state * pself );
     static ego_ai_state * dtor( ego_ai_state * pself );
+    static bool_t         dealloc( ego_ai_state * pself );
+    static ego_ai_state * reconstruct( ego_ai_state * pself );
+
     static void           spawn( ego_ai_state * pself, const CHR_REF by_reference index, const PRO_REF by_reference iobj, Uint16 rank );
     static bool_t         set_bumplast( ego_ai_state * pself, const CHR_REF by_reference  ichr );
     static bool_t         get_wp( ego_ai_state * pself );
     static bool_t         ensure_wp( ego_ai_state * pself );
     static bool_t         set_changed( ego_ai_state * pself );
     static bool_t         add_order( ego_ai_state * pai, Uint32 value, Uint16 counter );
-
 
     // performance monitoring
     PROFILE_DECLARE_STRUCT;

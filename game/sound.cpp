@@ -73,7 +73,7 @@ static size_t LoopedList_add( Mix_Chunk * sound, int loops, const CHR_REF by_ref
 // Sound using SDL_Mixer
 static bool_t mixeron         = bfalse;
 
-snd_config_t snd;
+ego_snd_config snd;
 
 // music
 bool_t      musicinmemory = bfalse;
@@ -803,7 +803,7 @@ void load_all_music_sounds_vfs()
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-bool_t snd_config_init( snd_config_t * psnd )
+bool_t snd_config_init( snd_config_data_t * psnd )
 {
     // Initialize the sound settings and set all values to default
     if ( NULL == psnd ) return bfalse;
@@ -820,7 +820,7 @@ bool_t snd_config_init( snd_config_t * psnd )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t snd_config_synch( snd_config_t * psnd, ego_config_data_t * pcfg )
+bool_t snd_config_synch( snd_config_data_t * psnd, ego_config_data_t * pcfg )
 {
     if ( NULL == psnd && NULL == pcfg ) return bfalse;
 

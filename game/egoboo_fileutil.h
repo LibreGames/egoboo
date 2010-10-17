@@ -26,6 +26,10 @@
 
 #include "file_common.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_oglx_texture;
@@ -100,3 +104,10 @@ void    GLSetup_SupportedFormats();
 Uint32  ego_texture_load_vfs( struct s_oglx_texture *texture, const char *filename, Uint32 key );
 
 int read_skin_vfs( const char *filename );
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _egoboo_fileutil_h
+

@@ -1875,7 +1875,7 @@ void issue_special_order( Uint32 value, IDSZ idsz )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ego_ai_state::free( ego_ai_state * pself )
+bool_t ego_ai_state::dealloc( ego_ai_state * pself )
 {
     if ( NULL == pself ) return bfalse;
 
@@ -1891,7 +1891,7 @@ ego_ai_state * ego_ai_state::reconstruct( ego_ai_state * pself )
     if ( NULL == pself ) return pself;
 
     // deallocate any existing data
-    ego_ai_state::free( pself );
+    ego_ai_state::dealloc( pself );
 
     // set everything to safe values
     memset( pself, 0, sizeof( *pself ) );
@@ -1972,18 +1972,18 @@ ego_ai_bundle * ego_ai_bundle::validate( ego_ai_bundle * pbundle )
         pbundle->chr_ptr = NULL;
     }
 
-    if ( NULL == pbundle->chr_ptr ) goto ego_ai_bundle::validate_fail;
+    if ( NULL == pbundle->chr_ptr ) goto ego_ai_bundle__validate_fail;
 
     // get the profile info
     pbundle->pro_ref = pbundle->chr_ptr->profile_ref;
-    if ( !LOADED_PRO( pbundle->pro_ref ) ) goto ego_ai_bundle::validate_fail;
+    if ( !LOADED_PRO( pbundle->pro_ref ) ) goto ego_ai_bundle__validate_fail;
 
     pbundle->pro_ptr = ProList.lst + pbundle->pro_ref;
 
     // get the cap info
     pbundle->cap_ref = pbundle->pro_ptr->icap;
 
-    if ( !LOADED_CAP( pbundle->cap_ref ) ) goto ego_ai_bundle::validate_fail;
+    if ( !LOADED_CAP( pbundle->cap_ref ) ) goto ego_ai_bundle__validate_fail;
     pbundle->cap_ptr = CapStack.lst + pbundle->cap_ref;
 
     // get the script info
@@ -1992,7 +1992,7 @@ ego_ai_bundle * ego_ai_bundle::validate( ego_ai_bundle * pbundle )
 
     return pbundle;
 
-ego_ai_bundle::validate_fail:
+ego_ai_bundle__validate_fail:
 
     return ego_ai_bundle::ctor( pbundle );
 }

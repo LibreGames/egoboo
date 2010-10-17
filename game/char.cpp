@@ -140,7 +140,6 @@ static ego_chr_bundle * move_one_character_do_floor( ego_chr_bundle * pbdl );
 
 static bool_t pack_validate( pack_t * ppack );
 
-
 static fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure );
 static float   get_mesh_pressure( ego_chr * pchr, float test_pos[] );
 
@@ -716,7 +715,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF by_reference c
         if ( vertex_offset == GRIP_ORIGIN )
         {
             fvec3_t tmp_pos = VECT3( pchr->inst.matrix.CNV( 3, 0 ), pchr->inst.matrix.CNV( 3, 1 ), pchr->inst.matrix.CNV( 3, 2 ) );
-            prt_set_pos( pprt, tmp_pos.v );
+            ego_prt::set_pos( pprt, tmp_pos.v );
 
             return pprt;
         }
@@ -746,12 +745,12 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF by_reference c
         // Do the transform
         TransformVertices( &( pchr->inst.matrix ), point, nupoint, 1 );
 
-        prt_set_pos( pprt, nupoint[0].v );
+        ego_prt::set_pos( pprt, nupoint[0].v );
     }
     else
     {
         // No matrix, so just wing it...
-        prt_set_pos( pprt, ego_chr::get_pos_v( pchr ) );
+        ego_prt::set_pos( pprt, ego_chr::get_pos_v( pchr ) );
     }
 
     return pprt;
@@ -1920,7 +1919,7 @@ void character_swipe( const CHR_REF by_reference ichr, slot_t slot )
                     fvec3_t tmp_pos;
                     ego_prt * pprt = PrtList.lst + iparticle;
 
-                    tmp_pos = prt_get_pos( pprt );
+                    tmp_pos = ego_prt::get_pos( pprt );
 
                     if ( pweapon_cap->attack_attached )
                     {
@@ -1940,13 +1939,13 @@ void character_swipe( const CHR_REF by_reference ichr, slot_t slot )
                         pprt->attachedto_ref = ( CHR_REF )MAX_CHR;
 
                         // Detach the particle
-                        if ( !prt_get_ppip( iparticle )->startontarget || !INGAME_CHR( pprt->target_ref ) )
+                        if ( !ego_prt::get_ppip( iparticle )->startontarget || !INGAME_CHR( pprt->target_ref ) )
                         {
                             pprt = place_particle_at_vertex( pprt, iweapon, spawn_vrt_offset );
                             if ( NULL == pprt ) return;
 
                             // Correct Z spacing base, but nothing else...
-                            tmp_pos.z += prt_get_ppip( iparticle )->spacing_vrt_pair.base;
+                            tmp_pos.z += ego_prt::get_ppip( iparticle )->spacing_vrt_pair.base;
                         }
 
                         // Don't spawn in walls
@@ -1971,7 +1970,7 @@ void character_swipe( const CHR_REF by_reference ichr, slot_t slot )
                     // Initial particles get an enchantment bonus
                     pprt->damage.base += pweapon->damageboost;
 
-                    prt_set_pos( pprt, tmp_pos.v );
+                    ego_prt::set_pos( pprt, tmp_pos.v );
                 }
             }
         }
@@ -3526,7 +3525,7 @@ ego_chr * chr_do_init( ego_chr * pchr )
             // Make sure the owner is not dead
             if ( SHOP_NOOWNER == ShopStack.lst[ishop].owner ) continue;
 
-            if ( object_is_in_passage( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+            if ( PassageStack_object_is_inside( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
             {
                 pchr->isshopitem = btrue;               // Full value
                 pchr->iskursed   = bfalse;              // Shop items are never kursed

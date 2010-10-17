@@ -22,15 +22,18 @@
 /// @details
 
 #include "cap_file.h"
+#include "mpd_file.h"
+
+#include "..\character_defs.h"
+#include "..\mad_defs.h"
 
 #include "template.h"
 
-#include "egoboo_fileutil.h"
-#include "egoboo_strutil.h"
-#include "egoboo_vfs.h"
-#include "egoboo.h"
+#include "..\egoboo_fileutil.h"
+#include "..\egoboo_strutil.h"
+#include "..\egoboo_vfs.h"
 
-#include "egoboo_math.inl"
+#include "..\egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

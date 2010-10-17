@@ -24,19 +24,9 @@
 #include "char.inl"
 
 //--------------------------------------------------------------------------------------------
-// FORWARD DECLARATION
-//--------------------------------------------------------------------------------------------
-
-INLINE PIP_REF  prt_get_ipip( const PRT_REF by_reference particle );
-INLINE ego_pip  * prt_get_ppip( const PRT_REF by_reference particle );
-INLINE CHR_REF  prt_get_iowner( const PRT_REF by_reference iprt, int depth );
-INLINE bool_t   prt_set_size( ego_prt *, int size );
-INLINE float    prt_get_scale( ego_prt * pprt );
-
-//--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
-INLINE PIP_REF prt_get_ipip( const PRT_REF by_reference iprt )
+INLINE PIP_REF ego_prt::get_ipip( const PRT_REF by_reference iprt )
 {
     ego_prt * pprt;
 
@@ -49,7 +39,7 @@ INLINE PIP_REF prt_get_ipip( const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_pip * prt_get_ppip( const PRT_REF by_reference iprt )
+INLINE ego_pip * ego_prt::get_ppip( const PRT_REF by_reference iprt )
 {
     ego_prt * pprt;
 
@@ -62,7 +52,7 @@ INLINE ego_pip * prt_get_ppip( const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t prt_set_size( ego_prt * pprt, int size )
+INLINE bool_t ego_prt::set_size( ego_prt * pprt, int size )
 {
     ego_pip *ppip;
 
@@ -84,7 +74,7 @@ INLINE bool_t prt_set_size( ego_prt * pprt, int size )
     }
     else
     {
-        float real_size  = SFP8_TO_FLOAT( size ) * prt_get_scale( pprt );
+        float real_size  = SFP8_TO_FLOAT( size ) * ego_prt::get_scale( pprt );
 
         if ( 0.0f == pprt->bump_real.size || 0.0f == size )
         {
@@ -121,7 +111,7 @@ INLINE bool_t prt_set_size( ego_prt * pprt, int size )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF prt_get_iowner( const PRT_REF by_reference iprt, int depth )
+INLINE CHR_REF ego_prt::get_iowner( const PRT_REF by_reference iprt, int depth )
 {
     /// BB@> A helper function for determining the owner of a particle
     ///
@@ -173,7 +163,7 @@ INLINE CHR_REF prt_get_iowner( const PRT_REF by_reference iprt, int depth )
             {
                 if ( iprt != pprt->parent_ref )
                 {
-                    iowner = prt_get_iowner( pprt->parent_ref, depth + 1 );
+                    iowner = ego_prt::get_iowner( pprt->parent_ref, depth + 1 );
                 }
             }
             else
@@ -190,7 +180,7 @@ INLINE CHR_REF prt_get_iowner( const PRT_REF by_reference iprt, int depth )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE float prt_get_scale( ego_prt * pprt )
+INLINE float ego_prt::get_scale( ego_prt * pprt )
 {
     /// @details BB@> get the scale factor between the "graphical size" of the particle and the actual
     ///               display size

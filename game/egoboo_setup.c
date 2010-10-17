@@ -39,12 +39,12 @@
 //--------------------------------------------------------------------------------------------
 // globally accessable config values
 
-bool_t fpson          = btrue;         
+bool_t fpson          = btrue;
 
-bool_t messageon      = btrue;         
+bool_t messageon      = btrue;
 int    maxmessage     = MAX_MESSAGE;
-int    wraptolerance  = 80;            
-bool_t wateron        = btrue;        
+int    wraptolerance  = 80;
+bool_t wateron        = btrue;
 
 size_t maxparticles   = 512;
 

@@ -23,22 +23,16 @@
 
 #include "module_file.h"
 
-#include "char.inl"
-#include "enchant.inl"
-#include "log.h"
-#include "menu.h"
-#include "sound.h"
-#include "graphic.h"
-#include "passage.h"
-#include "input.h"
-#include "game.h"
-#include "quest.h"
+#include "..\character_defs.h"
+#include "..\sound_defs.h"
+#include "..\graphic_defs.h"
+#include "..\input_defs.h"
 
-#include "egoboo_vfs.h"
-#include "egoboo_strutil.h"
-#include "egoboo_setup.h"
-#include "egoboo_fileutil.h"
-#include "egoboo.h"
+#include "..\log.h"
+#include "..\egoboo_vfs.h"
+#include "..\egoboo_strutil.h"
+#include "..\egoboo_setup.h"
+#include "..\egoboo_fileutil.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -207,9 +201,11 @@ int module_has_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, ch
 }
 
 //--------------------------------------------------------------------------------------------
-void module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, const char * buffer )
+bool_t module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, const char * buffer )
 {
     /// @details ZZ@> This function appends an IDSZ to the module's menu.txt file
+
+    bool_t    written = bfalse;
     vfs_FILE *filewrite;
 
     // Only add if there isn't one already
@@ -238,12 +234,14 @@ void module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, c
             // end the line
             vfs_printf( filewrite, "\n" );
 
-            // invalidate any module list so that we will reload them
-            module_list_valid = bfalse;
+            // let the caller know that the module list is invalidated
+            written = btrue;
 
             // close the file
             vfs_close( filewrite );
         }
     }
+
+    return written;
 }
 

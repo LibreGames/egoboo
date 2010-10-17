@@ -56,7 +56,6 @@
 
 #define SPELLBOOK           127                     ///< The spellbook model
 
-
 #define DAMAGERAISE         25                  ///< Tolerance for damage tiles
 
 /* SDL_GetTicks() always returns milli seconds */
@@ -141,7 +140,6 @@ EXTERN int                     local_import_count;                     ///< Numb
 EXTERN BIT_FIELD               local_import_control[16];             ///< Input bits for each imported player
 EXTERN int                     local_import_slot[16];                ///< For local imports
 
-
 // EWWWW. GLOBALS ARE EVIL.
 
 // KEYBOARD
@@ -172,7 +170,7 @@ struct ego_local_shared_stats
     bool_t  noplayers;                    ///< Are there any local players?
 };
 
-ego_local_shared_stats local_stats;
+extern ego_local_shared_stats local_stats;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -209,4 +207,4 @@ void egoboo_setup_vfs_paths( void );
 
 Uint32 egoboo_get_ticks( void );
 
-#define  _EGOBOO_H_
+#define  _EGOBOO_H

@@ -62,7 +62,7 @@ const char * undo_idsz( IDSZ idsz )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t frect_union( const frect_t * src1, const frect_t * src2, frect_t * dst )
+bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst )
 {
     if ( NULL == dst ) return bfalse;
 

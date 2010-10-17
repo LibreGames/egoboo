@@ -22,6 +22,10 @@
 #include "egoboo_typedef.h"
 #include "IDSZ_map.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //------------------------------------
 // Module constants
 //------------------------------------
@@ -84,6 +88,16 @@ typedef struct s_mod_file mod_file_t;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 int    module_has_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, char * buffer );
-void   module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, const char * buffer );
+bool_t module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, const char * buffer );
 
 mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod );
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _module_file_h
+

@@ -27,12 +27,9 @@
 
 #include "script_functions.h"
 
-#include "profile.inl"
-#include "enchant.inl"
-#include "char.inl"
-#include "particle.inl"
+#include "menu.h"
+
 #include "mad.h"
-#include "mesh.inl"
 
 #include "link.h"
 #include "camera.h"
@@ -48,8 +45,12 @@
 
 #include "egoboo_strutil.h"
 #include "egoboo_setup.h"
-#include "egoboo_math.inl"
 
+#include "profile.inl"
+#include "enchant.inl"
+#include "char.inl"
+#include "particle.inl"
+#include "mesh.inl"
 #include "egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
@@ -1192,7 +1193,7 @@ Uint8 scr_OpenPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = open_passage(( PASS_REF )pstate->argument );
+    returncode = PassageStack_open(( PASS_REF )pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -1207,7 +1208,7 @@ Uint8 scr_ClosePassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = close_passage(( PASS_REF )pstate->argument );
+    returncode = PassageStack_close_one(( PASS_REF )pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -1366,7 +1367,11 @@ Uint8 scr_AddIDSZ( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    module_add_idsz_vfs( pickedmodule_name, pstate->argument, 0, NULL );
+    if( module_add_idsz_vfs( pickedmodule_name, pstate->argument, 0, NULL ) )
+    {
+        // we need to invalidate the module list
+        module_list_valid = bfalse;
+    }
 
     SCRIPT_FUNCTION_END();
 }
@@ -2113,7 +2118,7 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
         place_particle_at_vertex( pprt, pself->index, pstate->distance );
         pprt->attachedto_ref = ( CHR_REF )MAX_CHR;
 
-        tmp_pos = prt_get_pos( pprt );
+        tmp_pos = ego_prt::get_pos( pprt );
 
         // Correct X, Y, Z spacing
         tmp_pos.z += PipStack.lst[pprt->pip_ref].spacing_vrt_pair.base;
@@ -2131,7 +2136,7 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
             }
         }
 
-        prt_set_pos( pprt, tmp_pos.v );
+        ego_prt::set_pos( pprt, tmp_pos.v );
     }
 
     SCRIPT_FUNCTION_END();
@@ -2771,7 +2776,7 @@ Uint8 scr_GiveExperienceToTarget( ego_script_state * pstate, ego_ai_bundle * pbd
 
     SCRIPT_FUNCTION_BEGIN();
 
-    give_experience( pself->target, pstate->argument, pstate->distance, bfalse );
+    give_experience( pself->target, pstate->argument, (xp_type)pstate->distance, bfalse );
 
     SCRIPT_FUNCTION_END();
 }
@@ -4393,7 +4398,7 @@ Uint8 scr_SpawnAttachedSizedParticle( ego_script_state * pstate, ego_ai_bundle *
 
     if ( VALID_PRT( iprt ) )
     {
-        returncode = prt_set_size( PrtList.lst + iprt, pstate->turn );
+        returncode = ego_prt::set_size( PrtList.lst + iprt, pstate->turn );
     }
 
     SCRIPT_FUNCTION_END();
@@ -5174,7 +5179,7 @@ Uint8 scr_set_TargetToWhoeverIsInPassage( ego_script_state * pstate, ego_ai_bund
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ichr = who_is_blocking_passage(( PASS_REF )pstate->argument, pself->index, IDSZ_NONE, TARGET_SELF | TARGET_FRIENDS | TARGET_ENEMIES, IDSZ_NONE );
+    ichr = PassageStack_who_is_blocking(( PASS_REF )pstate->argument, pself->index, IDSZ_NONE, TARGET_SELF | TARGET_FRIENDS | TARGET_ENEMIES, IDSZ_NONE );
 
     if ( INGAME_CHR( ichr ) )
     {
@@ -5686,7 +5691,7 @@ Uint8 scr_FlashPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    flash_passage(( PASS_REF )pstate->argument, pstate->distance );
+    PassageStack_flash(( PASS_REF )pstate->argument, pstate->distance );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6349,7 +6354,7 @@ Uint8 scr_AddShopPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    add_shop_passage( pself->index, ( PASS_REF )pstate->argument );
+    ShopStack_add_one( pself->index, ( PASS_REF )pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6467,7 +6472,7 @@ Uint8 scr_set_TargetToPassageID( ego_script_state * pstate, ego_ai_bundle * pbdl
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ichr = who_is_blocking_passage(( PASS_REF )pstate->argument, pself->index, IDSZ_NONE, TARGET_SELF | TARGET_FRIENDS | TARGET_ENEMIES, pstate->distance );
+    ichr = PassageStack_who_is_blocking(( PASS_REF )pstate->argument, pself->index, IDSZ_NONE, TARGET_SELF | TARGET_FRIENDS | TARGET_ENEMIES, pstate->distance );
 
     if ( INGAME_CHR( ichr ) )
     {
@@ -7757,7 +7762,7 @@ Uint8 scr_set_TargetToBlahInPassage( ego_script_state * pstate, ego_ai_bundle * 
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ichr = who_is_blocking_passage(( PASS_REF )pstate->argument, pself->index, pstate->turn, TARGET_SELF | pstate->distance, IDSZ_NONE );
+    ichr = PassageStack_who_is_blocking(( PASS_REF )pstate->argument, pself->index, pstate->turn, TARGET_SELF | pstate->distance, IDSZ_NONE );
 
     if ( INGAME_CHR( ichr ) )
     {
@@ -7865,7 +7870,7 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
 
             if ( img >= starttile && img < endtile )
             {
-                if ( object_is_in_passage(( PASS_REF )passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+                if ( PassageStack_object_is_inside(( PASS_REF )passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
                 {
                     // Remember where the hit occured.
                     *ptilex = pchr->pos.x;
@@ -7947,7 +7952,7 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
 
     int x, y;
     Uint32 fan;
-    passage_t * ppass;
+    ego_passage * ppass;
 
     if ( INVALID_PASSAGE( passage ) ) return bfalse;
     ppass = PassageStack.lst + passage;

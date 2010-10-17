@@ -22,6 +22,10 @@
 #include "egoboo_typedef.h"
 #include <SDL_endian.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #if defined(_APPLE_)
 #    include <Endian.h>
 #endif
@@ -37,3 +41,10 @@ extern float ENDIAN_FLOAT( float X );
 #define ENDIAN_INT16(X) SDL_SwapLE16(X)
 #define ENDIAN_INT32(X) SDL_SwapLE32(X)
 #define ENDIAN_INT64(X) SDL_SwapLE64(X)
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _egoboo_endian_h
+

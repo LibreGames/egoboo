@@ -75,14 +75,14 @@ struct mpd_BSP
 
     static mpd_BSP root;
 
-    mpd_BSP * ctor( mpd_BSP * pbsp, ego_mpd * pmesh );
-    mpd_BSP * dtor( mpd_BSP * );
-    bool_t    alloc( mpd_BSP * pbsp, ego_mpd * pmesh );
-    bool_t    dealloc( mpd_BSP * pbsp );
+    static mpd_BSP * ctor( mpd_BSP * pbsp, ego_mpd * pmesh );
+    static mpd_BSP * dtor( mpd_BSP * );
+    static bool_t    alloc( mpd_BSP * pbsp, ego_mpd * pmesh );
+    static bool_t    dealloc( mpd_BSP * pbsp );
 
-    bool_t    fill( mpd_BSP * pbsp );
+    static bool_t    fill( mpd_BSP * pbsp );
 
-    int       collide( mpd_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst );
+    static int       collide( mpd_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst );
 };
 
 //--------------------------------------------------------------------------------------------

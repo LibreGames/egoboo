@@ -31,7 +31,7 @@ extern "C"
 #    include <lualib.h>
 
 #if defined(__cplusplus)
-}
+};
 
 #endif
 

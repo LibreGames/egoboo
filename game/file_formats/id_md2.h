@@ -5,6 +5,10 @@
 
 #include "ogl_include.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // gcc does not properly recognize #pragma pack statements
@@ -164,4 +168,12 @@ extern float kid_md2_normals[MD2_MAX_NORMALS][3];
 id_md2_model_t * id_md2_load( const char *filename, id_md2_model_t * mdl );
 void             id_md2_free( id_md2_model_t * mdl );
 
-#define ID_MD2_H
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+};
+#endif
+
+#define _id_md2_h
+

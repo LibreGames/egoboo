@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file rpc.h
+/// @file egoboo_rpc.h
 /// @brief Definitions for the Remote Procedure Call module
 ///
 /// @details This module allows inter-thread and network control of certain game functions.
@@ -33,7 +33,7 @@
 //--------------------------------------------------------------------------------------------
 
 /// a generic "remote procedure call" structure for handling "inter-thread" communication
-struct rpc_base_t
+struct ego_rpc
 {
     int    index;      ///< the index of this request
     int    guid;       ///< the request id number
@@ -43,15 +43,15 @@ struct rpc_base_t
 
     int    data_type;  ///< a the type of the "inherited" data
     void * data;       ///< a pointer to the "inherited" data
+
+    static bool_t get_valid( ego_rpc * prpc )              { return ( NULL != prpc ) && prpc->allocated; }
+    static bool_t get_matches( ego_rpc * prpc, int guid )  { return ( NULL != prpc ) && prpc->allocated && ( guid == prpc->guid ); }
+    static bool_t get_finished( ego_rpc * prpc, int guid ) { return !ego_rpc::get_matches( prpc, guid ) || ( prpc->finished ); }
+    static bool_t set_abort( ego_rpc * prpc, int guid )    { if ( !ego_rpc::get_matches( prpc, guid ) ) return bfalse; prpc->abort = btrue; return btrue; }
+
+    static ego_rpc * ctor( ego_rpc * prpc, int data_type, void * data ) ;
+    static ego_rpc * dtor( ego_rpc * prpc );
 };
-
-INLINE bool_t ego_rpc_valid( ego_rpc_base_t * prpc )           { return ( NULL != prpc ) && prpc->allocated; }
-INLINE bool_t ego_rpc_matches( ego_rpc_base_t * prpc, int guid ) { return ( NULL != prpc ) && prpc->allocated && ( guid == prpc->guid ); }
-INLINE bool_t ego_rpc_finished( ego_rpc_base_t * prpc, int guid ) { return !ego_rpc_matches( prpc, guid ) || ( prpc->finished ); }
-INLINE bool_t ego_rpc_abort( ego_rpc_base_t * prpc, int guid ) { if ( !ego_rpc_matches( prpc, guid ) ) return bfalse; prpc->abort = btrue; return btrue; }
-
-ego_rpc_base_t * ego_rpc_base_ctor( ego_rpc_base_t * prpc, int data_type, void * data ) ;
-ego_rpc_base_t * ego_rpc_base_dtor( ego_rpc_base_t * prpc );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -59,28 +59,27 @@ ego_rpc_base_t * ego_rpc_base_dtor( ego_rpc_base_t * prpc );
 /// a "remote procedure call" structure for handling calls to TxTexture_load_one_vfs()
 /// and TxTitleImage_load_one_vfs()
 
-struct tx_request_t
+struct ego_tx_request : public ego_rpc
 {
-    // "base class" stuff
-    ego_rpc_base_t ego_rpc_base;
-
-    // the function call parameters
+     // the function call parameters
     STRING filename;
     TX_REF itex_src;
     Uint32 key;
 
     // the function call return value(s)
-    TX_REF index;    /// the return value of the function
+    TX_REF ret_index;    /// the return value of the function
+
+    static ego_tx_request * ctor( ego_tx_request * preq, int type );
+    static ego_tx_request * dtor( ego_tx_request * preq );
+
+    static ego_tx_request * load_TxTexture( const char *filename, int itex_src, Uint32 key );
+    static ego_tx_request * load_TxTitleImage( const char *filename );
+
+    static ego_rpc * get_rpc( ego_tx_request * ptr ) { return static_cast<ego_rpc *>(ptr); }
 };
 
-tx_request_t * tx_request_ctor( tx_request_t * preq, int type );
-tx_request_t * tx_request_dtor( tx_request_t * preq );
-
-tx_request_t * ego_rpc_load_TxTexture( const char *filename, int itex_src, Uint32 key );
-tx_request_t * ego_rpc_load_TxTitleImage( const char *filename );
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ego_rpc_system_begin();
-void   ego_rpc_system_end();
-bool_t ego_rpc_system_timestep();
+bool_t rpc_system_begin();
+void   rpc_system_end();
+bool_t rpc_system_timestep();

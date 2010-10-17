@@ -168,8 +168,8 @@ ui_buttonValues  ui_buttonBehavior( ui_id_t id, float x, float y, float width, f
 ui_buttonValues  ui_Widget_Behavior( ui_Widget_t * pw );
 
 // Drawing
-void   ui_drawButton( ui_id_t id, float x, float y, float width, float height, GLXvector4f pcolor );
-void   ui_drawImage( ui_id_t id, oglx_texture_t *img, float x, float y, float width, float height, GLXvector4f image_tint );
+void   ui_drawButton( ui_id_t id, float x, float y, float width, float height, const GLXvector4f pcolor );
+void   ui_drawImage( ui_id_t id, oglx_texture_t *img, float x, float y, float width, float height, const GLXvector4f image_tint );
 bool_t ui_drawText( display_item_t * tx_ptr, float vx, float vy );
 int    ui_drawTextBox( display_list_t * tx_lst, float vx, float vy, float vwidth, float vheight );
 
@@ -186,5 +186,6 @@ float ui_drawTextBoxImmediate( TTF_Font * ttf_ptr, float vx, float vy, float spa
 void ui_set_virtual_screen( float vw, float vh, float ww, float wh );
 TTF_Font * ui_loadFont( const char * font_name, float vpointSize );
 
-#define egoboo_ui_h
+#define _ui_h
+
 

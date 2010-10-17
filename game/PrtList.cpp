@@ -98,7 +98,7 @@ void PrtList_dtor()
 
     for ( cnt = 0; cnt < TOTAL_MAX_PRT; cnt++ )
     {
-        prt_run_object_deconstruct( PrtList.lst + cnt, 100 );
+        ego_prt::run_object_deconstruct( PrtList.lst + cnt, 100 );
     }
 
     PrtList.free_count = 0;
@@ -233,7 +233,7 @@ bool_t PrtList_free_one( const PRT_REF by_reference iprt )
         // from the list
         if ( FLAG_VALID_PBASE( pbase ) )
         {
-            ego_object::state_invalidate( &( pbase->state ) );
+            ego_object_state::invalidate( &( pbase->state ) );
         }
     }
     else
@@ -241,13 +241,13 @@ bool_t PrtList_free_one( const PRT_REF by_reference iprt )
         // was the egoboo_object_state invalidated before being completely killed?
         if ( !FLAG_KILLED_PBASE( pbase ) )
         {
-            // turn it on again so that we can call the prt_run_object_*() functions
+            // turn it on again so that we can call the ego_prt::run_object_*() functions
             // properly
             pbase->state.valid = btrue;
         }
 
         // deallocate any dynamically allocated memory
-        pprt = prt_run_object_deinitialize( pprt, 100 );
+        pprt = ego_prt::run_object_deinitialize( pprt, 100 );
         if ( NULL == pprt ) return bfalse;
 
         if ( pbase->lst_state.in_used_list )
@@ -265,7 +265,7 @@ bool_t PrtList_free_one( const PRT_REF by_reference iprt )
         }
 
         // particle "destructor"
-        pprt = prt_run_object_deconstruct( pprt, 100 );
+        pprt = ego_prt::run_object_deconstruct( pprt, 100 );
         if ( NULL == pprt ) return bfalse;
 
         // let everyone know that that the object is completely gone
@@ -437,7 +437,7 @@ PRT_REF PrtList_allocate( bool_t force )
     if ( ALLOCATED_PRT( iprt ) )
     {
         // construct the new structure
-        prt_run_object_construct( PrtList.lst +  iprt, 100 );
+        ego_prt::run_object_construct( PrtList.lst +  iprt, 100 );
     }
 
     return iprt;
