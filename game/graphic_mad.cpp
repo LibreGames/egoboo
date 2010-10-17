@@ -45,18 +45,18 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void chr_instance_update_lighting_base( chr_instance_t * pinst, chr_t * pchr, bool_t force );
+static void chr_instance_update_lighting_base( chr_instance_t * pinst, ego_chr * pchr, bool_t force );
 
-static void draw_points( chr_t * pchr, int vrt_offset, int verts );
-static void _draw_one_grip_raw( chr_instance_t * pinst, mad_t * pmad, int slot );
-static void draw_one_grip( chr_instance_t * pinst, mad_t * pmad, int slot );
-static void chr_draw_grips( chr_t * pchr );
-static void chr_draw_attached_grip( chr_t * pchr );
-static void render_chr_bbox( chr_t * pchr );
-static void render_chr_grips( chr_t * pchr );
-static void render_chr_points( chr_t * pchr );
-static bool_t render_chr_mount_cv( chr_t * pchr );
-static bool_t render_chr_grip_cv( chr_t * pchr, int grip_offset );
+static void draw_points( ego_chr * pchr, int vrt_offset, int verts );
+static void _draw_one_grip_raw( chr_instance_t * pinst, ego_mad * pmad, int slot );
+static void draw_one_grip( chr_instance_t * pinst, ego_mad * pmad, int slot );
+static void chr_draw_grips( ego_chr * pchr );
+static void chr_draw_attached_grip( ego_chr * pchr );
+static void render_chr_bbox( ego_chr * pchr );
+static void render_chr_grips( ego_chr * pchr );
+static void render_chr_points( ego_chr * pchr );
+static bool_t render_chr_mount_cv( ego_chr * pchr );
+static bool_t render_chr_grip_cv( ego_chr * pchr, int grip_offset );
 
 static egoboo_rv chr_instance_update_vlst_cache( chr_instance_t * pinst, int vmax, int vmin, bool_t force, bool_t vertices_match, bool_t frames_match );
 
@@ -70,9 +70,9 @@ bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f 
     Uint16 vertex;
     float  uoffset, voffset;
 
-    chr_t          * pchr;
-    mad_t          * pmad;
-    MD2_Model_t    * pmd2;
+    ego_chr          * pchr;
+    ego_mad          * pmad;
+    ego_MD2_Model    * pmd2;
     chr_instance_t * pinst;
     oglx_texture_t   * ptex;
 
@@ -119,7 +119,7 @@ bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f 
     ATTRIB_PUSH( "render_one_mad_enviro", GL_CURRENT_BIT );
     {
         int cmd_count;
-        MD2_GLCommand_t * glcommand;
+        ego_MD2_GLCommand * glcommand;
 
         GLXvector4f curr_color;
 
@@ -127,7 +127,7 @@ bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f 
 
         // Render each command
         cmd_count   = md2_get_numCommands( pmd2 );
-        glcommand   = ( MD2_GLCommand_t * )md2_get_Commands( pmd2 );
+        glcommand   = ( ego_MD2_GLCommand * )md2_get_Commands( pmd2 );
 
         for ( cnt = 0; cnt < cmd_count && NULL != glcommand; cnt++ )
         {
@@ -142,7 +142,7 @@ bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f 
                     GLfloat     cmax;
                     GLXvector4f col;
                     GLfloat     tex[2];
-                    GLvertex   *pvrt;
+                    ego_GLvertex   *pvrt;
 
                     vertex = glcommand->data[tnc].index;
                     if ( vertex >= pinst->vrt_count ) continue;
@@ -255,9 +255,9 @@ bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tin
     Uint16 vertex;
     float  uoffset, voffset;
 
-    chr_t          * pchr;
-    mad_t          * pmad;
-    MD2_Model_t    * pmd2;
+    ego_chr          * pchr;
+    ego_mad          * pmad;
+    ego_MD2_Model    * pmd2;
     chr_instance_t * pinst;
     oglx_texture_t   * ptex;
 
@@ -296,7 +296,7 @@ bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tin
     ATTRIB_PUSH( "render_one_mad_tex", GL_CURRENT_BIT );
     {
         float             base_amb;
-        MD2_GLCommand_t * glcommand;
+        ego_MD2_GLCommand * glcommand;
 
         // set the basic tint. if the object is marked with CHR_LIGHT
         // the color will not be set again inside the loop
@@ -312,7 +312,7 @@ bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tin
 
         // Render each command
         cmd_count   = md2_get_numCommands( pmd2 );
-        glcommand   = ( MD2_GLCommand_t * )md2_get_Commands( pmd2 );
+        glcommand   = ( ego_MD2_GLCommand * )md2_get_Commands( pmd2 );
 
         for ( cnt = 0; cnt < cmd_count && NULL != glcommand; cnt++ )
         {
@@ -326,7 +326,7 @@ bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tin
                 {
                     GLXvector2f tex;
                     GLXvector4f col;
-                    GLvertex * pvrt;
+                    ego_GLvertex * pvrt;
 
                     vertex = glcommand->data[tnc].index;
                     if ( vertex >= pinst->vrt_count ) continue;
@@ -427,7 +427,7 @@ bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, B
 {
     /// @details ZZ@> This function picks the actual function to use
 
-    chr_t * pchr;
+    ego_chr * pchr;
     bool_t retval;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
@@ -464,7 +464,7 @@ bool_t render_one_mad_ref( const CHR_REF by_reference ichr )
 {
     /// @details ZZ@> This function draws characters reflected in the floor
 
-    chr_t * pchr;
+    ego_chr * pchr;
     chr_instance_t * pinst;
     GLXvector4f tint;
 
@@ -530,7 +530,7 @@ bool_t render_one_mad_ref( const CHR_REF by_reference ichr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void render_chr_bbox( chr_t * pchr )
+void render_chr_bbox( ego_chr * pchr )
 {
     //PLA_REF ipla;
     bool_t render_player_platforms;
@@ -540,7 +540,7 @@ void render_chr_bbox( chr_t * pchr )
     render_player_platforms = bfalse; // pchr->platform;
     //for( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     //{
-    //    chr_t * pplayer_chr = pla_get_pchr(ipla);
+    //    ego_chr * pplayer_chr = pla_get_pchr(ipla);
     //    if( NULL == pplayer_chr ) continue;
 
     //    if( pchr->obj_base.index == pplayer_chr->onwhichplatform_ref )
@@ -555,9 +555,9 @@ void render_chr_bbox( chr_t * pchr )
     {
         GL_DEBUG( glDisable )( GL_TEXTURE_2D );
         {
-            oct_bb_t bb;
+            ego_oct_bb   bb;
 
-            oct_bb_add_vector( pchr->chr_min_cv, pchr->pos.v, &bb );
+            ego_oct_bb::add_vector( pchr->chr_min_cv, pchr->pos.v, &bb );
 
             GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
             render_oct_bb( &bb, btrue, btrue );
@@ -577,7 +577,7 @@ void render_chr_bbox( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_chr_grips( chr_t * pchr )
+void render_chr_grips( ego_chr * pchr )
 {
     bool_t render_mount_grip;
 
@@ -588,7 +588,7 @@ void render_chr_grips( chr_t * pchr )
     // draw the object's "saddle"  as a part of the graphics debug mode F7
     if ( cfg.dev_mode && render_mount_grip )
     {
-        draw_one_grip( &( pchr->inst ), chr_get_pmad( GET_REF_PCHR( pchr ) ), SLOT_LEFT );
+        draw_one_grip( &( pchr->inst ), ego_chr::get_pmad( GET_REF_PCHR( pchr ) ), SLOT_LEFT );
     }
 
     // the grips and vertices of all objects
@@ -599,7 +599,7 @@ void render_chr_grips( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_chr_mount_cv( chr_t * pchr )
+bool_t render_chr_mount_cv( ego_chr * pchr )
 {
     if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
@@ -609,12 +609,12 @@ bool_t render_chr_mount_cv( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_chr_grip_cv( chr_t * pchr, int grip_offset )
+bool_t render_chr_grip_cv( ego_chr * pchr, int grip_offset )
 {
     bool_t retval;
 
     fvec3_t grip_up, grip_origin;
-    oct_bb_t  grip_cv;
+    ego_oct_bb    grip_cv;
 
     retval = calc_grip_cv( pchr, grip_offset, &grip_cv, grip_origin.v, grip_up.v );
     if ( !retval ) return bfalse;
@@ -630,7 +630,7 @@ bool_t render_chr_grip_cv( chr_t * pchr, int grip_offset )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_chr_points( chr_t * pchr )
+void render_chr_points( ego_chr * pchr )
 {
 
     if ( !ACTIVE_PCHR( pchr ) ) return;
@@ -645,19 +645,19 @@ void render_chr_points( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_points( chr_t * pchr, int vrt_offset, int verts )
+void draw_points( ego_chr * pchr, int vrt_offset, int verts )
 {
     /// @details BB@> a function that will draw some of the vertices of the given character.
     ///     The original idea was to use this to debug the grip for attached items.
 
-    mad_t * pmad;
+    ego_mad * pmad;
 
     int vmin, vmax, cnt;
     GLboolean texture_1d_enabled, texture_2d_enabled;
 
     if ( !ACTIVE_PCHR( pchr ) ) return;
 
-    pmad = chr_get_pmad( GET_REF_PCHR( pchr ) );
+    pmad = ego_chr::get_pmad( GET_REF_PCHR( pchr ) );
     if ( NULL == pmad ) return;
 
     vmin = vrt_offset;
@@ -695,7 +695,7 @@ void draw_points( chr_t * pchr, int vrt_offset, int verts )
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_grip( chr_instance_t * pinst, mad_t * pmad, int slot )
+void draw_one_grip( chr_instance_t * pinst, ego_mad * pmad, int slot )
 {
     GLboolean texture_1d_enabled, texture_2d_enabled;
 
@@ -721,7 +721,7 @@ void draw_one_grip( chr_instance_t * pinst, mad_t * pmad, int slot )
 }
 
 //--------------------------------------------------------------------------------------------
-void _draw_one_grip_raw( chr_instance_t * pinst, mad_t * pmad, int slot )
+void _draw_one_grip_raw( chr_instance_t * pinst, ego_mad * pmad, int slot )
 {
     int vmin, vmax, cnt;
 
@@ -772,11 +772,11 @@ void _draw_one_grip_raw( chr_instance_t * pinst, mad_t * pmad, int slot )
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_draw_attached_grip( chr_t * pchr )
+void chr_draw_attached_grip( ego_chr * pchr )
 {
-    mad_t * pholder_mad;
-    cap_t * pholder_cap;
-    chr_t * pholder;
+    ego_mad * pholder_mad;
+    ego_cap * pholder_cap;
+    ego_chr * pholder;
 
     if ( !ACTIVE_PCHR( pchr ) ) return;
 
@@ -786,17 +786,17 @@ void chr_draw_attached_grip( chr_t * pchr )
     pholder_cap = pro_get_pcap( pholder->profile_ref );
     if ( NULL == pholder_cap ) return;
 
-    pholder_mad = chr_get_pmad( GET_REF_PCHR( pholder ) );
+    pholder_mad = ego_chr::get_pmad( GET_REF_PCHR( pholder ) );
     if ( NULL == pholder_mad ) return;
 
     draw_one_grip( &( pholder->inst ), pholder_mad, pchr->inwhich_slot );
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_draw_grips( chr_t * pchr )
+void chr_draw_grips( ego_chr * pchr )
 {
-    mad_t * pmad;
-    cap_t * pcap;
+    ego_mad * pmad;
+    ego_cap * pcap;
 
     int slot;
     GLboolean texture_1d_enabled, texture_2d_enabled;
@@ -806,7 +806,7 @@ void chr_draw_grips( chr_t * pchr )
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return;
 
-    pmad = chr_get_pmad( GET_REF_PCHR( pchr ) );
+    pmad = ego_chr::get_pmad( GET_REF_PCHR( pchr ) );
     if ( NULL == pmad ) return;
 
     texture_1d_enabled = GL_DEBUG( glIsEnabled )( GL_TEXTURE_1D );
@@ -842,7 +842,7 @@ void chr_draw_grips( chr_t * pchr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_update_instance( chr_t * pchr )
+egoboo_rv chr_update_instance( ego_chr * pchr )
 {
     chr_instance_t * pinst;
     egoboo_rv retval;
@@ -864,7 +864,7 @@ egoboo_rv chr_update_instance( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_instance_update_lighting_base( chr_instance_t * pinst, chr_t * pchr, bool_t force )
+void chr_instance_update_lighting_base( chr_instance_t * pinst, ego_chr * pchr, bool_t force )
 {
     /// @details BB@> determine the basic per-vertex lighting
 
@@ -872,9 +872,9 @@ void chr_instance_update_lighting_base( chr_instance_t * pinst, chr_t * pchr, bo
 
     lighting_cache_t global_light, loc_light;
 
-    GLvertex * vrt_lst;
+    ego_GLvertex * vrt_lst;
 
-    mad_t * pmad;
+    ego_mad * pmad;
 
     if ( NULL == pinst || NULL == pchr ) return;
     vrt_lst = pinst->vrt_lst;
@@ -887,7 +887,7 @@ void chr_instance_update_lighting_base( chr_instance_t * pinst, chr_t * pchr, bo
     pinst->lighting_update_wld = update_wld;
 
     // make sure the matrix is valid
-    chr_update_matrix( pchr, btrue );
+    ego_chr::update_matrix( pchr, btrue );
 
     // has this already been calculated this frame?
     if ( !force && pinst->lighting_frame_all >= frame_all ) return;
@@ -914,7 +914,7 @@ void chr_instance_update_lighting_base( chr_instance_t * pinst, chr_t * pchr, bo
     {
         Sint16 lite;
 
-        GLvertex * pvert = pinst->vrt_lst + cnt;
+        ego_GLvertex * pvert = pinst->vrt_lst + cnt;
 
         // a simple "height" measurement
         float hgt = pvert->pos[ZZ] * pinst->matrix.CNV( 3, 3 ) + pinst->matrix.CNV( 3, 3 );
@@ -954,9 +954,9 @@ egoboo_rv chr_instance_update_bbox( chr_instance_t * pinst )
 {
     int           i, frame_count;
 
-    mad_t       * pmad;
-    MD2_Model_t * pmd2;
-    MD2_Frame_t * frame_list, * pframe_nxt, * pframe_lst;
+    ego_mad       * pmad;
+    ego_MD2_Model * pmd2;
+    ego_MD2_Frame * frame_list, * pframe_nxt, * pframe_lst;
 
     if ( NULL == pinst ) return rv_error;
 
@@ -970,7 +970,7 @@ egoboo_rv chr_instance_update_bbox( chr_instance_t * pinst )
     frame_count = md2_get_numFrames( pmd2 );
     if ( pinst->frame_nxt >= frame_count ||  pinst->frame_lst >= frame_count ) return rv_error;
 
-    frame_list = ( MD2_Frame_t * )md2_get_Frames( pmd2 );
+    frame_list = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
     pframe_lst = frame_list + pinst->frame_lst;
     pframe_nxt = frame_list + pinst->frame_nxt;
 
@@ -1008,7 +1008,7 @@ egoboo_rv chr_instance_needs_update( chr_instance_t * pinst, int vmin, int vmax,
 
     vlst_cache_t * psave;
 
-    mad_t * pmad;
+    ego_mad * pmad;
     int maxvert;
 
     // ensure that the pointers point to something
@@ -1064,9 +1064,9 @@ egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vm
 
     vlst_cache_t * psave;
 
-    mad_t       * pmad;
-    MD2_Model_t * pmd2;
-    MD2_Frame_t * frame_list, * pframe_nxt, * pframe_lst;
+    ego_mad       * pmad;
+    ego_MD2_Model * pmd2;
+    ego_MD2_Frame * frame_list, * pframe_nxt, * pframe_lst;
 
     if ( NULL == pinst ) return rv_error;
     psave = &( pinst->save );
@@ -1138,7 +1138,7 @@ egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vm
     }
 
     // grab the frame data from the correct model
-    frame_list = ( MD2_Frame_t * )md2_get_Frames( pmd2 );
+    frame_list = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
     pframe_nxt = frame_list + pinst->frame_nxt;
     pframe_lst = frame_list + pinst->frame_lst;
 
@@ -1358,7 +1358,7 @@ egoboo_rv chr_instance_update_grip_verts( chr_instance_t * pinst, Uint16 vrt_lst
 egoboo_rv chr_instance_set_action( chr_instance_t * pinst, int action, bool_t action_ready, bool_t override_action )
 {
     int action_old;
-    mad_t * pmad;
+    ego_mad * pmad;
 
     // did we get a bad pointer?
     if ( NULL == pinst ) return rv_error;
@@ -1396,7 +1396,7 @@ egoboo_rv chr_instance_set_action( chr_instance_t * pinst, int action, bool_t ac
 //--------------------------------------------------------------------------------------------
 egoboo_rv chr_instance_set_frame( chr_instance_t * pinst, int frame )
 {
-    mad_t * pmad;
+    ego_mad * pmad;
 
     // did we get a bad pointer?
     if ( NULL == pinst ) return rv_error;
@@ -1445,7 +1445,7 @@ egoboo_rv chr_instance_set_anim( chr_instance_t * pinst, int action, int frame, 
 //--------------------------------------------------------------------------------------------
 egoboo_rv chr_instance_start_anim( chr_instance_t * pinst, int action, bool_t action_ready, bool_t override_action )
 {
-    mad_t * pmad;
+    ego_mad * pmad;
 
     if ( NULL == pinst ) return rv_error;
 
@@ -1463,7 +1463,7 @@ egoboo_rv chr_instance_increment_action( chr_instance_t * pinst )
     /// @details BB@> This function starts the next action for a character
 
     egoboo_rv retval;
-    mad_t * pmad;
+    ego_mad * pmad;
     int     action, action_old;
     bool_t  action_ready;
 
@@ -1488,7 +1488,7 @@ egoboo_rv chr_instance_increment_action( chr_instance_t * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_increment_frame( chr_instance_t * pinst, mad_t * pmad, const CHR_REF by_reference imount )
+egoboo_rv chr_instance_increment_frame( chr_instance_t * pinst, ego_mad * pmad, const CHR_REF by_reference imount )
 {
     /// @details BB@> all the code necessary to move on to the next frame of the animation
 
@@ -1543,7 +1543,7 @@ egoboo_rv chr_instance_increment_frame( chr_instance_t * pinst, mad_t * pmad, co
 egoboo_rv chr_instance_play_action( chr_instance_t * pinst, int action, bool_t action_ready )
 {
     /// @details ZZ@> This function starts a generic action for a character
-    mad_t * pmad;
+    ego_mad * pmad;
 
     if ( NULL == pinst ) return rv_error;
 

@@ -23,8 +23,8 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_ego_mpd;
-struct s_camera;
+struct ego_mpd;
+struct ego_camera;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -34,11 +34,11 @@ extern TX_REF          meshlasttexture;             ///< Last texture used
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void animate_all_tiles( struct s_ego_mpd * pmesh );
-void render_fan( struct s_ego_mpd * pmesh, Uint32 fan );
-void render_hmap_fan( struct s_ego_mpd * pmesh, Uint32 fan );
-void render_water_fan( struct s_ego_mpd * pmesh, Uint32 fan, Uint8 layer );
+void animate_all_tiles( struct ego_mpd * pmesh );
+void render_fan( struct ego_mpd * pmesh, Uint32 fan );
+void render_hmap_fan( struct ego_mpd * pmesh, Uint32 fan );
+void render_water_fan( struct ego_mpd * pmesh, Uint32 fan, Uint8 layer );
 
 void animate_tiles( void );
 
-void   do_grid_lighting( struct s_ego_mpd * pmesh, struct s_camera * pcam );
+void   do_grid_lighting( struct ego_mpd * pmesh, struct ego_camera * pcam );

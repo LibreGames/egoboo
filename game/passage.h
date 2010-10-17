@@ -29,7 +29,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct s_script_state;
+struct ego_script_state;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -60,12 +60,11 @@ DECLARE_STACK_EXTERN( passage_t, PassageStack, MAX_PASS );
 #define INVALID_PASSAGE( IPASS )     ( !VALID_PASSAGE( IPASS ) )
 
 /// The data defining a shop
-struct s_shop
+struct shop_t
 {
     PASS_REF passage;  ///< The passage number
     CHR_REF  owner;    ///< Who gets the gold?
 };
-typedef struct s_shop shop_t;
 
 DECLARE_STACK_EXTERN( shop_t, ShopStack, MAX_SHOP );
 

@@ -28,11 +28,6 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Uint32 ego_object_guid = 0;
-Uint32 ego_object_spawn_depth = 0;
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 // implement simple type arrays
 IMPLEMENT_DYNAMIC_ARY( char_ary,   char );
 IMPLEMENT_DYNAMIC_ARY( short_ary,  short );
@@ -217,7 +212,7 @@ void floats_to_pair( float vmin, float vmax, IPair * ppair )
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state_t * list_object_state_ctor( list_object_state_t * ptr, size_t index )
+list_object_state * list_object_state_ctor( list_object_state * ptr, size_t index )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -229,7 +224,7 @@ list_object_state_t * list_object_state_ctor( list_object_state_t * ptr, size_t 
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state_t * list_object_state_dtor( list_object_state_t * ptr )
+list_object_state * list_object_state_dtor( list_object_state * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -239,7 +234,7 @@ list_object_state_t * list_object_state_dtor( list_object_state_t * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state_t * list_object_state_clear( list_object_state_t * ptr )
+list_object_state * list_object_state_clear( list_object_state * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -251,7 +246,7 @@ list_object_state_t * list_object_state_clear( list_object_state_t * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state_t * list_object_set_allocated( list_object_state_t * ptr, bool_t val )
+list_object_state * list_object_set_allocated( list_object_state * ptr, bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -261,7 +256,7 @@ list_object_state_t * list_object_set_allocated( list_object_state_t * ptr, bool
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state_t * list_object_set_used( list_object_state_t * ptr, bool_t val )
+list_object_state * list_object_set_used( list_object_state * ptr, bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -271,7 +266,7 @@ list_object_state_t * list_object_set_used( list_object_state_t * ptr, bool_t va
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state_t * list_object_set_free( list_object_state_t * ptr, bool_t val )
+list_object_state * list_object_set_free( list_object_state * ptr, bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 

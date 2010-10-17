@@ -17,13 +17,11 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/cap_file.c
+/// @file file_formats/cap_data_file.c
 /// @brief routines for reading and writing the character profile file data.txt
 /// @details
 
 #include "cap_file.h"
-
-#include "char.h"
 
 #include "template.h"
 
@@ -36,7 +34,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-cap_t * cap_init( cap_t * pcap )
+cap_data_t * cap_data_init( cap_data_t * pcap )
 {
     /// @details BB@> initialize the character profile data to safe values
     ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
@@ -80,7 +78,7 @@ cap_t * cap_init( cap_t * pcap )
 }
 
 //--------------------------------------------------------------------------------------------
-cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
+cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * pcap )
 {
     /// @details ZZ@> This function fills a character profile with data from data.txt, returning
     ///     the icap slot that the profile was stuck into.  It may cause the program
@@ -112,7 +110,7 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
     // ignore this, since it was already read
     iTmp = fget_next_int( fileread );
 
-    cap_init( pcap );
+    cap_data_init( pcap );
 
     // mark the source filename
     strncpy( pcap->name, szLoadName, SDL_arraysize( pcap->name ) );
@@ -442,9 +440,9 @@ cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateName, cap_t * pcap )
+bool_t save_one_cap_data_file_vfs( const char * szSaveName, const char * szTemplateName, cap_data_t * pcap )
 {
-    /// @details BB@> export one cap_t struct to a "data.txt" file
+    /// @details BB@> export one cap_data_t struct to a "data.txt" file
     ///     converted to using the template file
 
     vfs_FILE* filewrite, * filetemp;

@@ -27,8 +27,8 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-/// grab a pointer to the process_t of any object that "inherits" this type
-#define PROC_PBASE(PTR) (&( (PTR)->base ))
+/// grab a pointer to the ego_process of any object that "inherits" this type
+#define PROC_PBASE(PTR) static_cast<ego_process *>(PTR)
 
 //--------------------------------------------------------------------------------------------
 // The various states that a process can occupy
@@ -49,7 +49,7 @@ typedef enum e_process_states process_state_t;
 /// A rudimentary implementation of "non-preemptive multitasking" in Egoboo.
 /// @details All other process types "inherit" from this one
 
-struct s_process_instance
+struct ego_process
 {
     bool_t          valid;
     bool_t          paused;
@@ -57,16 +57,16 @@ struct s_process_instance
     bool_t          terminated;
     process_state_t state;
     double          dtime;
+
+    static ego_process * init( ego_process * proc );
+    static bool_t        start( ego_process * proc );
+    static bool_t        kill( ego_process * proc );
+    static bool_t        validate( ego_process * proc );
+    static bool_t        terminate( ego_process * proc );
+    static bool_t        pause( ego_process * proc );
+    static bool_t        resume( ego_process * proc );
+    static bool_t        running( ego_process * proc );
 };
-typedef struct s_process_instance process_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-process_t * process_init( process_t * proc );
-bool_t      process_start( process_t * proc );
-bool_t      process_kill( process_t * proc );
-bool_t      process_validate( process_t * proc );
-bool_t      process_terminate( process_t * proc );
-bool_t      process_pause( process_t * proc );
-bool_t      process_resume( process_t * proc );
-bool_t      process_running( process_t * proc );

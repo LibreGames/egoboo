@@ -30,7 +30,7 @@
 // list definitions
 //--------------------------------------------------------------------------------------------
 
-DECLARE_LIST_EXTERN( chr_t, ChrList, MAX_CHR );
+DECLARE_LIST_EXTERN( ego_chr, ChrList, MAX_CHR );
 
 #define VALID_CHR_RANGE( ICHR )    ( ((ICHR) >= 0) && ((ICHR) < MAX_CHR) )
 #define ALLOCATED_CHR( ICHR )      ( VALID_CHR_RANGE( ICHR ) && ALLOCATED_PBASE ( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
@@ -51,8 +51,8 @@ DECLARE_LIST_EXTERN( chr_t, ChrList, MAX_CHR );
 
 // Macros automate looping through the ChrList. This hides code which defers the creation and deletion of
 // objects until the loop terminates, so that the length of the list will not change during the loop.
-#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {size_t IT##_internal; int chr_loop_start_depth = chr_loop_depth; chr_loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; chr_t * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.lst + IT;
-#define CHR_BEGIN_LOOP_BSP(IT, PCHR)     {size_t IT##_internal; int chr_loop_start_depth = chr_loop_depth; chr_loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; chr_t * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.lst + IT; if( !PCHR->bsp_leaf.inserted ) continue;
+#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {size_t IT##_internal; int chr_loop_start_depth = chr_loop_depth; chr_loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.lst + IT;
+#define CHR_BEGIN_LOOP_BSP(IT, PCHR)     {size_t IT##_internal; int chr_loop_start_depth = chr_loop_depth; chr_loop_depth++; for(IT##_internal=0;IT##_internal<ChrList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrList.lst + IT; if( !PCHR->bsp_leaf.inserted ) continue;
 #define CHR_END_LOOP() } chr_loop_depth--; if(chr_loop_start_depth != chr_loop_depth) EGOBOO_ASSERT(bfalse); ChrList_cleanup(); }
 
 extern int chr_loop_depth;
@@ -62,8 +62,8 @@ extern int chr_loop_depth;
 #define INGAME_CHR_BASE(ICHR)       ( VALID_CHR_RANGE( ICHR ) && ACTIVE_PBASE( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) && ON_PBASE( POBJ_GET_PBASE(ChrList.lst + (ICHR)) ) )
 #define INGAME_PCHR_BASE(PCHR)      ( VALID_CHR_PTR( PCHR ) && ACTIVE_PBASE( POBJ_GET_PBASE(PCHR) ) && ON_PBASE( POBJ_GET_PBASE(PCHR) ) )
 
-#define INGAME_CHR(ICHR)            ( (ego_object_spawn_depth) > 0 ? DEFINED_CHR(ICHR) : INGAME_CHR_BASE(ICHR) )
-#define INGAME_PCHR(PCHR)           ( (ego_object_spawn_depth) > 0 ? DEFINED_PCHR(PCHR) : INGAME_PCHR_BASE(PCHR) )
+#define INGAME_CHR(ICHR)            ( (ego_object::spawn_depth) > 0 ? DEFINED_CHR(ICHR) : INGAME_CHR_BASE(ICHR) )
+#define INGAME_PCHR(PCHR)           ( (ego_object::spawn_depth) > 0 ? DEFINED_PCHR(PCHR) : INGAME_PCHR_BASE(PCHR) )
 
 //--------------------------------------------------------------------------------------------
 // Function prototypes

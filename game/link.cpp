@@ -48,7 +48,7 @@ static bool_t link_push_module();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_hero_spawn_data
+struct hero_spawn_data_t
 {
     Uint32 object_index;
     fvec3_t   pos;
@@ -56,10 +56,9 @@ struct s_hero_spawn_data
 
     // are there any other hero things to add here?
 };
-typedef struct s_hero_spawn_data hero_spawn_data_t;
 
 /// A list of all the active links
-struct s_link_stack_entry
+struct link_stack_entry_t
 {
     STRING            modname;
     int               hero_count;
@@ -67,11 +66,10 @@ struct s_link_stack_entry
 
     // more module parameters, like whether it is beaten or some other things?
 };
-typedef struct s_link_stack_entry link_stack_entry_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Link_t LinkList[LINK_COUNT];
+ego_link LinkList[LINK_COUNT];
 
 static int                link_stack_count = 0;
 static link_stack_entry_t link_stack[LINK_STACK_MAX];
@@ -128,7 +126,7 @@ bool_t link_follow_modname( const char * modname, bool_t push_current_module )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t link_build_vfs( const char * fname, Link_t list[] )
+bool_t link_build_vfs( const char * fname, ego_link list[] )
 {
     vfs_FILE * pfile;
     int i;
@@ -172,7 +170,7 @@ bool_t link_pop_module()
         // restore the heroes' positions before jumping out of the module
         for ( i = 0; i < pentry->hero_count; i++ )
         {
-            chr_t * pchr;
+            ego_chr * pchr;
             hero_spawn_data_t * phero = pentry->hero + i;
 
             pchr = NULL;
@@ -190,11 +188,11 @@ bool_t link_pop_module()
             // is the character is found, restore the old position
             if ( NULL != pchr )
             {
-                chr_set_pos( pchr, phero->pos.v );
+                ego_chr::set_pos( pchr, phero->pos.v );
                 pchr->pos_old  = phero->pos;
                 pchr->pos_stt  = phero->pos_stt;
 
-                chr_update_safe( pchr, btrue );
+                ego_chr::update_safe( pchr, btrue );
             }
         };
     }
@@ -223,7 +221,7 @@ bool_t link_push_module()
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         CHR_REF ichr;
-        chr_t * pchr;
+        ego_chr * pchr;
 
         hero_spawn_data_t * phero;
 
@@ -248,7 +246,7 @@ bool_t link_push_module()
             phero->pos_stt.y    = pchr->pos_stt.y;
             phero->pos_stt.z    = pchr->pos_stt.z;
 
-            phero->pos = chr_get_pos( pchr );
+            phero->pos = ego_chr::get_pos( pchr );
         }
     }
 

@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/eve_file.h
+/// @file file_formats/eve_data_file.h
 /// @details data and functions for reading and writing enchant.txt files
 
 #include "egoboo_typedef.h"
@@ -107,7 +107,7 @@ typedef enum e_enchant_add enum_enchant_add;
 
 /// An enchantment profile, or "eve"
 /// @details An internal representation of the "enchant.txt" file
-struct s_eve
+struct s_eve_data
 {
     EGO_PROFILE_STUFF;
 
@@ -148,14 +148,14 @@ struct s_eve
     bool_t  seekurse;                    ///< Allow target to see kurses
 
     // debugging parameters
-    int enc_request_count;                ///< a way to tell how popular this enchant is
-    int enc_create_count;                 ///< if this number is significantly less than the enc_request_count, there is a problem.
+    int ego_enc_request_count;                ///< a way to tell how popular this enchant is
+    int ego_enc_create_count;                 ///< if this number is significantly less than the ego_enc_request_count, there is a problem.
 };
-typedef struct s_eve eve_t;
+typedef struct s_eve_data eve_data_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-eve_t *  load_one_enchant_file_vfs( const char* szLoadName, eve_t * peve );
-bool_t   save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplateName, eve_t * peve );
+eve_data_t *  load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * peve );
+bool_t        save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplateName, eve_data_t * peve );
 
-eve_t * eve_init( eve_t * peve );
+eve_data_t *  eve_data_init( eve_data_t * peve );

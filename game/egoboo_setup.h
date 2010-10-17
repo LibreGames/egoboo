@@ -23,6 +23,25 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+// the camera modes
+enum e_camera_turn_mode
+{
+    CAM_TURN_NONE = bfalse,
+    CAM_TURN_AUTO = btrue,
+    CAM_TURN_GOOD = 255
+};
+
+// Messaging stuff
+#define MAX_MESSAGE         8                       ///< Number of messages
+#define MAXTOTALMESSAGE     4096
+#define MESSAGESIZE         80
+#define MESSAGEBUFFERSIZE   (MAXTOTALMESSAGE*40)
+
+
+// set a value for the antialiasing multisamples
+#define EGO_MAX_MULTISAMPLES 32
+
 // The possible levels of game difficulty
 enum e_game_difficulty
 {
@@ -45,11 +64,8 @@ typedef enum e_feedback FEEDBACK_TYPE;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-// set a value for the
-#define EGO_MAX_MULTISAMPLES 32
-
 /// The internal representation of the data in "settings.txt"
-struct s_egoboo_config
+struct s_ego_config_data
 {
     // {GRAPHIC}
     bool_t                  fullscreen_req;            ///< Start in fullscreen?
@@ -109,9 +125,22 @@ struct s_egoboo_config
     bool_t                  sdl_image_allowed;       ///< Allow advanced SDL_Image functions?
 
 };
-typedef struct s_egoboo_config egoboo_config_t;
+typedef struct s_ego_config_data ego_config_data_t;
 
-extern egoboo_config_t cfg;
+extern ego_config_data_t cfg;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// globally accessable config values
+
+extern bool_t fpson;           ///< Show FPS?
+
+extern bool_t messageon;       ///< Messages?
+extern int    maxmessage;
+extern int    wraptolerance;   ///< Status bar
+extern bool_t wateron;         ///< Water overlays?
+
+extern size_t maxparticles;    ///< max number of particles
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -119,9 +148,9 @@ egoboo_rv setup_read_vfs();
 bool_t setup_write();
 bool_t setup_quit();
 
-bool_t setup_download( egoboo_config_t * pcfg );
-bool_t setup_upload( egoboo_config_t * pcfg );
-bool_t setup_synch( egoboo_config_t * pcfg );
+bool_t setup_download( ego_config_data_t * pcfg );
+bool_t setup_upload( ego_config_data_t * pcfg );
+bool_t setup_synch( ego_config_data_t * pcfg );
 
 bool_t input_settings_save_vfs( const char* whichfile );
 bool_t input_settings_load_vfs( const char *szFilename );

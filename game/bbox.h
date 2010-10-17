@@ -29,25 +29,23 @@
 //--------------------------------------------------------------------------------------------
 
 /// axis aligned bounding box
-struct s_aabb
+struct ego_aabb
 {
     float mins[3];
     float maxs[3];
 };
-typedef struct s_aabb aabb_t;
 
 //--------------------------------------------------------------------------------------------
 
 /// Level 0 character "bumper"
 /// The simplest collision volume, equivalent to the old-style collision data
 /// stored in data.txt
-struct s_bumper
+struct ego_bumper
 {
     float  size;        ///< Size of bumpers
     float  size_big;     ///< For octagonal bumpers
     float  height;      ///< Distance from head to toe
 };
-typedef struct s_bumper bumper_t;
 
 //--------------------------------------------------------------------------------------------
 
@@ -60,7 +58,7 @@ enum e_octagonal_axes
 /// a "vector" that measures distances based on the axes of an octagonal bounding box
 typedef float oct_vec_t[OCT_COUNT];
 
-bool_t oct_vec_ctor( oct_vec_t ovec , fvec3_t pos );
+bool_t oct_vec_ctor( oct_vec_t ovec, fvec3_t pos );
 
 #define OCT_VEC_INIT_VALS { 0,0,0,0,0 }
 
@@ -70,25 +68,26 @@ bool_t oct_vec_ctor( oct_vec_t ovec , fvec3_t pos );
 /// to be used for the Level 1 character "bumper"
 /// The best possible octagonal bounding volume. A generalization of the old octagonal bounding box
 /// values in data.txt. Computed on the fly.
-struct s_oct_bb
+
+struct ego_oct_bb
 {
     oct_vec_t mins,  maxs;
 
-#if defined(__cplusplus)
-    s_oct_bb() { memset( this, 0, sizeof( *this ) ); }
-#endif
-};
-typedef struct s_oct_bb oct_bb_t;
+    ego_oct_bb() { memset( this, 0, sizeof( *this ) ); }
 
-oct_bb_t * oct_bb_ctor( oct_bb_t * pobb );
-bool_t     oct_bb_union( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst );
-bool_t     oct_bb_intersection( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst );
-bool_t     oct_bb_empty( oct_bb_t src1 );
+    static ego_oct_bb * ctor( ego_oct_bb   * pobb );
+    static bool_t       do_union( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   * pdst );
+    static bool_t       do_intersection( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   * pdst );
+    static bool_t       empty( ego_oct_bb   src1 );
+
+    static void         downgrade( ego_oct_bb * psrc, ego_bumper bump_stt, ego_bumper bump_base, ego_bumper * p_bump, ego_oct_bb   * pdst );
+    static bool_t       add_vector( const ego_oct_bb src, const fvec3_base_t vec, ego_oct_bb   * pdst );
+};
 
 #define OCT_BB_INIT_VALS { OCT_VEC_INIT_VALS, OCT_VEC_INIT_VALS }
 
 //--------------------------------------------------------------------------------------------
-struct s_ego_aabb
+struct ego_lod_aabb
 {
     int    sub_used;
     float  weight;
@@ -97,100 +96,87 @@ struct s_ego_aabb
     int    level;
     int    address;
 
-    aabb_t  bb;
+    ego_aabb  bb;
 
-#if defined(__cplusplus)
-    s_ego_aabb() { memset( this, 0, sizeof( *this ) ); }
-#endif
+    ego_lod_aabb() { memset( this, 0, sizeof( *this ) ); }
 };
 
-typedef struct s_ego_aabb ego_aabb_t;
-
 //--------------------------------------------------------------------------------------------
-struct s_aabb_lst
+struct ego_aabb_lst
 {
     int       count;
-    ego_aabb_t * list;
+    ego_lod_aabb * list;
 
-#if defined(__cplusplus)
-    s_aabb_lst();
-    ~s_aabb_lst();
-#endif
+    ego_aabb_lst();
+    ~ego_aabb_lst();
+
+    static EGO_CONST ego_aabb_lst   * ctor( ego_aabb_lst   * lst );
+    static EGO_CONST ego_aabb_lst   * dtor( ego_aabb_lst   * lst );
+    static EGO_CONST ego_aabb_lst   * renew( ego_aabb_lst   * lst );
+    static EGO_CONST ego_aabb_lst   * alloc( ego_aabb_lst   * lst, int count );
 };
-typedef struct s_aabb_lst aabb_lst_t;
-
-EGO_CONST aabb_lst_t * aabb_lst_ctor( aabb_lst_t * lst );
-EGO_CONST aabb_lst_t * aabb_lst_dtor( aabb_lst_t * lst );
-EGO_CONST aabb_lst_t * aabb_lst_renew( aabb_lst_t * lst );
-EGO_CONST aabb_lst_t * aabb_lst_alloc( aabb_lst_t * lst, int count );
 
 //--------------------------------------------------------------------------------------------
-struct s_aabb_ary
+struct ego_aabb_ary
 {
     int         count;
-    aabb_lst_t * list;
-};
-typedef struct s_aabb_ary aabb_ary_t;
+    ego_aabb_lst   * list;
 
-EGO_CONST aabb_ary_t * bbox_ary_ctor( aabb_ary_t * ary );
-EGO_CONST aabb_ary_t * bbox_ary_dtor( aabb_ary_t * ary );
-EGO_CONST aabb_ary_t * bbox_ary_renew( aabb_ary_t * ary );
-EGO_CONST aabb_ary_t * bbox_ary_alloc( aabb_ary_t * ary, int count );
+    static EGO_CONST ego_aabb_ary * ctor( ego_aabb_ary * ary );
+    static EGO_CONST ego_aabb_ary * dtor( ego_aabb_ary * ary );
+    static EGO_CONST ego_aabb_ary * renew( ego_aabb_ary * ary );
+    static EGO_CONST ego_aabb_ary * alloc( ego_aabb_ary * ary, int count );
+};
 
 //--------------------------------------------------------------------------------------------
 
 /// @details A convex poly representation of an object volume
-struct s_OVolume
+struct ego_OVolume
 {
     int      lod;             ///< the level of detail (LOD) of this volume
     bool_t   needs_shape;     ///< is the shape data valid?
     bool_t   needs_position;  ///< Is the position data valid?
 
-    oct_bb_t oct;
+    ego_oct_bb   oct;
+
+    static ego_OVolume do_merge( ego_OVolume * pv1, ego_OVolume * pv2 );
+    static ego_OVolume do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 );
+    static bool_t      draw( ego_OVolume * cv, bool_t draw_square, bool_t draw_diamond );
+    static bool_t      shift( ego_OVolume * cv_src, fvec3_t * pos_src, ego_OVolume *cv_dst );
+    static bool_t      unshift( ego_OVolume * cv_src, fvec3_t * pos_src, ego_OVolume *cv_dst );
+    static bool_t      refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolume );
 };
-typedef struct s_OVolume OVolume_t;
-
-OVolume_t OVolume_merge( OVolume_t * pv1, OVolume_t * pv2 );
-OVolume_t OVolume_intersect( OVolume_t * pv1, OVolume_t * pv2 );
-bool_t    OVolume_draw( OVolume_t * cv, bool_t draw_square, bool_t draw_diamond );
-bool_t    OVolume_shift( OVolume_t * cv_src, fvec3_t * pos_src, OVolume_t *cv_dst );
-bool_t    OVolume_unshift( OVolume_t * cv_src, fvec3_t * pos_src, OVolume_t *cv_dst );
-
-bool_t    OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume );
 
 //--------------------------------------------------------------------------------------------
-struct s_OVolume_Tree { OVolume_t leaf[8]; };
-typedef struct s_OVolume_Tree OVolume_Tree_t;
+struct ego_OTree 
+{ 
+    ego_OVolume leaf[8]; 
+};
 
 //--------------------------------------------------------------------------------------------
 
 /// @details A convex polygon representation of the collision of two objects
-struct s_CVolume
+struct ego_CVolume
 {
-    float            volume;
-    fvec3_t          center;
-    OVolume_t        ov;
-    OVolume_Tree_t * tree;
-};
-typedef struct s_CVolume CVolume_t;
+    float          volume;
+    fvec3_t        center;
+    ego_OVolume    ov;
+    ego_OTree    * tree;
 
-bool_t CVolume_ctor( CVolume_t * pcv, OVolume_t * pva, OVolume_t * pvb );
-bool_t CVolume_refine( CVolume_t * pcv );
+    static bool_t ctor( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume * pvb );
+    static bool_t refine( ego_CVolume * pcv );
+};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // type conversion routines
 
-bool_t bumper_to_oct_bb_0( bumper_t src, oct_bb_t * pdst );
-bool_t bumper_to_oct_bb_1( bumper_t src, fvec3_t vel, oct_bb_t * pdst );
+bool_t bumper_to_oct_bb_0( ego_bumper src, ego_oct_bb   * pdst );
+bool_t bumper_to_oct_bb_1( ego_bumper src, fvec3_t vel, ego_oct_bb   * pdst );
 
-void   oct_bb_downgrade( oct_bb_t * psrc, bumper_t bump_stt, bumper_t bump_base, bumper_t * p_bump, oct_bb_t * pdst );
-bool_t oct_bb_intersection( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst );
 
-int    oct_bb_to_points( oct_bb_t * pbmp, fvec4_t pos[], size_t pos_count );
-void   points_to_oct_bb( oct_bb_t * pbmp, fvec4_t pos[], size_t pos_count );
-
-bool_t oct_bb_add_vector( const oct_bb_t src, const fvec3_base_t vec, oct_bb_t * pdst );
+int    oct_bb_to_points( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count );
+void   points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

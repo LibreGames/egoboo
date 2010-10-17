@@ -28,63 +28,60 @@
 //--------------------------------------------------------------------------------------------
 
 /// a hash type for "efficiently" storing data
-struct s_hash_node
+struct ego_hash_node
 {
-    struct s_hash_node * next;
+    ego_hash_node * next;
+    void          * data;
 
-    void * data;
+    static ego_hash_node * create( void * data );
+    static bool_t          destroy( ego_hash_node ** );
+    static ego_hash_node * ctor( ego_hash_node * n, void * data );
+    static bool_t          dtor( ego_hash_node * n );
+    static ego_hash_node * insert_after( ego_hash_node lst[], ego_hash_node * n );
+    static ego_hash_node * insert_before( ego_hash_node lst[], ego_hash_node * n );
+    static ego_hash_node * remove_after( ego_hash_node lst[] );
+    static ego_hash_node * remove( ego_hash_node lst[] );
 };
-typedef struct s_hash_node hash_node_t;
-
-hash_node_t * hash_node_create( void * data );
-bool_t        hash_node_destroy( hash_node_t ** );
-hash_node_t * hash_node_ctor( hash_node_t * n, void * data );
-hash_node_t * hash_node_insert_after( hash_node_t lst[], hash_node_t * n );
-hash_node_t * hash_node_insert_before( hash_node_t lst[], hash_node_t * n );
-hash_node_t * hash_node_remove_after( hash_node_t lst[] );
-hash_node_t * hash_node_remove( hash_node_t lst[] );
 
 //--------------------------------------------------------------------------------------------
-struct s_hash_list
+struct ego_hash_list
 {
     int            allocated;
     int         *  subcount;
-    hash_node_t ** sublist;
+    ego_hash_node ** sublist;
+
+    static ego_hash_list * create( int size );
+    static bool_t          destroy( ego_hash_list ** );
+    static ego_hash_list * ctor( ego_hash_list * lst, int size );
+    static ego_hash_list * dtor( ego_hash_list * lst );
+    static bool_t          dealloc( ego_hash_list * lst );
+    static bool_t          alloc( ego_hash_list * lst, int size );
+    static bool_t          renew( ego_hash_list * lst );
+
+    static size_t          count_nodes( ego_hash_list *plst );
+    static int             get_allocd( ego_hash_list *plst );
+    static size_t          get_count( ego_hash_list *plst, int i );
+    static ego_hash_node * get_node( ego_hash_list *plst, int i );
+
+    static bool_t          set_allocd( ego_hash_list *plst,        int );
+    static bool_t          set_count( ego_hash_list *plst, int i, int );
+    static bool_t          set_node( ego_hash_list *plst, int i, ego_hash_node * );
+
+    static bool_t          insert_unique( ego_hash_list * phash, ego_hash_node * pnode );
 };
-typedef struct s_hash_list hash_list_t;
 
-hash_list_t * hash_list_create( int size );
-bool_t        hash_list_destroy( hash_list_t ** );
-hash_list_t * hash_list_ctor( hash_list_t * lst, int size );
-hash_list_t * hash_list_dtor( hash_list_t * lst );
-bool_t        hash_list_free( hash_list_t * lst );
-bool_t        hash_list_alloc( hash_list_t * lst, int size );
-bool_t        hash_list_renew( hash_list_t * lst );
-
-size_t        hash_list_count_nodes( hash_list_t *plst );
-int           hash_list_get_allocd( hash_list_t *plst );
-size_t        hash_list_get_count( hash_list_t *plst, int i );
-hash_node_t * hash_list_get_node( hash_list_t *plst, int i );
-
-bool_t        hash_list_set_allocd( hash_list_t *plst,        int );
-bool_t        hash_list_set_count( hash_list_t *plst, int i, int );
-bool_t        hash_list_set_node( hash_list_t *plst, int i, hash_node_t * );
-
-bool_t        hash_list_insert_unique( hash_list_t * phash, hash_node_t * pnode );
 
 //--------------------------------------------------------------------------------------------
 
-/// An iterator element for traversing the hash_list_t
-struct s_hash_list_iterator
+/// An iterator element for traversing the ego_hash_list
+struct ego_hash_list_iterator
 {
     int           hash;
-    hash_node_t * pnode;
+    ego_hash_node * pnode;
+
+    static ego_hash_list_iterator * ctor( ego_hash_list_iterator * it );
+    static void                   * ptr( ego_hash_list_iterator * it );
+    static bool_t                   set_begin( ego_hash_list_iterator * it, ego_hash_list * hlst );
+    static bool_t                   done( ego_hash_list_iterator * it, ego_hash_list * hlst );
+    static bool_t                   next( ego_hash_list_iterator * it, ego_hash_list * hlst );
 };
-
-typedef struct s_hash_list_iterator hash_list_iterator_t;
-
-hash_list_iterator_t * hash_list_iterator_ctor( hash_list_iterator_t * it );
-void                 * hash_list_iterator_ptr( hash_list_iterator_t * it );
-bool_t                 hash_list_iterator_set_begin( hash_list_iterator_t * it, hash_list_t * hlst );
-bool_t                 hash_list_iterator_done( hash_list_iterator_t * it, hash_list_t * hlst );
-bool_t                 hash_list_iterator_next( hash_list_iterator_t * it, hash_list_t * hlst );

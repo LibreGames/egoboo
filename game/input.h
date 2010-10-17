@@ -51,7 +51,7 @@ typedef enum  e_input_device INPUT_DEVICE;
 //--------------------------------------------------------------------------------------------
 
 /// old user interface variables
-struct s_cursor
+struct cursor_t
 {
     int     x;
     int     y;
@@ -61,7 +61,6 @@ struct s_cursor
     bool_t  pending_click;
     bool_t  wheel_event;
 };
-typedef struct s_cursor cursor_t;
 
 extern cursor_t cursor;
 
@@ -69,7 +68,7 @@ extern cursor_t cursor;
 // MOUSE
 
 /// The internal representation of the mouse data
-struct s_mouse
+struct mouse_t
 {
     bool_t                  on;              ///< Is it alive?
     float                   sense;           ///< Sensitivity threshold
@@ -81,7 +80,6 @@ struct s_mouse
     Uint32                  b;               ///< Button masks
 
 };
-typedef struct s_mouse mouse_t;
 
 extern mouse_t mous;
 
@@ -91,7 +89,7 @@ extern mouse_t mous;
 #define KEYB_BUFFER_SIZE 2048
 
 /// The internal representation of the keyboard data
-struct s_keyboard
+struct keyboard_t
 {
     bool_t  on;                ///< Is the keyboard alive?
     int     count;
@@ -100,7 +98,6 @@ struct s_keyboard
     size_t  buffer_count;
     char    buffer[KEYB_BUFFER_SIZE];
 };
-typedef struct s_keyboard keyboard_t;
 
 extern keyboard_t keyb;
 
@@ -111,7 +108,7 @@ extern keyboard_t keyb;
 #define JOYBUTTON           32                      ///< Maximum number of joystick buttons
 
 /// The internal representation of the joystick data
-struct s_device_joystick
+struct device_joystick_t
 {
     bool_t  on;                ///< Is the holy joystick alive?
     float   x;
@@ -120,7 +117,6 @@ struct s_device_joystick
     Uint32  b;                 ///< Button masks
     SDL_Joystick * sdl_ptr;
 };
-typedef struct s_device_joystick device_joystick_t;
 
 extern device_joystick_t joy[MAXJOYSTICK];
 

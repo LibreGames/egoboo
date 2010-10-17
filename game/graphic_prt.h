@@ -27,9 +27,9 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-struct s_camera;
-struct s_prt;
-struct s_prt_bundle;
+struct ego_camera;
+struct ego_prt_data;
+struct ego_prt_bundle;
 
 //--------------------------------------------------------------------------------------------
 // support for computing the particle texture coordinates on the fly.
@@ -53,7 +53,7 @@ void prt_set_texture_params( const TX_REF by_reference itex );
 //--------------------------------------------------------------------------------------------
 
 /// All the data necessary to display a partile
-struct s_prt_instance
+struct prt_instance_t
 {
     bool_t valid;
 
@@ -90,18 +90,17 @@ struct s_prt_instance
     fvec3_t ref_right;
     fvec3_t ref_pos;
 };
-typedef struct s_prt_instance prt_instance_t;
 
 //--------------------------------------------------------------------------------------------
 bool_t render_one_prt_solid( const PRT_REF by_reference iprt );
 bool_t render_one_prt_trans( const PRT_REF by_reference iprt );
 bool_t render_one_prt_ref( const PRT_REF by_reference iprt );
 
-void   render_all_particles( struct s_camera * pcam );
+void   render_all_particles( struct ego_camera * pcam );
 void   render_all_prt_bbox();
-void   render_prt_ref( struct s_camera * pcam );
+void   render_prt_ref( struct ego_camera * pcam );
 
 void   render_all_prt_attachment();
 
-void prt_instance_update_all( struct s_camera * pcam );
+void prt_instance_update_all( struct ego_camera * pcam );
 

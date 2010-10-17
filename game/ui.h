@@ -32,7 +32,6 @@
 #define UI_Nothing (ui_id_t)(-1)
 #define UI_Invalid (ui_id_t)(-2)
 
-typedef struct s_ui_Context ui_Context_t;
 typedef Uint32 ui_id_t;
 
 /// Possible UI button states
@@ -73,12 +72,11 @@ enum e_ui_just
     UI_JUST_HGH
 };
 
-struct s_ui_Just
+struct ui_Just_t
 {
     unsigned horz: 2;
     unsigned vert: 2;
 };
-typedef struct s_ui_Just ui_Just_t;
 
 extern const ui_Just_t ui_just_nothing;
 extern const ui_Just_t ui_just_topleft;
@@ -88,7 +86,7 @@ extern const ui_Just_t ui_just_centered;
 extern const ui_Just_t ui_just_centerleft;
 
 /// The data describing the state of a UI widget
-struct s_ui_Widget
+struct ui_Widget_t
 {
     ui_id_t         id;
 
@@ -111,7 +109,6 @@ struct s_ui_Widget
     float         vx, vy;
     float         vwidth, vheight;
 };
-typedef struct s_ui_Widget ui_Widget_t;
 
 bool_t ui_Widget_free( ui_Widget_t * pw );
 bool_t ui_Widget_copy( ui_Widget_t * pw2, ui_Widget_t * pw1 );

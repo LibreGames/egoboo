@@ -36,57 +36,18 @@
 //--------------------------------------------------------------------------------------------
 // FORWARD DECLARARIONS
 //--------------------------------------------------------------------------------------------
-// cap_t accessor functions
+// ego_cap accessor functions
 INLINE bool_t cap_is_type_idsz( const CAP_REF by_reference icap, IDSZ test_idsz );
 INLINE bool_t cap_has_idsz( const CAP_REF by_reference icap, IDSZ idsz );
 
 //--------------------------------------------------------------------------------------------
 // team_t accessor functions
 INLINE CHR_REF  team_get_ileader( const TEAM_REF by_reference iteam );
-INLINE chr_t  * team_get_pleader( const TEAM_REF by_reference iteam );
+INLINE ego_chr  * team_get_pleader( const TEAM_REF by_reference iteam );
 
 INLINE bool_t team_hates_team( const TEAM_REF by_reference ipredator_team, const TEAM_REF by_reference iprey_team );
 
-//--------------------------------------------------------------------------------------------
-// chr_t accessor functions
-INLINE PRO_REF  chr_get_ipro( const CHR_REF by_reference ichr );
-INLINE CAP_REF  chr_get_icap( const CHR_REF by_reference ichr );
-INLINE EVE_REF  chr_get_ieve( const CHR_REF by_reference ichr );
-INLINE PIP_REF  chr_get_ipip( const CHR_REF by_reference ichr, int ipip );
-INLINE TEAM_REF chr_get_iteam( const CHR_REF by_reference ichr );
-INLINE TEAM_REF chr_get_iteam_base( const CHR_REF by_reference ichr );
 
-INLINE pro_t * chr_get_ppro( const CHR_REF by_reference ichr );
-INLINE cap_t * chr_get_pcap( const CHR_REF by_reference ichr );
-INLINE eve_t * chr_get_peve( const CHR_REF by_reference ichr );
-INLINE pip_t * chr_get_ppip( const CHR_REF by_reference ichr, int ipip );
-
-INLINE Mix_Chunk      * chr_get_chunk_ptr( chr_t * pchr, int index );
-INLINE Mix_Chunk      * chr_get_chunk( const CHR_REF by_reference ichr, int index );
-INLINE team_t         * chr_get_pteam( const CHR_REF by_reference ichr );
-INLINE team_t         * chr_get_pteam_base( const CHR_REF by_reference ichr );
-INLINE ai_state_t     * chr_get_pai( const CHR_REF by_reference ichr );
-INLINE chr_instance_t * chr_get_pinstance( const CHR_REF by_reference ichr );
-
-INLINE IDSZ chr_get_idsz( const CHR_REF by_reference ichr, int type );
-INLINE latch_2d_t chr_convert_latch_2d( const chr_t * pchr, const by_reference latch_2d_t src );
-
-INLINE void chr_update_size( chr_t * pchr );
-INLINE void chr_init_size( chr_t * pchr, cap_t * pcap );
-INLINE void chr_set_size( chr_t * pchr, float size );
-INLINE void chr_set_width( chr_t * pchr, float width );
-INLINE void chr_set_shadow( chr_t * pchr, float width );
-INLINE void chr_set_height( chr_t * pchr, float height );
-INLINE void chr_set_fat( chr_t * pchr, float fat );
-
-INLINE bool_t chr_has_idsz( const CHR_REF by_reference ichr, IDSZ idsz );
-INLINE bool_t chr_is_type_idsz( const CHR_REF by_reference ichr, IDSZ idsz );
-INLINE bool_t chr_has_vulnie( const CHR_REF by_reference item, const PRO_REF by_reference weapon_profile );
-
-INLINE bool_t chr_getMatUp( chr_t *pchr, fvec3_t   * pvec );
-INLINE bool_t chr_getMatRight( chr_t *pchr, fvec3_t   * pvec );
-INLINE bool_t chr_getMatForward( chr_t *pchr, fvec3_t   * pvec );
-INLINE bool_t chr_getMatTranslate( chr_t *pchr, fvec3_t   * pvec );
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
@@ -96,7 +57,7 @@ INLINE bool_t cap_is_type_idsz( const CAP_REF by_reference icap, IDSZ test_idsz 
     /// @details BB@> check IDSZ_PARENT and IDSZ_TYPE to see if the test_idsz matches. If we are not
     ///     picky (i.e. IDSZ_NONE == test_idsz), then it matches any valid item.
 
-    cap_t * pcap;
+    ego_cap * pcap;
 
     if ( !LOADED_CAP( icap ) ) return bfalse;
     pcap = CapStack.lst + icap;
@@ -115,7 +76,7 @@ INLINE bool_t cap_has_idsz( const CAP_REF by_reference icap, IDSZ idsz )
     ///               Matches anything if not picky (idsz == IDSZ_NONE)
 
     int     cnt;
-    cap_t * pcap;
+    ego_cap * pcap;
     bool_t  retval;
 
     if ( !LOADED_CAP( icap ) ) return bfalse;
@@ -151,7 +112,7 @@ INLINE CHR_REF team_get_ileader( const TEAM_REF by_reference iteam )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE chr_t  * team_get_pleader( const TEAM_REF by_reference iteam )
+INLINE ego_chr  * team_get_pleader( const TEAM_REF by_reference iteam )
 {
     CHR_REF ichr;
 
@@ -175,9 +136,9 @@ INLINE bool_t team_hates_team( const TEAM_REF by_reference ipredator_team, const
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE PRO_REF chr_get_ipro( const CHR_REF by_reference ichr )
+INLINE PRO_REF ego_chr::get_ipro( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return ( PRO_REF )MAX_PROFILE;
     pchr = ChrList.lst + ichr;
@@ -188,9 +149,9 @@ INLINE PRO_REF chr_get_ipro( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE CAP_REF chr_get_icap( const CHR_REF by_reference ichr )
+INLINE CAP_REF ego_chr::get_icap( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return ( CAP_REF )MAX_CAP;
     pchr = ChrList.lst + ichr;
@@ -199,9 +160,9 @@ INLINE CAP_REF chr_get_icap( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE EVE_REF chr_get_ieve( const CHR_REF by_reference ichr )
+INLINE EVE_REF ego_chr::get_ieve( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return ( EVE_REF )MAX_EVE;
     pchr = ChrList.lst + ichr;
@@ -210,9 +171,9 @@ INLINE EVE_REF chr_get_ieve( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE PIP_REF chr_get_ipip( const CHR_REF by_reference ichr, int ipip )
+INLINE PIP_REF ego_chr::get_ipip( const CHR_REF by_reference ichr, int ipip )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return ( PIP_REF )MAX_PIP;
     pchr = ChrList.lst + ichr;
@@ -221,9 +182,9 @@ INLINE PIP_REF chr_get_ipip( const CHR_REF by_reference ichr, int ipip )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE TEAM_REF chr_get_iteam( const CHR_REF by_reference ichr )
+INLINE TEAM_REF ego_chr::get_iteam( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
     int iteam;
 
     if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_DAMAGE;
@@ -236,9 +197,9 @@ INLINE TEAM_REF chr_get_iteam( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE TEAM_REF chr_get_iteam_base( const CHR_REF by_reference ichr )
+INLINE TEAM_REF ego_chr::get_iteam_base( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
     int iteam;
 
     if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_MAX;
@@ -251,9 +212,9 @@ INLINE TEAM_REF chr_get_iteam_base( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE pro_t * chr_get_ppro( const CHR_REF by_reference ichr )
+INLINE ego_pro * ego_chr::get_ppro( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -264,9 +225,9 @@ INLINE pro_t * chr_get_ppro( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE cap_t * chr_get_pcap( const CHR_REF by_reference ichr )
+INLINE ego_cap * ego_chr::get_pcap( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -275,9 +236,9 @@ INLINE cap_t * chr_get_pcap( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE eve_t * chr_get_peve( const CHR_REF by_reference ichr )
+INLINE ego_eve * ego_chr::get_peve( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -286,9 +247,9 @@ INLINE eve_t * chr_get_peve( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE pip_t * chr_get_ppip( const CHR_REF by_reference ichr, int ipip )
+INLINE ego_pip * ego_chr::get_ppip( const CHR_REF by_reference ichr, int ipip )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -297,9 +258,9 @@ INLINE pip_t * chr_get_ppip( const CHR_REF by_reference ichr, int ipip )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Mix_Chunk * chr_get_chunk( const CHR_REF by_reference ichr, int index )
+INLINE Mix_Chunk * ego_chr::get_chunk( const CHR_REF by_reference ichr, int index )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -308,7 +269,7 @@ INLINE Mix_Chunk * chr_get_chunk( const CHR_REF by_reference ichr, int index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Mix_Chunk * chr_get_chunk_ptr( chr_t * pchr, int index )
+INLINE Mix_Chunk * ego_chr::get_chunk_ptr( ego_chr * pchr, int index )
 {
     if ( !DEFINED_PCHR( pchr ) ) return NULL;
 
@@ -316,9 +277,9 @@ INLINE Mix_Chunk * chr_get_chunk_ptr( chr_t * pchr, int index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE team_t * chr_get_pteam( const CHR_REF by_reference ichr )
+INLINE team_t * ego_chr::get_pteam( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -329,9 +290,9 @@ INLINE team_t * chr_get_pteam( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE team_t * chr_get_pteam_base( const CHR_REF by_reference ichr )
+INLINE team_t * ego_chr::get_pteam_base( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -342,9 +303,9 @@ INLINE team_t * chr_get_pteam_base( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ai_state_t * chr_get_pai( const CHR_REF by_reference ichr )
+INLINE ego_ai_state * ego_chr::get_pai( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -353,9 +314,9 @@ INLINE ai_state_t * chr_get_pai( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE chr_instance_t * chr_get_pinstance( const CHR_REF by_reference ichr )
+INLINE chr_instance_t * ego_chr::get_pinstance( const CHR_REF by_reference ichr )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
     pchr = ChrList.lst + ichr;
@@ -364,50 +325,50 @@ INLINE chr_instance_t * chr_get_pinstance( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE IDSZ chr_get_idsz( const CHR_REF by_reference ichr, int type )
+INLINE IDSZ ego_chr::get_idsz( const CHR_REF by_reference ichr, int type )
 {
-    cap_t * pcap;
+    ego_cap * pcap;
 
     if ( type >= IDSZ_COUNT ) return IDSZ_NONE;
 
-    pcap = chr_get_pcap( ichr );
+    pcap = ego_chr::get_pcap( ichr );
     if ( NULL == pcap ) return IDSZ_NONE;
 
     return pcap->idsz[type];
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_has_idsz( const CHR_REF by_reference ichr, IDSZ idsz )
+INLINE bool_t ego_chr::has_idsz( const CHR_REF by_reference ichr, IDSZ idsz )
 {
     /// @details BB@> a wrapper for cap_has_idsz
 
-    CAP_REF icap = chr_get_icap( ichr );
+    CAP_REF icap = ego_chr::get_icap( ichr );
 
     return cap_has_idsz( icap, idsz );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_is_type_idsz( const CHR_REF by_reference item, IDSZ test_idsz )
+INLINE bool_t ego_chr::is_type_idsz( const CHR_REF by_reference item, IDSZ test_idsz )
 {
     /// @details BB@> check IDSZ_PARENT and IDSZ_TYPE to see if the test_idsz matches. If we are not
     ///     picky (i.e. IDSZ_NONE == test_idsz), then it matches any valid item.
 
     CAP_REF icap;
 
-    icap = chr_get_icap( item );
+    icap = ego_chr::get_icap( item );
 
     return cap_is_type_idsz( icap, test_idsz );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_has_vulnie( const CHR_REF by_reference item, const PRO_REF by_reference test_profile )
+INLINE bool_t ego_chr::has_vulnie( const CHR_REF by_reference item, const PRO_REF by_reference test_profile )
 {
     /// @details BB@> is item vulnerable to the type in profile test_profile?
 
     IDSZ vulnie;
 
     if ( !INGAME_CHR( item ) ) return bfalse;
-    vulnie = chr_get_idsz( item, IDSZ_VULNERABILITY );
+    vulnie = ego_chr::get_idsz( item, IDSZ_VULNERABILITY );
 
     // not vulnerable if there is no specific weakness
     if ( IDSZ_NONE == vulnie ) return bfalse;
@@ -420,7 +381,7 @@ INLINE bool_t chr_has_vulnie( const CHR_REF by_reference item, const PRO_REF by_
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_getMatUp( chr_t *pchr, fvec3_t   *pvec )
+INLINE bool_t ego_chr::get_MatUp( ego_chr *pchr, fvec3_t   *pvec )
 {
     /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
 
@@ -428,12 +389,12 @@ INLINE bool_t chr_getMatUp( chr_t *pchr, fvec3_t   *pvec )
 
     if ( NULL == pvec ) return bfalse;
 
-    if ( !chr_matrix_valid( pchr ) )
+    if ( !ego_chr::matrix_valid( pchr ) )
     {
-        chr_update_matrix( pchr, btrue );
+        ego_chr::update_matrix( pchr, btrue );
     }
 
-    if ( chr_matrix_valid( pchr ) )
+    if ( ego_chr::matrix_valid( pchr ) )
     {
         ( *pvec ) = mat_getChrUp( pchr->inst.matrix );
     }
@@ -447,7 +408,7 @@ INLINE bool_t chr_getMatUp( chr_t *pchr, fvec3_t   *pvec )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_getMatRight( chr_t *pchr, fvec3_t   *pvec )
+INLINE bool_t ego_chr::get_MatRight( ego_chr *pchr, fvec3_t   *pvec )
 {
     /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
 
@@ -455,12 +416,12 @@ INLINE bool_t chr_getMatRight( chr_t *pchr, fvec3_t   *pvec )
 
     if ( NULL == pvec ) return bfalse;
 
-    if ( !chr_matrix_valid( pchr ) )
+    if ( !ego_chr::matrix_valid( pchr ) )
     {
-        chr_update_matrix( pchr, btrue );
+        ego_chr::update_matrix( pchr, btrue );
     }
 
-    if ( chr_matrix_valid( pchr ) )
+    if ( ego_chr::matrix_valid( pchr ) )
     {
         ( *pvec ) = mat_getChrForward( pchr->inst.matrix );
     }
@@ -475,7 +436,7 @@ INLINE bool_t chr_getMatRight( chr_t *pchr, fvec3_t   *pvec )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_getMatForward( chr_t *pchr, fvec3_t   *pvec )
+INLINE bool_t ego_chr::get_MatForward( ego_chr *pchr, fvec3_t   *pvec )
 {
     /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
 
@@ -483,12 +444,12 @@ INLINE bool_t chr_getMatForward( chr_t *pchr, fvec3_t   *pvec )
 
     if ( NULL == pvec ) return bfalse;
 
-    if ( !chr_matrix_valid( pchr ) )
+    if ( !ego_chr::matrix_valid( pchr ) )
     {
-        chr_update_matrix( pchr, btrue );
+        ego_chr::update_matrix( pchr, btrue );
     }
 
-    if ( chr_matrix_valid( pchr ) )
+    if ( ego_chr::matrix_valid( pchr ) )
     {
         ( *pvec ) = mat_getChrRight( pchr->inst.matrix );
     }
@@ -503,7 +464,7 @@ INLINE bool_t chr_getMatForward( chr_t *pchr, fvec3_t   *pvec )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t chr_getMatTranslate( chr_t *pchr, fvec3_t   *pvec )
+INLINE bool_t ego_chr::get_MatTranslate( ego_chr *pchr, fvec3_t   *pvec )
 {
     /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
 
@@ -511,18 +472,18 @@ INLINE bool_t chr_getMatTranslate( chr_t *pchr, fvec3_t   *pvec )
 
     if ( NULL == pvec ) return bfalse;
 
-    if ( !chr_matrix_valid( pchr ) )
+    if ( !ego_chr::matrix_valid( pchr ) )
     {
-        chr_update_matrix( pchr, btrue );
+        ego_chr::update_matrix( pchr, btrue );
     }
 
-    if ( chr_matrix_valid( pchr ) )
+    if ( ego_chr::matrix_valid( pchr ) )
     {
         ( *pvec ) = mat_getTranslate( pchr->inst.matrix );
     }
     else
     {
-        ( *pvec ) = chr_get_pos( pchr );
+        ( *pvec ) = ego_chr::get_pos( pchr );
     }
 
     return btrue;
@@ -530,7 +491,7 @@ INLINE bool_t chr_getMatTranslate( chr_t *pchr, fvec3_t   *pvec )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE void chr_update_size( chr_t * pchr )
+INLINE void ego_chr::update_size( ego_chr * pchr )
 {
     /// @details BB@> Convert the base size values to the size values that are used in the game
 
@@ -541,11 +502,11 @@ INLINE void chr_update_size( chr_t * pchr )
     pchr->bump.size_big = pchr->bump_save.size_big * pchr->fat;
     pchr->bump.height   = pchr->bump_save.height   * pchr->fat;
 
-    chr_update_collision_size( pchr, btrue );
+    ego_chr::update_collision_size( pchr, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void chr_init_size( chr_t * pchr, cap_t * pcap )
+INLINE void ego_chr::init_size( ego_chr * pchr, ego_cap * pcap )
 {
     /// @details BB@> initialize the character size info
 
@@ -564,11 +525,11 @@ INLINE void chr_init_size( chr_t * pchr, cap_t * pcap )
     pchr->bump_save.size_big = pchr->bump_stt.size_big;
     pchr->bump_save.height   = pchr->bump_stt.height;
 
-    chr_update_size( pchr );
+    ego_chr::update_size( pchr );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void chr_set_size( chr_t * pchr, float size )
+INLINE void ego_chr::set_size( ego_chr * pchr, float size )
 {
     /// @details BB@> scale the entire character so that the size matches the given value
 
@@ -583,11 +544,11 @@ INLINE void chr_set_size( chr_t * pchr, float size )
     pchr->bump_save.size_big *= ratio;
     pchr->bump_save.height   *= ratio;
 
-    chr_update_size( pchr );
+    ego_chr::update_size( pchr );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void chr_set_width( chr_t * pchr, float width )
+INLINE void ego_chr::set_width( ego_chr * pchr, float width )
 {
     /// @details BB@> update the base character "width". This also modifies the shadow size
 
@@ -601,11 +562,11 @@ INLINE void chr_set_width( chr_t * pchr, float width )
     pchr->bump_stt.size    *= ratio;
     pchr->bump_stt.size_big *= ratio;
 
-    chr_update_size( pchr );
+    ego_chr::update_size( pchr );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void chr_set_shadow( chr_t * pchr, float width )
+INLINE void ego_chr::set_shadow( ego_chr * pchr, float width )
 {
     /// @details BB@> update the base shadow size
 
@@ -613,11 +574,11 @@ INLINE void chr_set_shadow( chr_t * pchr, float width )
 
     pchr->shadow_size_stt = width;
 
-    chr_update_size( pchr );
+    ego_chr::update_size( pchr );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void chr_set_fat( chr_t * pchr, float fat )
+INLINE void ego_chr::set_fat( ego_chr * pchr, float fat )
 {
     /// @details BB@> update all the character size info by specifying the fat value
 
@@ -625,11 +586,11 @@ INLINE void chr_set_fat( chr_t * pchr, float fat )
 
     pchr->fat = fat;
 
-    chr_update_size( pchr );
+    ego_chr::update_size( pchr );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void chr_set_height( chr_t * pchr, float height )
+INLINE void ego_chr::set_height( ego_chr * pchr, float height )
 {
     /// @details BB@> update the base character height
 
@@ -639,11 +600,11 @@ INLINE void chr_set_height( chr_t * pchr, float height )
 
     pchr->bump_save.height = height;
 
-    chr_update_size( pchr );
+    ego_chr::update_size( pchr );
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE latch_2d_t chr_convert_latch_2d( const chr_t * pchr, const by_reference latch_2d_t src )
+INLINE latch_2d_t ego_chr::convert_latch_2d( const ego_chr * pchr, const latch_2d_t by_reference src )
 {
     latch_2d_t dst = src;
 

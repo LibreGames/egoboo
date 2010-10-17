@@ -31,7 +31,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INSTANTIATE_LIST( ACCESS_TYPE_NONE, prt_t, PrtList, MAX_PRT );
+INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_prt, PrtList, MAX_PRT );
 
 static size_t  prt_termination_count = 0;
 static PRT_REF prt_termination_list[TOTAL_MAX_PRT];
@@ -79,13 +79,13 @@ void PrtList_init()
     for ( cnt = 0; cnt < TOTAL_MAX_PRT; cnt++ )
     {
         PRT_REF iprt = ( PRT_REF )(( TOTAL_MAX_PRT - 1 ) - cnt );
-        prt_t * pprt = PrtList.lst + iprt;
+        ego_prt * pprt = PrtList.lst + iprt;
 
         // blank out all the data, including the obj_base data
         memset( pprt, 0, sizeof( *pprt ) );
 
         // particle "initializer"
-        ego_object_ctor( POBJ_GET_PBASE( pprt ), iprt );
+        ego_object::ctor( POBJ_GET_PBASE( pprt ), iprt );
 
         PrtList_add_free( iprt );
     }
@@ -213,8 +213,8 @@ bool_t PrtList_free_one( const PRT_REF by_reference iprt )
     /// should be enough to ensure that no particle is freed more than once
 
     bool_t retval;
-    prt_t * pprt;
-    ego_object_base_t * pbase;
+    ego_prt * pprt;
+    ego_object * pbase;
 
     if ( !ALLOCATED_PRT( iprt ) ) return bfalse;
     pprt = PrtList.lst + iprt;
@@ -233,7 +233,7 @@ bool_t PrtList_free_one( const PRT_REF by_reference iprt )
         // from the list
         if ( FLAG_VALID_PBASE( pbase ) )
         {
-            ego_object_state_invalidate( &( pbase->state ) );
+            ego_object::state_invalidate( &( pbase->state ) );
         }
     }
     else
@@ -269,7 +269,7 @@ bool_t PrtList_free_one( const PRT_REF by_reference iprt )
         if ( NULL == pprt ) return bfalse;
 
         // let everyone know that that the object is completely gone
-        ego_object_invalidate( pbase );
+        ego_object::invalidate( pbase );
     }
 
     return retval;
@@ -328,7 +328,7 @@ PRT_REF PrtList_allocate( bool_t force )
             for ( iprt = 0; iprt < maxparticles; iprt++ )
             {
                 bool_t was_forced = bfalse;
-                prt_t * pprt;
+                ego_prt * pprt;
 
                 // Is this an invalid particle? The particle allocation count is messed up! :(
                 if ( !DEFINED_PRT( iprt ) )
@@ -648,7 +648,7 @@ bool_t PrtList_remove_used( const PRT_REF by_reference iprt )
 void PrtList_cleanup()
 {
     size_t  cnt;
-    prt_t * pprt;
+    ego_prt * pprt;
 
     // go through the list and activate all the particles that
     // were created while the list was iterating
@@ -659,7 +659,7 @@ void PrtList_cleanup()
         if ( !ALLOCATED_PRT( iprt ) ) continue;
         pprt = PrtList.lst + iprt;
 
-        ego_object_grant_on( POBJ_GET_PBASE( pprt ) );
+        ego_object::grant_on( POBJ_GET_PBASE( pprt ) );
     }
     prt_activation_count = 0;
 

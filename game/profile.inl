@@ -36,17 +36,17 @@ INLINE EVE_REF pro_get_ieve( const PRO_REF by_reference iobj );
 INLINE PIP_REF pro_get_ipip( const PRO_REF by_reference iobj, int ipip );
 INLINE IDSZ    pro_get_idsz( const PRO_REF by_reference iobj, int type );
 
-INLINE cap_t *     pro_get_pcap( const PRO_REF by_reference iobj );
-INLINE mad_t *     pro_get_pmad( const PRO_REF by_reference iobj );
-INLINE eve_t *     pro_get_peve( const PRO_REF by_reference iobj );
-INLINE pip_t *     pro_get_ppip( const PRO_REF by_reference iobj, int pip_index );
+INLINE ego_cap *     pro_get_pcap( const PRO_REF by_reference iobj );
+INLINE ego_mad *     pro_get_pmad( const PRO_REF by_reference iobj );
+INLINE ego_eve *     pro_get_peve( const PRO_REF by_reference iobj );
+INLINE ego_pip *     pro_get_ppip( const PRO_REF by_reference iobj, int pip_index );
 INLINE Mix_Chunk * pro_get_chunk( const PRO_REF by_reference iobj, int index );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 INLINE CAP_REF pro_get_icap( const PRO_REF by_reference iobj )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
 
     if ( !LOADED_PRO( iobj ) ) return ( CAP_REF )MAX_CAP;
     pobj = ProList.lst + iobj;
@@ -57,7 +57,7 @@ INLINE CAP_REF pro_get_icap( const PRO_REF by_reference iobj )
 //--------------------------------------------------------------------------------------------
 INLINE MAD_REF pro_get_imad( const PRO_REF by_reference iobj )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
 
     if ( !LOADED_PRO( iobj ) ) return ( MAD_REF )MAX_MAD;
     pobj = ProList.lst + iobj;
@@ -68,7 +68,7 @@ INLINE MAD_REF pro_get_imad( const PRO_REF by_reference iobj )
 //--------------------------------------------------------------------------------------------
 INLINE EVE_REF pro_get_ieve( const PRO_REF by_reference iobj )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
 
     if ( !LOADED_PRO( iobj ) ) return ( EVE_REF )MAX_EVE;
     pobj = ProList.lst + iobj;
@@ -79,7 +79,7 @@ INLINE EVE_REF pro_get_ieve( const PRO_REF by_reference iobj )
 //--------------------------------------------------------------------------------------------
 INLINE PIP_REF pro_get_ipip( const PRO_REF by_reference iobj, int pip_index )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
     PIP_REF found_pip, global_pip;
 
     found_pip = ( PIP_REF )MAX_PIP;
@@ -111,7 +111,7 @@ INLINE PIP_REF pro_get_ipip( const PRO_REF by_reference iobj, int pip_index )
 //--------------------------------------------------------------------------------------------
 INLINE IDSZ pro_get_idsz( const PRO_REF by_reference iobj, int type )
 {
-    cap_t * pcap;
+    ego_cap * pcap;
 
     if ( type >= IDSZ_COUNT ) return IDSZ_NONE;
 
@@ -122,9 +122,9 @@ INLINE IDSZ pro_get_idsz( const PRO_REF by_reference iobj, int type )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE cap_t * pro_get_pcap( const PRO_REF by_reference iobj )
+INLINE ego_cap * pro_get_pcap( const PRO_REF by_reference iobj )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
 
     if ( !LOADED_PRO( iobj ) ) return NULL;
     pobj = ProList.lst + iobj;
@@ -135,9 +135,9 @@ INLINE cap_t * pro_get_pcap( const PRO_REF by_reference iobj )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE mad_t * pro_get_pmad( const PRO_REF by_reference iobj )
+INLINE ego_mad * pro_get_pmad( const PRO_REF by_reference iobj )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
 
     if ( !LOADED_PRO( iobj ) ) return NULL;
     pobj = ProList.lst + iobj;
@@ -148,9 +148,9 @@ INLINE mad_t * pro_get_pmad( const PRO_REF by_reference iobj )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE eve_t * pro_get_peve( const PRO_REF by_reference iobj )
+INLINE ego_eve * pro_get_peve( const PRO_REF by_reference iobj )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
 
     if ( !LOADED_PRO( iobj ) ) return NULL;
     pobj = ProList.lst + iobj;
@@ -161,9 +161,9 @@ INLINE eve_t * pro_get_peve( const PRO_REF by_reference iobj )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE pip_t * pro_get_ppip( const PRO_REF by_reference iobj, int pip_index )
+INLINE ego_pip * pro_get_ppip( const PRO_REF by_reference iobj, int pip_index )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
     PIP_REF global_pip, local_pip;
 
     if ( !LOADED_PRO( iobj ) )
@@ -196,7 +196,7 @@ INLINE pip_t * pro_get_ppip( const PRO_REF by_reference iobj, int pip_index )
 //--------------------------------------------------------------------------------------------
 INLINE Mix_Chunk * pro_get_chunk( const PRO_REF by_reference iobj, int index )
 {
-    pro_t * pobj;
+    ego_pro * pobj;
 
     if ( !VALID_SND( index ) ) return NULL;
 

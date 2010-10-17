@@ -30,17 +30,17 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INSTANTIATE_LIST( ACCESS_TYPE_NONE, enc_t, EncList, MAX_ENC );
+INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_enc, EncList, MAX_ENC );
 
-static size_t  enc_termination_count = 0;
-static ENC_REF enc_termination_list[MAX_ENC];
+static size_t  ego_enc_termination_count = 0;
+static ENC_REF ego_enc_termination_list[MAX_ENC];
 
-static size_t  enc_activation_count = 0;
-static ENC_REF enc_activation_list[MAX_ENC];
+static size_t  ego_enc_activation_count = 0;
+static ENC_REF ego_enc_activation_list[MAX_ENC];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int enc_loop_depth = 0;
+int ego_enc_loop_depth = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -70,13 +70,13 @@ void EncList_init()
     for ( cnt = 0; cnt < MAX_ENC; cnt++ )
     {
         ENC_REF ienc = ( ENC_REF )(( MAX_ENC - 1 ) - cnt );
-        enc_t * penc = EncList.lst + ienc;
+        ego_enc * penc = EncList.lst + ienc;
 
         // blank out all the data, including the obj_base data
         memset( penc, 0, sizeof( *penc ) );
 
         // enchant "initializer"
-        ego_object_ctor( POBJ_GET_PBASE( penc ), ienc );
+        ego_object::ctor( POBJ_GET_PBASE( penc ), ienc );
 
         EncList_add_free( ienc );
     }
@@ -89,7 +89,7 @@ void EncList_dtor()
 
     for ( cnt = 0; cnt < MAX_ENC; cnt++ )
     {
-        enc_run_object_deconstruct( EncList.lst + cnt, 100 );
+        ego_enc::run_object_deconstruct( EncList.lst + cnt, 100 );
     }
 
     EncList.free_count = 0;
@@ -166,8 +166,8 @@ void EncList_update_used()
     // go through the enchant list to see if there are any dangling enchants
     for ( ienc = 0; ienc < MAX_ENC; ienc++ )
     {
-        enc_t               * penc;
-        list_object_state_t * lst_obj_ptr;
+        ego_enc               * penc;
+        list_object_state * lst_obj_ptr;
 
         if ( !VALID_ENC( ienc ) ) continue;
         penc        = EncList.lst + ienc;
@@ -211,8 +211,8 @@ bool_t EncList_free_one( const ENC_REF by_reference ienc )
     /// should be enough to ensure that no enchant is freed more than once
 
     bool_t retval;
-    enc_t * penc;
-    ego_object_base_t * pbase;
+    ego_enc * penc;
+    ego_object * pbase;
 
     if ( !ALLOCATED_ENC( ienc ) ) return bfalse;
     penc = EncList.lst + ienc;
@@ -221,19 +221,19 @@ bool_t EncList_free_one( const ENC_REF by_reference ienc )
     if ( NULL == pbase ) return bfalse;
 
 #if (DEBUG_SCRIPT_LEVEL > 0) && defined(DEBUG_PROFILE) && EGO_DEBUG
-    enc_log_script_time( ienc );
+    ego_enc::log_script_time( ienc );
 #endif
 
     // if we are inside a EncList loop, do not actually change the length of the
     // list. This will cause some problems later.
-    if ( enc_loop_depth > 0 )
+    if ( ego_enc_loop_depth > 0 )
     {
         retval = EncList_add_termination( ienc );
     }
     else
     {
         // deallocate any dynamically allocated memory
-        penc = enc_run_object_deinitialize( penc, 100 );
+        penc = ego_enc::run_object_deinitialize( penc, 100 );
         if ( NULL == penc ) return bfalse;
 
         if ( pbase->lst_state.in_used_list )
@@ -251,7 +251,7 @@ bool_t EncList_free_one( const ENC_REF by_reference ienc )
         }
 
         // enchant "destructor"
-        penc = enc_dtor( penc );
+        penc = ego_enc::dtor( penc );
         if ( NULL == penc ) return bfalse;
     }
 
@@ -542,7 +542,7 @@ ENC_REF EncList_allocate( const ENC_REF by_reference override )
     if ( VALID_ENC( ienc ) )
     {
         // construct the new structure
-        enc_run_object_construct( EncList.lst + ienc, 100 );
+        ego_enc::run_object_construct( EncList.lst + ienc, 100 );
     }
 
     return ienc;
@@ -552,28 +552,28 @@ ENC_REF EncList_allocate( const ENC_REF by_reference override )
 void EncList_cleanup()
 {
     size_t  cnt;
-    enc_t * penc;
+    ego_enc * penc;
 
     // go through the list and activate all the enchants that
     // were created while the list was iterating
-    for ( cnt = 0; cnt < enc_activation_count; cnt++ )
+    for ( cnt = 0; cnt < ego_enc_activation_count; cnt++ )
     {
-        ENC_REF ienc = enc_activation_list[cnt];
+        ENC_REF ienc = ego_enc_activation_list[cnt];
 
         if ( !VALID_ENC( ienc ) ) continue;
         penc = EncList.lst + ienc;
 
-        ego_object_grant_on( POBJ_GET_PBASE( penc ) );
+        ego_object::grant_on( POBJ_GET_PBASE( penc ) );
     }
-    enc_activation_count = 0;
+    ego_enc_activation_count = 0;
 
     // go through and delete any enchants that were
     // supposed to be deleted while the list was iterating
-    for ( cnt = 0; cnt < enc_termination_count; cnt++ )
+    for ( cnt = 0; cnt < ego_enc_termination_count; cnt++ )
     {
-        EncList_free_one( enc_termination_list[cnt] );
+        EncList_free_one( ego_enc_termination_list[cnt] );
     }
-    enc_termination_count = 0;
+    ego_enc_termination_count = 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -586,10 +586,10 @@ bool_t EncList_add_activation( ENC_REF ienc )
 
     if ( !VALID_ENC_RANGE( ienc ) ) return bfalse;
 
-    if ( enc_activation_count < MAX_ENC )
+    if ( ego_enc_activation_count < MAX_ENC )
     {
-        enc_activation_list[enc_activation_count] = ienc;
-        enc_activation_count++;
+        ego_enc_activation_list[ego_enc_activation_count] = ienc;
+        ego_enc_activation_count++;
 
         retval = btrue;
     }
@@ -606,10 +606,10 @@ bool_t EncList_add_termination( ENC_REF ienc )
 
     if ( !VALID_ENC_RANGE( ienc ) ) return bfalse;
 
-    if ( enc_termination_count < MAX_ENC )
+    if ( ego_enc_termination_count < MAX_ENC )
     {
-        enc_termination_list[enc_termination_count] = ienc;
-        enc_termination_count++;
+        ego_enc_termination_list[ego_enc_termination_count] = ienc;
+        ego_enc_termination_count++;
 
         retval = btrue;
     }

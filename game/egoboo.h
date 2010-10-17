@@ -56,11 +56,6 @@
 
 #define SPELLBOOK           127                     ///< The spellbook model
 
-// Messaging stuff
-#define MAX_MESSAGE         8                       ///< Number of messages
-#define MAXTOTALMESSAGE     4096
-#define MESSAGESIZE         80
-#define MESSAGEBUFFERSIZE   (MAXTOTALMESSAGE*40)
 
 #define DAMAGERAISE         25                  ///< Tolerance for damage tiles
 
@@ -146,12 +141,6 @@ EXTERN int                     local_import_count;                     ///< Numb
 EXTERN BIT_FIELD               local_import_control[16];             ///< Input bits for each imported player
 EXTERN int                     local_import_slot[16];                ///< For local imports
 
-// Setup values
-EXTERN bool_t                  messageon      EQ( btrue );         ///< Messages?
-EXTERN int                     maxmessage     EQ( MAX_MESSAGE );
-EXTERN int                     wraptolerance  EQ( 80 );            ///< Status bar
-EXTERN bool_t                  wateron        EQ( btrue );         ///< Water overlays?
-EXTERN bool_t                  fpson          EQ( btrue );         ///< Show FPS?
 
 // EWWWW. GLOBALS ARE EVIL.
 
@@ -164,7 +153,7 @@ EXTERN bool_t console_done EQ( bfalse );                   ///< Input text from 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // Shared stats
-struct local_shared_stats_s
+struct ego_local_shared_stats
 {
     int        seeinvis_level;
     int     seedark_level;
@@ -182,8 +171,8 @@ struct local_shared_stats_s
     /// @todo ZF@> Dont think this one is supposed to be in here
     bool_t  noplayers;                    ///< Are there any local players?
 };
-typedef struct local_shared_stats_s local_shared_stats_t;
-local_shared_stats_t local_stats;
+
+ego_local_shared_stats local_stats;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -191,10 +180,8 @@ local_shared_stats_t local_stats;
 #include "egoboo_process.h"
 
 /// a process that controls the master loop of the program
-struct s_ego_process
+struct ego_main_process : public ego_process
 {
-    process_t base;
-
     double frameDuration;
     int    menuResult;
 
@@ -207,9 +194,8 @@ struct s_ego_process
 
     char * argv0;
 };
-typedef struct s_ego_process ego_process_t;
 
-extern ego_process_t * EProc;
+extern ego_main_process * EProc;
 
 void ego_init_SDL_base( void );
 

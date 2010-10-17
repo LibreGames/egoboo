@@ -25,12 +25,14 @@
 
 #include <SDL_ttf.h>
 
+#include "egoboo_typedef.h"
 #include "ogl_include.h"
 
 //--------------------------------------------------------------------------------------------
 
 /// forward declaration for that encapsulates OpenGL data for the display list
-typedef struct s_display_item display_item_t;
+
+struct display_item_t;
 
 extern display_item_t * display_item_new();
 extern display_item_t * display_item_ctor( display_item_t * );
@@ -59,7 +61,8 @@ extern GLboolean       display_item_draw( display_item_t * );
 
 //--------------------------------------------------------------------------------------------
 /// forward declaration for an opaque struct implementing an OpenGL-like display list
-typedef struct s_display_list display_list_t;
+
+struct display_list_t;
 
 extern display_list_t * display_list_ctor( display_list_t *, GLsizei count );
 extern display_list_t * display_list_dtor( display_list_t *, GLboolean owner );

@@ -25,31 +25,30 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_chr;
-struct s_prt;
+struct ego_chr;
+struct ego_prt_data;
 
-struct s_cap;
-struct s_mad;
-struct s_eve;
-struct s_pip;
+struct ego_cap;
+struct ego_mad;
+struct s_eve_data;
+struct ego_pip;
 struct Mix_Chunk;
 
-struct s_mpd_BSP;
+struct mpd_BSP  ;
 
-struct s_prt_bundle;
+struct ego_prt_bundle;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// Placeholders used while importing profiles
-struct s_pro_import
+struct pro_import_t
 {
     int   slot;
     int   player;
     int   slot_lst[MAX_PROFILE];
     int   max_slot;
 };
-typedef struct s_pro_import pro_import_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -62,7 +61,7 @@ typedef struct s_pro_import pro_import_t;
 #define MAXSECTION                      4              ///< T-wi-n-k...  Most of 4 sections
 
 /// The buffer for the random naming data
-struct s_chop_data
+struct chop_data_t
 {
     size_t  chop_count;             ///< The global number of name parts
 
@@ -70,7 +69,6 @@ struct s_chop_data
     char    buffer[CHOPDATACHUNK];  ///< The name parts
     int     start[MAXCHOP];         ///< The first character of each part
 };
-typedef struct s_chop_data chop_data_t;
 
 chop_data_t * chop_data_init( chop_data_t * pdata );
 
@@ -79,23 +77,21 @@ bool_t        chop_export_vfs( const char *szSaveName, const char * szChop );
 //--------------------------------------------------------------------------------------------
 
 /// Definition of a single chop section
-struct s_chop_section
+struct chop_section_t
 {
     int size;     ///< Number of choices, 0
     int start;    ///< A reference to a specific offset in the chop_data_t buffer
 };
-typedef struct s_chop_section chop_section_t;
 
 #define CHOP_SECTION_INIT { /* size */ -1, /* start */ -1 }
 
 //--------------------------------------------------------------------------------------------
 
 /// Definition of the chop info needed to create a name
-struct s_chop_definition
+struct chop_definition_t
 {
     chop_section_t  section[MAXSECTION];
 };
-typedef struct s_chop_definition chop_definition_t;
 
 chop_definition_t * chop_definition_init( chop_definition_t * pdefinition );
 
@@ -105,7 +101,7 @@ chop_definition_t * chop_definition_init( chop_definition_t * pdefinition );
 //--------------------------------------------------------------------------------------------
 
 /// a wrapper for all the datafiles in the *.obj dir
-struct s_object_profile
+struct ego_pro
 {
     EGO_PROFILE_STUFF;
 
@@ -132,14 +128,11 @@ struct s_object_profile
     struct Mix_Chunk *  wavelist[MAX_WAVE];             ///< sounds in a object
 };
 
-typedef struct s_object_profile object_profile_t;
-typedef struct s_object_profile pro_t;
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // the profile list
 
-DECLARE_LIST_EXTERN( pro_t, ProList, MAX_PROFILE );
+DECLARE_LIST_EXTERN( ego_pro, ProList, MAX_PROFILE );
 
 int          pro_get_slot_vfs( const char * tmploadname, int slot_override );
 const char * pro_create_chop( const PRO_REF by_reference profile_ref );
@@ -156,29 +149,30 @@ bool_t  ProList_free_one( const PRO_REF by_reference object_ref );
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // the BSP structure housing the object
-struct s_obj_BSP
+struct ego_obj_BSP
 {
     // the BSP of characters for character-character and character-particle interactions
-    BSP_tree_t   tree;
+    ego_BSP_tree     tree;
+
+    static ego_obj_BSP root;
+    static int         chr_count;      ///< the number of characters in the ego_obj_BSP::root structure
+    static int         prt_count;      ///< the number of particles  in the ego_obj_BSP::root structure
+
+    static bool_t ctor( ego_obj_BSP * pbsp, struct mpd_BSP   * pmesh_bsp );
+    static bool_t dtor( ego_obj_BSP * pbsp );
+
+    static bool_t alloc( ego_obj_BSP * pbsp, int depth );
+    static bool_t dealloc( ego_obj_BSP * pbsp );
+
+    static bool_t fill( ego_obj_BSP * pbsp );
+    static bool_t empty( ego_obj_BSP * pbsp );
+
+    //bool_t insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf   * pnode, int depth, int address_x[], int address_y[], int address_z[] );
+    static bool_t insert_chr( ego_obj_BSP * pbsp, struct ego_chr * pchr );
+    static bool_t insert_prt( ego_obj_BSP * pbsp, struct ego_prt_bundle * pbdl_prt );
+
+    static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst );
 };
-typedef struct s_obj_BSP obj_BSP_t;
-
-bool_t obj_BSP_ctor( obj_BSP_t * pbsp, struct s_mpd_BSP * pmesh_bsp );
-bool_t obj_BSP_dtor( obj_BSP_t * pbsp );
-
-bool_t obj_BSP_alloc( obj_BSP_t * pbsp, int depth );
-bool_t obj_BSP_free( obj_BSP_t * pbsp );
-
-bool_t obj_BSP_fill( obj_BSP_t * pbsp );
-bool_t obj_BSP_empty( obj_BSP_t * pbsp );
-
-//bool_t obj_BSP_insert_leaf( obj_BSP_t * pbsp, BSP_leaf_t * pnode, int depth, int address_x[], int address_y[], int address_z[] );
-bool_t obj_BSP_insert_chr( obj_BSP_t * pbsp, struct s_chr * pchr );
-bool_t obj_BSP_insert_prt( obj_BSP_t * pbsp, struct s_prt_bundle * pbdl_prt );
-
-int    obj_BSP_collide( obj_BSP_t * pbsp, BSP_aabb_t * paabb, BSP_leaf_pary_t * colst );
-
-extern obj_BSP_t obj_BSP_root;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -193,9 +187,6 @@ DECLARE_EXTERN_STATIC_ARY( MessageOffsetAry, MessageOffset );
 
 extern Uint32          message_buffer_carat;                                  ///< Where to put letter
 extern char            message_buffer[MESSAGEBUFFERSIZE];                     ///< The text buffer
-
-extern int             BSP_chr_count;                                         ///< the number of characters in the obj_BSP_root structure
-extern int             BSP_prt_count;                                         ///< the number of particles  in the obj_BSP_root structure
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

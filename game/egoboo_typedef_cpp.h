@@ -72,8 +72,6 @@ template <typename _ty> class t_reference
 
 #define CPP_DECLARE_REF( TYPE, NAME ) typedef t_reference<TYPE> NAME
 
-#define REF_TO_INT( X ) ((X).get_value())
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // a simple array template

@@ -113,7 +113,7 @@ typedef struct s_dynalight_info dynalight_info_t;
 //--------------------------------------------------------------------------------------------
 
 /// The definition of a particle profile
-struct s_pip
+struct s_pip_data
 {
     EGO_PROFILE_STUFF;
 
@@ -208,7 +208,7 @@ struct s_pip
     int prt_create_count;                 ///< if this number is significantly less than the prt_request_count, there is a problem.
 };
 
-typedef struct s_pip pip_t;
+typedef struct s_pip_data pip_data_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -217,6 +217,6 @@ extern particle_direction_t prt_direction[256];
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-pip_t * load_one_pip_file_vfs( const char *szLoadName, pip_t * ppip );
+pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip );
 
-pip_t * pip_init( pip_t * ppip );
+pip_data_t * pip_init( pip_data_t * ppip );

@@ -27,7 +27,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_ego_mpd;
+struct ego_mpd;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -41,12 +41,6 @@ enum e_camera_mode
 };
 
 /// The mode that the camera uses to determine where is is looking
-enum e_camera_turn_mode
-{
-    CAM_TURN_NONE = bfalse,
-    CAM_TURN_AUTO = btrue,
-    CAM_TURN_GOOD = 255
-};
 
 #define CAM_TRACK_X_AREA_LOW     100
 #define CAM_TRACK_X_AREA_HIGH    180
@@ -83,7 +77,7 @@ enum e_camera_turn_mode
 //--------------------------------------------------------------------------------------------
 
 /// definition of the Egoboo camera object
-struct s_camera
+struct ego_camera
 {
     fmat_4x4_t mView, mViewSave;      ///< View Matrix
     fmat_4x4_t mProjection;           ///< Projection Matrix
@@ -118,25 +112,19 @@ struct s_camera
     fvec3_t   vfw;                 ///< the camera forward vector
     fvec3_t   vup;                 ///< the camera up vector
     fvec3_t   vrt;                 ///< the camera right vector
+
+    static ego_camera * ctor( ego_camera * pcam );
+
+    static void         reset( ego_camera * pcam, struct ego_mpd * pmesh );
+    static void         adjust_angle( ego_camera * pcam, float height );
+    static void         move( ego_camera * pcam, struct ego_mpd * pmesh );
+    static void         make_matrix( ego_camera * pcam );
+    static void         look_at( ego_camera * pcam, float x, float y );
+
+    static bool_t       reset_target( ego_camera * pcam, struct ego_mpd * pmesh );
+    static void         rotmesh_init();
 };
 
-typedef struct s_camera camera_t;
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-extern camera_t gCamera;
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-// Function prototypes
-
-camera_t * camera_ctor( camera_t * pcam );
-
-void camera_reset( camera_t * pcam, struct s_ego_mpd * pmesh );
-void camera_adjust_angle( camera_t * pcam, float height );
-void camera_move( camera_t * pcam, struct s_ego_mpd * pmesh );
-void camera_make_matrix( camera_t * pcam );
-void camera_look_at( camera_t * pcam, float x, float y );
-
-bool_t camera_reset_target( camera_t * pcam, struct s_ego_mpd * pmesh );
-void   camera_rotmesh_init();
+extern ego_camera gCamera;

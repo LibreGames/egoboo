@@ -204,7 +204,7 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
 
     CHR_REF character, foundother;
     passage_t * ppass;
-    chr_t *psrc;
+    ego_chr *psrc;
 
     // Skip if the one who is looking doesn't exist
     if ( !INGAME_CHR( isrc ) ) return ( CHR_REF )MAX_CHR;
@@ -218,7 +218,7 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
     foundother = ( CHR_REF )MAX_CHR;
     for ( character = 0; character < MAX_CHR; character++ )
     {
-        chr_t * pchr;
+        ego_chr * pchr;
 
         if ( !INGAME_CHR( character ) ) continue;
         pchr = ChrList.lst + character;
@@ -244,14 +244,14 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
                 CHR_REF item;
 
                 // I: Check left hand
-                if ( chr_is_type_idsz( pchr->holdingwhich[SLOT_LEFT], require_item ) )
+                if ( ego_chr::is_type_idsz( pchr->holdingwhich[SLOT_LEFT], require_item ) )
                 {
                     // It has the item...
                     return character;
                 }
 
                 // II: Check right hand
-                if ( chr_is_type_idsz( pchr->holdingwhich[SLOT_RIGHT], require_item ) )
+                if ( ego_chr::is_type_idsz( pchr->holdingwhich[SLOT_RIGHT], require_item ) )
                 {
                     // It has the item...
                     return character;
@@ -260,7 +260,7 @@ CHR_REF who_is_blocking_passage( const PASS_REF by_reference passage, const CHR_
                 // III: Check the pack
                 PACK_BEGIN_LOOP( item, pchr->pack.next )
                 {
-                    if ( chr_is_type_idsz( item, require_item ) )
+                    if ( ego_chr::is_type_idsz( item, require_item ) )
                     {
                         // It has the item in inventory...
                         return character;
@@ -295,7 +295,7 @@ void check_passage_music()
         // Look at each player
         for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
         {
-            chr_t * pchr;
+            ego_chr * pchr;
             player_t * ppla = PlaStack.lst + ipla;
 
             character = ppla->index;
@@ -340,7 +340,7 @@ bool_t close_passage( const PASS_REF by_reference passage )
         // Make sure it isn't blocked
         for ( character = 0; character < MAX_CHR; character++ )
         {
-            chr_t *pchr;
+            ego_chr *pchr;
 
             if ( !INGAME_CHR( character ) ) continue;
             pchr = ChrList.lst + character;
@@ -370,7 +370,7 @@ bool_t close_passage( const PASS_REF by_reference passage )
         for ( cnt = 0; cnt < numcrushed; cnt++ )
         {
             character = crushedcharacters[cnt];
-            ADD_BITS( chr_get_pai( character )->alert, ALERTIF_CRUSHED );
+            ADD_BITS( ego_chr::get_pai( character )->alert, ALERTIF_CRUSHED );
         }
     }
 
@@ -419,7 +419,7 @@ void add_shop_passage( const CHR_REF by_reference owner, const PASS_REF by_refer
     // flag every item in the shop as a shop item
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        chr_t * pchr;
+        ego_chr * pchr;
 
         if ( !INGAME_CHR( ichr ) ) continue;
         pchr = ChrList.lst + ichr;
@@ -438,7 +438,7 @@ void add_shop_passage( const CHR_REF by_reference owner, const PASS_REF by_refer
                 /// An answer would be to reduce the XP based on the some quality of the book and the character's level?
                 /// Maybe give the spell books levels, and if your character's level is above the spellbook level, no XP for identifying it?
 
-                if ( chr_get_price( ichr ) <= SHOP_IDENTIFY )
+                if ( ego_chr::get_price( ichr ) <= SHOP_IDENTIFY )
                 {
                     pchr->nameknown  = btrue;
                 }

@@ -164,18 +164,18 @@ enum e_chr_gender
 //--------------------------------------------------------------------------------------------
 
 /// The character statistic data in the form used in data.txt
-struct s_cap_stat
+struct s_cap_data_stat
 {
     FRange val;
     FRange perlevel;
 };
-typedef struct s_cap_stat cap_stat_t;
+typedef struct s_cap_data_stat cap_stat_t;
 
 //--------------------------------------------------------------------------------------------
 
 /// The character profile data, or cap
 /// The internal representation of the information in data.txt
-struct s_cap
+struct s_cap_data
 {
     EGO_PROFILE_STUFF;
 
@@ -344,11 +344,11 @@ struct s_cap
 
 };
 
-typedef struct s_cap cap_t;
+typedef struct s_cap_data cap_data_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-cap_t * load_one_cap_file_vfs( const char * tmploadname, cap_t * pcap );
-bool_t  save_one_cap_file_vfs( const char * szSaveName, const char * szTemplateFile, cap_t * pcap );
+cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * pcap );
+bool_t  save_one_cap_data_file_vfs( const char * szSaveName, const char * szTemplateFile, cap_data_t * pcap );
 
-cap_t * cap_init( cap_t * pcap );
+cap_data_t * cap_data_init( cap_data_t * pcap );

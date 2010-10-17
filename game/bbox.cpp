@@ -31,26 +31,25 @@
 //--------------------------------------------------------------------------------------------
 
 static Uint32    cv_list_count = 0;
-static OVolume_t cv_list[1000];
+static ego_OVolume cv_list[1000];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_cv_point_data
+struct ego_cv_point_data
 {
     bool_t  inside;
     fvec3_t   pos;
     float   rads;
 };
-typedef struct s_cv_point_data cv_point_data_t;
 
 static int cv_point_data_cmp( const void * pleft, const void * pright );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-s_aabb_lst::s_aabb_lst() { aabb_lst_ctor( this ); }
-s_aabb_lst::~s_aabb_lst() { aabb_lst_dtor( this ); }
+ego_aabb_lst::ego_aabb_lst() { ego_aabb_lst::ctor( this ); }
+ego_aabb_lst::~ego_aabb_lst() { ego_aabb_lst::dtor( this ); }
 
-EGO_CONST aabb_lst_t * aabb_lst_ctor( aabb_lst_t * lst )
+EGO_CONST ego_aabb_lst * ego_aabb_lst::ctor( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
@@ -60,7 +59,7 @@ EGO_CONST aabb_lst_t * aabb_lst_ctor( aabb_lst_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST aabb_lst_t * aabb_lst_dtor( aabb_lst_t * lst )
+EGO_CONST ego_aabb_lst   * ego_aabb_lst::dtor( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
@@ -76,24 +75,24 @@ EGO_CONST aabb_lst_t * aabb_lst_dtor( aabb_lst_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST aabb_lst_t * aabb_lst_renew( aabb_lst_t * lst )
+EGO_CONST ego_aabb_lst   * ego_aabb_lst::renew( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
-    aabb_lst_dtor( lst );
-    return aabb_lst_ctor( lst );
+    ego_aabb_lst::dtor( lst );
+    return ego_aabb_lst::ctor( lst );
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST aabb_lst_t * aabb_lst_alloc( aabb_lst_t * lst, int count )
+EGO_CONST ego_aabb_lst   * ego_aabb_lst::alloc( ego_aabb_lst   * lst, int count )
 {
     if ( NULL == lst ) return NULL;
 
-    aabb_lst_dtor( lst );
+    ego_aabb_lst::dtor( lst );
 
     if ( count > 0 )
     {
-        lst->list = EGOBOO_NEW_ARY( ego_aabb_t, count );
+        lst->list = EGOBOO_NEW_ARY( ego_lod_aabb, count );
         if ( NULL != lst->list )
         {
             lst->count = count;
@@ -105,7 +104,7 @@ EGO_CONST aabb_lst_t * aabb_lst_alloc( aabb_lst_t * lst, int count )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-EGO_CONST aabb_ary_t * bbox_ary_ctor( aabb_ary_t * ary )
+EGO_CONST ego_aabb_ary * bbox_ary_ctor( ego_aabb_ary * ary )
 {
     if ( NULL == ary ) return NULL;
 
@@ -115,7 +114,7 @@ EGO_CONST aabb_ary_t * bbox_ary_ctor( aabb_ary_t * ary )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST aabb_ary_t * bbox_ary_dtor( aabb_ary_t * ary )
+EGO_CONST ego_aabb_ary * bbox_ary_dtor( ego_aabb_ary * ary )
 {
     int i;
 
@@ -125,7 +124,7 @@ EGO_CONST aabb_ary_t * bbox_ary_dtor( aabb_ary_t * ary )
     {
         for ( i = 0; i < ary->count; i++ )
         {
-            aabb_lst_dtor( ary->list + i );
+            ego_aabb_lst::dtor( ary->list + i );
         }
 
         EGOBOO_DELETE( ary->list );
@@ -138,7 +137,7 @@ EGO_CONST aabb_ary_t * bbox_ary_dtor( aabb_ary_t * ary )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST aabb_ary_t * bbox_ary_renew( aabb_ary_t * ary )
+EGO_CONST ego_aabb_ary * bbox_ary_renew( ego_aabb_ary * ary )
 {
     if ( NULL == ary ) return NULL;
     bbox_ary_dtor( ary );
@@ -146,7 +145,7 @@ EGO_CONST aabb_ary_t * bbox_ary_renew( aabb_ary_t * ary )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST aabb_ary_t * bbox_ary_alloc( aabb_ary_t * ary, int count )
+EGO_CONST ego_aabb_ary * bbox_ary_alloc( ego_aabb_ary * ary, int count )
 {
     if ( NULL == ary ) return NULL;
 
@@ -154,7 +153,7 @@ EGO_CONST aabb_ary_t * bbox_ary_alloc( aabb_ary_t * ary, int count )
 
     if ( count > 0 )
     {
-        ary->list = EGOBOO_NEW_ARY( aabb_lst_t, count );
+        ary->list = EGOBOO_NEW_ARY( ego_aabb_lst  , count );
         if ( NULL != ary->list )
         {
             ary->count = count;
@@ -166,11 +165,11 @@ EGO_CONST aabb_ary_t * bbox_ary_alloc( aabb_ary_t * ary, int count )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-OVolume_t OVolume_merge( OVolume_t * pv1, OVolume_t * pv2 )
+ego_OVolume ego_OVolume::do_merge( ego_OVolume * pv1, ego_OVolume * pv2 )
 {
-    OVolume_t rv;
+    ego_OVolume rv;
 
-    // construct the OVolume
+    // construct the ego_OVolume
     memset( &rv, 0, sizeof( rv ) );
     rv.lod = -1;
 
@@ -232,11 +231,11 @@ OVolume_t OVolume_merge( OVolume_t * pv1, OVolume_t * pv2 )
 }
 
 //--------------------------------------------------------------------------------------------
-OVolume_t OVolume_intersect( OVolume_t * pv1, OVolume_t * pv2 )
+ego_OVolume ego_OVolume::do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 )
 {
-    OVolume_t rv;
+    ego_OVolume rv;
 
-    // construct the OVolume
+    // construct the ego_OVolume
     memset( &rv, 0, sizeof( rv ) );
     rv.lod = -1;
 
@@ -328,7 +327,7 @@ OVolume_t OVolume_intersect( OVolume_t * pv1, OVolume_t * pv2 )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
+bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolume )
 {
     /// @details BB@> determine which of the 16 possible intersection points are within both
     //     square and diamond bounding volumes
@@ -338,7 +337,7 @@ bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
     float  area, darea, volume;
 
     fvec3_t center, centroid;
-    cv_point_data_t pd[16];
+    ego_cv_point_data pd[16];
 
     if ( NULL == pov ) return bfalse;
 
@@ -475,7 +474,7 @@ bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
 
     // use qsort to order the points according to their rotation angle
     // relative to the centroid
-    qsort(( void * )pd, count, sizeof( cv_point_data_t ), cv_point_data_cmp );
+    qsort(( void * )pd, count, sizeof( ego_cv_point_data ), cv_point_data_cmp );
 
     // now we can use geometry to find the area of the planar collision area
     fvec3_self_clear( centroid.v );
@@ -571,16 +570,16 @@ bool_t OVolume_refine( OVolume_t * pov, fvec3_t * pcenter, float * pvolume )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t CVolume_ctor( CVolume_t * pcv, OVolume_t * pva, OVolume_t * pvb )
+bool_t ego_CVolume::ctor( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume * pvb )
 {
     bool_t retval;
-    CVolume_t cv;
+    ego_CVolume cv;
 
     if ( pva->lod < 0 || pvb->lod < 0 ) return bfalse;
 
     //---- do the preliminary collision test ----
 
-    cv.ov = OVolume_intersect( pva, pvb );
+    cv.ov = ego_OVolume::do_intersect( pva, pvb );
     if ( cv.ov.lod < 0 )
     {
         return bfalse;
@@ -589,7 +588,7 @@ bool_t CVolume_ctor( CVolume_t * pcv, OVolume_t * pva, OVolume_t * pvb )
     //---- refine the collision volume ----
 
     cv.ov.lod = MIN( pva->lod, pvb->lod );
-    retval = CVolume_refine( &cv );
+    retval = ego_CVolume::refine( &cv );
 
     if ( NULL != pcv )
     {
@@ -600,7 +599,7 @@ bool_t CVolume_ctor( CVolume_t * pcv, OVolume_t * pva, OVolume_t * pvb )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t CVolume_refine( CVolume_t * pcv )
+bool_t ego_CVolume::refine( ego_CVolume * pcv )
 {
     /// @details BB@> determine which of the 16 possible intersection points are within both
     //     square and diamond bounding volumes
@@ -614,7 +613,7 @@ bool_t CVolume_refine( CVolume_t * pcv )
         return bfalse;
     }
 
-    return OVolume_refine( &( pcv->ov ), &( pcv->center ), &( pcv->volume ) );
+    return ego_OVolume::refine( &( pcv->ov ), &( pcv->center ), &( pcv->volume ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -623,8 +622,8 @@ static int cv_point_data_cmp( const void * pleft, const void * pright )
 {
     int rv = 0;
 
-    cv_point_data_t * pcv_left  = ( cv_point_data_t * )pleft;
-    cv_point_data_t * pcv_right = ( cv_point_data_t * )pright;
+    ego_cv_point_data * pcv_left  = ( ego_cv_point_data * )pleft;
+    ego_cv_point_data * pcv_right = ( ego_cv_point_data * )pright;
 
     if ( pcv_left->rads < pcv_right->rads ) rv = -1;
     else if ( pcv_left->rads > pcv_right->rads ) rv = 1;
@@ -634,7 +633,7 @@ static int cv_point_data_cmp( const void * pleft, const void * pright )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int oct_bb_to_points( oct_bb_t * pbmp, fvec4_t   pos[], size_t pos_count )
+int oct_bb_to_points( ego_oct_bb   * pbmp, fvec4_t   pos[], size_t pos_count )
 {
     /// @details BB@> convert the corners of the level 1 bounding box to a point cloud
     ///      set pos[].w to zero for now, that the transform does not
@@ -895,7 +894,7 @@ int oct_bb_to_points( oct_bb_t * pbmp, fvec4_t   pos[], size_t pos_count )
 }
 
 //--------------------------------------------------------------------------------------------
-void points_to_oct_bb( oct_bb_t * pbmp, fvec4_t pos[], size_t pos_count )
+void points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count )
 {
     /// @details BB@> convert the new point cloud into a level 1 bounding box using a fvec4_t
     ///               array as the source
@@ -952,7 +951,7 @@ bool_t oct_vec_ctor( oct_vec_t ovec , fvec3_t pos )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t bumper_to_oct_bb_0( bumper_t src, oct_bb_t * pdst )
+bool_t bumper_to_oct_bb_0( ego_bumper src, ego_oct_bb   * pdst )
 {
     if ( NULL == pdst ) return bfalse;
 
@@ -976,7 +975,7 @@ bool_t bumper_to_oct_bb_0( bumper_t src, oct_bb_t * pdst )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-oct_bb_t * oct_bb_ctor( oct_bb_t * pobb )
+ego_oct_bb   * ego_oct_bb::ctor( ego_oct_bb   * pobb )
 {
     if ( NULL == pobb ) return NULL;
 
@@ -986,9 +985,9 @@ oct_bb_t * oct_bb_ctor( oct_bb_t * pobb )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t oct_bb_union( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst )
+bool_t ego_oct_bb::do_union( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   * pdst )
 {
-    /// @details BB@> find the union of two oct_bb_t
+    /// @details BB@> find the union of two ego_oct_bb
 
     if ( NULL == pdst ) return bfalse;
 
@@ -1011,9 +1010,9 @@ bool_t oct_bb_union( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t oct_bb_intersection( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst )
+bool_t ego_oct_bb::do_intersection( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   * pdst )
 {
-    /// @details BB@> find the intersection of two oct_bb_t
+    /// @details BB@> find the intersection of two ego_oct_bb
 
     if ( NULL == pdst ) return bfalse;
 
@@ -1036,7 +1035,7 @@ bool_t oct_bb_intersection( oct_bb_t src1, oct_bb_t src2, oct_bb_t * pdst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t oct_bb_add_vector( const oct_bb_t src, const fvec3_base_t vec, oct_bb_t * pdst )
+bool_t ego_oct_bb::add_vector( const ego_oct_bb   src, const fvec3_base_t vec, ego_oct_bb   * pdst )
 {
     /// @details BB@> shift the bounding box by the vector vec
 
@@ -1063,7 +1062,7 @@ bool_t oct_bb_add_vector( const oct_bb_t src, const fvec3_base_t vec, oct_bb_t *
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t oct_bb_empty( oct_bb_t src1 )
+bool_t ego_oct_bb::empty( ego_oct_bb   src1 )
 {
     int cnt;
     bool_t rv;
@@ -1082,7 +1081,7 @@ bool_t oct_bb_empty( oct_bb_t src1 )
 }
 
 //--------------------------------------------------------------------------------------------
-void oct_bb_downgrade( oct_bb_t * psrc_bb, bumper_t bump_stt, bumper_t bump_base, bumper_t * pdst_bump, oct_bb_t * pdst_bb )
+void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bumper bump_base, ego_bumper * pdst_bump, ego_oct_bb   * pdst_bb )
 {
     /// @details BB@> convert a level 1 bumper to an "equivalent" level 0 bumper
 

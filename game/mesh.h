@@ -26,8 +26,7 @@
 #include "bsp.h"
 
 //--------------------------------------------------------------------------------------------
-struct s_ego_mpd;
-typedef struct s_ego_mpd ego_mpd_t;
+struct ego_mpd;
 
 struct s_mesh_wall_data;
 
@@ -64,36 +63,33 @@ typedef float       light_cache_t[4];
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // the BSP structure housing the mesh
-struct s_mpd_BSP
+struct mpd_BSP
 {
-    oct_bb_t       volume;
-    BSP_leaf_ary_t nodes;
-    BSP_tree_t     tree;
+    ego_oct_bb         volume;
+    ego_BSP_leaf_ary_t nodes;
+    ego_BSP_tree       tree;
 
-#if defined(__cplusplus)
-    s_mpd_BSP();
-    s_mpd_BSP( ego_mpd_t * pmesh );
-    ~s_mpd_BSP();
-#endif
+    mpd_BSP  ();
+    mpd_BSP  ( ego_mpd   * pmesh );
+    ~mpd_BSP  ();
+
+    static mpd_BSP root;
+
+    mpd_BSP * ctor( mpd_BSP * pbsp, ego_mpd * pmesh );
+    mpd_BSP * dtor( mpd_BSP * );
+    bool_t    alloc( mpd_BSP * pbsp, ego_mpd * pmesh );
+    bool_t    dealloc( mpd_BSP * pbsp );
+
+    bool_t    fill( mpd_BSP * pbsp );
+
+    int       collide( mpd_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst );
 };
-typedef struct s_mpd_BSP mesh_BSP_t;
-
-mesh_BSP_t * mesh_BSP_ctor( mesh_BSP_t * pbsp, ego_mpd_t * pmesh );
-mesh_BSP_t * mesh_BSP_dtor( mesh_BSP_t * );
-bool_t       mesh_BSP_alloc( mesh_BSP_t * pbsp, ego_mpd_t * pmesh );
-bool_t       mesh_BSP_free( mesh_BSP_t * pbsp );
-
-bool_t mesh_BSP_fill( mesh_BSP_t * pbsp );
-
-int    mesh_BSP_collide( mesh_BSP_t * pbsp, BSP_aabb_t * paabb, BSP_leaf_pary_t * colst );
-
-extern mesh_BSP_t mesh_BSP_root;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// The data describing an Egoboo tile
-struct s_ego_tile_info
+struct ego_tile_info_t
 {
     Uint8   type;                              ///< Tile type
     Uint16  img;                               ///< Get texture from this
@@ -104,13 +100,12 @@ struct s_ego_tile_info
     signed  inrenderlist_frame;                ///< What was the frame number the last time this tile was rendered?
     bool_t  needs_lighting_update;             ///< Has this tile been tagged for a lighting update?
 
-    oct_bb_t       oct;                        ///< the octagonal bounding box for this tile
+    ego_oct_bb         oct;                        ///< the octagonal bounding box for this tile
     normal_cache_t ncache;                     ///< the normals at the corners of this tile
     light_cache_t  lcache;                     ///< the light at the corners of this tile
     light_cache_t  d1_cache;                   ///< the estimated change in the light at the corner of the tile
     light_cache_t  d2_cache;                   ///< the estimated change in the light at the corner of the tile
 };
-typedef struct s_ego_tile_info ego_tile_info_t;
 
 ego_tile_info_t * ego_tile_info_alloc();
 ego_tile_info_t * ego_tile_info_init( ego_tile_info_t * ptr );
@@ -122,7 +117,7 @@ ego_tile_info_t * ego_tile_info_init_ary( ego_tile_info_t * ptr, size_t count );
 //--------------------------------------------------------------------------------------------
 
 /// The data describing an Egoboo grid
-struct s_ego_grid_info
+struct ego_grid_info
 {
     Uint8           fx;                        ///< Special effects flags
     Uint8           twist;                     ///< The orientation of the tile
@@ -131,15 +126,11 @@ struct s_ego_grid_info
     Uint8            a, l;                     ///< the raw mesh lighting... pretty much ignored
     lighting_cache_t cache;                    ///< the per-grid lighting info
 
-#if defined(__cplusplus)
-    s_ego_grid_info() { memset( this, 0, sizeof( *this ) ); }
-#endif
-
+    ego_grid_info() { memset( this, 0, sizeof( *this ) ); }
 };
-typedef struct s_ego_grid_info ego_grid_info_t;
 
 //--------------------------------------------------------------------------------------------
-struct s_grid_mem
+struct ego_grid_mem
 {
     int             grids_x;                          ///< Size in grids
     int             grids_y;
@@ -156,22 +147,19 @@ struct s_grid_mem
     Uint32        * tilestart;                        ///< list of tiles  that start each row
 
     // the per-grid info
-    ego_grid_info_t* grid_list;                        ///< tile command info
+    ego_grid_info* grid_list;                        ///< tile command info
 
-#if defined(__cplusplus)
-    s_grid_mem();
-    ~s_grid_mem();
-#endif
+    ego_grid_mem();
+    ~ego_grid_mem();
 };
-typedef struct s_grid_mem grid_mem_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// A wrapper for the dynamically allocated mesh memory
-struct s_tile_mem
+struct ego_tile_mem
 {
-    aabb_t           bbox;                             ///< bounding box for the entire mesh
+    ego_aabb           bbox;                             ///< bounding box for the entire mesh
 
     // the per-tile info
     size_t           tile_count;                       ///< number of tiles
@@ -184,17 +172,14 @@ struct s_tile_mem
     GLXvector3f   * clst;                              ///< the color list (for lighting the mesh)
     GLXvector3f   * nlst;                              ///< the normal list
 
-#if defined(__cplusplus)
-    s_tile_mem();
-    ~s_tile_mem();
-#endif
+    ego_tile_mem();
+    ~ego_tile_mem();
 };
-typedef struct s_tile_mem tile_mem_t;
 
 //--------------------------------------------------------------------------------------------
 
 /// The generic parameters describing an ego_mpd
-struct s_ego_mpd_info
+struct ego_mpd_info
 {
     size_t          vertcount;                         ///< For malloc
 
@@ -202,28 +187,22 @@ struct s_ego_mpd_info
     int             tiles_y;
     Uint32          tiles_count;                      ///< Number of tiles
 
-#if defined(__cplusplus)
-    s_ego_mpd_info() { memset( this, 0, sizeof( *this ) ); }
-#endif
-
+    ego_mpd_info() { memset( this, 0, sizeof( *this ) ); }
 };
-typedef struct s_ego_mpd_info ego_mpd_info_t;
 
 //--------------------------------------------------------------------------------------------
 
 /// Egoboo's representation of the .mpd mesh file
-struct s_ego_mpd
+struct ego_mpd
 {
-    ego_mpd_info_t  info;
-    tile_mem_t      tmem;
-    grid_mem_t      gmem;
+    ego_mpd_info  info;
+    ego_tile_mem      tmem;
+    ego_grid_mem      gmem;
 
     fvec2_t         tileoff[MAXTILETYPE];     ///< Tile texture offset
 
-#if defined(__cplusplus)
-    s_ego_mpd();
-    ~s_ego_mpd();
-#endif
+    ego_mpd();
+    ~ego_mpd();
 };
 
 //--------------------------------------------------------------------------------------------
@@ -242,34 +221,34 @@ extern int mesh_pressure_tests;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mpd_t * mesh_create( ego_mpd_t * pmesh, int tiles_x, int tiles_y );
-bool_t      mesh_destroy( ego_mpd_t ** pmesh );
+ego_mpd   * mesh_create( ego_mpd   * pmesh, int tiles_x, int tiles_y );
+bool_t      mesh_destroy( ego_mpd   ** pmesh );
 
-ego_mpd_t * mesh_ctor( ego_mpd_t * pmesh );
-ego_mpd_t * mesh_dtor( ego_mpd_t * pmesh );
-ego_mpd_t * mesh_renew( ego_mpd_t * pmesh );
+ego_mpd   * mesh_ctor( ego_mpd   * pmesh );
+ego_mpd   * mesh_dtor( ego_mpd   * pmesh );
+ego_mpd   * mesh_renew( ego_mpd   * pmesh );
 
 // loading/saving
-ego_mpd_t * mesh_load( const char *modname, ego_mpd_t * pmesh );
+ego_mpd   * mesh_load( const char *modname, ego_mpd   * pmesh );
 
 void   mesh_make_twist();
 
-float  mesh_light_corners( ego_mpd_t * pmesh, int itile, float mesh_lighting_keep );
-bool_t mesh_test_corners( ego_mpd_t * pmesh, int itile, float threshold );
-bool_t mesh_interpolate_vertex( tile_mem_t * pmem, int itile, float pos[], float * plight );
+float  mesh_light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep );
+bool_t mesh_test_corners( ego_mpd   * pmesh, int itile, float threshold );
+bool_t mesh_interpolate_vertex( ego_tile_mem * pmem, int itile, float pos[], float * plight );
 
-bool_t grid_light_one_corner( ego_mpd_t * pmesh, int fan, float height, float nrm[], float * plight );
+bool_t grid_light_one_corner( ego_mpd   * pmesh, int fan, float height, float nrm[], float * plight );
 
-BIT_FIELD mesh_hit_wall( ego_mpd_t * pmesh, float pos[], float radius, Uint32 bits, float nrm[], float * pressure );
-bool_t mesh_test_wall( ego_mpd_t * pmesh, float pos[], float radius, Uint32 bits, struct s_mesh_wall_data * private_data );
+BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, float nrm[], float * pressure );
+bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, struct s_mesh_wall_data * private_data );
 
-float mesh_get_max_vertex_0( ego_mpd_t * pmesh, int grid_x, int grid_y );
-float mesh_get_max_vertex_1( ego_mpd_t * pmesh, int grid_x, int grid_y, float xmin, float ymin, float xmax, float ymax );
+float mesh_get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y );
+float mesh_get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xmin, float ymin, float xmax, float ymax );
 
-bool_t mesh_set_texture( ego_mpd_t * pmesh, Uint16 tile, Uint16 image );
-bool_t mesh_update_texture( ego_mpd_t * pmesh, Uint32 tile );
+bool_t mesh_set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image );
+bool_t mesh_update_texture( ego_mpd   * pmesh, Uint32 tile );
 
-fvec2_t mesh_get_diff( ego_mpd_t * pmesh, float pos[], float radius, float center_pressure, BIT_FIELD bits );
-float mesh_get_pressure( ego_mpd_t * pmesh, float pos[], float radius, BIT_FIELD bits );
+fvec2_t mesh_get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, BIT_FIELD bits );
+float mesh_get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits );
 
-Uint8 cartman_get_fan_twist( ego_mpd_t * pmesh, Uint32 tile );
+Uint8 cartman_get_fan_twist( ego_mpd   * pmesh, Uint32 tile );

@@ -23,15 +23,12 @@
 /// @Basic skeleton for the server portion of a client-server architecture,
 /// this is totally not in use yet.
 
-typedef struct GameState GameState;
-
 /// A mockup of the struct that could be used to store the server state
-typedef struct ServerState_t
+struct ServerState_t
 {
     int dummy;
 // GameState gameState;
-}
-ServerState_t;
+};
 
 /// Globally accessible server state
 extern ServerState_t ServerState;

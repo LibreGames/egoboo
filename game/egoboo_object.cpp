@@ -27,11 +27,16 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_ctor( ego_object_base_t * pbase, size_t index )
+Uint32 ego_object::guid_counter   = 0;
+Uint32 ego_object::spawn_depth    = 0;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_object * ego_object::ctor( ego_object * pbase, size_t index )
 {
-    list_object_state_t * lst_obj_ptr = NULL;
-    ego_object_state_t  * ego_obj_ptr = NULL;
-    ego_object_req_t    * ego_req_ptr = NULL;
+    list_object_state * lst_obj_ptr = NULL;
+    ego_object_state  * ego_obj_ptr = NULL;
+    ego_object_req    * ego_req_ptr = NULL;
 
     if ( NULL == pbase ) return pbase;
     lst_obj_ptr = &( pbase->lst_state );
@@ -43,19 +48,19 @@ ego_object_base_t * ego_object_ctor( ego_object_base_t * pbase, size_t index )
     // construct the
     list_object_state_ctor( lst_obj_ptr, index );
 
-    ego_object_state_ctor( ego_obj_ptr );
+    ego_object_state::ctor( ego_obj_ptr );
 
-    ego_object_req_ctor( ego_req_ptr );
+    ego_object_req::ctor( ego_req_ptr );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase )
+ego_object * ego_object::dtor( ego_object * pbase )
 {
-    list_object_state_t * lst_obj_ptr = NULL;
-    ego_object_state_t  * ego_obj_ptr = NULL;
-    ego_object_req_t    * ego_req_ptr = NULL;
+    list_object_state * lst_obj_ptr = NULL;
+    ego_object_state  * ego_obj_ptr = NULL;
+    ego_object_req    * ego_req_ptr = NULL;
 
     if ( NULL == pbase ) return pbase;
     lst_obj_ptr = &( pbase->lst_state );
@@ -64,26 +69,26 @@ ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase )
 
     list_object_state_dtor( lst_obj_ptr );
 
-    ego_object_state_dtor( ego_obj_ptr );
+    ego_object_state::dtor( ego_obj_ptr );
 
-    ego_object_req_dtor( ego_req_ptr );
+    ego_object_req::dtor( ego_req_ptr );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_allocate( ego_object_base_t * pbase, size_t index )
+ego_object * ego_object::allocate( ego_object * pbase, size_t index )
 {
-    list_object_state_t tmp_lst_state;
+    list_object_state tmp_lst_state;
 
     if( NULL == pbase ) return pbase;
 
-    // we don't want to overwrite the list_object_state values since some of them belong to the 
+    // we don't want to overwrite the list_object_state values since some of them belong to the
     // ChrList/PrtList/EncList rather than to the list_object_state
     tmp_lst_state = pbase->lst_state;
 
     // construct the a new state (this destroys the data in pbase->lst_state)
-    pbase = ego_object_ctor( pbase, index );
+    pbase = ego_object::ctor( pbase, index );
     if ( NULL == pbase ) return pbase;
 
     // restore the old pbase->lst_state
@@ -93,11 +98,11 @@ ego_object_base_t * ego_object_allocate( ego_object_base_t * pbase, size_t index
     list_object_set_allocated( &( pbase->lst_state ), btrue );
 
     // validate the object
-    return ego_object_validate( pbase );
+    return ego_object::validate( pbase );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_deallocate( ego_object_base_t * pbase )
+ego_object * ego_object::deallocate( ego_object * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
@@ -105,133 +110,133 @@ ego_object_base_t * ego_object_deallocate( ego_object_base_t * pbase )
     list_object_set_allocated( &( pbase->lst_state ), bfalse );
 
     // invalidate the object
-    return ego_object_invalidate( pbase );
+    return ego_object::invalidate( pbase );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_invalidate( ego_object_base_t * pbase )
+ego_object * ego_object::invalidate( ego_object * pbase )
 {
-    ego_object_state_t * loc_pstate = NULL;
+    ego_object_state * loc_pstate = NULL;
 
     if ( NULL == pbase ) return pbase;
     loc_pstate = &( pbase->state );
 
-    ego_object_state_invalidate( loc_pstate );
+    ego_object_state::invalidate( loc_pstate );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_end_constructing( ego_object_base_t * pbase )
+ego_object * ego_object::end_constructing( ego_object * pbase )
 {
-    ego_object_state_t * loc_pstate = NULL;
+    ego_object_state * loc_pstate = NULL;
 
     if ( NULL == pbase ) return pbase;
     loc_pstate = &( pbase->state );
 
-    ego_object_state_end_constructing( loc_pstate );
+    ego_object_state::end_constructing( loc_pstate );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_end_initializing( ego_object_base_t * pbase )
+ego_object * ego_object::end_initializing( ego_object * pbase )
 {
-    ego_object_state_t * loc_pstate = NULL;
+    ego_object_state * loc_pstate = NULL;
 
     if ( NULL == pbase ) return pbase;
     loc_pstate = &( pbase->state );
 
-    ego_object_state_end_initialization( loc_pstate );
+    ego_object_state::end_initialization( loc_pstate );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_end_processing( ego_object_base_t * pbase )
+ego_object * ego_object::end_processing( ego_object * pbase )
 {
-    ego_object_state_t * loc_pstate = NULL;
+    ego_object_state * loc_pstate = NULL;
 
     if ( NULL == pbase ) return pbase;
     loc_pstate = &( pbase->state );
 
-    ego_object_state_end_processing( loc_pstate );
+    ego_object_state::end_processing( loc_pstate );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_end_deinitializing( ego_object_base_t * pbase )
+ego_object * ego_object::end_deinitializing( ego_object * pbase )
 {
-    ego_object_state_t * loc_pstate = NULL;
+    ego_object_state * loc_pstate = NULL;
 
     if ( NULL == pbase ) return pbase;
     loc_pstate = &( pbase->state );
 
-    ego_object_state_end_deinitializing( loc_pstate );
+    ego_object_state::end_deinitializing( loc_pstate );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_end_destructing( ego_object_base_t * pbase )
+ego_object * ego_object::end_destructing( ego_object * pbase )
 {
-    ego_object_state_t * loc_pstate = NULL;
+    ego_object_state * loc_pstate = NULL;
 
     if ( NULL == pbase ) return pbase;
     loc_pstate = &( pbase->state );
 
-    ego_object_state_end_destructing( loc_pstate );
+    ego_object_state::end_destructing( loc_pstate );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_end_killing( ego_object_base_t * pbase )
+ego_object * ego_object::end_killing( ego_object * pbase )
 {
-    ego_object_state_t * loc_pstate = NULL;
+    ego_object_state * loc_pstate = NULL;
 
     if ( NULL == pbase ) return pbase;
     loc_pstate = &( pbase->state );
 
-    ego_object_state_end_killing( loc_pstate );
+    ego_object_state::end_killing( loc_pstate );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_validate( ego_object_base_t * pbase )
+ego_object * ego_object::validate( ego_object * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
     // clear out the state
-    ego_object_state_clear( &( pbase->state ) );
+    ego_object_state::clear( &( pbase->state ) );
 
     // clear out any requests
-    ego_object_req_clear( &( pbase->req ) );
+    ego_object_req::clear( &( pbase->req ) );
 
     // set the "valid" variable and initialize the action
-    ego_object_state_set_valid( &( pbase->state ), pbase->lst_state.allocated );
+    ego_object_state::set_valid( &( pbase->state ), pbase->lst_state.allocated );
     if ( !pbase->state.valid ) return pbase;
 
     // if this succeeds, assign a new guid
-    pbase->guid = ego_object_guid++;
+    pbase->guid = ego_object::guid_counter++;
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_begin_waiting( ego_object_base_t * pbase )
+ego_object * ego_object::begin_waiting( ego_object * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
-    ego_object_state_begin_waiting( &( pbase->state ) );
+    ego_object_state::begin_waiting( &( pbase->state ) );
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_begin_processing( ego_object_base_t * pbase, const char * name )
+ego_object * ego_object::begin_processing( ego_object * pbase, const char * name )
 {
     if ( NULL == pbase ) return pbase;
 
@@ -253,7 +258,7 @@ ego_object_base_t * ego_object_begin_processing( ego_object_base_t * pbase, cons
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_req_terminate( ego_object_base_t * pbase )
+ego_object * ego_object::req_terminate( ego_object * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
@@ -270,9 +275,9 @@ ego_object_base_t * ego_object_req_terminate( ego_object_base_t * pbase )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_grant_terminate( ego_object_base_t * pbase )
+ego_object * ego_object::grant_terminate( ego_object * pbase )
 {
-    /// Completely turn off an ego_object_base_t object and mark it as no longer allocated
+    /// Completely turn off an ego_object object and mark it as no longer allocated
 
     if ( NULL == pbase ) return pbase;
 
@@ -285,23 +290,23 @@ ego_object_base_t * ego_object_grant_terminate( ego_object_base_t * pbase )
     if ( pbase->state.initialized )
     {
         // jump to deinitializing
-        ego_object_end_processing( pbase );
+        ego_object::end_processing( pbase );
     }
     else if ( pbase->state.constructed )
     {
         // jump to deconstructing
-        ego_object_end_deinitializing( pbase );
+        ego_object::end_deinitializing( pbase );
     }
     else
     {
-        ego_object_end_killing( pbase );
+        ego_object::end_killing( pbase );
     }
 
     return pbase;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_grant_on( ego_object_base_t * pbase )
+ego_object * ego_object::grant_on( ego_object * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
@@ -328,7 +333,7 @@ ego_object_base_t * ego_object_grant_on( ego_object_base_t * pbase )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_base_t * ego_object_set_spawning( ego_object_base_t * pbase, bool_t val )
+ego_object * ego_object::set_spawning( ego_object * pbase, bool_t val )
 {
     if ( NULL == pbase ) return pbase;
 
@@ -341,7 +346,7 @@ ego_object_base_t * ego_object_set_spawning( ego_object_base_t * pbase, bool_t v
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_ctor( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::ctor( ego_object_state * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -353,17 +358,17 @@ ego_object_state_t * ego_object_state_ctor( ego_object_state_t * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_dtor( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::dtor( ego_object_state * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    ego_object_state_clear( ptr );
+    ego_object_state::clear( ptr );
 
     return ptr;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_clear( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::clear( ego_object_state * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -375,7 +380,7 @@ ego_object_state_t * ego_object_state_clear( ego_object_state_t * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_end_constructing( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::end_constructing( ego_object_state * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
@@ -388,7 +393,7 @@ ego_object_state_t * ego_object_state_end_constructing( ego_object_state_t * ptr
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_end_initialization( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::end_initialization( ego_object_state * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
@@ -401,7 +406,7 @@ ego_object_state_t * ego_object_state_end_initialization( ego_object_state_t * p
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_end_processing( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::end_processing( ego_object_state * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
@@ -415,7 +420,7 @@ ego_object_state_t * ego_object_state_end_processing( ego_object_state_t * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_end_deinitializing( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::end_deinitializing( ego_object_state * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
@@ -429,7 +434,7 @@ ego_object_state_t * ego_object_state_end_deinitializing( ego_object_state_t * p
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_end_destructing( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::end_destructing( ego_object_state * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
@@ -443,7 +448,7 @@ ego_object_state_t * ego_object_state_end_destructing( ego_object_state_t * ptr 
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_end_killing( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::end_killing( ego_object_state * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
@@ -458,16 +463,16 @@ ego_object_state_t * ego_object_state_end_killing( ego_object_state_t * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_invalidate( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::invalidate( ego_object_state * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    ego_object_state_dtor( ptr );
+    ego_object_state::dtor( ptr );
 
     return ptr;
 }
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_set_valid( ego_object_state_t * ptr, bool_t val )
+ego_object_state * ego_object_state::set_valid( ego_object_state * ptr, bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -480,7 +485,7 @@ ego_object_state_t * ego_object_state_set_valid( ego_object_state_t * ptr, bool_
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_state_t * ego_object_state_begin_waiting( ego_object_state_t * ptr )
+ego_object_state * ego_object_state::begin_waiting( ego_object_state * ptr )
 {
     // put the object in the "waiting to be killed" mode. currently used only by particles
 
@@ -493,19 +498,19 @@ ego_object_state_t * ego_object_state_begin_waiting( ego_object_state_t * ptr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_object_req_t * ego_object_req_ctor( ego_object_req_t * ptr )
+ego_object_req * ego_object_req::ctor( ego_object_req * ptr )
 {
-    return ego_object_req_clear( ptr );
+    return ego_object_req::clear( ptr );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_req_t * ego_object_req_dtor( ego_object_req_t * ptr )
+ego_object_req * ego_object_req::dtor( ego_object_req * ptr )
 {
-    return ego_object_req_clear( ptr );
+    return ego_object_req::clear( ptr );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_object_req_t * ego_object_req_clear( ego_object_req_t* ptr )
+ego_object_req * ego_object_req::clear( ego_object_req* ptr )
 {
     if ( NULL == ptr ) return ptr;
 

@@ -134,7 +134,7 @@ bool_t phys_estimate_chr_chr_normal( oct_vec_t opos_a, oct_vec_t opos_b, oct_vec
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv oct_bb_intersect_index( int index, oct_bb_t src1, oct_vec_t opos1, oct_vec_t ovel1, oct_bb_t src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
+egoboo_rv ego_oct_bb::intersect_index( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
 {
     float diff;
     float time[4];
@@ -167,7 +167,7 @@ egoboo_rv oct_bb_intersect_index( int index, oct_bb_t src1, oct_vec_t opos1, oct
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv oct_bb_intersect_close_index( int index, oct_bb_t src1, oct_vec_t opos1, oct_vec_t ovel1, oct_bb_t src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
+egoboo_rv ego_oct_bb::intersect_close_index( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
 {
     egoboo_rv retval = rv_error;
     float     diff;
@@ -217,7 +217,7 @@ egoboo_rv oct_bb_intersect_close_index( int index, oct_bb_t src1, oct_vec_t opos
     else
     {
         // there is no special treatment in the z direction
-        retval = oct_bb_intersect_index( index, src1, opos1, ovel1, src2, opos2, ovel2, tmin, tmax );
+        retval = ego_oct_bb::intersect_index( index, src1, opos1, ovel1, src2, opos2, ovel2, tmin, tmax );
     }
 
     if ( *tmax < *tmin ) return rv_fail;
@@ -226,13 +226,13 @@ egoboo_rv oct_bb_intersect_close_index( int index, oct_bb_t src1, oct_vec_t opos
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oct_bb_t src2_orig, fvec3_t pos2, fvec3_t vel2, int test_platform, oct_bb_t * pdst, float *tmin, float *tmax )
+bool_t phys_intersect_oct_bb( ego_oct_bb   src1_orig, fvec3_t pos1, fvec3_t vel1, ego_oct_bb   src2_orig, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
 {
     /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
     ///               Designed to determine whether a bullet particle will interact with character.
 
-    oct_bb_t  src1, src2;
-    oct_bb_t  exp1, exp2;
+    ego_oct_bb    src1, src2;
+    ego_oct_bb    exp1, exp2;
     oct_vec_t opos1, opos2;
     oct_vec_t ovel1, ovel2;
 
@@ -271,11 +271,11 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
 
             if ( PHYS_CLOSE_TOLERANCE_NONE != test_platform )
             {
-                retval = oct_bb_intersect_close_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
+                retval = ego_oct_bb::intersect_close_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
             }
             else
             {
-                retval = oct_bb_intersect_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
+                retval = ego_oct_bb::intersect_index( index, src1_orig, opos1, ovel1, src2_orig, opos2, ovel2, &tmp_min, &tmp_max );
             }
 
             if ( rv_fail == retval )
@@ -332,15 +332,15 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
         tmp_max = CLIP( *tmax, 0.0f, 1.0f );
 
         // shift the source bounding boxes to be centered on the given positions
-        oct_bb_add_vector( src1_orig, pos1.v, &src1 );
-        oct_bb_add_vector( src2_orig, pos2.v, &src2 );
+        ego_oct_bb::add_vector( src1_orig, pos1.v, &src1 );
+        ego_oct_bb::add_vector( src2_orig, pos2.v, &src2 );
 
         // determine the expanded collision volumes for both objects
         phys_expand_oct_bb( src1, vel1, tmp_min, tmp_max, &exp1 );
         phys_expand_oct_bb( src2, vel2, tmp_min, tmp_max, &exp2 );
 
         // determine the intersection of these two volumes
-        oct_bb_intersection( exp1, exp2, pdst );
+        ego_oct_bb::do_intersection( exp1, exp2, pdst );
 
         // check to see if there is any possibility of interaction at all
         for ( cnt = 0; cnt < OCT_COUNT; cnt++ )
@@ -354,14 +354,14 @@ bool_t phys_intersect_oct_bb( oct_bb_t src1_orig, fvec3_t pos1, fvec3_t vel1, oc
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t phys_expand_oct_bb( oct_bb_t src, fvec3_t vel, float tmin, float tmax, oct_bb_t * pdst )
+bool_t phys_expand_oct_bb( ego_oct_bb   src, fvec3_t vel, float tmin, float tmax, ego_oct_bb   * pdst )
 {
-    /// @details BB@> use the velocity of an object and its oct_bb_t to determine the
+    /// @details BB@> use the velocity of an object and its ego_oct_bb   to determine the
     ///               amount of territory that an object will cover in the range [tmin,tmax].
     ///               One update equals [tmin,tmax] == [0,1].
 
     float abs_vel;
-    oct_bb_t tmp_min, tmp_max;
+    ego_oct_bb   tmp_min, tmp_max;
 
     abs_vel = fvec3_length_abs( vel.v );
     if ( 0.0f == abs_vel )
@@ -387,7 +387,7 @@ bool_t phys_expand_oct_bb( oct_bb_t src, fvec3_t vel, float tmin, float tmax, oc
         pos_min.z = vel.z * tmin;
 
         // adjust the bounding box to take in the position at the next step
-        if ( !oct_bb_add_vector( src, pos_min.v, &tmp_min ) ) return bfalse;
+        if ( !ego_oct_bb::add_vector( src, pos_min.v, &tmp_min ) ) return bfalse;
     }
 
     // determine the bounding volume at t == tmax
@@ -404,23 +404,23 @@ bool_t phys_expand_oct_bb( oct_bb_t src, fvec3_t vel, float tmin, float tmax, oc
         pos_max.z = vel.z * tmax;
 
         // adjust the bounding box to take in the position at the next step
-        if ( !oct_bb_add_vector( src, pos_max.v, &tmp_max ) ) return bfalse;
+        if ( !ego_oct_bb::add_vector( src, pos_max.v, &tmp_max ) ) return bfalse;
     }
 
     // determine bounding box for the range of times
-    if ( !oct_bb_union( tmp_min, tmp_max, pdst ) ) return bfalse;
+    if ( !ego_oct_bb::do_union( tmp_min, tmp_max, pdst ) ) return bfalse;
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_expand_chr_bb( chr_t * pchr, float tmin, float tmax, oct_bb_t * pdst )
+bool_t phys_expand_chr_bb( ego_chr * pchr, float tmin, float tmax, ego_oct_bb   * pdst )
 {
     /// @details BB@> use the object velocity to figure out where the volume that the character will
     ///               occupy during this update. Use the loser prt_cv and include extra height if
     ///               it is a platform.
 
-    oct_bb_t tmp_oct1, tmp_oct2;
+    ego_oct_bb   tmp_oct1, tmp_oct2;
 
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
@@ -429,26 +429,26 @@ bool_t phys_expand_chr_bb( chr_t * pchr, float tmin, float tmax, oct_bb_t * pdst
     tmp_oct1 = pchr->chr_max_cv;
 
     // add in the current position to the bounding volume
-    oct_bb_add_vector( tmp_oct1, pchr->pos.v, &tmp_oct2 );
+    ego_oct_bb::add_vector( tmp_oct1, pchr->pos.v, &tmp_oct2 );
 
     // stretch the bounding volume to cover the path of the object
     return phys_expand_oct_bb( tmp_oct2, pchr->vel, tmin, tmax, pdst );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_expand_prt_bb( prt_t * pprt, float tmin, float tmax, oct_bb_t * pdst )
+bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   * pdst )
 {
     /// @details BB@> use the object velocity to figure out where the volume that the particle will
     ///               occupy during this update
 
-    oct_bb_t tmp_oct;
+    ego_oct_bb   tmp_oct;
 
     if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
 
     // add in the current position to the bounding volume
     {
         fvec3_t _tmp_vec = prt_get_pos( pprt );
-        oct_bb_add_vector( pprt->prt_cv, _tmp_vec.v, &tmp_oct );
+        ego_oct_bb::add_vector( pprt->prt_cv, _tmp_vec.v, &tmp_oct );
     }
 
     // stretch the bounding volume to cover the path of the object
@@ -457,7 +457,7 @@ bool_t phys_expand_prt_bb( prt_t * pprt, float tmin, float tmax, oct_bb_t * pdst
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, chr_t * pchr )
+breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, ego_chr * pchr )
 {
     if ( NULL == bc ) return bc;
 
@@ -481,10 +481,10 @@ breadcrumb_t * breadcrumb_init_chr( breadcrumb_t * bc, chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, prt_t * pprt )
+breadcrumb_t * breadcrumb_init_prt( breadcrumb_t * bc, ego_prt * pprt )
 {
     BIT_FIELD bits = 0;
-    pip_t * ppip;
+    ego_pip * ppip;
 
     if ( NULL == bc ) return bc;
 
@@ -1055,13 +1055,13 @@ bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, fl
 // OBSOLETE CODE
 //--------------------------------------------------------------------------------------------
 
-//bool_t oct_bb_intersect_close( oct_bb_t src1, fvec3_t pos1, fvec3_t vel1, oct_bb_t src2, fvec3_t pos2, fvec3_t vel2, int test_platform, oct_bb_t * pdst, float *tmin, float *tmax )
+//bool_t ego_oct_bb::intersect_close( ego_oct_bb   src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb   src2, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
 //{
 //    /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
 //    ///               Designed to determine whether a bullet particle will interact with character.
 //
-//    oct_bb_t exp1, exp2;
-//    oct_bb_t intersection;
+//    ego_oct_bb   exp1, exp2;
+//    ego_oct_bb   intersection;
 //
 //    oct_vec_t opos1, opos2;
 //    oct_vec_t ovel1, ovel2;
@@ -1080,7 +1080,7 @@ bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, fl
 //    {
 //        if ( NULL != pdst )
 //        {
-//            oct_bb_intersection( src1, src2, pdst );
+//            ego_oct_bb::do_intersection( src1, src2, pdst );
 //        }
 //
 //        return btrue;
@@ -1101,7 +1101,7 @@ bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, fl
 //        egoboo_rv retval;
 //        float tmp_min, tmp_max;
 //
-//        retval = oct_bb_intersect_close_index( index, src1, opos1, ovel1, src2, opos2, ovel2, test_platform, &tmp_min, &tmp_max );
+//        retval = ego_oct_bb::intersect_close_index( index, src1, opos1, ovel1, src2, opos2, ovel2, test_platform, &tmp_min, &tmp_max );
 //        if ( rv_fail == retval ) return bfalse;
 //
 //        if ( rv_success == retval )
@@ -1130,7 +1130,7 @@ bool_t phys_data_apply_normal_acceleration( phys_data_t * pphys, fvec3_t nrm, fl
 //    phys_expand_oct_bb( src2, vel2, *tmin, *tmax, &exp2 );
 //
 //    // determine the intersection of these two volumes
-//    oct_bb_intersection( exp1, exp2, &intersection );
+//    ego_oct_bb::do_intersection( exp1, exp2, &intersection );
 //
 //    // check to see if there is any possibility of interaction at all
 //    for ( cnt = 0; cnt < OCT_Z; cnt++ )

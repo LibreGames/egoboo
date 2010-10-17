@@ -74,7 +74,7 @@
 /// A latch with a time attached
 /// @details This is recieved over the network, or inserted into the list by the local system to simulate
 ///  network traffic
-struct s_time_latch
+struct time_latch_t
 {
     float     raw[2];
 
@@ -83,10 +83,9 @@ struct s_time_latch
 
     Uint32    time;
 };
-typedef struct s_time_latch time_latch_t;
 
 //--------------------------------------------------------------------------------------------
-struct s_input_device
+struct input_device_t
 {
     bool_t                  on;              ///< Is it alive?
     BIT_FIELD               bits;
@@ -97,7 +96,6 @@ struct s_input_device
     latch_input_t           latch;
     latch_input_t           latch_old;       ///< For sustain
 };
-typedef struct s_input_device input_device_t;
 
 void input_device_init( input_device_t * pdevice );
 void input_device_add_latch( input_device_t * pdevice, latch_input_t latch );
@@ -106,7 +104,7 @@ void input_device_add_latch( input_device_t * pdevice, latch_input_t latch );
 #define INVALID_PLAYER MAX_PLAYER
 
 /// The state of a player
-struct s_player
+struct player_t
 {
     bool_t                  valid;                    ///< Player used?
     CHR_REF                 index;                    ///< Which character?
@@ -134,7 +132,6 @@ struct s_player
     /// Network latch, set by unbuffer_all_player_latches(), used to set the local character's latch
     latch_input_t           net_latch;
 };
-typedef struct s_player player_t;
 
 DECLARE_STACK_EXTERN( player_t, PlaStack, MAX_PLAYER );                         ///< Stack for keeping track of players
 extern int local_numlpla;                                   ///< Number of local players
@@ -147,16 +144,16 @@ player_t *     pla_ctor( player_t * ppla );
 player_t *     pla_dtor( player_t * ppla );
 player_t *     pla_reinit( player_t * ppla );
 CHR_REF        pla_get_ichr( const PLA_REF by_reference iplayer );
-struct s_chr * pla_get_pchr( const PLA_REF by_reference iplayer );
-latch_2d_t     pla_convert_latch_2d( const PLA_REF by_reference iplayer, const by_reference latch_2d_t src );
+struct ego_chr * pla_get_pchr( const PLA_REF by_reference iplayer );
+latch_2d_t     pla_convert_latch_2d( const PLA_REF by_reference iplayer, const latch_2d_t by_reference src );
 
-player_t*      chr_get_ppla( const CHR_REF by_reference ichr );
+player_t*      net_get_ppla( const CHR_REF by_reference ichr );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// The state of the network code used in old-egoboo
-struct s_net_instance
+struct net_instance_t
 {
     bool_t  initialized;             ///< Is Networking initialized?
     bool_t  serviceon;               ///< Do I need to free the interface?
@@ -164,7 +161,6 @@ struct s_net_instance
     bool_t  readytostart;            ///< Ready to hit the Start Game button?
     bool_t  waitingforplayers;       ///< Has everyone talked to the host?
 };
-typedef struct s_net_instance net_instance_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -204,7 +200,7 @@ bool_t                 network_get_host_active();
 bool_t                 network_set_host_active( bool_t state );
 bool_t                 network_waiting_for_players();
 
-void network_system_begin( egoboo_config_t * pcfg );
+void network_system_begin( ego_config_data_t * pcfg );
 void network_system_end( void );
 
 void listen_for_packets();

@@ -25,22 +25,22 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_ego_mpd;
-struct s_camera;
-struct s_script_state;
-struct s_mod_file;
+struct ego_mpd;
+struct ego_camera;
+struct ego_script_state;
 
+struct s_mod_file;
 struct s_wawalite_animtile;
 struct s_wawalite_damagetile;
 struct s_wawalite_weather;
 struct s_wawalite_water;
 struct s_wawalite_fog;
 
-struct s_menu_process;
+struct ego_menu_process;
 
-struct s_chr;
-struct s_prt;
-struct s_prt_bundle;
+struct ego_chr;
+struct ego_prt;
+struct ego_prt_bundle;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -78,10 +78,8 @@ enum e_targeting_bits
 //--------------------------------------------------------------------------------------------
 
 /// a process that controls a single game
-struct s_game_process
+struct ego_game_process : public ego_process
 {
-    process_t base;
-
     double frameDuration;
     bool_t mod_paused, pause_key_ready;
     bool_t was_active;
@@ -93,9 +91,8 @@ struct s_game_process
     int    ups_ticks_next, ups_ticks_now;
 
 };
-typedef struct s_game_process game_process_t;
 
-extern game_process_t * GProc;
+extern ego_game_process * GProc;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -129,22 +126,21 @@ enum e_latchbutton_bits
 //--------------------------------------------------------------------------------------------
 
 /// The actual state of the animated tiles in-game
-struct s_animtile_instance
+struct ego_animtile_instance
 {
     int    update_and;             ///< New tile every 7 frames
     Uint16 frame_and;
     Uint16 base_and;
     Uint16 frame_add;
 };
-typedef struct s_animtile_instance animtile_instance_t;
 
-extern Uint32              animtile_update_and;
-extern animtile_instance_t animtile[2];
+extern Uint32                animtile_update_and;
+extern ego_animtile_instance animtile[2];
 
 //--------------------------------------------------------------------------------------------
 
 /// The actual in-game state of the damage tiles
-struct s_damagetile_instance
+struct ego_damagetile_instance
 {
     IPair   amount;                    ///< Amount of damage
     int    type;
@@ -156,13 +152,13 @@ struct s_damagetile_instance
     //Sint16  sound_time;           // this is not used anywhere in the game
     //Uint16  min_distance;           // this is not used anywhere in the game
 };
-typedef struct s_damagetile_instance damagetile_instance_t;
-extern damagetile_instance_t damagetile;
+
+extern ego_damagetile_instance damagetile;
 
 //--------------------------------------------------------------------------------------------
 
 /// The data describing the weather state
-struct s_weather_instance
+struct ego_weather_instance
 {
     int     timer_reset;        ///< How long between each spawn?
     bool_t  over_water;         ///< Only spawn over water?
@@ -171,13 +167,13 @@ struct s_weather_instance
     PLA_REF iplayer;
     int     time;                ///< 0 is no weather
 };
-typedef struct s_weather_instance weather_instance_t;
-extern weather_instance_t weather;
+
+extern ego_weather_instance weather;
 
 //--------------------------------------------------------------------------------------------
 
 /// The data describing the state of a water layer
-struct s_water_layer_instance
+struct ego_water_layer_instance
 {
     Uint16    frame;        ///< Frame
     Uint32    frame_add;      ///< Speed
@@ -196,10 +192,9 @@ struct s_water_layer_instance
 
     fvec2_t   tx_add;            ///< Texture movement
 };
-typedef struct s_water_layer_instance water_instance_layer_t;
 
 /// The data describing the water state
-struct s_water_instance
+struct ego_water_instance
 {
     float  surface_level;          ///< Surface level for water striders
     float  douse_level;            ///< Surface level for torches
@@ -213,34 +208,33 @@ struct s_water_instance
 
     Uint32 spek[256];              ///< Specular highlights
 
-    int                    layer_count;
-    water_instance_layer_t layer[MAXWATERLAYER];
+    int                      layer_count;
+    ego_water_layer_instance layer[MAXWATERLAYER];
 
     float  layer_z_add[MAXWATERLAYER][MAXWATERFRAME][WATERPOINTS];
 };
 
-typedef struct s_water_instance water_instance_t;
-extern water_instance_t water;
+extern ego_water_instance water;
 
 //--------------------------------------------------------------------------------------------
 
 /// The in-game fog state
 /// @warn Fog is currently not used
-struct s_fog_instance
+struct ego_fog_instance
 {
     bool_t  on;            ///< Do ground fog?
     float   top, bottom;
     Uint8   red, grn, blu;
     float   distance;
 };
-typedef struct s_fog_instance fog_instance_t;
-extern fog_instance_t fog;
+
+extern ego_fog_instance fog;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// the module data that the game needs
-struct s_game_module
+struct ego_game_module_data
 {
     Uint8   importamount;               ///< Number of imports for this module
     bool_t  exportvalid;                ///< Can it export?
@@ -256,7 +250,6 @@ struct s_game_module
     Uint32  seed;                       ///< The module seed
     Uint32  randsave;
 };
-typedef struct s_game_module game_module_t;
 
 //--------------------------------------------------------------------------------------------
 // Status displays
@@ -279,18 +272,17 @@ extern size_t endtext_carat;
 
 extern bool_t    overrideslots;          ///< Override existing slots?
 
-extern struct s_ego_mpd         * PMesh;
-extern struct s_camera          * PCamera;
-extern struct s_game_module * PMod;
+extern struct ego_mpd         * PMesh;
+extern struct ego_camera          * PCamera;
+extern struct ego_game_module_data * PMod;
 
 /// Pitty stuff
-struct s_pit_info
+struct pit_info_t
 {
     bool_t     kill;          ///< Do they kill?
     bool_t     teleport;      ///< Do they teleport?
     fvec3_t    teleport_pos;
 };
-typedef struct s_pit_info pit_info_t;
 
 extern pit_info_t pits;
 
@@ -323,9 +315,9 @@ void reset_end_text();
 // Particles
 int     number_of_attached_particles( const CHR_REF by_reference character );
 int     spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by_reference particle );
-struct s_prt * place_particle_at_vertex( struct s_prt * pprt, const CHR_REF by_reference character, int vertex_offset );
 void    disaffirm_attached_particles( const CHR_REF by_reference character );
 int     reaffirm_attached_particles( const CHR_REF by_reference character );
+ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF by_reference character, int vertex_offset );
 
 // Statlist
 void statlist_add( const CHR_REF by_reference character );
@@ -337,7 +329,7 @@ void   set_one_player_latch( const PLA_REF by_reference player );
 bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_reference player, Uint32 device );
 
 // AI targeting
-CHR_REF chr_find_target( struct s_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits );
+CHR_REF chr_find_target( struct ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits );
 CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
                          const PIP_REF by_reference particletype, const TEAM_REF by_reference team, const CHR_REF by_reference donttarget, const CHR_REF by_reference oldtarget );
 
@@ -345,35 +337,35 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
 void  free_all_objects( void );
 
 // Data
-struct s_ego_mpd * set_PMesh( struct s_ego_mpd * pmpd );
-struct s_camera  * set_PCamera( struct s_camera * pcam );
+struct ego_mpd * set_PMesh( struct ego_mpd * pmpd );
+struct ego_camera  * set_PCamera( struct ego_camera * pcam );
 
-bool_t upload_animtile_data( animtile_instance_t pinst[], struct s_wawalite_animtile * pdata, size_t animtile_count );
-bool_t upload_damagetile_data( damagetile_instance_t * pinst, struct s_wawalite_damagetile * pdata );
-bool_t upload_weather_data( weather_instance_t * pinst, struct s_wawalite_weather * pdata );
-bool_t upload_water_data( water_instance_t * pinst, struct s_wawalite_water * pdata );
-bool_t upload_fog_data( fog_instance_t * pinst, struct s_wawalite_fog * pdata );
+bool_t upload_animtile_data( ego_animtile_instance pinst[], struct s_wawalite_animtile * pdata, size_t animtile_count );
+bool_t upload_damagetile_data( ego_damagetile_instance * pinst, struct s_wawalite_damagetile * pdata );
+bool_t upload_weather_data( ego_weather_instance * pinst, struct s_wawalite_weather * pdata );
+bool_t upload_water_data( ego_water_instance * pinst, struct s_wawalite_water * pdata );
+bool_t upload_fog_data( ego_fog_instance * pinst, struct s_wawalite_fog * pdata );
 
-float get_mesh_level( struct s_ego_mpd * pmesh, float x, float y, bool_t waterwalk );
+float get_mesh_level( struct ego_mpd * pmesh, float x, float y, bool_t waterwalk );
 
-bool_t make_water( water_instance_t * pinst, struct s_wawalite_water * pdata );
+bool_t make_water( ego_water_instance * pinst, struct s_wawalite_water * pdata );
 
 bool_t game_choose_module( int imod, int seed );
 
-int                  game_do_menu( struct s_menu_process * mproc );
-game_process_t     * game_process_init( game_process_t * gproc );
+int                  game_do_menu( struct ego_menu_process * mproc );
+ego_game_process     * game_process_init( ego_game_process * gproc );
 
-void expand_escape_codes( const CHR_REF by_reference ichr, struct s_script_state * pstate, char * src, char * src_end, char * dst, char * dst_end );
+void expand_escape_codes( const CHR_REF by_reference ichr, struct ego_script_state * pstate, char * src, char * src_end, char * dst, char * dst_end );
 
 void upload_wawalite();
 
-bool_t game_module_setup( game_module_t * pinst, struct s_mod_file * pdata, const char * loadname, Uint32 seed );
-bool_t game_module_init( game_module_t * pinst );
-bool_t game_module_reset( game_module_t * pinst, Uint32 seed );
-bool_t game_module_start( game_module_t * pinst );
-bool_t game_module_stop( game_module_t * pinst );
+bool_t game_module_setup( ego_game_module_data * pinst, struct s_mod_file * pdata, const char * loadname, Uint32 seed );
+bool_t game_module_init( ego_game_module_data * pinst );
+bool_t game_module_reset( ego_game_module_data * pinst, Uint32 seed );
+bool_t game_module_start( ego_game_module_data * pinst );
+bool_t game_module_stop( ego_game_module_data * pinst );
 
-bool_t check_target( struct s_chr * psrc, const CHR_REF by_reference ichr_test, IDSZ idsz, BIT_FIELD targeting_bits );
+bool_t check_target( struct ego_chr * psrc, const CHR_REF by_reference ichr_test, IDSZ idsz, BIT_FIELD targeting_bits );
 
 void attach_all_particles();
 
@@ -389,17 +381,17 @@ bool_t do_shop_buy( const CHR_REF by_reference ipicker, const CHR_REF by_referen
 bool_t do_shop_steal( const CHR_REF by_reference ithief, const CHR_REF by_reference iitem );
 bool_t do_item_pickup( const CHR_REF by_reference ichr, const CHR_REF by_reference iitem );
 
-bool_t get_chr_regeneration( struct s_chr * pchr, int *pliferegen, int * pmanaregen );
+bool_t get_chr_regeneration( struct ego_chr * pchr, int *pliferegen, int * pmanaregen );
 
-float get_chr_level( struct s_ego_mpd * pmesh, struct s_chr * pchr );
+float get_chr_level( struct ego_mpd * pmesh, struct ego_chr * pchr );
 
-int do_game_proc_run( game_process_t * gproc, double frameDuration );
+int do_game_proc_run( ego_game_process * gproc, double frameDuration );
 
-egoboo_rv move_water( water_instance_t * pwater );
+egoboo_rv move_water( ego_water_instance * pwater );
 
 // manage the game's vfs mount points
 bool_t game_setup_vfs_paths( const char * mod_path );
 
-void cleanup_character_enchants( struct s_chr * pchr );
+void cleanup_character_enchants( struct ego_chr * pchr );
 
-bool_t attach_one_particle( struct s_prt_bundle * pbdl_prt );
+bool_t attach_one_particle( struct ego_prt_bundle * pbdl_prt );

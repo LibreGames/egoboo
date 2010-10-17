@@ -24,11 +24,10 @@
 /// this is totally not in use yet.
 
 /// A mockup of an actual client state
-typedef struct ClientState_t
+struct ClientState_t
 {
     int dummy;
-}
-ClientState_t;
+};
 
 // Globally accesible client state
 extern ClientState_t ClientState;

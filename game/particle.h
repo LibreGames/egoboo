@@ -35,7 +35,13 @@
 // Physics
 #define STOPBOUNCINGPART                5.0f         ///< To make particles stop bouncing
 
-DECLARE_STACK_EXTERN( pip_t, PipStack, MAX_PIP );
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct ego_pip_data : public s_pip_data {};
+
+struct ego_pip : public ego_pip_data {};
+
+DECLARE_STACK_EXTERN( ego_pip, PipStack, MAX_PIP );
 
 #define VALID_PIP_RANGE( IPIP ) ( ((IPIP) >= 0) && ((IPIP) < MAX_PIP) )
 #define LOADED_PIP( IPIP )       ( VALID_PIP_RANGE( IPIP ) && PipStack.lst[IPIP].loaded )
@@ -43,7 +49,7 @@ DECLARE_STACK_EXTERN( pip_t, PipStack, MAX_PIP );
 //--------------------------------------------------------------------------------------------
 
 /// Everything that is necessary to compute the character's interaction with the environment
-struct s_prt_environment
+struct prt_environment_t
 {
     // floor stuff
     float  grid_level;           ///< Height the current grid
@@ -67,10 +73,9 @@ struct s_prt_environment
     bool_t   inwater;
     fvec3_t  acc;
 };
-typedef struct s_prt_environment prt_environment_t;
 
 //--------------------------------------------------------------------------------------------
-struct s_prt_spawn_data
+struct prt_spawn_data_t
 {
     fvec3_t  pos;
     FACING_T facing;
@@ -87,21 +92,13 @@ struct s_prt_spawn_data
     CHR_REF  oldtarget;
 };
 
-typedef struct s_prt_spawn_data prt_spawn_data_t;
-
 //--------------------------------------------------------------------------------------------
 // Particle variables
 //--------------------------------------------------------------------------------------------
 
-/// The definition of the particle object
-/// This "inherits" for ego_object_base_t
-struct s_prt
+/// The definition of the particle data
+struct ego_prt_data
 {
-    ego_object_base_t obj_base;              ///< the "inheritance" from ego_object_base_t
-    bool_t            obj_base_display;      ///< a variable that would be added to a custom ego_object_base_t
-
-    prt_spawn_data_t  spawn_data;
-
     // profiles
     PIP_REF pip_ref;                         ///< The part template
     PRO_REF profile_ref;                     ///< the profile related to the spawned particle
@@ -152,11 +149,11 @@ struct s_prt
     int     contspawn_delay;                 ///< Time until spawn
 
     Uint32            bump_size_stt;                   ///< the starting size of the particle (8.8-bit fixed point)
-    bumper_t          bump_real;                       ///< Actual size of the particle
-    bumper_t          bump_padded;                     ///< The maximum of the "real" bumper and the "bump size" bumper
-    bumper_t          bump_min;                        ///< The minimum of the "real" bumper and the "bump size" bumper
-    oct_bb_t          prt_cv;                          ///< Collision volume for chr-prt interactions
-    oct_bb_t          prt_min_cv;                      ///< Collision volume for chr-platform interactions
+    ego_bumper          bump_real;                       ///< Actual size of the particle
+    ego_bumper          bump_padded;                     ///< The maximum of the "real" bumper and the "bump size" bumper
+    ego_bumper          bump_min;                        ///< The minimum of the "real" bumper and the "bump size" bumper
+    ego_oct_bb            prt_cv;                          ///< Collision volume for chr-prt interactions
+    ego_oct_bb            prt_min_cv;                      ///< Collision volume for chr-platform interactions
     PRT_REF           bumplist_next;                   ///< Next particle on fanblock
     IPair             damage;                          ///< For strength
     Uint8             damagetype;                      ///< Damage type
@@ -188,35 +185,40 @@ struct s_prt
     float          buoyancy;                  ///< an estimate of the particle bouyancy in air
     float          air_resistance;            ///< an estimate of the particle's extra resistance to air motion
 
-    BSP_leaf_t        bsp_leaf;
+    ego_BSP_leaf          bsp_leaf;
 
-#if defined(__cplusplus)
-    s_prt();
-    ~s_prt();
-#endif
+    ego_prt_data();
+    ~ego_prt_data();
 };
-typedef struct s_prt prt_t;
+
+/// The definition of the particle object
+struct ego_prt : public ego_prt_data
+{
+    ego_object obj_base;              ///< the "inheritance" from ego_object
+    bool_t            obj_base_display;      ///< a variable that would be added to a custom ego_object
+
+    prt_spawn_data_t  spawn_data;
+};
 
 // counters for debugging wall collisions
 extern int prt_stoppedby_tests;
 extern int prt_pressure_tests;
 
-prt_t * prt_object_set_limbo( prt_t * pbase, bool_t val );
+ego_prt * prt_object_set_limbo( ego_prt * pbase, bool_t val );
 
 //--------------------------------------------------------------------------------------------
-struct s_prt_bundle
+struct ego_prt_bundle
 {
     PRT_REF   prt_ref;
-    prt_t   * prt_ptr;
+    ego_prt   * prt_ptr;
 
     PIP_REF   pip_ref;
-    pip_t   * pip_ptr;
-};
-typedef struct s_prt_bundle prt_bundle_t;
+    ego_pip   * pip_ptr;
 
-prt_bundle_t * prt_bundle_ctor( prt_bundle_t * pbundle );
-prt_bundle_t * prt_bundle_validate( prt_bundle_t * pbundle );
-prt_bundle_t * prt_bundle_set( prt_bundle_t * pbundle, prt_t * pprt );
+    static ego_prt_bundle * ctor( ego_prt_bundle * pbundle );
+    static ego_prt_bundle * validate( ego_prt_bundle * pbundle );
+    static ego_prt_bundle * set( ego_prt_bundle * pbundle, ego_prt * pprt );
+};
 
 //--------------------------------------------------------------------------------------------
 // function prototypes
@@ -246,31 +248,31 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_refer
 
 #define spawn_one_particle_global( pos, facing, ipip, multispawn ) spawn_one_particle( pos, facing, (PRO_REF)MAX_PROFILE, ipip, (CHR_REF)MAX_CHR, GRIP_LAST, (TEAM_REF)TEAM_NULL, (CHR_REF)MAX_CHR, (PRT_REF)TOTAL_MAX_PRT, multispawn, (CHR_REF)MAX_CHR );
 
-prt_t *   prt_ctor( prt_t * pprt );
-prt_t *   prt_dtor( prt_t * pprt );
-BIT_FIELD prt_hit_wall( prt_t * pprt, float test_pos[], float nrm[], float * pressure );
-bool_t    prt_test_wall( prt_t * pprt, float test_pos[] );
+ego_prt *   prt_ctor( ego_prt * pprt );
+ego_prt *   prt_dtor( ego_prt * pprt );
+BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * pressure );
+bool_t    prt_test_wall( ego_prt * pprt, float test_pos[] );
 bool_t    prt_is_over_water( const PRT_REF by_reference particle );
-bool_t    prt_request_free( prt_bundle_t * pbdl_prt );
+bool_t    prt_request_free( ego_prt_bundle * pbdl_prt );
 bool_t    prt_request_free_ref( const PRT_REF by_reference iprt );
-void      prt_set_level( prt_t * pprt, float level );
+void      prt_set_level( ego_prt * pprt, float level );
 
 int     PrtList_count_free();
 
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF by_reference pip_override );
 void    reset_particles();
 
-prt_t * prt_run_object( prt_t * pprt );
-prt_t * prt_run_object_construct( prt_t * pprt, int max_iterations );
-prt_t * prt_run_object_initialize( prt_t * pprt, int max_iterations );
-prt_t * prt_run_object_activate( prt_t * pprt, int max_iterations );
-prt_t * prt_run_object_deinitialize( prt_t * pprt, int max_iterations );
-prt_t * prt_run_object_deconstruct( prt_t * pprt, int max_iterations );
+ego_prt * prt_run_object( ego_prt * pprt );
+ego_prt * prt_run_object_construct( ego_prt * pprt, int max_iterations );
+ego_prt * prt_run_object_initialize( ego_prt * pprt, int max_iterations );
+ego_prt * prt_run_object_activate( ego_prt * pprt, int max_iterations );
+ego_prt * prt_run_object_deinitialize( ego_prt * pprt, int max_iterations );
+ego_prt * prt_run_object_deconstruct( ego_prt * pprt, int max_iterations );
 
-bool_t prt_set_pos( prt_t * pprt, fvec3_base_t pos );
-float * prt_get_pos_v( prt_t * pprt );
-fvec3_t prt_get_pos( prt_t * pprt );
+bool_t prt_set_pos( ego_prt * pprt, fvec3_base_t pos );
+float * prt_get_pos_v( ego_prt * pprt );
+fvec3_t prt_get_pos( ego_prt * pprt );
 
-prt_bundle_t * prt_get_environment( prt_bundle_t * pbdl );
+ego_prt_bundle * prt_get_environment( ego_prt_bundle * pbdl );
 
 #define PARTICLE_H

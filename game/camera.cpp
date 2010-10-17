@@ -23,8 +23,7 @@
 
 #include "camera.h"
 
-#include "char.inl"
-#include "mesh.inl"
+#include "egoboo_setup.h"
 
 #include "input.h"
 #include "graphic.h"
@@ -36,17 +35,20 @@
 
 #include "SDL_extensions.h"
 
+#include "char.inl"
+#include "mesh.inl"
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-camera_t gCamera;
+ego_camera gCamera;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // Camera control stuff
 
 //--------------------------------------------------------------------------------------------
-void camera_rotmesh_init()
+void ego_camera::rotmesh_init()
 {
     // Matrix init stuff (from remove.c)
     rotmeshtopside    = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_TOPSIDE / ( 1.33333f );
@@ -56,7 +58,7 @@ void camera_rotmesh_init()
 }
 
 //--------------------------------------------------------------------------------------------
-camera_t * camera_ctor( camera_t * pcam )
+ego_camera * ego_camera::ctor( ego_camera * pcam )
 {
     /// @details BB@> initialize the camera structure
 
@@ -97,7 +99,7 @@ camera_t * camera_ctor( camera_t * pcam )
     pcam->mProjection.v[10] /= 2.0f;
     pcam->mProjection.v[11] /= 2.0f;
 
-    camera_rotmesh_init();
+    ego_camera::rotmesh_init();
 
     return pcam;
 }
@@ -124,7 +126,7 @@ void dump_matrix( fmat_4x4_t a )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void camera_look_at( camera_t * pcam, float x, float y )
+void ego_camera::look_at( ego_camera * pcam, float x, float y )
 {
     /// @details ZZ@> This function makes the camera turn to face the character
 
@@ -136,7 +138,7 @@ void camera_look_at( camera_t * pcam, float x, float y )
 }
 
 //--------------------------------------------------------------------------------------------
-void camera_make_matrix( camera_t * pcam )
+void ego_camera::make_matrix( ego_camera * pcam )
 {
     /// @details ZZ@> This function sets pcam->mView to the camera's location and rotation
 
@@ -205,7 +207,7 @@ void camera_make_matrix( camera_t * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void camera_adjust_angle( camera_t * pcam, float height )
+void ego_camera::adjust_angle( ego_camera * pcam, float height )
 {
     /// @details ZZ@> This function makes the camera look downwards as it is raised up
 
@@ -220,7 +222,7 @@ void camera_adjust_angle( camera_t * pcam, float height )
 }
 
 //--------------------------------------------------------------------------------------------
-void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
+void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
 {
     /// @details ZZ@> This function moves the camera
 
@@ -292,7 +294,7 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
 
         for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
         {
-            chr_t * pchr;
+            ego_chr * pchr;
 
             pchr = pla_get_pchr( ipla );
             if ( NULL == pchr || !pchr->alive ) continue;
@@ -319,14 +321,14 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
         // "Show me the drama!"
 
         PLA_REF ipla;
-        chr_t * local_chr_ptrs[MAX_PLAYER];
+        ego_chr * local_chr_ptrs[MAX_PLAYER];
         int local_chr_count = 0;
 
         // count the number of local players, first
         local_chr_count = 0;
         for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
         {
-            chr_t * pchr;
+            ego_chr * pchr;
 
             pchr = pla_get_pchr( ipla );
             if ( NULL == pchr || !pchr->alive ) continue;
@@ -361,7 +363,7 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
 
             for ( cnt = 0; cnt < local_chr_count; cnt++ )
             {
-                chr_t * pchr;
+                ego_chr * pchr;
                 float weight1, weight2, weight;
 
                 // we JUST checked the validity of these characters. No need to do it again?
@@ -578,20 +580,20 @@ void camera_move( camera_t * pcam, ego_mpd_t * pmesh )
     pcam->center.y += -movex * turntosin[ turnsin & TRIG_TABLE_MASK ] + movey * turntocos[ turnsin & TRIG_TABLE_MASK ];
 
     // Finish up the camera
-    camera_look_at( pcam, pcam->center.x, pcam->center.y );
+    ego_camera::look_at( pcam, pcam->center.x, pcam->center.y );
     pcam->pos.x = ( float ) pcam->center.x + ( pcam->zoom * SIN( pcam->turn_z_rad ) );
     pcam->pos.y = ( float ) pcam->center.y + ( pcam->zoom * COS( pcam->turn_z_rad ) );
 
-    camera_adjust_angle( pcam, pcam->pos.z );
+    ego_camera::adjust_angle( pcam, pcam->pos.z );
 
-    camera_make_matrix( pcam );
+    ego_camera::make_matrix( pcam );
 
     pcam->turn_z_one = ( pcam->turn_z_rad ) / ( TWO_PI );
     pcam->ori.facing_z     = CLIP_TO_16BITS( FLOAT_TO_FP16( pcam->turn_z_one ) );
 }
 
 //--------------------------------------------------------------------------------------------
-void camera_reset( camera_t * pcam, ego_mpd_t * pmesh )
+void ego_camera::reset( ego_camera * pcam, ego_mpd   * pmesh )
 {
     /// @details ZZ@> This function makes sure the camera starts in a suitable position
 
@@ -618,11 +620,11 @@ void camera_reset( camera_t * pcam, ego_mpd_t * pmesh )
     pcam->motion_blur  = 0;
 
     // make sure you are looking at the players
-    camera_reset_target( pcam, pmesh );
+    ego_camera::reset_target( pcam, pmesh );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t camera_reset_target( camera_t * pcam, ego_mpd_t * pmesh )
+bool_t ego_camera::reset_target( ego_camera * pcam, ego_mpd   * pmesh )
 {
     // @details BB@> Force the camera to focus in on the players. Should be called any time there is
     //               a "change of scene". With the new velocity-tracking of the camera, this would include
@@ -641,9 +643,9 @@ bool_t camera_reset_target( camera_t * pcam, ego_mpd_t * pmesh )
     pcam->turn_mode = CAM_TURN_AUTO;
     pcam->move_mode = CAM_RESET;
 
-    // If you use CAM_RESET, camera_move() automatically restores pcam->move_mode
+    // If you use CAM_RESET, ego_camera::move() automatically restores pcam->move_mode
     // to its default setting
-    camera_move( pcam, pmesh );
+    ego_camera::move( pcam, pmesh );
 
     // fix the center position
     pcam->center.x = pcam->track_pos.x;

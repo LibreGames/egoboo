@@ -27,7 +27,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t hash_node_dtor( hash_node_t * n )
+bool_t ego_hash_node::dtor( ego_hash_node * n )
 {
     if ( NULL == n ) return bfalse;
 
@@ -37,7 +37,7 @@ bool_t hash_node_dtor( hash_node_t * n )
 }
 
 //--------------------------------------------------------------------------------------------
-hash_node_t * hash_node_ctor( hash_node_t * pn, void * data )
+ego_hash_node * ego_hash_node::ctor( ego_hash_node * pn, void * data )
 {
     if ( NULL == pn ) return pn;
 
@@ -49,21 +49,21 @@ hash_node_t * hash_node_ctor( hash_node_t * pn, void * data )
 }
 
 //--------------------------------------------------------------------------------------------
-hash_node_t * hash_node_create( void * data )
+ego_hash_node * ego_hash_node::create( void * data )
 {
-    hash_node_t * n = EGOBOO_NEW( hash_node_t );
+    ego_hash_node * n = EGOBOO_NEW( ego_hash_node );
 
-    return hash_node_ctor( n, data );
+    return ego_hash_node::ctor( n, data );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_node_destroy( hash_node_t ** pn )
+bool_t ego_hash_node::destroy( ego_hash_node ** pn )
 {
     bool_t retval = bfalse;
 
     if ( NULL == pn || NULL == *pn ) return bfalse;
 
-    retval = hash_node_dtor( *pn );
+    retval = ego_hash_node::dtor( *pn );
 
     EGOBOO_DELETE( *pn );
 
@@ -71,7 +71,7 @@ bool_t hash_node_destroy( hash_node_t ** pn )
 }
 
 //--------------------------------------------------------------------------------------------
-hash_node_t * hash_node_insert_after( hash_node_t lst[], hash_node_t * n )
+ego_hash_node * ego_hash_node::insert_after( ego_hash_node lst[], ego_hash_node * n )
 {
     if ( NULL == n ) return lst;
     n->next = NULL;
@@ -85,7 +85,7 @@ hash_node_t * hash_node_insert_after( hash_node_t lst[], hash_node_t * n )
 }
 
 //--------------------------------------------------------------------------------------------
-hash_node_t * hash_node_insert_before( hash_node_t lst[], hash_node_t * n )
+ego_hash_node * ego_hash_node::insert_before( ego_hash_node lst[], ego_hash_node * n )
 {
     if ( NULL == n ) return lst;
     n->next = NULL;
@@ -98,9 +98,9 @@ hash_node_t * hash_node_insert_before( hash_node_t lst[], hash_node_t * n )
 }
 
 //--------------------------------------------------------------------------------------------
-hash_node_t * hash_node_remove_after( hash_node_t lst[] )
+ego_hash_node * ego_hash_node::remove_after( ego_hash_node lst[] )
 {
-    hash_node_t * n;
+    ego_hash_node * n;
 
     if ( NULL == lst ) return NULL;
 
@@ -114,9 +114,9 @@ hash_node_t * hash_node_remove_after( hash_node_t lst[] )
 }
 
 //--------------------------------------------------------------------------------------------
-hash_node_t * hash_node_remove( hash_node_t lst[] )
+ego_hash_node * ego_hash_node::remove( ego_hash_node lst[] )
 {
-    hash_node_t * n;
+    ego_hash_node * n;
 
     if ( NULL == lst ) return NULL;
 
@@ -130,29 +130,29 @@ hash_node_t * hash_node_remove( hash_node_t lst[] )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-hash_list_t * hash_list_ctor( hash_list_t * lst, int hash_size )
+ego_hash_list * ego_hash_list::ctor( ego_hash_list * lst, int hash_size )
 {
     if ( NULL == lst ) return NULL;
 
     if ( hash_size < 0 ) hash_size = 256;
 
-    hash_list_alloc( lst, hash_size );
+    ego_hash_list::alloc( lst, hash_size );
 
     return lst;
 }
 
 //--------------------------------------------------------------------------------------------
-hash_list_t * hash_list_dtor( hash_list_t * lst )
+ego_hash_list * ego_hash_list::dtor( ego_hash_list * lst )
 {
     if ( NULL == lst ) return NULL;
 
-    hash_list_free( lst );
+    ego_hash_list::dealloc( lst );
 
     return lst;
 }
 
 //--------------------------------------------------------------------------------------------
-size_t hash_list_count_nodes( hash_list_t *plst )
+size_t ego_hash_list::count_nodes( ego_hash_list *plst )
 {
     /// @details BB@> count the total number of nodes in the hash list
 
@@ -173,24 +173,24 @@ size_t hash_list_count_nodes( hash_list_t *plst )
 }
 
 //--------------------------------------------------------------------------------------------
-hash_list_t * hash_list_create( int size )
+ego_hash_list * ego_hash_list::create( int size )
 {
-    hash_list_t * rv = EGOBOO_NEW( hash_list_t );
+    ego_hash_list * rv = EGOBOO_NEW( ego_hash_list );
     if ( NULL == rv ) return NULL;
 
     memset( rv, 0, sizeof( *rv ) );
 
-    return hash_list_ctor( rv, size );
+    return ego_hash_list::ctor( rv, size );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_destroy( hash_list_t ** plst )
+bool_t ego_hash_list::destroy( ego_hash_list ** plst )
 {
     bool_t retval = bfalse;
 
     if ( NULL == plst || NULL == *plst ) return bfalse;
 
-    retval = ( NULL != hash_list_dtor( *plst ) );
+    retval = ( NULL != ego_hash_list::dtor( *plst ) );
 
     EGOBOO_DELETE( *plst );
 
@@ -198,7 +198,7 @@ bool_t hash_list_destroy( hash_list_t ** plst )
 }
 
 //--------------------------------------------------------------------------------------------
-int hash_list_get_allocd( hash_list_t *plst )
+int ego_hash_list::get_allocd( ego_hash_list *plst )
 {
     if ( NULL == plst ) return 0;
 
@@ -206,7 +206,7 @@ int hash_list_get_allocd( hash_list_t *plst )
 }
 
 //--------------------------------------------------------------------------------------------
-size_t hash_list_get_count( hash_list_t *plst, int i )
+size_t ego_hash_list::get_count( ego_hash_list *plst, int i )
 {
     if ( NULL == plst || NULL == plst->subcount ) return 0;
 
@@ -214,7 +214,7 @@ size_t hash_list_get_count( hash_list_t *plst, int i )
 }
 
 //--------------------------------------------------------------------------------------------
-hash_node_t *  hash_list_get_node( hash_list_t *plst, int i )
+ego_hash_node *  ego_hash_list::get_node( ego_hash_list *plst, int i )
 {
     if ( NULL == plst || NULL == plst->sublist ) return NULL;
 
@@ -222,7 +222,7 @@ hash_node_t *  hash_list_get_node( hash_list_t *plst, int i )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_set_allocd( hash_list_t *plst, int ival )
+bool_t ego_hash_list::set_allocd( ego_hash_list *plst, int ival )
 {
     if ( NULL == plst ) return bfalse;
 
@@ -232,7 +232,7 @@ bool_t hash_list_set_allocd( hash_list_t *plst, int ival )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_set_count( hash_list_t *plst, int i, int count )
+bool_t ego_hash_list::set_count( ego_hash_list *plst, int i, int count )
 {
     if ( NULL == plst || NULL == plst->subcount ) return bfalse;
 
@@ -244,7 +244,7 @@ bool_t hash_list_set_count( hash_list_t *plst, int i, int count )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_set_node( hash_list_t *plst, int i, hash_node_t * pnode )
+bool_t ego_hash_list::set_node( ego_hash_list *plst, int i, ego_hash_node * pnode )
 {
     if ( NULL == plst || NULL == plst->sublist ) return bfalse;
 
@@ -256,7 +256,7 @@ bool_t hash_list_set_node( hash_list_t *plst, int i, hash_node_t * pnode )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_free( hash_list_t * lst )
+bool_t ego_hash_list::dealloc( ego_hash_list * lst )
 {
     if ( NULL == lst ) return bfalse;
     if ( 0 == lst->allocated ) return btrue;
@@ -269,11 +269,11 @@ bool_t hash_list_free( hash_list_t * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_alloc( hash_list_t * lst, int size )
+bool_t ego_hash_list::alloc( ego_hash_list * lst, int size )
 {
     if ( NULL == lst ) return bfalse;
 
-    hash_list_free( lst );
+    ego_hash_list::dealloc( lst );
 
     lst->subcount = EGOBOO_NEW_ARY( int, size );
     if ( NULL == lst->subcount )
@@ -281,7 +281,7 @@ bool_t hash_list_alloc( hash_list_t * lst, int size )
         return bfalse;
     }
 
-    lst->sublist = EGOBOO_NEW_ARY( hash_node_t *, size );
+    lst->sublist = EGOBOO_NEW_ARY( ego_hash_node *, size );
     if ( NULL == lst->sublist )
     {
         EGOBOO_DELETE( lst->subcount );
@@ -299,7 +299,7 @@ bool_t hash_list_alloc( hash_list_t * lst, int size )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_renew( hash_list_t * lst )
+bool_t ego_hash_list::renew( ego_hash_list * lst )
 {
     /// @details BB@> renew the CoNode_t hash table.
     ///
@@ -321,7 +321,7 @@ bool_t hash_list_renew( hash_list_t * lst )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-hash_list_iterator_t * hash_list_iterator_ctor( hash_list_iterator_t * it )
+ego_hash_list_iterator * ego_hash_list_iterator::ctor( ego_hash_list_iterator * it )
 {
     if ( NULL == it ) return NULL;
 
@@ -331,11 +331,11 @@ hash_list_iterator_t * hash_list_iterator_ctor( hash_list_iterator_t * it )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_iterator_set_begin( hash_list_iterator_t * it, hash_list_t * hlst )
+bool_t ego_hash_list_iterator::set_begin( ego_hash_list_iterator * it, ego_hash_list * hlst )
 {
     int i;
 
-    it = hash_list_iterator_ctor( it );
+    it = ego_hash_list_iterator::ctor( it );
 
     if ( NULL == it || NULL == hlst ) return bfalse;
 
@@ -350,7 +350,7 @@ bool_t hash_list_iterator_set_begin( hash_list_iterator_t * it, hash_list_t * hl
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_iterator_done( hash_list_iterator_t * it, hash_list_t * hlst )
+bool_t ego_hash_list_iterator::done( ego_hash_list_iterator * it, ego_hash_list * hlst )
 {
     if ( NULL == it || NULL == hlst ) return btrue;
 
@@ -361,10 +361,10 @@ bool_t hash_list_iterator_done( hash_list_iterator_t * it, hash_list_t * hlst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t hash_list_iterator_next( hash_list_iterator_t * it, hash_list_t * hlst )
+bool_t ego_hash_list_iterator::next( ego_hash_list_iterator * it, ego_hash_list * hlst )
 {
     int i, inext;
-    hash_node_t * pnext;
+    ego_hash_node * pnext;
 
     if ( NULL == it || NULL == hlst ) return bfalse;
 
@@ -399,7 +399,7 @@ bool_t hash_list_iterator_next( hash_list_iterator_t * it, hash_list_t * hlst )
 }
 
 //--------------------------------------------------------------------------------------------
-void * hash_list_iterator_ptr( hash_list_iterator_t * it )
+void * ego_hash_list_iterator::ptr( ego_hash_list_iterator * it )
 {
     if ( NULL == it || NULL == it->pnode ) return NULL;
 

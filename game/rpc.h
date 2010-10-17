@@ -33,7 +33,7 @@
 //--------------------------------------------------------------------------------------------
 
 /// a generic "remote procedure call" structure for handling "inter-thread" communication
-struct s_rpc_base
+struct rpc_base_t
 {
     int    index;      ///< the index of this request
     int    guid;       ///< the request id number
@@ -44,7 +44,6 @@ struct s_rpc_base
     int    data_type;  ///< a the type of the "inherited" data
     void * data;       ///< a pointer to the "inherited" data
 };
-typedef struct s_rpc_base ego_rpc_base_t;
 
 INLINE bool_t ego_rpc_valid( ego_rpc_base_t * prpc )           { return ( NULL != prpc ) && prpc->allocated; }
 INLINE bool_t ego_rpc_matches( ego_rpc_base_t * prpc, int guid ) { return ( NULL != prpc ) && prpc->allocated && ( guid == prpc->guid ); }
@@ -60,7 +59,7 @@ ego_rpc_base_t * ego_rpc_base_dtor( ego_rpc_base_t * prpc );
 /// a "remote procedure call" structure for handling calls to TxTexture_load_one_vfs()
 /// and TxTitleImage_load_one_vfs()
 
-struct s_tx_request
+struct tx_request_t
 {
     // "base class" stuff
     ego_rpc_base_t ego_rpc_base;
@@ -73,8 +72,6 @@ struct s_tx_request
     // the function call return value(s)
     TX_REF index;    /// the return value of the function
 };
-
-typedef struct s_tx_request tx_request_t;
 
 tx_request_t * tx_request_ctor( tx_request_t * preq, int type );
 tx_request_t * tx_request_dtor( tx_request_t * preq );

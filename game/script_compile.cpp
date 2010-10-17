@@ -36,7 +36,7 @@
 //-------------------------------------------------------------------------------------------
 
 /// The description of a single pre-defined egoscript token
-struct s_token
+struct token_t
 {
     int    iLine;
     int    iIndex;
@@ -44,7 +44,6 @@ struct s_token
     char   cType;
     char   cWord[MAXCODENAMESIZE];
 };
-typedef struct s_token token_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

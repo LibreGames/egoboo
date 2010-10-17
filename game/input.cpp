@@ -22,9 +22,9 @@
 /// @details
 
 #include "input.h"
-#include "SDL_extensions.h"
-
 #include "controls_file.h"
+
+#include "extensions\SDL_extensions.h"
 
 #if defined(USE_LUA_CONSOLE)
 #    include "lua_console.h"
@@ -141,7 +141,7 @@ void input_read_mouse()
 {
     int x, y, b;
 
-    if ( process_running( PROC_PBASE( MProc ) ) )
+    if ( ego_process::running( PROC_PBASE( MProc ) ) )
     {
         b = SDL_GetMouseState( &x, &y );
     }
@@ -270,10 +270,10 @@ void input_read()
                     // The ui will handle its own issues.
 
                     // grab all the new SDL screen info
-                    SDLX_Get_Screen_Info( &sdl_scr, bfalse );
+                    SDLX_Get_Screen_Info( &sdl_scr, (SDL_bool)bfalse );
 
                     // fix the camera rotation angles to estimate what is in-view
-                    camera_rotmesh_init();
+                    ego_camera::rotmesh_init();
                 }
                 break;
 

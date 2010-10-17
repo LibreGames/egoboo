@@ -30,8 +30,8 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_object_profile;
-struct s_chr;
+struct ego_pro;
+struct ego_chr;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -46,14 +46,25 @@ struct s_chr;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
+struct ego_eve_data : public s_eve_data
+{
+    static ego_eve_data * init( ego_eve_data * ptr ) { s_eve_data * rv = eve_data_init( ptr ); return NULL == rv ? NULL : ptr; }
+};
+
+struct ego_eve : public ego_eve_data
+{
+    static ego_eve * init( ego_eve * ptr ) { ego_eve_data * rv = ego_eve_data::init( ptr ); return NULL == rv ? NULL : ptr; }
+};
+
+
 /// Enchantment template
-DECLARE_STACK_EXTERN( eve_t, EveStack, MAX_EVE );
+DECLARE_STACK_EXTERN( ego_eve, EveStack, MAX_EVE );
 
 #define VALID_EVE_RANGE( IEVE ) ( ((IEVE) >= 0) && ((IEVE) < MAX_EVE) )
 #define LOADED_EVE( IEVE )      ( VALID_EVE_RANGE( IEVE ) && EveStack.lst[IEVE].loaded )
 
 //--------------------------------------------------------------------------------------------
-struct s_enc_spawn_data
+struct ego_enc_spawn_data
 {
     CHR_REF owner_ref;
     CHR_REF target_ref;
@@ -61,18 +72,12 @@ struct s_enc_spawn_data
     PRO_REF profile_ref;
     EVE_REF eve_ref;
 };
-typedef struct s_enc_spawn_data enc_spawn_data_t;
 
 //--------------------------------------------------------------------------------------------
 
-/// The definition of a single Egoboo enchantment
-/// This "inherits" from ego_object_base_t
-struct s_enc
+/// The definition of a Egoboo enchantment's data
+struct ego_enc_data
 {
-    ego_object_base_t obj_base;
-
-    enc_spawn_data_t  spawn_data;
-
     int     time;                    ///< Time before end
     int     spawntime;               ///< Time before spawn
 
@@ -98,7 +103,66 @@ struct s_enc
     bool_t  addyesno[MAX_ENCHANT_ADD];  ///< Was the value adjusted
     float   addsave[MAX_ENCHANT_ADD];   ///< The adjustment
 };
-typedef struct s_enc enc_t;
+
+
+//--------------------------------------------------------------------------------------------
+
+/// The definition of a single Egoboo enchantment
+/// This "inherits" from ego_object
+struct ego_enc : public ego_enc_data
+{
+    ego_object obj_base;
+
+    ego_enc_spawn_data  spawn_data;
+
+    ego_enc()  { ego_enc::ctor( this ); };
+    ~ego_enc() { ego_enc::dtor( this ); };
+
+    static ego_enc * ctor( ego_enc * penc );
+    static ego_enc * dtor( ego_enc * penc );
+
+    static ENC_REF value_filled( const ENC_REF by_reference enchant_idx, int value_idx );
+    static void    apply_set( const ENC_REF by_reference  enchant_idx, int value_idx, const PRO_REF by_reference profile );
+    static void    apply_add( const ENC_REF by_reference  enchant_idx, int value_idx, const EVE_REF by_reference enchanttype );
+    static void    remove_set( const ENC_REF by_reference  enchant_idx, int value_idx );
+    static void    remove_add( const ENC_REF by_reference  enchant_idx, int value_idx );
+
+    static bool_t request_terminate( const ENC_REF by_reference  ienc );
+
+    static ego_enc * run_object( ego_enc * penc );
+
+    static ego_enc * run_object_construct( ego_enc * penc, int max_iterations );
+    static ego_enc * run_object_initialize( ego_enc * penc, int max_iterations );
+    static ego_enc * run_object_activate( ego_enc * penc, int max_iterations );
+    static ego_enc * run_object_deinitialize( ego_enc * penc, int max_iterations );
+    static ego_enc * run_object_deconstruct( ego_enc * penc, int max_iterations );
+
+    static INLINE PRO_REF   get_ipro( const ENC_REF by_reference ienc );
+    static INLINE ego_pro * get_ppro( const ENC_REF by_reference ienc );
+
+    static INLINE CHR_REF   get_iowner( const ENC_REF by_reference ienc );
+    static INLINE ego_chr * get_powner( const ENC_REF by_reference ienc );
+
+    static INLINE EVE_REF   get_ieve( const ENC_REF by_reference ienc );
+    static INLINE ego_eve * get_peve( const ENC_REF by_reference ienc );
+
+    static INLINE IDSZ      get_idszremove( const ENC_REF by_reference ienc );
+    static INLINE bool_t    is_removed( const ENC_REF by_reference ienc, const PRO_REF by_reference test_profile );
+
+private:
+    static bool_t    dealloc( ego_enc * penc );
+
+    static ego_enc * do_object_constructing( ego_enc * penc );
+    static ego_enc * do_object_initializing( ego_enc * penc );
+    static ego_enc * do_object_deinitializing( ego_enc * penc );
+    static ego_enc * do_object_processing( ego_enc * penc );
+    static ego_enc * do_object_destructing( ego_enc * penc );
+
+    static ego_enc * do_init( ego_enc * penc );
+    static ego_enc * do_active( ego_enc * penc );
+    static ego_enc * do_deinit( ego_enc * penc );
+    
+};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -106,9 +170,6 @@ typedef struct s_enc enc_t;
 
 void enchant_system_begin();
 void enchant_system_end();
-
-enc_t * enc_ctor( enc_t * penc );
-enc_t * enc_dtor( enc_t * penc );
 
 void   init_all_eve();
 void   release_all_eve();
@@ -121,25 +182,9 @@ void    increment_all_enchant_update_counters( void );
 bool_t  remove_enchant( const ENC_REF by_reference  enchant_idx, ENC_REF *  enchant_parent );
 bool_t  remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz );
 
-ENC_REF spawn_one_enchant( const CHR_REF by_reference owner, const CHR_REF by_reference target, const CHR_REF by_reference spawner, const ENC_REF by_reference enc_override, const PRO_REF by_reference modeloptional );
+ENC_REF spawn_one_enchant( const CHR_REF by_reference owner, const CHR_REF by_reference target, const CHR_REF by_reference spawner, const ENC_REF by_reference ego_enc_override, const PRO_REF by_reference modeloptional );
 EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF by_reference profile );
-ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * enc_parent );
-
-ENC_REF enc_value_filled( const ENC_REF by_reference enchant_idx, int value_idx );
-void    enc_apply_set( const ENC_REF by_reference  enchant_idx, int value_idx, const PRO_REF by_reference profile );
-void    enc_apply_add( const ENC_REF by_reference  enchant_idx, int value_idx, const EVE_REF by_reference enchanttype );
-void    enc_remove_set( const ENC_REF by_reference  enchant_idx, int value_idx );
-void    enc_remove_add( const ENC_REF by_reference  enchant_idx, int value_idx );
-
-bool_t enc_request_terminate( const ENC_REF by_reference  ienc );
-
-enc_t * enc_run_object( enc_t * penc );
-
-enc_t * enc_run_object_construct( enc_t * penc, int max_iterations );
-enc_t * enc_run_object_initialize( enc_t * penc, int max_iterations );
-enc_t * enc_run_object_activate( enc_t * penc, int max_iterations );
-enc_t * enc_run_object_deinitialize( enc_t * penc, int max_iterations );
-enc_t * enc_run_object_deconstruct( enc_t * penc, int max_iterations );
+ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * ego_enc_parent );
 
 #define  remove_all_character_enchants( ICHR ) remove_all_enchants_with_idsz( ICHR, IDSZ_NONE )
 

@@ -49,7 +49,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 /// A console for interacting with lua
-struct s_lua_console
+struct lua_console_t
 {
     lua_State * L;
 

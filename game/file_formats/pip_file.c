@@ -52,7 +52,7 @@ particle_direction_t prt_direction[256] =
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-pip_t * pip_init( pip_t * ppip )
+pip_data_t * pip_init( pip_data_t * ppip )
 {
     if ( NULL == ppip ) return ppip;
 
@@ -73,7 +73,7 @@ pip_t * pip_init( pip_t * ppip )
 }
 
 //--------------------------------------------------------------------------------------------
-pip_t * load_one_pip_file_vfs( const char *szLoadName, pip_t * ppip )
+pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
 {
     /// @details ZZ@> This function loads a particle template, returning bfalse if the file wasn't
     ///    found

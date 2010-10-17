@@ -20,11 +20,15 @@
 //********************************************************************************************
 
 #include "egoboo_typedef.h"
-#include "extensions/ogl_texture.h"
-#include "file_formats/module_file.h"
+#include "graphic_defs.h"
+#include "egoboo_setup.h"
+
 #include "mesh.h"
 #include "mad.h"
 #include "font_ttf.h"
+
+#include "extensions/ogl_texture.h"
+#include "file_formats/module_file.h"
 
 #include "egoboo.h"
 
@@ -32,78 +36,33 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_chr;
-struct s_camera;
-struct s_egoboo_config;
+struct ego_chr;
+struct ego_camera;
+struct ego_config_data;
 struct s_chr_instance;
 struct s_oglx_texture_parameters;
-struct s_egoboo_config;
 struct s_display_item;
 
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-#define DOLIST_SIZE (MAX_CHR + TOTAL_MAX_PRT)
-
-#define MAXMESHRENDER             1024                       ///< Max number of tiles to draw
-
-#define MAPSIZE 96
-
-#define TABX                            32// 16      ///< Size of little name tag on the bar
-#define BARX                            112// 216         ///< Size of bar
-#define BARY                            16// 8
-#define NUMTICK                         10// 50          ///< Number of ticks per row
-#define TICKX                           8// 4           ///< X size of each tick
-#define MAXTICK                         (NUMTICK*10) ///< Max number of ticks to draw
-#define XPTICK                          6
-
-#define NUMBAR                          6               ///< Number of status bars
-#define NUMXPBAR                        2               ///< Number of xp bars
-
-#define MAXLIGHTLEVEL                   16          ///< Number of premade light intensities
-#define MAXSPEKLEVEL                    16          ///< Number of premade specularities
-#define MAXLIGHTROTATION                256         ///< Number of premade light maps
-
-#define DONTFLASH                       255
-#define SEEKURSEAND                     31          ///< Blacking flash
-
-#define ICON_SIZE                       32
-
-#define SHADOWRAISE                       5
-
-/// The supported colors of bars and blips
-enum e_color
-{
-    COLOR_WHITE = 0,
-    COLOR_RED,
-    COLOR_YELLOW,
-    COLOR_GREEN,
-    COLOR_BLUE,
-    COLOR_PURPLE,
-    COLOR_MAX,
-    NOSPARKLE = COLOR_MAX
-};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// An element of the do-list, an all encompassing list of all objects to be drawn by the renderer
-struct s_do_list_data
+struct do_list_data_t
 {
     float   dist;
     CHR_REF chr;
 };
-typedef struct s_do_list_data do_list_data_t;
 
 //--------------------------------------------------------------------------------------------
 
 /// Structure for sorting both particles and characters based on their position from the camera
-struct s_obj_registry_entity
+struct obj_registry_entity_t
 {
     CHR_REF ichr;
     PRT_REF iprt;
     float   dist;
 };
-typedef struct s_obj_registry_entity obj_registry_entity_t;
 
 int obj_registry_entity_cmp( const void * pleft, const void * pright );
 
@@ -111,7 +70,7 @@ int obj_registry_entity_cmp( const void * pleft, const void * pright );
 //--------------------------------------------------------------------------------------------
 
 /// OPENGL VERTEX
-struct s_GLvertex
+struct ego_GLvertex
 {
     GLXvector4f pos;
     GLXvector3f nrm;
@@ -123,20 +82,16 @@ struct s_GLvertex
 
     GLXvector4f col;      ///< the total vertex-dependent lighting (ambient + directional)
 
-#if defined(__cplusplus)
-    s_GLvertex() { memset( this, 0, sizeof( *this ) ); }
-#endif
-
+    ego_GLvertex() { memset( this, 0, sizeof( *this ) ); }
 };
-typedef struct s_GLvertex GLvertex;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 // Which tiles are to be drawn, arranged by MPDFX_* bits
-struct s_renderlist
+struct renderlist_t
 {
-    ego_mpd_t * pmesh;
+    ego_mpd   * pmesh;
 
     int     all_count;                               ///< Number to render, total
     int     ref_count;                               ///< ..., is reflected in the floor
@@ -155,7 +110,6 @@ struct s_renderlist
 
     Uint32  wat[MAXMESHRENDER];                      ///< ..., draws a water tile
 };
-typedef struct s_renderlist renderlist_t;
 
 extern renderlist_t renderlist;
 
@@ -172,12 +126,11 @@ extern float           lighttoenviroy[256];                                ///< 
 extern int    msgtimechange;
 
 /// A display messages
-struct s_msg
+struct msg_t
 {
     int             time;                            ///< The time for this message
     char            textdisplay[MESSAGESIZE];        ///< The displayed text
 };
-typedef struct s_msg msg_t;
 
 DECLARE_STATIC_ARY_TYPE( DisplayMsgAry, msg_t, MAX_MESSAGE );
 
@@ -200,39 +153,15 @@ extern int rotmeshdown;
 
 //--------------------------------------------------------------------------------------------
 // encapsulation of all graphics options
-struct s_gfx_config
+
+struct ego_gfx_config : public s_gfx_config_data
 {
-    GLuint shading;
-    bool_t refon;
-    Uint8  reffadeor;
-    bool_t antialiasing;
-    bool_t dither;
-    bool_t perspective;
-    bool_t phongon;
-    bool_t shaon;
-    bool_t shasprite;
-
-    bool_t clearson;          ///< Do we clear every time?
-    bool_t draw_background;   ///< Do we draw the background image?
-    bool_t draw_overlay;      ///< Draw overlay?
-    bool_t draw_water_0;      ///< Do we draw water layer 1 (TX_WATER_LOW)
-    bool_t draw_water_1;      ///< Do we draw water layer 2 (TX_WATER_TOP)
-
-    int    dyna_list_max;     ///< Max number of dynamic lights to draw
-    bool_t exploremode;       ///< fog of war mode for mesh display
-    bool_t usefaredge;        ///< Far edge maps? (Outdoor)
-
-    // virtual window parameters
-    float vw, vh;
-    float vdw, vdh;
+    static bool_t init( ego_gfx_config * pgfx );
 };
-typedef struct s_gfx_config gfx_config_t;
 
-extern gfx_config_t gfx;
+extern ego_gfx_config gfx;
 
-bool_t gfx_config_init( gfx_config_t * pgfx );
-bool_t gfx_set_virtual_screen( gfx_config_t * pgfx );
-bool_t gfx_synch_config( gfx_config_t * pgfx, struct s_egoboo_config * pcfg );
+bool_t gfx_set_virtual_screen( ego_gfx_config * pgfx );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -265,7 +194,8 @@ enum e_bb_opt
 
 /// Description of a generic bilboarded object.
 /// Any graphics that can be composited onto a SDL_surface can be used
-struct s_billboard_data
+
+struct ego_billboard_data
 {
     bool_t      valid;        ///< has the billboard data been initialized?
 
@@ -283,22 +213,23 @@ struct s_billboard_data
 
     float       size;         ///< the size of the billboard
     float       size_add;     ///< the size change per update
+
+    static ego_billboard_data * init( ego_billboard_data * pbb );
+    static bool_t               dealloc( ego_billboard_data * pbb );
+    static bool_t               update( ego_billboard_data * pbb );
+    static bool_t               printf_ttf( ego_billboard_data * pbb, TTF_Font *font, SDL_Color color, const char * format, ... );
 };
-typedef struct s_billboard_data billboard_data_t;
 
-billboard_data_t * billboard_data_init( billboard_data_t * pbb );
-bool_t             billboard_data_free( billboard_data_t * pbb );
-bool_t             billboard_data_update( billboard_data_t * pbb );
-bool_t             billboard_data_printf_ttf( billboard_data_t * pbb, TTF_Font *font, SDL_Color color, const char * format, ... );
+typedef ego_billboard_data ego_billboard_data_t;
 
-DECLARE_LIST_EXTERN( billboard_data_t, BillboardList, BILLBOARD_COUNT );
+DECLARE_LIST_EXTERN( ego_billboard_data, BillboardList, BILLBOARD_COUNT );
 
 void               BillboardList_init_all();
 void               BillboardList_update_all();
 void               BillboardList_free_all();
 size_t             BillboardList_get_free( Uint32 lifetime_secs );
 bool_t             BillboardList_free_one( size_t ibb );
-billboard_data_t * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb );
+ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb );
 
 #define VALID_BILLBOARD_RANGE( IBB ) ( ( (IBB) >= 0 ) && ( (IBB) < BILLBOARD_COUNT ) )
 #define VALID_BILLBOARD( IBB )       ( VALID_BILLBOARD_RANGE( IBB ) && BillboardList.lst[IBB].valid )
@@ -308,13 +239,13 @@ billboard_data_t * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb );
 // some lines to be drawn in the display
 
 #define LINE_COUNT 100
-struct s_line_data
+
+struct line_data_t
 {
     fvec3_t   dst;
     fvec4_t   src, color;
     int time;
 };
-typedef struct s_line_data line_data_t;
 
 extern line_data_t line_list[LINE_COUNT];
 
@@ -353,9 +284,8 @@ void   gfx_system_end();
 
 int    ogl_init();
 void   gfx_main();
-void   gfx_begin_3d( struct s_camera * pcam );
+void   gfx_begin_3d( struct ego_camera * pcam );
 void   gfx_end_3d();
-bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_egoboo_config * pcfg );
 void   gfx_reload_all_textures();
 
 void   request_clear_screen();
@@ -364,10 +294,10 @@ bool_t flip_pages_requested();
 void   request_flip_pages();
 void   do_flip_pages();
 
-void   dolist_sort( struct s_camera * pcam, bool_t do_reflect );
-void   dolist_make( ego_mpd_t * pmesh );
-bool_t dolist_add_chr( ego_mpd_t * pmesh, const CHR_REF by_reference ichr );
-bool_t dolist_add_prt( ego_mpd_t * pmesh, const PRT_REF by_reference iprt );
+void   dolist_sort( struct ego_camera * pcam, bool_t do_reflect );
+void   dolist_make( ego_mpd   * pmesh );
+bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr );
+bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF by_reference iprt );
 
 void draw_one_icon( const TX_REF by_reference icontype, float x, float y, Uint8 sparkle );
 void draw_one_font( int fonttype, float x, float y );
@@ -379,15 +309,15 @@ int  draw_status( const CHR_REF by_reference character, float x, float y );
 void draw_text();
 void draw_one_character_icon( const CHR_REF by_reference item, float x, float y, bool_t draw_ammo );
 void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map );
-void draw_all_lines( struct s_camera * pcam );
+void draw_all_lines( struct ego_camera * pcam );
 
-void   render_world( struct s_camera * pcam );
+void   render_world( struct ego_camera * pcam );
 void   render_shadow( const CHR_REF by_reference character );
 void   render_bad_shadow( const CHR_REF by_reference character );
-void   render_scene( ego_mpd_t * pmesh, struct s_camera * pcam );
-bool_t render_oct_bb( oct_bb_t * bb, bool_t draw_square, bool_t draw_diamond );
-bool_t render_aabb( aabb_t * pbbox );
-void   render_all_billboards( struct s_camera * pcam );
+void   render_scene( ego_mpd   * pmesh, struct ego_camera * pcam );
+bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond );
+bool_t render_aabb( ego_aabb * pbbox );
+void   render_all_billboards( struct ego_camera * pcam );
 
 void   make_enviro();
 void   clear_messages();
@@ -399,10 +329,10 @@ int  DisplayMsg_get_free();
 int debug_printf( const char *format, ... );
 
 void renderlist_reset();
-void renderlist_make( ego_mpd_t * pmesh, struct s_camera * pcam );
+void renderlist_make( ego_mpd   * pmesh, struct ego_camera * pcam );
 
-bool_t grid_lighting_interpolate( ego_mpd_t * pmesh, lighting_cache_t * dst, float fx, float fy );
-float  grid_lighting_test( ego_mpd_t * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff );
+bool_t grid_lighting_interpolate( ego_mpd   * pmesh, lighting_cache_t * dst, float fx, float fy );
+float  grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff );
 
 int  get_free_line();
 

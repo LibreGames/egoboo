@@ -29,7 +29,6 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_egoboo_console;
-
 typedef struct s_egoboo_console egoboo_console_t;
 
 typedef SDL_bool( *egoboo_console_callback_t )( egoboo_console_t * pcon, void * data );

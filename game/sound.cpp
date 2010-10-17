@@ -44,13 +44,12 @@
 #define LOOPED_COUNT 256
 
 /// Data needed to store and manipulate a looped sound
-struct s_looped_sound_data
+struct looped_sound_data_t
 {
     int         channel;
     Mix_Chunk * chunk;
     CHR_REF     object;
 };
-typedef struct s_looped_sound_data looped_sound_data_t;
 
 INSTANTIATE_LIST_STATIC( looped_sound_data_t, LoopedList, LOOPED_COUNT );
 
@@ -116,13 +115,11 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff );
 static int music_stack_depth = 0;
 
 /// The data needed to store a single music track on the music_stack[]
-struct s_music_stack_element
+struct music_stack_element_t
 {
     Mix_Music * mus;
     int         number;
 };
-
-typedef struct s_music_stack_element music_stack_element_t;
 
 static music_stack_element_t music_stack[MUSIC_STACK_COUNT];
 
@@ -387,7 +384,7 @@ Mix_Music * sound_load_music( const char * szFileName )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t sound_load( mix_ptr_t * pptr, const char * szFileName, mix_type_t type )
+bool_t sound_load( snd_mix_ptr * pptr, const char * szFileName, snd_mix_type type )
 {
 
     if ( !mixeron ) return bfalse;
@@ -431,7 +428,7 @@ bool_t sound_load( mix_ptr_t * pptr, const char * szFileName, mix_type_t type )
 }
 
 //--------------------------------------------------------------------------------------------
-int sound_play_mix( fvec3_t   pos, mix_ptr_t * pptr )
+int sound_play_mix( fvec3_t   pos, snd_mix_ptr * pptr )
 {
     int retval = INVALID_SOUND_CHANNEL;
     if ( !snd.soundvalid || !mixeron )
@@ -570,7 +567,7 @@ int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const C
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
 
     // only play sound effects if the game is running
-    if ( !process_running( PROC_PBASE( GProc ) ) )  return INVALID_SOUND_CHANNEL;
+    if ( !ego_process::running( PROC_PBASE( GProc ) ) )  return INVALID_SOUND_CHANNEL;
 
     // measure the distance in tiles
     diff = fvec3_sub( pos.v, PCamera->track_pos.v );
@@ -612,7 +609,7 @@ int sound_play_chunk_full( Mix_Chunk * pchunk )
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
 
     // only play sound effects if the game is running
-    if ( !process_running( PROC_PBASE( GProc ) ) )  return INVALID_SOUND_CHANNEL;
+    if ( !ego_process::running( PROC_PBASE( GProc ) ) )  return INVALID_SOUND_CHANNEL;
 
     // play the sound
     channel = Mix_PlayChannel( -1, pchunk, 0 );
@@ -823,7 +820,7 @@ bool_t snd_config_init( snd_config_t * psnd )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t snd_config_synch( snd_config_t * psnd, egoboo_config_t * pcfg )
+bool_t snd_config_synch( snd_config_t * psnd, ego_config_data_t * pcfg )
 {
     if ( NULL == psnd && NULL == pcfg ) return bfalse;
 

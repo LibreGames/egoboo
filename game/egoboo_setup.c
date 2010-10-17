@@ -24,17 +24,29 @@
 #include "egoboo_setup.h"
 
 #include "log.h"
+
+#include "graphic_defs.h"
+#include "sound_defs.h"
+
 #include "file_formats/configfile.h"
-#include "graphic.h"
-#include "input.h"
-#include "particle.inl"
-#include "sound.h"
-#include "network.h"
-#include "camera.h"
+#include "extensions/ogl_texture.h"
 
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
-#include "egoboo.h"
+#include "egoboo_math.h"
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// globally accessable config values
+
+bool_t fpson          = btrue;         
+
+bool_t messageon      = btrue;         
+int    maxmessage     = MAX_MESSAGE;
+int    wraptolerance  = 80;            
+bool_t wateron        = btrue;        
+
+size_t maxparticles   = 512;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -84,13 +96,13 @@ static STRING _config_filename = EMPTY_CSTR;
 //--------------------------------------------------------------------------------------------
 
 static ConfigFilePtr_t lConfigSetup = NULL;
-static egoboo_config_t cfg_default;
+static ego_config_data_t cfg_default;
 
-egoboo_config_t cfg;
+ego_config_data_t cfg;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void egoboo_config_init( egoboo_config_t * pcfg )
+void egoboo_config_init( ego_config_data_t * pcfg )
 {
     memset( &cfg_default, 0, sizeof( cfg_default ) );
 
@@ -220,7 +232,7 @@ bool_t setup_write()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t setup_download( egoboo_config_t * pcfg )
+bool_t setup_download( ego_config_data_t * pcfg )
 {
     /// @details BB@> download the ConfigFile_t keys into game variables
     ///     use default values to fill in any missing keys
@@ -419,7 +431,7 @@ bool_t setup_download( egoboo_config_t * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t setup_synch( egoboo_config_t * pcfg )
+bool_t setup_synch( ego_config_data_t * pcfg )
 {
     if ( NULL == pcfg ) return bfalse;
 
@@ -436,10 +448,10 @@ bool_t setup_synch( egoboo_config_t * pcfg )
     maxparticles = CLIP( pcfg->particle_count_req, 0, TOTAL_MAX_PRT );
 
     // sound options
-    snd_config_synch( &snd, pcfg );
+    snd_config_synch( snd_get_config(), pcfg );
 
     // renderer options
-    gfx_synch_config( &gfx, pcfg );
+    gfx_synch_config( gfx_get_config(), pcfg );
 
     // texture options
     gfx_synch_oglx_texture_parameters( &tex_params, pcfg );
@@ -448,7 +460,7 @@ bool_t setup_synch( egoboo_config_t * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t setup_upload( egoboo_config_t * pcfg )
+bool_t setup_upload( ego_config_data_t * pcfg )
 {
     /// @details BB@> upload game variables into the ConfigFile_t keys
 

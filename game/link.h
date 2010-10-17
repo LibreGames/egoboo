@@ -25,19 +25,18 @@
 #define LINK_COUNT 16
 
 // The data needed to describe a single link between modules
-struct s_link
+struct ego_link
 {
     bool_t   valid;
     STRING   modname;
     PASS_REF passage;
 };
-typedef struct s_link Link_t;
 
-extern Link_t LinkList[LINK_COUNT];
+extern ego_link LinkList[LINK_COUNT];
 
 // Function prototypes
 bool_t link_follow_modname( const char * modname, bool_t push_current_module );
-bool_t link_build_vfs( const char * fname, Link_t list[] );
+bool_t link_build_vfs( const char * fname, ego_link list[] );
 
 bool_t link_pop_module();
 bool_t link_load_parent( const char * modname, fvec3_t   pos );

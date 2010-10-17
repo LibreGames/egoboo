@@ -78,7 +78,7 @@ enum e_menu_states
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // "Slidy" buttons used in some of the menus.  They're shiny.
-struct s_SlidyButtonState
+struct SlidyButtonState_t
 {
     // string data
     const char ** but_text;
@@ -94,19 +94,17 @@ struct s_SlidyButtonState
     int top;
     int left;
 };
-typedef struct s_SlidyButtonState SlidyButtonState_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// the data to display a chosen player in the load player menu
-struct s_ChoosePlayer_element
+struct ChoosePlayer_element_t
 {
-    CAP_REF           cap_ref;   ///< the index of the cap_t
+    CAP_REF           cap_ref;   ///< the index of the ego_cap
     TX_REF            tx_ref;    ///< the index of the icon texture
     chop_definition_t chop;      ///< put this here so we can generate a name without loading an entire profile
 };
-typedef struct s_ChoosePlayer_element ChoosePlayer_element_t;
 
 #define PLAYER_ELEMENT_INIT \
     { \
@@ -118,12 +116,11 @@ typedef struct s_ChoosePlayer_element ChoosePlayer_element_t;
 //--------------------------------------------------------------------------------------------
 
 /// The data that menu.c uses to store the users' choice of players
-struct s_ChoosePlayer_profiles
+struct ChoosePlayer_profiles_t
 {
     int count;                                                 ///< the profiles that have been loaded
     ChoosePlayer_element_t pro_data[MAXIMPORTPERPLAYER + 1];   ///< the profile data
 };
-typedef struct s_ChoosePlayer_profiles ChoosePlayer_profiles_t;
 
 #define PLAYER_PROFILES_INIT { 0, {PLAYER_ELEMENT_INIT} }
 
@@ -131,7 +128,7 @@ typedef struct s_ChoosePlayer_profiles ChoosePlayer_profiles_t;
 //--------------------------------------------------------------------------------------------
 
 /// the module data that the menu system needs
-struct s_mnu_module
+struct mnu_module_t
 {
     EGO_PROFILE_STUFF;                           ///< the "base class" of a profile obbject
 
@@ -143,7 +140,6 @@ struct s_mnu_module
     STRING vfs_path;                               ///< the virtual pathname of the module
     STRING dest_path;                              ///< the path that module data can be written into
 };
-typedef struct s_mnu_module mnu_module_t;
 
 #define VALID_MOD_RANGE( IMOD ) ( ((IMOD) >= 0) && ((IMOD) < MAX_MODULE) )
 #define VALID_MOD( IMOD )       ( VALID_MOD_RANGE( IMOD ) && IMOD < mnu_ModList.count && mnu_ModList.lst[IMOD].loaded )
@@ -155,7 +151,7 @@ INSTANTIATE_STACK_STATIC( mnu_module_t, mnu_ModList, MAX_MODULE );
 //--------------------------------------------------------------------------------------------
 
 /// The data that menu.c uses to store the users' choice of players
-struct s_GameTips
+struct GameTips_t
 {
     // These are loaded only once
     Uint8  count;                         //< Number of global tips loaded
@@ -165,7 +161,6 @@ struct s_GameTips
     Uint8  local_count;                   //< Number of module specific tips loaded
     STRING local_hint[MENU_MAX_GAMETIPS]; //< Module specific hints and tips
 };
-typedef struct s_GameTips GameTips_t;
 
 //--------------------------------------------------------------------------------------------
 // declaration of "private" variables
@@ -200,7 +195,7 @@ static int buttonTop = 0;
 
 static int selectedPlayer = 0;           // Which player is currently selected to play
 
-static menu_process_t    _mproc;
+static ego_menu_process    _mproc;
 
 static int     mnu_selectedPlayerCount = 0;
 static Uint32  mnu_selectedInput[MAX_PLAYER] = {0};
@@ -217,7 +212,7 @@ static GameTips_t mnu_GameTip = { 0 };
 
 INSTANTIATE_STACK_STATIC( oglx_texture_t, TxTitleImage, TITLE_TEXTURE_COUNT ); // OpenGL title image surfaces
 
-menu_process_t * MProc             = &_mproc;
+ego_menu_process * MProc             = &_mproc;
 bool_t           start_new_player  = bfalse;
 bool_t           module_list_valid = bfalse;
 
@@ -230,7 +225,7 @@ TTF_Font          * menuFont    = NULL;
 bool_t mnu_draw_background = btrue;
 
 int              loadplayer_count = 0;
-LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
+ego_load_player_info loadplayer[MAXLOADPLAYER];
 
 //--------------------------------------------------------------------------------------------
 // "private" function prototypes
@@ -274,9 +269,9 @@ static void mnu_ModList_release_images();
 void        mnu_ModList_release_all();
 
 // "process" management
-static int do_menu_proc_beginning( menu_process_t * mproc );
-static int do_menu_proc_running( menu_process_t * mproc );
-static int do_menu_proc_leaving( menu_process_t * mproc );
+static int do_menu_proc_beginning( ego_menu_process * mproc );
+static int do_menu_proc_running( ego_menu_process * mproc );
+static int do_menu_proc_leaving( ego_menu_process * mproc );
 
 // the hint system
 static void   mnu_GameTip_load_global_vfs();
@@ -354,7 +349,7 @@ void mnu_stack_clear()
 //--------------------------------------------------------------------------------------------
 // The implementation of the menu process
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_beginning( menu_process_t * mproc )
+int do_menu_proc_beginning( ego_menu_process * mproc )
 {
     // play some music
     sound_play_song( MENU_SONG, 0, -1 );
@@ -367,36 +362,36 @@ int do_menu_proc_beginning( menu_process_t * mproc )
     mnu_load_all_module_info();
 
     // initialize the process state
-    mproc->base.valid = btrue;
+    mproc->valid = btrue;
 
     return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_running( menu_process_t * mproc )
+int do_menu_proc_running( ego_menu_process * mproc )
 {
     int menuResult;
 
-    if ( !process_validate( PROC_PBASE( mproc ) ) ) return -1;
+    if ( !ego_process::validate( PROC_PBASE( mproc ) ) ) return -1;
 
-    mproc->was_active = mproc->base.valid;
+    mproc->was_active = mproc->valid;
 
-    if ( mproc->base.paused ) return 0;
+    if ( mproc->paused ) return 0;
 
     // play the menu music
-    mnu_draw_background = !process_running( PROC_PBASE( GProc ) );
+    mnu_draw_background = !ego_process::running( PROC_PBASE( GProc ) );
     menuResult          = game_do_menu( mproc );
 
     switch ( menuResult )
     {
         case MENU_SELECT:
             // go ahead and start the game
-            process_pause( PROC_PBASE( mproc ) );
+            ego_process::pause( PROC_PBASE( mproc ) );
             break;
 
         case MENU_QUIT:
             // the user selected "quit"
-            process_kill( PROC_PBASE( mproc ) );
+            ego_process::kill( PROC_PBASE( mproc ) );
             break;
     }
 
@@ -407,16 +402,16 @@ int do_menu_proc_running( menu_process_t * mproc )
 
         // We have exited the menu and restarted the game
         GProc->mod_paused = bfalse;
-        process_pause( PROC_PBASE( MProc ) );
+        ego_process::pause( PROC_PBASE( MProc ) );
     }
 
     return 0;
 }
 
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_leaving( menu_process_t * mproc )
+int do_menu_proc_leaving( ego_menu_process * mproc )
 {
-    if ( !process_validate( PROC_PBASE( mproc ) ) ) return -1;
+    if ( !ego_process::validate( PROC_PBASE( mproc ) ) ) return -1;
 
     // terminate the menu system
     menu_system_end();
@@ -428,35 +423,35 @@ int do_menu_proc_leaving( menu_process_t * mproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_menu_proc_run( menu_process_t * mproc, double frameDuration )
+int do_menu_proc_run( ego_menu_process * mproc, double frameDuration )
 {
     int result = 0, proc_result = 0;
 
-    if ( !process_validate( PROC_PBASE( mproc ) ) ) return -1;
-    mproc->base.dtime = frameDuration;
+    if ( !ego_process::validate( PROC_PBASE( mproc ) ) ) return -1;
+    mproc->dtime = frameDuration;
 
-    if ( mproc->base.paused ) return 0;
+    if ( mproc->paused ) return 0;
 
-    if ( mproc->base.killme )
+    if ( mproc->killme )
     {
-        mproc->base.state = proc_leaving;
+        mproc->state = proc_leaving;
     }
 
-    switch ( mproc->base.state )
+    switch ( mproc->state )
     {
         case proc_beginning:
             proc_result = do_menu_proc_beginning( mproc );
 
             if ( 1 == proc_result )
             {
-                mproc->base.state = proc_entering;
+                mproc->state = proc_entering;
             }
             break;
 
         case proc_entering:
             // proc_result = do_menu_proc_entering( mproc );
 
-            mproc->base.state = proc_running;
+            mproc->state = proc_running;
             break;
 
         case proc_running:
@@ -464,7 +459,7 @@ int do_menu_proc_run( menu_process_t * mproc, double frameDuration )
 
             if ( 1 == proc_result )
             {
-                mproc->base.state = proc_leaving;
+                mproc->state = proc_leaving;
             }
             break;
 
@@ -473,13 +468,13 @@ int do_menu_proc_run( menu_process_t * mproc, double frameDuration )
 
             if ( 1 == proc_result )
             {
-                mproc->base.state  = proc_finishing;
-                mproc->base.killme = bfalse;
+                mproc->state  = proc_finishing;
+                mproc->killme = bfalse;
             }
             break;
 
         case proc_finishing:
-            process_terminate( PROC_PBASE( mproc ) );
+            ego_process::terminate( PROC_PBASE( mproc ) );
             break;
 
         default:
@@ -491,13 +486,13 @@ int do_menu_proc_run( menu_process_t * mproc, double frameDuration )
 }
 
 //--------------------------------------------------------------------------------------------
-menu_process_t * menu_process_init( menu_process_t * mproc )
+ego_menu_process * menu_process_init( ego_menu_process * mproc )
 {
     if ( NULL == mproc ) return NULL;
 
     memset( mproc, 0, sizeof( *mproc ) );
 
-    process_init( PROC_PBASE( mproc ) );
+    ego_process::init( PROC_PBASE( mproc ) );
 
     return mproc;
 }
@@ -603,11 +598,11 @@ int mnu_get_menu_depth()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_MainState
+//struct MainState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_MainState MainState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static MainState_t *MainState_ctor( MainState_t * ps )
@@ -894,11 +889,11 @@ int doMainMenu( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_SinglePlayerState
+//struct SinglePlayerState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_SinglePlayerState SinglePlayerState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static SinglePlayerState_t *SinglePlayerState_ctor( SinglePlayerState_t * ps )
@@ -1193,11 +1188,11 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_ChooseModuleState
+//struct ChooseModuleState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_ChooseModuleState ChooseModuleState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static ChooseModuleState_t *ChooseModuleState_ctor( ChooseModuleState_t * ps )
@@ -1900,7 +1895,7 @@ bool_t doChoosePlayer_load_profiles( int player, ChoosePlayer_profiles_t * pro_l
         ref_temp = load_one_character_profile_vfs( szFilename, slot, bfalse );
         if ( LOADED_CAP( ref_temp ) )
         {
-            cap_t * pcap = CapStack.lst + ref_temp;
+            ego_cap * pcap = CapStack.lst + ref_temp;
 
             // go to the next element in the list
             pdata = pro_list->pro_data + pro_list->count;
@@ -1923,15 +1918,13 @@ bool_t doChoosePlayer_load_profiles( int player, ChoosePlayer_profiles_t * pro_l
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_doChoosePlayer_stats_info
+struct doChoosePlayer_stats_info_t
 {
     ChoosePlayer_profiles_t objects;
     int                     player;
     int                     player_last;
     display_item_t        * item_ptr;
 };
-
-typedef struct s_doChoosePlayer_stats_info doChoosePlayer_stats_info_t;
 
 #define PLAYER_STATS_INFO_INIT                  \
     {                                               \
@@ -1980,11 +1973,11 @@ doChoosePlayer_stats_info_t * doChoosePlayer_stats_info_dtor( doChoosePlayer_sta
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_ChoosePlayerState
+//struct ChoosePlayerState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_ChoosePlayerState ChoosePlayerState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static ChoosePlayerState_t *ChoosePlayerState_ctor( ChoosePlayerState_t * ps )
@@ -2149,7 +2142,7 @@ doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_
 
             if ( LOADED_CAP( icap ) )
             {
-                cap_t * pcap = CapStack.lst + icap;
+                ego_cap * pcap = CapStack.lst + icap;
                 Uint8 skin = ( Uint8 )MAX( 0, pcap->skin_override );
 
                 ui_drawButton( UI_Nothing, x, y, width, height, NULL );
@@ -2215,7 +2208,7 @@ doChoosePlayer_stats_info_t * doChoosePlayer_render_stats( doChoosePlayer_stats_
                             const int icon_indent = 8;
                             TX_REF  icon_ref;
                             STRING itemname;
-                            cap_t * pcap = CapStack.lst + icap;
+                            ego_cap * pcap = CapStack.lst + icap;
 
                             if ( pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
                             else                   strncpy( itemname, pcap->classname,   SDL_arraysize( itemname ) );
@@ -2833,11 +2826,11 @@ int doChoosePlayer( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_OptionsState
+//struct OptionsState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_OptionsState OptionsState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static OptionsState_t *OptionsState_ctor( OptionsState_t * ps )
@@ -3091,11 +3084,10 @@ int doOptions( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_OptionsInputState
+struct OptionsInputState_t
 {
     BASE_MENU_STATE;
 };
-typedef struct s_OptionsInputState OptionsInputState_t;
 
 //--------------------------------------------------------------------------------------------
 static OptionsInputState_t *OptionsInputState_ctor( OptionsInputState_t * ps )
@@ -3956,11 +3948,11 @@ static bool_t doOptionsGame_update_fps( ui_Widget_t * lab_ptr, bool_t allowed );
 static bool_t doOptionsGame_update_feedback( ui_Widget_t * lab_ptr, FEEDBACK_TYPE type );
 
 //--------------------------------------------------------------------------------------------
-//struct s_OptionsGameState
+//struct OptionsGameState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_OptionsGameState OptionsGameState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static OptionsGameState_t *OptionsGameState_ctor( OptionsGameState_t * ps )
@@ -4518,11 +4510,11 @@ int doOptionsGame( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_OptionsAudioState
+//struct OptionsAudioState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_OptionsAudioState OptionsAudioState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static OptionsAudioState_t *OptionsAudioState_ctor( OptionsAudioState_t * ps )
@@ -4663,7 +4655,7 @@ bool_t doOptionsAudio_update_footfall( ui_Widget_t * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_settings( egoboo_config_t * pcfg )
+bool_t doOptionsAudio_update_settings( ego_config_data_t * pcfg )
 {
     if ( NULL == pcfg ) return bfalse;
 
@@ -5054,11 +5046,11 @@ int doOptionsAudio( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_OptionsVideoState
+//struct OptionsVideoState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_OptionsVideoState OptionsVideoState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static OptionsVideoState_t *OptionsVideoState_ctor( OptionsVideoState_t * ps )
@@ -5176,7 +5168,7 @@ bool_t doOptionsVideo_coerce_aspect_ratio( int width, int height, float * pratio
 }
 
 //--------------------------------------------------------------------------------------------
-int doOptionsVideo_fix_fullscreen_resolution( egoboo_config_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
+int doOptionsVideo_fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
 {
     STRING     sz_aspect_ratio = "unknown";
     float      req_screen_area  = ( float )pcfg->scrx_req * ( float )pcfg->scry_req;
@@ -5493,7 +5485,7 @@ bool_t doVideoOptions_update_resolution( ui_Widget_t * but_ptr, int x, int y )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsVideo_update_settings( egoboo_config_t * pcfg )
+bool_t doOptionsVideo_update_settings( ego_config_data_t * pcfg )
 {
     if ( NULL == pcfg ) return bfalse;
 
@@ -6103,11 +6095,11 @@ int doOptionsVideo( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_ShowResultsState
+//struct ShowResultsState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_ShowResultsState ShowResultsState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static ShowResultsState_t *ShowResultsState_ctor( ShowResultsState_t * ps )
@@ -6297,11 +6289,11 @@ int doShowResults( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_NotImplementedState
+//struct NotImplementedState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_NotImplementedState NotImplementedState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static NotImplementedState_t *NotImplementedState_ctor( NotImplementedState_t * ps )
@@ -6406,11 +6398,11 @@ int doNotImplemented( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_GamePausedState
+//struct GamePausedState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_GamePausedState GamePausedState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static GamePausedState_t *GamePausedState_ctor( GamePausedState_t * ps )
@@ -6623,11 +6615,11 @@ int doGamePaused( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct s_ShowEndgameState
+//struct ShowEndgameState_t
 //{
 //    BASE_MENU_STATE;
 //};
-//typedef struct s_ShowEndgameState ShowEndgameState_t;
+//
 //
 ////--------------------------------------------------------------------------------------------
 //static ShowEndgameState_t *ShowEndgameState_ctor( ShowEndgameState_t * ps )
@@ -6861,7 +6853,7 @@ int doShowEndgame( float deltaTime )
                 {
                     game_finish_module();
                     pickedmodule_index = -1;
-                    process_kill( PROC_PBASE( GProc ) );
+                    ego_process::kill( PROC_PBASE( GProc ) );
                 }
 
                 // free the widgets
@@ -7039,7 +7031,7 @@ int doMenu( float deltaTime )
                     if ( !reloaded )
                     {
                         game_finish_module();
-                        process_kill( PROC_PBASE( GProc ) );
+                        ego_process::kill( PROC_PBASE( GProc ) );
                     }
 
                     result = MENU_QUIT;
@@ -7090,7 +7082,7 @@ int doMenu( float deltaTime )
 //--------------------------------------------------------------------------------------------
 // Auto formatting functions
 //--------------------------------------------------------------------------------------------
-void autoformat_init( gfx_config_t * pgfx )
+void autoformat_init( ego_gfx_config::data_t * pgfx )
 {
     autoformat_init_slidy_buttons();
     autoformat_init_tip_text();
@@ -7259,7 +7251,7 @@ TX_REF mnu_get_icon_ref( const CAP_REF by_reference icap, const TX_REF by_refere
     TX_REF icon_ref = ( TX_REF )ICON_NULL;
     bool_t is_spell_fx, is_book, draw_book;
 
-    cap_t * pitem_cap;
+    ego_cap * pitem_cap;
 
     if ( !LOADED_CAP( icap ) ) return icon_ref;
     pitem_cap = CapStack.lst + icap;
@@ -7342,7 +7334,7 @@ bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_le
         for ( cnt = 0; cnt < mnu_selectedPlayerCount; cnt++ )
         {
             int                quest_level = QUEST_NONE;
-            LOAD_PLAYER_INFO * ploadplayer = loadplayer + mnu_selectedPlayer[cnt];
+            ego_load_player_info * ploadplayer = loadplayer + mnu_selectedPlayer[cnt];
 
             player_count++;
 
@@ -8022,7 +8014,7 @@ void loadplayer_init()
 bool_t loadplayer_import_one( const char * foundfile )
 {
     STRING filename;
-    LOAD_PLAYER_INFO * pinfo;
+    ego_load_player_info * pinfo;
     int skin = 0;
 
     if ( !VALID_CSTR( foundfile ) || !vfs_exists( foundfile ) ) return bfalse;

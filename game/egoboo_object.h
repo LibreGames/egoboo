@@ -29,7 +29,7 @@
 //--------------------------------------------------------------------------------------------
 // some basic data that all Egoboo objects should have
 
-/// The possible actions that an ego_object_base_t object can perform
+/// The possible actions that an ego_object object can perform
 enum e_ego_object_actions
 {
     ego_object_nothing        = ego_action_invalid,
@@ -46,9 +46,9 @@ typedef enum e_ego_object_actions ego_object_actions_t;
 
 //--------------------------------------------------------------------------------------------
 
-/// The state of an ego_object_base_t object. The object is essentially
+/// The state of an ego_object object. The object is essentially
 /// a state machine in the same way that the "egoboo process" is
-struct s_ego_object_state
+struct ego_object_state
 {
     // basic flags for where the object is in the creation/desctuction process
     bool_t               valid;       ///< The object is a valid object
@@ -63,128 +63,130 @@ struct s_ego_object_state
     bool_t               paused;      ///< The object's action will be overridden to bo ego_object_nothing
 
     ego_object_actions_t action;      ///< What action is it performing?
+
+    static ego_object_state * ctor(  ego_object_state * );
+    static ego_object_state * dtor(  ego_object_state * );
+    static ego_object_state * clear(  ego_object_state * ptr );
+
+    static ego_object_state * set_valid(  ego_object_state *, bool_t val );
+
+    static ego_object_state * end_constructing(  ego_object_state * );
+    static ego_object_state * end_initialization(  ego_object_state * );
+    static ego_object_state * end_processing(  ego_object_state * );
+    static ego_object_state * end_deinitializing(  ego_object_state * );
+    static ego_object_state * end_destructing(  ego_object_state * );
+    static ego_object_state * end_killing(  ego_object_state * );
+    static ego_object_state * invalidate(  ego_object_state * );
+
+    static ego_object_state * begin_waiting(  ego_object_state * );
 };
-typedef struct s_ego_object_state ego_object_state_t;
-
-ego_object_state_t * ego_object_state_ctor( ego_object_state_t * );
-ego_object_state_t * ego_object_state_dtor( ego_object_state_t * );
-ego_object_state_t * ego_object_state_clear( ego_object_state_t * ptr );
-
-ego_object_state_t * ego_object_state_set_valid( ego_object_state_t *, bool_t val );
-
-ego_object_state_t * ego_object_state_end_constructing( ego_object_state_t * );
-ego_object_state_t * ego_object_state_end_initialization( ego_object_state_t * );
-ego_object_state_t * ego_object_state_end_processing( ego_object_state_t * );
-ego_object_state_t * ego_object_state_end_deinitializing( ego_object_state_t * );
-ego_object_state_t * ego_object_state_end_destructing( ego_object_state_t * );
-ego_object_state_t * ego_object_state_end_killing( ego_object_state_t * );
-ego_object_state_t * ego_object_state_invalidate( ego_object_state_t * );
-
-ego_object_state_t * ego_object_state_begin_waiting( ego_object_state_t * );
 
 //--------------------------------------------------------------------------------------------
 
-/// Structure for handling user requests to the ego_object_base_t
-struct s_ego_object_req
+/// Structure for handling user requests to the ego_object
+struct ego_object_req
 {
     bool_t  unpause_me;  ///< request to un-pause the object
     bool_t  pause_me;    ///< request to pause the object
     bool_t  turn_me_on;  ///< request to turn on the object
     bool_t  turn_me_off; ///< request to turn on the object
     bool_t  kill_me;     ///< request to destroy the object
-};
-typedef struct s_ego_object_req ego_object_req_t;
 
-ego_object_req_t * ego_object_req_ctor( ego_object_req_t * ptr );
-ego_object_req_t * ego_object_req_dtor( ego_object_req_t * ptr );
-ego_object_req_t * ego_object_req_clear( ego_object_req_t* ptr );
+    static ego_object_req * ctor( ego_object_req * ptr );
+    static ego_object_req * dtor( ego_object_req * ptr );
+    static ego_object_req * clear( ego_object_req* ptr );
+};
 
 //--------------------------------------------------------------------------------------------
 
 /// The data that is "inherited" by every Egoboo object.
-struct s_ego_object_base
+struct ego_object
 {
     // basic object definitions
     STRING               base_name; ///< what is its name at creation. Probably related to the filename that generated it.
     Uint32               guid;      ///< a globally unique identifier
 
     // "process" control control
-    ego_object_state_t   state;     ///< The state of the object_base "process"
-    ego_object_req_t     req;       ///< place for making requests to change the state
+    ego_object_state   state;     ///< The state of the object_base "process"
+    ego_object_req     req;       ///< place for making requests to change the state
 
     // allocation info
-    list_object_state_t lst_state;
+    list_object_state lst_state;
 
     // things related to the updating of objects
     size_t         update_count;  ///< How many updates have been made to this object?
     size_t         frame_count;   ///< How many frames have been rendered?
 
     unsigned       update_guid;   ///< a value that lets you know if an reference in synch with its object list
+
+    /// A variable to hold the object guid counter
+    static Uint32 guid_counter;
+
+    static Uint32 spawn_depth;
+
+    static ego_object * ctor(  ego_object * pbase, size_t index );
+    static ego_object * dtor(  ego_object * pbase );
+
+    static ego_object * allocate(  ego_object * pbase, size_t index );
+    static ego_object * deallocate(  ego_object * pbase );
+    static ego_object * invalidate(  ego_object * );
+    static ego_object * end_constructing(  ego_object * );
+    static ego_object * end_initializing(  ego_object * );
+    static ego_object * end_processing(  ego_object * );
+    static ego_object * end_deinitializing(  ego_object * );
+    static ego_object * end_destructing(  ego_object * );
+    static ego_object * end_killing(  ego_object * );
+
+    static ego_object * begin_processing(  ego_object *, const char * name );
+    static ego_object * validate(  ego_object * pbase );
+    static ego_object * begin_waiting(  ego_object * pbase );
+
+    static ego_object * req_terminate(  ego_object * pbase );
+    static ego_object * grant_terminate(  ego_object * pbase );
+    static ego_object * set_spawning(  ego_object * pbase, bool_t val );
+
+    static ego_object * grant_on(  ego_object * pbase );
 };
 
-typedef struct s_ego_object_base ego_object_base_t;
-
-ego_object_base_t * ego_object_ctor( ego_object_base_t * pbase, size_t index );
-ego_object_base_t * ego_object_dtor( ego_object_base_t * pbase );
-
-ego_object_base_t * ego_object_allocate( ego_object_base_t * pbase, size_t index );
-ego_object_base_t * ego_object_deallocate( ego_object_base_t * pbase );
-ego_object_base_t * ego_object_invalidate( ego_object_base_t * );
-ego_object_base_t * ego_object_end_constructing( ego_object_base_t * );
-ego_object_base_t * ego_object_end_initializing( ego_object_base_t * );
-ego_object_base_t * ego_object_end_processing( ego_object_base_t * );
-ego_object_base_t * ego_object_end_deinitializing( ego_object_base_t * );
-ego_object_base_t * ego_object_end_destructing( ego_object_base_t * );
-ego_object_base_t * ego_object_end_killing( ego_object_base_t * );
-
-ego_object_base_t * ego_object_begin_processing( ego_object_base_t *, const char * name );
-ego_object_base_t * ego_object_validate( ego_object_base_t * pbase );
-ego_object_base_t * ego_object_begin_waiting( ego_object_base_t * pbase );
-
-ego_object_base_t * ego_object_req_terminate( ego_object_base_t * pbase );
-ego_object_base_t * ego_object_grant_terminate( ego_object_base_t * pbase );
-ego_object_base_t * ego_object_set_spawning( ego_object_base_t * pbase, bool_t val );
-
-ego_object_base_t * ego_object_grant_on( ego_object_base_t * pbase );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-/// Mark a ego_object_base_t object as being allocated
-#define POBJ_ALLOCATE( PDATA, INDEX ) ( (NULL == (PDATA)) ? NULL : ego_object_allocate( POBJ_GET_PBASE(PDATA), INDEX ) )
+/// Mark a ego_object object as being allocated
+#define POBJ_ALLOCATE( PDATA, INDEX ) ( (NULL == (PDATA)) ? NULL : ego_object::allocate( POBJ_GET_PBASE(PDATA), INDEX ) )
 
-/// Mark a ego_object_base_t object as being deallocated
-#define POBJ_INVALIDATE( PDATA ) ( (NULL == (PDATA)) ? NULL : ego_object_invalidate( POBJ_GET_PBASE(PDATA) ) )
+/// Mark a ego_object object as being deallocated
+#define POBJ_INVALIDATE( PDATA ) ( (NULL == (PDATA)) ? NULL : ego_object::invalidate( POBJ_GET_PBASE(PDATA) ) )
 
-/// Turn on an ego_object_base_t object
-#define POBJ_ACTIVATE( PDATA, NAME ) ( (NULL == (PDATA)) ? NULL : ego_object_begin_processing( POBJ_GET_PBASE(PDATA), NAME ) )
+/// Turn on an ego_object object
+#define POBJ_ACTIVATE( PDATA, NAME ) ( (NULL == (PDATA)) ? NULL : ego_object::begin_processing( POBJ_GET_PBASE(PDATA), NAME ) )
 
-/// Begin turning off an ego_object_base_t object
-#define POBJ_REQUEST_TERMINATE( PDATA ) ( (NULL == (PDATA)) ? NULL : ego_object_req_terminate( POBJ_GET_PBASE(PDATA) ) )
+/// Begin turning off an ego_object object
+#define POBJ_REQUEST_TERMINATE( PDATA ) ( (NULL == (PDATA)) ? NULL : ego_object::req_terminate( POBJ_GET_PBASE(PDATA) ) )
 
-/// Completely turn off an ego_object_base_t object and mark it as no longer allocated
-#define POBJ_TERMINATE( PDATA ) ( (NULL == (PDATA)) ? NULL : ego_object_grant_terminate( POBJ_GET_PBASE(PDATA) ) )
+/// Completely turn off an ego_object object and mark it as no longer allocated
+#define POBJ_TERMINATE( PDATA ) ( (NULL == (PDATA)) ? NULL : ego_object::grant_terminate( POBJ_GET_PBASE(PDATA) ) )
 
 #define POBJ_BEGIN_SPAWN( PDATA ) \
     if( (NULL != (PDATA)) && FLAG_VALID_PBASE(POBJ_GET_PBASE(PDATA))  ) \
     {\
         if( !(PDATA)->obj_base.state.spawning )\
         {\
-            ego_object_set_spawning( POBJ_GET_PBASE(PDATA), btrue );\
-            ego_object_spawn_depth++;\
+            ego_object::set_spawning( POBJ_GET_PBASE(PDATA), btrue );\
+            ego_object::spawn_depth++;\
         }\
     }\
-     
+
 #define POBJ_END_SPAWN( PDATA ) \
     if( (NULL != (PDATA)) && FLAG_VALID_PBASE(POBJ_GET_PBASE(PDATA)) ) \
     {\
         if( (PDATA)->obj_base.state.spawning )\
         {\
-            ego_object_set_spawning( POBJ_GET_PBASE(PDATA), bfalse );\
-            ego_object_spawn_depth--;\
+            ego_object::set_spawning( POBJ_GET_PBASE(PDATA), bfalse );\
+            ego_object::spawn_depth--;\
         }\
     }\
-     
+
 /// Is the object flagged as allocated?
 #define FLAG_ALLOCATED_PBASE( PBASE ) ( (PBASE)->lst_state.allocated )
 /// Is the object allocated?
@@ -254,23 +256,15 @@ ego_object_base_t * ego_object_grant_on( ego_object_base_t * pbase );
 #define STATE_TERMINATED_PBASE( PBASE ) FLAG_KILLED_PBASE(PBASE)
 #define TERMINATED_PBASE( PBASE )       KILLED_PBASE( PBASE )
 
-/// Grab a pointer to the ego_object_base_t of an object that "inherits" this data
+/// Grab a pointer to the ego_object of an object that "inherits" this data
 #define POBJ_GET_PBASE( POBJ )   ( (NULL == (POBJ)) ? NULL : &((POBJ)->obj_base) )
 
-/// Grab the index value of object that "inherits" from ego_object_base_t
+/// Grab the index value of object that "inherits" from ego_object
 #define GET_INDEX_POBJ( POBJ, FAIL_VALUE )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_GET_PBASE( (POBJ) ) ) ) ? FAIL_VALUE : (POBJ)->obj_base.lst_state.index )
 #define GET_REF_POBJ( POBJ, FAIL_VALUE )    ((REF_T)GET_INDEX_POBJ( POBJ, FAIL_VALUE ))
 
-/// Grab the state of object that "inherits" from ego_object_base_t
+/// Grab the state of object that "inherits" from ego_object
 #define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_GET_PBASE( (POBJ) ) ) ) ? ego_object_nothing : (POBJ)->obj_base.lst_state.index )
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-/// A variable to hold the object guid counter
-extern Uint32 ego_object_guid;
-
-extern Uint32 ego_object_spawn_depth;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

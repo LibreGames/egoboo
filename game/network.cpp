@@ -58,7 +58,7 @@ static void PlaStack_init();
 static void PlaStack_reinit();
 static void PlaStack_dtor();
 
-static void net_initialize( egoboo_config_t * pcfg );
+static void net_initialize( ego_config_data_t * pcfg );
 static void net_shutDown();
 //static void net_logf( const char *format, ... );
 
@@ -115,11 +115,10 @@ enum NetworkMessage
 };
 
 /// Network information on connected players
-typedef struct NetPlayerInfo
+struct NetPlayerInfo
 {
     int playerSlot;
-}
-NetPlayerInfo;
+};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -144,13 +143,12 @@ static Uint32  packetsize;                             // The size of the packet
 static Uint8   packetbuffer[MAXSENDSIZE];              // The data packet
 
 /// Data for network file transfers
-typedef struct NetFileTransfer
+struct NetFileTransfer
 {
     char sourceName[NET_MAX_FILE_NAME];
     char destName[NET_MAX_FILE_NAME];
     ENetPeer *target;
-}
-NetFileTransfer;
+};
 
 /// Network file transfer queue
 static NetFileTransfer net_transferStates[NET_MAX_FILE_TRANSFERS];
@@ -169,7 +167,7 @@ static bool_t _network_system_init = bfalse;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void network_system_begin( egoboo_config_t * pcfg )
+void network_system_begin( ego_config_data_t * pcfg )
 {
     if ( !_network_system_init )
     {
@@ -1817,7 +1815,7 @@ void unbuffer_one_player_latch_do_network( player_t * ppla )
 //--------------------------------------------------------------------------------------------
 void unbuffer_one_player_latch_download( player_t * ppla )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( NULL == ppla ) return;
 
@@ -1839,7 +1837,7 @@ void unbuffer_one_player_latch_download( player_t * ppla )
 //--------------------------------------------------------------------------------------------
 void unbuffer_one_player_latch_do_respawn( player_t * ppla )
 {
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( NULL == ppla ) return;
 
@@ -1902,7 +1900,7 @@ void unbuffer_all_player_latches()
 }
 
 //--------------------------------------------------------------------------------------------
-void net_initialize( egoboo_config_t * pcfg )
+void net_initialize( ego_config_data_t * pcfg )
 {
     /// @details ZZ@> This starts up the network and logs whatever goes on
 
@@ -2265,7 +2263,7 @@ CHR_REF pla_get_ichr( const PLA_REF by_reference iplayer )
 }
 
 //--------------------------------------------------------------------------------------------
-player_t* chr_get_ppla( const CHR_REF by_reference ichr )
+player_t* net_get_ppla( const CHR_REF by_reference ichr )
 {
     PLA_REF iplayer;
 
@@ -2278,7 +2276,7 @@ player_t* chr_get_ppla( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-chr_t  * pla_get_pchr( const PLA_REF by_reference iplayer )
+ego_chr  * pla_get_pchr( const PLA_REF by_reference iplayer )
 {
     player_t * pplayer;
 
@@ -2302,7 +2300,7 @@ latch_2d_t pla_convert_latch_2d( const PLA_REF by_reference iplayer, const by_re
     // is there a valid character?
     if ( !DEFINED_CHR( ppla->index ) ) return dst;
 
-    return chr_convert_latch_2d( ChrList.lst + ppla->index, src );
+    return ego_chr::convert_latch_2d( ChrList.lst + ppla->index, src );
 }
 
 //--------------------------------------------------------------------------------------------

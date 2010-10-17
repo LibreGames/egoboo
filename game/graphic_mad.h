@@ -53,7 +53,7 @@ enum e_matrix_cache_type
 typedef enum e_matrix_cache_type matrix_cache_type_t;
 
 /// the data necessary to cache the last values required to create the character matrix
-struct s_matrix_cache
+struct matrix_cache_t
 {
     // is the cache data valid?
     bool_t valid;
@@ -84,14 +84,13 @@ struct s_matrix_cache
     // the body fixed scaling
     fvec3_t  self_scale;
 };
-typedef struct s_matrix_cache matrix_cache_t;
 
 matrix_cache_t * matrix_cache_init( matrix_cache_t * mcache );
 
 //--------------------------------------------------------------------------------------------
 
 /// some pre-computed parameters for reflection
-struct s_chr_reflection_cache
+struct chr_reflection_cache_t
 {
     fmat_4x4_t matrix;
     bool_t     matrix_valid;
@@ -104,12 +103,11 @@ struct s_chr_reflection_cache
 
     Uint32     update_wld;
 };
-typedef struct s_chr_reflection_cache chr_reflection_cache_t;
 
 //--------------------------------------------------------------------------------------------
 
 /// the data to determine whether re-calculation of vlst is necessary
-struct s_vlst_cache
+struct vlst_cache_t
 {
     bool_t valid;             ///< do we know whether this cache is valid or not?
 
@@ -122,14 +120,13 @@ struct s_vlst_cache
     int    vmax;              ///< the maximum clean vertex the last time the vertices were updated
     Uint32 vert_wld;          ///< the update_wld the last time the vertices were updated
 };
-typedef struct s_vlst_cache vlst_cache_t;
 
 vlst_cache_t * vlst_cache_init( vlst_cache_t * );
 
 //--------------------------------------------------------------------------------------------
 
 /// All the data that the renderer needs to draw the character
-struct s_chr_instance
+struct chr_instance_t
 {
     // position info
     fmat_4x4_t     matrix;           ///< Character's matrix
@@ -179,8 +176,8 @@ struct s_chr_instance
 
     // linear interpolated frame vertices
     size_t         vrt_count;
-    GLvertex     * vrt_lst;
-    oct_bb_t       bbox;                           ///< the bounding box for this frame
+    ego_GLvertex * vrt_lst;
+    ego_oct_bb         bbox;                           ///< the bounding box for this frame
 
     // graphical optimizations
     bool_t                 indolist;               ///< Has it been added yet?
@@ -194,8 +191,6 @@ struct s_chr_instance
     // Uint8          lightlevel_dir;  ///< 0-255, terrain light
 };
 
-typedef struct s_chr_instance chr_instance_t;
-
 //--------------------------------------------------------------------------------------------
 bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f tint, Uint32 bits );
 bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tint, Uint32 bits );
@@ -203,7 +198,7 @@ bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, U
 bool_t render_one_mad_ref( const CHR_REF by_reference tnc );
 
 void      update_all_chr_instance();
-egoboo_rv chr_update_instance( struct s_chr * pchr );
+egoboo_rv chr_update_instance( struct ego_chr * pchr );
 egoboo_rv chr_instance_update_bbox( chr_instance_t * pinst );
 egoboo_rv chr_instance_needs_update( chr_instance_t * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match );
 egoboo_rv chr_instance_update_vertices( chr_instance_t * pinst, int vmin, int vmax, bool_t force );
@@ -215,5 +210,5 @@ egoboo_rv chr_instance_start_anim( chr_instance_t * pinst, int action, bool_t ac
 egoboo_rv chr_instance_set_anim( chr_instance_t * pinst, int action, int frame, bool_t action_ready, bool_t override_action );
 
 egoboo_rv chr_instance_increment_action( chr_instance_t * pinst );
-egoboo_rv chr_instance_increment_frame( chr_instance_t * pinst, mad_t * pmad, const CHR_REF by_reference imount );
+egoboo_rv chr_instance_increment_frame( chr_instance_t * pinst, ego_mad * pmad, const CHR_REF by_reference imount );
 egoboo_rv chr_instance_play_action( chr_instance_t * pinst, int action, bool_t actionready );

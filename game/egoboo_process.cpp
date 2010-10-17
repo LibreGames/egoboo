@@ -25,7 +25,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-process_t * process_init( process_t * proc )
+ego_process * ego_process::init( ego_process * proc )
 {
     if ( NULL == proc ) return proc;
 
@@ -36,7 +36,8 @@ process_t * process_init( process_t * proc )
     return proc;
 }
 
-bool_t process_start( process_t * proc )
+//--------------------------------------------------------------------------------------------
+bool_t ego_process::start( ego_process * proc )
 {
     if ( NULL == proc ) return bfalse;
 
@@ -61,10 +62,11 @@ bool_t process_start( process_t * proc )
     return btrue;
 }
 
-bool_t process_kill( process_t * proc )
+//--------------------------------------------------------------------------------------------
+bool_t ego_process::kill( ego_process * proc )
 {
     if ( NULL == proc ) return bfalse;
-    if ( !process_validate( proc ) ) return btrue;
+    if ( !ego_process::validate( proc ) ) return btrue;
 
     // turn the process back on with an order to commit suicide
     proc->paused = bfalse;
@@ -73,19 +75,21 @@ bool_t process_kill( process_t * proc )
     return btrue;
 }
 
-bool_t process_validate( process_t * proc )
+//--------------------------------------------------------------------------------------------
+bool_t ego_process::validate( ego_process * proc )
 {
     if ( NULL == proc ) return bfalse;
 
     if ( !proc->valid || proc->terminated )
     {
-        process_terminate( proc );
+        ego_process::terminate( proc );
     }
 
     return proc->valid;
 }
 
-bool_t process_terminate( process_t * proc )
+//--------------------------------------------------------------------------------------------
+bool_t ego_process::terminate( ego_process * proc )
 {
     if ( NULL == proc ) return bfalse;
 
@@ -96,11 +100,12 @@ bool_t process_terminate( process_t * proc )
     return btrue;
 }
 
-bool_t process_pause( process_t * proc )
+//--------------------------------------------------------------------------------------------
+bool_t ego_process::pause( ego_process * proc )
 {
     bool_t old_value;
 
-    if ( !process_validate( proc ) ) return bfalse;
+    if ( !ego_process::validate( proc ) ) return bfalse;
 
     old_value    = proc->paused;
     proc->paused = btrue;
@@ -108,11 +113,12 @@ bool_t process_pause( process_t * proc )
     return old_value != proc->paused;
 }
 
-bool_t process_resume( process_t * proc )
+//--------------------------------------------------------------------------------------------
+bool_t ego_process::resume( ego_process * proc )
 {
     bool_t old_value;
 
-    if ( !process_validate( proc ) ) return bfalse;
+    if ( !ego_process::validate( proc ) ) return bfalse;
 
     old_value    = proc->paused;
     proc->paused = bfalse;
@@ -120,9 +126,10 @@ bool_t process_resume( process_t * proc )
     return old_value != proc->paused;
 }
 
-bool_t process_running( process_t * proc )
+//--------------------------------------------------------------------------------------------
+bool_t ego_process::running( ego_process * proc )
 {
-    if ( !process_validate( proc ) ) return bfalse;
+    if ( !ego_process::validate( proc ) ) return bfalse;
 
     return !proc->paused;
 }

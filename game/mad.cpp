@@ -41,7 +41,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, mad_t, MadStack, MAX_MAD );
+INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_mad, MadStack, MAX_MAD );
 
 static STRING  szModelName     = EMPTY_CSTR;      ///< MD2 Model name
 static char    cActionName[ACTION_COUNT][2];      ///< Two letter name code
@@ -65,10 +65,10 @@ static void mad_heal_actions( const MAD_REF by_reference imad, const char * load
 //static void md2_get_transvertices( const MAD_REF by_reference imad );
 //static int  vertexconnected( md2_ogl_commandlist_t * pclist, int vertex );
 
-static mad_t * mad_ctor( mad_t * pmad );
-static mad_t * mad_dtor( mad_t * pmad );
-static mad_t * mad_reconstruct( mad_t * pmad );
-static bool_t  mad_free( mad_t * pmad );
+static ego_mad * mad_ctor( ego_mad * pmad );
+static ego_mad * mad_dtor( ego_mad * pmad );
+static ego_mad * mad_reconstruct( ego_mad * pmad );
+static bool_t  mad_free( ego_mad * pmad );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -76,10 +76,10 @@ void MadList_init()
 {
     MAD_REF cnt;
 
-    // initialize all mad_t
+    // initialize all ego_mad
     for ( cnt = 0; cnt < MAX_MAD; cnt++ )
     {
-        mad_t * pmad = MadStack.lst + cnt;
+        ego_mad * pmad = MadStack.lst + cnt;
 
         // blank out all the data, including the obj_base data
         memset( pmad, 0, sizeof( *pmad ) );
@@ -132,7 +132,7 @@ void action_copy_correct( const MAD_REF by_reference imad, int actiona, int acti
     /// @details ZZ@> This function makes sure both actions are valid if either of them
     ///    are valid.  It will copy start and ends to mirror the valid action.
 
-    mad_t * pmad;
+    ego_mad * pmad;
 
     if ( actiona < 0 || actiona >= ACTION_COUNT ) return;
     if ( actionb < 0 || actionb >= ACTION_COUNT ) return;
@@ -197,7 +197,7 @@ int mad_get_action( const MAD_REF by_reference imad, int action )
     /// returns ACTION_COUNT on a complete failure, or the default ACTION_DA if it exists
 
     int     retval;
-    mad_t * pmad;
+    ego_mad * pmad;
 
     if ( !LOADED_MAD( imad ) ) return ACTION_COUNT;
     pmad = MadStack.lst + imad;
@@ -249,9 +249,9 @@ BIT_FIELD mad_get_actionfx( const MAD_REF by_reference imad, int action )
 {
     BIT_FIELD retval = EMPTY_BIT_FIELD;
     int cnt;
-    mad_t * pmad;
-    MD2_Model_t * md2;
-    MD2_Frame_t * frame_lst, * pframe;
+    ego_mad * pmad;
+    ego_MD2_Model * md2;
+    ego_MD2_Frame * frame_lst, * pframe;
 
     if ( !LOADED_MAD( imad ) ) return 0;
     pmad = MadStack.lst + imad;
@@ -263,7 +263,7 @@ BIT_FIELD mad_get_actionfx( const MAD_REF by_reference imad, int action )
 
     if ( !pmad->action_valid[action] ) return 0;
 
-    frame_lst = ( MD2_Frame_t * )md2_get_Frames( md2 );
+    frame_lst = ( ego_MD2_Frame * )md2_get_Frames( md2 );
     for ( cnt = pmad->action_stt[action]; cnt <= pmad->action_end[action]; cnt++ )
     {
         pframe = frame_lst + cnt;
@@ -342,7 +342,7 @@ void mad_get_walk_frame( const MAD_REF by_reference imad, int lip, int action )
     /// @details ZZ@> This helps make walking look right
     int frame = 0;
     int framesinaction, action_stt;
-    mad_t * pmad;
+    ego_mad * pmad;
 
     if ( !LOADED_MAD( imad ) ) return;
     pmad = MadStack.lst + imad;
@@ -398,8 +398,8 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF by_reference imad, 
     const char * ptmp, * ptmp_end;
     char *paction, *paction_end;
 
-    MD2_Model_t * md2;
-    MD2_Frame_t * pframe;
+    ego_MD2_Model * md2;
+    ego_MD2_Frame * pframe;
 
     if ( !VALID_MAD_RANGE( imad ) ) return;
 
@@ -408,7 +408,7 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF by_reference imad, 
 
     // check for a valid frame number
     if ( frame >= md2_get_numFrames( md2 ) ) return;
-    pframe = ( MD2_Frame_t * )md2_get_Frames( md2 );
+    pframe = ( ego_MD2_Frame * )md2_get_Frames( md2 );
     pframe = pframe + frame;
 
     // this should only be initialized the first time through
@@ -590,9 +590,9 @@ void mad_make_framelip( const MAD_REF by_reference imad, int action )
 
     int frame_count, frame, framesinaction;
 
-    mad_t       * pmad;
-    MD2_Model_t * md2;
-    MD2_Frame_t * frame_list, * pframe;
+    ego_mad       * pmad;
+    ego_MD2_Model * md2;
+    ego_MD2_Frame * frame_list, * pframe;
 
     if ( !LOADED_MAD( imad ) ) return;
     pmad = MadStack.lst + imad;
@@ -606,7 +606,7 @@ void mad_make_framelip( const MAD_REF by_reference imad, int action )
     if ( !pmad->action_valid[action] ) return;
 
     frame_count = md2_get_numFrames( md2 );
-    frame_list  = ( MD2_Frame_t * )md2_get_Frames( md2 );
+    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( md2 );
 
     framesinaction = pmad->action_end[action] - pmad->action_stt[action];
 
@@ -626,7 +626,7 @@ void mad_make_equally_lit( const MAD_REF by_reference imad )
     /// @details ZZ@> This function makes ultra low poly models look better
 
     int cnt, vert;
-    MD2_Model_t * md2;
+    ego_MD2_Model * md2;
     int frame_count, vert_count;
 
     if ( !LOADED_MAD( imad ) ) return;
@@ -637,7 +637,7 @@ void mad_make_equally_lit( const MAD_REF by_reference imad )
 
     for ( cnt = 0; cnt < frame_count; cnt++ )
     {
-        MD2_Frame_t * pframe = ( MD2_Frame_t * )md2_get_Frames( md2 );
+        ego_MD2_Frame * pframe = ( ego_MD2_Frame * )md2_get_Frames( md2 );
         for ( vert = 0; vert < vert_count; vert++ )
         {
             pframe->vertex_lst[vert].normal = EGO_AMBIENT_INDEX;
@@ -698,7 +698,7 @@ void load_action_names_vfs( const char* loadname )
 //--------------------------------------------------------------------------------------------
 MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF by_reference imad )
 {
-    mad_t * pmad;
+    ego_mad * pmad;
     STRING  newloadname;
 
     if ( !VALID_MAD_RANGE( imad ) ) return ( MAD_REF )MAX_MAD;
@@ -721,7 +721,7 @@ MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF by_re
     //pmad->md2_ref = imad;
 
     // load the model from the file
-    pmad->md2_ptr = md2_load( vfs_resolveReadFilename( newloadname ), NULL );
+    pmad->md2_ptr = ego_MD2_Model::load( vfs_resolveReadFilename( newloadname ), NULL );
 
     // set the model's file name
     szModelName[0] = CSTR_END;
@@ -734,7 +734,7 @@ MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF by_re
         ///      commands that multiplied various quantities by 4 or by 4.125 throughout the code.
         ///      It was very counter-intuitive, and caused me no end of headaches...  Of course the
         ///      solution is to scale the model!
-        md2_scale_model( pmad->md2_ptr, -3.5, 3.5, 3.5 );
+        ego_MD2_Model::scale( pmad->md2_ptr, -3.5, 3.5, 3.5 );
     }
 
     // Create the actions table for this imad
@@ -815,9 +815,9 @@ void mad_finalize( const MAD_REF by_reference imad )
 {
     int frame, frame_count;
 
-    mad_t       * pmad;
-    MD2_Model_t * pmd2;
-    MD2_Frame_t * frame_list;
+    ego_mad       * pmad;
+    ego_MD2_Model * pmd2;
+    ego_MD2_Frame * frame_list;
 
     if ( !LOADED_MAD( imad ) ) return;
     pmad = MadStack.lst + imad;
@@ -826,7 +826,7 @@ void mad_finalize( const MAD_REF by_reference imad )
     if ( NULL == pmd2 ) return;
 
     frame_count = md2_get_numFrames( pmd2 );
-    frame_list  = ( MD2_Frame_t * )md2_get_Frames( pmd2 );
+    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
 
     // Create table for doing transition from one type of walk to another...
     // Clear 'em all to start
@@ -856,9 +856,9 @@ void mad_rip_actions( const MAD_REF by_reference imad )
     int frame_count, iframe, framesinaction;
     int action, lastaction;
 
-    mad_t          * pmad;
-    MD2_Model_t    * pmd2;
-    MD2_Frame_t    * frame_list;
+    ego_mad          * pmad;
+    ego_MD2_Model    * pmd2;
+    ego_MD2_Frame    * frame_list;
 
     if ( !LOADED_MAD( imad ) ) return;
     pmad = MadStack.lst + imad;
@@ -880,7 +880,7 @@ void mad_rip_actions( const MAD_REF by_reference imad )
     pmad->action_end[ACTION_DA]   = 1;
 
     frame_count = md2_get_numFrames( pmd2 );
-    frame_list  = ( MD2_Frame_t * )md2_get_Frames( pmd2 );
+    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
 
     // Now go huntin' to see what each iframe is, look for runs of same action
     lastaction     = action_number( frame_list[0].name );
@@ -923,19 +923,19 @@ void mad_rip_actions( const MAD_REF by_reference imad )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t mad_free( mad_t * pmad )
+bool_t mad_free( ego_mad * pmad )
 {
     /// Free all allocated memory
 
     if ( NULL == pmad || !pmad->loaded ) return bfalse;
 
-    md2_destroy( &( pmad->md2_ptr ) );
+    ego_MD2_Model::destroy( &( pmad->md2_ptr ) );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-mad_t * mad_reconstruct( mad_t * pmad )
+ego_mad * mad_reconstruct( ego_mad * pmad )
 {
     /// @details BB@> initialize the character data to safe values
     ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
@@ -961,7 +961,7 @@ mad_t * mad_reconstruct( mad_t * pmad )
 }
 
 //--------------------------------------------------------------------------------------------
-mad_t * mad_ctor( mad_t * pmad )
+ego_mad * mad_ctor( ego_mad * pmad )
 {
     if ( NULL == mad_reconstruct( pmad ) ) return NULL;
 
@@ -971,7 +971,7 @@ mad_t * mad_ctor( mad_t * pmad )
 }
 
 //--------------------------------------------------------------------------------------------
-mad_t * mad_dtor( mad_t * pmad )
+ego_mad * mad_dtor( ego_mad * pmad )
 {
     /// @details BB@> deinitialize the character data
 
@@ -1011,7 +1011,7 @@ void release_all_mad()
 //--------------------------------------------------------------------------------------------
 bool_t release_one_mad( const MAD_REF by_reference imad )
 {
-    mad_t * pmad;
+    ego_mad * pmad;
 
     if ( !VALID_MAD_RANGE( imad ) ) return bfalse;
     pmad = MadStack.lst + imad;

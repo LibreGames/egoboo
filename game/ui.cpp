@@ -47,13 +47,12 @@ extern const ui_Just_t ui_just_centerleft = { UI_JUST_MID, UI_JUST_LOW };
 //--------------------------------------------------------------------------------------------
 #define UI_MAX_JOYSTICKS 8
 #define UI_CONTROL_TIMER 100
-struct s_ui_control_info
+struct ui_control_info_t
 {
     int    timer;
     float  scr[2];
     float  vrt[2];
 };
-typedef struct s_ui_control_info ui_control_info_t;
 
 /// The data to describe the UI state
 struct UiContext

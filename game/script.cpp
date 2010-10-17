@@ -51,16 +51,16 @@ static PRO_REF       script_error_model     = ( PRO_REF )MAX_PROFILE;
 static const char *  script_error_name      = "UNKNOWN";
 static REF_T         script_error_index     = ( Uint16 )( ~0 );
 
-static bool_t scr_increment_exe( ai_state_t * pself );
-static bool_t scr_set_exe( ai_state_t * pself, size_t offset );
+static bool_t scr_increment_exe( ego_ai_state * pself );
+static bool_t scr_set_exe( ego_ai_state * pself, size_t offset );
 
-// static Uint8 run_function_obsolete( script_state_t * pstate, ai_state_t * pself );
-static Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pself );
-static void  scr_set_operand( script_state_t * pstate, Uint8 variable );
-static void  scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pself );
+// static Uint8 run_function_obsolete( ego_script_state * pstate, ego_ai_state * pself );
+static Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pself );
+static void  scr_set_operand( ego_script_state * pstate, Uint8 variable );
+static void  scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pself );
 
-static bool_t scr_run_operation( script_state_t * pstate, ai_state_bundle_t * pself );
-static bool_t scr_run_function_call( script_state_t * pstate, ai_state_bundle_t * pself );
+static bool_t scr_run_operation( ego_script_state * pstate, ego_ai_bundle * pself );
+static bool_t scr_run_function_call( ego_script_state * pstate, ego_ai_bundle * pself );
 
 PROFILE_DECLARE( script_function )
 
@@ -125,14 +125,14 @@ void scripting_system_end()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
+void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
 {
     /// @details ZZ@> This function lets one character do AI stuff
 
-    script_state_t    my_state;
+    ego_script_state    my_state;
 
-    ai_state_t * pai;
-    chr_t      * pchr;
+    ego_ai_state * pai;
+    ego_chr      * pchr;
 
     // make sure that the scripting module is initialized
     scripting_system_begin();
@@ -275,11 +275,11 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
         float scale;
         CHR_REF rider_ref = pchr->holdingwhich[SLOT_LEFT];
 
-        ai_state_ensure_wp( pai );
+        ego_ai_state::ensure_wp( pai );
 
         if ( pchr->ismount && INGAME_CHR( rider_ref ) )
         {
-            chr_t * prider = ChrList.lst + rider_ref;
+            ego_chr * prider = ChrList.lst + rider_ref;
 
             // Mount
             pchr->latch.raw_valid = prider->latch.raw_valid;
@@ -331,10 +331,10 @@ void scr_run_chr_script( ai_state_bundle_t * pbdl_ai )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t scr_run_function_call( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
+bool_t scr_run_function_call( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 {
     Uint8  functionreturn;
-    ai_state_t * pself;
+    ego_ai_state * pself;
 
     // check for valid pointers
     if ( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return bfalse;
@@ -371,11 +371,11 @@ bool_t scr_run_function_call( script_state_t * pstate, ai_state_bundle_t * pbdl_
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t scr_run_operation( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
+bool_t scr_run_operation( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 {
     const char * variable;
     Uint32 var_value, operand_count, i;
-    ai_state_t * pself;
+    ego_ai_state * pself;
 
     // check for valid pointers
     if ( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return bfalse;
@@ -435,14 +435,14 @@ bool_t scr_run_operation( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
+Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 {
     /// @details BB@> This is about half-way to what is needed for Lua integration
 
     // Mask out the indentation
     Uint32       valuecode;
     Uint8        returncode;
-    ai_state_t * pself;
+    ego_ai_state * pself;
 
     if ( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return bfalse;
 
@@ -899,7 +899,7 @@ Uint8 scr_run_function( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 }
 
 //--------------------------------------------------------------------------------------------
-void scr_set_operand( script_state_t * pstate, Uint8 variable )
+void scr_set_operand( ego_script_state * pstate, Uint8 variable )
 {
     /// @details ZZ@> This function sets one of the tmp* values for scripted AI
     switch ( variable )
@@ -931,7 +931,7 @@ void scr_set_operand( script_state_t * pstate, Uint8 variable )
 }
 
 //--------------------------------------------------------------------------------------------
-void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
+void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 {
     /// @details ZZ@> This function does the scripted arithmetic in OPERATOR, OPERAND pairs
 
@@ -943,8 +943,8 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
     Uint32 iTmp;
 
-    chr_t * pchr = NULL, * ptarget = NULL, * powner = NULL;
-    ai_state_t * pself;
+    ego_chr * pchr = NULL, * ptarget = NULL, * powner = NULL;
+    ego_ai_state * pself;
 
     if ( NULL == pstate || NULL == pbdl_ai || NULL == pbdl_ai->ai_state_ptr ) return;
 
@@ -1091,7 +1091,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARLEADERDISTANCE:
                 {
-                    chr_t * pleader;
+                    ego_chr * pleader;
                     varname = "LEADERDISTANCE";
 
                     pleader = team_get_pleader( pchr->team );
@@ -1118,7 +1118,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
             case VARGOTOX:
                 varname = "GOTOX";
 
-                ai_state_ensure_wp( pself );
+                ego_ai_state::ensure_wp( pself );
 
                 if ( !pself->wp_valid )
                 {
@@ -1133,7 +1133,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
             case VARGOTOY:
                 varname = "GOTOY";
 
-                ai_state_ensure_wp( pself );
+                ego_ai_state::ensure_wp( pself );
 
                 if ( !pself->wp_valid )
                 {
@@ -1148,7 +1148,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
             case VARGOTODISTANCE:
                 varname = "GOTODISTANCE";
 
-                ai_state_ensure_wp( pself );
+                ego_ai_state::ensure_wp( pself );
 
                 if ( !pself->wp_valid )
                 {
@@ -1191,12 +1191,12 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 
             case VARSELFID:
                 varname = "SELFID";
-                iTmp = chr_get_idsz( pbdl_ai->chr_ref, IDSZ_TYPE );
+                iTmp = ego_chr::get_idsz( pbdl_ai->chr_ref, IDSZ_TYPE );
                 break;
 
             case VARSELFHATEID:
                 varname = "SELFHATEID";
-                iTmp = chr_get_idsz( pbdl_ai->chr_ref, IDSZ_HATE );
+                iTmp = ego_chr::get_idsz( pbdl_ai->chr_ref, IDSZ_HATE );
                 break;
 
             case VARSELFMANA:
@@ -1462,7 +1462,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
             case VARTARGETTEAM:
                 varname = "TARGETTEAM";
                 iTmp = ( NULL == ptarget ) ? 0 : ptarget->team;
-                //iTmp = REF_TO_INT( chr_get_iteam( pself->target ) );
+                //iTmp = REF_TO_INT( ego_chr::get_iteam( pself->target ) );
                 break;
 
             case VARTARGETARMOR:
@@ -1577,7 +1577,7 @@ void scr_run_operand( script_state_t * pstate, ai_state_bundle_t * pbdl_ai )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t scr_increment_exe( ai_state_t * pself )
+bool_t scr_increment_exe( ego_ai_state * pself )
 {
     if ( NULL == pself ) return bfalse;
     if ( pself->exe_pos < pself->exe_stt || pself->exe_pos >= pself->exe_end ) return bfalse;
@@ -1589,7 +1589,7 @@ bool_t scr_increment_exe( ai_state_t * pself )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t scr_set_exe( ai_state_t * pself, size_t offset )
+bool_t scr_set_exe( ego_ai_state * pself, size_t offset )
 {
     if ( NULL == pself ) return bfalse;
     if ( offset < pself->exe_stt || offset >= pself->exe_end ) return bfalse;
@@ -1602,7 +1602,7 @@ bool_t scr_set_exe( ai_state_t * pself, size_t offset )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_peek( waypoint_list_t * plst, waypoint_t wp )
+bool_t ego_waypoint_list::peek( ego_waypoint_list * plst, waypoint_t wp )
 {
     int index;
 
@@ -1641,7 +1641,7 @@ bool_t waypoint_list_peek( waypoint_list_t * plst, waypoint_t wp )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_push( waypoint_list_t * plst, float x, float y, float z )
+bool_t ego_waypoint_list::push( ego_waypoint_list * plst, float x, float y, float z )
 {
     /// @details BB@> Add a waypoint to the waypoint list
 
@@ -1668,7 +1668,7 @@ bool_t waypoint_list_push( waypoint_list_t * plst, float x, float y, float z )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_reset( waypoint_list_t * plst )
+bool_t ego_waypoint_list::reset( ego_waypoint_list * plst )
 {
     /// @details BB@> reset the waypoint list to the beginning
 
@@ -1680,7 +1680,7 @@ bool_t waypoint_list_reset( waypoint_list_t * plst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_clear( waypoint_list_t * plst )
+bool_t ego_waypoint_list::clear( ego_waypoint_list * plst )
 {
     /// @details BB@> Clear out all waypoints
 
@@ -1693,7 +1693,7 @@ bool_t waypoint_list_clear( waypoint_list_t * plst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_empty( const waypoint_list_t * plst )
+bool_t ego_waypoint_list::empty( const ego_waypoint_list * plst )
 {
     if ( NULL == plst ) return btrue;
 
@@ -1701,7 +1701,7 @@ bool_t waypoint_list_empty( const waypoint_list_t * plst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_finished( const waypoint_list_t * plst )
+bool_t ego_waypoint_list::finished( const ego_waypoint_list * plst )
 {
     if ( NULL == plst || 0 == plst->head ) return btrue;
 
@@ -1709,7 +1709,7 @@ bool_t waypoint_list_finished( const waypoint_list_t * plst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t waypoint_list_advance( waypoint_list_t * plst )
+bool_t ego_waypoint_list::advance( ego_waypoint_list * plst )
 {
     bool_t retval;
 
@@ -1735,19 +1735,19 @@ bool_t waypoint_list_advance( waypoint_list_t * plst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ai_state_get_wp( ai_state_t * pself )
+bool_t ego_ai_state::get_wp( ego_ai_state * pself )
 {
     // try to load up the top waypoint
 
     if ( NULL == pself || !INGAME_CHR( pself->index ) ) return bfalse;
 
-    pself->wp_valid = waypoint_list_peek( &( pself->wp_lst ), pself->wp );
+    pself->wp_valid = ego_waypoint_list::peek( &( pself->wp_lst ), pself->wp );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ai_state_ensure_wp( ai_state_t * pself )
+bool_t ego_ai_state::ensure_wp( ego_ai_state * pself )
 {
     // is the current waypoint is not valid, try to load up the top waypoint
 
@@ -1755,18 +1755,18 @@ bool_t ai_state_ensure_wp( ai_state_t * pself )
 
     if ( pself->wp_valid ) return btrue;
 
-    return ai_state_get_wp( pself );
+    return ego_ai_state::get_wp( pself );
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void set_alerts( ai_state_bundle_t * pbdl_ai )
+void set_alerts( ego_ai_bundle * pbdl_ai )
 {
     /// @details ZZ@> This function polls some alert conditions
 
-    chr_t           * pchr;
-    ai_state_t      * pself;
-    waypoint_list_t * pwaypoints;
+    ego_chr           * pchr;
+    ego_ai_state      * pself;
+    ego_waypoint_list * pwaypoints;
     bool_t            at_waypoint;
 
     // if the bundle does not exist, return
@@ -1780,7 +1780,7 @@ void set_alerts( ai_state_bundle_t * pbdl_ai )
     pchr       = pbdl_ai->chr_ptr;
     pwaypoints = &( pself->wp_lst );
 
-    if ( waypoint_list_empty( pwaypoints ) ) return;
+    if ( ego_waypoint_list::empty( pwaypoints ) ) return;
 
     // let's let mounts get alert updates...
     // imagine a mount, like a racecar, that needs to make sure that it follows X
@@ -1790,7 +1790,7 @@ void set_alerts( ai_state_bundle_t * pbdl_ai )
     // if ( INGAME_CHR(pchr->attachedto) ) return;
 
     // is the current waypoint is not valid, try to load up the top waypoint
-    ai_state_ensure_wp( pself );
+    ego_ai_state::ensure_wp( pself );
 
     at_waypoint = bfalse;
     if ( pself->wp_valid )
@@ -1803,27 +1803,27 @@ void set_alerts( ai_state_bundle_t * pbdl_ai )
     {
         ADD_BITS( pself->alert, ALERTIF_ATWAYPOINT );
 
-        if ( waypoint_list_finished( pwaypoints ) )
+        if ( ego_waypoint_list::finished( pwaypoints ) )
         {
             // we are now at the last waypoint
             // if the object can be alerted to last waypoint, do it
             // this test needs to be done because the ALERTIF_ATLASTWAYPOINT
             // doubles for "at last waypoint" and "not put away"
-            if ( !chr_get_pcap( pbdl_ai->chr_ref )->isequipment )
+            if ( !ego_chr::get_pcap( pbdl_ai->chr_ref )->isequipment )
             {
                 ADD_BITS( pself->alert, ALERTIF_ATLASTWAYPOINT );
             }
 
             // !!!!restart the waypoint list, do not clear them!!!!
-            waypoint_list_reset( pwaypoints );
+            ego_waypoint_list::reset( pwaypoints );
 
             // load the top waypoint
-            ai_state_get_wp( pself );
+            ego_ai_state::get_wp( pself );
         }
-        else if ( waypoint_list_advance( pwaypoints ) )
+        else if ( ego_waypoint_list::advance( pwaypoints ) )
         {
             // load the top waypoint
-            ai_state_get_wp( pself );
+            ego_ai_state::get_wp( pself );
         }
     }
 }
@@ -1840,9 +1840,9 @@ void issue_order( const CHR_REF by_reference character, Uint32 value )
     {
         if ( !INGAME_CHR( cnt ) ) continue;
 
-        if ( chr_get_iteam( cnt ) == chr_get_iteam( character ) )
+        if ( ego_chr::get_iteam( cnt ) == ego_chr::get_iteam( character ) )
         {
-            ai_add_order( chr_get_pai( cnt ), value, counter );
+            ego_ai_state::add_order( ego_chr::get_pai( cnt ), value, counter );
             counter++;
         }
     }
@@ -1858,16 +1858,16 @@ void issue_special_order( Uint32 value, IDSZ idsz )
 
     for ( cnt = 0, counter = 0; cnt < MAX_CHR; cnt++ )
     {
-        cap_t * pcap;
+        ego_cap * pcap;
 
         if ( !INGAME_CHR( cnt ) ) continue;
 
-        pcap = chr_get_pcap( cnt );
+        pcap = ego_chr::get_pcap( cnt );
         if ( NULL == pcap ) continue;
 
         if ( idsz == pcap->idsz[IDSZ_SPECIAL] )
         {
-            ai_add_order( chr_get_pai( cnt ), value, counter );
+            ego_ai_state::add_order( ego_chr::get_pai( cnt ), value, counter );
             counter++;
         }
     }
@@ -1875,7 +1875,7 @@ void issue_special_order( Uint32 value, IDSZ idsz )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ai_state_free( ai_state_t * pself )
+bool_t ego_ai_state::free( ego_ai_state * pself )
 {
     if ( NULL == pself ) return bfalse;
 
@@ -1886,12 +1886,12 @@ bool_t ai_state_free( ai_state_t * pself )
 };
 
 //--------------------------------------------------------------------------------------------
-ai_state_t * ai_state_reconstruct( ai_state_t * pself )
+ego_ai_state * ego_ai_state::reconstruct( ego_ai_state * pself )
 {
     if ( NULL == pself ) return pself;
 
     // deallocate any existing data
-    ai_state_free( pself );
+    ego_ai_state::free( pself );
 
     // set everything to safe values
     memset( pself, 0, sizeof( *pself ) );
@@ -1911,9 +1911,9 @@ ai_state_t * ai_state_reconstruct( ai_state_t * pself )
 }
 
 //--------------------------------------------------------------------------------------------
-ai_state_t * ai_state_ctor( ai_state_t * pself )
+ego_ai_state * ego_ai_state::ctor( ego_ai_state * pself )
 {
-    if ( NULL == ai_state_reconstruct( pself ) ) return NULL;
+    if ( NULL == ego_ai_state::reconstruct( pself ) ) return NULL;
 
     PROFILE_INIT_STRUCT( ai, pself );
 
@@ -1921,19 +1921,19 @@ ai_state_t * ai_state_ctor( ai_state_t * pself )
 }
 
 //--------------------------------------------------------------------------------------------
-ai_state_t * ai_state_dtor( ai_state_t * pself )
+ego_ai_state * ego_ai_state::dtor( ego_ai_state * pself )
 {
     if ( NULL == pself ) return pself;
 
     // initialize the object
-    ai_state_reconstruct( pself );
+    ego_ai_state::reconstruct( pself );
 
     return pself;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ai_state_bundle_t * ai_state_bundle_ctor( ai_state_bundle_t * pbundle )
+ego_ai_bundle * ego_ai_bundle::ctor( ego_ai_bundle * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
@@ -1953,7 +1953,7 @@ ai_state_bundle_t * ai_state_bundle_ctor( ai_state_bundle_t * pbundle )
 }
 
 //--------------------------------------------------------------------------------------------
-ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle )
+ego_ai_bundle * ego_ai_bundle::validate( ego_ai_bundle * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
@@ -1972,18 +1972,18 @@ ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle )
         pbundle->chr_ptr = NULL;
     }
 
-    if ( NULL == pbundle->chr_ptr ) goto ai_state_bundle_validate_fail;
+    if ( NULL == pbundle->chr_ptr ) goto ego_ai_bundle::validate_fail;
 
     // get the profile info
     pbundle->pro_ref = pbundle->chr_ptr->profile_ref;
-    if ( !LOADED_PRO( pbundle->pro_ref ) ) goto ai_state_bundle_validate_fail;
+    if ( !LOADED_PRO( pbundle->pro_ref ) ) goto ego_ai_bundle::validate_fail;
 
     pbundle->pro_ptr = ProList.lst + pbundle->pro_ref;
 
     // get the cap info
     pbundle->cap_ref = pbundle->pro_ptr->icap;
 
-    if ( !LOADED_CAP( pbundle->cap_ref ) ) goto ai_state_bundle_validate_fail;
+    if ( !LOADED_CAP( pbundle->cap_ref ) ) goto ego_ai_bundle::validate_fail;
     pbundle->cap_ptr = CapStack.lst + pbundle->cap_ref;
 
     // get the script info
@@ -1992,18 +1992,18 @@ ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle )
 
     return pbundle;
 
-ai_state_bundle_validate_fail:
+ego_ai_bundle::validate_fail:
 
-    return ai_state_bundle_ctor( pbundle );
+    return ego_ai_bundle::ctor( pbundle );
 }
 
 //--------------------------------------------------------------------------------------------
-ai_state_bundle_t * ai_state_bundle_set( ai_state_bundle_t * pbundle, chr_t * pchr )
+ego_ai_bundle * ego_ai_bundle::set( ego_ai_bundle * pbundle, ego_chr * pchr )
 {
     if ( NULL == pbundle ) return NULL;
 
     // blank out old data
-    pbundle = ai_state_bundle_ctor( pbundle );
+    pbundle = ego_ai_bundle::ctor( pbundle );
 
     if ( NULL == pbundle || NULL == pchr ) return pbundle;
 
@@ -2011,7 +2011,7 @@ ai_state_bundle_t * ai_state_bundle_set( ai_state_bundle_t * pbundle, chr_t * pc
     pbundle->chr_ptr = pchr;
 
     // validate the particle data
-    pbundle = ai_state_bundle_validate( pbundle );
+    pbundle = ego_ai_bundle::validate( pbundle );
 
     return pbundle;
 }

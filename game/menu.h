@@ -31,22 +31,19 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct s_mod_file;
-struct s_gfx_config;
+struct s_gfx_config_data;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// a process that controls the menu system
-struct s_menu_process
+struct ego_menu_process : public ego_process
 {
-    process_t base;
-
     bool_t was_active;
     bool_t escape_requested, escape_latch;
 
     int    ticks_next, ticks_now;
 };
-typedef struct s_menu_process menu_process_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -89,7 +86,7 @@ enum e_menu_retvals
 #define MAXLOADPLAYER     100
 
 /// data for caching the which players may be loaded
-struct s_load_player_info
+struct ego_load_player_info
 {
     STRING name;                                ///< the object's name
     STRING dir;                                    ///< the object's full path
@@ -98,16 +95,15 @@ struct s_load_player_info
 
     chop_definition_t chop;   ///< put this here so we can generate a name without loading an entire profile
 };
-typedef struct s_load_player_info LOAD_PLAYER_INFO;
 
-extern int              loadplayer_count;
-extern LOAD_PLAYER_INFO loadplayer[MAXLOADPLAYER];
+extern int                  loadplayer_count;
+extern ego_load_player_info loadplayer[MAXLOADPLAYER];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 extern bool_t mnu_draw_background;
 
-extern menu_process_t * MProc;
+extern ego_menu_process * MProc;
 
 extern bool_t module_list_valid;
 
@@ -146,10 +142,10 @@ bool_t mnu_test_by_name( const char *szModName );
 bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_len, char * buffer );
 
 // "public" menu process hooks
-int                  do_menu_proc_run( menu_process_t * mproc, double frameDuration );
-menu_process_t     * menu_process_init( menu_process_t * mproc );
+int                  do_menu_proc_run( ego_menu_process * mproc, double frameDuration );
+ego_menu_process     * menu_process_init( ego_menu_process * mproc );
 
 // "public" reset of the autoformatting
-void autoformat_init( struct s_gfx_config * pgfx );
+void autoformat_init( struct s_gfx_config_data * pgfx );
 
 #define egoboo_Menu_h

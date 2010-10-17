@@ -517,7 +517,7 @@ float lighting_evaluate_cache_base( lighting_cache_base_t * lcache, fvec3_base_t
 }
 
 //--------------------------------------------------------------------------------------------
-float lighting_evaluate_cache( lighting_cache_t * src, fvec3_base_t nrm, float z, aabb_t bbox, float * light_amb, float * light_dir )
+float lighting_evaluate_cache( lighting_cache_t * src, fvec3_base_t nrm, float z, ego_aabb bbox, float * light_amb, float * light_dir )
 {
     float loc_light_amb = 0.0f, loc_light_dir = 0.0f;
     float light_tot;

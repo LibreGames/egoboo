@@ -82,13 +82,11 @@
 //--------------------------------------------------------------------------------------------
 
 /// Structure for keeping track of which dynalights are visible
-struct s_dynalight_registry
+struct dynalight_registry_t
 {
     int         reference;
     ego_frect_t bound;
 };
-
-typedef struct s_dynalight_registry dynalight_registry_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -125,7 +123,7 @@ static bool_t             gfx_page_clear_requested = btrue;
 
 static float dynalight_keep = 0.9f;
 
-INSTANTIATE_LIST( ACCESS_TYPE_NONE, billboard_data_t, BillboardList, BILLBOARD_COUNT );
+INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_billboard_data, BillboardList, BILLBOARD_COUNT );
 
 PROFILE_DECLARE( render_scene_init );
 PROFILE_DECLARE( render_scene_mesh );
@@ -176,7 +174,7 @@ int GFX_HEIGHT = 600;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-gfx_config_t     gfx;
+ego_gfx_config::data_t     gfx;
 
 SDLX_video_parameters_t sdl_vparam;
 oglx_video_parameters_t ogl_vparam;
@@ -220,14 +218,14 @@ static int  _debug_vprintf( const char *format, va_list args );
 static int  _va_draw_string( float x, float y, const char *format, va_list args );
 static int  _draw_string_raw( float x, float y, const char *format, ... );
 
-static void project_view( camera_t * pcam );
+static void project_view( ego_camera * pcam );
 
 static void init_icon_data();
 static void init_bar_data();
 static void init_blip_data();
 static void init_map_data();
 
-static bool_t render_billboard( struct s_camera * pcam, billboard_data_t * pbb, float scale );
+static bool_t render_billboard( struct ego_camera * pcam, ego_billboard_data * pbb, float scale );
 
 static void gfx_update_timers();
 
@@ -243,7 +241,7 @@ static void gfx_end_2d( void );
 static void light_fans( renderlist_t * prlist );
 static void render_water( renderlist_t * prlist );
 
-static void gfx_make_dynalist( camera_t * pcam );
+static void gfx_make_dynalist( ego_camera * pcam );
 
 //--------------------------------------------------------------------------------------------
 // MODULE "PRIVATE" FUNCTIONS
@@ -572,7 +570,7 @@ void gfx_init_SDL_graphics()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_set_virtual_screen( gfx_config_t * pgfx )
+bool_t gfx_set_virtual_screen( ego_gfx_config::data_t * pgfx )
 {
     float kx, ky;
 
@@ -606,10 +604,10 @@ bool_t gfx_set_virtual_screen( gfx_config_t * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_config( gfx_config_t * pgfx, egoboo_config_t * pcfg )
+bool_t gfx_synch_config( ego_gfx_config::data_t * pgfx, ego_config_data_t * pcfg )
 {
-    // call gfx_config_init(), even if the config data is invalid
-    if ( !gfx_config_init( pgfx ) ) return bfalse;
+    // call ego_gfx_config::init(), even if the config data is invalid
+    if ( !ego_gfx_config::init( pgfx ) ) return bfalse;
 
     // if there is no config data, do not proceed
     if ( NULL == pcfg ) return bfalse;
@@ -642,7 +640,7 @@ bool_t gfx_synch_config( gfx_config_t * pgfx, egoboo_config_t * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_config_init( gfx_config_t * pgfx )
+bool_t ego_gfx_config::init( ego_gfx_config::data_t * pgfx )
 {
     if ( NULL == pgfx ) return bfalse;
 
@@ -668,7 +666,7 @@ bool_t gfx_config_init( gfx_config_t * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_oglx_texture_parameters( oglx_texture_parameters_t * ptex, egoboo_config_t * pcfg )
+bool_t gfx_synch_oglx_texture_parameters( oglx_texture_parameters_t * ptex, ego_config_data_t * pcfg )
 {
     //// @details BB@> synch the texture parameters with the video mode
 
@@ -1223,10 +1221,10 @@ void draw_one_character_icon( const CHR_REF by_reference item, float x, float y,
     TX_REF icon_ref;
     Uint8  draw_sparkle;
 
-    chr_t * pitem = !INGAME_CHR( item ) ? NULL : ChrList.lst + item;
+    ego_chr * pitem = !INGAME_CHR( item ) ? NULL : ChrList.lst + item;
 
     // grab the icon reference
-    icon_ref = chr_get_icon_ref( item );
+    icon_ref = ego_chr::get_icon_ref( item );
 
     // draw the icon
     draw_sparkle = ( NULL == pitem ) ? NOSPARKLE : pitem->sparkle;
@@ -1237,7 +1235,7 @@ void draw_one_character_icon( const CHR_REF by_reference item, float x, float y,
     {
         if ( pitem->ammomax != 0 && pitem->ammoknown )
         {
-            cap_t * pitem_cap = chr_get_pcap( item );
+            ego_cap * pitem_cap = ego_chr::get_pcap( item );
 
             if (( NULL != pitem_cap && !pitem_cap->isstackable ) || pitem->ammo > 1 )
             {
@@ -1251,8 +1249,8 @@ void draw_one_character_icon( const CHR_REF by_reference item, float x, float y,
 //--------------------------------------------------------------------------------------------
 int draw_character_xp_bar( const CHR_REF by_reference character, float x, float y )
 {
-    chr_t * pchr;
-    cap_t * pcap;
+    ego_chr * pchr;
+    ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return y;
     pchr = ChrList.lst + character;
@@ -1289,13 +1287,13 @@ int draw_status( const CHR_REF by_reference character, float x, float y )
     int life, lifemax;
     int mana, manamax;
 
-    chr_t * pchr;
-    cap_t * pcap;
+    ego_chr * pchr;
+    ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return y;
     pchr = ChrList.lst + character;
 
-    pcap = chr_get_pcap( character );
+    pcap = ego_chr::get_pcap( character );
     if ( NULL == pcap ) return y;
 
     life     = SFP8_TO_SINT( pchr->life );
@@ -1304,7 +1302,7 @@ int draw_status( const CHR_REF by_reference character, float x, float y )
     manamax  = SFP8_TO_SINT( pchr->manamax );
 
     // grab the character's display name
-    readtext = ( char * )chr_get_name( character, CHRNAME_CAPITAL );
+    readtext = ( char * )ego_chr::get_name( character, CHRNAME_CAPITAL );
 
     // make a short name for the actual display
     for ( cnt = 0; cnt < 7; cnt++ )
@@ -1405,13 +1403,13 @@ void draw_map()
 
             for ( ichr = 0; ichr < MAX_CHR && blip_count < MAXBLIP; ichr++ )
             {
-                chr_t * pchr;
-                cap_t * pcap;
+                ego_chr * pchr;
+                ego_cap * pcap;
 
                 if ( !INGAME_CHR( ichr ) ) continue;
                 pchr = ChrList.lst + ichr;
 
-                pcap = chr_get_pcap( ichr );
+                pcap = ego_chr::get_pcap( ichr );
                 if ( NULL == pcap ) continue;
 
                 // Show only teams that will attack the player
@@ -1454,7 +1452,7 @@ void draw_map()
 
                 if ( INPUT_BITS_NONE != ppla->device.bits && INGAME_CHR( ppla->index ) )
                 {
-                    chr_t * pchr = ChrList.lst + ppla->index;
+                    ego_chr * pchr = ChrList.lst + ppla->index;
                     if ( pchr->alive )
                     {
                         draw_blip( 0.75f, COLOR_WHITE, pchr->pos.x, pchr->pos.y, btrue );
@@ -1494,7 +1492,7 @@ int draw_fps( int y )
 #if EGO_DEBUG
 
 #    if defined(DEBUG_BSP) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", BSP_chr_count, MAX_CHR - chr_count_free(), BSP_prt_count, maxparticles - PrtList_count_free() );
+        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtList_count_free() );
         y = _draw_string_raw( 0, y, "BSP collisions %d", CHashList_inserted );
         y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", chr_stoppedby_tests + chr_pressure_tests, prt_stoppedby_tests + prt_pressure_tests );
 #    endif
@@ -1578,7 +1576,7 @@ int draw_help( int y )
 //--------------------------------------------------------------------------------------------
 int draw_debug_character( CHR_REF ichr, int y )
 {
-    chr_t   *pchr;
+    ego_chr   *pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return y;
     pchr = ChrList.lst + ichr;
@@ -1597,7 +1595,7 @@ int draw_debug_player( PLA_REF ipla, int y )
     if ( DEFINED_CHR( ppla->index ) )
     {
         CHR_REF ichr = ppla->index;
-        chr_t  *pchr = ChrList.lst + ichr;
+        ego_chr  *pchr = ChrList.lst + ichr;
 
         y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", REF_TO_INT( ipla ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
@@ -1629,7 +1627,7 @@ int draw_debug( int y )
         player_t * ppla = PlaStack.lst + ipla;
         if ( DEFINED_CHR( ppla->index ) )
         {
-            chr_t * pchr = ChrList.lst + ppla->index;
+            ego_chr * pchr = ChrList.lst + ppla->index;
 
             y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", REF_TO_INT( ipla ), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
         }
@@ -1798,7 +1796,7 @@ void draw_text()
 //--------------------------------------------------------------------------------------------
 // 3D RENDERER FUNCTIONS
 //--------------------------------------------------------------------------------------------
-void project_view( camera_t * pcam )
+void project_view( ego_camera * pcam )
 {
     /// @details ZZ@> This function figures out where the corners of the view area
     ///    go when projected onto the plane of the PMesh->  Used later for
@@ -1921,7 +1919,7 @@ void project_view( camera_t * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_shadow_sprite( float intensity, GLvertex v[] )
+void render_shadow_sprite( float intensity, ego_GLvertex v[] )
 {
     int i;
 
@@ -1944,7 +1942,7 @@ void render_shadow_sprite( float intensity, GLvertex v[] )
 void render_shadow( const CHR_REF by_reference character )
 {
     /// @details ZZ@> This function draws a NIFTY shadow
-    GLvertex v[4];
+    ego_GLvertex v[4];
 
     const float size_factor = 1.5f;
 
@@ -1954,7 +1952,7 @@ void render_shadow( const CHR_REF by_reference character )
     float   level;
     float   height, size_umbra, size_penumbra;
     float   alpha, alpha_umbra, alpha_penumbra;
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( IS_ATTACHED_CHR( character ) ) return;
     pchr = ChrList.lst + character;
@@ -2077,13 +2075,13 @@ void render_bad_shadow( const CHR_REF by_reference character )
 {
     /// @details ZZ@> This function draws a sprite shadow
 
-    GLvertex v[4];
+    ego_GLvertex v[4];
 
     TX_REF  itex;
     int     itex_style;
     float   size, x, y;
     float   level, height, height_factor, alpha;
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( IS_ATTACHED_CHR( character ) ) return;
     pchr = ChrList.lst + character;
@@ -2172,7 +2170,7 @@ void update_all_chr_instance()
 
     for ( cnt = 0; cnt < MAX_CHR; cnt++ )
     {
-        chr_t * pchr;
+        ego_chr * pchr;
 
         if ( !INGAME_CHR( cnt ) ) continue;
         pchr = ChrList.lst + cnt;
@@ -2182,13 +2180,13 @@ void update_all_chr_instance()
         if ( rv_success == chr_update_instance( pchr ) )
         {
             // the instance has changed, refresh the collision bound
-            chr_update_collision_size( pchr, btrue );
+            ego_chr::update_collision_size( pchr, btrue );
         }
     }
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_fans_by_list( ego_mpd_t * pmesh, Uint32 list[], size_t list_size )
+bool_t render_fans_by_list( ego_mpd   * pmesh, Uint32 list[], size_t list_size )
 {
     Uint32 cnt;
     TX_REF tx;
@@ -2223,7 +2221,7 @@ bool_t render_fans_by_list( ego_mpd_t * pmesh, Uint32 list[], size_t list_size )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_scene_init( ego_mpd_t * pmesh, camera_t * pcam )
+void render_scene_init( ego_mpd   * pmesh, ego_camera * pcam )
 {
 
     PROFILE_BEGIN( renderlist_make );
@@ -2287,7 +2285,7 @@ void render_scene_mesh( renderlist_t * prlist )
 
     size_t      cnt;
     signed      rcnt;
-    ego_mpd_t * pmesh;
+    ego_mpd   * pmesh;
 
     if ( NULL == prlist ) return;
 
@@ -2534,7 +2532,7 @@ void render_scene_solid()
         if ( TOTAL_MAX_PRT == dolist[cnt].iprt )
         {
             GLXvector4f tint;
-            chr_instance_t * pinst = chr_get_pinstance( dolist[cnt].ichr );
+            chr_instance_t * pinst = ego_chr::get_pinstance( dolist[cnt].ichr );
 
             if ( NULL != pinst && pinst->alpha == 255 && pinst->light == 255 )
             {
@@ -2579,7 +2577,7 @@ void render_scene_trans()
         if ( TOTAL_MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
         {
             CHR_REF  ichr = dolist[rcnt].ichr;
-            chr_t * pchr = ChrList.lst + ichr;
+            ego_chr * pchr = ChrList.lst + ichr;
             chr_instance_t * pinst = &( pchr->inst );
 
             GL_DEBUG( glEnable )( GL_CULL_FACE );         // GL_ENABLE_BIT
@@ -2623,7 +2621,7 @@ void render_scene_trans()
 }
 
 //--------------------------------------------------------------------------------------------
-void render_scene( ego_mpd_t * pmesh, camera_t * pcam )
+void render_scene( ego_mpd   * pmesh, ego_camera * pcam )
 {
     /// @details ZZ@> This function draws 3D objects
 
@@ -2704,7 +2702,7 @@ void render_scene( ego_mpd_t * pmesh, camera_t * pcam )
 void render_world_background( const TX_REF by_reference texture )
 {
     /// @details ZZ@> This function draws the large background
-    GLvertex vtlist[4];
+    ego_GLvertex vtlist[4];
     int i;
     float z0, Qx, Qy;
     float light = 1.0f, intens = 1.0f, alpha = 1.0f;
@@ -2712,10 +2710,10 @@ void render_world_background( const TX_REF by_reference texture )
     float xmag, Cx_0, Cx_1;
     float ymag, Cy_0, Cy_1;
 
-    ego_mpd_info_t * pinfo;
-    grid_mem_t     * pgmem;
+    ego_mpd_info * pinfo;
+    ego_grid_mem     * pgmem;
     oglx_texture_t   * ptex;
-    water_instance_layer_t * ilayer;
+    ego_water_layer_instance * ilayer;
 
     pinfo = &( PMesh->info );
     pgmem = &( PMesh->gmem );
@@ -2866,7 +2864,7 @@ void render_world_overlay( const TX_REF by_reference texture )
 
     oglx_texture_t           * ptex;
 
-    water_instance_layer_t * ilayer = water.layer + 1;
+    ego_water_layer_instance * ilayer = water.layer + 1;
 
     vforw_wind.x = ilayer->tx_add.x;
     vforw_wind.y = ilayer->tx_add.y;
@@ -2883,7 +2881,7 @@ void render_world_overlay( const TX_REF by_reference texture )
 
     if ( alpha != 0.0f )
     {
-        GLvertex vtlist[4];
+        ego_GLvertex vtlist[4];
         int i;
         float size;
         float sinsize, cossize;
@@ -2958,7 +2956,7 @@ void render_world_overlay( const TX_REF by_reference texture )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_world( camera_t * pcam )
+void render_world( ego_camera * pcam )
 {
     gfx_begin_3d( pcam );
     {
@@ -3138,9 +3136,9 @@ float calc_light_rotation( int rotation, int normal )
     fvec3_t   nrm, nrm2;
     float sinrot, cosrot;
 
-    nrm.x = kMd2Normals[normal][0];
-    nrm.y = kMd2Normals[normal][1];
-    nrm.z = kMd2Normals[normal][2];
+    nrm.x = ego_MD2_Model::kNormals[normal][0];
+    nrm.y = ego_MD2_Model::kNormals[normal][1];
+    nrm.z = ego_MD2_Model::kNormals[normal][2];
 
     sinrot = sinlut[rotation];
     cosrot = coslut[rotation];
@@ -3160,9 +3158,9 @@ float calc_light_global( int rotation, int normal, float lx, float ly, float lz 
     fvec3_t   nrm, nrm2;
     float sinrot, cosrot;
 
-    nrm.x = kMd2Normals[normal][0];
-    nrm.y = kMd2Normals[normal][1];
-    nrm.z = kMd2Normals[normal][2];
+    nrm.x = ego_MD2_Model::kNormals[normal][0];
+    nrm.y = ego_MD2_Model::kNormals[normal][1];
+    nrm.z = ego_MD2_Model::kNormals[normal][2];
 
     sinrot = sinlut[rotation];
     cosrot = coslut[rotation];
@@ -3187,8 +3185,8 @@ void make_enviro( void )
     // Find the environment map positions
     for ( cnt = 0; cnt < EGO_NORMAL_COUNT; cnt++ )
     {
-        x = kMd2Normals[cnt][0];
-        y = kMd2Normals[cnt][1];
+        x = ego_MD2_Model::kNormals[cnt][0];
+        y = ego_MD2_Model::kNormals[cnt][1];
         indextoenvirox[cnt] = ATAN2( y, x ) / TWO_PI;
     }
 
@@ -3200,13 +3198,13 @@ void make_enviro( void )
 }
 
 //--------------------------------------------------------------------------------------------
-float grid_lighting_test( ego_mpd_t * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff )
+float grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff )
 {
     int ix, iy, cnt;
     Uint32 fan[4];
     float u, v;
 
-    ego_grid_info_t  * glist;
+    ego_grid_info  * glist;
     lighting_cache_t * cache_list[4];
 
     if ( NULL == pmesh ) return bfalse;
@@ -3236,13 +3234,13 @@ float grid_lighting_test( ego_mpd_t * pmesh, GLXvector3f pos, float * low_diff, 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t grid_lighting_interpolate( ego_mpd_t * pmesh, lighting_cache_t * dst, float fx, float fy )
+bool_t grid_lighting_interpolate( ego_mpd   * pmesh, lighting_cache_t * dst, float fx, float fy )
 {
     int ix, iy, cnt;
     Uint32 fan[4];
     float u, v;
 
-    ego_grid_info_t  * glist;
+    ego_grid_info  * glist;
     lighting_cache_t * cache_list[4];
 
     if ( NULL == pmesh ) return bfalse;
@@ -3327,7 +3325,7 @@ void gfx_update_timers()
 //--------------------------------------------------------------------------------------------
 // BILLBOARD DATA IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
-billboard_data_t * billboard_data_init( billboard_data_t * pbb )
+ego_billboard_data * ego_billboard_data::init( ego_billboard_data * pbb )
 {
     if ( NULL == pbb ) return pbb;
 
@@ -3348,23 +3346,23 @@ billboard_data_t * billboard_data_init( billboard_data_t * pbb )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t billboard_data_free( billboard_data_t * pbb )
+bool_t ego_billboard_data::dealloc( ego_billboard_data * pbb )
 {
     if ( NULL == pbb || !pbb->valid ) return bfalse;
 
     // free any allocated texture
     TxTexture_free_one( pbb->tex_ref );
 
-    billboard_data_init( pbb );
+    ego_billboard_data::init( pbb );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t billboard_data_update( billboard_data_t * pbb )
+bool_t ego_billboard_data::update( ego_billboard_data * pbb )
 {
     fvec3_t     vup, pos_new;
-    chr_t     * pchr;
+    ego_chr     * pchr;
     float       height, offset;
 
     if ( NULL == pbb || !pbb->valid ) return bfalse;
@@ -3373,7 +3371,7 @@ bool_t billboard_data_update( billboard_data_t * pbb )
     pchr = ChrList.lst + pbb->ichr;
 
     // determine where the new position should be
-    chr_getMatUp( pchr, &vup );
+    ego_chr::get_MatUp( pchr, &vup );
 
     height = pchr->bump.height;
     offset = MIN( pchr->bump_1.height * 0.5f, pchr->bump_1.size );
@@ -3401,14 +3399,14 @@ bool_t billboard_data_update( billboard_data_t * pbb )
     // automatically kill a billboard that is no longer useful
     if ( pbb->tint[AA] == 0.0f || pbb->size == 0.0f )
     {
-        billboard_data_free( pbb );
+        ego_billboard_data::dealloc( pbb );
     }
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t billboard_data_printf_ttf( billboard_data_t * pbb, TTF_Font *font, SDL_Color color, const char * format, ... )
+bool_t ego_billboard_data::printf_ttf( ego_billboard_data * pbb, TTF_Font *font, SDL_Color color, const char * format, ... )
 {
     va_list          args      = NULL;
     oglx_texture_t * oglx_ptex = NULL;
@@ -3476,7 +3474,7 @@ void BillboardList_init_all()
 
     for ( cnt = 0; cnt < BILLBOARD_COUNT; cnt++ )
     {
-        billboard_data_init( BillboardList.lst + cnt );
+        ego_billboard_data::init( BillboardList.lst + cnt );
     }
 
     BillboardList_clear_data();
@@ -3494,7 +3492,7 @@ void BillboardList_update_all()
     {
         bool_t is_invalid;
 
-        billboard_data_t * pbb = BillboardList.lst + cnt;
+        ego_billboard_data * pbb = BillboardList.lst + cnt;
 
         if ( !pbb->valid ) continue;
 
@@ -3524,7 +3522,7 @@ void BillboardList_update_all()
         }
         else
         {
-            billboard_data_update( BillboardList.lst + cnt );
+            ego_billboard_data::update( BillboardList.lst + cnt );
         }
     }
 }
@@ -3538,7 +3536,7 @@ void BillboardList_free_all()
     {
         if ( !BillboardList.lst[cnt].valid ) continue;
 
-        billboard_data_update( BillboardList.lst + cnt );
+        ego_billboard_data::update( BillboardList.lst + cnt );
     }
 }
 
@@ -3547,7 +3545,7 @@ size_t BillboardList_get_free( Uint32 lifetime_secs )
 {
     TX_REF             itex = ( TX_REF )INVALID_TX_TEXTURE;
     size_t             ibb  = INVALID_BILLBOARD;
-    billboard_data_t * pbb  = NULL;
+    ego_billboard_data * pbb  = NULL;
 
     if ( BillboardList.free_count <= 0 ) return INVALID_BILLBOARD;
 
@@ -3566,7 +3564,7 @@ size_t BillboardList_get_free( Uint32 lifetime_secs )
     {
         pbb = BillboardList.lst + ( BBOARD_REF )ibb;
 
-        billboard_data_init( pbb );
+        ego_billboard_data::init( pbb );
 
         pbb->tex_ref = itex;
         pbb->time    = egoboo_get_ticks() + lifetime_secs * TICKS_PER_SEC;
@@ -3587,12 +3585,12 @@ size_t BillboardList_get_free( Uint32 lifetime_secs )
 //--------------------------------------------------------------------------------------------
 bool_t BillboardList_free_one( size_t ibb )
 {
-    billboard_data_t * pbb;
+    ego_billboard_data * pbb;
 
     if ( !VALID_BILLBOARD_RANGE( ibb ) ) return bfalse;
     pbb = BillboardList.lst + ( BBOARD_REF )ibb;
 
-    billboard_data_free( pbb );
+    ego_billboard_data::dealloc( pbb );
 
 #if EGO_DEBUG
     {
@@ -3620,7 +3618,7 @@ bool_t BillboardList_free_one( size_t ibb )
 }
 
 //--------------------------------------------------------------------------------------------
-billboard_data_t * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb )
+ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb )
 {
     if ( !VALID_BILLBOARD( ibb ) ) return NULL;
 
@@ -3629,10 +3627,10 @@ billboard_data_t * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t render_billboard( camera_t * pcam, billboard_data_t * pbb, float scale )
+bool_t render_billboard( ego_camera * pcam, ego_billboard_data * pbb, float scale )
 {
     int i;
-    GLvertex vtlist[4];
+    ego_GLvertex vtlist[4];
     float x1, y1;
     float w, h;
     fvec4_t   vector_up, vector_right;
@@ -3731,7 +3729,7 @@ bool_t render_billboard( camera_t * pcam, billboard_data_t * pbb, float scale )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_all_billboards( camera_t * pcam )
+void render_all_billboards( ego_camera * pcam )
 {
     BBOARD_REF cnt;
 
@@ -3754,7 +3752,7 @@ void render_all_billboards( camera_t * pcam )
 
             for ( cnt = 0; cnt < BILLBOARD_COUNT; cnt++ )
             {
-                billboard_data_t * pbb = BillboardList.lst + cnt;
+                ego_billboard_data * pbb = BillboardList.lst + cnt;
 
                 if ( !pbb->valid ) continue;
 
@@ -3785,7 +3783,7 @@ int get_free_line()
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_all_lines( camera_t * pcam )
+void draw_all_lines( ego_camera * pcam )
 {
     /// @details BB@> draw some lines for debugging purposes
 
@@ -3833,7 +3831,7 @@ void draw_all_lines( camera_t * pcam )
 //--------------------------------------------------------------------------------------------
 // AXIS BOUNDING BOX IMPLEMENTATION(S)
 //--------------------------------------------------------------------------------------------
-bool_t render_aabb( aabb_t * pbbox )
+bool_t render_aabb( ego_aabb * pbbox )
 {
     GLXvector3f * pmin, * pmax;
 
@@ -3892,7 +3890,7 @@ bool_t render_aabb( aabb_t * pbbox )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_oct_bb( oct_bb_t * bb, bool_t draw_square, bool_t draw_diamond )
+bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond )
 {
     bool_t retval = bfalse;
 
@@ -4040,12 +4038,12 @@ bool_t render_oct_bb( oct_bb_t * bb, bool_t draw_square, bool_t draw_diamond )
 //--------------------------------------------------------------------------------------------
 // GRAPHICS OPTIMIZATIONS
 //--------------------------------------------------------------------------------------------
-bool_t dolist_add_chr( ego_mpd_t * pmesh, const CHR_REF by_reference ichr )
+bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr )
 {
     /// ZZ@> This function puts a character in the list
     Uint32 itile;
-    chr_t * pchr;
-    cap_t * pcap;
+    ego_chr * pchr;
+    ego_cap * pcap;
     chr_instance_t * pinst;
 
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
@@ -4056,7 +4054,7 @@ bool_t dolist_add_chr( ego_mpd_t * pmesh, const CHR_REF by_reference ichr )
 
     if ( pinst->indolist ) return btrue;
 
-    pcap = chr_get_pcap( ichr );
+    pcap = ego_chr::get_pcap( ichr );
     if ( NULL == pcap ) return bfalse;
 
     itile = pchr->onwhichgrid;
@@ -4092,10 +4090,10 @@ bool_t dolist_add_chr( ego_mpd_t * pmesh, const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t dolist_add_prt( ego_mpd_t * pmesh, const PRT_REF by_reference iprt )
+bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF by_reference iprt )
 {
     /// ZZ@> This function puts a character in the list
-    prt_t * pprt;
+    ego_prt * pprt;
     prt_instance_t * pinst;
 
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
@@ -4118,7 +4116,7 @@ bool_t dolist_add_prt( ego_mpd_t * pmesh, const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void dolist_make( ego_mpd_t * pmesh )
+void dolist_make( ego_mpd   * pmesh )
 {
     /// @details ZZ@> This function finds the characters that need to be drawn and puts them in the list
 
@@ -4142,7 +4140,7 @@ void dolist_make( ego_mpd_t * pmesh )
     // Now fill it up again
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        chr_t * pchr;
+        ego_chr * pchr;
 
         if ( !INGAME_CHR( ichr ) ) continue;
         pchr = ChrList.lst + ichr;
@@ -4166,7 +4164,7 @@ void dolist_make( ego_mpd_t * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-void dolist_sort( camera_t * pcam, bool_t do_reflect )
+void dolist_sort( ego_camera * pcam, bool_t do_reflect )
 {
     /// @details ZZ@> This function orders the dolist based on distance from camera,
     ///    which is needed for reflections to properly clip themselves.
@@ -4297,7 +4295,7 @@ void renderlist_reset()
 }
 
 //--------------------------------------------------------------------------------------------
-void renderlist_make( ego_mpd_t * pmesh, camera_t * pcam )
+void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
 {
     /// @details ZZ@> This function figures out which mesh fans to draw
     int cnt, grid_x, grid_y;
@@ -4919,7 +4917,7 @@ void flash_character( const CHR_REF by_reference character, Uint8 value )
 {
     /// @details ZZ@> This function sets a character's lighting
 
-    chr_instance_t * pinst = chr_get_pinstance( character );
+    chr_instance_t * pinst = ego_chr::get_pinstance( character );
 
     if ( NULL != pinst )
     {
@@ -4974,7 +4972,7 @@ void gfx_disable_texturing()
 }
 
 //--------------------------------------------------------------------------------------------
-void gfx_begin_3d( camera_t * pcam )
+void gfx_begin_3d( ego_camera * pcam )
 {
     GL_DEBUG( glMatrixMode )( GL_PROJECTION );
     GL_DEBUG( glPushMatrix )();
@@ -5034,11 +5032,11 @@ void do_clear_screen()
     bool_t try_clear;
 
     try_clear = bfalse;
-    if ( process_running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_beginning )
+    if ( ego_process::running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
-    else if ( process_running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_beginning )
+    else if ( ego_process::running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
@@ -5054,8 +5052,8 @@ void do_clear_screen()
         GL_DEBUG( glClear )( GL_DEPTH_BUFFER_BIT );
 
         // clear the color buffer only if necessary
-        game_needs_clear = gfx.clearson && process_running( PROC_PBASE( GProc ) );
-        menu_needs_clear = mnu_draw_background && process_running( PROC_PBASE( MProc ) );
+        game_needs_clear = gfx.clearson && ego_process::running( PROC_PBASE( GProc ) );
+        menu_needs_clear = mnu_draw_background && ego_process::running( PROC_PBASE( MProc ) );
 
         if ( game_needs_clear || menu_needs_clear )
         {
@@ -5070,11 +5068,11 @@ void do_flip_pages()
     bool_t try_flip;
 
     try_flip = bfalse;
-    if ( process_running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_beginning )
+    if ( ego_process::running( PROC_PBASE( GProc ) ) && PROC_PBASE( GProc )->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }
-    else if ( process_running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_beginning )
+    else if ( ego_process::running( PROC_PBASE( MProc ) ) && PROC_PBASE( MProc )->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }
@@ -5148,9 +5146,9 @@ void light_fans( renderlist_t * prlist )
     /// which means that the threshold could be set as low as 1/64 = 0.015625.
     const float delta_threshold = 0.05f;
 
-    ego_mpd_t      * pmesh;
-    tile_mem_t     * ptmem;
-    grid_mem_t     * pgmem;
+    ego_mpd        * pmesh;
+    ego_tile_mem     * ptmem;
+    ego_grid_mem     * pgmem;
 
     if ( NULL == prlist ) return;
 
@@ -5393,7 +5391,7 @@ bool_t sum_global_lighting( lighting_vector_t lighting )
 //}
 
 //--------------------------------------------------------------------------------------------
-void gfx_make_dynalist( camera_t * pcam )
+void gfx_make_dynalist( ego_camera * pcam )
 {
     /// @details ZZ@> This function figures out which particles are visible, and it sets up dynamic
     ///    lighting
@@ -5472,7 +5470,7 @@ void gfx_make_dynalist( camera_t * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void do_grid_lighting( ego_mpd_t * pmesh, camera_t * pcam )
+void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
 {
     /// @details ZZ@> Do all tile lighting, dynamic and global
 
@@ -5488,10 +5486,10 @@ void do_grid_lighting( ego_mpd_t * pmesh, camera_t * pcam )
 
     ego_frect_t mesh_bound, light_bound;
 
-    ego_mpd_info_t  * pinfo;
-    grid_mem_t      * pgmem;
-    tile_mem_t      * ptmem;
-    ego_grid_info_t * glist;
+    ego_mpd_info  * pinfo;
+    ego_grid_mem      * pgmem;
+    ego_tile_mem      * ptmem;
+    ego_grid_info * glist;
 
     if ( NULL == pmesh ) return;
     pinfo = &( pmesh->info );

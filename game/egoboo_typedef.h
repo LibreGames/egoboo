@@ -312,14 +312,14 @@ struct s_list_object_state
     bool_t in_free_list; ///< the object is currently in the free list
     bool_t in_used_list; ///< the object is currently in the used list
 };
-typedef struct s_list_object_state list_object_state_t;
+typedef struct s_list_object_state list_object_state;
 
-list_object_state_t * list_object_state_ctor( list_object_state_t *, size_t index );
-list_object_state_t * list_object_state_dtor( list_object_state_t * );
-list_object_state_t * list_object_state_clear( list_object_state_t * );
-list_object_state_t * list_object_set_allocated( list_object_state_t *, bool_t val );
-list_object_state_t * list_object_set_used( list_object_state_t *, bool_t val );
-list_object_state_t * list_object_set_free( list_object_state_t *, bool_t val );
+list_object_state * list_object_state_ctor( list_object_state *, size_t index );
+list_object_state * list_object_state_dtor( list_object_state * );
+list_object_state * list_object_state_clear( list_object_state * );
+list_object_state * list_object_set_allocated( list_object_state *, bool_t val );
+list_object_state * list_object_set_used( list_object_state *, bool_t val );
+list_object_state * list_object_set_free( list_object_state *, bool_t val );
 
 #define C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT) \
     struct s_c_list__##TYPE__##NAME           \
@@ -482,38 +482,30 @@ list_object_state_t * list_object_set_free( list_object_state_t *, bool_t val );
 #    define _INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
 #    define _INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
 
-typedef struct s_cap cap_t;
-typedef struct s_chr chr_t;
 typedef struct s_team team_t;
-typedef struct s_eve eve_t;
-typedef struct s_enc enc_t;
-typedef struct s_mad mad_t;
 typedef struct s_player player_t;
-typedef struct s_pip pip_t;
-typedef struct s_prt prt_t;
+typedef struct ego_pip ego_pip;
 typedef struct s_passage passage_t;
 typedef struct s_shop shop_t;
-typedef struct s_object_profile pro_t;
 typedef struct s_oglx_texture oglx_texture_t;
-typedef struct s_billboard_data billboard_data_t;
 typedef struct s_looped_sound_data looped_sound_data_t;
 typedef struct s_mnu_module mnu_module_t;
 typedef struct s_tx_request tx_request_t;
 
-CPP_DECLARE_REF( cap_t, CAP_REF );
-CPP_DECLARE_REF( chr_t, CHR_REF );
+CPP_DECLARE_REF( ego_cap, CAP_REF );
+CPP_DECLARE_REF( ego_chr, CHR_REF );
 CPP_DECLARE_REF( team_t, TEAM_REF );
-CPP_DECLARE_REF( eve_t, EVE_REF );
-CPP_DECLARE_REF( enc_t, ENC_REF );
-CPP_DECLARE_REF( mad_t, MAD_REF );
+CPP_DECLARE_REF( ego_eve, EVE_REF );
+CPP_DECLARE_REF( ego_enc, ENC_REF );
+CPP_DECLARE_REF( ego_mad, MAD_REF );
 CPP_DECLARE_REF( player_t, PLA_REF );
-CPP_DECLARE_REF( pip_t, PIP_REF );
-CPP_DECLARE_REF( prt_t, PRT_REF );
+CPP_DECLARE_REF( ego_pip, PIP_REF );
+CPP_DECLARE_REF( ego_prt, PRT_REF );
 CPP_DECLARE_REF( passage_t, PASS_REF );
 CPP_DECLARE_REF( shop_t, SHOP_REF );
-CPP_DECLARE_REF( pro_t, PRO_REF );
+CPP_DECLARE_REF( ego_pro, PRO_REF );
 CPP_DECLARE_REF( oglx_texture_t, TX_REF );
-CPP_DECLARE_REF( billboard_data_t, BBOARD_REF );
+CPP_DECLARE_REF( ego_billboard_data, BBOARD_REF );
 CPP_DECLARE_REF( looped_sound_data_t, LOOP_REF );
 CPP_DECLARE_REF( mnu_module_t, MOD_REF );
 CPP_DECLARE_REF( MOD_REF, MOD_REF_REF );

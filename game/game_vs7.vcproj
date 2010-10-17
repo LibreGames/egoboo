@@ -152,19 +152,19 @@
 				RelativePath=".\bsp.cpp">
 			</File>
 			<File
-				RelativePath=".\clock.cpp">
+				RelativePath=".\clock.c">
 			</File>
 			<File
 				RelativePath=".\egoboo_display_list.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_endian.cpp">
+				RelativePath=".\egoboo_endian.c">
 			</File>
 			<File
-				RelativePath=".\egoboo_fileutil.cpp">
+				RelativePath=".\egoboo_fileutil.c">
 			</File>
 			<File
-				RelativePath=".\egoboo_math.cpp">
+				RelativePath=".\egoboo_math.c">
 			</File>
 			<File
 				RelativePath=".\egoboo_object.cpp">
@@ -173,10 +173,10 @@
 				RelativePath=".\egoboo_process.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_setup.cpp">
+				RelativePath=".\egoboo_setup.c">
 			</File>
 			<File
-				RelativePath=".\egoboo_strutil.cpp">
+				RelativePath=".\egoboo_strutil.c">
 			</File>
 			<File
 				RelativePath=".\egoboo_typedef.cpp">
@@ -194,7 +194,7 @@
 				RelativePath=".\input.cpp">
 			</File>
 			<File
-				RelativePath=".\log.cpp">
+				RelativePath=".\log.c">
 			</File>
 		</Filter>
 		<Filter
@@ -327,7 +327,7 @@
 				RelativePath=".\graphic_prt.cpp">
 			</File>
 			<File
-				RelativePath=".\IDSZ_map.cpp">
+				RelativePath=".\IDSZ_map.c">
 			</File>
 			<File
 				RelativePath=".\lighting.cpp">
@@ -422,6 +422,9 @@
 				RelativePath=".\graphic.h">
 			</File>
 			<File
+				RelativePath=".\graphic_defs.h">
+			</File>
+			<File
 				RelativePath=".\graphic_fan.h">
 			</File>
 			<File
@@ -441,6 +444,9 @@
 			</File>
 			<File
 				RelativePath=".\mad.h">
+			</File>
+			<File
+				RelativePath=".\mad_defs.h">
 			</File>
 			<File
 				RelativePath=".\Md2.h">
@@ -477,6 +483,9 @@
 			</File>
 			<File
 				RelativePath=".\sound.h">
+			</File>
+			<File
+				RelativePath=".\sound_defs.h">
 			</File>
 			<File
 				RelativePath=".\texture.h">
@@ -607,19 +616,13 @@
 			Name="File System"
 			Filter="">
 			<File
-				RelativePath=".\egoboo_vfs.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						GeneratePreprocessedFile="0"/>
-				</FileConfiguration>
+				RelativePath=".\egoboo_vfs.c">
 			</File>
 			<File
 				RelativePath=".\egoboo_vfs.h">
 			</File>
 			<File
-				RelativePath=".\file_common.cpp">
+				RelativePath=".\file_common.c">
 			</File>
 			<File
 				RelativePath=".\file_common.h">

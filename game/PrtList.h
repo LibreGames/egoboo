@@ -30,9 +30,7 @@
 // list definitions
 //--------------------------------------------------------------------------------------------
 
-DECLARE_LIST_EXTERN( prt_t, PrtList, TOTAL_MAX_PRT );
-
-extern size_t maxparticles;                              ///< max number of particles
+DECLARE_LIST_EXTERN( ego_prt, PrtList, TOTAL_MAX_PRT );
 
 #define VALID_PRT_RANGE( IPRT ) ( ((IPRT) >= 0) && ((IPRT) < maxparticles) && ((IPRT) < TOTAL_MAX_PRT) )
 #define ALLOCATED_PRT( IPRT )   ( VALID_PRT_RANGE( IPRT ) && ALLOCATED_PBASE (POBJ_GET_PBASE(PrtList.lst + (IPRT))) )
@@ -53,9 +51,9 @@ extern size_t maxparticles;                              ///< max number of part
 
 // Macros automate looping through the PrtList. This hides code which defers the creation and deletion of
 // objects until the loop terminates, so that the length of the list will not change during the loop.
-#define PRT_BEGIN_LOOP_USED(IT, PRT_BDL)   {size_t IT##_internal; int prt_loop_start_depth = prt_loop_depth; prt_loop_depth++; for(IT##_internal=0;IT##_internal<PrtList.used_count;IT##_internal++) { PRT_REF IT; prt_bundle_t PRT_BDL; IT = (PRT_REF)PrtList.used_ref[IT##_internal]; if(!DEFINED_PRT (IT)) continue; prt_bundle_set(&PRT_BDL, PrtList.lst + IT);
-#define PRT_BEGIN_LOOP_ACTIVE(IT, PRT_BDL) {size_t IT##_internal; int prt_loop_start_depth = prt_loop_depth; prt_loop_depth++; for(IT##_internal=0;IT##_internal<PrtList.used_count;IT##_internal++) { PRT_REF IT; prt_bundle_t PRT_BDL; IT = (PRT_REF)PrtList.used_ref[IT##_internal]; if(!ACTIVE_PRT (IT)) continue; prt_bundle_set(&PRT_BDL, PrtList.lst + IT);
-#define PRT_BEGIN_LOOP_LIMBO(IT, PRT_BDL)  {size_t IT##_internal; int prt_loop_start_depth = prt_loop_depth; prt_loop_depth++; for(IT##_internal=0;IT##_internal<PrtList.used_count;IT##_internal++) { PRT_REF IT; prt_bundle_t PRT_BDL; IT = (PRT_REF)PrtList.used_ref[IT##_internal]; if(!LIMBO_PRT(IT)) continue; prt_bundle_set(&PRT_BDL, PrtList.lst + IT);
+#define PRT_BEGIN_LOOP_USED(IT, PRT_BDL)   {size_t IT##_internal; int prt_loop_start_depth = prt_loop_depth; prt_loop_depth++; for(IT##_internal=0;IT##_internal<PrtList.used_count;IT##_internal++) { PRT_REF IT; ego_prt_bundle PRT_BDL; IT = (PRT_REF)PrtList.used_ref[IT##_internal]; if(!DEFINED_PRT (IT)) continue; ego_prt_bundle::set(&PRT_BDL, PrtList.lst + IT);
+#define PRT_BEGIN_LOOP_ACTIVE(IT, PRT_BDL) {size_t IT##_internal; int prt_loop_start_depth = prt_loop_depth; prt_loop_depth++; for(IT##_internal=0;IT##_internal<PrtList.used_count;IT##_internal++) { PRT_REF IT; ego_prt_bundle PRT_BDL; IT = (PRT_REF)PrtList.used_ref[IT##_internal]; if(!ACTIVE_PRT (IT)) continue; ego_prt_bundle::set(&PRT_BDL, PrtList.lst + IT);
+#define PRT_BEGIN_LOOP_LIMBO(IT, PRT_BDL)  {size_t IT##_internal; int prt_loop_start_depth = prt_loop_depth; prt_loop_depth++; for(IT##_internal=0;IT##_internal<PrtList.used_count;IT##_internal++) { PRT_REF IT; ego_prt_bundle PRT_BDL; IT = (PRT_REF)PrtList.used_ref[IT##_internal]; if(!LIMBO_PRT(IT)) continue; ego_prt_bundle::set(&PRT_BDL, PrtList.lst + IT);
 #define PRT_END_LOOP() } prt_loop_depth--; if(prt_loop_start_depth != prt_loop_depth) EGOBOO_ASSERT(bfalse); PrtList_cleanup(); }
 
 extern int prt_loop_depth;
@@ -70,13 +68,13 @@ extern int prt_loop_depth;
 #define INGAME_PRT_BASE(IPRT)       ( VALID_PRT ( IPRT ) && FLAG_ON_PBASE( POBJ_GET_PBASE(PrtList.lst + (IPRT)) )  )
 #define INGAME_PPRT_BASE(PPRT)      ( VALID_PPRT( PPRT ) && FLAG_ON_PBASE( POBJ_GET_PBASE(PPRT) ) )
 
-#define INGAME_PRT(IPRT)            ( ( (ego_object_spawn_depth > 0) ? DEFINED_PRT(IPRT) : INGAME_PRT_BASE(IPRT) ) && !FLAG_LIMBO_PPRT( PrtList.lst + (IPRT) ) )
-#define INGAME_PPRT(PPRT)           ( ( (ego_object_spawn_depth > 0) ? DEFINED_PPRT(PPRT) : INGAME_PPRT_BASE(PPRT) ) && !FLAG_LIMBO_PPRT( PPRT ) )
+#define INGAME_PRT(IPRT)            ( ( (ego_object::spawn_depth > 0) ? DEFINED_PRT(IPRT) : INGAME_PRT_BASE(IPRT) ) && !FLAG_LIMBO_PPRT( PrtList.lst + (IPRT) ) )
+#define INGAME_PPRT(PPRT)           ( ( (ego_object::spawn_depth > 0) ? DEFINED_PPRT(PPRT) : INGAME_PPRT_BASE(PPRT) ) && !FLAG_LIMBO_PPRT( PPRT ) )
 
 // the same as INGAME_*_BASE except that the particle does not have to be "on"
 // visible particles stick around in the active state (but off) until they have been displayed at least once
-#define LIMBO_PRT(IPRT)            ( ( (ego_object_spawn_depth > 0) ? DEFINED_PRT(IPRT) : INGAME_PRT_BASE(IPRT) ) && FLAG_LIMBO_PRT( IPRT ) )
-#define LIMBO_PPRT(PPRT)           ( ( (ego_object_spawn_depth > 0) ? DEFINED_PPRT(PPRT) : INGAME_PPRT_BASE(PPRT) ) && FLAG_LIMBO_PPRT( PPRT ) )
+#define LIMBO_PRT(IPRT)            ( ( (ego_object::spawn_depth > 0) ? DEFINED_PRT(IPRT) : INGAME_PRT_BASE(IPRT) ) && FLAG_LIMBO_PRT( IPRT ) )
+#define LIMBO_PPRT(PPRT)           ( ( (ego_object::spawn_depth > 0) ? DEFINED_PPRT(PPRT) : INGAME_PPRT_BASE(PPRT) ) && FLAG_LIMBO_PPRT( PPRT ) )
 
 //--------------------------------------------------------------------------------------------
 // Function prototypes

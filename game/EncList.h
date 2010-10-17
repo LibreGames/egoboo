@@ -50,23 +50,23 @@
 
 // Macros automate looping through the EncList. This hides code which defers the creation and deletion of
 // objects until the loop terminates, so that the length of the list will not change during the loop.
-#define ENC_BEGIN_LOOP_ACTIVE(IT, PENC)  {size_t IT##_internal; int enc_loop_start_depth = enc_loop_depth; enc_loop_depth++; for(IT##_internal=0;IT##_internal<EncList.used_count;IT##_internal++) { ENC_REF IT; enc_t * PENC = NULL; IT = (ENC_REF)EncList.used_ref[IT##_internal]; if(!ACTIVE_ENC (IT)) continue; PENC =  EncList.lst + IT;
-#define ENC_END_LOOP() } enc_loop_depth--; if(enc_loop_start_depth != enc_loop_depth) EGOBOO_ASSERT(bfalse); EncList_cleanup(); }
+#define ENC_BEGIN_LOOP_ACTIVE(IT, PENC)  {size_t IT##_internal; int ego_enc_loop_start_depth = ego_enc_loop_depth; ego_enc_loop_depth++; for(IT##_internal=0;IT##_internal<EncList.used_count;IT##_internal++) { ENC_REF IT; ego_enc * PENC = NULL; IT = (ENC_REF)EncList.used_ref[IT##_internal]; if(!ACTIVE_ENC (IT)) continue; PENC =  EncList.lst + IT;
+#define ENC_END_LOOP() } ego_enc_loop_depth--; if(ego_enc_loop_start_depth != ego_enc_loop_depth) EGOBOO_ASSERT(bfalse); EncList_cleanup(); }
 
 // Macros to determine whether the enchant is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"
 #define INGAME_ENC_BASE(IENC)       ( VALID_ENC_RANGE( IENC ) && ACTIVE_PBASE( POBJ_GET_PBASE(EncList.lst + (IENC)) ) && ON_PBASE( POBJ_GET_PBASE(EncList.lst + (IENC)) ) )
 #define INGAME_PENC_BASE(PENC)      ( VALID_ENC_PTR( PENC ) && ACTIVE_PBASE( POBJ_GET_PBASE(PENC) ) && ON_PBASE( POBJ_GET_PBASE(PENC) ) )
 
-#define INGAME_ENC(IENC)            ( (ego_object_spawn_depth) > 0 ? DEFINED_ENC(IENC) : INGAME_ENC_BASE(IENC) )
-#define INGAME_PENC(PENC)           ( (ego_object_spawn_depth) > 0 ? DEFINED_PENC(PENC) : INGAME_PENC_BASE(PENC) )
+#define INGAME_ENC(IENC)            ( (ego_object::spawn_depth) > 0 ? DEFINED_ENC(IENC) : INGAME_ENC_BASE(IENC) )
+#define INGAME_PENC(PENC)           ( (ego_object::spawn_depth) > 0 ? DEFINED_PENC(PENC) : INGAME_PENC_BASE(PENC) )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-DECLARE_LIST_EXTERN( enc_t, EncList, MAX_ENC );
+DECLARE_LIST_EXTERN( ego_enc, EncList, MAX_ENC );
 
-extern int enc_loop_depth;
+extern int ego_enc_loop_depth;
 
 //--------------------------------------------------------------------------------------------
 // Function prototypes

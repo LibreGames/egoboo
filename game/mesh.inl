@@ -29,19 +29,19 @@
 // FORWARD DECLARATIONS
 //--------------------------------------------------------------------------------------------
 
-INLINE float  mesh_get_level( ego_mpd_t * pmesh, float x, float y );
-INLINE Uint32 mesh_get_block( ego_mpd_t * pmesh, float pos_x, float pos_y );
-INLINE Uint32 mesh_get_tile( ego_mpd_t * pmesh, float pos_x, float pos_y );
+INLINE float  mesh_get_level( ego_mpd   * pmesh, float x, float y );
+INLINE Uint32 mesh_get_block( ego_mpd   * pmesh, float pos_x, float pos_y );
+INLINE Uint32 mesh_get_tile( ego_mpd   * pmesh, float pos_x, float pos_y );
 
-INLINE Uint32 mesh_get_block_int( ego_mpd_t * pmesh, int block_x, int block_y );
-INLINE Uint32 mesh_get_tile_int( ego_mpd_t * pmesh, int grid_x,  int grid_y );
+INLINE Uint32 mesh_get_block_int( ego_mpd   * pmesh, int block_x, int block_y );
+INLINE Uint32 mesh_get_tile_int( ego_mpd   * pmesh, int grid_x,  int grid_y );
 
-INLINE Uint32 mesh_test_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags );
-INLINE bool_t mesh_clear_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags );
-INLINE bool_t mesh_add_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags );
+INLINE Uint32 mesh_test_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags );
+INLINE bool_t mesh_clear_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags );
+INLINE bool_t mesh_add_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags );
 
 INLINE Uint32 mesh_has_some_mpdfx( BIT_FIELD mpdfx, BIT_FIELD test );
-INLINE bool_t mesh_grid_is_valid( ego_mpd_t * pmpd, Uint32 id );
+INLINE bool_t mesh_grid_is_valid( ego_mpd   * pmpd, Uint32 id );
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ INLINE Uint32 mesh_has_some_mpdfx( BIT_FIELD MPDFX, BIT_FIELD TEST )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t mesh_grid_is_valid( ego_mpd_t * pmpd, Uint32 id )
+INLINE bool_t mesh_grid_is_valid( ego_mpd   * pmpd, Uint32 id )
 {
     if ( NULL == pmpd ) return bfalse;
 
@@ -63,7 +63,7 @@ INLINE bool_t mesh_grid_is_valid( ego_mpd_t * pmpd, Uint32 id )
     return id < pmpd->info.tiles_count;
 };
 //--------------------------------------------------------------------------------------------
-INLINE float mesh_get_level( ego_mpd_t * pmesh, float x, float y )
+INLINE float mesh_get_level( ego_mpd   * pmesh, float x, float y )
 {
     /// @details ZZ@> This function returns the height of a point within a mesh fan, precisely
 
@@ -95,7 +95,7 @@ INLINE float mesh_get_level( ego_mpd_t * pmesh, float x, float y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Uint32 mesh_get_block( ego_mpd_t * pmesh, float pos_x, float pos_y )
+INLINE Uint32 mesh_get_block( ego_mpd   * pmesh, float pos_x, float pos_y )
 {
     Uint32 block = INVALID_BLOCK;
 
@@ -116,7 +116,7 @@ INLINE Uint32 mesh_get_block( ego_mpd_t * pmesh, float pos_x, float pos_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Uint32 mesh_get_tile( ego_mpd_t * pmesh, float pos_x, float pos_y )
+INLINE Uint32 mesh_get_tile( ego_mpd   * pmesh, float pos_x, float pos_y )
 {
     Uint32 tile = INVALID_TILE;
 
@@ -137,7 +137,7 @@ INLINE Uint32 mesh_get_tile( ego_mpd_t * pmesh, float pos_x, float pos_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Uint32 mesh_get_block_int( ego_mpd_t * pmesh, int block_x, int block_y )
+INLINE Uint32 mesh_get_block_int( ego_mpd   * pmesh, int block_x, int block_y )
 {
     if ( NULL == pmesh ) return INVALID_BLOCK;
 
@@ -148,7 +148,7 @@ INLINE Uint32 mesh_get_block_int( ego_mpd_t * pmesh, int block_x, int block_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Uint32 mesh_get_tile_int( ego_mpd_t * pmesh, int grid_x,  int grid_y )
+INLINE Uint32 mesh_get_tile_int( ego_mpd   * pmesh, int grid_x,  int grid_y )
 {
     if ( NULL == pmesh ) return INVALID_TILE;
 
@@ -159,7 +159,7 @@ INLINE Uint32 mesh_get_tile_int( ego_mpd_t * pmesh, int grid_x,  int grid_y )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t mesh_clear_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags )
+INLINE bool_t mesh_clear_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags )
 {
     Uint32 old_flags;
 
@@ -181,7 +181,7 @@ INLINE bool_t mesh_clear_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t mesh_add_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags )
+INLINE bool_t mesh_add_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags )
 {
     Uint32 old_flags;
 
@@ -203,7 +203,7 @@ INLINE bool_t mesh_add_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Uint32 mesh_test_fx( ego_mpd_t * pmesh, Uint32 itile, BIT_FIELD flags )
+INLINE Uint32 mesh_test_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags )
 {
     // test for mesh
     if ( NULL == pmesh ) return 0;

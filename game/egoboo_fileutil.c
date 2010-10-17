@@ -23,15 +23,18 @@
 
 #include "egoboo_fileutil.h"
 
-#include "extensions/ogl_texture.h"
 #include "log.h"
 
-#include "mad.h"
-#include "char.inl"
+#include "extensions/ogl_texture.h"
+#include "file_formats/cap_file.h"
+#include "file_formats/pip_file.h"
+#include "file_formats/eve_file.h"
+
+#include "mad_defs.h"
 
 #include "egoboo_setup.h"
 #include "egoboo_strutil.h"
-#include "egoboo.h"
+#include "egoboo_math.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

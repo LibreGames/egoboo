@@ -28,21 +28,21 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_obj_BSP;
-struct s_chr;
-struct s_prt;
-struct s_oct_bb;
+struct ego_obj_BSP;
+struct ego_chr;
+struct ego_prt_data;
+struct ego_oct_bb  ;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// element for storing pair-wise "collision" data
-/// @note this does not use the "standard" method of inheritance from hash_node_t, where an
-/// instance of hash_node_t is embedded inside CoNode_t as CoNode_t::base or something.
+/// @note this does not use the "standard" method of inheritance from ego_hash_node, where an
+/// instance of ego_hash_node is embedded inside CoNode_t as CoNode_t::base or something.
 /// Instead, a separate lists of free hash_nodes and free CoNodes are kept, and they are
-/// associated through the hash_node_t::data pointer when the hash node is added to the
-/// hash_list_t
-struct s_CoNode
+/// associated through the ego_hash_node::data pointer when the hash node is added to the
+/// ego_hash_list
+struct CoNode_t
 {
     // the "colliding" objects
     CHR_REF chra;
@@ -55,9 +55,8 @@ struct s_CoNode
 
     // some information about the estimated collision
     float    tmin, tmax;
-    oct_bb_t cv;
+    ego_oct_bb   cv;
 };
-typedef struct s_CoNode CoNode_t;
 
 CoNode_t * CoNode_ctor( CoNode_t * );
 Uint8      CoNode_generate_hash( CoNode_t * coll );
@@ -68,13 +67,13 @@ int        CoNode_cmp( const void * pleft, const void * pright );
 DECLARE_DYNAMIC_ARY( CoNode_ary, CoNode_t );
 
 //--------------------------------------------------------------------------------------------
-// a template-like definition of a dynamically allocated array of hash_node_t elements
-DECLARE_DYNAMIC_ARY( HashNode_ary, hash_node_t );
+// a template-like definition of a dynamically allocated array of ego_hash_node elements
+DECLARE_DYNAMIC_ARY( HashNode_ary, ego_hash_node );
 
 //--------------------------------------------------------------------------------------------
 
 /// a useful re-typing of the CHashList_t, in case we need to add more variables or functionality later
-typedef hash_list_t CHashList_t;
+typedef ego_hash_list CHashList_t;
 
 CHashList_t * CHashList_ctor( CHashList_t * pchlst, int size );
 CHashList_t * CHashList_dtor( CHashList_t * pchlst );
@@ -92,11 +91,11 @@ extern int CHashList_inserted;
 bool_t collision_system_begin();
 void   collision_system_end();
 
-void bump_all_objects( struct s_obj_BSP * pbsp );
+void bump_all_objects( struct ego_obj_BSP * pbsp );
 
-bool_t detach_character_from_platform( struct s_chr * pchr );
-bool_t detach_particle_from_platform( struct s_prt * pprt );
+bool_t detach_character_from_platform( struct ego_chr * pchr );
+bool_t detach_particle_from_platform( struct ego_prt_data * pprt );
 
-bool_t calc_grip_cv( struct s_chr * pmount, int grip_offset, struct s_oct_bb * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary );
+bool_t calc_grip_cv( struct ego_chr * pmount, int grip_offset, struct ego_oct_bb   * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary );
 
 void update_all_platform_attachments();

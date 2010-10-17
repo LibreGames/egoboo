@@ -87,7 +87,7 @@
 //--------------------------------------------------------------------------------------------
 
 /// Data needed to specify a line-of-sight test
-struct s_line_of_sight_info
+struct line_of_sight_info_t
 {
     float x0, y0, z0;
     float x1, y1, z1;
@@ -98,8 +98,6 @@ struct s_line_of_sight_info
     int     collide_x;
     int     collide_y;
 };
-
-typedef struct s_line_of_sight_info line_of_sight_info_t;
 
 static bool_t collide_ray_with_mesh( line_of_sight_info_t * plos );
 static bool_t collide_ray_with_characters( line_of_sight_info_t * plos );
@@ -112,11 +110,11 @@ void game_reset_local_shared_stats();
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-static ego_mpd_t         _mesh[2];
-static camera_t          _camera[2];
+static ego_mpd           _mesh[2];
+static ego_camera          _camera[2];
 
-static game_process_t    _gproc;
-static game_module_t      gmod;
+static ego_game_process    _gproc;
+static ego_game_module_data      gmod;
 
 PROFILE_DECLARE( game_update_loop );
 PROFILE_DECLARE( gfx_loop );
@@ -142,21 +140,21 @@ bool_t  StatusList_on     = btrue;
 int     StatusList_count    = 0;
 CHR_REF StatusList[MAXSTAT];
 
-ego_mpd_t         * PMesh   = _mesh + 0;
-camera_t          * PCamera = _camera + 0;
-game_module_t     * PMod    = &gmod;
-game_process_t    * GProc   = &_gproc;
+ego_mpd           * PMesh   = _mesh + 0;
+ego_camera          * PCamera = _camera + 0;
+ego_game_module_data     * PMod    = &gmod;
+ego_game_process    * GProc   = &_gproc;
 
 pit_info_t pits = { bfalse, bfalse, ZERO_VECT3 };
 
 FACING_T glo_useangle = 0;                                        // actually still used
 
 Uint32                animtile_update_and = 0;
-animtile_instance_t   animtile[2];
-damagetile_instance_t damagetile;
-weather_instance_t    weather;
-water_instance_t      water;
-fog_instance_t        fog;
+ego_animtile_instance   animtile[2];
+ego_damagetile_instance damagetile;
+ego_weather_instance    weather;
+ego_water_instance      water;
+ego_fog_instance        fog;
 
 // declare the variables to do profiling
 //--------------------------------------------------------------------------------------------
@@ -192,13 +190,13 @@ static void   game_reset_players();
 static void log_madused_vfs( const char *savename );
 
 // "process" management
-static int do_game_proc_beginning( game_process_t * gproc );
-static int do_game_proc_running( game_process_t * gproc );
-static int do_game_proc_leaving( game_process_t * gproc );
+static int do_game_proc_beginning( ego_game_process * gproc );
+static int do_game_proc_running( ego_game_process * gproc );
+static int do_game_proc_leaving( ego_game_process * gproc );
 
 // misc
-static bool_t game_begin_menu( menu_process_t * mproc, which_menu_t which );
-static void   game_end_menu( menu_process_t * mproc );
+static bool_t game_begin_menu( ego_menu_process * mproc, which_menu_t which );
+static void   game_end_menu( ego_menu_process * mproc );
 
 static void   do_game_hud();
 
@@ -213,8 +211,8 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     /// @details ZZ@> This function exports a character
 
     int tnc = 0;
-    cap_t * pcap;
-    pro_t * pobj;
+    ego_cap * pcap;
+    ego_pro * pobj;
 
     STRING fromdir;
     STRING todir;
@@ -228,10 +226,10 @@ void export_one_character( const CHR_REF by_reference character, const CHR_REF b
     // Don't export enchants
     remove_all_character_enchants( character );
 
-    pobj = chr_get_ppro( character );
+    pobj = ego_chr::get_ppro( character );
     if ( NULL == pobj ) return;
 
-    pcap = chr_get_pcap( character );
+    pcap = ego_chr::get_pcap( character );
     if ( NULL == pcap ) return;
 
     // do not export items that can't be exported
@@ -369,7 +367,7 @@ void export_all_players( bool_t require_local )
     CHR_REF character, item;
 
     // Don't export if the module isn't running
-    if ( !process_running( PROC_PBASE( GProc ) ) ) return;
+    if ( !ego_process::running( PROC_PBASE( GProc ) ) ) return;
 
     // Stop if export isn't valid
     if ( !PMod->exportvalid ) return;
@@ -459,7 +457,7 @@ void statlist_add( const CHR_REF by_reference character )
 {
     /// @details ZZ@> This function adds a status display to the do list
 
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( StatusList_count >= MAXSTAT ) return;
 
@@ -527,24 +525,24 @@ void statlist_sort()
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_set_frame( const CHR_REF by_reference character, int action, int frame, int lip )
+void ego_chr::set_frame( const CHR_REF by_reference character, int action, int frame, int lip )
 {
     /// @details ZZ@> This function sets the frame for a character explicitly...  This is used to
     ///    rotate Tank turrets
 
-    chr_t * pchr;
-    mad_t * pmad;
+    ego_chr * pchr;
+    ego_mad * pmad;
     int frame_stt, frame_nxt;
 
     if ( !INGAME_CHR( character ) ) return;
     pchr = ChrList.lst + character;
 
-    pmad = chr_get_pmad( character );
+    pmad = ego_chr::get_pmad( character );
     if ( NULL == pmad ) return;
 
-    action = mad_get_action( chr_get_imad( character ), action );
+    action = mad_get_action( ego_chr::get_imad( character ), action );
 
-    if ( rv_success == chr_set_action( pchr, action, btrue, btrue ) )
+    if ( rv_success == ego_chr::set_action( pchr, action, btrue, btrue ) )
     {
         frame_stt = pmad->action_stt[action] + frame;
         frame_stt = MIN( frame_stt, pmad->action_end[action] - 1 );
@@ -712,7 +710,7 @@ int update_game()
         for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
         {
             CHR_REF ichr;
-            chr_t * pchr;
+            ego_chr * pchr;
             player_t * ppla;
 
             // ignore ivalid players
@@ -765,7 +763,7 @@ int update_game()
                     local_stats.daze_level += pchr->dazetime;
                 }
 
-                local_stats.listen_level = MAX( local_stats.listen_level, chr_get_skill( pchr, MAKE_IDSZ( 'L', 'I', 'S', 'T' ) ) );
+                local_stats.listen_level = MAX( local_stats.listen_level, ego_chr::get_skill( pchr, MAKE_IDSZ( 'L', 'I', 'S', 'T' ) ) );
             }
             else
             {
@@ -790,7 +788,7 @@ int update_game()
         for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
         {
             CHR_REF ichr;
-            chr_t * pchr;
+            ego_chr * pchr;
 
             player_t * ppla = PlaStack.lst + ipla;
             if ( !ppla->valid ) continue;
@@ -861,7 +859,7 @@ int update_game()
                 //---- begin the code for updating in-game objects
                 initialize_all_objects();
                 {
-                    bump_all_objects( &obj_BSP_root );    // do the interactions
+                    bump_all_objects( &ego_obj_BSP::root );    // do the interactions
                     move_all_objects();                   // this function may clear some latches
                 }
                 finalize_all_objects();
@@ -870,7 +868,7 @@ int update_game()
                 game_update_timers();
 
                 // put the camera movement inside here
-                camera_move( PCamera, PMesh );
+                ego_camera::move( PCamera, PMesh );
 
                 // Timers
                 clock_wld += UPDATE_SKIP;
@@ -933,7 +931,7 @@ void game_update_timers()
     ticks_now  = egoboo_get_ticks();
 
     // check to make sure that the game is running
-    if ( !process_running( PROC_PBASE( GProc ) ) || GProc->mod_paused )
+    if ( !ego_process::running( PROC_PBASE( GProc ) ) || GProc->mod_paused )
     {
         // for a local game, force the function to ignore the accumulation of time
         // until you re-join the game
@@ -1034,7 +1032,7 @@ void reset_timers()
 }
 
 //--------------------------------------------------------------------------------------------
-int game_do_menu( menu_process_t * mproc )
+int game_do_menu( ego_menu_process * mproc )
 {
     /// @details BB@> do menus
 
@@ -1049,9 +1047,9 @@ int game_do_menu( menu_process_t * mproc )
         need_menu = btrue;
 
         // force the menu to be displayed immediately when the game stops
-        mproc->base.dtime = 1.0f / ( float )cfg.framelimit;
+        mproc->dtime = 1.0f / ( float )cfg.framelimit;
     }
-    else if ( !process_running( PROC_PBASE( GProc ) ) )
+    else if ( !ego_process::running( PROC_PBASE( GProc ) ) )
     {
         // the menu's frame rate is controlled by a timer
         mproc->ticks_now = SDL_GetTicks();
@@ -1062,16 +1060,16 @@ int game_do_menu( menu_process_t * mproc )
             mproc->ticks_next = mproc->ticks_now + frameskip;
 
             need_menu = btrue;
-            mproc->base.dtime = 1.0f / ( float )cfg.framelimit;
+            mproc->dtime = 1.0f / ( float )cfg.framelimit;
         }
     }
 
     menuResult = 0;
     if ( need_menu )
     {
-        ui_beginFrame( mproc->base.dtime );
+        ui_beginFrame( mproc->dtime );
         {
-            menuResult = doMenu( mproc->base.dtime );
+            menuResult = doMenu( mproc->dtime );
             request_flip_pages();
         }
         ui_endFrame();
@@ -1082,7 +1080,7 @@ int game_do_menu( menu_process_t * mproc )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int do_game_proc_beginning( game_process_t * gproc )
+int do_game_proc_beginning( ego_game_process * gproc )
 {
     BillboardList_init_all();
 
@@ -1112,18 +1110,18 @@ int do_game_proc_beginning( game_process_t * gproc )
     // do some graphics initialization
     // make_lightdirectionlookup();
     make_enviro();
-    camera_ctor( PCamera );
+    ego_camera::ctor( PCamera );
 
     // try to start a new module
     if ( !game_begin_module( pickedmodule_path, ( Uint32 )~0 ) )
     {
         // failure - kill the game process
-        process_kill( PROC_PBASE( gproc ) );
-        process_resume( PROC_PBASE( MProc ) );
+        ego_process::kill( PROC_PBASE( gproc ) );
+        ego_process::resume( PROC_PBASE( MProc ) );
     }
 
     // Initialize the process
-    gproc->base.valid = btrue;
+    gproc->valid = btrue;
 
     // initialize all the profile variables
     PROFILE_RESET( game_update_loop );
@@ -1159,21 +1157,21 @@ int do_game_proc_beginning( game_process_t * gproc )
     est_update_game_time  = 1.0f / TARGET_UPS;
     est_max_game_ups      = TARGET_UPS;
 
-    obj_BSP_ctor( &obj_BSP_root, &mesh_BSP_root );
+    ego_obj_BSP::ctor( &ego_obj_BSP::root, &mpd_BSP::root );
 
     return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-int do_game_proc_running( game_process_t * gproc )
+int do_game_proc_running( ego_game_process * gproc )
 {
     int update_loops = 0;
 
-    if ( !process_validate( PROC_PBASE( gproc ) ) ) return -1;
+    if ( !ego_process::validate( PROC_PBASE( gproc ) ) ) return -1;
 
-    gproc->was_active  = gproc->base.valid;
+    gproc->was_active  = gproc->valid;
 
-    if ( gproc->base.paused ) return 0;
+    if ( gproc->paused ) return 0;
 
     gproc->ups_ticks_now = SDL_GetTicks();
     if (( !single_frame_mode && gproc->ups_ticks_now > gproc->ups_ticks_next ) || ( single_frame_mode && single_update_requested ) )
@@ -1321,15 +1319,15 @@ int do_game_proc_running( game_process_t * gproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_game_proc_leaving( game_process_t * gproc )
+int do_game_proc_leaving( ego_game_process * gproc )
 {
-    if ( !process_validate( PROC_PBASE( gproc ) ) ) return -1;
+    if ( !ego_process::validate( PROC_PBASE( gproc ) ) ) return -1;
 
     // get rid of all module data
     game_quit_module();
 
     // resume the menu
-    process_resume( PROC_PBASE( MProc ) );
+    ego_process::resume( PROC_PBASE( MProc ) );
 
     // deallocate any dynamically allocated collision memory
     collision_system_end();
@@ -1364,35 +1362,35 @@ int do_game_proc_leaving( game_process_t * gproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int do_game_proc_run( game_process_t * gproc, double frameDuration )
+int do_game_proc_run( ego_game_process * gproc, double frameDuration )
 {
     int result = 0, proc_result = 0;
 
-    if ( !process_validate( PROC_PBASE( gproc ) ) ) return -1;
-    gproc->base.dtime = frameDuration;
+    if ( !ego_process::validate( PROC_PBASE( gproc ) ) ) return -1;
+    gproc->dtime = frameDuration;
 
-    if ( gproc->base.paused ) return 0;
+    if ( gproc->paused ) return 0;
 
-    if ( gproc->base.killme )
+    if ( gproc->killme )
     {
-        gproc->base.state = proc_leaving;
+        gproc->state = proc_leaving;
     }
 
-    switch ( gproc->base.state )
+    switch ( gproc->state )
     {
         case proc_beginning:
             proc_result = do_game_proc_beginning( gproc );
 
             if ( 1 == proc_result )
             {
-                gproc->base.state = proc_entering;
+                gproc->state = proc_entering;
             }
             break;
 
         case proc_entering:
             // proc_result = do_game_proc_entering( gproc );
 
-            gproc->base.state = proc_running;
+            gproc->state = proc_running;
             break;
 
         case proc_running:
@@ -1400,7 +1398,7 @@ int do_game_proc_run( game_process_t * gproc, double frameDuration )
 
             if ( 1 == proc_result )
             {
-                gproc->base.state = proc_leaving;
+                gproc->state = proc_leaving;
             }
             break;
 
@@ -1409,14 +1407,14 @@ int do_game_proc_run( game_process_t * gproc, double frameDuration )
 
             if ( 1 == proc_result )
             {
-                gproc->base.state  = proc_finishing;
-                gproc->base.killme = bfalse;
+                gproc->state  = proc_finishing;
+                gproc->killme = bfalse;
             }
             break;
 
         case proc_finishing:
-            process_terminate( PROC_PBASE( gproc ) );
-            process_resume( PROC_PBASE( MProc ) );
+            ego_process::terminate( PROC_PBASE( gproc ) );
+            ego_process::resume( PROC_PBASE( MProc ) );
             break;
     }
 
@@ -1432,7 +1430,7 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
 
     const float max_dist2 = WIDE * WIDE;
 
-    pip_t * ppip;
+    ego_pip * ppip;
 
     CHR_REF besttarget = ( CHR_REF )MAX_CHR;
     float  longdist2 = max_dist2;
@@ -1460,8 +1458,8 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
         // Don't retarget someone we already had or not supposed to target
         if ( cnt == oldtarget || cnt == donttarget ) continue;
 
-        target_friend = ppip->onlydamagefriendly && team == chr_get_iteam( cnt );
-        target_enemy  = !ppip->onlydamagefriendly && team_hates_team( team, chr_get_iteam( cnt ) );
+        target_friend = ppip->onlydamagefriendly && team == ego_chr::get_iteam( cnt );
+        target_enemy  = !ppip->onlydamagefriendly && team_hates_team( team, ego_chr::get_iteam( cnt ) );
 
         if ( target_friend || target_enemy )
         {
@@ -1491,13 +1489,13 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ idsz, BIT_FIELD targeting_bits )
+bool_t check_target( ego_chr * psrc, const CHR_REF by_reference ichr_test, IDSZ idsz, BIT_FIELD targeting_bits )
 {
     bool_t retval = bfalse;
 
     bool_t is_hated, hates_me;
     bool_t is_friend, is_prey, is_predator, is_mutual;
-    chr_t * ptst;
+    ego_chr * ptst;
 
     // Skip non-existing objects
     if ( !ACTIVE_PCHR( psrc ) ) return bfalse;
@@ -1527,7 +1525,7 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
     if ( !chr_can_see_object( GET_REF_PCHR( psrc ), ichr_test ) ) return bfalse;
 
     // Need specific skill? ([NONE] always passes)
-    if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != chr_get_skill( ptst, idsz ) ) return bfalse;
+    if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != ego_chr::get_skill( ptst, idsz ) ) return bfalse;
 
     // Require player to have specific quest?
     if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && VALID_PLA( ptst->is_which_player ) )
@@ -1588,7 +1586,7 @@ bool_t check_target( chr_t * psrc, const CHR_REF by_reference ichr_test, IDSZ id
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits )
+CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits )
 {
     /// @details ZF@> This is the new improved AI targeting system. Also includes distance in the Z direction.
     ///     If max_dist is 0 then it searches without a max limit.
@@ -1643,7 +1641,7 @@ CHR_REF chr_find_target( chr_t * psrc, float max_dist, IDSZ idsz, BIT_FIELD targ
     {
         float  dist2;
         fvec3_t   diff;
-        chr_t * ptst;
+        ego_chr * ptst;
         CHR_REF ichr_test = search_list[cnt];
 
         if ( !INGAME_CHR( ichr_test ) ) continue;
@@ -1686,8 +1684,8 @@ void do_damage_tiles()
 
     CHR_BEGIN_LOOP_ACTIVE( character, pchr )
     {
-        cap_t * pcap;
-        chr_t * pchr;
+        ego_cap * pcap;
+        ego_chr * pchr;
 
         if ( !INGAME_CHR( character ) ) continue;
         pchr = ChrList.lst + character;
@@ -1832,7 +1830,7 @@ void update_pits()
                         }
 
                         // Do some damage (same as damage tile)
-                        damage_character( ichr, ATK_BEHIND, damagetile.amount, damagetile.type, ( TEAM_REF )TEAM_DAMAGE, chr_get_pai( ichr )->bumplast, DAMFX_NBLOC | DAMFX_ARMO, bfalse );
+                        damage_character( ichr, ATK_BEHIND, damagetile.amount, damagetile.type, ( TEAM_REF )TEAM_DAMAGE, ego_chr::get_pai( ichr )->bumplast, DAMFX_NBLOC | DAMFX_ARMO, bfalse );
                     }
                 }
             }
@@ -1863,7 +1861,7 @@ void do_weather_spawn_particles()
         int        cnt;
         PLA_REF    weather_ipla = MAX_PLAYER;
         player_t * weather_ppla = NULL;
-        chr_t    * weather_pchr = NULL;
+        ego_chr    * weather_pchr = NULL;
         PRT_REF    weather_iprt = TOTAL_MAX_PRT;
 
         if ( !VALID_PLA( weather.iplayer ) )
@@ -1878,7 +1876,7 @@ void do_weather_spawn_particles()
         for ( cnt = 0; cnt < MAX_PLAYER; cnt++ )
         {
             player_t * tmp_ppla = NULL;
-            chr_t    * tmp_pchr = NULL;
+            ego_chr    * tmp_pchr = NULL;
 
             weather_ipla = ( PLA_REF )(( REF_TO_INT( weather_ipla ) + 1 ) % MAX_PLAYER );
 
@@ -1911,7 +1909,7 @@ void do_weather_spawn_particles()
         // is the particle valid?
         if ( VALID_PRT( weather_iprt ) )
         {
-            prt_t * pprt = PrtList.lst + weather_iprt;
+            ego_prt * pprt = PrtList.lst + weather_iprt;
 
             bool_t destroy_particle = bfalse;
 
@@ -1957,7 +1955,7 @@ void set_one_player_latch( const PLA_REF by_reference player )
     fvec3_t       vcam_fwd, vcam_rgt;
     latch_input_t sum;
 
-    chr_t          * pchr;
+    ego_chr          * pchr;
     player_t       * ppla;
     input_device_t * pdevice;
 
@@ -2032,7 +2030,7 @@ void set_one_player_latch( const PLA_REF by_reference player )
                      1 == local_numlpla &&
                      control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) == 0 )  joy_latch.dir[kX] = 0;
 
-                joy_latch = chr_convert_latch_2d( pchr, joy_latch );
+                joy_latch = ego_chr::convert_latch_2d( pchr, joy_latch );
 
                 joy_latch_trans.x = joy_latch.dir[kX] * vcam_rgt.x + joy_latch.dir[kY] * vcam_fwd.x;
                 joy_latch_trans.y = joy_latch.dir[kX] * vcam_rgt.y + joy_latch.dir[kY] * vcam_fwd.y;
@@ -2091,7 +2089,7 @@ void set_one_player_latch( const PLA_REF by_reference player )
                  1 == local_numlpla &&
                  !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
 
-            joy_latch = chr_convert_latch_2d( pchr, joy_latch );
+            joy_latch = ego_chr::convert_latch_2d( pchr, joy_latch );
 
             joy_latch_trans.x = joy_latch.dir[kX] * vcam_rgt.x + joy_latch.dir[kY] * vcam_fwd.x;
             joy_latch_trans.y = joy_latch.dir[kX] * vcam_rgt.y + joy_latch.dir[kY] * vcam_fwd.y;
@@ -2149,7 +2147,7 @@ void set_one_player_latch( const PLA_REF by_reference player )
                  1 == local_numlpla &&
                  !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
 
-            joy_latch = chr_convert_latch_2d( pchr, joy_latch );
+            joy_latch = ego_chr::convert_latch_2d( pchr, joy_latch );
 
             joy_latch_trans.x = joy_latch.dir[kX] * vcam_rgt.x + joy_latch.dir[kY] * vcam_fwd.x;
             joy_latch_trans.y = joy_latch.dir[kX] * vcam_rgt.y + joy_latch.dir[kY] * vcam_fwd.y;
@@ -2198,7 +2196,7 @@ void set_one_player_latch( const PLA_REF by_reference player )
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
                  1 == local_numlpla )  joy_latch.dir[kX] = 0;
 
-            joy_latch = chr_convert_latch_2d( pchr, joy_latch );
+            joy_latch = ego_chr::convert_latch_2d( pchr, joy_latch );
 
             joy_latch_trans.x = joy_latch.dir[kX] * vcam_rgt.x + joy_latch.dir[kY] * vcam_fwd.x;
             joy_latch_trans.y = joy_latch.dir[kX] * vcam_rgt.y + joy_latch.dir[kY] * vcam_fwd.y;
@@ -2281,8 +2279,8 @@ void check_stats()
             if ( INGAME_CHR( ppla->index ) )
             {
                 Uint32  xpgain;
-                chr_t * pchr = ChrList.lst + ppla->index;
-                cap_t * pcap = pro_get_pcap( pchr->profile_ref );
+                ego_chr * pchr = ChrList.lst + ppla->index;
+                ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
                 // Give 10% of XP needed for next level
                 xpgain = 0.1f * ( pcap->experience_forlevel[MIN( pchr->experiencelevel+1, MAXLEVEL )] - pcap->experience_forlevel[pchr->experiencelevel] );
@@ -2384,13 +2382,13 @@ void show_stat( int statindex )
 
         if ( INGAME_CHR( character ) )
         {
-            cap_t * pcap;
-            chr_t * pchr = ChrList.lst + character;
+            ego_cap * pcap;
+            ego_chr * pchr = ChrList.lst + character;
 
             pcap = pro_get_pcap( pchr->profile_ref );
 
             // Name
-            debug_printf( "=%s=", chr_get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_CAPITAL ) );
+            debug_printf( "=%s=", ego_chr::get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_CAPITAL ) );
 
             // Level and gender and class
             gender[0] = 0;
@@ -2399,7 +2397,7 @@ void show_stat( int statindex )
                 int itmp;
                 const char * gender_str;
 
-                gender_str = chr_get_gender_name( character, NULL, 0 );
+                gender_str = ego_chr::get_gender_name( character, NULL, 0 );
 
                 level = 1 + pchr->experiencelevel;
                 itmp = level % 10;
@@ -2442,8 +2440,8 @@ void show_armor( int statindex )
 
     Uint8  skinlevel;
 
-    cap_t * pcap;
-    chr_t * pchr;
+    ego_cap * pcap;
+    ego_chr * pchr;
 
     if ( statindex >= StatusList_count ) return;
 
@@ -2453,7 +2451,7 @@ void show_armor( int statindex )
     pchr = ChrList.lst + ichr;
     skinlevel = pchr->skin;
 
-    pcap = chr_get_pcap( ichr );
+    pcap = ego_chr::get_pcap( ichr );
     if ( NULL == pcap ) return;
 
     // Armor Name
@@ -2489,7 +2487,7 @@ void show_armor( int statindex )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t get_chr_regeneration( chr_t * pchr, int * pliferegen, int * pmanaregen )
+bool_t get_chr_regeneration( ego_chr * pchr, int * pliferegen, int * pmanaregen )
 {
     /// @details ZF@> Get a character's life and mana regeneration, considering all sources
 
@@ -2533,7 +2531,7 @@ void show_full_status( int statindex )
 
     CHR_REF character;
     int manaregen, liferegen;
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( statindex >= StatusList_count ) return;
 
@@ -2545,7 +2543,7 @@ void show_full_status( int statindex )
     cleanup_character_enchants( pchr );
 
     // Enchanted?
-    debug_printf( "=%s is %s=", chr_get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ), INGAME_ENC( pchr->firstenchant ) ? "enchanted" : "unenchanted" );
+    debug_printf( "=%s is %s=", ego_chr::get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ), INGAME_ENC( pchr->firstenchant ) ? "enchanted" : "unenchanted" );
 
     // Armor Stats
     debug_printf( "~DEF: %d  SLASH:%3d~CRUSH:%3d POKE:%3d",
@@ -2573,7 +2571,7 @@ void show_magic_status( int statindex )
 
     CHR_REF character;
     const char * missile_str;
-    chr_t * pchr;
+    ego_chr * pchr;
 
     if ( statindex >= StatusList_count ) return;
 
@@ -2586,7 +2584,7 @@ void show_magic_status( int statindex )
     cleanup_character_enchants( pchr );
 
     // Enchanted?
-    debug_printf( "=%s is %s=", chr_get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ), INGAME_ENC( pchr->firstenchant ) ? "enchanted" : "unenchanted" );
+    debug_printf( "=%s is %s=", ego_chr::get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ), INGAME_ENC( pchr->firstenchant ) ? "enchanted" : "unenchanted" );
 
     // Enchantment status
     debug_printf( "~See Invisible: %s~~See Kurses: %s",
@@ -2745,8 +2743,8 @@ void game_load_all_profiles( const char *modname )
 //--------------------------------------------------------------------------------------------
 bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinfo )
 {
-    chr_t * pchr, *pparent;
-    ai_state_bundle_t tmp_bdl_ai;
+    ego_chr * pchr, *pparent;
+    ego_ai_bundle tmp_bdl_ai;
 
     // trap bad pointers
     if ( NULL == pinfo ) return bfalse;
@@ -2772,7 +2770,7 @@ bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinf
         ADD_BITS( pchr->ai.alert, ALERTIF_GRABBED );  // Make spellbooks change
         pchr->attachedto = pinfo->parent;  // Make grab work
 
-        scr_run_chr_script( ai_state_bundle_set( &tmp_bdl_ai, pchr ) );  // Empty the grabbed messages
+        scr_run_chr_script( ego_ai_bundle::set( &tmp_bdl_ai, pchr ) );  // Empty the grabbed messages
 
         pchr->attachedto = ( CHR_REF )MAX_CHR;  // Fix grab
 
@@ -2784,7 +2782,7 @@ bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinf
         attach_character_to_mount( ichr, pinfo->parent, grip_off );
 
         // Handle the "grabbed" messages
-        scr_run_chr_script( ai_state_bundle_set( &tmp_bdl_ai, pchr ) );
+        scr_run_chr_script( ego_ai_bundle::set( &tmp_bdl_ai, pchr ) );
     }
 
     // Set the starting pinfo->level
@@ -2800,7 +2798,7 @@ bool_t chr_setup_apply( const CHR_REF by_reference ichr, spawn_file_info_t *pinf
     // automatically identify and unkurse all player starting equipment? I think yes.
     if ( start_new_player && NULL != pparent && VALID_PLA( pparent->is_which_player ) )
     {
-        chr_t *pitem;
+        ego_chr *pitem;
         pchr->nameknown = btrue;
 
         // Unkurse both inhand items
@@ -2885,7 +2883,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
 {
     int     tnc, local_index = 0;
     CHR_REF new_object;
-    chr_t * pobject;
+    ego_chr * pobject;
     PRO_REF iprofile;
 
     if ( NULL == psp_info || !psp_info->do_spawn || psp_info->slot < 0 ) return bfalse;
@@ -3267,8 +3265,8 @@ int reaffirm_attached_particles( const CHR_REF by_reference character )
     int     number_added, number_attached;
     int     amount, attempts;
     PRT_REF particle;
-    chr_t * pchr;
-    cap_t * pcap;
+    ego_chr * pchr;
+    ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return 0;
     pchr = ChrList.lst + character;
@@ -3285,10 +3283,10 @@ int reaffirm_attached_particles( const CHR_REF by_reference character )
     number_added = 0;
     for ( attempts = 0; attempts < amount && number_attached < amount; attempts++ )
     {
-        particle = spawn_one_particle( pchr->pos, 0, pchr->profile_ref, pcap->attachedprt_pip, character, GRIP_LAST + number_attached, chr_get_iteam( character ), character, ( PRT_REF )TOTAL_MAX_PRT, number_attached, ( CHR_REF )MAX_CHR );
+        particle = spawn_one_particle( pchr->pos, 0, pchr->profile_ref, pcap->attachedprt_pip, character, GRIP_LAST + number_attached, ego_chr::get_iteam( character ), character, ( PRT_REF )TOTAL_MAX_PRT, number_attached, ( CHR_REF )MAX_CHR );
         if ( VALID_PRT( particle ) )
         {
-            prt_t * pprt = PrtList.lst + particle;
+            ego_prt * pprt = PrtList.lst + particle;
 
             pprt = place_particle_at_vertex( pprt, character, pprt->attachedto_vrt_off );
             if ( NULL == pprt ) continue;
@@ -3460,7 +3458,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
     initialize_all_objects();
     cursor_reset();
     game_module_reset( PMod, seed );
-    camera_reset( PCamera, PMesh );
+    ego_camera::reset( PCamera, PMesh );
     make_all_character_matrices( update_wld != 0 );
     attach_all_particles();
 
@@ -3570,7 +3568,7 @@ void game_release_module_data()
 {
     /// @details ZZ@> This function frees up memory used by the module
 
-    ego_mpd_t * ptmp;
+    ego_mpd   * ptmp;
 
     // make sure that the object lists are cleared out
     free_all_objects();
@@ -3586,15 +3584,15 @@ void game_release_module_data()
     ptmp = PMesh;
     mesh_destroy( &ptmp );
 
-    // restore the original statically allocated ego_mpd_t header
+    // restore the original statically allocated ego_mpd   header
     PMesh = _mesh + 0;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t attach_one_particle( prt_bundle_t * pbdl_prt )
+bool_t attach_one_particle( ego_prt_bundle * pbdl_prt )
 {
-    prt_t * pprt;
-    chr_t * pchr;
+    ego_prt * pprt;
+    ego_chr * pchr;
 
     if ( NULL == pbdl_prt ) return bfalse;
     pprt = pbdl_prt->prt_ptr;
@@ -3637,7 +3635,7 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
     /// @details ZZ@> This function adds a player, returning bfalse if it fails, btrue otherwise
 
     player_t * ppla = NULL;
-    chr_t    * pchr = NULL;
+    ego_chr    * pchr = NULL;
 
     if ( !VALID_PLA_RANGE( player ) ) return bfalse;
     ppla = PlaStack.lst + player;
@@ -3655,10 +3653,10 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
     pchr->is_which_player = player;
 
     // download the quest info
-    quest_log_download_vfs( ppla->quest_log, SDL_arraysize( ppla->quest_log ), chr_get_dir_name( character ) );
+    quest_log_download_vfs( ppla->quest_log, SDL_arraysize( ppla->quest_log ), ego_chr::get_dir_name( character ) );
 
     //---- skeleton for using a ConfigFile to save quests
-    // ppla->quest_file = quest_file_open( chr_get_dir_name(character) );
+    // ppla->quest_file = quest_file_open( ego_chr::get_dir_name(character) );
 
     ppla->index       = character;
     ppla->valid       = btrue;
@@ -3671,7 +3669,7 @@ bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_refere
         local_numlpla++;
 
         // reset the camera
-        camera_reset_target( PCamera, PMesh );
+        ego_camera::reset_target( PCamera, PMesh );
     }
 
     PlaStack.count++;
@@ -3694,14 +3692,14 @@ void let_all_characters_think()
 
     CHR_BEGIN_LOOP_ACTIVE( character, pchr )
     {
-        cap_t * pcap;
-        ai_state_t * pself;
+        ego_cap * pcap;
+        ego_ai_state * pself;
 
-        ai_state_bundle_t bdl_ai;
+        ego_ai_bundle bdl_ai;
 
         bool_t is_crushed, is_cleanedup, gained_level, can_think;
 
-        if ( NULL == ai_state_bundle_set( &bdl_ai, pchr ) ) continue;
+        if ( NULL == ego_ai_bundle::set( &bdl_ai, pchr ) ) continue;
 
         // use some aliases to ease the notation
         pcap  = bdl_ai.cap_ptr;
@@ -3737,31 +3735,31 @@ void let_all_characters_think()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_begin_menu( menu_process_t * mproc, which_menu_t which )
+bool_t game_begin_menu( ego_menu_process * mproc, which_menu_t which )
 {
     if ( NULL == mproc ) return bfalse;
 
-    if ( !process_running( PROC_PBASE( mproc ) ) )
+    if ( !ego_process::running( PROC_PBASE( mproc ) ) )
     {
         GProc->menu_depth = mnu_get_menu_depth();
     }
 
     if ( mnu_begin_menu( which ) )
     {
-        process_start( PROC_PBASE( mproc ) );
+        ego_process::start( PROC_PBASE( mproc ) );
     }
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-void game_end_menu( menu_process_t * mproc )
+void game_end_menu( ego_menu_process * mproc )
 {
     mnu_end_menu();
 
     if ( mnu_get_menu_depth() <= GProc->menu_depth )
     {
-        process_resume( PROC_PBASE( MProc ) );
+        ego_process::resume( PROC_PBASE( MProc ) );
         GProc->menu_depth = -1;
     }
 }
@@ -3792,9 +3790,9 @@ void free_all_objects( void )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mpd_t * set_PMesh( ego_mpd_t * pmpd )
+ego_mpd   * set_PMesh( ego_mpd   * pmpd )
 {
-    ego_mpd_t * pmpd_old = PMesh;
+    ego_mpd   * pmpd_old = PMesh;
 
     PMesh = pmpd;
 
@@ -3802,9 +3800,9 @@ ego_mpd_t * set_PMesh( ego_mpd_t * pmpd )
 }
 
 //--------------------------------------------------------------------------------------------
-camera_t * set_PCamera( camera_t * pcam )
+ego_camera * set_PCamera( ego_camera * pcam )
 {
-    camera_t * pcam_old = PCamera;
+    ego_camera * pcam_old = PCamera;
 
     PCamera = pcam;
 
@@ -3818,7 +3816,7 @@ camera_t * set_PCamera( camera_t * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-float get_mesh_level( ego_mpd_t * pmesh, float x, float y, bool_t waterwalk )
+float get_mesh_level( ego_mpd   * pmesh, float x, float y, bool_t waterwalk )
 {
     /// @details ZZ@> This function returns the height of a point within a mesh fan, precise
     ///    If waterwalk is nonzero and the fan is watery, then the level returned is the
@@ -3842,7 +3840,7 @@ float get_mesh_level( ego_mpd_t * pmesh, float x, float y, bool_t waterwalk )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t make_water( water_instance_t * pinst, wawalite_water_t * pdata )
+bool_t make_water( ego_water_instance * pinst, wawalite_water_t * pdata )
 {
     /// @details ZZ@> This function sets up water movements
 
@@ -3923,27 +3921,27 @@ void reset_end_text()
 }
 
 //--------------------------------------------------------------------------------------------
-void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * pstate, char * src, char * src_end, char * dst, char * dst_end )
+void expand_escape_codes( const CHR_REF by_reference ichr, ego_script_state * pstate, char * src, char * src_end, char * dst, char * dst_end )
 {
     int    cnt;
     STRING szTmp;
 
-    chr_t      * pchr, *ptarget, *powner;
-    cap_t      * pchr_cap, *ptarget_cap, *powner_cap;
+    ego_chr      * pchr, *ptarget, *powner;
+    ego_cap      * pchr_cap, *ptarget_cap, *powner_cap;
     CHR_REF      itarget, iowner;
-    ai_state_t * pchr_ai;
+    ego_ai_state * pchr_ai;
 
     pchr     = !INGAME_CHR( ichr ) ? NULL : ChrList.lst + ichr;
     pchr_ai  = ( NULL == pchr )    ? NULL : &( pchr->ai );
-    pchr_cap = chr_get_pcap( ichr );
+    pchr_cap = ego_chr::get_pcap( ichr );
 
     itarget     = ( NULL == pchr_ai ) ? MAX_CHR : pchr_ai->target;
     ptarget     = !INGAME_CHR( itarget ) ? NULL : ChrList.lst + itarget;
-    ptarget_cap = chr_get_pcap( itarget );
+    ptarget_cap = ego_chr::get_pcap( itarget );
 
     iowner     = ( NULL == pchr_ai ) ? MAX_CHR : pchr_ai->owner;
     powner     = !INGAME_CHR( iowner ) ? NULL : ChrList.lst + iowner;
-    powner_cap = chr_get_pcap( iowner );
+    powner_cap = ego_chr::get_pcap( iowner );
 
     cnt = 0;
     while ( CSTR_END != *src && src < src_end && dst < dst_end )
@@ -3972,7 +3970,7 @@ void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * psta
 
                 case 'n' : // Name
                     {
-                        snprintf( szTmp, SDL_arraysize( szTmp ), "%s", chr_get_name( ichr, CHRNAME_ARTICLE ) );
+                        snprintf( szTmp, SDL_arraysize( szTmp ), "%s", ego_chr::get_name( ichr, CHRNAME_ARTICLE ) );
                     }
                     break;
 
@@ -3988,13 +3986,13 @@ void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * psta
 
                 case 't':  // Target name
                     {
-                        snprintf( szTmp, SDL_arraysize( szTmp ), "%s", chr_get_name( itarget, CHRNAME_ARTICLE ) );
+                        snprintf( szTmp, SDL_arraysize( szTmp ), "%s", ego_chr::get_name( itarget, CHRNAME_ARTICLE ) );
                     }
                     break;
 
                 case 'o':  // Owner name
                     {
-                        snprintf( szTmp, SDL_arraysize( szTmp ), "%s", chr_get_name( iowner, CHRNAME_ARTICLE ) );
+                        snprintf( szTmp, SDL_arraysize( szTmp ), "%s", ego_chr::get_name( iowner, CHRNAME_ARTICLE ) );
                     }
                     break;
 
@@ -4055,19 +4053,19 @@ void expand_escape_codes( const CHR_REF by_reference ichr, script_state_t * psta
 
                 case 'p':  // Character's possessive
                     {
-                        chr_get_gender_possessive( ichr, szTmp, SDL_arraysize( szTmp ) );
+                        ego_chr::get_gender_possessive( ichr, szTmp, SDL_arraysize( szTmp ) );
                     }
                     break;
 
                 case 'm':  // Character's gender
                     {
-                        chr_get_gender_name( ichr, szTmp, SDL_arraysize( szTmp ) );
+                        ego_chr::get_gender_name( ichr, szTmp, SDL_arraysize( szTmp ) );
                     }
                     break;
 
                 case 'g':  // Target's possessive
                     {
-                        chr_get_gender_possessive( itarget, szTmp, SDL_arraysize( szTmp ) );
+                        ego_chr::get_gender_possessive( itarget, szTmp, SDL_arraysize( szTmp ) );
                     }
                     break;
 
@@ -4193,13 +4191,13 @@ bool_t game_choose_module( int imod, int seed )
 }
 
 //--------------------------------------------------------------------------------------------
-game_process_t * game_process_init( game_process_t * gproc )
+ego_game_process * game_process_init( ego_game_process * gproc )
 {
     if ( NULL == gproc ) return NULL;
 
     memset( gproc, 0, sizeof( *gproc ) );
 
-    process_init( PROC_PBASE( gproc ) );
+    ego_process::init( PROC_PBASE( gproc ) );
 
     gproc->menu_depth = -1;
     gproc->pause_key_ready = btrue;
@@ -4234,7 +4232,7 @@ void do_game_hud()
             y = draw_string( 0, y, "estimated max FPS %2.3f", est_max_fps ); \
         }
 
-        y = draw_string( 0, y, "Menu time %f", MProc->base.dtime );
+        y = draw_string( 0, y, "Menu time %f", MProc->dtime );
     }
 }
 
@@ -4428,7 +4426,7 @@ void game_reset_players()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t upload_water_layer_data( water_instance_layer_t inst[], wawalite_water_layer_t data[], int layer_count )
+bool_t upload_water_layer_data( ego_water_layer_instance inst[], wawalite_water_layer_t data[], int layer_count )
 {
     int layer;
 
@@ -4467,7 +4465,7 @@ bool_t upload_water_layer_data( water_instance_layer_t inst[], wawalite_water_la
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t upload_water_data( water_instance_t * pinst, wawalite_water_t * pdata )
+bool_t upload_water_data( ego_water_instance * pinst, wawalite_water_t * pdata )
 {
     //int layer;
 
@@ -4522,7 +4520,7 @@ bool_t upload_water_data( water_instance_t * pinst, wawalite_water_t * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t upload_weather_data( weather_instance_t * pinst, wawalite_weather_t * pdata )
+bool_t upload_weather_data( ego_weather_instance * pinst, wawalite_weather_t * pdata )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -4546,7 +4544,7 @@ bool_t upload_weather_data( weather_instance_t * pinst, wawalite_weather_t * pda
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t upload_fog_data( fog_instance_t * pinst, wawalite_fog_t * pdata )
+bool_t upload_fog_data( ego_fog_instance * pinst, wawalite_fog_t * pdata )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -4574,7 +4572,7 @@ bool_t upload_fog_data( fog_instance_t * pinst, wawalite_fog_t * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t upload_damagetile_data( damagetile_instance_t * pinst, wawalite_damagetile_t * pdata )
+bool_t upload_damagetile_data( ego_damagetile_instance * pinst, wawalite_damagetile_t * pdata )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -4598,7 +4596,7 @@ bool_t upload_damagetile_data( damagetile_instance_t * pinst, wawalite_damagetil
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t upload_animtile_data( animtile_instance_t inst[], wawalite_animtile_t * pdata, size_t animtile_count )
+bool_t upload_animtile_data( ego_animtile_instance inst[], wawalite_animtile_t * pdata, size_t animtile_count )
 {
     Uint32 cnt;
 
@@ -4735,7 +4733,7 @@ void upload_wawalite()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_module_setup( game_module_t * pinst, mod_file_t * pdata, const char * loadname, Uint32 seed )
+bool_t game_module_setup( ego_game_module_data * pinst, mod_file_t * pdata, const char * loadname, Uint32 seed )
 {
     // Prepares a module to be played
     if ( NULL == pdata ) return bfalse;
@@ -4760,7 +4758,7 @@ bool_t game_module_setup( game_module_t * pinst, mod_file_t * pdata, const char 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_module_init( game_module_t * pinst )
+bool_t game_module_init( ego_game_module_data * pinst )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -4772,7 +4770,7 @@ bool_t game_module_init( game_module_t * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_module_reset( game_module_t * pinst, Uint32 seed )
+bool_t game_module_reset( ego_game_module_data * pinst, Uint32 seed )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -4784,7 +4782,7 @@ bool_t game_module_reset( game_module_t * pinst, Uint32 seed )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_module_start( game_module_t * pinst )
+bool_t game_module_start( ego_game_module_data * pinst )
 {
     /// @details BB@> Let the module go
 
@@ -4802,7 +4800,7 @@ bool_t game_module_start( game_module_t * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_module_stop( game_module_t * pinst )
+bool_t game_module_stop( ego_game_module_data * pinst )
 {
     /// @details BB@> stop the module
 
@@ -4961,7 +4959,7 @@ Uint8 get_local_light( int light )
 //--------------------------------------------------------------------------------------------
 bool_t do_shop_drop( const CHR_REF by_reference idropper, const CHR_REF by_reference iitem )
 {
-    chr_t * pdropper, * pitem;
+    ego_chr * pdropper, * pitem;
     bool_t inshop;
 
     if ( !INGAME_CHR( iitem ) ) return bfalse;
@@ -4982,16 +4980,16 @@ bool_t do_shop_drop( const CHR_REF by_reference idropper, const CHR_REF by_refer
         if ( INGAME_CHR( iowner ) )
         {
             int price;
-            chr_t * powner = ChrList.lst + iowner;
+            ego_chr * powner = ChrList.lst + iowner;
 
             inshop = btrue;
 
-            price = chr_get_price( iitem );
+            price = ego_chr::get_price( iitem );
 
             // Are they are trying to sell junk or quest items?
             if ( 0 == price )
             {
-                ai_add_order( &( powner->ai ), ( Uint32 ) price, SHOP_BUY );
+                ego_ai_state::add_order( &( powner->ai ), ( Uint32 ) price, SHOP_BUY );
             }
             else
             {
@@ -5001,7 +4999,7 @@ bool_t do_shop_drop( const CHR_REF by_reference idropper, const CHR_REF by_refer
                 powner->money -= price;
                 powner->money  = CLIP( powner->money, 0, MAXMONEY );
 
-                ai_add_order( &( powner->ai ), ( Uint32 ) price, SHOP_BUY );
+                ego_ai_state::add_order( &( powner->ai ), ( Uint32 ) price, SHOP_BUY );
             }
         }
     }
@@ -5015,7 +5013,7 @@ bool_t do_shop_buy( const CHR_REF by_reference ipicker, const CHR_REF by_referen
     bool_t can_grab, can_pay, in_shop;
     int price;
 
-    chr_t * ppicker, * pitem;
+    ego_chr * ppicker, * pitem;
 
     if ( !INGAME_CHR( iitem ) ) return bfalse;
     pitem = ChrList.lst + iitem;
@@ -5037,15 +5035,15 @@ bool_t do_shop_buy( const CHR_REF by_reference ipicker, const CHR_REF by_referen
         iowner = shop_get_owner( ix, iy );
         if ( INGAME_CHR( iowner ) )
         {
-            chr_t * powner = ChrList.lst + iowner;
+            ego_chr * powner = ChrList.lst + iowner;
 
             in_shop = btrue;
-            price   = chr_get_price( iitem );
+            price   = ego_chr::get_price( iitem );
 
             if ( ppicker->money >= price )
             {
                 // Okay to sell
-                ai_add_order( &( powner->ai ), ( Uint32 ) price, SHOP_SELL );
+                ego_ai_state::add_order( &( powner->ai ), ( Uint32 ) price, SHOP_SELL );
 
                 ppicker->money -= price;
                 ppicker->money  = CLIP( ppicker->money, 0, MAXMONEY );
@@ -5059,7 +5057,7 @@ bool_t do_shop_buy( const CHR_REF by_reference ipicker, const CHR_REF by_referen
             else
             {
                 // Don't allow purchase
-                ai_add_order( &( powner->ai ), price, SHOP_NOAFFORD );
+                ego_ai_state::add_order( &( powner->ai ), price, SHOP_NOAFFORD );
                 can_grab = bfalse;
                 can_pay  = bfalse;
             }
@@ -5074,16 +5072,16 @@ bool_t do_shop_buy( const CHR_REF by_reference ipicker, const CHR_REF by_referen
         {
             if( can_pay )
             {
-                debug_printf( "%s bought %s", chr_get_name( ipicker, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL), chr_get_name( iitem, CHRNAME_ARTICLE ) );
+                debug_printf( "%s bought %s", ego_chr::get_name( ipicker, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL), ego_chr::get_name( iitem, CHRNAME_ARTICLE ) );
             }
             else
             {
-                debug_printf( "%s can't afford %s", chr_get_name( ipicker, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL), chr_get_name( iitem, CHRNAME_ARTICLE ) );
+                debug_printf( "%s can't afford %s", ego_chr::get_name( ipicker, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL), ego_chr::get_name( iitem, CHRNAME_ARTICLE ) );
             }
         }
         else
         {
-            debug_printf( "%s picked up %s", chr_get_name( ipicker, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL), chr_get_name( iitem, CHRNAME_ARTICLE ) );
+            debug_printf( "%s picked up %s", ego_chr::get_name( ipicker, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL), ego_chr::get_name( iitem, CHRNAME_ARTICLE ) );
         }
     }*/
 
@@ -5097,7 +5095,7 @@ bool_t do_shop_steal( const CHR_REF by_reference ithief, const CHR_REF by_refere
 
     bool_t can_steal;
 
-    chr_t * pthief, * pitem;
+    ego_chr * pthief, * pitem;
 
     if ( !INGAME_CHR( iitem ) ) return bfalse;
     pitem = ChrList.lst + iitem;
@@ -5118,14 +5116,14 @@ bool_t do_shop_steal( const CHR_REF by_reference ithief, const CHR_REF by_refere
         {
             IPair  tmp_rand = {1, 100};
             Uint8  detection;
-            chr_t * powner = ChrList.lst + iowner;
+            ego_chr * powner = ChrList.lst + iowner;
 
             detection = generate_irand_pair( tmp_rand );
 
             can_steal = btrue;
             if ( chr_can_see_object( iowner, ithief ) || detection <= 5 || ( detection - ( pthief->dexterity >> 7 ) + ( powner->wisdom >> 7 ) ) > 50 )
             {
-                ai_add_order( &( powner->ai ), SHOP_STOLEN, SHOP_THEFT );
+                ego_ai_state::add_order( &( powner->ai ), SHOP_STOLEN, SHOP_THEFT );
                 powner->ai.target = ithief;
                 can_steal = bfalse;
             }
@@ -5140,7 +5138,7 @@ bool_t do_item_pickup( const CHR_REF by_reference ichr, const CHR_REF by_referen
 {
     bool_t can_grab;
     bool_t is_invis, can_steal, in_shop;
-    chr_t * pchr, * pitem;
+    ego_chr * pchr, * pitem;
     int ix, iy;
 
     // ?? lol what ??
@@ -5172,11 +5170,11 @@ bool_t do_item_pickup( const CHR_REF by_reference ichr, const CHR_REF by_referen
 
             if ( !can_grab )
             {
-                debug_printf( "%s was detected!!", chr_get_name( ichr, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ) );
+                debug_printf( "%s was detected!!", ego_chr::get_name( ichr, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ) );
             }
             else
             {
-                debug_printf( "%s stole %s", chr_get_name( ichr, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ), chr_get_name( iitem, CHRNAME_ARTICLE ) );
+                debug_printf( "%s stole %s", ego_chr::get_name( ichr, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ), ego_chr::get_name( iitem, CHRNAME_ARTICLE ) );
             }
         }
         else
@@ -5189,7 +5187,7 @@ bool_t do_item_pickup( const CHR_REF by_reference ichr, const CHR_REF by_referen
 }
 
 //--------------------------------------------------------------------------------------------
-float get_mesh_max_vertex_0( ego_mpd_t * pmesh, int grid_x, int grid_y, bool_t waterwalk )
+float get_mesh_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y, bool_t waterwalk )
 {
     float zdone = mesh_get_max_vertex_0( pmesh, grid_x, grid_y );
 
@@ -5207,7 +5205,7 @@ float get_mesh_max_vertex_0( ego_mpd_t * pmesh, int grid_x, int grid_y, bool_t w
 }
 
 //--------------------------------------------------------------------------------------------
-float get_mesh_max_vertex_1( ego_mpd_t * pmesh, int grid_x, int grid_y, oct_bb_t * pbump, bool_t waterwalk )
+float get_mesh_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, ego_oct_bb   * pbump, bool_t waterwalk )
 {
     float zdone = mesh_get_max_vertex_1( pmesh, grid_x, grid_y, pbump->mins[OCT_X], pbump->mins[OCT_Y], pbump->maxs[OCT_X], pbump->maxs[OCT_Y] );
 
@@ -5225,7 +5223,7 @@ float get_mesh_max_vertex_1( ego_mpd_t * pmesh, int grid_x, int grid_y, oct_bb_t
 }
 
 //--------------------------------------------------------------------------------------------
-float get_mesh_max_vertex_2( ego_mpd_t * pmesh, chr_t * pchr )
+float get_mesh_max_vertex_2( ego_mpd   * pmesh, ego_chr * pchr )
 {
     /// @details BB@> the object does not overlap a single grid corner. Check the 4 corners of the collision volume
 
@@ -5254,7 +5252,7 @@ float get_mesh_max_vertex_2( ego_mpd_t * pmesh, chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-float get_chr_level( ego_mpd_t * pmesh, chr_t * pchr )
+float get_chr_level( ego_mpd   * pmesh, ego_chr * pchr )
 {
     float zmax;
     int ix, ixmax, ixmin;
@@ -5264,7 +5262,7 @@ float get_chr_level( ego_mpd_t * pmesh, chr_t * pchr )
     int grid_vert_x[1024];
     int grid_vert_y[1024];
 
-    oct_bb_t bump;
+    ego_oct_bb   bump;
 
     if ( NULL == pmesh || !ACTIVE_PCHR( pchr ) ) return 0;
 
@@ -5356,7 +5354,7 @@ float get_chr_level( ego_mpd_t * pmesh, chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv move_water( water_instance_t * pwater )
+egoboo_rv move_water( ego_water_instance * pwater )
 {
     /// @details ZZ@> This function animates the water overlays
 
@@ -5366,7 +5364,7 @@ egoboo_rv move_water( water_instance_t * pwater )
 
     for ( layer = 0; layer < MAXWATERLAYER; layer++ )
     {
-        water_instance_layer_t * player = pwater->layer + layer;
+        ego_water_layer_instance * player = pwater->layer + layer;
 
         player->tx.x += player->tx_add.x;
         player->tx.y += player->tx_add.y;
@@ -5383,7 +5381,7 @@ egoboo_rv move_water( water_instance_t * pwater )
 }
 
 //--------------------------------------------------------------------------------------------
-void cleanup_character_enchants( chr_t * pchr )
+void cleanup_character_enchants( ego_chr * pchr )
 {
     if ( NULL == pchr ) return;
 

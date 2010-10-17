@@ -40,11 +40,11 @@ TX_REF           meshlasttexture = ( TX_REF )INVALID_TX_TEXTURE;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static bool_t animate_tile( ego_mpd_t * pmesh, Uint32 itile );
+static bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void animate_all_tiles( ego_mpd_t * pmesh )
+void animate_all_tiles( ego_mpd   * pmesh )
 {
     Uint32 cnt;
     Uint32 tile_count;
@@ -60,14 +60,14 @@ void animate_all_tiles( ego_mpd_t * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t animate_tile( ego_mpd_t * pmesh, Uint32 itile )
+bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
 {
     /// BB@> animate a given tile
 
     Uint16 basetile, image;
     Uint16 base_and, frame_and, frame_add;
     Uint8  type;
-    tile_mem_t  * ptmem;
+    ego_tile_mem  * ptmem;
     ego_tile_info_t * ptile;
 
     if ( NULL == pmesh ) return bfalse;
@@ -108,7 +108,7 @@ bool_t animate_tile( ego_mpd_t * pmesh, Uint32 itile )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_fan( ego_mpd_t * pmesh, Uint32 itile )
+void render_fan( ego_mpd   * pmesh, Uint32 itile )
 {
     /// @details ZZ@> This function draws a mesh itile
     /// Optimized to use gl*Pointer() and glArrayElement() for vertex presentation
@@ -120,7 +120,7 @@ void render_fan( ego_mpd_t * pmesh, Uint32 itile )
     Uint8  type;
     int    texture;
 
-    tile_mem_t  * ptmem;
+    ego_tile_mem  * ptmem;
     ego_tile_info_t * ptile;
 
     if ( NULL == pmesh ) return;
@@ -193,10 +193,10 @@ void render_fan( ego_mpd_t * pmesh, Uint32 itile )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_hmap_fan( ego_mpd_t * pmesh, Uint32 itile )
+void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
 {
     /// @details ZZ@> This function draws a mesh itile
-    GLvertex v[4];
+    ego_GLvertex v[4];
 
     int cnt, vertex;
     size_t badvertex;
@@ -204,11 +204,11 @@ void render_hmap_fan( ego_mpd_t * pmesh, Uint32 itile )
     Uint16 tile;
     Uint8  type, twist;
 
-    ego_mpd_info_t  * pinfo;
-    tile_mem_t      * ptmem;
+    ego_mpd_info  * pinfo;
+    ego_tile_mem      * ptmem;
     ego_tile_info_t * ptile;
-    grid_mem_t      * pgmem;
-    ego_grid_info_t * pgrid;
+    ego_grid_mem      * pgmem;
+    ego_grid_info * pgrid;
 
     if ( NULL == pmesh ) return;
     ptmem  = &( pmesh->tmem );
@@ -273,11 +273,11 @@ void render_hmap_fan( ego_mpd_t * pmesh, Uint32 itile )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_water_fan( ego_mpd_t * pmesh, Uint32 itile, Uint8 layer )
+void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
 {
     /// @details ZZ@> This function draws a water itile
 
-    GLvertex v[4];
+    ego_GLvertex v[4];
 
     int    cnt, tnc;
     size_t badvertex;
@@ -291,9 +291,9 @@ void render_water_fan( ego_mpd_t * pmesh, Uint32 itile, Uint8 layer )
     float x1, y1, fx_off[4], fy_off[4];
     float falpha;
 
-    ego_mpd_info_t * pinfo;
-    tile_mem_t     * ptmem;
-    grid_mem_t     * pgmem;
+    ego_mpd_info * pinfo;
+    ego_tile_mem     * ptmem;
+    ego_grid_mem     * pgmem;
     ego_tile_info_t    * ptile;
     oglx_texture_t   * ptex;
 

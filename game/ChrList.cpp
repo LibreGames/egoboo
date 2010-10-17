@@ -30,7 +30,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INSTANTIATE_LIST( ACCESS_TYPE_NONE, chr_t, ChrList, MAX_CHR );
+INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_chr, ChrList, MAX_CHR );
 
 static size_t  chr_termination_count = 0;
 static CHR_REF chr_termination_list[MAX_CHR];
@@ -70,13 +70,13 @@ void ChrList_init()
     for ( cnt = 0; cnt < MAX_CHR; cnt++ )
     {
         CHR_REF ichr = ( CHR_REF )(( MAX_CHR - 1 ) - cnt );
-        chr_t * pchr = ChrList.lst + ichr;
+        ego_chr * pchr = ChrList.lst + ichr;
 
         // blank out all the data, including the obj_base data
         memset( pchr, 0, sizeof( *pchr ) );
 
         // character "initializer"
-        ego_object_ctor( POBJ_GET_PBASE( pchr ), ichr );
+        ego_object::ctor( POBJ_GET_PBASE( pchr ), ichr );
 
         ChrList_add_free( ichr );
     }
@@ -89,7 +89,7 @@ void ChrList_dtor()
 
     for ( cnt = 0; cnt < MAX_CHR; cnt++ )
     {
-        chr_run_object_deconstruct( ChrList.lst + cnt, 100 );
+        ego_chr::run_object_deconstruct( ChrList.lst + cnt, 100 );
     }
 
     ChrList.free_count = 0;
@@ -205,8 +205,8 @@ egoboo_rv ChrList_free_one( const CHR_REF by_reference ichr )
     /// should be enough to ensure that no character is freed more than once
 
     egoboo_rv retval;
-    chr_t * pchr;
-    ego_object_base_t * pbase;
+    ego_chr * pchr;
+    ego_object * pbase;
 
     if ( !ALLOCATED_CHR( ichr ) ) return rv_fail;
     pchr = ChrList.lst + ichr;
@@ -227,7 +227,7 @@ egoboo_rv ChrList_free_one( const CHR_REF by_reference ichr )
     else
     {
         // deallocate any dynamically allocated memory
-        pchr = chr_run_object_deinitialize( pchr, 100 );
+        pchr = ego_chr::run_object_deinitialize( pchr, 100 );
         if ( NULL == pchr ) return rv_error;
 
         if ( pbase->lst_state.in_used_list )
@@ -245,7 +245,7 @@ egoboo_rv ChrList_free_one( const CHR_REF by_reference ichr )
         }
 
         // character "destructor"
-        pchr = chr_dtor( pchr );
+        pchr = ego_chr::dtor( pchr );
         if ( NULL == pchr ) return rv_error;
     }
 
@@ -536,7 +536,7 @@ CHR_REF ChrList_allocate( const CHR_REF by_reference override )
     if ( VALID_CHR( ichr ) )
     {
         // construct the new structure
-        chr_run_object_construct( ChrList.lst + ichr, 100 );
+        ego_chr::run_object_construct( ChrList.lst + ichr, 100 );
     }
 
     return ichr;
@@ -546,7 +546,7 @@ CHR_REF ChrList_allocate( const CHR_REF by_reference override )
 void ChrList_cleanup()
 {
     size_t  cnt;
-    chr_t * pchr;
+    ego_chr * pchr;
 
     // go through the list and activate all the characters that
     // were created while the list was iterating
@@ -557,7 +557,7 @@ void ChrList_cleanup()
         if ( !VALID_CHR( ichr ) ) continue;
         pchr = ChrList.lst + ichr;
 
-        ego_object_grant_on( POBJ_GET_PBASE( pchr ) );
+        ego_object::grant_on( POBJ_GET_PBASE( pchr ) );
     }
     chr_activation_count = 0;
 

@@ -28,17 +28,17 @@
 //--------------------------------------------------------------------------------------------
 
 INLINE PIP_REF  prt_get_ipip( const PRT_REF by_reference particle );
-INLINE pip_t  * prt_get_ppip( const PRT_REF by_reference particle );
+INLINE ego_pip  * prt_get_ppip( const PRT_REF by_reference particle );
 INLINE CHR_REF  prt_get_iowner( const PRT_REF by_reference iprt, int depth );
-INLINE bool_t   prt_set_size( prt_t *, int size );
-INLINE float    prt_get_scale( prt_t * pprt );
+INLINE bool_t   prt_set_size( ego_prt *, int size );
+INLINE float    prt_get_scale( ego_prt * pprt );
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
 INLINE PIP_REF prt_get_ipip( const PRT_REF by_reference iprt )
 {
-    prt_t * pprt;
+    ego_prt * pprt;
 
     if ( !DEFINED_PRT( iprt ) ) return ( PIP_REF )MAX_PIP;
     pprt = PrtList.lst + iprt;
@@ -49,9 +49,9 @@ INLINE PIP_REF prt_get_ipip( const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE pip_t * prt_get_ppip( const PRT_REF by_reference iprt )
+INLINE ego_pip * prt_get_ppip( const PRT_REF by_reference iprt )
 {
-    prt_t * pprt;
+    ego_prt * pprt;
 
     if ( !DEFINED_PRT( iprt ) ) return NULL;
     pprt = PrtList.lst + iprt;
@@ -62,9 +62,9 @@ INLINE pip_t * prt_get_ppip( const PRT_REF by_reference iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t prt_set_size( prt_t * pprt, int size )
+INLINE bool_t prt_set_size( ego_prt * pprt, int size )
 {
-    pip_t *ppip;
+    ego_pip *ppip;
 
     if ( !DEFINED_PPRT( pprt ) ) return bfalse;
 
@@ -139,7 +139,7 @@ INLINE CHR_REF prt_get_iowner( const PRT_REF by_reference iprt, int depth )
 
     CHR_REF iowner = ( CHR_REF )MAX_CHR;
 
-    prt_t * pprt;
+    ego_prt * pprt;
 
     // be careful because this can be recursive
     if ( depth > ( signed )maxparticles - ( signed )PrtList.free_count ) return ( CHR_REF )MAX_CHR;
@@ -190,7 +190,7 @@ INLINE CHR_REF prt_get_iowner( const PRT_REF by_reference iprt, int depth )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE float prt_get_scale( prt_t * pprt )
+INLINE float prt_get_scale( ego_prt * pprt )
 {
     /// @details BB@> get the scale factor between the "graphical size" of the particle and the actual
     ///               display size

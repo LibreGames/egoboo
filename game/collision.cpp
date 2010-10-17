@@ -48,11 +48,11 @@
 //--------------------------------------------------------------------------------------------
 
 /// data block used to communicate between the different "modules" governing the character-particle collision
-struct s_chr_prt_collsion_data
+struct chr_prt_collsion_data_t
 {
     // object parameters
-    cap_t * pcap;
-    pip_t * ppip;
+    ego_cap * pcap;
+    ego_pip * ppip;
 
     // collision parameters
     oct_vec_t odepth;
@@ -71,12 +71,10 @@ struct s_chr_prt_collsion_data
     bool_t  prt_damages_chr;
 };
 
-typedef struct s_chr_prt_collsion_data chr_prt_collsion_data_t;
-
 //--------------------------------------------------------------------------------------------
 
 /// one element of the data for partitioning character and particle positions
-struct s_bumplist
+struct bumplist_t
 {
     size_t   chrnum;                  // Number on the block
     CHR_REF  chr;                     // For character collisions
@@ -84,7 +82,6 @@ struct s_bumplist
     size_t   prtnum;                  // Number on the block
     CHR_REF  prt;                     // For particle collisions
 };
-typedef struct s_bumplist bumplist_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -100,13 +97,13 @@ static bool_t detect_chr_prt_interaction_valid( const CHR_REF by_reference ichr_
 static bool_t do_chr_platform_detection( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
 static bool_t do_prt_platform_detection( const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b );
 
-static bool_t attach_chr_to_platform( chr_t * pchr, chr_t * pplat );
-static bool_t attach_prt_to_platform( prt_t * pprt, chr_t * pplat );
+static bool_t attach_chr_to_platform( ego_chr * pchr, ego_chr * pplat );
+static bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat );
 
 static bool_t fill_interaction_list( CHashList_t * pclst, CoNode_ary_t * pcn_lst, HashNode_ary_t * phn_lst );
-static bool_t fill_bumplists( obj_BSP_t * pbsp );
+static bool_t fill_bumplists( ego_obj_BSP * pbsp );
 
-static egoboo_rv bump_prepare( obj_BSP_t * pbsp );
+static egoboo_rv bump_prepare( ego_obj_BSP * pbsp );
 static void      bump_begin();
 static bool_t    bump_all_platforms( CoNode_ary_t * pcn_ary );
 static bool_t    bump_all_mounts( CoNode_ary_t * pcn_ary );
@@ -114,36 +111,36 @@ static bool_t    bump_all_collisions( CoNode_ary_t * pcn_ary );
 //static void      bump_end();
 
 //static bool_t do_mounts( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
-static egoboo_rv do_chr_platform_physics( CoNode_t * d, chr_bundle_t *pbdl_item, chr_bundle_t *pbdl_plat );
-static float  estimate_chr_prt_normal( chr_t * pchr, prt_t * pprt, fvec3_base_t nrm, fvec3_base_t vdiff );
+static egoboo_rv do_chr_platform_physics( CoNode_t * d, ego_chr_bundle *pbdl_item, ego_chr_bundle *pbdl_plat );
+static float  estimate_chr_prt_normal( ego_chr * pchr, ego_prt * pprt, fvec3_base_t nrm, fvec3_base_t vdiff );
 static bool_t do_chr_chr_collision( CoNode_t * d );
 
-static bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr_bundle_t *pbdl_b );
+static bool_t do_chr_chr_collision_interaction( CoNode_t * d, ego_chr_bundle *pbdl_a, ego_chr_bundle *pbdl_b );
 
-static bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata );
-static bool_t do_chr_prt_collision_recoil( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata );
-static bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata );
-static bool_t do_chr_prt_collision_bump( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata );
-static bool_t do_chr_prt_collision_handle_bump( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata );
-static bool_t do_chr_prt_collision_init( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata );
+static bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata );
+static bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata );
+static bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata );
+static bool_t do_chr_prt_collision_bump( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata );
+static bool_t do_chr_prt_collision_handle_bump( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata );
+static bool_t do_chr_prt_collision_init( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata );
 static bool_t do_chr_prt_collision( CoNode_t * d );
 
-static bool_t update_chr_platform_attachment( chr_t * pchr );
-static prt_bundle_t * update_prt_platform_attachment( prt_bundle_t * pbdl );
+static bool_t update_chr_platform_attachment( ego_chr * pchr );
+static ego_prt_bundle * update_prt_platform_attachment( ego_prt_bundle * pbdl );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 IMPLEMENT_DYNAMIC_ARY( CoNode_ary,   CoNode_t );
-IMPLEMENT_DYNAMIC_ARY( HashNode_ary, hash_node_t );
+IMPLEMENT_DYNAMIC_ARY( HashNode_ary, ego_hash_node );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //static bumplist_t bumplist[MAXMESHFAN/16];
 
 static CHashList_t   * _CHashList_ptr = NULL;
-static HashNode_ary_t  _hn_ary;                 ///< the available hash_node_t collision nodes for the CHashList_t
-static CoNode_ary_t    _co_ary;                 ///< the available CoNode_t    data pointed to by the hash_node_t nodes
-static BSP_leaf_pary_t _coll_leaf_lst;
+static HashNode_ary_t  _hn_ary;                 ///< the available ego_hash_node collision nodes for the CHashList_t
+static CoNode_ary_t    _co_ary;                 ///< the available CoNode_t    data pointed to by the ego_hash_node nodes
+static ego_BSP_leaf_pary_t _coll_leaf_lst;
 static CoNode_ary_t    _coll_node_lst;
 
 static bool_t _collision_hash_initialized = bfalse;
@@ -161,7 +158,7 @@ bool_t collision_system_begin()
 
         if ( NULL == HashNode_ary_ctor( &_hn_ary, COLLISION_HASH_NODES ) ) goto collision_system_begin_fail;
 
-        if ( NULL == BSP_leaf_pary_ctor( &_coll_leaf_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
+        if ( NULL == ego_BSP_leaf_pary_ctor( &_coll_leaf_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
 
         if ( NULL == CoNode_ary_ctor( &_coll_node_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
 
@@ -174,7 +171,7 @@ collision_system_begin_fail:
 
     CoNode_ary_dtor( &_co_ary );
     HashNode_ary_dtor( &_hn_ary );
-    BSP_leaf_pary_dtor( &_coll_leaf_lst );
+    ego_BSP_leaf_pary_dtor( &_coll_leaf_lst );
     CoNode_ary_dtor( &_coll_node_lst );
 
     _collision_system_initialized = bfalse;
@@ -189,7 +186,7 @@ void collision_system_end()
 {
     if ( _collision_hash_initialized )
     {
-        hash_list_destroy( &_CHashList_ptr );
+        ego_hash_list::destroy( &_CHashList_ptr );
         _collision_hash_initialized = bfalse;
     }
     _CHashList_ptr = NULL;
@@ -198,7 +195,7 @@ void collision_system_end()
     {
         CoNode_ary_dtor( &_co_ary );
         HashNode_ary_dtor( &_hn_ary );
-        BSP_leaf_pary_dtor( &_coll_leaf_lst );
+        ego_BSP_leaf_pary_dtor( &_coll_leaf_lst );
         CoNode_ary_dtor( &_coll_node_lst );
 
         _collision_system_initialized = bfalse;
@@ -305,13 +302,13 @@ int CoNode_cmp( const void * vleft, const void * vright )
 //--------------------------------------------------------------------------------------------
 CHashList_t * CHashList_ctor( CHashList_t * pchlst, int size )
 {
-    return hash_list_ctor( pchlst, size );
+    return ego_hash_list::ctor( pchlst, size );
 }
 
 //--------------------------------------------------------------------------------------------
 CHashList_t * CHashList_dtor( CHashList_t * pchlst )
 {
-    return hash_list_dtor( pchlst );
+    return ego_hash_list::dtor( pchlst );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -327,7 +324,7 @@ CHashList_t * CHashList_get_Instance( int size )
     // if the _CHashList_ptr doesn't exist, create it (and initialize it)
     if ( NULL == _CHashList_ptr )
     {
-        _CHashList_ptr              = hash_list_create( size );
+        _CHashList_ptr              = ego_hash_list::create( size );
         _collision_hash_initialized = ( NULL != _CHashList_ptr );
     }
 
@@ -347,7 +344,7 @@ bool_t CHashList_insert_unique( CHashList_t * pchlst, CoNode_t * pdata, CoNode_a
     Uint32 hashval = 0;
     CoNode_t * d;
 
-    hash_node_t * hn;
+    ego_hash_node * hn;
     bool_t found;
     size_t count;
 
@@ -357,13 +354,13 @@ bool_t CHashList_insert_unique( CHashList_t * pchlst, CoNode_t * pdata, CoNode_a
     hashval = CoNode_generate_hash( pdata );
 
     found = bfalse;
-    count = hash_list_get_count( pchlst, hashval );
+    count = ego_hash_list::get_count( pchlst, hashval );
     if ( count > 0 )
     {
         size_t k;
 
         // this hash already exists. check to see if the binary collision exists, too
-        hn = hash_list_get_node( pchlst, hashval );
+        hn = ego_hash_list::get_node( pchlst, hashval );
         for ( k = 0; k < count; k++ )
         {
             if ( 0 == CoNode_cmp( hn->data, pdata ) )
@@ -378,7 +375,7 @@ bool_t CHashList_insert_unique( CHashList_t * pchlst, CoNode_t * pdata, CoNode_a
     if ( !found )
     {
         size_t old_count;
-        hash_node_t * old_head, * new_head, * hn;
+        ego_hash_node * old_head, * new_head, * hn;
 
         // pick a free collision data
         d = CoNode_ary_pop_back( free_cdata );
@@ -393,13 +390,13 @@ bool_t CHashList_insert_unique( CHashList_t * pchlst, CoNode_t * pdata, CoNode_a
         hn->data = d;
 
         // insert the node at the front of the collision list for this hash
-        old_head = hash_list_get_node( pchlst, hashval );
-        new_head = hash_node_insert_before( old_head, hn );
-        hash_list_set_node( pchlst, hashval, new_head );
+        old_head = ego_hash_list::get_node( pchlst, hashval );
+        new_head = ego_hash_node::insert_before( old_head, hn );
+        ego_hash_list::set_node( pchlst, hashval, new_head );
 
         // add 1 to the count at this hash
-        old_count = hash_list_get_count( pchlst, hashval );
-        hash_list_set_count( pchlst, hashval, old_count + 1 );
+        old_count = ego_hash_list::get_count( pchlst, hashval );
+        ego_hash_list::set_count( pchlst, hashval, old_count + 1 );
     }
 
     return !found;
@@ -409,7 +406,7 @@ bool_t CHashList_insert_unique( CHashList_t * pchlst, CoNode_t * pdata, CoNode_a
 //--------------------------------------------------------------------------------------------
 bool_t detect_chr_chr_interaction_valid( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b )
 {
-    chr_t *pchr_a, *pchr_b;
+    ego_chr *pchr_a, *pchr_b;
 
     // Don't interact with self
     if ( ichr_a == ichr_b ) return bfalse;
@@ -437,8 +434,8 @@ bool_t detect_chr_chr_interaction_valid( const CHR_REF by_reference ichr_a, cons
 //--------------------------------------------------------------------------------------------
 bool_t detect_chr_prt_interaction_valid( const CHR_REF by_reference ichr_a, const PRT_REF by_reference iprt_b )
 {
-    chr_t * pchr_a;
-    prt_t * pprt_b;
+    ego_chr * pchr_a;
+    ego_prt * pprt_b;
 
     // Ignore invalid characters
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
@@ -465,18 +462,18 @@ bool_t detect_chr_prt_interaction_valid( const CHR_REF by_reference ichr_a, cons
 //--------------------------------------------------------------------------------------------
 bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashNode_ary_t * hn_lst )
 {
-    ego_mpd_info_t * mi;
-    BSP_aabb_t       tmp_aabb;
+    ego_mpd_info * mi;
+    ego_BSP_aabb         tmp_aabb;
 
     if ( NULL == pchlst || NULL == cn_lst || NULL == hn_lst ) return bfalse;
 
     mi = &( PMesh->info );
 
-    // allocate a BSP_aabb_t once, to be shared for all collision tests
-    BSP_aabb_ctor( &tmp_aabb, obj_BSP_root.tree.dimensions );
+    // allocate a ego_BSP_aabb   once, to be shared for all collision tests
+    ego_BSP_aabb::ctor( &tmp_aabb, ego_obj_BSP::root.tree.dimensions );
 
     // renew the CoNode_t hash table.
-    hash_list_renew( pchlst );
+    ego_hash_list::renew( pchlst );
 
     //---- find the character/particle interactions
 
@@ -485,18 +482,18 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
     CHashList_inserted = 0;
     CHR_BEGIN_LOOP_BSP( ichr_a, pchr_a )
     {
-        oct_bb_t   tmp_oct;
+        ego_oct_bb     tmp_oct;
 
         // use the object velocity to figure out where the volume that the object will occupy during this
         // update
         phys_expand_chr_bb( pchr_a, 0.0f, 1.0f, &tmp_oct );
 
-        // convert the oct_bb_t to a correct BSP_aabb_t
-        BSP_aabb_from_oct_bb( &tmp_aabb, &tmp_oct );
+        // convert the ego_oct_bb   to a correct ego_BSP_aabb
+        ego_BSP_aabb::from_oct_bb( &tmp_aabb, &tmp_oct );
 
         // find all collisions with other characters and particles
         _coll_leaf_lst.top = 0;
-        obj_BSP_collide( &( obj_BSP_root ), &tmp_aabb, &_coll_leaf_lst );
+        ego_obj_BSP::collide( &( ego_obj_BSP::root ), &tmp_aabb, &_coll_leaf_lst );
 
         // transfer valid _coll_leaf_lst entries to pchlst entries
         // and sort them by their initial times
@@ -506,7 +503,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
 
             for ( j = 0; j < _coll_leaf_lst.top; j++ )
             {
-                BSP_leaf_t * pleaf;
+                ego_BSP_leaf   * pleaf;
                 size_t      coll_ref;
                 CoNode_t    tmp_codata;
                 bool_t      do_insert;
@@ -529,7 +526,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
                     {
                         bool_t found = bfalse;
 
-                        chr_t * pchr_b = ChrList.lst + ichr_b;
+                        ego_chr * pchr_b = ChrList.lst + ichr_b;
 
                         CoNode_ctor( &tmp_codata );
 
@@ -576,18 +573,18 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
                     {
                         bool_t found = bfalse;
 
-                        prt_t * pprt_b = PrtList.lst + iprt_b;
+                        ego_prt * pprt_b = PrtList.lst + iprt_b;
 
                         CoNode_ctor( &tmp_codata );
 
-                        // do a simple test, since I do not want to resolve the cap_t for these objects here
+                        // do a simple test, since I do not want to resolve the ego_cap for these objects here
                         test_platform = PHYS_CLOSE_TOLERANCE_NONE;
                         test_platform |= pchr_a->platform ? PHYS_CLOSE_TOLERANCE_OBJ1 : 0;
 
                         // detect a when the possible collision occurred
 
                         // clear the collision volume
-                        oct_bb_ctor( &( tmp_codata.cv ) );
+                        ego_oct_bb::ctor( &( tmp_codata.cv ) );
 
                         // platform physics overrides normal interactions, so
                         // do the platform test first
@@ -634,7 +631,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
     //    if ( !INGAME_CHR( ichra ) ) continue;
 
     //    // find all character collisions with mesh tiles
-    //    mesh_BSP_collide( &mesh_BSP_root, &( ChrList.lst[ichra].prt_cv ), &_coll_leaf_lst );
+    //    mpd_BSP::collide( &mpd_BSP::root, &( ChrList.lst[ichra].prt_cv ), &_coll_leaf_lst );
     //    if ( _coll_leaf_lst.top > 0 )
     //    {
     //        int j;
@@ -663,7 +660,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
     //    if ( !INGAME_PRT( iprta ) ) continue;
 
     //    // find all particle collisions with mesh tiles
-    //    mesh_BSP_collide( &mesh_BSP_root, &( PrtList.lst[iprta].prt_cv ), &_coll_leaf_lst );
+    //    mpd_BSP::collide( &mpd_BSP::root, &( PrtList.lst[iprta].prt_cv ), &_coll_leaf_lst );
     //    if ( _coll_leaf_lst.top > 0 )
     //    {
     //        int j;
@@ -685,33 +682,33 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary_t * cn_lst, HashN
     //}
 
     // do this manually in C
-    BSP_aabb_dtor( &tmp_aabb );
+    ego_BSP_aabb::dtor( &tmp_aabb );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fill_bumplists( obj_BSP_t * pbsp )
+bool_t fill_bumplists( ego_obj_BSP * pbsp )
 {
-    /// @details BB@> Fill in the obj_BSP_t for this frame
+    /// @details BB@> Fill in the ego_obj_BSP for this frame
     ///
-    /// @note do not use obj_BSP_empty every frame, because the number of pre-allocated nodes can be quite large.
+    /// @note do not use ego_obj_BSP::empty every frame, because the number of pre-allocated nodes can be quite large.
     /// Instead, just remove the nodes from the tree, fill the tree, and then prune any empty leaves
 
     if ( NULL == pbsp ) return bfalse;
 
     // Remove any unused branches from the tree.
-    // If you do this after BSP_tree_free_nodes() it will remove all branches
+    // If you do this after ego_BSP_tree::dealloc_nodes() it will remove all branches
     if ( 7 == ( frame_all & 7 ) )
     {
-        BSP_tree_prune( &( pbsp->tree ) );
+        ego_BSP_tree::prune( &( pbsp->tree ) );
     }
 
     // empty out the BSP node lists
-    obj_BSP_empty( pbsp );
+    ego_obj_BSP::empty( pbsp );
 
     // fill up the BSP list based on the current locations
-    obj_BSP_fill( pbsp );
+    ego_obj_BSP::fill( pbsp );
 
     return btrue;
 }
@@ -723,15 +720,15 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
 
     fvec3_t grip_up, grip_origin, vdiff, pdiff;
 
-    chr_t * pchr_a, * pchr_b;
-    chr_t * pmount, * prider;
+    ego_chr * pchr_a, * pchr_b;
+    ego_chr * pmount, * prider;
 
     bool_t mount_updated = bfalse;
     bool_t mount_a, mount_b;
 
     float   vnrm;
 
-    oct_bb_t  grip_cv, rider_cv;
+    ego_oct_bb    grip_cv, rider_cv;
 
     oct_vec_t odepth;
     float z_overlap;
@@ -821,7 +818,7 @@ bool_t do_chr_mount_detection( const CHR_REF by_reference ichr_a, const CHR_REF 
     if ( vnrm >= 0.0f ) return bfalse;
 
     // convert the rider foot position to an oct vector
-    oct_bb_add_vector( prider->chr_min_cv, prider->pos.v, &rider_cv );
+    ego_oct_bb::add_vector( prider->chr_min_cv, prider->pos.v, &rider_cv );
 
     // initialize the overlap depths
     odepth[OCT_Z] = odepth[OCT_X] = odepth[OCT_Y] = odepth[OCT_XY] = odepth[OCT_YX] = 0.0f;
@@ -876,14 +873,14 @@ bool_t do_chr_platform_detection( const CHR_REF by_reference ichr_a, const CHR_R
 {
     int cnt;
 
-    chr_t * pchr_a, * pchr_b;
+    ego_chr * pchr_a, * pchr_b;
 
     bool_t platform_updated = bfalse;
     bool_t platform_a, platform_b;
     bool_t mount_a, mount_b;
 
     oct_vec_t opos_object;
-    oct_bb_t  platform_min_cv, platform_max_cv;
+    ego_oct_bb    platform_min_cv, platform_max_cv;
 
     oct_vec_t odepth;
     float z_overlap;
@@ -951,18 +948,18 @@ bool_t do_chr_platform_detection( const CHR_REF by_reference ichr_a, const CHR_R
     // determine how the characters can be attached
     // The surface that the object will rest on is given by chr_min_cv.maxs[OCT_Z],
     // not chr_max_cv.maxs[OCT_Z] or chr_cv.maxs[OCT_Z]
-    oct_bb_ctor( &platform_min_cv );
+    ego_oct_bb::ctor( &platform_min_cv );
     if ( platform_a )
     {
         oct_vec_ctor( opos_object, pchr_b->pos );
-        oct_bb_add_vector( pchr_a->chr_min_cv, pchr_a->pos.v, &platform_min_cv );
-        oct_bb_add_vector( pchr_a->chr_max_cv, pchr_a->pos.v, &platform_max_cv );
+        ego_oct_bb::add_vector( pchr_a->chr_min_cv, pchr_a->pos.v, &platform_min_cv );
+        ego_oct_bb::add_vector( pchr_a->chr_max_cv, pchr_a->pos.v, &platform_max_cv );
     }
     else if ( platform_b )
     {
         oct_vec_ctor( opos_object, pchr_a->pos );
-        oct_bb_add_vector( pchr_b->chr_min_cv, pchr_b->pos.v, &platform_min_cv );
-        oct_bb_add_vector( pchr_b->chr_max_cv, pchr_b->pos.v, &platform_max_cv );
+        ego_oct_bb::add_vector( pchr_b->chr_min_cv, pchr_b->pos.v, &platform_min_cv );
+        ego_oct_bb::add_vector( pchr_b->chr_max_cv, pchr_b->pos.v, &platform_max_cv );
     }
 
     // initialize the overlap depths
@@ -1023,14 +1020,14 @@ bool_t do_prt_platform_detection( const PRT_REF by_reference iprt_a, const CHR_R
 {
     int cnt;
 
-    prt_t * pprt_a;
-    chr_t * pchr_b;
+    ego_prt * pprt_a;
+    ego_chr * pchr_b;
 
     bool_t platform_updated = bfalse;
     bool_t platform_b;
 
     oct_vec_t opos_object;
-    oct_bb_t  platform_min_cv, platform_max_cv;
+    ego_oct_bb    platform_min_cv, platform_max_cv;
 
     oct_vec_t odepth;
     float z_overlap;
@@ -1062,8 +1059,8 @@ bool_t do_prt_platform_detection( const PRT_REF by_reference iprt_a, const CHR_R
     // The surface that the object will rest on is given by chr_min_cv.maxs[OCT_Z],
     // not chr_max_cv.maxs[OCT_Z] or chr_cv.maxs[OCT_Z]
     oct_vec_ctor( opos_object, pprt_a->pos );
-    oct_bb_add_vector( pchr_b->chr_min_cv, pchr_b->pos.v, &platform_min_cv );
-    oct_bb_add_vector( pchr_b->chr_max_cv, pchr_b->pos.v, &platform_max_cv );
+    ego_oct_bb::add_vector( pchr_b->chr_min_cv, pchr_b->pos.v, &platform_min_cv );
+    ego_oct_bb::add_vector( pchr_b->chr_max_cv, pchr_b->pos.v, &platform_max_cv );
 
     // initialize the overlap depths
     odepth[OCT_Z] = odepth[OCT_X] = odepth[OCT_Y] = odepth[OCT_XY] = odepth[OCT_YX] = 0.0f;
@@ -1106,11 +1103,11 @@ bool_t do_prt_platform_detection( const PRT_REF by_reference iprt_a, const CHR_R
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t attach_chr_to_platform( chr_t * pchr, chr_t * pplat )
+bool_t attach_chr_to_platform( ego_chr * pchr, ego_chr * pplat )
 {
     /// @details BB@> attach a character to a platform
 
-    cap_t * pchr_cap;
+    ego_cap * pchr_cap;
 
     // verify that we do not have two dud pointers
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
@@ -1139,11 +1136,11 @@ bool_t attach_chr_to_platform( chr_t * pchr, chr_t * pplat )
         pchr->onwhichplatform_ref = GET_REF_PCHR( pplat );
 
         // update the character-platform properties
-        chr_get_environment( pchr );
+        chr_calc_environment( pchr );
 
         // tell the platform that we bumped into it
         // this is necessary for key buttons to work properly, for instance
-        ai_state_set_bumplast( &( pplat->ai ), GET_REF_PCHR( pchr ) );
+        ego_ai_state::set_bumplast( &( pplat->ai ), GET_REF_PCHR( pchr ) );
     }
 
     // blank out the targetplatform_ref, so we know we are done searching
@@ -1154,11 +1151,11 @@ bool_t attach_chr_to_platform( chr_t * pchr, chr_t * pplat )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t detach_character_from_platform( chr_t * pchr )
+bool_t detach_character_from_platform( ego_chr * pchr )
 {
     /// @details BB@> detach a character from a platform
 
-    chr_t * pplat;
+    ego_chr * pplat;
 
     // verify that we do not have two dud pointers
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
@@ -1185,7 +1182,7 @@ bool_t detach_character_from_platform( chr_t * pchr )
         pplat->holdingweight = MAX( 0.0f, pplat->holdingweight );
 
         // update the character-platform properties
-        chr_get_environment( pchr );
+        chr_calc_environment( pchr );
     }
 
     // fix some character variables
@@ -1195,11 +1192,11 @@ bool_t detach_character_from_platform( chr_t * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t attach_prt_to_platform( prt_t * pprt, chr_t * pplat )
+bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat )
 {
     /// @details BB@> attach a particle to a platform
 
-    pip_t   * pprt_pip;
+    ego_pip   * pprt_pip;
 
     // verify that we do not have two dud pointers
     if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
@@ -1217,11 +1214,11 @@ bool_t attach_prt_to_platform( prt_t * pprt, chr_t * pplat )
     // do the attachment
     if ( pprt->onwhichplatform_ref != GET_REF_PCHR( pplat ) )
     {
-        prt_bundle_t bdl;
+        ego_prt_bundle bdl;
 
         pprt->onwhichplatform_ref    = GET_REF_PCHR( pplat );
 
-        prt_get_environment( prt_bundle_set( &bdl, pprt ) );
+        prt_get_environment( ego_prt_bundle::set( &bdl, pprt ) );
     }
 
     // blank the targetplatform_* stuff so we know we are done searching
@@ -1232,17 +1229,17 @@ bool_t attach_prt_to_platform( prt_t * pprt, chr_t * pplat )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t detach_particle_from_platform( prt_t * pprt )
+bool_t detach_particle_from_platform( ego_prt * pprt )
 {
     /// @details BB@> attach a particle to a platform
 
-    prt_bundle_t bdl_prt;
+    ego_prt_bundle bdl_prt;
 
     // verify that we do not have two dud pointers
     if ( !DEFINED_PPRT( pprt ) ) return bfalse;
 
     // grab all of the particle info
-    prt_bundle_set( &bdl_prt, pprt );
+    ego_prt_bundle::set( &bdl_prt, pprt );
 
     // check if they can be connected
     if ( INGAME_CHR( pprt->onwhichplatform_ref ) ) return bfalse;
@@ -1260,7 +1257,7 @@ bool_t detach_particle_from_platform( prt_t * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void bump_all_objects( obj_BSP_t * pbsp )
+void bump_all_objects( ego_obj_BSP * pbsp )
 {
     /// @details ZZ@> This function handles characters hitting other characters or particles
 
@@ -1395,7 +1392,7 @@ bool_t bump_all_platforms( CoNode_ary_t * pcn_ary )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv bump_prepare( obj_BSP_t * pbsp )
+egoboo_rv bump_prepare( ego_obj_BSP * pbsp )
 {
     CHashList_t * pchlst;
     size_t        co_node_count;
@@ -1422,19 +1419,19 @@ egoboo_rv bump_prepare( obj_BSP_t * pbsp )
     fill_interaction_list( pchlst, &_co_ary, &_hn_ary );
 
     // convert the CHashList_t into a CoNode_ary_t and sort
-    co_node_count = hash_list_count_nodes( pchlst );
+    co_node_count = ego_hash_list::count_nodes( pchlst );
 
     if ( co_node_count > 0 )
     {
-        hash_list_iterator_t it;
+        ego_hash_list_iterator it;
 
         _coll_node_lst.top = 0;
 
-        hash_list_iterator_ctor( &it );
-        hash_list_iterator_set_begin( &it, pchlst );
-        for ( /* nothing */; !hash_list_iterator_done( &it, pchlst ); hash_list_iterator_next( &it, pchlst ) )
+        ego_hash_list_iterator::ctor( &it );
+        ego_hash_list_iterator::set_begin( &it, pchlst );
+        for ( /* nothing */; !ego_hash_list_iterator::done( &it, pchlst ); ego_hash_list_iterator::next( &it, pchlst ) )
         {
-            CoNode_t * ptr = ( CoNode_t * )hash_list_iterator_ptr( &it );
+            CoNode_t * ptr = ( CoNode_t * )ego_hash_list_iterator::ptr( &it );
             if ( NULL == ptr ) break;
 
             CoNode_ary_push_back( &_coll_node_lst, *ptr );
@@ -1565,11 +1562,11 @@ bool_t bump_all_collisions( CoNode_ary_t * pcn_ary )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv do_chr_platform_physics( CoNode_t * d, chr_bundle_t *pbdl_item, chr_bundle_t *pbdl_plat )
+egoboo_rv do_chr_platform_physics( CoNode_t * d, ego_chr_bundle *pbdl_item, ego_chr_bundle *pbdl_plat )
 {
     // we know that ichr_a is a platform and ichr_b is on it
     egoboo_rv retval = rv_error;
-    chr_t * pitem, * pplat;
+    ego_chr * pitem, * pplat;
 
     int     rot_a, rot_b;
     float   walk_lerp, plat_lerp, vel_lerp;
@@ -1593,7 +1590,7 @@ egoboo_rv do_chr_platform_physics( CoNode_t * d, chr_bundle_t *pbdl_item, chr_bu
     if ( pitem->onwhichplatform_ref != GET_REF_PCHR( pplat ) ) return rv_error;
 
     // grab the "up" vector for the platform
-    chr_getMatUp( pplat, &platform_up );
+    ego_chr::get_MatUp( pplat, &platform_up );
     fvec3_self_normalize( platform_up.v );
 
     // what is the "up" velocity relative to the platform?
@@ -1689,7 +1686,7 @@ do_chr_platform_physics_fail:
 }
 
 //--------------------------------------------------------------------------------------------
-float estimate_chr_prt_normal( chr_t * pchr, prt_t * pprt, fvec3_base_t nrm, fvec3_base_t vdiff )
+float estimate_chr_prt_normal( ego_chr * pchr, ego_prt * pprt, fvec3_base_t nrm, fvec3_base_t vdiff )
 {
     fvec3_t collision_size;
     float dot;
@@ -1767,13 +1764,13 @@ float estimate_chr_prt_normal( chr_t * pchr, prt_t * pprt, fvec3_base_t nrm, fve
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_chr_collision_test( chr_bundle_t *pbdl_a, chr_bundle_t *pbdl_b )
+bool_t do_chr_chr_collision_test( ego_chr_bundle *pbdl_a, ego_chr_bundle *pbdl_b )
 {
     /// BB@> break off the collision tests to this function
 
     CHR_REF ichr_a, ichr_b;
-    chr_t * pchr_a, * pchr_b;
-    cap_t * pcap_a, * pcap_b;
+    ego_chr * pchr_a, * pchr_b;
+    ego_cap * pcap_a, * pcap_b;
 
     if ( NULL == pbdl_a || NULL == pbdl_b ) return bfalse;
 
@@ -1804,12 +1801,12 @@ bool_t do_chr_chr_collision_test( chr_bundle_t *pbdl_a, chr_bundle_t *pbdl_b )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_plat_collision_test( chr_bundle_t *pbdl_item, chr_bundle_t *pbdl_plat )
+bool_t do_chr_plat_collision_test( ego_chr_bundle *pbdl_item, ego_chr_bundle *pbdl_plat )
 {
     /// BB@> break off the collision tests to this function
 
     CHR_REF ichr_plat;
-    chr_t * pchr_item, * pchr_plat;
+    ego_chr * pchr_item, * pchr_plat;
 
     if ( NULL == pbdl_item || NULL == pbdl_plat ) return bfalse;
 
@@ -1835,11 +1832,11 @@ bool_t do_chr_plat_collision_test( chr_bundle_t *pbdl_item, chr_bundle_t *pbdl_p
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr_bundle_t *pbdl_b )
+bool_t do_chr_chr_collision_interaction( CoNode_t * d, ego_chr_bundle *pbdl_a, ego_chr_bundle *pbdl_b )
 {
     CHR_REF loc_ichr_a, loc_ichr_b;
-    chr_t * loc_pchr_a, * loc_pchr_b;
-    cap_t * loc_pcap_a, * loc_pcap_b;
+    ego_chr * loc_pchr_a, * loc_pchr_b;
+    ego_cap * loc_pcap_a, * loc_pcap_b;
 
     float interaction_strength = 1.0f;
     float wta, wtb;
@@ -1875,7 +1872,7 @@ bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr
     interaction_strength *= calc_dismount_lerp( loc_pchr_a, loc_pchr_b );
 
     // ensure that we have a collision volume
-    if ( oct_bb_empty( d->cv ) )
+    if ( ego_oct_bb::empty( d->cv ) )
     {
         bool_t found;
 
@@ -1886,7 +1883,7 @@ bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr
         found = phys_intersect_oct_bb( loc_pchr_a->chr_min_cv, loc_pchr_a->pos, loc_pchr_a->vel, loc_pchr_b->chr_min_cv, loc_pchr_b->pos, loc_pchr_b->vel, 0, &( d->cv ), &( d->tmin ), &( d->tmax ) );
 
         // if no valid collision was found, return with a fail code
-        if ( !found || oct_bb_empty( d->cv ) || d->tmax < 0.0f || d->tmin > 1.0f )
+        if ( !found || ego_oct_bb::empty( d->cv ) || d->tmax < 0.0f || d->tmin > 1.0f )
         {
             return bfalse;
         }
@@ -1916,9 +1913,9 @@ bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr
     {
         int cnt;
 
-        oct_bb_t src1, src2;
+        ego_oct_bb   src1, src2;
 
-        oct_bb_t exp1, exp2, intersect;
+        ego_oct_bb   exp1, exp2, intersect;
 
         float tmp_min, tmp_max;
 
@@ -1926,15 +1923,15 @@ bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr
         tmp_max = d->tmin + ( d->tmax - d->tmin ) * 0.1f;
 
         // shift the source bounding boxes to be centered on the given positions
-        oct_bb_add_vector( loc_pchr_a->chr_min_cv, loc_pchr_a->pos.v, &src1 );
-        oct_bb_add_vector( loc_pchr_b->chr_min_cv, loc_pchr_b->pos.v, &src2 );
+        ego_oct_bb::add_vector( loc_pchr_a->chr_min_cv, loc_pchr_a->pos.v, &src1 );
+        ego_oct_bb::add_vector( loc_pchr_b->chr_min_cv, loc_pchr_b->pos.v, &src2 );
 
         // determine the expanded collision volumes for both objects
         phys_expand_oct_bb( src1, loc_pchr_a->vel, tmp_min, tmp_max, &exp1 );
         phys_expand_oct_bb( src2, loc_pchr_b->vel, tmp_min, tmp_max, &exp2 );
 
         // determine the intersection of these two volumes
-        oct_bb_intersection( exp1, exp2, &intersect );
+        ego_oct_bb::do_intersection( exp1, exp2, &intersect );
 
         for ( cnt = 0; cnt < OCT_COUNT; cnt++ )
         {
@@ -2171,8 +2168,8 @@ bool_t do_chr_chr_collision_interaction( CoNode_t * d, chr_bundle_t *pbdl_a, chr
 
     if ( bump )
     {
-        ai_state_set_bumplast( &( loc_pchr_a->ai ), loc_ichr_b );
-        ai_state_set_bumplast( &( loc_pchr_b->ai ), loc_ichr_a );
+        ego_ai_state::set_bumplast( &( loc_pchr_a->ai ), loc_ichr_b );
+        ego_ai_state::set_bumplast( &( loc_pchr_b->ai ), loc_ichr_a );
     }
 
     return btrue;
@@ -2186,10 +2183,10 @@ bool_t do_chr_chr_collision( CoNode_t * d )
     bool_t retval = bfalse;                         // assume that the collision will fail
 
     CHR_REF ichr_a, ichr_b;
-    chr_t * pchr_a, * pchr_b;
-    chr_bundle_t bdl_a, bdl_b;
+    ego_chr * pchr_a, * pchr_b;
+    ego_chr_bundle bdl_a, bdl_b;
 
-    chr_bundle_t * pbdl_item, * pbdl_plat;
+    ego_chr_bundle * pbdl_item, * pbdl_plat;
     bool_t do_platform, do_collision;
 
     // make sure that the collision node exists
@@ -2199,7 +2196,7 @@ bool_t do_chr_chr_collision( CoNode_t * d )
     if ( TOTAL_MAX_PRT != d->prta || TOTAL_MAX_PRT != d->prtb || FANOFF != d->tileb ) return bfalse;
 
     if ( !INGAME_CHR( d->chra ) ) return bfalse;
-    if ( NULL == chr_bundle_set( &bdl_a, ChrList.lst + d->chra ) ) return bfalse;
+    if ( NULL == ego_chr_bundle::set( &bdl_a, ChrList.lst + d->chra ) ) return bfalse;
 
     // make some aliases for easier notation
     ichr_a = bdl_a.chr_ref;
@@ -2210,7 +2207,7 @@ bool_t do_chr_chr_collision( CoNode_t * d )
     if ( pchr_a->pack.is_packed ) return bfalse;
 
     if ( !INGAME_CHR( d->chrb ) ) return bfalse;
-    if ( NULL == chr_bundle_set( &bdl_b, ChrList.lst + d->chrb ) ) return bfalse;
+    if ( NULL == ego_chr_bundle::set( &bdl_b, ChrList.lst + d->chrb ) ) return bfalse;
 
     // make some aliases for easier notation
     ichr_b = bdl_b.chr_ref;
@@ -2292,7 +2289,7 @@ bool_t do_chr_chr_collision( CoNode_t * d )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t do_prt_platform_physics( prt_t * pprt, chr_t * pplat, chr_prt_collsion_data_t * pdata )
+bool_t do_prt_platform_physics( ego_prt * pprt, ego_chr * pplat, chr_prt_collsion_data_t * pdata )
 {
     /// @details BB@> handle the particle interaction with a platform it is not attached "on".
     ///               @note gravity is not handled here
@@ -2380,14 +2377,14 @@ bool_t do_prt_platform_physics( prt_t * pprt, chr_t * pplat, chr_prt_collsion_da
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata )
+bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata )
 {
     bool_t prt_deflected = bfalse;
 
     bool_t chr_is_invictus, chr_can_deflect;
     bool_t prt_wants_deflection;
     FACING_T direction;
-    pip_t  *ppip;
+    ego_pip  *ppip;
 
     if ( NULL == pdata ) return bfalse;
 
@@ -2499,13 +2496,13 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
                 // Now we have the block rating and know the enemy
                 if ( INGAME_CHR( pprt->owner_ref ) && using_shield )
                 {
-                    chr_t *pshield = ChrList.lst + item;
-                    chr_t *pattacker = ChrList.lst + pprt->owner_ref;
+                    ego_chr *pshield = ChrList.lst + item;
+                    ego_chr *pattacker = ChrList.lst + pprt->owner_ref;
                     int total_block_rating;
 
                     // use the character block skill plus the base block rating of the shield and adjust for strength
-                    total_block_rating = chr_get_skill( pchr, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
-                    total_block_rating += chr_get_skill( pshield, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
+                    total_block_rating = ego_chr::get_skill( pchr, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
+                    total_block_rating += ego_chr::get_skill( pshield, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
                     total_block_rating -= SFP8_TO_SINT( pattacker->strength ) * 4;            //-4% per attacker strength
                     total_block_rating += SFP8_TO_SINT( pchr->strength )      * 2;            //+2% per defender strength
 
@@ -2533,7 +2530,7 @@ bool_t do_chr_prt_collision_deflect( chr_t * pchr, prt_t * pprt, chr_prt_collsio
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_prt_collision_recoil( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata )
+bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata )
 {
     /// @details BB@> make the character and particle recoil from the collision
     float prt_mass;
@@ -2636,7 +2633,7 @@ bool_t do_chr_prt_collision_recoil( chr_t * pchr, prt_t * pprt, chr_prt_collsion
     // weapon (actually, the weapon's holder) to rebound.
     if ( INGAME_CHR( pprt->attachedto_ref ) )
     {
-        chr_t * ptarget;
+        ego_chr * ptarget;
         CHR_REF iholder;
 
         ptarget = NULL;
@@ -2644,14 +2641,14 @@ bool_t do_chr_prt_collision_recoil( chr_t * pchr, prt_t * pprt, chr_prt_collsion
         // transmit the force of the blow back to the character that is
         // holding the weapon
 
-        iholder = chr_get_lowest_attachment( pprt->attachedto_ref, bfalse );
+        iholder = ego_chr::get_lowest_attachment( pprt->attachedto_ref, bfalse );
         if ( INGAME_CHR( iholder ) )
         {
             ptarget = ChrList.lst + iholder;
         }
         else
         {
-            iholder = chr_get_lowest_attachment( pprt->owner_ref, bfalse );
+            iholder = ego_chr::get_lowest_attachment( pprt->owner_ref, bfalse );
             if ( INGAME_CHR( iholder ) )
             {
                 ptarget = ChrList.lst + iholder;
@@ -2688,9 +2685,9 @@ bool_t do_chr_prt_collision_recoil( chr_t * pchr, prt_t * pprt, chr_prt_collsion
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata )
+bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata )
 {
-    ENC_REF enchant, enc_next;
+    ENC_REF enchant, ego_enc_next;
     bool_t prt_needs_impact;
 
     if ( NULL == pdata ) return bfalse;
@@ -2704,12 +2701,12 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
     enchant = pchr->firstenchant;
     while ( enchant != MAX_ENC )
     {
-        enc_next = EncList.lst[enchant].nextenchant_ref;
-        if ( enc_is_removed( enchant, pprt->profile_ref ) )
+        ego_enc_next = EncList.lst[enchant].nextenchant_ref;
+        if ( ego_enc::is_removed( enchant, pprt->profile_ref ) )
         {
             remove_enchant( enchant, NULL );
         }
-        enchant = enc_next;
+        enchant = ego_enc_next;
     }
 
     // Do confuse effects
@@ -2736,8 +2733,8 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
         prt_needs_impact = pdata->ppip->rotatetoface || INGAME_CHR( pprt->attachedto_ref );
         if ( INGAME_CHR( pprt->owner_ref ) )
         {
-            chr_t * powner = ChrList.lst + pprt->owner_ref;
-            cap_t * powner_cap = pro_get_pcap( powner->profile_ref );
+            ego_chr * powner = ChrList.lst + pprt->owner_ref;
+            ego_cap * powner_cap = pro_get_pcap( powner->profile_ref );
 
             if ( powner_cap->isranged ) prt_needs_impact = btrue;
         }
@@ -2756,7 +2753,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
             {
                 CHR_REF item;
                 int drain;
-                chr_t * powner = ChrList.lst + pprt->owner_ref;
+                ego_chr * powner = ChrList.lst + pprt->owner_ref;
 
                 // Apply intelligence/wisdom bonus damage for particles with the [IDAM] and [WDAM] expansions (Low ability gives penalty)
                 // +2% bonus for every point of intelligence and/or wisdom above 14. Below 14 gives -2% instead!
@@ -2815,7 +2812,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
             }
 
             // handle vulnerabilities, double the damage
-            if ( chr_has_vulnie( GET_REF_PCHR( pchr ), pprt->profile_ref ) )
+            if ( ego_chr::has_vulnie( GET_REF_PCHR( pchr ), pprt->profile_ref ) )
             {
                 // Double the damage
                 loc_damage.base = ( loc_damage.base << 1 );
@@ -2869,7 +2866,7 @@ bool_t do_chr_prt_collision_damage( chr_t * pchr, prt_t * pprt, chr_prt_collsion
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_prt_collision_bump( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata )
+bool_t do_chr_prt_collision_bump( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata )
 {
     bool_t prt_belongs_to_chr;
     bool_t prt_hates_chr, prt_attacks_chr, prt_hateonly;
@@ -2892,8 +2889,8 @@ bool_t do_chr_prt_collision_bump( chr_t * pchr, prt_t * pprt, chr_prt_collsion_d
         CHR_REF prt_owner = prt_get_iowner( GET_REF_PPRT( pprt ), 0 );
         if ( INGAME_CHR( prt_owner ) )
         {
-            CHR_REF chr_wielder = chr_get_lowest_attachment( GET_REF_PCHR( pchr ), btrue );
-            CHR_REF prt_wielder = chr_get_lowest_attachment( prt_owner, btrue );
+            CHR_REF chr_wielder = ego_chr::get_lowest_attachment( GET_REF_PCHR( pchr ), btrue );
+            CHR_REF prt_wielder = ego_chr::get_lowest_attachment( prt_owner, btrue );
 
             if ( !INGAME_CHR( chr_wielder ) ) chr_wielder = GET_REF_PCHR( pchr );
             if ( !INGAME_CHR( prt_wielder ) ) prt_wielder = prt_owner;
@@ -2926,7 +2923,7 @@ bool_t do_chr_prt_collision_bump( chr_t * pchr, prt_t * pprt, chr_prt_collsion_d
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_prt_collision_handle_bump( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata )
+bool_t do_chr_prt_collision_handle_bump( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata )
 {
     if ( NULL == pdata || !pdata->prt_bumps_chr ) return bfalse;
 
@@ -2943,7 +2940,7 @@ bool_t do_chr_prt_collision_handle_bump( chr_t * pchr, prt_t * pprt, chr_prt_col
     {
         if ( pdata->ppip->bump_money )
         {
-            chr_t * pcollector = pchr;
+            ego_chr * pcollector = pchr;
 
             // Let mounts collect money for their riders
             if ( pchr->ismount && INGAME_CHR( pchr->holdingwhich[SLOT_LEFT] ) )
@@ -2977,7 +2974,7 @@ bool_t do_chr_prt_collision_handle_bump( chr_t * pchr, prt_t * pprt, chr_prt_col
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t do_chr_prt_collision_init( chr_t * pchr, prt_t * pprt, chr_prt_collsion_data_t * pdata )
+bool_t do_chr_prt_collision_init( ego_chr * pchr, ego_prt * pprt, chr_prt_collsion_data_t * pdata )
 {
     /// must use bump_padded here since that is the range for character-particle interactions
 
@@ -3028,8 +3025,8 @@ bool_t do_chr_prt_collision( CoNode_t * d )
     CHR_REF ichr_a;
     PRT_REF iprt_b;
 
-    chr_t * pchr_a;
-    prt_t * pprt_b;
+    ego_chr * pchr_a;
+    ego_prt * pprt_b;
 
     bool_t prt_deflected;
     bool_t prt_can_hit_chr;
@@ -3097,7 +3094,7 @@ bool_t do_chr_prt_collision( CoNode_t * d )
         // Check reaffirmation of particles
         if ( pchr_a->reaffirmdamagetype == pprt_b->damagetype )
         {
-            cap_t *pcap_a = chr_get_pcap( pchr_a->ai.index );
+            ego_cap *pcap_a = ego_chr::get_pcap( pchr_a->ai.index );
 
             // This prevents books in shops from being burned
             if ( pchr_a->isshopitem && pcap_a->spelleffect_type != NO_SKIN_OVERRIDE )
@@ -3152,9 +3149,9 @@ bool_t do_chr_prt_collision( CoNode_t * d )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t update_chr_platform_attachment( chr_t * pchr )
+bool_t update_chr_platform_attachment( ego_chr * pchr )
 {
-    chr_t * pplat;
+    ego_chr * pplat;
 
     if ( !DEFINED_PCHR( pchr ) || !INGAME_CHR( pchr->onwhichplatform_ref ) ) return bfalse;
 
@@ -3181,10 +3178,10 @@ void update_all_chr_platform_attachments()
 }
 
 //--------------------------------------------------------------------------------------------
-prt_bundle_t * update_prt_platform_attachment( prt_bundle_t * pbdl )
+ego_prt_bundle * update_prt_platform_attachment( ego_prt_bundle * pbdl )
 {
-    chr_t * pplat;
-    prt_t * loc_pprt;
+    ego_chr * pplat;
+    ego_prt * loc_pprt;
 
     if ( NULL == pbdl || NULL == pbdl->prt_ptr ) return pbdl;
     loc_pprt = pbdl->prt_ptr;
@@ -3217,7 +3214,7 @@ void update_all_platform_attachments()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary )
+bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary )
 {
     /// @details BB@> use a standard size for the grip
 
@@ -3231,7 +3228,7 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
     Uint16    grip_verts[GRIP_VERTS];
 
     int       vertex, cnt;
-    oct_bb_t  tmp_cv = OCT_BB_INIT_VALS;
+    ego_oct_bb tmp_cv;
 
     if ( NULL == grip_cv_ptr || !DEFINED_PCHR( pmount ) ) return bfalse;
 
@@ -3305,7 +3302,7 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
         grip_up_ary[kZ] = -SGN( gravity );
 
         // grab the origin of the grip
-        fvec3_base_assign( grip_origin_ary, chr_get_pos( pmount ) );
+        fvec3_base_assign( grip_origin_ary, ego_chr::get_pos( pmount ) );
     }
     else if ( grip_count > 0 )
     {
@@ -3326,7 +3323,7 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
     }
 
     // add in the "origin" of the grip
-    oct_bb_add_vector( tmp_cv, grip_origin_ary, grip_cv_ptr );
+    ego_oct_bb::add_vector( tmp_cv, grip_origin_ary, grip_cv_ptr );
 
     return btrue;
 }
@@ -3338,7 +3335,7 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
 //    int count;
 //    bool_t found;
 //
-//    hash_node_t * n;
+//    ego_hash_node * n;
 //    CoNode_t    * d;
 //
 //    if ( NULL == pchlst || NULL == pcn_lst || NULL == phn_lst ) return bfalse;
@@ -3386,11 +3383,11 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
 //        EGOBOO_ASSERT( HashNode_ary_get_top( phn_lst ) < COLLISION_HASH_NODES );
 //        n = HashNode_ary_pop_back( phn_lst );
 //
-//        hash_node_ctor( n, ( void* )d );
+//        ego_hash_node::ctor( n, ( void* )d );
 //
 //        // insert the node
 //        pchlst->subcount[hashval]++;
-//        pchlst->sublist[hashval] = hash_node_insert_before( pchlst->sublist[hashval], n );
+//        pchlst->sublist[hashval] = ego_hash_node::insert_before( pchlst->sublist[hashval], n );
 //    }
 //
 //    return !found;
@@ -3403,7 +3400,7 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
 //    int    count;
 //    Uint32 hashval = 0;
 //
-//    hash_node_t * n;
+//    ego_hash_node * n;
 //    CoNode_t    * d;
 //
 //    if ( NULL == pchlst ) return bfalse;
@@ -3446,11 +3443,11 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
 //        EGOBOO_ASSERT( HashNode_ary_get_top( phn_lst ) < COLLISION_HASH_NODES );
 //        n = HashNode_ary_pop_back( phn_lst );
 //
-//        hash_node_ctor( n, ( void* )d );
+//        ego_hash_node::ctor( n, ( void* )d );
 //
 //        // insert the node
 //        pchlst->subcount[hashval]++;
-//        pchlst->sublist[hashval] = hash_node_insert_before( pchlst->sublist[hashval], n );
+//        pchlst->sublist[hashval] = ego_hash_node::insert_before( pchlst->sublist[hashval], n );
 //    }
 //
 //    return !found;
@@ -3462,8 +3459,8 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
 //    float xa, ya, za;
 //    float xb, yb, zb;
 //
-//    chr_t * pchr_a, * pchr_b;
-//    cap_t * pcap_a, * pcap_b;
+//    ego_chr * pchr_a, * pchr_b;
+//    ego_cap * pcap_a, * pcap_b;
 //
 //    bool_t mount_a, mount_b;
 //    float  dx, dy, dist;
@@ -3479,14 +3476,14 @@ bool_t calc_grip_cv( chr_t * pmount, int grip_offset, oct_bb_t * grip_cv_ptr, fv
 //    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
 //    pchr_a = ChrList.lst + ichr_a;
 //
-//    pcap_a = chr_get_pcap( ichr_a );
+//    pcap_a = ego_chr::get_pcap( ichr_a );
 //    if ( NULL == pcap_a ) return bfalse;
 //
 //    // make sure that B is valid
 //    if ( !INGAME_CHR( ichr_b ) ) return bfalse;
 //    pchr_b = ChrList.lst + ichr_b;
 //
-//    pcap_b = chr_get_pcap( ichr_b );
+//    pcap_b = ego_chr::get_pcap( ichr_b );
 //    if ( NULL == pcap_b ) return bfalse;
 //
 //    // can either of these objects mount the other?

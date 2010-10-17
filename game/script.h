@@ -25,9 +25,9 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_cap;
-struct s_chr;
-struct s_object_profile;
+struct ego_cap;
+struct ego_chr;
+struct ego_pro;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -111,24 +111,24 @@ enum chr_alert_bits
 
 typedef float waypoint_t[3];
 
-struct s_waypoint_list
+struct ego_waypoint_list
 {
     int          tail;         ///< Which waypoint
     int          head;         ///< Where to stick next
     waypoint_t   pos[MAXWAY];  ///< Waypoint
-};
-typedef struct s_waypoint_list waypoint_list_t;
 
-bool_t waypoint_list_push( waypoint_list_t * plst, float x, float y, float z );
-bool_t waypoint_list_reset( waypoint_list_t * plst );
-bool_t waypoint_list_clear( waypoint_list_t * plst );
-bool_t waypoint_list_advance( waypoint_list_t * plst );
-bool_t waypoint_list_peek( waypoint_list_t * plst, waypoint_t wp );
-bool_t waypoint_list_empty( const waypoint_list_t * plst );
-bool_t waypoint_list_finished( const waypoint_list_t * plst );
+    bool_t push( ego_waypoint_list * plst, float x, float y, float z );
+    bool_t reset( ego_waypoint_list * plst );
+    bool_t clear( ego_waypoint_list * plst );
+    bool_t advance( ego_waypoint_list * plst );
+    bool_t peek( ego_waypoint_list * plst, waypoint_t wp );
+    bool_t empty( const ego_waypoint_list * plst );
+    bool_t finished( const ego_waypoint_list * plst );
+};
+
 
 /// the state variables for a script / AI
-struct s_ai_state
+struct ego_ai_state
 {
     // which script to run
     REF_T          type;
@@ -179,25 +179,28 @@ struct s_ai_state
     // waypoints
     bool_t          wp_valid;            ///< is the current waypoint valid?
     waypoint_t      wp;                  ///< current waypoint
-    waypoint_list_t wp_lst;              ///< Stored waypoints
+    ego_waypoint_list wp_lst;              ///< Stored waypoints
+
+    static ego_ai_state * ctor( ego_ai_state * pself );
+    static ego_ai_state * dtor( ego_ai_state * pself );
+    static void           spawn( ego_ai_state * pself, const CHR_REF by_reference index, const PRO_REF by_reference iobj, Uint16 rank );
+    static bool_t         set_bumplast( ego_ai_state * pself, const CHR_REF by_reference  ichr );
+    static bool_t         get_wp( ego_ai_state * pself );
+    static bool_t         ensure_wp( ego_ai_state * pself );
+    static bool_t         set_changed( ego_ai_state * pself );
+    static bool_t         add_order( ego_ai_state * pai, Uint32 value, Uint16 counter );
+
 
     // performance monitoring
     PROFILE_DECLARE_STRUCT;
 };
-typedef struct s_ai_state ai_state_t;
-
-ai_state_t * ai_state_ctor( ai_state_t * pself );
-ai_state_t * ai_state_dtor( ai_state_t * pself );
-bool_t       ai_state_set_bumplast( ai_state_t * pself, const CHR_REF by_reference  ichr );
-bool_t       ai_state_get_wp( ai_state_t * pself );
-bool_t       ai_state_ensure_wp( ai_state_t * pself );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// The state of the scripting system
 /// @details It is not persistent between one evaluation of a script and another
-struct s_script_state
+struct ego_script_state
 {
     int     x;
     int     y;
@@ -206,39 +209,37 @@ struct s_script_state
     int     argument;
     int     operationsum;
 };
-typedef struct s_script_state script_state_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct s_ai_state_bundle
+struct ego_ai_bundle
 {
-    CHR_REF        chr_ref;
-    struct s_chr * chr_ptr;
+    CHR_REF   chr_ref;
+    ego_chr * chr_ptr;
 
-    PRO_REF                   pro_ref;
-    struct s_object_profile * pro_ptr;
+    PRO_REF   pro_ref;
+    ego_pro * pro_ptr;
 
-    REF_T          ai_state_ref;
-    ai_state_t   * ai_state_ptr;
+    CAP_REF   cap_ref;
+    ego_cap * cap_ptr;
 
-    CAP_REF        cap_ref;
-    struct s_cap * cap_ptr;
+    REF_T            ai_state_ref;
+    ego_ai_state   * ai_state_ptr;
+
+    static ego_ai_bundle * ctor( ego_ai_bundle * pbundle );
+    static ego_ai_bundle * validate( ego_ai_bundle * pbundle );
+    static ego_ai_bundle * set( ego_ai_bundle * pbundle, struct ego_chr * pchr );
 };
-typedef struct s_ai_state_bundle ai_state_bundle_t;
-
-ai_state_bundle_t * ai_state_bundle_ctor( ai_state_bundle_t * pbundle );
-ai_state_bundle_t * ai_state_bundle_validate( ai_state_bundle_t * pbundle );
-ai_state_bundle_t * ai_state_bundle_set( ai_state_bundle_t * pbundle, struct s_chr * pchr );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // Prototypes
 
-void  scr_run_chr_script( ai_state_bundle_t * pbdl_ai );
+void  scr_run_chr_script( ego_ai_bundle * pbdl_ai );
 
 void issue_order( const CHR_REF by_reference character, Uint32 order );
 void issue_special_order( Uint32 order, IDSZ idsz );
-void set_alerts( ai_state_bundle_t * pbdl_ai );
+void set_alerts( ego_ai_bundle * pbdl_ai );
 
 void scripting_system_begin();
 void scripting_system_end();
