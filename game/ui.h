@@ -156,7 +156,6 @@ private:
     static bool_t set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, va_list args );
 };
 
-
 // Initialize or shut down the ui system
 int  ui_begin( const char *default_font, int default_font_size );
 void ui_end();

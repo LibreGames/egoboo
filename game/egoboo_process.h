@@ -61,6 +61,7 @@ struct ego_process
     ego_process() { ego_process::ctor( this ); }
 
     static ego_process * ctor( ego_process * proc );
+    static ego_process * clear( ego_process * ptr );
 
     static bool_t        start( ego_process * proc );
     static bool_t        kill( ego_process * proc );

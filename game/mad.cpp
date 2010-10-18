@@ -68,7 +68,8 @@ static void mad_heal_actions( const MAD_REF & imad, const char * loadname );
 static ego_mad * mad_ctor( ego_mad * pmad );
 static ego_mad * mad_dtor( ego_mad * pmad );
 static ego_mad * mad_reconstruct( ego_mad * pmad );
-static bool_t  mad_free( ego_mad * pmad );
+static bool_t    mad_free( ego_mad * pmad );
+static ego_mad * mad_clear( ego_mad * pmad );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -82,7 +83,7 @@ void MadList_init()
         ego_mad * pmad = MadStack.lst + cnt;
 
         // blank out all the data, including the obj_base data
-        memset( pmad, 0, sizeof( *pmad ) );
+        mad_dtor( pmad );
 
         mad_reconstruct( pmad );
     }
@@ -922,6 +923,15 @@ void mad_rip_actions( const MAD_REF & imad )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+ego_mad * mad_clear( ego_mad * pmad )
+{
+    if ( NULL == pmad ) return pmad;
+
+    memset( pmad, 0, sizeof( *pmad ) );
+
+    return pmad;
+}
+
 //--------------------------------------------------------------------------------------------
 bool_t mad_free( ego_mad * pmad )
 {
@@ -947,7 +957,7 @@ ego_mad * mad_reconstruct( ego_mad * pmad )
 
     mad_free( pmad );
 
-    memset( pmad, 0, sizeof( *pmad ) );
+    pmad = mad_clear( pmad );
 
     strncpy( pmad->name, "*NONE*", SDL_arraysize( pmad->name ) );
 

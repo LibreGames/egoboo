@@ -243,10 +243,10 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
     // flag every item in the shop as a shop item
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ego_chr * pchr;
+        ego_chr * pchr = ChrObjList.get_valid_pdata( ichr );
+        if ( NULL == pchr ) continue;
 
-        if ( !INGAME_CHR( ichr ) ) continue;
-        pchr = ChrObjList.get_valid_pdata( ichr );
+        if ( !INGAME_PCHR( pchr ) ) continue;
 
         if ( pchr->isitem )
         {
@@ -442,10 +442,10 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
     foundother = CHR_REF( MAX_CHR );
     for ( character = 0; character < MAX_CHR; character++ )
     {
-        ego_chr * pchr;
+        ego_chr * pchr = ChrObjList.get_valid_pdata( character );
+        if ( NULL == pchr ) continue;
 
-        if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrObjList.get_valid_pdata( character );
+        if ( !INGAME_PCHR( pchr ) ) continue;
 
         // don't do scenery objects unless we allow items
         if ( !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) && pchr->phys.weight == INFINITE_WEIGHT ) continue;
@@ -564,10 +564,10 @@ bool_t ego_passage::close( ego_passage * ppass )
         // Make sure it isn't blocked
         for ( character = 0; character < MAX_CHR; character++ )
         {
-            ego_chr *pchr;
+            ego_chr * pchr = ChrObjList.get_valid_pdata( character );
+            if ( NULL == pchr ) continue;
 
-            if ( !INGAME_CHR( character ) ) continue;
-            pchr = ChrObjList.get_valid_pdata( character );
+            if ( !INGAME_PCHR( pchr ) ) continue;
 
             // Don't do held items
             if ( IS_ATTACHED_PCHR( pchr ) ) continue;

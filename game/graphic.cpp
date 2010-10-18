@@ -244,7 +244,6 @@ static void render_water( ego_renderlist * prlist );
 
 static void gfx_make_dynalist( ego_camera * pcam );
 
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -1424,8 +1423,10 @@ void draw_map()
                 ego_chr * pchr;
                 ego_cap * pcap;
 
-                if ( !INGAME_CHR( ichr ) ) continue;
                 pchr = ChrObjList.get_valid_pdata( ichr );
+                if ( NULL == pchr ) continue;
+
+                if ( !INGAME_PCHR( pchr ) ) continue;
 
                 pcap = ego_chr::get_pcap( ichr );
                 if ( NULL == pcap ) continue;
@@ -1512,7 +1513,7 @@ int draw_fps( int y )
 #    if defined(DEBUG_BSP) && EGO_DEBUG
         y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtObjList.count_free() );
         y = _draw_string_raw( 0, y, "BSP collisions %d", CHashList_inserted );
-        y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", chr_stoppedby_tests + chr_pressure_tests, prt_stoppedby_tests + prt_pressure_tests );
+        y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", ego_chr::stoppedby_tests + ego_chr::pressure_tests, ego_prt::stoppedby_tests + ego_prt::pressure_tests );
 #    endif
 
 #if defined(DEBUG_RENDERLIST) && EGO_DEBUG
@@ -2188,10 +2189,10 @@ void update_all_chr_instance()
 
     for ( cnt = 0; cnt < MAX_CHR; cnt++ )
     {
-        ego_chr * pchr;
+        ego_chr * pchr = ChrObjList.get_valid_pdata( cnt );
+        if ( NULL == pchr ) continue;
 
-        if ( !INGAME_CHR( cnt ) ) continue;
-        pchr = ChrObjList.get_valid_pdata( cnt );
+        if ( !INGAME_PCHR( pchr ) ) continue;
 
         if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
 
@@ -3343,11 +3344,22 @@ void gfx_update_timers()
 //--------------------------------------------------------------------------------------------
 // BILLBOARD DATA IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
-ego_billboard_data * ego_billboard_data::init( ego_billboard_data * pbb )
+ego_billboard_data * ego_billboard_data::clear( ego_billboard_data * pbb )
 {
     if ( NULL == pbb ) return pbb;
 
     memset( pbb, 0, sizeof( *pbb ) );
+
+    return pbb;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_billboard_data * ego_billboard_data::init( ego_billboard_data * pbb )
+{
+    if ( NULL == pbb ) return pbb;
+
+    pbb = ego_billboard_data::clear( pbb );
+    if ( NULL == pbb ) return pbb;
 
     pbb->tex_ref = INVALID_TX_TEXTURE;
     pbb->ichr    = CHR_REF( MAX_CHR );
@@ -4158,10 +4170,10 @@ void dolist_make( ego_mpd   * pmesh )
     // Now fill it up again
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ego_chr * pchr;
+        ego_chr * pchr = ChrObjList.get_valid_pdata( ichr );
+        if ( NULL == pchr ) continue;
 
-        if ( !INGAME_CHR( ichr ) ) continue;
-        pchr = ChrObjList.get_valid_pdata( ichr );
+        if ( !INGAME_PCHR( pchr ) ) continue;
 
         if ( !pchr->pack.is_packed )
         {

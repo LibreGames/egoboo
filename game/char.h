@@ -188,6 +188,25 @@ struct ego_chr_spawn_data
 /// This has been separated from ego_chr so that it can be initialized easily without upsetting anuthing else
 struct ego_chr_data
 {
+    //---- constructors and destructors
+
+    /// default constructor
+    explicit ego_chr_data()  { ego_chr_data::ctor( this ); };
+
+    /// default destructor
+    ~ego_chr_data() { ego_chr_data::dtor( this ); };
+
+    //---- construction and destruction
+
+    /// construct this struct, ONLY
+    static ego_chr_data * ctor( ego_chr_data * );
+    /// destruct this struct, ONLY
+    static ego_chr_data * dtor( ego_chr_data * );
+    /// set the critical variables to safe values
+    static ego_chr_data * init( ego_chr_data * );
+
+    //---- generic character data
+
     // character state
     ego_ai_state     ai;              ///< ai data
     ego_latch_game   latch;           ///< the latch data
@@ -400,12 +419,20 @@ struct ego_chr_data
 
     ego_breadcrumb_list crumbs;                     ///< a list of previous valid positions that the object has passed through
 
-    ego_chr_data()  { ego_chr_data::ctor( this ); };
-    ~ego_chr_data() { ego_chr_data::dtor( this ); };
+protected:
 
-    static ego_chr_data * ctor( ego_chr_data * );
-    static ego_chr_data * dtor( ego_chr_data * );
+    //---- construction and destruction
 
+    /// construct this struct, and ALL dependent structs
+    static ego_chr_data * do_ctor( ego_chr_data * );
+    /// denstruct this struct, and ALL dependent structs
+    static ego_chr_data * do_dtor( ego_chr_data * );
+
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
+    static ego_chr_data * alloc( ego_chr_data * pchr );
+    /// deallocate data for this struct, ONLY
     static ego_chr_data * dealloc( ego_chr_data * pchr );
 };
 
@@ -416,28 +443,44 @@ struct ego_chr : public ego_chr_data
 {
     friend struct ego_obj_chr;
 
-private:
-
-    /// a hook to ego_obj_chr, which is the parent container of this object
-    const ego_obj_chr * _parent_obj_ptr;
-
 public:
 
-    // some extra data
+    //---- extra data
+
     ego_chr_spawn_data  spawn_data;
     ego_BSP_leaf        bsp_leaf;
 
-    // constructors and destructors
-    explicit ego_chr( ego_obj_chr * _parent );
-    ~ego_chr();
+    // counters for debugging wall collisions
+    static int stoppedby_tests;
+    static int pressure_tests;
 
-    // The public means of accessing the parent ego_obj_chr object
+    //---- constructors and destructors
+
+    /// non-default constructor. We MUST know who our marent is
+    explicit ego_chr( ego_obj_chr * _pparent ) : _parent_obj_ptr( _pparent ) { ego_chr::ctor( this ); };
+
+    /// default destructor
+    ~ego_chr() { ego_chr::dtor( this ); };
+
+    //---- implementation of required accessors
+
+    // This ego_chr is contained by ego_che_obj. We need some way of accessing it
+    // These have to have generic names to that all objects that are contained in
+    // an ego_object can be interfaced with in the same way
+
     const ego_obj_chr * cget_pparent() const { return _parent_obj_ptr; }
     ego_obj_chr       * get_pparent()  const { return ( ego_obj_chr * )_parent_obj_ptr; }
 
-    // memory management
-    static ego_chr * ctor( ego_chr * );
-    static ego_chr * dtor( ego_chr * );
+    //---- construction and destruction
+
+    /// construct this struct, ONLY
+    static ego_chr * ctor( ego_chr * pchr );
+    /// destruct this struct, ONLY
+    static ego_chr * dtor( ego_chr * pchr );
+    /// do some initialiation
+    static ego_chr * init( ego_chr * pchr ) { return pchr; }
+
+    //---- generic character functions
 
     // matrix related functions
     static egoboo_rv  update_matrix( ego_chr * pchr, bool_t update_size );
@@ -534,62 +577,123 @@ public:
     static INLINE bool_t get_MatTranslate( ego_chr *pchr, fvec3_t   * pvec );
 
 protected:
+
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
     static ego_chr * alloc( ego_chr * pchr );
+    /// deallocate data for this struct, ONLY
     static ego_chr * dealloc( ego_chr * pchr );
 
+    /// allocate data for this struct, and ALL dependent structs
+    static ego_chr * do_alloc( ego_chr * pchr );
+    /// deallocate data for this struct, and ALL dependent structs
+    static ego_chr * do_dealloc( ego_chr * pchr );
+
+    //---- private implementations of the configuration functions
+
+    static ego_chr * do_ctor( ego_chr * pchr );
     static ego_chr * do_init( ego_chr * pchr );
     static ego_chr * do_process( ego_chr * pchr );
     static ego_chr * do_deinit( ego_chr * pchr );
+    static ego_chr * do_dtor( ego_chr * pchr );
+
+private:
+
+    /// a hook to ego_obj_chr, which is the parent container of this object
+    const ego_obj_chr * _parent_obj_ptr;
 };
 
 //--------------------------------------------------------------------------------------------
+
 /// A refinement of the ego_obj and the actual container that will be stored in the t_cpp_list<>
 /// This adds functions for implementing the state machine on this object (the run* and do* functions)
 /// and encapsulates the character data
 
 struct ego_obj_chr : public ego_obj
 {
-    // a type definition so that parent struct t_ego_obj_lst<> can define a function
-    // to get at the actual character data. For instance ChrObjList.get_pdata() to return
-    // a pointer to the character data
+    //---- typedefs
+
+    /// a type definition so that parent struct t_ego_obj_lst<> can define a function
+    /// to get at the actual character data. For instance ChrObjList.get_pdata() to return
+    /// a pointer to the character data
     typedef ego_chr data_type;
 
-    // constructors and destructors
-    ego_obj_chr() : _chr_data( this ) { ctor( this, bfalse ); }
-    ~ego_obj_chr() { dtor( this, bfalse ); }
+    //---- constructors and destructors
+
+    /// default constructor
+    explicit ego_obj_chr() : _chr_data( this ) { ctor( this ); }
+
+    /// default destructor
+    ~ego_obj_chr() { dtor( this ); }
+
+    //---- implementation of required accessors
 
     // This container "has a" ego_chr, so we need some way of accessing it
     // These have to have generic names to that t_ego_obj_lst<> can access the data
     // for all container types
+
     ego_chr & get_data()  { return _chr_data; }
     ego_chr * get_pdata() { return &_chr_data; }
 
     const ego_chr & cget_data()  const { return _chr_data; }
     const ego_chr * cget_pdata() const { return &_chr_data; }
 
-    // memory management
-    static ego_obj_chr * ctor( ego_obj_chr * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_chr::ctor( pobj->get_pdata() ); return pobj; };
-    static ego_obj_chr * dtor( ego_obj_chr * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_chr::ctor( pobj->get_pdata() ); return pobj; };
+    //---- construction and destruction
 
-    // global configuration functions
+    /// construct this struct, ONLY
+    static ego_obj_chr * ctor( ego_obj_chr * pobj );
+    /// destruct this struct, ONLY
+    static ego_obj_chr * dtor( ego_obj_chr * pobj );
+
+    /// construct this struct, and ALL dependent structs
+    static ego_obj_chr * do_ctor( ego_obj_chr * pobj );
+    /// destruct this struct, and ALL dependent structs
+    static ego_obj_chr * do_dtor( ego_obj_chr * pobj );
+
+    //---- global configuration functions
+
+    /// External handle for iterating the "egoboo object process" state machine
     static ego_obj_chr * run( ego_obj_chr * pchr );
+    /// External handle for getting an "egoboo object process" into the constructed state
     static ego_obj_chr * run_construct( ego_obj_chr * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the initialized state
     static ego_obj_chr * run_initialize( ego_obj_chr * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the active state
     static ego_obj_chr * run_activate( ego_obj_chr * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the deinitialized state
     static ego_obj_chr * run_deinitialize( ego_obj_chr * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the deconstructed state
     static ego_obj_chr * run_deconstruct( ego_obj_chr * pprt, int max_iterations );
 
+    /// Ask the "egoboo object process" to terminate itself
     static bool_t        request_terminate( const CHR_REF & ichr );
 
 protected:
 
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
+    static ego_obj_chr * alloc( ego_obj_chr * pobj );
+    /// deallocate data for this struct, ONLY
     static ego_obj_chr * dealloc( ego_obj_chr * pobj );
 
-    // private implementations of the configuration functions
+    /// allocate data for this struct, and ALL dependent structs
+    static ego_obj_chr * do_alloc( ego_obj_chr * pobj );
+    /// deallocate data for this struct, and ALL dependent structs
+    static ego_obj_chr * do_dealloc( ego_obj_chr * pobj );
+
+    //---- private implementations of the configuration functions
+
+    /// private implementation of egoboo "egoboo object process's" constructing method
     static ego_obj_chr * do_constructing( ego_obj_chr * pchr );
+    /// private implementation of egoboo "egoboo object process's" initializing method
     static ego_obj_chr * do_initializing( ego_obj_chr * pchr );
+    /// private implementation of egoboo "egoboo object process's" deinitializing method
     static ego_obj_chr * do_deinitializing( ego_obj_chr * pchr );
+    /// private implementation of egoboo "egoboo object process's" processing method
     static ego_obj_chr * do_processing( ego_obj_chr * pchr );
+    /// private implementation of egoboo "egoboo object process's" destructing method
     static ego_obj_chr * do_destructing( ego_obj_chr * pchr );
 
 private:
@@ -608,10 +712,6 @@ DECLARE_STACK_EXTERN( ego_cap,  CapStack,  MAX_PROFILE );
 
 #define VALID_CAP_RANGE( ICAP ) ( ((ICAP) >= 0) && ((ICAP) < MAX_CAP) )
 #define LOADED_CAP( ICAP )       ( VALID_CAP_RANGE( ICAP ) && CapStack.lst[ICAP].loaded )
-
-// counters for debugging wall collisions
-extern int chr_stoppedby_tests;
-extern int chr_pressure_tests;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

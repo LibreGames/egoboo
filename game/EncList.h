@@ -64,7 +64,6 @@
 #define ENC_BEGIN_LOOP_BSP(IT, PENC)     {size_t IT##_internal; int enc_loop_start_depth = EncObjList.loop_depth; EncObjList.loop_depth++; for(IT##_internal=0;IT##_internal<EncObjList.used_count;IT##_internal++) { ENC_REF IT; ego_enc * PENC = NULL; IT = (ENC_REF)EncObjList.used_ref[IT##_internal]; if(!ACTIVE_ENC (IT)) continue; PENC =  EncObjList.get_valid_pdata(IT); if( !PENC->bsp_leaf.inserted ) continue;
 #define ENC_END_LOOP() } EncObjList.loop_depth--; if(enc_loop_start_depth != EncObjList.loop_depth) EGOBOO_ASSERT(bfalse); EncObjList.cleanup(); }
 
-
 // Macros to determine whether the enchant is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"
 #define INGAME_ENC_BASE(IENC)       ( VALID_ENC_REF( IENC ) && ACTIVE_PBASE( POBJ_CGET_PBASE(EncObjList.lst + (IENC)) ) && ON_PBASE( POBJ_CGET_PBASE(EncObjList.lst + (IENC)) ) )

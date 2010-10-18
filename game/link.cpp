@@ -180,7 +180,7 @@ bool_t link_pop_module()
 
                 if ( phero->object_index == ChrObjList.get_data( j ).profile_ref )
                 {
-                    pchr = ChrObjList.get_valid_pdata( j );
+                    pchr = ChrObjList.get_pdata( j );
                     break;
                 };
             }

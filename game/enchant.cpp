@@ -59,6 +59,70 @@ void enchant_system_end()
 }
 
 //--------------------------------------------------------------------------------------------
+// struct ego_enc_data -
+//--------------------------------------------------------------------------------------------
+ego_enc_data * ego_enc_data::ctor( ego_enc_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    // set the critical values to safe ones
+    pdata = ego_enc_data::init( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    // construct/allocate any dynamic data
+    pdata = ego_enc_data::alloc( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_enc_data * ego_enc_data::dtor( ego_enc_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    // destruct/free any dynamic data
+    pdata = ego_enc_data::dealloc( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    // set the critical values to safe ones
+    pdata = ego_enc_data::init( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_enc_data * ego_enc_data::init( ego_enc_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    pdata->profile_ref      = ( PRO_REF )MAX_PROFILE;
+    pdata->eve_ref          = ( EVE_REF )MAX_EVE;
+
+    pdata->target_ref       = CHR_REF( MAX_CHR );
+    pdata->owner_ref        = CHR_REF( MAX_CHR );
+    pdata->spawner_ref      = CHR_REF( MAX_CHR );
+    pdata->spawnermodel_ref = ( PRO_REF )MAX_PROFILE;
+    pdata->overlay_ref      = CHR_REF( MAX_CHR );
+
+    pdata->nextenchant_ref  = ( ENC_REF )MAX_ENC;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+// struct ego_enc -
+//--------------------------------------------------------------------------------------------
+ego_enc *  ego_enc::alloc( ego_enc * penc )
+{
+    if ( !VALID_PENC( penc ) ) return bfalse;
+
+    // nothing to do yet
+
+    return penc;
+}
+
 //--------------------------------------------------------------------------------------------
 ego_enc *  ego_enc::dealloc( ego_enc * penc )
 {
@@ -70,35 +134,74 @@ ego_enc *  ego_enc::dealloc( ego_enc * penc )
 }
 
 //--------------------------------------------------------------------------------------------
+ego_enc * ego_enc::do_alloc( ego_enc * penc )
+{
+    if ( NULL == penc ) return penc;
+
+    ego_enc::alloc( penc );
+    ego_enc_data::alloc( penc );
+
+    return penc;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_enc * ego_enc::do_dealloc( ego_enc * penc )
+{
+    if ( NULL == penc ) return penc;
+
+    ego_enc_data::dealloc( penc );
+
+    ego_enc::dealloc( penc );
+
+    return penc;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_enc * ego_enc::do_ctor( ego_enc * penc )
+{
+    // construct this struct and all sub-struct
+
+    if ( NULL == penc ) return penc;
+
+    // call the data ctor
+    if ( NULL == ego_enc_data::ctor( penc ) ) return NULL;
+
+    // call the data ctor
+    if ( NULL == ego_enc::ctor( penc ) ) return NULL;
+
+    return penc;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_enc * ego_enc::do_dtor( ego_enc * penc )
+{
+    // destruct this struct and all sub-struct
+
+    if ( NULL == penc ) return penc;
+
+    // destruct/free any dynamic data
+    ego_enc::dtor( penc );
+
+    // dealloc anything in the data
+    ego_enc_data::dtor( penc );
+
+    return penc;
+}
+//--------------------------------------------------------------------------------------------
 ego_enc * ego_enc::ctor( ego_enc * penc )
 {
-    ego_obj save_base;
-    ego_obj * pbase;
+    /// @details BB@> initialize the ego_enc
 
-    // grab the base object
-    pbase = PDATA_GET_PBASE( penc );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
+    if ( NULL == penc ) return penc;
 
-    memcpy( &save_base, pbase, sizeof( ego_obj ) );
+    // construct/allocate any dynamic data
+    penc = ego_enc::init( penc );
+    if ( NULL == penc ) return penc;
 
-    memset( penc, 0, sizeof( *penc ) );
-
-    // restore the base object data
-    memcpy( pbase, &save_base, sizeof( ego_obj ) );
-
-    penc->profile_ref      = ( PRO_REF )MAX_PROFILE;
-    penc->eve_ref          = ( EVE_REF )MAX_EVE;
-
-    penc->target_ref       = CHR_REF( MAX_CHR );
-    penc->owner_ref        = CHR_REF( MAX_CHR );
-    penc->spawner_ref      = CHR_REF( MAX_CHR );
-    penc->spawnermodel_ref = ( PRO_REF )MAX_PROFILE;
-    penc->overlay_ref      = CHR_REF( MAX_CHR );
-
-    penc->nextenchant_ref  = ( ENC_REF )MAX_ENC;
-
-    // we are done constructing. move on to initializing.
-    ego_obj::end_constructing( pbase );
+    // construct/allocate any dynamic data
+    penc = ego_enc::alloc( penc );
+    if ( NULL == penc ) return penc;
 
     return penc;
 }
@@ -108,12 +211,12 @@ ego_enc * ego_enc::dtor( ego_enc * penc )
 {
     if ( NULL == penc ) return penc;
 
-    // destroy the object
+    // destruct/free any dynamic data
     ego_enc::dealloc( penc );
 
-    // Destroy the base object.
-    // Sets the state to ego_obj_terminated automatically.
-    PDATA_TERMINATE( penc );
+    // construct/allocate any dynamic data
+    penc = ego_enc::init( penc );
+    if ( NULL == penc ) return penc;
 
     return penc;
 }
@@ -880,7 +983,7 @@ ego_enc * ego_enc::do_init( ego_enc * penc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::do_active( ego_enc * penc )
+ego_enc * ego_enc::do_process( ego_enc * penc )
 {
     /// @details ZZ@> This function allows enchantments to update, spawn particles,
     //  do drains, stat boosts and despawn.
@@ -1243,7 +1346,7 @@ ego_obj_enc * ego_obj_enc::do_constructing( ego_obj_enc * pobj )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
 
     // run the constructor
-    ego_enc * penc = ego_enc::ctor( pobj->get_pdata() );
+    ego_enc * penc = ego_enc::do_ctor( pobj->get_pdata() );
     if ( NULL == penc ) return pobj;
 
     // move on to the next action
@@ -1320,7 +1423,7 @@ ego_obj_enc * ego_obj_enc::do_processing( ego_obj_enc * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the main loop
-    ego_enc * penc = ego_enc::do_active( pobj->get_pdata() );
+    ego_enc * penc = ego_enc::do_process( pobj->get_pdata() );
     if ( NULL == penc ) return pobj;
 
     /* add stuff here */
@@ -1374,7 +1477,7 @@ ego_obj_enc * ego_obj_enc::do_destructing( ego_obj_enc * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the destructor
-    ego_enc * penc = ego_enc::dtor( pobj->get_pdata() );
+    ego_enc * penc = ego_enc::do_dtor( pobj->get_pdata() );
     if ( NULL == penc ) return pobj;
 
     // move on to the next action (dead)
@@ -1995,9 +2098,8 @@ void increment_all_enchant_update_counters()
 
     for ( cnt = 0; cnt < MAX_ENC; cnt++ )
     {
-        ego_obj * pbase;
+        ego_obj * pbase = EncObjList.get_valid_ptr( cnt );
 
-        pbase = POBJ_GET_PBASE( EncObjList.get_ptr( cnt ) );
         if ( !ACTIVE_PBASE( pbase ) ) continue;
 
         pbase->update_count++;
@@ -2012,5 +2114,113 @@ bool_t ego_obj_enc::request_terminate( const ENC_REF & ienc )
     POBJ_REQUEST_TERMINATE( EncObjList.get_ptr( ienc ) );
 
     return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+// struct ego_obj_enc - memory management
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_obj_enc::ctor( ego_obj_enc * pobj )
+{
+    // construct this struct, ONLY
+
+    if ( NULL == pobj ) return NULL;
+
+    pobj = ego_obj_enc::alloc( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_obj_enc::dtor( ego_obj_enc * pobj )
+{
+    // destruct this struct, ONLY
+
+    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_KILLED_PBASE( pobj ) ) return pobj;
+
+    pobj = ego_obj_enc::dealloc( pobj );
+
+    // Sets the state to ego_obj_terminated automatically.
+    POBJ_TERMINATE( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_obj_enc::do_ctor( ego_obj_enc * pobj )
+{
+    // construct this struct, and ALL dependent structs
+
+    pobj = ego_obj_enc::ctor( pobj );
+    if ( NULL == pobj ) return pobj;
+
+    ego_enc::do_ctor( pobj->get_pdata() );
+
+    // we are done constructing. move on to initializing.
+    ego_obj::end_constructing( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_obj_enc::do_dtor( ego_obj_enc * pobj )
+{
+    // destruct this struct, and ALL dependent structs
+
+    ego_enc::do_dtor( pobj->get_pdata() );
+
+    pobj = ego_obj_enc::dtor( pobj );
+    if ( NULL == pobj ) return pobj;
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_obj_enc::dealloc( ego_obj_enc * pobj )
+{
+    // deallocate this struct
+    if ( !VALID_PBASE( pobj ) ) return pobj;
+
+    /* do something here */
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_obj_enc::do_dealloc( ego_obj_enc * pobj )
+{
+    // deallocate this struct and all sub structs
+
+    if ( !VALID_PBASE( pobj ) ) return pobj;
+
+    ego_enc::do_dealloc( pobj->get_pdata() );
+
+    ego_obj_enc::dealloc( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_obj_enc::alloc( ego_obj_enc * pobj )
+{
+    // allocate this struct
+    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
+
+    /* do something here */
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_obj_enc::do_alloc( ego_obj_enc * pobj )
+{
+    // allocate this struct and all sub structs
+
+    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
+
+    ego_obj_enc::alloc( pobj );
+
+    ego_enc::do_alloc( pobj->get_pdata() );
+
+    return pobj;
 }
 

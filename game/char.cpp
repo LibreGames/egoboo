@@ -75,8 +75,8 @@ static IDSZ    inventory_idsz[INVEN_COUNT];
 INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_cap, CapStack, MAX_PROFILE );
 INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_team, TeamStack, TEAM_MAX );
 
-int chr_stoppedby_tests = 0;
-int chr_pressure_tests = 0;
+int ego_chr::stoppedby_tests = 0;
+int ego_chr::pressure_tests = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -149,220 +149,6 @@ void character_system_end()
     release_all_cap();
     ChrObjList.dtor();
 }
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::dealloc( ego_obj_chr * pobj )
-{
-    if ( NULL == pobj ) return pobj;
-
-    if ( pobj->get_allocated() ) return pobj;
-
-    ego_chr::dealloc( POBJ_GET_PDATA( pobj ) );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::dealloc( ego_chr * pchr )
-{
-    if ( NULL == pchr ) return pchr;
-
-    // dealloc anything in the data
-    ego_chr_data::dealloc( pchr );
-
-    // do some list clean-up
-    remove_all_character_enchants( GET_REF_PCHR( pchr ) );
-
-    ego_BSP_leaf::dtor( &( pchr->bsp_leaf ) );
-
-    return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr_data * ego_chr_data::dealloc( ego_chr_data * pdata )
-{
-    /// Free all allocated memory
-
-    if ( NULL == pdata ) return pdata;
-
-    // deallocate
-    BillboardList_free_one( REF_TO_INT( pdata->ibillboard ) );
-
-    LoopedList_remove( pdata->loopedsound_channel );
-
-    chr_instance_dtor( &( pdata->inst ) );
-    ego_ai_state::dtor( &( pdata->ai ) );
-
-    EGOBOO_ASSERT( NULL == pdata->inst.vrt_lst );
-
-    return pdata;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr_data * ego_chr_data::ctor( ego_chr_data * pdata )
-{
-    /// @details BB@> initialize the character data to safe values
-    ///     since we use memset(..., 0, ...), everything == 0 == false == 0.0f
-    ///     statements are redundant
-
-    int cnt;
-
-    if ( NULL == pdata ) return pdata;
-
-    // deallocate any existing data
-    if ( NULL == ego_chr_data::dealloc( pdata ) ) return NULL;
-
-    // clear out all data
-    memset( pdata, 0, sizeof( *pdata ) );
-
-    // IMPORTANT!!!
-    pdata->ibillboard = INVALID_BILLBOARD;
-    pdata->sparkle = NOSPARKLE;
-    pdata->loopedsound_channel = INVALID_SOUND_CHANNEL;
-
-    // Set up model stuff
-    pdata->inwhich_slot = SLOT_LEFT;
-    pdata->hitready = btrue;
-    pdata->boretime = BORETIME;
-    pdata->carefultime = CAREFULTIME;
-
-    // Enchant stuff
-    pdata->firstenchant = ( ENC_REF ) MAX_ENC;
-    pdata->undoenchant = ( ENC_REF ) MAX_ENC;
-    pdata->missiletreatment = MISSILE_NORMAL;
-
-    // Character stuff
-    pdata->turnmode = TURNMODE_VELOCITY;
-    pdata->alive = btrue;
-
-    // Jumping
-    pdata->jump_time = JUMP_DELAY;
-
-    // Grip info
-    pdata->attachedto = CHR_REF( MAX_CHR );
-    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
-    {
-        pdata->holdingwhich[cnt] = CHR_REF( MAX_CHR );
-    }
-
-    // pack/inventory info
-    pdata->pack.next = CHR_REF( MAX_CHR );
-    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
-    {
-        pdata->inventory[cnt] = CHR_REF( MAX_CHR );
-    }
-
-    // Set up position
-    pdata->ori.map_facing_y = MAP_TURN_OFFSET;  // These two mean on level surface
-    pdata->ori.map_facing_x = MAP_TURN_OFFSET;
-
-    // I think we have to set the dismount timer, otherwise objects that
-    // are spawned by chests will behave strangely...
-    // nope this did not fix it
-    // ZF@> If this is != 0 then scorpion claws and riders are dropped at spawn (non-item objects)
-    pdata->dismount_timer  = 0;
-    pdata->dismount_object = CHR_REF( MAX_CHR );
-
-    // set all of the integer references to invalid values
-    pdata->firstenchant = ( ENC_REF ) MAX_ENC;
-    pdata->undoenchant  = ( ENC_REF ) MAX_ENC;
-    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
-    {
-        pdata->holdingwhich[cnt] = CHR_REF( MAX_CHR );
-    }
-
-    pdata->pack.next = CHR_REF( MAX_CHR );
-    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
-    {
-        pdata->inventory[cnt] = CHR_REF( MAX_CHR );
-    }
-
-    pdata->onwhichplatform_ref    = CHR_REF( MAX_CHR );
-    pdata->onwhichplatform_update = 0;
-    pdata->targetplatform_ref     = CHR_REF( MAX_CHR );
-    pdata->attachedto             = CHR_REF( MAX_CHR );
-
-    // all movements valid
-    pdata->movement_bits   = ( unsigned )( ~0 );
-
-    // not a player
-    pdata->is_which_player = MAX_PLAYER;
-
-
-    //---- call the constructors of the "has a" classes
-
-    // set the instance values to safe values
-    chr_instance_ctor( &( pdata->inst ) );
-
-    // initialize the ai_state
-    ego_ai_state::ctor( &( pdata->ai ) );
-
-    return pdata;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr_data * ego_chr_data::dtor( ego_chr_data * pdata )
-{
-    if ( NULL == pdata ) return pdata;
-
-    // destruct/free any allocated data
-    ego_chr_data::dealloc( pdata );
-
-    return pdata;
-}
-
-
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::ctor( ego_chr * pchr )
-{
-    /// @details BB@> initialize the character data to safe values
-    ///     since we use memset(..., 0, ...), everything == 0 == false == 0.0f
-    ///     statements are redundant
-
-    if ( NULL == pchr ) return pchr;
-
-    // deallocate any existing data
-    if ( VALID_PCHR( pchr ) )
-    {
-        // call the dtor
-        if ( NULL == ego_chr::dtor( pchr ) ) return NULL;
-    }
-
-    // call the data ctor
-    if ( NULL == ego_chr_data::ctor( pchr ) ) return NULL;
-
-    // start the character out in the "dance" animation
-    ego_chr::start_anim( pchr, ACTION_DA, btrue, btrue );
-
-    // initialize the bsp node for this character
-    ego_BSP_leaf::ctor( &( pchr->bsp_leaf ), 3, pchr, 1 );
-
-    pchr->bsp_leaf.data      = pchr;
-    pchr->bsp_leaf.data_type = LEAF_CHR;
-    pchr->bsp_leaf.index     = GET_IDX_PCHR( pchr );
-
-    return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::dtor( ego_chr * pchr )
-{
-    if ( NULL == pchr ) return pchr;
-
-    // destruct/free any allocated data
-    ego_chr::dealloc( pchr );
-
-    // Destroy the base object.
-    // Sets the state to ego_obj_terminated automatically.
-    PDATA_TERMINATE( pchr );
-
-    return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr::ego_chr( ego_obj_chr * _pparent ) : _parent_obj_ptr( _pparent ) { ego_chr::ctor( this ); };
-ego_chr::~ego_chr() { ego_chr::dtor( this ); };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -959,8 +745,8 @@ float chr_get_mesh_pressure( ego_chr * pchr, float test_pos[] )
     {
         retval = mesh_get_pressure( PMesh, test_pos, radius, pchr->stoppedby );
     }
-    chr_stoppedby_tests += mesh_mpdfx_tests;
-    chr_pressure_tests += mesh_pressure_tests;
+    ego_chr::stoppedby_tests += mesh_mpdfx_tests;
+    ego_chr::pressure_tests += mesh_pressure_tests;
 
     return retval;
 }
@@ -995,8 +781,8 @@ fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure )
     {
         retval = mesh_get_diff( PMesh, test_pos, radius, center_pressure, pchr->stoppedby );
     }
-    chr_stoppedby_tests += mesh_mpdfx_tests;
-    chr_pressure_tests += mesh_pressure_tests;
+    ego_chr::stoppedby_tests += mesh_mpdfx_tests;
+    ego_chr::pressure_tests += mesh_pressure_tests;
 
     return retval;
 }
@@ -1034,8 +820,8 @@ BIT_FIELD chr_hit_wall( ego_chr * pchr, float test_pos[], float nrm[], float * p
     {
         retval = mesh_hit_wall( PMesh, test_pos, radius, pchr->stoppedby, nrm, pressure );
     }
-    chr_stoppedby_tests += mesh_mpdfx_tests;
-    chr_pressure_tests  += mesh_pressure_tests;
+    ego_chr::stoppedby_tests += mesh_mpdfx_tests;
+    ego_chr::pressure_tests  += mesh_pressure_tests;
 
     return retval;
 }
@@ -1073,8 +859,8 @@ bool_t chr_test_wall( ego_chr * pchr, float test_pos[] )
     {
         retval = mesh_test_wall( PMesh, test_pos, radius, pchr->stoppedby, NULL );
     }
-    chr_stoppedby_tests += mesh_mpdfx_tests;
-    chr_pressure_tests += mesh_pressure_tests;
+    ego_chr::stoppedby_tests += mesh_mpdfx_tests;
+    ego_chr::pressure_tests += mesh_pressure_tests;
 
     return retval;
 }
@@ -3763,377 +3549,6 @@ ego_chr * ego_chr::do_deinit( ego_chr * pchr )
     /* nothing to do yet */
 
     return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_construct( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_constructing + 1 ) )
-    {
-        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_constructing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_initialize( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_initializing + 1 ) )
-    {
-        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_initializing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_activate( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_procing + 1 ) )
-    {
-        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action < ego_obj_procing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    EGOBOO_ASSERT( pbase->get_proc().action == ego_obj_procing );
-    if ( pbase->get_proc().action == ego_obj_procing )
-    {
-        ChrObjList.add_used( GET_REF_PCHR_OBJ( pobj ) );
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_deinitialize( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, deinitialize it
-    if ( pbase->get_proc().action > ( int )( ego_obj_deinitializing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pbase->get_proc().action < ego_obj_deinitializing )
-    {
-        ego_obj::end_processing( pbase );
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_deinitializing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_deconstruct( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, do nothing
-    if ( pbase->get_proc().action > ( int )( ego_obj_destructing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pbase->get_proc().action < ego_obj_deinitializing )
-    {
-        // make sure that you deinitialize before destructing
-        ego_obj::end_processing( pbase );
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_destructing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run( ego_obj_chr * pobj )
-{
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // set the object to deinitialize if it is not "dangerous" and if was requested
-    if ( FLAG_REQ_TERMINATION_PBASE( pbase ) )
-    {
-        pbase = ego_obj::grant_terminate( pbase );
-    }
-
-    switch ( pbase->get_proc().action )
-    {
-        default:
-        case ego_obj_nothing:
-            /* no operation */
-            break;
-
-        case ego_obj_constructing:
-            pobj = ego_obj_chr::do_constructing( pobj );
-            break;
-
-        case ego_obj_initializing:
-            pobj = ego_obj_chr::do_initializing( pobj );
-            break;
-
-        case ego_obj_procing:
-            pobj = ego_obj_chr::do_processing( pobj );
-            break;
-
-        case ego_obj_deinitializing:
-            pobj = ego_obj_chr::do_deinitializing( pobj );
-            break;
-
-        case ego_obj_destructing:
-            pobj = ego_obj_chr::do_destructing( pobj );
-            break;
-
-        case ego_obj_waiting:
-            /* do nothing */
-            break;
-    }
-
-    if ( NULL == pobj )
-    {
-        pbase->update_guid = INVALID_UPDATE_GUID;
-    }
-    else if ( ego_obj_procing == pbase->get_proc().action )
-    {
-        pbase->update_guid = ChrObjList.update_guid;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_constructing( ego_obj_chr * pobj )
-{
-    /// @details BB@> initialize the character data to safe values
-    ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
-    ///     statements are redundant
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
-
-    // run the constructor
-    ego_chr * pchr = ego_chr::ctor( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    // move on to the next action
-    ego_obj::end_constructing( pbase );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_initializing( ego_obj_chr * pobj )
-{
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_INITIALIZING_PBASE( pbase ) ) return pobj;
-
-    // tell the game that we're spawning something
-    POBJ_BEGIN_SPAWN( pobj );
-
-    // run the initialization routine
-    ego_chr * pchr = ego_chr::do_init( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    // request that we be turned on
-    pbase->get_req().turn_me_on = btrue;
-
-    // do something about being turned on
-    if ( 0 == ChrObjList.loop_depth )
-    {
-        ego_obj::grant_on( pbase );
-    }
-    else
-    {
-        ChrObjList.add_activation( GET_REF_PCHR_OBJ( pobj ) );
-    }
-
-    // move on to the next action
-    ego_obj::end_initializing( pbase );
-
-    // this will only work after the object has been fully initialized
-    if ( !LOADED_PRO( pobj->get_data().spawn_data.profile ) )
-    {
-        POBJ_ACTIVATE( pobj, "*UNKNOWN*" );
-    }
-    else
-    {
-        ego_cap * pcap = pro_get_pcap( pobj->get_data().profile_ref );
-        if ( NULL != pcap )
-        {
-            POBJ_ACTIVATE( pobj, pcap->name );
-        }
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_processing( ego_obj_chr * pobj )
-{
-    // there's nothing to configure if the object is active...
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_PROCESSING_PBASE( pbase ) ) return pobj;
-
-    // do this here (instead of at the end of *_do_object_initializing()) so that
-    // we are sure that the object is actually "on"
-    POBJ_END_SPAWN( pobj );
-
-    // run the main loop
-    ego_chr * pchr = ego_chr::do_process( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    /* add stuff here */
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_deinitializing( ego_obj_chr * pobj )
-{
-    /// @details BB@> deinitialize the character data
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_DEINITIALIZING_PBASE( pbase ) ) return pobj;
-
-    // make sure that the spawn is terminated
-    POBJ_END_SPAWN( pobj );
-
-    // run a deinitialization routine
-    ego_chr * pchr = ego_chr::do_deinit( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    // move on to the next action
-    ego_obj::end_deinitializing( pbase );
-
-    // make sure the object is off
-    pbase->get_proc().on = bfalse;
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_destructing( ego_obj_chr * pobj )
-{
-    /// @details BB@> deinitialize the character data
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_DESTRUCTING_PBASE( pbase ) ) return pobj;
-
-    // make sure that the spawn is terminated
-    POBJ_END_SPAWN( pobj );
-
-    // run the destructor
-    ego_chr * pchr = ego_chr::dtor( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    // move on to the next action (dead)
-    ego_obj::end_destructing( pbase );
-
-    return pobj;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7454,7 +6869,7 @@ void move_all_characters( void )
 {
     /// @details ZZ@> This function handles character physics
 
-    chr_stoppedby_tests = 0;
+    ego_chr::stoppedby_tests = 0;
 
     // Move every character
     CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
@@ -7487,8 +6902,8 @@ void cleanup_all_characters()
         ego_chr * pchr;
         bool_t time_out;
 
-        if ( !VALID_CHR( cnt ) ) continue;
         pchr = ChrObjList.get_valid_pdata( cnt );
+        if ( NULL == pchr ) continue;
 
         time_out = ( pchr->ai.poof_time >= 0 ) && ( pchr->ai.poof_time <= ( Sint32 )update_wld );
         if ( !WAITING_PBASE( PDATA_GET_PBASE( pchr ) ) && !time_out ) continue;
@@ -8653,18 +8068,6 @@ bool_t chr_teleport( const CHR_REF & ichr, float x, float y, float z, FACING_T f
     }
 
     return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_obj_chr::request_terminate( const CHR_REF & ichr )
-{
-    /// @details BB@> Mark this character for deletion
-
-    if ( !DEFINED_CHR( ichr ) ) return bfalse;
-
-    POBJ_REQUEST_TERMINATE( ChrObjList.get_valid_ptr( ichr ) );
-
-    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -11553,3 +10956,819 @@ bool_t chr_copy_enviro( ego_chr * chr_psrc, ego_chr * chr_pdst )
 
     return btrue;
 }
+
+//--------------------------------------------------------------------------------------------
+// struct ego_chr_data - memory management
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::alloc( ego_chr_data * pdata )
+{
+    /// Free all allocated memory
+
+    if ( NULL == pdata ) return pdata;
+
+    // allocate
+    chr_instance_ctor( &( pdata->inst ) );
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::dealloc( ego_chr_data * pdata )
+{
+    /// Free all allocated memory
+
+    if ( NULL == pdata ) return pdata;
+
+    chr_instance_dtor( &( pdata->inst ) );
+
+    EGOBOO_ASSERT( NULL == pdata->inst.vrt_lst );
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::ctor( ego_chr_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    // set the critical values to safe ones
+    pdata = ego_chr_data::init( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    // construct/allocate any dynamic data
+    pdata = ego_chr_data::alloc( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::dtor( ego_chr_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    // destruct/free any dynamic data
+    pdata = ego_chr_data::dealloc( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    // remove it from the BillboardList
+    BillboardList_free_one( REF_TO_INT( pdata->ibillboard ) );
+
+    // remove it from the LoopedList
+    LoopedList_remove( pdata->loopedsound_channel );
+
+    // reset the ego_ai_state
+    ego_ai_state::dtor( &( pdata->ai ) );
+
+    // set the critical values to safe ones
+    pdata = ego_chr_data::init( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::init( ego_chr_data * pdata )
+{
+    /// @details BB@> initialize the character data to safe values
+    ///     since we use memset(..., 0, ...), everything == 0 == false == 0.0f
+    ///     statements are redundant
+
+    int cnt;
+
+    if ( NULL == pdata ) return pdata;
+
+    // IMPORTANT!!!
+    pdata->ibillboard = INVALID_BILLBOARD;
+    pdata->sparkle = NOSPARKLE;
+    pdata->loopedsound_channel = INVALID_SOUND_CHANNEL;
+
+    // Set up model stuff
+    pdata->inwhich_slot = SLOT_LEFT;
+    pdata->hitready = btrue;
+    pdata->boretime = BORETIME;
+    pdata->carefultime = CAREFULTIME;
+
+    // Enchant stuff
+    pdata->firstenchant = ( ENC_REF ) MAX_ENC;
+    pdata->undoenchant = ( ENC_REF ) MAX_ENC;
+    pdata->missiletreatment = MISSILE_NORMAL;
+
+    // Character stuff
+    pdata->turnmode = TURNMODE_VELOCITY;
+    pdata->alive = btrue;
+
+    // Jumping
+    pdata->jump_time = JUMP_DELAY;
+
+    // Grip info
+    pdata->attachedto = CHR_REF( MAX_CHR );
+    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
+    {
+        pdata->holdingwhich[cnt] = CHR_REF( MAX_CHR );
+    }
+
+    // pack/inventory info
+    pdata->pack.next = CHR_REF( MAX_CHR );
+    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
+    {
+        pdata->inventory[cnt] = CHR_REF( MAX_CHR );
+    }
+
+    // Set up position
+    pdata->ori.map_facing_y = MAP_TURN_OFFSET;  // These two mean on level surface
+    pdata->ori.map_facing_x = MAP_TURN_OFFSET;
+
+    // I think we have to set the dismount timer, otherwise objects that
+    // are spawned by chests will behave strangely...
+    // nope this did not fix it
+    // ZF@> If this is != 0 then scorpion claws and riders are dropped at spawn (non-item objects)
+    pdata->dismount_timer  = 0;
+    pdata->dismount_object = CHR_REF( MAX_CHR );
+
+    // set all of the integer references to invalid values
+    pdata->firstenchant = ( ENC_REF ) MAX_ENC;
+    pdata->undoenchant  = ( ENC_REF ) MAX_ENC;
+    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
+    {
+        pdata->holdingwhich[cnt] = CHR_REF( MAX_CHR );
+    }
+
+    pdata->pack.next = CHR_REF( MAX_CHR );
+    for ( cnt = 0; cnt < INVEN_COUNT; cnt++ )
+    {
+        pdata->inventory[cnt] = CHR_REF( MAX_CHR );
+    }
+
+    pdata->onwhichplatform_ref    = CHR_REF( MAX_CHR );
+    pdata->onwhichplatform_update = 0;
+    pdata->targetplatform_ref     = CHR_REF( MAX_CHR );
+    pdata->attachedto             = CHR_REF( MAX_CHR );
+
+    // all movements valid
+    pdata->movement_bits   = ( unsigned )( ~0 );
+
+    // not a player
+    pdata->is_which_player = MAX_PLAYER;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::do_ctor( ego_chr_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    //---- call the constructor of the main classes
+    pdata = ego_chr_data::ctor( pdata );
+    if ( NULL == pdata ) return pdata;
+
+    //---- call the constructors of the dependent classes
+
+    // set the instance values to safe values
+    chr_instance_ctor( &( pdata->inst ) );
+
+    // initialize the ai_state
+    ego_ai_state::ctor( &( pdata->ai ) );
+
+    return pdata;
+};
+
+//--------------------------------------------------------------------------------------------
+ego_chr_data * ego_chr_data::do_dtor( ego_chr_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    //---- call the destructors of the dependent classes
+
+    // set the instance values to safe values
+    chr_instance_dtor( &( pdata->inst ) );
+
+    // initialize the ai_state
+    ego_ai_state::dtor( &( pdata->ai ) );
+
+    //---- call the destructor of the main classes
+    pdata = ego_chr_data::dtor( pdata );
+
+    return pdata;
+};
+
+//--------------------------------------------------------------------------------------------
+// struct ego_chr - memory management
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::alloc( ego_chr * pchr )
+{
+    if ( NULL == pchr ) return pchr;
+
+    // initialize the bsp node for this character
+    ego_BSP_leaf::ctor( &( pchr->bsp_leaf ), 3, pchr, 1 );
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::dealloc( ego_chr * pchr )
+{
+    if ( NULL == pchr ) return pchr;
+
+    ego_BSP_leaf::dtor( &( pchr->bsp_leaf ) );
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_alloc( ego_chr * pchr )
+{
+    if ( NULL == pchr ) return pchr;
+
+    ego_chr::alloc( pchr );
+    ego_chr_data::alloc( pchr );
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_dealloc( ego_chr * pchr )
+{
+    if ( NULL == pchr ) return pchr;
+
+    ego_chr_data::dealloc( pchr );
+
+    ego_chr::dealloc( pchr );
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_ctor( ego_chr * pchr )
+{
+    // construct this struct and all sub-struct
+
+    if ( NULL == pchr ) return pchr;
+
+    // deallocate any existing data
+    if ( VALID_PCHR( pchr ) )
+    {
+        // call the dtor
+        if ( NULL == ego_chr::dtor( pchr ) ) return NULL;
+    }
+
+    // call the data ctor
+    if ( NULL == ego_chr_data::ctor( pchr ) ) return NULL;
+
+    // call the data ctor
+    if ( NULL == ego_chr::ctor( pchr ) ) return NULL;
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_dtor( ego_chr * pchr )
+{
+    // destruct this struct and all sub-struct
+
+    if ( NULL == pchr ) return pchr;
+
+    // destruct/free any dynamic data
+    ego_chr::dtor( pchr );
+
+    // dealloc anything in the data
+    ego_chr_data::dtor( pchr );
+
+    return pchr;
+}
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::ctor( ego_chr * pchr )
+{
+    /// @details BB@> initialize the ego_chr
+
+    if ( NULL == pchr ) return pchr;
+
+    // set the critical values to safe ones
+    pchr = ego_chr::init( pchr );
+    if ( NULL == pchr ) return pchr;
+
+    // construct/allocate any dynamic data
+    pchr = ego_chr::alloc( pchr );
+    if ( NULL == pchr ) return pchr;
+
+    // start the character out in the "dance" animation
+    ego_chr::start_anim( pchr, ACTION_DA, btrue, btrue );
+
+    // set the ego_BSP_leaf data
+    pchr->bsp_leaf.data      = pchr;
+    pchr->bsp_leaf.data_type = LEAF_CHR;
+    pchr->bsp_leaf.index     = GET_IDX_PCHR( pchr );
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::dtor( ego_chr * pchr )
+{
+    if ( NULL == pchr ) return pchr;
+
+    // destruct/free any dynamic data
+    ego_chr::dealloc( pchr );
+
+    // do some list clean-up
+    remove_all_character_enchants( GET_REF_PCHR( pchr ) );
+
+    // set the critical values to safe ones
+    pchr = ego_chr::init( pchr );
+    if ( NULL == pchr ) return pchr;
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+// struct ego_obj_chr - memory management
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::ctor( ego_obj_chr * pobj )
+{
+    // construct this struct, ONLY
+
+    if ( NULL == pobj ) return NULL;
+
+    pobj = ego_obj_chr::alloc( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::dtor( ego_obj_chr * pobj )
+{
+    // destruct this struct, ONLY
+
+    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_KILLED_PBASE( pobj ) ) return pobj;
+
+    pobj = ego_obj_chr::dealloc( pobj );
+
+    // Sets the state to ego_obj_terminated automatically.
+    POBJ_TERMINATE( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_ctor( ego_obj_chr * pobj )
+{
+    // construct this struct, and ALL dependent structs
+
+    pobj = ego_obj_chr::ctor( pobj );
+    if ( NULL == pobj ) return pobj;
+
+    ego_chr::do_ctor( pobj->get_pdata() );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_dtor( ego_obj_chr * pobj )
+{
+    // destruct this struct, and ALL dependent structs
+
+    ego_chr::do_dtor( pobj->get_pdata() );
+
+    pobj = ego_obj_chr::dtor( pobj );
+    if ( NULL == pobj ) return pobj;
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::dealloc( ego_obj_chr * pobj )
+{
+    // deallocate this struct
+    if ( !VALID_PBASE( pobj ) ) return pobj;
+
+    /* do something here */
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_dealloc( ego_obj_chr * pobj )
+{
+    // deallocate this struct and all sub structs
+
+    if ( !VALID_PBASE( pobj ) ) return pobj;
+
+    ego_chr::do_dealloc( pobj->get_pdata() );
+
+    ego_obj_chr::dealloc( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::alloc( ego_obj_chr * pobj )
+{
+    // allocate this struct
+    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
+
+    /* do something here */
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_alloc( ego_obj_chr * pobj )
+{
+    // allocate this struct and all sub structs
+
+    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
+
+    ego_obj_chr::alloc( pobj );
+
+    ego_chr::do_alloc( pobj->get_pdata() );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+// struct ego_obj_chr - external "egoboo object process" handles
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::run_construct( ego_obj_chr * pobj, int max_iterations )
+{
+    int                 iterations;
+    ego_obj * pbase;
+
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if the character is already beyond this stage, deconstruct it and start over
+    if ( pbase->get_proc().action > ( int )( ego_obj_constructing + 1 ) )
+    {
+        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
+        if ( tmp_chr == pobj ) return NULL;
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_constructing && iterations < max_iterations )
+    {
+        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+
+        iterations++;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::run_initialize( ego_obj_chr * pobj, int max_iterations )
+{
+    int                 iterations;
+    ego_obj * pbase;
+
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if the character is already beyond this stage, deconstruct it and start over
+    if ( pbase->get_proc().action > ( int )( ego_obj_initializing + 1 ) )
+    {
+        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
+        if ( tmp_chr == pobj ) return NULL;
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_initializing && iterations < max_iterations )
+    {
+        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+        iterations++;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::run_activate( ego_obj_chr * pobj, int max_iterations )
+{
+    int                 iterations;
+    ego_obj * pbase;
+
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if the character is already beyond this stage, deconstruct it and start over
+    if ( pbase->get_proc().action > ( int )( ego_obj_procing + 1 ) )
+    {
+        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
+        if ( tmp_chr == pobj ) return NULL;
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pbase->get_proc().action < ego_obj_procing && iterations < max_iterations )
+    {
+        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+        iterations++;
+    }
+
+    EGOBOO_ASSERT( pbase->get_proc().action == ego_obj_procing );
+    if ( pbase->get_proc().action == ego_obj_procing )
+    {
+        ChrObjList.add_used( GET_REF_PCHR_OBJ( pobj ) );
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::run_deinitialize( ego_obj_chr * pobj, int max_iterations )
+{
+    int                 iterations;
+    ego_obj * pbase;
+
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if the character is already beyond this stage, deinitialize it
+    if ( pbase->get_proc().action > ( int )( ego_obj_deinitializing + 1 ) )
+    {
+        return pobj;
+    }
+    else if ( pbase->get_proc().action < ego_obj_deinitializing )
+    {
+        ego_obj::end_processing( pbase );
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_deinitializing && iterations < max_iterations )
+    {
+        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+        iterations++;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::run_deconstruct( ego_obj_chr * pobj, int max_iterations )
+{
+    int                 iterations;
+    ego_obj * pbase;
+
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if the character is already beyond this stage, do nothing
+    if ( pbase->get_proc().action > ( int )( ego_obj_destructing + 1 ) )
+    {
+        return pobj;
+    }
+    else if ( pbase->get_proc().action < ego_obj_deinitializing )
+    {
+        // make sure that you deinitialize before destructing
+        ego_obj::end_processing( pbase );
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_destructing && iterations < max_iterations )
+    {
+        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+        iterations++;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::run( ego_obj_chr * pobj )
+{
+    ego_obj * pbase;
+
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // set the object to deinitialize if it is not "dangerous" and if was requested
+    if ( FLAG_REQ_TERMINATION_PBASE( pbase ) )
+    {
+        pbase = ego_obj::grant_terminate( pbase );
+    }
+
+    switch ( pbase->get_proc().action )
+    {
+        default:
+        case ego_obj_nothing:
+            /* no operation */
+            break;
+
+        case ego_obj_constructing:
+            pobj = ego_obj_chr::do_constructing( pobj );
+            break;
+
+        case ego_obj_initializing:
+            pobj = ego_obj_chr::do_initializing( pobj );
+            break;
+
+        case ego_obj_procing:
+            pobj = ego_obj_chr::do_processing( pobj );
+            break;
+
+        case ego_obj_deinitializing:
+            pobj = ego_obj_chr::do_deinitializing( pobj );
+            break;
+
+        case ego_obj_destructing:
+            pobj = ego_obj_chr::do_destructing( pobj );
+            break;
+
+        case ego_obj_waiting:
+            /* do nothing */
+            break;
+    }
+
+    if ( NULL == pobj )
+    {
+        pbase->update_guid = INVALID_UPDATE_GUID;
+    }
+    else if ( ego_obj_procing == pbase->get_proc().action )
+    {
+        pbase->update_guid = ChrObjList.update_guid;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+// struct ego_obj_chr - internal "egoboo object process" methods
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_constructing( ego_obj_chr * pobj )
+{
+    /// @details BB@> initialize the character data to safe values
+    ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
+    ///     statements are redundant
+
+    ego_obj * pbase;
+
+    // grab the base object
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if we aren't in the correct state, abort.
+    if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
+
+    // run the constructor
+    ego_chr * pchr = ego_chr::do_ctor( pobj->get_pdata() );
+    if ( NULL == pchr ) return pobj;
+
+    // move on to the next action
+    ego_obj::end_constructing( pbase );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_initializing( ego_obj_chr * pobj )
+{
+    ego_obj * pbase;
+
+    // grab the base object
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if we aren't in the correct state, abort.
+    if ( !STATE_INITIALIZING_PBASE( pbase ) ) return pobj;
+
+    // tell the game that we're spawning something
+    POBJ_BEGIN_SPAWN( pobj );
+
+    // run the initialization routine
+    ego_chr * pchr = ego_chr::do_init( pobj->get_pdata() );
+    if ( NULL == pchr ) return pobj;
+
+    // request that we be turned on
+    pbase->get_req().turn_me_on = btrue;
+
+    // do something about being turned on
+    if ( 0 == ChrObjList.loop_depth )
+    {
+        ego_obj::grant_on( pbase );
+    }
+    else
+    {
+        ChrObjList.add_activation( GET_REF_PCHR_OBJ( pobj ) );
+    }
+
+    // move on to the next action
+    ego_obj::end_initializing( pbase );
+
+    // this will only work after the object has been fully initialized
+    if ( !LOADED_PRO( pobj->get_data().spawn_data.profile ) )
+    {
+        POBJ_ACTIVATE( pobj, "*UNKNOWN*" );
+    }
+    else
+    {
+        ego_cap * pcap = pro_get_pcap( pobj->get_data().profile_ref );
+        if ( NULL != pcap )
+        {
+            POBJ_ACTIVATE( pobj, pcap->name );
+        }
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_processing( ego_obj_chr * pobj )
+{
+    // there's nothing to configure if the object is active...
+
+    ego_obj * pbase;
+
+    // grab the base object
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if we aren't in the correct state, abort.
+    if ( !STATE_PROCESSING_PBASE( pbase ) ) return pobj;
+
+    // do this here (instead of at the end of *_do_object_initializing()) so that
+    // we are sure that the object is actually "on"
+    POBJ_END_SPAWN( pobj );
+
+    // run the main loop
+    ego_chr * pchr = ego_chr::do_process( pobj->get_pdata() );
+    if ( NULL == pchr ) return pobj;
+
+    /* add stuff here */
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_deinitializing( ego_obj_chr * pobj )
+{
+    /// @details BB@> deinitialize the character data
+
+    ego_obj * pbase;
+
+    // grab the base object
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if we aren't in the correct state, abort.
+    if ( !STATE_DEINITIALIZING_PBASE( pbase ) ) return pobj;
+
+    // make sure that the spawn is terminated
+    POBJ_END_SPAWN( pobj );
+
+    // run a deinitialization routine
+    ego_chr * pchr = ego_chr::do_deinit( pobj->get_pdata() );
+    if ( NULL == pchr ) return pobj;
+
+    // move on to the next action
+    ego_obj::end_deinitializing( pbase );
+
+    // make sure the object is off
+    pbase->get_proc().on = bfalse;
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::do_destructing( ego_obj_chr * pobj )
+{
+    /// @details BB@> deinitialize the character data
+
+    ego_obj * pbase;
+
+    // grab the base object
+    pbase = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pbase ) ) return NULL;
+
+    // if we aren't in the correct state, abort.
+    if ( !STATE_DESTRUCTING_PBASE( pbase ) ) return pobj;
+
+    // make sure that the spawn is terminated
+    POBJ_END_SPAWN( pobj );
+
+    // run the destructor
+    ego_chr * pchr = ego_chr::do_dtor( pobj->get_pdata() );
+    if ( NULL == pchr ) return pobj;
+
+    // move on to the next action (dead)
+    ego_obj::end_destructing( pbase );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_chr::request_terminate( const CHR_REF & ichr )
+{
+    /// @details BB@> Mark this character for deletion
+
+    if ( !DEFINED_CHR( ichr ) ) return bfalse;
+
+    POBJ_REQUEST_TERMINATE( ChrObjList.get_valid_ptr( ichr ) );
+
+    return btrue;
+}
+

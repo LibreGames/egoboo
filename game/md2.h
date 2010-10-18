@@ -60,6 +60,8 @@ struct ego_MD2_TexCoord
 //--------------------------------------------------------------------------------------------
 struct ego_MD2_Frame
 {
+    friend struct ego_MD2_Model;
+
     char          name[16];
 
     size_t        vertex_count;
@@ -72,6 +74,11 @@ struct ego_MD2_Frame
     ego_MD2_Frame();
     ego_MD2_Frame( size_t size );
     ~ego_MD2_Frame();
+
+protected:
+    static ego_MD2_Frame * ctor( ego_MD2_Frame * pframe, size_t size );
+    static ego_MD2_Frame * dtor( ego_MD2_Frame * pframe );
+    static ego_MD2_Frame * clear( ego_MD2_Frame * pframe );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -83,6 +90,8 @@ struct ego_MD2_SkinName : public id_md2_skin_t {};
 //--------------------------------------------------------------------------------------------
 struct ego_MD2_GLCommand
 {
+    friend struct ego_MD2_Model;
+
     ego_MD2_GLCommand * next;
 
     GLenum              gl_mode;
@@ -91,15 +100,18 @@ struct ego_MD2_GLCommand
 
     ego_MD2_GLCommand();
     ~ego_MD2_GLCommand();
+
+    static ego_MD2_GLCommand * create( void );
+    static ego_MD2_GLCommand * new_vector( int n );
+    static void                destroy( ego_MD2_GLCommand ** m );
+    static void                delete_vector( ego_MD2_GLCommand * v, int n );
+
+protected:
+    static ego_MD2_GLCommand * ctor( ego_MD2_GLCommand * m );
+    static ego_MD2_GLCommand * dtor( ego_MD2_GLCommand * m );
+    static ego_MD2_GLCommand * clear( ego_MD2_GLCommand * m );
+    static ego_MD2_GLCommand * delete_list( ego_MD2_GLCommand * command_ptr, int command_count );
 };
-
-void MD2_GLCommand_ctor( ego_MD2_GLCommand * m );
-void MD2_GLCommand_dtor( ego_MD2_GLCommand * m );
-
-ego_MD2_GLCommand * MD2_GLCommand_create( void );
-ego_MD2_GLCommand * MD2_GLCommand_new_vector( int n );
-void              MD2_GLCommand_destroy( ego_MD2_GLCommand ** m );
-void              MD2_GLCommand_delete_vector( ego_MD2_GLCommand * v, int n );
 
 //--------------------------------------------------------------------------------------------
 struct ego_MD2_Model
@@ -117,16 +129,12 @@ struct ego_MD2_Model
     ego_MD2_Frame     *m_frames;
     ego_MD2_GLCommand *m_commands;
 
-    ego_MD2_Model();
-    ~ego_MD2_Model();
-
     static float kNormals[EGO_NORMAL_COUNT][3];
 
     // CTORS
-    static ego_MD2_Model * ctor( ego_MD2_Model * m );
-    static ego_MD2_Model * dtor( ego_MD2_Model * m );
     static ego_MD2_Model * create( void );
     static void            destroy( ego_MD2_Model ** m );
+    static ego_MD2_Model * clear( ego_MD2_Model * ptr );
 
     static ego_MD2_Model * new_vector( int n );
     static void            delete_vector( ego_MD2_Model * v, int n );
@@ -135,6 +143,17 @@ struct ego_MD2_Model
     static ego_MD2_Model * load( const char * szFilename, ego_MD2_Model* m );
     static void            dealloc( ego_MD2_Model * m );
     static void            scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, float scale_z );
+
+protected:
+
+    static ego_MD2_Model * ctor( ego_MD2_Model * m );
+    static ego_MD2_Model * dtor( ego_MD2_Model * m );
+
+private:
+    // by making this private, the only way to create it is through the create and destroy methods
+    ego_MD2_Model() { ctor( this ); }
+    ~ego_MD2_Model() { dtor( this ); }
+
 };
 
 #define _md2_h

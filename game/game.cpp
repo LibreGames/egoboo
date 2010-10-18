@@ -604,8 +604,8 @@ void update_used_lists()
 //--------------------------------------------------------------------------------------------
 void update_all_objects()
 {
-    chr_stoppedby_tests = prt_stoppedby_tests = 0;
-    chr_pressure_tests  = prt_pressure_tests  = 0;
+    ego_chr::stoppedby_tests = ego_prt::stoppedby_tests = 0;
+    ego_chr::pressure_tests  = ego_prt::pressure_tests  = 0;
 
     update_all_characters();
     update_all_particles();
@@ -1096,7 +1096,6 @@ ego_game_process * ego_game_process::ctor( ego_game_process * gproc )
 
     return gproc;
 }
-
 
 //--------------------------------------------------------------------------------------------
 int ego_game_process::do_beginning( ego_game_process * gproc )

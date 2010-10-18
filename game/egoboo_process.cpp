@@ -25,11 +25,22 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+ego_process * ego_process::clear( ego_process * ptr )
+{
+    if ( NULL == ptr ) return ptr;
+
+    memset( ptr, 0, sizeof( *ptr ) );
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
 ego_process * ego_process::ctor( ego_process * proc )
 {
     if ( NULL == proc ) return proc;
 
-    memset( proc, 0, sizeof( *proc ) );
+    proc = ego_process::clear( proc );
+    if ( NULL == proc ) return proc;
 
     proc->terminated = btrue;
 

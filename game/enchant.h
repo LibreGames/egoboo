@@ -74,9 +74,29 @@ struct ego_enc_spawn_data
 
 //--------------------------------------------------------------------------------------------
 
-/// The definition of a Egoboo enchantment's data
+/// The definition of the enchant data
+/// This has been separated from ego_enc so that it can be initialized easily without upsetting anuthing else
 struct ego_enc_data
 {
+    //---- constructors and destructors
+
+    /// default constructor
+    explicit ego_enc_data()  { ego_enc_data::ctor( this ); };
+
+    /// default destructor
+    ~ego_enc_data() { ego_enc_data::dtor( this ); };
+
+    //---- construction and destruction
+
+    /// construct this struct, ONLY
+    static ego_enc_data * ctor( ego_enc_data * );
+    /// destruct this struct, ONLY
+    static ego_enc_data * dtor( ego_enc_data * );
+    /// do some initialization
+    static ego_enc_data * init( ego_enc_data * );
+
+    //---- generic enchant data
+
     int     time;                    ///< Time before end
     int     spawntime;               ///< Time before spawn
 
@@ -101,30 +121,67 @@ struct ego_enc_data
 
     bool_t  addyesno[MAX_ENCHANT_ADD];  ///< Was the value adjusted
     float   addsave[MAX_ENCHANT_ADD];   ///< The adjustment
+
+protected:
+
+    //---- construction and destruction
+
+    /// construct this struct, and ALL dependent structs
+    static ego_enc_data * do_ctor( ego_enc_data * ptr ) { return ego_enc_data::ctor( ptr ); };
+    /// denstruct this struct, and ALL dependent structs
+    static ego_enc_data * do_dtor( ego_enc_data * ptr ) { return ego_enc_data::dtor( ptr ); };
+
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
+    static ego_enc_data * alloc( ego_enc_data * pdata ) { return pdata; };
+    /// deallocate data for this struct, ONLY
+    static ego_enc_data * dealloc( ego_enc_data * pdata ) { return pdata; };
+
+    /// allocate data for this struct, and ALL dependent structs
+    static ego_enc_data * do_alloc( ego_enc_data * pdata ) { return pdata; };
+    /// deallocate data for this struct, and ALL dependent structs
+    static ego_enc_data * do_dealloc( ego_enc_data * pdata ) { return pdata; };
 };
 
 //--------------------------------------------------------------------------------------------
 
-/// The definition of a single Egoboo enchantment
-/// This "inherits" from ego_obj
+/// The definition of the enchant
+/// This encapsulates all the enchant functions and some extra data
 struct ego_enc : public ego_enc_data
 {
     friend struct ego_obj_enc;
 
-private:
-    const ego_obj_enc * _parent_obj_ptr;
-
 public:
     ego_enc_spawn_data  spawn_data;
 
-    explicit ego_enc( ego_obj_enc * _parent ) : _parent_obj_ptr( _parent ) { ego_enc::ctor( this ); }
-    ~ego_enc() { ego_enc::dtor( this ); }
+    //---- constructors and destructors
+
+    /// non-default constructor. We MUST know who our marent is
+    explicit ego_enc( ego_obj_enc * _pparent ) : _parent_obj_ptr( _pparent ) { ego_enc::ctor( this ); };
+
+    /// default destructor
+    ~ego_enc() { ego_enc::dtor( this ); };
+
+    //---- implementation of required accessors
+
+    // This ego_enc is contained by ego_che_obj. We need some way of accessing it
+    // These have to have generic names to that all objects that are contained in
+    // an ego_object can be interfaced with in the same way
 
     const ego_obj_enc * cget_pparent() const { return _parent_obj_ptr; }
     ego_obj_enc       * get_pparent()  const { return ( ego_obj_enc * )_parent_obj_ptr; }
 
+    //---- construction and destruction
+
+    /// construct this struct, ONLY
     static ego_enc * ctor( ego_enc * penc );
+    /// destruct this struct, ONLY
     static ego_enc * dtor( ego_enc * penc );
+    /// do some initialization
+    static ego_enc * init( ego_enc * penc ) { return penc; };
+
+    //---- generic enchant functions
 
     static ENC_REF value_filled( const ENC_REF & enchant_idx, int value_idx );
     static void    apply_set( const ENC_REF &  enchant_idx, int value_idx, const PRO_REF & profile );
@@ -145,57 +202,127 @@ public:
     static INLINE bool_t    is_removed( const ENC_REF & ienc, const PRO_REF & test_profile );
 
 protected:
+
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
     static ego_enc * alloc( ego_enc * penc );
+    /// deallocate data for this struct, ONLY
     static ego_enc * dealloc( ego_enc * penc );
 
+    /// allocate data for this struct, and ALL dependent structs
+    static ego_enc * do_alloc( ego_enc * penc );
+    /// deallocate data for this struct, and ALL dependent structs
+    static ego_enc * do_dealloc( ego_enc * penc );
+
+    //---- private implementations of the configuration functions
+
+    static ego_enc * do_ctor( ego_enc * penc );
     static ego_enc * do_init( ego_enc * penc );
-    static ego_enc * do_active( ego_enc * penc );
+    static ego_enc * do_process( ego_enc * penc );
     static ego_enc * do_deinit( ego_enc * penc );
+    static ego_enc * do_dtor( ego_enc * penc );
+
+private:
+
+    /// a hook to ego_obj_enc, which is the parent container of this object
+    const ego_obj_enc * _parent_obj_ptr;
 };
 
-
 //--------------------------------------------------------------------------------------------
+
+/// A refinement of the ego_obj and the actual container that will be stored in the t_cpp_list<>
+/// This adds functions for implementing the state machine on this object (the run* and do* functions)
+/// and encapsulates the enchant data
+
 struct ego_obj_enc : public ego_obj
 {
+    //---- typedefs
+
+    /// a type definition so that parent struct t_ego_obj_lst<> can define a function
+    /// to get at the actual enchant data. For instance EncObjList.get_pdata() to return
+    /// a pointer to the enchant data
     typedef ego_enc data_type;
 
-    ego_enc & get_enc();
-    ego_enc * get_penc();
+    //---- constructors and destructors
 
-    ego_obj_enc() : _enc_data( this ) { ctor( this, bfalse ); }
-    ~ego_obj_enc() { dtor( this, bfalse ); }
+    /// default constructor
+    explicit ego_obj_enc() : _enc_data( this ) { ctor( this ); }
+
+    /// default destructor
+    ~ego_obj_enc() { dtor( this ); }
+
+    //---- implementation of required accessors
 
     // This container "has a" ego_enc, so we need some way of accessing it
     // These have to have generic names to that t_ego_obj_lst<> can access the data
     // for all container types
+
     ego_enc & get_data()  { return _enc_data; }
     ego_enc * get_pdata() { return &_enc_data; }
 
     const ego_enc & cget_data()  const { return _enc_data; }
     const ego_enc * cget_pdata() const { return &_enc_data; }
 
-    static ego_obj_enc * ctor( ego_obj_enc * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_enc::ctor( pobj->get_pdata() ); return pobj; };
-    static ego_obj_enc * dtor( ego_obj_enc * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_enc::dtor( pobj->get_pdata() ); return pobj; };
+    //---- construction and destruction
 
-    // global enc configuration functions
+    /// construct this struct, ONLY
+    static ego_obj_enc * ctor( ego_obj_enc * pobj );
+    /// destruct this struct, ONLY
+    static ego_obj_enc * dtor( ego_obj_enc * pobj );
+
+    /// construct this struct, and ALL dependent structs
+    static ego_obj_enc * do_ctor( ego_obj_enc * pobj );
+    /// destruct this struct, and ALL dependent structs
+    static ego_obj_enc * do_dtor( ego_obj_enc * pobj );
+
+    //---- global configuration functions
+
+    /// External handle for iterating the "egoboo object process" state machine
     static ego_obj_enc * run( ego_obj_enc * penc );
+    /// External handle for getting an "egoboo object process" into the constructed state
     static ego_obj_enc * run_construct( ego_obj_enc * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the initialized state
     static ego_obj_enc * run_initialize( ego_obj_enc * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the active state
     static ego_obj_enc * run_activate( ego_obj_enc * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the deinitialized state
     static ego_obj_enc * run_deinitialize( ego_obj_enc * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the deconstructed state
     static ego_obj_enc * run_deconstruct( ego_obj_enc * pprt, int max_iterations );
 
-    static bool_t    request_terminate( const ENC_REF & ienc );
-
-    static ego_obj_enc * do_constructing( ego_obj_enc * penc );
-    static ego_obj_enc * do_initializing( ego_obj_enc * penc );
-    static ego_obj_enc * do_deinitializing( ego_obj_enc * penc );
-    static ego_obj_enc * do_processing( ego_obj_enc * penc );
-    static ego_obj_enc * do_destructing( ego_obj_enc * penc );
+    /// Ask the "egoboo object process" to terminate itself
+    static bool_t        request_terminate( const ENC_REF & ienc );
 
 protected:
-    ego_enc _enc_data;
 
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
+    static ego_obj_enc * alloc( ego_obj_enc * pobj );
+    /// deallocate data for this struct, ONLY
+    static ego_obj_enc * dealloc( ego_obj_enc * pobj );
+
+    /// allocate data for this struct, and ALL dependent structs
+    static ego_obj_enc * do_alloc( ego_obj_enc * pobj );
+    /// deallocate data for this struct, and ALL dependent structs
+    static ego_obj_enc * do_dealloc( ego_obj_enc * pobj );
+
+    //---- private implementations of the configuration functions
+
+    /// private implementation of egoboo "egoboo object process's" constructing method
+    static ego_obj_enc * do_constructing( ego_obj_enc * penc );
+    /// private implementation of egoboo "egoboo object process's" initializing method
+    static ego_obj_enc * do_initializing( ego_obj_enc * penc );
+    /// private implementation of egoboo "egoboo object process's" deinitializing method
+    static ego_obj_enc * do_deinitializing( ego_obj_enc * penc );
+    /// private implementation of egoboo "egoboo object process's" processing method
+    static ego_obj_enc * do_processing( ego_obj_enc * penc );
+    /// private implementation of egoboo "egoboo object process's" destructing method
+    static ego_obj_enc * do_destructing( ego_obj_enc * penc );
+
+private:
+    ego_enc _enc_data;
 };
 
 //--------------------------------------------------------------------------------------------

@@ -215,6 +215,8 @@ struct ego_billboard_data
     static bool_t               dealloc( ego_billboard_data * pbb );
     static bool_t               update( ego_billboard_data * pbb );
     static bool_t               printf_ttf( ego_billboard_data * pbb, TTF_Font *font, SDL_Color color, const char * format, ... );
+
+    static ego_billboard_data * clear( ego_billboard_data * pbb );
 };
 
 typedef ego_billboard_data ego_billboard_data_t;

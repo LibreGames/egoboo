@@ -51,6 +51,7 @@ struct ego_rpc
 
     static ego_rpc * ctor( ego_rpc * prpc, int data_type, void * data ) ;
     static ego_rpc * dtor( ego_rpc * prpc );
+    static ego_rpc * clear( ego_rpc * prpc );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -71,6 +72,7 @@ struct ego_tx_request : public ego_rpc
 
     static ego_tx_request * ctor( ego_tx_request * preq, int type );
     static ego_tx_request * dtor( ego_tx_request * preq );
+    static ego_tx_request * clear( ego_tx_request * preq );
 
     static ego_tx_request * load_TxTexture( const char *filename, int itex_src, Uint32 key );
     static ego_tx_request * load_TxTitleImage( const char *filename );

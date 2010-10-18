@@ -41,6 +41,7 @@ struct cpp_list_state
     {
         cpp_list_state::ctor( this, index );
     }
+
     ~cpp_list_state()
     {
         cpp_list_state::dtor( this );
@@ -49,6 +50,7 @@ struct cpp_list_state
     static cpp_list_state * ctor( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
     static cpp_list_state * dtor( cpp_list_state * );
     static cpp_list_state * clear( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
+
     static cpp_list_state * set_allocated( cpp_list_state *, bool_t val );
     static cpp_list_state * set_used( cpp_list_state *, bool_t val );
     static cpp_list_state * set_free( cpp_list_state *, bool_t val );
@@ -198,7 +200,6 @@ protected:
     bool_t remove_used_index( int index );
 };
 
-
 #define CPP_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)    extern t_cpp_list<TYPE, COUNT> NAME
 #define CPP_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT) static t_cpp_list<TYPE, COUNT> NAME
 #define CPP_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT) ACCESS t_cpp_list<TYPE, COUNT> NAME
@@ -220,7 +221,6 @@ struct t_cpp_stack
 #define CPP_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      extern t_cpp_stack<TYPE, COUNT> NAME
 #define CPP_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  static t_cpp_stack<TYPE, COUNT> NAME
 #define CPP_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) ACCESS t_cpp_stack<TYPE, COUNT> NAME
-
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

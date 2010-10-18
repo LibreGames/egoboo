@@ -58,7 +58,6 @@
 #define ACTIVE_PPRT_OBJ( PPRT_OBJ )         ( VALID_PRT_OBJ_PTR( PPRT_OBJ ) && ACTIVE_PBASE( POBJ_CGET_PBASE(PPRT_OBJ) ) )
 #define TERMINATED_PPRT_OBJ( PPRT_OBJ )     ( VALID_PRT_OBJ_PTR( PPRT_OBJ ) && TERMINATED_PBASE( POBJ_CGET_PBASE(PPRT_OBJ) ) )
 
-
 // Macros automate looping through the PrtObjList. This hides code which defers the creation and deletion of
 // objects until the loop terminates, so that the length of the list will not change during the loop.
 #define PRT_BEGIN_LOOP_USED(IT, PRT_BDL)   {size_t IT##_internal; int prt_loop_start_depth = PrtObjList.loop_depth; PrtObjList.loop_depth++; for(IT##_internal=0;IT##_internal<PrtObjList.used_count;IT##_internal++) { PRT_REF IT; ego_prt_bundle PRT_BDL; IT = (PRT_REF)PrtObjList.used_ref[IT##_internal]; if(!DEFINED_PRT (IT)) continue; ego_prt_bundle::set(&PRT_BDL, PrtObjList.get_valid_pdata(IT));

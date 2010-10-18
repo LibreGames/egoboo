@@ -36,7 +36,8 @@ ego_obj_proc * ego_obj_proc::ctor( ego_obj_proc * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    ptr = ego_obj_proc::clear( ptr );
+    if ( NULL == ptr ) return ptr;
 
     ptr->action = ego_obj_nothing;
 
@@ -57,8 +58,6 @@ ego_obj_proc * ego_obj_proc::dtor( ego_obj_proc * ptr )
 ego_obj_proc * ego_obj_proc::clear( ego_obj_proc * ptr )
 {
     if ( NULL == ptr ) return ptr;
-
-    memset( ptr, 0, sizeof( *ptr ) );
 
     memset( ptr, 0, sizeof( *ptr ) );
 
@@ -138,7 +137,8 @@ ego_obj_proc * ego_obj_proc::end_killing( ego_obj_proc * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    ptr = ego_obj_proc::clear( ptr );
+    if ( NULL == ptr ) return ptr;
 
     ptr->valid  = btrue;
     ptr->killed = btrue;
@@ -162,7 +162,8 @@ ego_obj_proc * ego_obj_proc::set_valid( ego_obj_proc * ptr, bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    ptr = ego_obj_proc::clear( ptr );
+    if ( NULL == ptr ) return ptr;
 
     ptr->valid  = val;
     ptr->action = val ? ego_obj_constructing : ego_obj_nothing;
@@ -254,8 +255,6 @@ egoboo_rv ego_obj_proc_data::proc_set_process()
     return rv_success;
 }
 
-
-
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_obj_proc_data::proc_set_kill()
 {
@@ -276,7 +275,6 @@ egoboo_rv ego_obj_proc_data::proc_set_kill()
 
     return was_killed ? rv_fail : rv_success;
 }
-
 
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_obj_proc_data::proc_do_on()
@@ -309,7 +307,6 @@ egoboo_rv ego_obj_proc_data::proc_do_on()
     return ( old_on == _proc_data.on ) ? rv_fail : rv_success;
 }
 
-
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_obj_proc_data::proc_set_spawning( bool_t val )
 {
@@ -325,14 +322,14 @@ egoboo_rv ego_obj_proc_data::proc_set_spawning( bool_t val )
     return ( old_val == val ) ? rv_fail : rv_success;
 }
 
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::ctor( ego_obj * pbase, size_t index )
+ego_obj * ego_obj::do_ctor( ego_obj * pbase, size_t index )
 {
     if ( NULL == pbase ) return pbase;
 
-    memset( pbase, 0, sizeof( *pbase ) );
+    pbase = ego_obj::ctor( pbase );
+    if ( NULL == pbase ) return pbase;
 
     cpp_list_state::ctor( pbase->get_plist(), index );
     ego_obj_proc::ctor( pbase->get_pproc() );
@@ -342,7 +339,7 @@ ego_obj * ego_obj::ctor( ego_obj * pbase, size_t index )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::dtor( ego_obj * pbase )
+ego_obj * ego_obj::do_dtor( ego_obj * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
@@ -351,6 +348,9 @@ ego_obj * ego_obj::dtor( ego_obj * pbase )
     ego_obj_proc::dtor( pbase->get_pproc() );
 
     ego_obj_req::dtor( pbase->get_preq() );
+
+    pbase = ego_obj::dtor( pbase );
+    if ( NULL == pbase ) return pbase;
 
     return pbase;
 }
@@ -367,7 +367,7 @@ ego_obj * ego_obj::allocate( ego_obj * pbase, size_t index )
     tmp_lst_state = pbase->get_list();
 
     // construct the a new state (this destroys the data in pbase->lst_state)
-    pbase = ego_obj::ctor( pbase, index );
+    pbase = ego_obj::do_ctor( pbase, index );
     if ( NULL == pbase ) return pbase;
 
     // restore the old pbase->lst_state

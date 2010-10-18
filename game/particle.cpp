@@ -52,8 +52,8 @@ const float buoyancy_friction = 0.2f;          // how fast does a "cloud-like" o
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int prt_stoppedby_tests = 0;
-int prt_pressure_tests = 0;
+int ego_prt::stoppedby_tests = 0;
+int ego_prt::pressure_tests = 0;
 
 INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_pip, PipStack, MAX_PIP );
 
@@ -84,36 +84,82 @@ static bool_t    _prt_request_terminate_ref( const PRT_REF & iprt );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ego_prt_data::dealloc( ego_prt_data * pdata )
+ego_prt_data * ego_prt_data::alloc( ego_prt_data * pdata )
 {
-    return btrue;
+    if ( NULL == pdata ) return pdata;
+
+    /* do something here */
+
+    return pdata;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::dealloc( ego_prt * pprt )
+ego_prt_data * ego_prt_data::dealloc( ego_prt_data * pdata )
 {
-    if ( !ego_prt_data::dealloc( pprt ) ) return pprt;
+    if ( NULL == pdata ) return pdata;
 
-    // do not allow this if you are inside a particle loop
-    EGOBOO_ASSERT( 0 == PrtObjList.loop_depth );
+    /* do something here */
 
-    if ( TERMINATED_PPRT( pprt ) ) return pprt;
-
-    // deallocate any dynamic data
-    ego_BSP_leaf::dtor( &( pprt->bsp_leaf ) );
-
-    return pprt;
+    return pdata;
 }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+//ego_prt * ego_prt::dealloc( ego_prt * pprt )
+//{
+//    if ( !ego_prt_data::dealloc( pprt ) ) return pprt;
+//
+//    // do not allow this if you are inside a particle loop
+//    EGOBOO_ASSERT( 0 == PrtObjList.loop_depth );
+//
+//    if ( TERMINATED_PPRT( pprt ) ) return pprt;
+//
+//    // deallocate any dynamic data
+//    ego_BSP_leaf::dtor( &( pprt->bsp_leaf ) );
+//
+//    return pprt;
+//}
+
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 ego_prt_data * ego_prt_data::ctor( ego_prt_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    // set the critical values to safe ones
+    pdata = ego_prt_data::init( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    // construct/allocate any dynamic data
+    pdata = ego_prt_data::alloc( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt_data * ego_prt_data::dtor( ego_prt_data * pdata )
+{
+    if ( NULL == pdata ) return pdata;
+
+    // destruct/free any dynamic data
+    pdata = ego_prt_data::dealloc( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    // set the critical values to safe ones
+    pdata = ego_prt_data::init( pdata );
+    if ( NULL == pdata ) return NULL;
+
+    return pdata;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt_data * ego_prt_data::init( ego_prt_data * pdata )
 {
     /// BB@> Set all particle parameters to safe values.
     ///      @details The c equivalent of the particle prt::new() function.
 
     if ( NULL == pdata ) return pdata;
-
-    memset( pdata, 0, sizeof( *pdata ) );
 
     // "no lifetime" = "eternal"
     pdata->lifetime           = ( size_t )( ~0 );
@@ -137,59 +183,18 @@ ego_prt_data * ego_prt_data::ctor( ego_prt_data * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt_data * ego_prt_data::dtor( ego_prt_data * pdata )
-{
-    if ( NULL == pdata ) return pdata;
-
-    // destruct/free any allocated data
-    ego_prt_data::dealloc( pdata );
-
-    return pdata;
-}
-
-//--------------------------------------------------------------------------------------------
 ego_prt * ego_prt::ctor( ego_prt * pprt )
 {
     /// BB@> Set all particle parameters to safe values.
     ///      @details The c equivalent of the particle prt::new() function.
 
-    ego_obj save_base;
-    ego_obj * base_ptr;
+    pprt = ego_prt::alloc( pprt );
+    if ( NULL == pprt ) return pprt;
 
-    // save the base object data, do not construct it with this function.
-    base_ptr = PDATA_GET_PBASE( pprt );
-    if ( NULL == base_ptr ) return NULL;
-
-    memcpy( &save_base, base_ptr, sizeof( save_base ) );
-
-    memset( pprt, 0, sizeof( *pprt ) );
-
-    // restore the base object data
-    memcpy( base_ptr, &save_base, sizeof( save_base ) );
-
-    // "no lifetime" = "eternal"
-    pprt->lifetime           = ( size_t )( ~0 );
-    pprt->lifetime_remaining = pprt->lifetime;
-    pprt->frames_remaining   = ( size_t )( ~0 );
-
-    pprt->pip_ref      = MAX_PIP;
-    pprt->profile_ref  = MAX_PROFILE;
-
-    pprt->attachedto_ref = CHR_REF( MAX_CHR );
-    pprt->owner_ref      = CHR_REF( MAX_CHR );
-    pprt->target_ref     = CHR_REF( MAX_CHR );
-    pprt->parent_ref     = MAX_PRT;
-    pprt->parent_guid    = 0xFFFFFFFF;
-
-    pprt->onwhichplatform_ref    = CHR_REF( MAX_CHR );
-    pprt->onwhichplatform_update = 0;
-    pprt->targetplatform_ref     = CHR_REF( MAX_CHR );
-
-    // initialize the bsp node for this particle
-    ego_BSP_leaf::ctor( &( pprt->bsp_leaf ), 3, pprt, 2 );
-    pprt->bsp_leaf.index = GET_IDX_PPRT( pprt );
-
-    ego_obj::end_constructing( PDATA_GET_PBASE( pprt ) );
+    // set the ego_BSP_leaf data
+    pprt->bsp_leaf.data      = pprt;
+    pprt->bsp_leaf.data_type = LEAF_PRT;
+    pprt->bsp_leaf.index     = GET_IDX_PPRT( pprt );
 
     return pprt;
 }
@@ -199,12 +204,63 @@ ego_prt * ego_prt::dtor( ego_prt * pprt )
 {
     if ( NULL == pprt ) return pprt;
 
-    // destruct/free any allocated data
-    ego_prt::dealloc( pprt );
+    // destruct/free any dynamic data
+    pprt = ego_prt::dealloc( pprt );
+    if ( NULL == pprt ) return pprt;
 
-    // Destroy the base object.
-    // Sets the state to ego_obj_terminated automatically.
-    PDATA_TERMINATE( pprt );
+    return pprt;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt * ego_prt::alloc( ego_prt * pprt )
+{
+    if ( NULL == pprt ) return pprt;
+
+    // initialize the bsp node for this particle
+    ego_BSP_leaf::ctor( &( pprt->bsp_leaf ), 3, pprt, LEAF_PRT );
+
+    return pprt;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt * ego_prt::dealloc( ego_prt * pprt )
+{
+    if ( NULL == pprt ) return pprt;
+
+    // initialize the bsp node for this particle
+    ego_BSP_leaf::dtor( &( pprt->bsp_leaf ) );
+
+    return pprt;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt * ego_prt::do_ctor( ego_prt * pprt )
+{
+    // construct this struct and all sub-struct
+
+    if ( NULL == pprt ) return pprt;
+
+    // call the main ctor
+    if ( NULL == ego_prt::ctor( pprt ) ) return NULL;
+
+    // call the data ctor
+    if ( NULL == ego_prt_data::do_ctor( pprt ) ) return NULL;
+
+    return pprt;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt * ego_prt::do_dtor( ego_prt * pprt )
+{
+    // destruct this struct and all sub-struct
+
+    if ( NULL == pprt ) return pprt;
+
+    // dealloc anything in the data
+    if ( NULL == ego_prt_data::do_dtor( pprt ) ) return NULL;
+
+    // destruct/free any dynamic data
+    if ( NULL == ego_prt::dtor( pprt ) ) return NULL;
 
     return pprt;
 }
@@ -603,7 +659,7 @@ ego_prt * ego_prt::do_init( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::do_active( ego_prt * pprt )
+ego_prt * ego_prt::do_process( ego_prt * pprt )
 {
     // is there ever a reason to change the state?
 
@@ -841,7 +897,7 @@ ego_obj_prt * ego_obj_prt::do_constructing( ego_obj_prt * pobj )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
 
     // run the constructor
-    ego_prt * pprt = ego_prt::ctor( pobj->get_pdata() );
+    ego_prt * pprt = ego_prt::do_ctor( pobj->get_pdata() );
     if ( NULL == pprt ) return NULL;
 
     // move on to the next action
@@ -918,7 +974,7 @@ ego_obj_prt * ego_obj_prt::do_processing( ego_obj_prt * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the main loop
-    ego_prt * pprt = ego_prt::do_active( pobj->get_pdata() );
+    ego_prt * pprt = ego_prt::do_process( pobj->get_pdata() );
     if ( NULL == pprt ) return pobj;
 
     /* add stuff here */
@@ -972,7 +1028,7 @@ ego_obj_prt * ego_obj_prt::do_destructing( ego_obj_prt * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the destructor
-    ego_prt * pprt = ego_prt::dtor( pobj->get_pdata() );
+    ego_prt * pprt = ego_prt::do_dtor( pobj->get_pdata() );
     if ( NULL == pprt ) return pobj;
 
     // move on to the next action (dead)
@@ -1077,8 +1133,8 @@ float prt_calc_mesh_pressure( ego_prt * pprt, float test_pos[] )
     {
         retval = mesh_get_pressure( PMesh, test_pos, 0.0f, stoppedby );
     }
-    prt_stoppedby_tests += mesh_mpdfx_tests;
-    prt_pressure_tests += mesh_pressure_tests;
+    ego_prt::stoppedby_tests += mesh_mpdfx_tests;
+    ego_prt::pressure_tests += mesh_pressure_tests;
 
     return retval;
 }
@@ -1120,8 +1176,8 @@ fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
     {
         retval = mesh_get_diff( PMesh, test_pos, radius, center_pressure, stoppedby );
     }
-    prt_stoppedby_tests += mesh_mpdfx_tests;
-    prt_pressure_tests += mesh_pressure_tests;
+    ego_prt::stoppedby_tests += mesh_mpdfx_tests;
+    ego_prt::pressure_tests += mesh_pressure_tests;
 
     return retval;
 }
@@ -1154,8 +1210,8 @@ BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * p
     {
         retval = mesh_hit_wall( PMesh, test_pos, 0.0f, stoppedby, nrm, pressure );
     }
-    prt_stoppedby_tests += mesh_mpdfx_tests;
-    prt_pressure_tests += mesh_pressure_tests;
+    ego_prt::stoppedby_tests += mesh_mpdfx_tests;
+    ego_prt::pressure_tests += mesh_pressure_tests;
 
     return retval;
 }
@@ -1189,8 +1245,8 @@ bool_t prt_test_wall( ego_prt * pprt, float test_pos[] )
     {
         retval = mesh_test_wall( PMesh, test_pos, 0.0f, stoppedby, NULL );
     }
-    prt_stoppedby_tests += mesh_mpdfx_tests;
-    prt_pressure_tests += mesh_pressure_tests;
+    ego_prt::stoppedby_tests += mesh_mpdfx_tests;
+    ego_prt::pressure_tests += mesh_pressure_tests;
 
     return retval;
 }
@@ -1768,7 +1824,7 @@ void move_all_particles( void )
 {
     /// @details ZZ@> This is the particle physics function
 
-    prt_stoppedby_tests = 0;
+    ego_prt::stoppedby_tests = 0;
 
     // move every particle
     PRT_BEGIN_LOOP_USED( cnt, prt_bdl )
@@ -2334,7 +2390,10 @@ void cleanup_all_particles()
         bool_t prt_allocated;
 
         pprt  = PrtObjList.get_valid_pdata( iprt );
+        if ( NULL == pprt ) continue;
+
         pbase = PDATA_GET_PBASE( pprt );
+        if ( NULL == pbase ) continue;
 
         prt_allocated = FLAG_VALID_PBASE( pbase );
         if ( !prt_allocated ) continue;
@@ -2356,7 +2415,6 @@ void cleanup_all_particles()
             // tell the particle to finish deallocating itself
             ego_obj::end_processing( pbase );
         }
-
     }
 }
 
@@ -2367,9 +2425,8 @@ void increment_all_particle_update_counters()
 
     for ( cnt = 0; cnt < maxparticles; cnt++ )
     {
-        ego_obj * pbase;
+        ego_obj * pbase = PrtObjList.get_valid_ptr( cnt );
 
-        pbase = POBJ_GET_PBASE( PrtObjList.get_valid_ptr( cnt ) );
         if ( !ACTIVE_PBASE( pbase ) ) continue;
 
         pbase->update_count++;
@@ -3725,6 +3782,139 @@ void particle_physics_finalize_all( float dt )
         particle_physics_finalize_one( &bdl, dt );
     }
     PRT_END_LOOP();
+}
+
+//--------------------------------------------------------------------------------------------
+// struct ego_obj_prt - memory management
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_obj_prt::ctor( ego_obj_prt * pobj )
+{
+    // construct this struct, ONLY
+
+    if ( NULL == pobj ) return NULL;
+
+    pobj = ego_obj_prt::alloc( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_obj_prt::dtor( ego_obj_prt * pobj )
+{
+    // destruct this struct, ONLY
+
+    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_KILLED_PBASE( pobj ) ) return pobj;
+
+    pobj = ego_obj_prt::dealloc( pobj );
+
+    // Sets the state to ego_obj_terminated automatically.
+    POBJ_TERMINATE( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_obj_prt::do_ctor( ego_obj_prt * pobj )
+{
+    // construct this struct, and ALL dependent structs
+
+    pobj = ego_obj_prt::ctor( pobj );
+    if ( NULL == pobj ) return pobj;
+
+    ego_prt::do_ctor( pobj->get_pdata() );
+
+    ego_obj::end_constructing( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_obj_prt::do_dtor( ego_obj_prt * pobj )
+{
+    // destruct this struct, and ALL dependent structs
+
+    ego_prt::do_dtor( pobj->get_pdata() );
+
+    pobj = ego_obj_prt::dtor( pobj );
+    if ( NULL == pobj ) return pobj;
+
+    // Sets the state to ego_obj_terminated automatically.
+    POBJ_TERMINATE( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_obj_prt::dealloc( ego_obj_prt * pobj )
+{
+    // deallocate this struct
+    if ( !VALID_PBASE( pobj ) ) return pobj;
+
+    /* do something here */
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt * ego_prt::do_alloc( ego_prt * pprt )
+{
+    if ( NULL == pprt ) return pprt;
+
+    ego_prt::alloc( pprt );
+    ego_prt_data::alloc( pprt );
+
+    return pprt;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_prt * ego_prt::do_dealloc( ego_prt * pprt )
+{
+    if ( NULL == pprt ) return pprt;
+
+    ego_prt_data::dealloc( pprt );
+
+    ego_prt::dealloc( pprt );
+
+    return pprt;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_obj_prt::do_dealloc( ego_obj_prt * pobj )
+{
+    // deallocate this struct and all sub structs
+
+    if ( !VALID_PBASE( pobj ) ) return pobj;
+
+    ego_prt::do_dealloc( pobj->get_pdata() );
+
+    ego_obj_prt::dealloc( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_obj_prt::alloc( ego_obj_prt * pobj )
+{
+    // allocate this struct
+    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
+
+    /* do something here */
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_obj_prt::do_alloc( ego_obj_prt * pobj )
+{
+    // allocate this struct and all sub structs
+
+    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
+
+    ego_obj_prt::alloc( pobj );
+
+    ego_prt::do_alloc( pobj->get_pdata() );
+
+    return pobj;
 }
 
 //--------------------------------------------------------------------------------------------

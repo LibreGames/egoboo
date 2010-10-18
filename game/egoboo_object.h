@@ -136,7 +136,6 @@ private:
     ego_obj_req     _req_data;    ///< place for making requests to change the state
 };
 
-
 //--------------------------------------------------------------------------------------------
 /// Additional data that all egoboo object use
 struct ego_obj_data
@@ -173,9 +172,15 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
     const ego_obj & cget_ego_obj() const { return *this; }
     const ego_obj * cget_pego_obj() const { return this; }
 
+    explicit ego_obj() { ctor( this ); }
+    ~ego_obj() { dtor( this ); }
+
     // generic construction/destruction functions
-    static ego_obj * ctor( ego_obj *, size_t index );
-    static ego_obj * dtor( ego_obj * );
+    static ego_obj * ctor( ego_obj * ptr ) { return ptr; }
+    static ego_obj * dtor( ego_obj * ptr ) { return ptr; }
+
+    static ego_obj * do_ctor( ego_obj *, size_t index );
+    static ego_obj * do_dtor( ego_obj * );
 
     // memory management functions
     static ego_obj * allocate( ego_obj * pobj, size_t index );
@@ -256,7 +261,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
             ego_obj::spawn_depth++;\
         }\
     }\
-     
+
 #define POBJ_END_SPAWN( POBJ ) \
     if( (NULL != (POBJ)) && FLAG_VALID_PBASE(POBJ_CGET_PBASE(POBJ)) ) \
     {\
@@ -266,7 +271,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
             ego_obj::spawn_depth--;\
         }\
     }\
-     
+
 /// Is the object flagged as allocated?
 #define FLAG_ALLOCATED_PBASE( PBASE ) ( (PBASE)->get_allocated() )
 /// Is the object allocated?

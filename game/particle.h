@@ -102,8 +102,29 @@ struct ego_prt_spawn_data
 //--------------------------------------------------------------------------------------------
 
 /// The definition of the particle data
+/// This has been separated from ego_prt so that it can be initialized easily without upsetting anuthing else
+
 struct ego_prt_data
 {
+    //---- constructors and destructors
+
+    /// default constructor
+    explicit ego_prt_data()  { ego_prt_data::ctor( this ); };
+
+    /// default destructor
+    ~ego_prt_data() { ego_prt_data::dtor( this ); };
+
+    //---- construction and destruction
+
+    /// construct this struct, ONLY
+    static ego_prt_data * ctor( ego_prt_data * );
+    /// destruct this struct, ONLY
+    static ego_prt_data * dtor( ego_prt_data * );
+    /// set critical values to safe values
+    static ego_prt_data * init( ego_prt_data * );
+
+    //---- generic enchant data
+
     // profiles
     PIP_REF pip_ref;                         ///< The part template
     PRO_REF profile_ref;                     ///< the profile related to the spawned particle
@@ -190,12 +211,22 @@ struct ego_prt_data
     float          buoyancy;                  ///< an estimate of the particle bouyancy in air
     float          air_resistance;            ///< an estimate of the particle's extra resistance to air motion
 
-    ego_prt_data() { ego_prt_data::ctor( this ); }
-    ~ego_prt_data() { ego_prt_data::dtor( this ); }
+protected:
 
-    static ego_prt_data * ctor( ego_prt_data * );
-    static ego_prt_data * dtor( ego_prt_data * );
-    static bool_t         dealloc( ego_prt_data * pdata );
+    //---- construction and destruction
+
+    /// construct this struct, and ALL dependent structs
+    static ego_prt_data * do_ctor( ego_prt_data * pdata ) { return ego_prt_data::ctor( pdata ); };
+    /// denstruct this struct, and ALL dependent structs
+    static ego_prt_data * do_dtor( ego_prt_data * pdata ) { return ego_prt_data::dtor( pdata ); };
+
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
+    static ego_prt_data * alloc( ego_prt_data * pprt );
+    /// deallocate data for this struct, ONLY
+    static ego_prt_data * dealloc( ego_prt_data * pprt );
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -204,21 +235,43 @@ struct ego_prt : public ego_prt_data
 {
     friend struct ego_obj_prt;
 
-private:
-    const ego_obj_prt * _parent_obj_ptr;
+    //---- extra data
 
-public:
+    // counters for debugging wall collisions
+    static int stoppedby_tests;
+    static int pressure_tests;
+
     ego_prt_spawn_data  spawn_data;
     ego_BSP_leaf        bsp_leaf;
 
-    explicit ego_prt( ego_obj_prt * _parent ) : _parent_obj_ptr( _parent ) { ego_prt::ctor( this ); }
-    ~ego_prt() { ego_prt::dtor( this ); }
+    //---- constructors and destructors
+
+    /// non-default constructor. We MUST know who our marent is
+    explicit ego_prt( ego_obj_prt * _pparent ) : _parent_obj_ptr( _pparent ) { ego_prt::ctor( this ); };
+
+    /// default destructor
+    ~ego_prt() { ego_prt::dtor( this ); };
+
+    //---- implementation of required accessors
+
+    // This ego_prt is contained by ego_che_obj. We need some way of accessing it
+    // These have to have generic names to that all objects that are contained in
+    // an ego_object can be interfaced with in the same way
 
     const ego_obj_prt * cget_pparent() const { return _parent_obj_ptr; }
-    ego_obj_prt       * get_pparent()        { return ( ego_obj_prt * )_parent_obj_ptr; }
+    ego_obj_prt       * get_pparent()  const { return ( ego_obj_prt * )_parent_obj_ptr; }
 
+    //---- construction and destruction
+
+    /// construct this struct, ONLY
     static ego_prt * ctor( ego_prt * pprt );
+    /// construct this struct, ONLY
     static ego_prt * dtor( ego_prt * pprt );
+
+    /// do some initialization
+    static ego_prt * init( ego_prt * pprt );
+
+    //---- generic particle functions
 
     static bool_t    set_pos( ego_prt * pprt, fvec3_base_t pos );
     static float *   get_pos_v( ego_prt * pprt );
@@ -232,62 +285,139 @@ public:
     static INLINE bool_t     set_size( ego_prt *, int size );
     static INLINE float      get_scale( ego_prt * pprt );
 
-private:
+protected:
+
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
     static ego_prt * alloc( ego_prt * pprt );
+    /// deallocate data for this struct, ONLY
     static ego_prt * dealloc( ego_prt * pprt );
 
+    /// allocate data for this struct, and ALL dependent structs
+    static ego_prt * do_alloc( ego_prt * pprt );
+    /// deallocate data for this struct, and ALL dependent structs
+    static ego_prt * do_dealloc( ego_prt * pprt );
+
+    //---- private implementations of the configuration functions
+
+    static ego_prt * do_ctor( ego_prt * pprt );
     static ego_prt * do_init( ego_prt * pprt );
-    static ego_prt * do_active( ego_prt * pprt );
+    static ego_prt * do_process( ego_prt * pprt );
     static ego_prt * do_deinit( ego_prt * pprt );
+    static ego_prt * do_dtor( ego_prt * pprt );
+
+private:
+
+    /// a hook to ego_obj_prt, which is the parent container of this object
+    const ego_obj_prt * _parent_obj_ptr;
 };
 
 //--------------------------------------------------------------------------------------------
-// the container object for the particle list
+
+/// A refinement of the ego_obj and the actual container that will be stored in the t_cpp_list<>
+/// This adds functions for implementing the state machine on this object (the run* and do* functions)
+/// and encapsulates the particle data
+
 struct ego_obj_prt : public ego_obj
 {
+    //---- typedefs
+
+    /// a type definition so that parent struct t_ego_obj_lst<> can define a function
+    /// to get at the actual particle data. For instance PrtObjList.get_pdata() to return
+    /// a pointer to the particle data
     typedef ego_prt data_type;
+
+    //---- extra data
 
     /// the flag for limbo particles
     bool_t  obj_base_display;
 
-    ego_obj_prt() : _prt_data( this ) { ctor( this, bfalse ); };
-    ~ego_obj_prt() { dtor( this, bfalse ); };
+    //---- constructors and destructors
+
+    /// default constructor
+    explicit ego_obj_prt() : _prt_data( this ) { ctor( this ); }
+
+    /// default destructor
+    ~ego_obj_prt() { dtor( this ); }
+
+    //---- implementation of required accessors
+
+    // This container "has a" ego_prt, so we need some way of accessing it
+    // These have to have generic names to that t_ego_obj_lst<> can access the data
+    // for all container types
 
     ego_prt & get_data()  { return _prt_data; }
     ego_prt * get_pdata() { return &_prt_data; }
 
-    const ego_prt & cget_data() const { return _prt_data; }
-    const ego_prt * cget_pdata()const { return &_prt_data; }
+    const ego_prt & cget_data()  const { return _prt_data; }
+    const ego_prt * cget_pdata() const { return &_prt_data; }
 
-    static ego_obj_prt * set_limbo( ego_obj_prt * pbase, bool_t val );
+    //---- construction and destruction
 
-    static ego_obj_prt * ctor( ego_obj_prt * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_prt::ctor( pobj->get_pdata() ); return pobj; };
-    static ego_obj_prt * dtor( ego_obj_prt * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_prt::dtor( pobj->get_pdata() ); return pobj; };
+    /// construct this struct, ONLY
+    static ego_obj_prt * ctor( ego_obj_prt * pobj );
+    /// destruct this struct, ONLY
+    static ego_obj_prt * dtor( ego_obj_prt * pobj );
 
-    // global prt configuration functions
+    /// construct this struct, and ALL dependent structs
+    static ego_obj_prt * do_ctor( ego_obj_prt * pobj );
+    /// destruct this struct, and ALL dependent structs
+    static ego_obj_prt * do_dtor( ego_obj_prt * pobj );
+
+    //---- accessors
+
+    /// tell the ego_obj_prt whether it is in limbo or not
+    static ego_obj_prt * set_limbo( ego_obj_prt * pobj, bool_t val );
+
+    //---- global configuration functions
+
+    /// External handle for iterating the "egoboo object process" state machine
     static ego_obj_prt * run( ego_obj_prt * pprt );
+    /// External handle for getting an "egoboo object process" into the constructed state
     static ego_obj_prt * run_construct( ego_obj_prt * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the initialized state
     static ego_obj_prt * run_initialize( ego_obj_prt * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the active state
     static ego_obj_prt * run_activate( ego_obj_prt * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the deinitialized state
     static ego_obj_prt * run_deinitialize( ego_obj_prt * pprt, int max_iterations );
+    /// External handle for getting an "egoboo object process" into the deconstructed state
     static ego_obj_prt * run_deconstruct( ego_obj_prt * pprt, int max_iterations );
 
-protected:
-    static bool_t    request_terminate( const PRT_REF & iprt );
+    /// Ask the "egoboo object process" to terminate itself
+    static bool_t        request_terminate( const PRT_REF & iprt );
 
+protected:
+
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
+    static ego_obj_prt * alloc( ego_obj_prt * pobj );
+    /// deallocate data for this struct, ONLY
+    static ego_obj_prt * dealloc( ego_obj_prt * pobj );
+
+    /// allocate data for this struct, and ALL dependent structs
+    static ego_obj_prt * do_alloc( ego_obj_prt * pobj );
+    /// deallocate data for this struct, and ALL dependent structs
+    static ego_obj_prt * do_dealloc( ego_obj_prt * pobj );
+
+    //---- private implementations of the configuration functions
+
+    /// private implementation of egoboo "egoboo object process's" constructing method
     static ego_obj_prt * do_constructing( ego_obj_prt * pprt );
+    /// private implementation of egoboo "egoboo object process's" initializing method
     static ego_obj_prt * do_initializing( ego_obj_prt * pprt );
+    /// private implementation of egoboo "egoboo object process's" deinitializing method
     static ego_obj_prt * do_deinitializing( ego_obj_prt * pprt );
+    /// private implementation of egoboo "egoboo object process's" processing method
     static ego_obj_prt * do_processing( ego_obj_prt * pprt );
+    /// private implementation of egoboo "egoboo object process's" destructing method
     static ego_obj_prt * do_destructing( ego_obj_prt * pprt );
 
 private:
     ego_prt _prt_data;
 };
-
-// counters for debugging wall collisions
-extern int prt_stoppedby_tests;
-extern int prt_pressure_tests;
 
 //--------------------------------------------------------------------------------------------
 struct ego_prt_bundle

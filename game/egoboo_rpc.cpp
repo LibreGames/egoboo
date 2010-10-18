@@ -49,11 +49,24 @@ static int rpc_system_get_guid();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+ego_rpc * ego_rpc::clear( ego_rpc * ptr )
+{
+    if ( NULL == ptr ) return ptr;
+
+    memset( ptr, 0, sizeof( *ptr ) );
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
 ego_rpc * ego_rpc::ctor( ego_rpc * prpc, int data_type, void * data )
 {
     /// @details BB@> construct the sample rpc data element
 
     if ( ego_rpc::get_valid( prpc ) ) return NULL;
+
+    prpc = ego_rpc::clear( prpc );
+    if ( NULL == prpc ) return prpc;
 
     prpc->allocated = btrue;
     prpc->finished  = bfalse;
@@ -72,14 +85,26 @@ ego_rpc * ego_rpc::dtor( ego_rpc * prpc )
     /// @details BB@> deconstruct the sample rpc data element
 
     if ( NULL == prpc ) return NULL;
+
     if ( !ego_rpc::get_valid( prpc ) ) return prpc;
 
-    memset( prpc, 0, sizeof( *prpc ) );
+    prpc = ego_rpc::clear( prpc );
+    if ( NULL == prpc ) return prpc;
 
     return prpc;
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_tx_request * ego_tx_request::clear( ego_tx_request * ptr )
+{
+    if ( NULL == ptr ) return ptr;
+
+    memset( ptr, 0, sizeof( *ptr ) );
+
+    return ptr;
+}
+
 //--------------------------------------------------------------------------------------------
 ego_tx_request * ego_tx_request::ctor( ego_tx_request * preq, int type )
 {
@@ -107,7 +132,8 @@ ego_tx_request * ego_tx_request::dtor( ego_tx_request * preq )
     memcpy( &save_base, ego_tx_request::get_rpc( preq ), sizeof( save_base ) );
 
     // zero out the memory
-    memset( preq, 0, sizeof( *preq ) );
+    preq = ego_tx_request::clear( preq );
+    if ( NULL == preq ) return preq;
 
     // restore the deconstructed base
     memcpy( &save_base, ego_tx_request::get_rpc( preq ), sizeof( save_base ) );
@@ -167,7 +193,7 @@ void TxReqList_ctor()
 
     TxReqList.free_count = 0;
     TxReqList.used_count = 0;
-    for ( idx = 0; idx < MAX_ENC; idx++ )
+    for ( idx = 0; idx < MAX_TX_TEXTURE_REQ; idx++ )
     {
         TxReqList.free_ref[idx] = MAX_TX_TEXTURE_REQ;
         TxReqList.used_ref[idx] = MAX_TX_TEXTURE_REQ;
@@ -178,7 +204,7 @@ void TxReqList_ctor()
         ego_tx_request * preq = TxReqList.lst + ireq;
 
         // blank out all the data, including the obj_base data
-        memset( preq, 0, sizeof( *preq ) );
+        ego_tx_request::dtor( preq );
 
         // tx_request "constructor" (type -1 == type unknown)
         ego_tx_request::ctor( preq, -1 );

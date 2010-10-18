@@ -36,25 +36,34 @@
 float ego_MD2_Model::kNormals[EGO_NORMAL_COUNT][3] =
 {
 #include "id_normals.inl"
-    , {0, 0, 0}                     ///< the "equal light" normal
+    , {0, 0, 0}                     // the "equal light" normal
 };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static ego_MD2_Frame * MD2_Frame_ctor( ego_MD2_Frame * pframe, size_t size );
-static ego_MD2_Frame * MD2_Frame_dtor( ego_MD2_Frame * pframe );
+ego_MD2_Frame::ego_MD2_Frame()              { ego_MD2_Frame::clear( this ); }
+//--------------------------------------------------------------------------------------------
+ego_MD2_Frame::ego_MD2_Frame( size_t size ) { ego_MD2_Frame::ctor( this, size ); }
+//--------------------------------------------------------------------------------------------
+ego_MD2_Frame::~ego_MD2_Frame()             { ego_MD2_Frame::dtor( this ); }
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_MD2_Frame::ego_MD2_Frame()            { memset( this, 0, sizeof( *this ) ); }
-ego_MD2_Frame::ego_MD2_Frame( size_t size ) { MD2_Frame_ctor( this, size ); }
-ego_MD2_Frame::~ego_MD2_Frame()           { MD2_Frame_dtor( this ); }
-
-ego_MD2_Frame * MD2_Frame_ctor( ego_MD2_Frame * pframe, size_t size )
+ego_MD2_Frame * ego_MD2_Frame::clear( ego_MD2_Frame * pframe )
 {
     if ( NULL == pframe ) return pframe;
 
     memset( pframe, 0, sizeof( *pframe ) );
+
+    return pframe;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_MD2_Frame * ego_MD2_Frame::ctor( ego_MD2_Frame * pframe, size_t size )
+{
+    if ( NULL == pframe ) return pframe;
+
+    pframe = ego_MD2_Frame::clear( pframe );
+    if ( NULL == pframe ) return pframe;
 
     pframe->vertex_lst = EGOBOO_NEW_ARY( ego_MD2_Vertex, size );
     if ( NULL != pframe->vertex_lst ) pframe->vertex_count = size;
@@ -63,100 +72,130 @@ ego_MD2_Frame * MD2_Frame_ctor( ego_MD2_Frame * pframe, size_t size )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_Frame * MD2_Frame_dtor( ego_MD2_Frame * pframe )
+ego_MD2_Frame * ego_MD2_Frame::dtor( ego_MD2_Frame * pframe )
 {
     if ( NULL == pframe ) return pframe;
 
     EGOBOO_DELETE_ARY( pframe->vertex_lst );
     pframe->vertex_count = 0;
 
-    memset( pframe, 0, sizeof( *pframe ) );
+    pframe = ego_MD2_Frame::clear( pframe );
+    if ( NULL == pframe ) return pframe;
 
     return pframe;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand::ego_MD2_GLCommand() { MD2_GLCommand_ctor( this ); }
-ego_MD2_GLCommand::~ego_MD2_GLCommand() { MD2_GLCommand_dtor( this ); }
-
-void MD2_GLCommand_ctor( ego_MD2_GLCommand * m )
-{
-    if ( NULL == m ) return;
-
-    memset( m, 0, sizeof( *m ) );
-
-    m->next = NULL;
-    m->data = NULL;
-}
+ego_MD2_GLCommand::ego_MD2_GLCommand() { ego_MD2_GLCommand::ctor( this ); }
 
 //--------------------------------------------------------------------------------------------
-void MD2_GLCommand_dtor( ego_MD2_GLCommand * m )
-{
-    if ( NULL == m ) return;
-
-    EGOBOO_DELETE_ARY( m->data );
-
-    memset( m, 0, sizeof( *m ) );
-}
+ego_MD2_GLCommand::~ego_MD2_GLCommand() { ego_MD2_GLCommand::dtor( this ); }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand * MD2_GLCommand_create()
+ego_MD2_GLCommand * ego_MD2_GLCommand::clear( ego_MD2_GLCommand * m )
 {
-    ego_MD2_GLCommand * m;
+    if ( NULL == m ) return m;
 
-    m = EGOBOO_NEW( ego_MD2_GLCommand );
-
-    MD2_GLCommand_ctor( m );
+    memset( m, 0, sizeof( *m ) );
 
     return m;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand * MD2_GLCommand_new_vector( int n )
+ego_MD2_GLCommand * ego_MD2_GLCommand::ctor( ego_MD2_GLCommand * m )
+{
+    if ( NULL == m ) return m;
+
+    m = ego_MD2_GLCommand::clear( m );
+    if ( NULL == m ) return m;
+
+    m->next = NULL;
+    m->data = NULL;
+
+    return m;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_MD2_GLCommand * ego_MD2_GLCommand::dtor( ego_MD2_GLCommand * m )
+{
+    if ( NULL == m ) return m;
+
+    EGOBOO_DELETE_ARY( m->data );
+
+    m = ego_MD2_GLCommand::clear( m );
+    if ( NULL == m ) return m;
+
+    return m;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_MD2_GLCommand * ego_MD2_GLCommand::create()
+{
+    ego_MD2_GLCommand * m;
+
+    m = EGOBOO_NEW( ego_MD2_GLCommand );
+
+    ego_MD2_GLCommand::ctor( m );
+
+    return m;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_MD2_GLCommand * ego_MD2_GLCommand::new_vector( int n )
 {
     int i;
     ego_MD2_GLCommand * v = EGOBOO_NEW_ARY( ego_MD2_GLCommand, n );
-    for ( i = 0; i < n; i++ ) MD2_GLCommand_ctor( v + i );
+    for ( i = 0; i < n; i++ ) ego_MD2_GLCommand::ctor( v + i );
     return v;
 }
 
 //--------------------------------------------------------------------------------------------
-void MD2_GLCommand_destroy( ego_MD2_GLCommand ** m )
+void ego_MD2_GLCommand::destroy( ego_MD2_GLCommand ** m )
 {
     if ( NULL == m || NULL == * m ) return;
 
-    MD2_GLCommand_dtor( *m );
+    ego_MD2_GLCommand::dtor( *m );
 
     EGOBOO_DELETE( *m );
 }
 
 //--------------------------------------------------------------------------------------------
-void MD2_GLCommand_delete_list( ego_MD2_GLCommand * command_ptr, int command_count )
+ego_MD2_GLCommand * ego_MD2_GLCommand::delete_list( ego_MD2_GLCommand * command_ptr, int command_count )
 {
     int cnt;
 
-    if ( NULL == command_ptr ) return;
+    if ( NULL == command_ptr ) return command_ptr;
 
     for ( cnt = 0; cnt < command_count && NULL != command_ptr; cnt++ )
     {
         ego_MD2_GLCommand * tmp = command_ptr;
         command_ptr = command_ptr->next;
 
-        MD2_GLCommand_destroy( &tmp );
+        ego_MD2_GLCommand::destroy( &tmp );
     }
+
+    return command_ptr;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_MD2_Model::ego_MD2_Model() { ego_MD2_Model::ctor( this ); }
-ego_MD2_Model::~ego_MD2_Model() { ego_MD2_Model::dtor( this ); }
+ego_MD2_Model * ego_MD2_Model::clear( ego_MD2_Model * ptr )
+{
+    if ( NULL == ptr ) return ptr;
 
+    memset( ptr, 0, sizeof( *ptr ) );
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
 ego_MD2_Model * ego_MD2_Model::ctor( ego_MD2_Model * m )
 {
     if ( NULL == m ) return m;
 
-    memset( m, 0, sizeof( *m ) );
+    m = ego_MD2_Model::clear( m );
+    if ( NULL == m ) return m;
 
     return m;
 }
@@ -178,14 +217,14 @@ void ego_MD2_Model::dealloc( ego_MD2_Model * m )
         int i;
         for ( i = 0; i < m->m_numFrames; i++ )
         {
-            MD2_Frame_dtor( m->m_frames + i );
+            ego_MD2_Frame::dtor( m->m_frames + i );
         }
 
         EGOBOO_DELETE_ARY( m->m_frames );
         m->m_numFrames = 0;
     }
 
-    MD2_GLCommand_delete_list( m->m_commands, m->m_numCommands );
+    ego_MD2_GLCommand::delete_list( m->m_commands, m->m_numCommands );
     m->m_commands = NULL;
     m->m_numCommands = 0;
 }
@@ -365,7 +404,7 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
 
     for ( i = 0; i < md2_header.num_frames; i++ )
     {
-        MD2_Frame_ctor( model->m_frames + i, md2_header.num_vertices );
+        ego_MD2_Frame::ctor( model->m_frames + i, md2_header.num_vertices );
     }
 
     // Load the texture coordinates from the file, normalizing them as we go
@@ -501,7 +540,7 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
 
             if ( 0 == commands || cmd_size == md2_header.size_glcmds ) break;
 
-            cmd = MD2_GLCommand_create();
+            cmd = ego_MD2_GLCommand::create();
             cmd->command_count = commands;
 
             // set the GL drawing mode

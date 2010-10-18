@@ -1378,16 +1378,22 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
     ego_obj_BSP::chr_count = 0;
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ChrObjList.get_data( ichr ).bsp_leaf.next     = NULL;
-        ChrObjList.get_data( ichr ).bsp_leaf.inserted = bfalse;
+        ego_chr * pchr = ChrObjList.get_pdata( ichr );
+        if ( NULL == pchr ) continue;
+
+        pchr->bsp_leaf.next     = NULL;
+        pchr->bsp_leaf.inserted = bfalse;
     }
 
     // unlink all used particle nodes
     ego_obj_BSP::prt_count = 0;
     for ( iprt = 0; iprt < MAX_PRT; iprt++ )
     {
-        PrtObjList.get_data( iprt ).bsp_leaf.next     = NULL;
-        PrtObjList.get_data( iprt ).bsp_leaf.inserted = bfalse;
+        ego_prt * pprt = PrtObjList.get_pdata( iprt );
+        if ( NULL == pprt ) continue;
+
+        pprt->bsp_leaf.next     = NULL;
+        pprt->bsp_leaf.inserted = bfalse;
     }
 
     return btrue;

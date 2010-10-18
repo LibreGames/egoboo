@@ -31,7 +31,6 @@
 // MACROS
 //--------------------------------------------------------------------------------------------
 
-
 #define VALID_CHR_IDX( INDX )      ( ((INDX) >= 0) && ((INDX) < MAX_CHR) )
 #define VALID_CHR_REF( ICHR )      ChrObjList.validate_ref(ICHR)
 #define ALLOCATED_CHR( ICHR )      ( VALID_CHR_REF( ICHR ) && ALLOCATED_PBASE ( POBJ_CGET_PBASE(ChrObjList.lst + (ICHR)) ) )
@@ -64,7 +63,6 @@
 #define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {size_t IT##_internal; int chr_loop_start_depth = ChrObjList.loop_depth; ChrObjList.loop_depth++; for(IT##_internal=0;IT##_internal<ChrObjList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrObjList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrObjList.get_valid_pdata(IT);
 #define CHR_BEGIN_LOOP_BSP(IT, PCHR)     {size_t IT##_internal; int chr_loop_start_depth = ChrObjList.loop_depth; ChrObjList.loop_depth++; for(IT##_internal=0;IT##_internal<ChrObjList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrObjList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrObjList.get_valid_pdata(IT); if( !PCHR->bsp_leaf.inserted ) continue;
 #define CHR_END_LOOP() } ChrObjList.loop_depth--; if(chr_loop_start_depth != ChrObjList.loop_depth) EGOBOO_ASSERT(bfalse); ChrObjList.cleanup(); }
-
 
 // Macros to determine whether the character is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"
