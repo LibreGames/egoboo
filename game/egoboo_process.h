@@ -58,7 +58,7 @@ struct ego_process
     process_state_t state;
     double          dtime;
 
-    ego_process() { ego_process::ctor(this); }
+    ego_process() { ego_process::ctor( this ); }
 
     static ego_process * ctor( ego_process * proc );
 

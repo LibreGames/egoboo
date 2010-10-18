@@ -37,19 +37,19 @@ IMPLEMENT_DYNAMIC_ARY( double_ary, double );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-list_object_state * list_object_state::ctor( list_object_state * ptr, size_t idx )
+cpp_list_state * cpp_list_state::ctor( cpp_list_state * ptr, size_t idx )
 {
-    return list_object_state::clear( ptr, idx );
+    return cpp_list_state::clear( ptr, idx );
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state * list_object_state::dtor( list_object_state * ptr )
+cpp_list_state * cpp_list_state::dtor( cpp_list_state * ptr )
 {
-    return list_object_state::clear( ptr );
+    return cpp_list_state::clear( ptr );
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state * list_object_state::clear( list_object_state * ptr, size_t idx )
+cpp_list_state * cpp_list_state::clear( cpp_list_state * ptr, size_t idx )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -61,7 +61,7 @@ list_object_state * list_object_state::clear( list_object_state * ptr, size_t id
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state * list_object_state::set_allocated( list_object_state * ptr, bool_t val )
+cpp_list_state * cpp_list_state::set_allocated( cpp_list_state * ptr, bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -71,7 +71,7 @@ list_object_state * list_object_state::set_allocated( list_object_state * ptr, b
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state * list_object_state::set_used( list_object_state * ptr, bool_t val )
+cpp_list_state * cpp_list_state::set_used( cpp_list_state * ptr, bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -81,7 +81,7 @@ list_object_state * list_object_state::set_used( list_object_state * ptr, bool_t
 }
 
 //--------------------------------------------------------------------------------------------
-list_object_state * list_object_state::set_free( list_object_state * ptr, bool_t val )
+cpp_list_state * cpp_list_state::set_free( cpp_list_state * ptr, bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 

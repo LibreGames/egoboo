@@ -45,9 +45,9 @@ struct ego_menu_process_data
 
     static ego_menu_process_data * ctor( ego_menu_process_data * ptr )
     {
-        if( NULL == ptr ) return NULL;
+        if ( NULL == ptr ) return NULL;
 
-        memset(ptr,0,sizeof(*ptr) );
+        memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }
@@ -57,7 +57,7 @@ struct ego_menu_process_data
 struct ego_menu_process : public ego_menu_process_data, public ego_process
 {
 
-    static ego_menu_process * ctor(ego_menu_process * ptr)
+    static ego_menu_process * ctor( ego_menu_process * ptr )
     {
         ego_process::ctor( ptr );
         ego_menu_process_data::ctor( ptr );
@@ -71,7 +71,7 @@ struct ego_menu_process : public ego_menu_process_data, public ego_process
     static int do_beginning( ego_menu_process * mproc );
     static int do_running( ego_menu_process * mproc );
     static int do_leaving( ego_menu_process * mproc );
-    
+
 };
 
 //--------------------------------------------------------------------------------------------

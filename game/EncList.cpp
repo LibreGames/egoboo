@@ -17,7 +17,7 @@
 //*
 //********************************************************************************************
 
-/// @file EncList.c
+/// @file EncObjList.c
 /// @brief Implementation of the EncList_* functions
 /// @details
 
@@ -27,12 +27,12 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
+t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 
 ////--------------------------------------------------------------------------------------------
 ////--------------------------------------------------------------------------------------------
 //
-//INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_enc, EncList, MAX_ENC );
+//INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_enc, EncObjList, MAX_ENC );
 //
 //static size_t  ego_enc_termination_count = 0;
 //static ENC_REF ego_enc_termination_list[MAX_ENC];
@@ -61,24 +61,24 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //{
 //    int cnt;
 //
-//    EncList.free_count = 0;
-//    EncList.used_count = 0;
+//    EncObjList.free_count = 0;
+//    EncObjList.used_count = 0;
 //    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
 //    {
-//        EncList.free_ref[cnt] = MAX_ENC;
-//        EncList.used_ref[cnt] = MAX_ENC;
+//        EncObjList.free_ref[cnt] = MAX_ENC;
+//        EncObjList.used_ref[cnt] = MAX_ENC;
 //    }
 //
 //    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
 //    {
 //        ENC_REF ienc = ( ENC_REF )(( MAX_ENC - 1 ) - cnt );
-//        ego_enc * penc = EncList.get_valid_ptr(ienc);
+//        ego_enc * penc = EncObjList.get_valid_pdata(ienc);
 //
 //        // blank out all the data, including the obj_base data
 //        memset( penc, 0, sizeof( *penc ) );
 //
 //        // enchant "initializer"
-//        ego_object::ctor( POBJ_GET_PBASE( penc ), ienc );
+//        ego_obj::ctor( POBJ_GET_PBASE( penc ), ienc );
 //
 //        EncList_add_free( ienc );
 //    }
@@ -91,15 +91,15 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //
 //    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
 //    {
-//        ego_enc::run_object_deconstruct( EncList.get_valid_ptr(cnt), 100 );
+//        ego_obj_enc::run_deconstruct( EncObjList.get_valid_pdata(cnt), 100 );
 //    }
 //
-//    EncList.free_count = 0;
-//    EncList.used_count = 0;
+//    EncObjList.free_count = 0;
+//    EncObjList.used_count = 0;
 //    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
 //    {
-//        EncList.free_ref[cnt] = MAX_ENC;
-//        EncList.used_ref[cnt] = MAX_ENC;
+//        EncObjList.free_ref[cnt] = MAX_ENC;
+//        EncObjList.used_ref[cnt] = MAX_ENC;
 //    }
 //}
 //
@@ -111,18 +111,18 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    size_t cnt;
 //    ENC_REF ienc;
 //
-//    for ( cnt = 0; cnt < EncList.used_count; cnt++ )
+//    for ( cnt = 0; cnt < EncObjList.used_count; cnt++ )
 //    {
 //        bool_t removed = bfalse;
 //
-//        ienc = EncList.used_ref[cnt];
+//        ienc = EncObjList.used_ref[cnt];
 //
 //        if ( !VALID_ENC_REF( ienc ) || !DEFINED_ENC( ienc ) )
 //        {
 //            removed = EncList_remove_used_index( cnt );
 //        }
 //
-//        if ( removed && !EncList.lst[ienc].obj_base.lst_state.in_free_list )
+//        if ( removed && !EncObjList.get_data(ienc).get_proc().in_free_list )
 //        {
 //            EncList_add_free( ienc );
 //        }
@@ -137,18 +137,18 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    size_t cnt;
 //    ENC_REF ienc;
 //
-//    for ( cnt = 0; cnt < EncList.free_count; cnt++ )
+//    for ( cnt = 0; cnt < EncObjList.free_count; cnt++ )
 //    {
 //        bool_t removed = bfalse;
 //
-//        ienc = EncList.free_ref[cnt];
+//        ienc = EncObjList.free_ref[cnt];
 //
 //        if ( VALID_ENC_REF( ienc ) && INGAME_PRT_BASE( ienc ) )
 //        {
 //            removed = EncList_remove_free_index( cnt );
 //        }
 //
-//        if ( removed && !EncList.lst[ienc].obj_base.lst_state.in_free_list )
+//        if ( removed && !EncObjList.get_data(ienc).get_proc().in_free_list )
 //        {
 //            EncList_add_used( ienc );
 //        }
@@ -169,11 +169,11 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    for ( ienc = 0; ienc < MAX_ENC; ienc++ )
 //    {
 //        ego_enc               * penc;
-//        list_object_state * lst_obj_ptr;
+//        cpp_list_state * lst_obj_ptr;
 //
 //        if ( !VALID_ENC( ienc ) ) continue;
-//        penc        = EncList.get_valid_ptr(ienc);
-//        lst_obj_ptr = &( penc->obj_base.lst_state );
+//        penc        = EncObjList.get_valid_pdata(ienc);
+//        lst_obj_ptr = &( penc->get_pparent()->lst_state );
 //
 //        if ( INGAME_ENC( ienc ) )
 //        {
@@ -192,15 +192,15 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    }
 //
 //    // blank out the unused elements of the used list
-//    for ( cnt = EncList.used_count; cnt < MAX_ENC; cnt++ )
+//    for ( cnt = EncObjList.used_count; cnt < MAX_ENC; cnt++ )
 //    {
-//        EncList.used_ref[cnt] = MAX_ENC;
+//        EncObjList.used_ref[cnt] = MAX_ENC;
 //    }
 //
 //    // blank out the unused elements of the free list
-//    for ( cnt = EncList.free_count; cnt < MAX_ENC; cnt++ )
+//    for ( cnt = EncObjList.free_count; cnt < MAX_ENC; cnt++ )
 //    {
-//        EncList.free_ref[cnt] = MAX_ENC;
+//        EncObjList.free_ref[cnt] = MAX_ENC;
 //    }
 //}
 //
@@ -214,10 +214,10 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //
 //    bool_t retval;
 //    ego_enc * penc;
-//    ego_object * pbase;
+//    ego_obj * pbase;
 //
 //    if ( !ALLOCATED_ENC( ienc ) ) return bfalse;
-//    penc = EncList.get_valid_ptr(ienc);
+//    penc = EncObjList.get_valid_pdata(ienc);
 //
 //    pbase = POBJ_GET_PBASE( penc );
 //    if ( NULL == pbase ) return bfalse;
@@ -226,7 +226,7 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    ego_enc::log_script_time( ienc );
 //#endif
 //
-//    // if we are inside a EncList loop, do not actually change the length of the
+//    // if we are inside a EncObjList loop, do not actually change the length of the
 //    // list. This will cause some problems later.
 //    if ( ego_enc_loop_depth > 0 )
 //    {
@@ -235,15 +235,15 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    else
 //    {
 //        // deallocate any dynamically allocated memory
-//        penc = ego_enc::run_object_deinitialize( penc, 100 );
+//        penc = ego_obj_enc::run_deinitialize( penc, 100 );
 //        if ( NULL == penc ) return bfalse;
 //
-//        if ( pbase->lst_state.in_used_list )
+//        if ( pbase->in_used_list() )
 //        {
 //            EncList_remove_used( ienc );
 //        }
 //
-//        if ( pbase->lst_state.in_free_list )
+//        if ( pbase->in_free_list() )
 //        {
 //            retval = btrue;
 //        }
@@ -267,20 +267,20 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //
 //    size_t retval = MAX_ENC;
 //
-//    if ( EncList.free_count > 0 )
+//    if ( EncObjList.free_count > 0 )
 //    {
-//        EncList.free_count--;
-//        EncList.update_guid++;
+//        EncObjList.free_count--;
+//        EncObjList.update_guid++;
 //
-//        retval = EncList.free_ref[EncList.free_count];
+//        retval = EncObjList.free_ref[EncObjList.free_count];
 //
 //        // completely remove it from the free list
-//        EncList.free_ref[EncList.free_count] = MAX_ENC;
+//        EncObjList.free_ref[EncObjList.free_count] = MAX_ENC;
 //
 //        if ( VALID_ENC_REF( retval ) )
 //        {
 //            // let the object know it is not in the free list any more
-//            list_object_state::set_free( &( EncList.lst[retval].obj_base.lst_state ), bfalse );
+//            cpp_list_state::set_free( &( EncObjList.get_data(retval).get_proc() ), bfalse );
 //        }
 //    }
 //
@@ -306,11 +306,11 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //
 //    if ( !VALID_ENC_REF( ienc ) ) return retval;
 //
-//    for ( cnt = 0; cnt < EncList.free_count; cnt++ )
+//    for ( cnt = 0; cnt < EncObjList.free_count; cnt++ )
 //    {
-//        if ( ienc == EncList.free_ref[cnt] )
+//        if ( ienc == EncObjList.free_ref[cnt] )
 //        {
-//            EGOBOO_ASSERT( EncList.lst[ienc].obj_base.lst_state.in_free_list );
+//            EGOBOO_ASSERT( EncObjList.get_data(ienc).get_proc().in_free_list );
 //            retval = cnt;
 //            break;
 //        }
@@ -333,17 +333,17 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    }
 //#endif
 //
-//    EGOBOO_ASSERT( !EncList.lst[ienc].obj_base.lst_state.in_free_list );
+//    EGOBOO_ASSERT( !EncObjList.get_data(ienc).get_proc().in_free_list );
 //
 //    retval = bfalse;
-//    if ( EncList.free_count < MAX_ENC )
+//    if ( EncObjList.free_count < MAX_ENC )
 //    {
-//        EncList.free_ref[EncList.free_count] = ienc;
+//        EncObjList.free_ref[EncObjList.free_count] = ienc;
 //
-//        EncList.free_count++;
-//        EncList.update_guid++;
+//        EncObjList.free_count++;
+//        EncObjList.update_guid++;
 //
-//        list_object_state::set_free( &( EncList.lst[ienc].obj_base.lst_state ), btrue );
+//        cpp_list_state::set_free( &( EncObjList.get_data(ienc).get_proc() ), btrue );
 //
 //        retval = btrue;
 //    }
@@ -357,27 +357,27 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    ENC_REF ienc;
 //
 //    // was it found?
-//    if ( index < 0 || ( size_t )index >= EncList.free_count ) return bfalse;
+//    if ( index < 0 || ( size_t )index >= EncObjList.free_count ) return bfalse;
 //
-//    ienc = EncList.free_ref[index];
+//    ienc = EncObjList.free_ref[index];
 //
 //    // blank out the index in the list
-//    EncList.free_ref[index] = MAX_ENC;
+//    EncObjList.free_ref[index] = MAX_ENC;
 //
 //    if ( VALID_ENC_REF( ienc ) )
 //    {
 //        // let the object know it is not in the list anymore
-//        list_object_state::set_free( &( EncList.lst[ienc].obj_base.lst_state ), bfalse );
+//        cpp_list_state::set_free( &( EncObjList.get_data(ienc).get_proc() ), bfalse );
 //    }
 //
 //    // shorten the list
-//    EncList.free_count--;
-//    EncList.update_guid++;
+//    EncObjList.free_count--;
+//    EncObjList.update_guid++;
 //
-//    if ( EncList.free_count > 0 )
+//    if ( EncObjList.free_count > 0 )
 //    {
 //        // swap the last element for the deleted element
-//        SWAP( size_t, EncList.free_ref[index], EncList.free_ref[EncList.free_count] );
+//        SWAP( size_t, EncObjList.free_ref[index], EncObjList.free_ref[EncObjList.free_count] );
 //    }
 //
 //    return btrue;
@@ -400,11 +400,11 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //
 //    if ( !VALID_ENC_REF( ienc ) ) return retval;
 //
-//    for ( cnt = 0; cnt < EncList.used_count; cnt++ )
+//    for ( cnt = 0; cnt < EncObjList.used_count; cnt++ )
 //    {
-//        if ( ienc == EncList.used_ref[cnt] )
+//        if ( ienc == EncObjList.used_ref[cnt] )
 //        {
-//            EGOBOO_ASSERT( EncList.lst[ienc].obj_base.lst_state.in_used_list );
+//            EGOBOO_ASSERT( EncObjList.get_data(ienc).get_proc().in_used_list );
 //            retval = cnt;
 //            break;
 //        }
@@ -427,17 +427,17 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    }
 //#endif
 //
-//    EGOBOO_ASSERT( !EncList.lst[ienc].obj_base.lst_state.in_used_list );
+//    EGOBOO_ASSERT( !EncObjList.get_data(ienc).get_proc().in_used_list );
 //
 //    retval = bfalse;
-//    if ( EncList.used_count < MAX_ENC )
+//    if ( EncObjList.used_count < MAX_ENC )
 //    {
-//        EncList.used_ref[EncList.used_count] = ienc;
+//        EncObjList.used_ref[EncObjList.used_count] = ienc;
 //
-//        EncList.used_count++;
-//        EncList.update_guid++;
+//        EncObjList.used_count++;
+//        EncObjList.update_guid++;
 //
-//        list_object_state::set_used( &( EncList.lst[ienc].obj_base.lst_state ), btrue );
+//        cpp_list_state::set_used( &( EncObjList.get_data(ienc).get_proc() ), btrue );
 //
 //        retval = btrue;
 //    }
@@ -451,27 +451,27 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    ENC_REF ienc;
 //
 //    // was it found?
-//    if ( index < 0 || ( size_t )index >= EncList.used_count ) return bfalse;
+//    if ( index < 0 || ( size_t )index >= EncObjList.used_count ) return bfalse;
 //
-//    ienc = EncList.used_ref[index];
+//    ienc = EncObjList.used_ref[index];
 //
 //    // blank out the index in the list
-//    EncList.used_ref[index] = MAX_ENC;
+//    EncObjList.used_ref[index] = MAX_ENC;
 //
 //    if ( VALID_ENC_REF( ienc ) )
 //    {
 //        // let the object know it is not in the list anymore
-//        list_object_state::set_used( &( EncList.lst[ienc].obj_base.lst_state ), bfalse );
+//        cpp_list_state::set_used( &( EncObjList.get_data(ienc).get_proc() ), bfalse );
 //    }
 //
 //    // shorten the list
-//    EncList.used_count--;
-//    EncList.update_guid++;
+//    EncObjList.used_count--;
+//    EncObjList.update_guid++;
 //
-//    if ( EncList.used_count > 0 )
+//    if ( EncObjList.used_count > 0 )
 //    {
 //        // swap the last element for the deleted element
-//        SWAP( size_t, EncList.used_ref[index], EncList.used_ref[EncList.used_count] );
+//        SWAP( size_t, EncObjList.used_ref[index], EncObjList.used_ref[EncObjList.used_count] );
 //    }
 //
 //    return btrue;
@@ -498,18 +498,18 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //        {
 //            int override_index = EncList_get_free_list_index( override );
 //
-//            if ( override_index < 0 || ( size_t )override_index >= EncList.free_count )
+//            if ( override_index < 0 || ( size_t )override_index >= EncObjList.free_count )
 //            {
 //                ienc = ( ENC_REF )MAX_ENC;
 //            }
 //            else
 //            {
 //                // store the "wrong" value in the override enchant's index
-//                EncList.free_ref[override_index] = ienc;
+//                EncObjList.free_ref[override_index] = ienc;
 //
 //                // fix the in_free_list values
-//                list_object_state::set_free( &( EncList.lst[ienc].obj_base.lst_state ), btrue );
-//                list_object_state::set_free( &( EncList.lst[override].obj_base.lst_state ), bfalse );
+//                cpp_list_state::set_free( &( EncObjList.get_data(ienc).get_proc() ), btrue );
+//                cpp_list_state::set_free( &( EncObjList.get_data(override).get_proc() ), bfalse );
 //
 //                ienc = override;
 //            }
@@ -538,13 +538,13 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //        }
 //
 //        // allocate the new one
-//        POBJ_ALLOCATE( EncList.get_valid_ptr(ienc), ienc );
+//        POBJ_ALLOCATE( EncObjList.get_valid_pdata(ienc), ienc );
 //    }
 //
 //    if ( VALID_ENC( ienc ) )
 //    {
 //        // construct the new structure
-//        ego_enc::run_object_construct( EncList.get_valid_ptr(ienc), 100 );
+//        ego_obj_enc::run_construct( EncObjList.get_valid_pdata(ienc), 100 );
 //    }
 //
 //    return ienc;
@@ -563,9 +563,9 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //        ENC_REF ienc = ego_enc_activation_list[cnt];
 //
 //        if ( !VALID_ENC( ienc ) ) continue;
-//        penc = EncList.get_valid_ptr(ienc);
+//        penc = EncObjList.get_valid_pdata(ienc);
 //
-//        ego_object::grant_on( POBJ_GET_PBASE( penc ) );
+//        ego_obj::grant_on( POBJ_GET_PBASE( penc ) );
 //    }
 //    ego_enc_activation_count = 0;
 //
@@ -582,7 +582,7 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //bool_t EncList_add_activation( ENC_REF ienc )
 //{
 //    // put this enchant into the activation list so that it can be activated right after
-//    // the EncList loop is completed
+//    // the EncObjList loop is completed
 //
 //    bool_t retval = bfalse;
 //
@@ -596,7 +596,7 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //        retval = btrue;
 //    }
 //
-//    EncList.lst[ienc].obj_base.req.turn_me_on = btrue;
+//    EncObjList.lst[ienc].req.turn_me_on = btrue;
 //
 //    return retval;
 //}
@@ -617,7 +617,7 @@ t_ego_obj_lst<ego_enc,MAX_ENC> EncList;
 //    }
 //
 //    // at least mark the object as "waiting to be terminated"
-//    POBJ_REQUEST_TERMINATE( EncList.get_valid_ptr(ienc ));
+//    POBJ_REQUEST_TERMINATE( EncObjList.get_valid_pdata(ienc ));
 //
 //    return retval;
 //}

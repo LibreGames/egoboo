@@ -45,7 +45,7 @@ extern "C"
 // we must have the same definition in c and c++ otherwise,
 // structs with items of type bool will be different sizes
 // in different modules!
-typedef unsigned char bool_t;
+    typedef unsigned char bool_t;
 #define btrue  1
 #define bfalse 0
 
@@ -184,28 +184,28 @@ typedef unsigned char bool_t;
 // PAIR AND RANGE
 
 // Specifies a value between "base" and "base + rand"
-struct s_pair
-{
-    int base, rand;
-};
-typedef struct s_pair IPair;
+    struct s_pair
+    {
+        int base, rand;
+    };
+    typedef struct s_pair IPair;
 
 // Specifies a value from "from" to "to"
-struct s_range
-{
-    float from, to;
-};
-typedef struct s_range FRange;
+    struct s_range
+    {
+        float from, to;
+    };
+    typedef struct s_range FRange;
 
-void pair_to_range( IPair pair, FRange * prange );
-void range_to_pair( FRange range, IPair * ppair );
+    void pair_to_range( IPair pair, FRange * prange );
+    void range_to_pair( FRange range, IPair * ppair );
 
-void ints_to_range( int base, int rand, FRange * prange );
-void floats_to_pair( float vmin, float vmax, IPair * ppair );
+    void ints_to_range( int base, int rand, FRange * prange );
+    void floats_to_pair( float vmin, float vmax, IPair * ppair );
 
 //--------------------------------------------------------------------------------------------
 // IDSZ
-typedef Uint32 IDSZ;
+    typedef Uint32 IDSZ;
 
 #define IDSZ_DEFINED
 
@@ -222,11 +222,11 @@ typedef Uint32 IDSZ;
 #define IDSZ_NONE            MAKE_IDSZ('N','O','N','E')       ///< [NONE]
 #define IDSZ_BOOK            MAKE_IDSZ('B','O','O','K')       ///< [BOOK]
 
-const char * undo_idsz( IDSZ idsz );
+    const char * undo_idsz( IDSZ idsz );
 
 //--------------------------------------------------------------------------------------------
 // STRING
-typedef char STRING[256];
+    typedef char STRING[256];
 
 //--------------------------------------------------------------------------------------------
 
@@ -239,22 +239,22 @@ typedef char STRING[256];
 //--------------------------------------------------------------------------------------------
 
 /// The basic 2d latch
-struct s_latch_2d
-{
-    float     dir[2];
-    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
-};
-typedef struct s_latch_2d latch_2d_t;
+    struct s_latch_2d
+    {
+        float     dir[2];
+        BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+    };
+    typedef struct s_latch_2d latch_2d_t;
 
 #define LATCH_2D_INIT { {0.0f,0.0f}, EMPTY_BIT_FIELD }
 
 /// The basic 3d latch
-struct s_latch_3d
-{
-    float     dir[3];
-    BIT_FIELD b;         ///< the raw bits corresponding to various buttons
-};
-typedef struct s_latch_3d latch_3d_t;
+    struct s_latch_3d
+    {
+        float     dir[3];
+        BIT_FIELD b;         ///< the raw bits corresponding to various buttons
+    };
+    typedef struct s_latch_3d latch_3d_t;
 
 #define LATCH_3D_INIT { {0.0f,0.0f,0.0f}, EMPTY_BIT_FIELD }
 
@@ -474,14 +474,14 @@ extern "C"
     typedef struct s_oglx_texture oglx_texture_t;
 
     struct ego_cap;
-    struct ego_chr;
+    struct ego_obj_chr;
     struct ego_team;
     struct ego_eve;
-    struct ego_enc;
+    struct ego_obj_enc;
     struct ego_mad;
     struct ego_player;
     struct ego_pip;
-    struct ego_prt;
+    struct ego_obj_prt;
     struct ego_passage;
     struct ego_shop;
     struct ego_pro;
@@ -494,14 +494,14 @@ extern "C"
     typedef s_oglx_texture oglx_texture_t;
 
     CPP_DECLARE_REF( ego_cap, CAP_REF );
-    CPP_DECLARE_REF( ego_chr, CHR_REF );
+    CPP_DECLARE_REF( ego_obj_chr, CHR_REF );
     CPP_DECLARE_REF( ego_team, TEAM_REF );
     CPP_DECLARE_REF( ego_eve, EVE_REF );
-    CPP_DECLARE_REF( ego_enc, ENC_REF );
+    CPP_DECLARE_REF( ego_obj_enc, ENC_REF );
     CPP_DECLARE_REF( ego_mad, MAD_REF );
     CPP_DECLARE_REF( ego_player, PLA_REF );
     CPP_DECLARE_REF( ego_pip, PIP_REF );
-    CPP_DECLARE_REF( ego_prt, PRT_REF );
+    CPP_DECLARE_REF( ego_obj_prt, PRT_REF );
     CPP_DECLARE_REF( ego_passage, PASS_REF );
     CPP_DECLARE_REF( ego_shop, SHOP_REF );
     CPP_DECLARE_REF( ego_pro, PRO_REF );
@@ -563,11 +563,11 @@ extern "C"
 // forward declaration of standard dynamic array types
 #if defined(__cplusplus)
 
-DECLARE_DYNAMIC_ARY( char_ary,   char )
-DECLARE_DYNAMIC_ARY( short_ary,  short )
-DECLARE_DYNAMIC_ARY( int_ary,    int )
-DECLARE_DYNAMIC_ARY( float_ary,  float )
-DECLARE_DYNAMIC_ARY( double_ary, double )
+    DECLARE_DYNAMIC_ARY( char_ary,   char )
+    DECLARE_DYNAMIC_ARY( short_ary,  short )
+    DECLARE_DYNAMIC_ARY( int_ary,    int )
+    DECLARE_DYNAMIC_ARY( float_ary,  float )
+    DECLARE_DYNAMIC_ARY( double_ary, double )
 
 #endif
 

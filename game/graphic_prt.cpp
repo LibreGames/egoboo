@@ -197,7 +197,7 @@ bool_t render_one_prt_solid( const PRT_REF & iprt )
     ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtList.get_valid_ptr(iprt);
+    pprt = PrtObjList.get_valid_pdata( iprt );
     pinst = &( pprt->inst );
 
     // if the particle instance data is not valid, do not continue
@@ -276,7 +276,7 @@ bool_t render_one_prt_trans( const PRT_REF & iprt )
     ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtList.get_valid_ptr(iprt);
+    pprt = PrtObjList.get_valid_pdata( iprt );
     pinst = &( pprt->inst );
 
     // if the particle instance data is not valid, do not continue
@@ -455,7 +455,7 @@ bool_t render_one_prt_ref( const PRT_REF & iprt )
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
 
-    pprt = PrtList.get_valid_ptr(iprt);
+    pprt = PrtObjList.get_valid_pdata( iprt );
     pinst = &( pprt->inst );
     if ( !pinst->valid ) return bfalse;
 
@@ -729,7 +729,7 @@ void prt_draw_attached_point( ego_prt_bundle * pbdl_prt )
     if ( !INGAME_PPRT_BASE( loc_pprt ) ) return;
 
     if ( !INGAME_CHR( loc_pprt->attachedto_ref ) ) return;
-    pholder = ChrList.get_valid_ptr(loc_pprt->attachedto_ref);
+    pholder = ChrObjList.get_valid_pdata( loc_pprt->attachedto_ref );
 
     pholder_cap = pro_get_pcap( pholder->profile_ref );
     if ( NULL == pholder_cap ) return;
@@ -758,7 +758,7 @@ void prt_instance_update_all( ego_camera * pcam )
         pinst = &( prt_bdl.prt_ptr->inst );
 
         // only do frame counting for particles that are fully activated!
-        prt_bdl.prt_ptr->obj_base.frame_count++;
+        prt_bdl.prt_ptr->get_pparent()->frame_count++;
         if ( prt_bdl.prt_ptr->frames_remaining > 0 ) prt_bdl.prt_ptr->frames_remaining--;
 
         if ( !prt_bdl.prt_ptr->inview || prt_bdl.prt_ptr->is_hidden || 0 == prt_bdl.prt_ptr->size )
@@ -897,7 +897,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
     {
         ego_chr_instance * cinst = ego_chr::get_pinstance( pprt->attachedto_ref );
 
-        if ( ego_chr::matrix_valid( ChrList.get_valid_ptr(pprt->attachedto_ref )) )
+        if ( ego_chr::matrix_valid( ChrObjList.get_valid_pdata( pprt->attachedto_ref ) ) )
         {
             // use the character matrix to orient the particle
             // assume that the particle "up" is in the z-direction in the object's
@@ -1156,7 +1156,7 @@ void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 tra
     ego_prt_instance * pinst;
 
     if ( !INGAME_PRT_BASE( particle ) ) return;
-    pprt = PrtList.get_valid_ptr(particle);
+    pprt = PrtObjList.get_valid_pdata( particle );
     pinst = &( pprt->inst );
 
     // make sure that the vertices are interpolated

@@ -81,12 +81,12 @@
     return returncode;
 
 #define SET_TARGET_0(ITARGET)         pself->target = ITARGET;
-#define SET_TARGET_1(ITARGET,PTARGET) if( NULL != PTARGET ) { PTARGET = (!INGAME_CHR(ITARGET) ? NULL : ChrList.get_valid_ptr(ITARGET) ); }
+#define SET_TARGET_1(ITARGET,PTARGET) if( NULL != PTARGET ) { PTARGET = (!INGAME_CHR(ITARGET) ? NULL : ChrObjList.get_valid_pdata(ITARGET) ); }
 #define SET_TARGET(ITARGET,PTARGET)   SET_TARGET_0( ITARGET ); SET_TARGET_1(ITARGET,PTARGET)
 
 #define SCRIPT_REQUIRE_TARGET(PTARGET) \
     if( !INGAME_CHR(pself->target) ) return bfalse; \
-    PTARGET = ChrList.get_valid_ptr(pself->target);
+    PTARGET = ChrObjList.get_valid_pdata(pself->target);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -556,7 +556,7 @@ Uint8 scr_FindPath( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     {
         float fx, fy;
 
-        ego_chr * pself_target = ChrList.get_valid_ptr(pself->target);
+        ego_chr * pself_target = ChrObjList.get_valid_pdata( pself->target );
 
         if ( pstate->distance != MOVE_FOLLOW )
         {
@@ -1124,12 +1124,12 @@ Uint8 scr_DropWeapons( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
         {
             fvec3_t tmp_pos;
 
-            ChrList.lst[ichr].vel.z    = DISMOUNTZVEL;
-            ChrList.lst[ichr].jump_time = JUMP_DELAY;
+            ChrObjList.get_data( ichr ).vel.z    = DISMOUNTZVEL;
+            ChrObjList.get_data( ichr ).jump_time = JUMP_DELAY;
 
-            tmp_pos = ego_chr::get_pos( ChrList.get_valid_ptr(ichr ));
+            tmp_pos = ego_chr::get_pos( ChrObjList.get_valid_pdata( ichr ) );
             tmp_pos.z += DISMOUNTZVEL;
-            ego_chr::set_pos( ChrList.get_valid_ptr(ichr), tmp_pos.v );
+            ego_chr::set_pos( ChrObjList.get_valid_pdata( ichr ), tmp_pos.v );
         }
     }
 
@@ -1141,12 +1141,12 @@ Uint8 scr_DropWeapons( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
         {
             fvec3_t tmp_pos;
 
-            ChrList.lst[ichr].vel.z    = DISMOUNTZVEL;
-            ChrList.lst[ichr].jump_time = JUMP_DELAY;
+            ChrObjList.get_data( ichr ).vel.z    = DISMOUNTZVEL;
+            ChrObjList.get_data( ichr ).jump_time = JUMP_DELAY;
 
-            tmp_pos = ego_chr::get_pos( ChrList.get_valid_ptr(ichr ));
+            tmp_pos = ego_chr::get_pos( ChrObjList.get_valid_pdata( ichr ) );
             tmp_pos.z += DISMOUNTZVEL;
-            ego_chr::set_pos( ChrList.get_valid_ptr(ichr), tmp_pos.v );
+            ego_chr::set_pos( ChrObjList.get_valid_pdata( ichr ), tmp_pos.v );
         }
     }
 
@@ -1166,7 +1166,7 @@ Uint8 scr_TargetDoAction( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     returncode = bfalse;
     if ( INGAME_CHR( pself->target ) )
     {
-        ego_chr * pself_target = ChrList.get_valid_ptr(pself->target);
+        ego_chr * pself_target = ChrObjList.get_valid_pdata( pself->target );
 
         if ( pself_target->alive )
         {
@@ -1272,23 +1272,23 @@ Uint8 scr_CostTargetItemID( ego_script_state * pstate, ego_ai_bundle * pbdl_self
     {
         returncode = btrue;
 
-        if ( ChrList.lst[item].ammo > 1 )
+        if ( ChrObjList.get_data( item ).ammo > 1 )
         {
             // Cost one ammo
-            ChrList.lst[item].ammo--;
+            ChrObjList.get_data( item ).ammo--;
         }
         else
         {
             // Poof the item
 
             // remove it from a pack, if it was packed
-            pack_remove_item( &( ChrList.lst[ichr].pack ), pack_last, item );
+            pack_remove_item( &( ChrObjList.get_data( ichr ).pack ), pack_last, item );
 
             // Drop from hand, if held
             detach_character_from_mount( item, btrue, bfalse );
 
             // get rid of the character, no matter what
-            ego_chr::request_terminate( item );
+            ego_obj_chr::request_terminate( item );
         }
     }
 
@@ -1442,7 +1442,7 @@ Uint8 scr_TargetCanOpenStuff( ego_script_state * pstate, ego_ai_bundle * pbdl_se
         if ( DEFINED_CHR( iheld ) )
         {
             // can the rider open the
-            returncode = ChrList.lst[iheld].openstuff;
+            returncode = ChrObjList.get_data( iheld ).openstuff;
         }
     }
 
@@ -1654,7 +1654,7 @@ Uint8 scr_set_TargetToTargetOfLeader( ego_script_state * pstate, ego_ai_bundle *
 
         if ( NOLEADER != ileader && INGAME_CHR( ileader ) )
         {
-            CHR_REF itarget = ChrList.lst[ileader].ai.target;
+            CHR_REF itarget = ChrObjList.get_data( ileader ).ai.target;
 
             if ( INGAME_CHR( itarget ) )
             {
@@ -1842,23 +1842,23 @@ Uint8 scr_SpawnCharacter( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     pos.y = pstate->y;
     pos.z = 0;
 
-    ichr = spawn_one_character( pos, pchr->profile_ref, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF(MAX_CHR) );
+    ichr = spawn_one_character( pos, pchr->profile_ref, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF( MAX_CHR ) );
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->obj_base.base_name );
+            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->get_pparent()->base_name );
         }
     }
     else
     {
-        ego_chr * pchild = ChrList.get_valid_ptr(ichr);
+        ego_chr * pchild = ChrObjList.get_valid_pdata( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
         {
-            ego_chr::request_terminate( ichr );
-            ichr = CHR_REF(MAX_CHR);
+            ego_obj_chr::request_terminate( ichr );
+            ichr = CHR_REF( MAX_CHR );
         }
         else
         {
@@ -2106,17 +2106,17 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
         ichr = pchr->attachedto;
     }
 
-    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
+    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
     returncode = VALID_PRT( iprt );
     if ( returncode )
     {
         fvec3_t tmp_pos;
-        ego_prt * pprt = PrtList.get_valid_ptr(iprt);
+        ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
 
         // attach the particle
         place_particle_at_vertex( pprt, pself->index, pstate->distance );
-        pprt->attachedto_ref = CHR_REF(MAX_CHR);
+        pprt->attachedto_ref = CHR_REF( MAX_CHR );
 
         tmp_pos = ego_prt::get_pos( pprt );
 
@@ -2402,15 +2402,15 @@ Uint8 scr_ScoredAHit( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     SCRIPT_FUNCTION_BEGIN();
 
     // Proceed only if the character scored a hit
-    if ( !INGAME_CHR( pchr->attachedto ) || ChrList.lst[pchr->attachedto].ismount )
+    if ( !INGAME_CHR( pchr->attachedto ) || ChrObjList.get_data( pchr->attachedto ).ismount )
     {
         returncode = HAS_SOME_BITS( pself->alert, ALERTIF_SCOREDAHIT );
     }
 
     // Proceed only if the holder scored a hit with the character
-    else if ( ChrList.lst[pchr->attachedto].ai.lastitemused == pself->index )
+    else if ( ChrObjList.get_data( pchr->attachedto ).ai.lastitemused == pself->index )
     {
-        returncode = HAS_SOME_BITS( ChrList.lst[pchr->attachedto].ai.alert, ALERTIF_SCOREDAHIT );
+        returncode = HAS_SOME_BITS( ChrObjList.get_data( pchr->attachedto ).ai.alert, ALERTIF_SCOREDAHIT );
     }
     else returncode = bfalse;
 
@@ -3091,7 +3091,7 @@ Uint8 scr_KillTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ichr = pself->index;
 
     // Weapons don't kill people, people kill people...
-    if ( INGAME_CHR( pchr->attachedto ) && !ChrList.lst[pchr->attachedto].ismount )
+    if ( INGAME_CHR( pchr->attachedto ) && !ChrObjList.get_data( pchr->attachedto ).ismount )
     {
         ichr = pchr->attachedto;
     }
@@ -3532,7 +3532,7 @@ Uint8 scr_HoldingRangedWeapon( ego_script_state * pstate, ego_ai_bundle * pbdl_s
     {
         ego_cap * pcap = ego_chr::get_pcap( ichr );
 
-        if ( NULL != pcap && pcap->isranged && ( ChrList.lst[ichr].ammomax == 0 || ( ChrList.lst[ichr].ammo != 0 && ChrList.lst[ichr].ammoknown ) ) )
+        if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data( ichr ).ammomax == 0 || ( ChrObjList.get_data( ichr ).ammo != 0 && ChrObjList.get_data( ichr ).ammoknown ) ) )
         {
             if ( pstate->argument == 0 || ( update_wld & 1 ) )
             {
@@ -3550,7 +3550,7 @@ Uint8 scr_HoldingRangedWeapon( ego_script_state * pstate, ego_ai_bundle * pbdl_s
         {
             ego_cap * pcap = ego_chr::get_pcap( ichr );
 
-            if ( NULL != pcap && pcap->isranged && ( ChrList.lst[ichr].ammomax == 0 || ( ChrList.lst[ichr].ammo != 0 && ChrList.lst[ichr].ammoknown ) ) )
+            if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data( ichr ).ammomax == 0 || ( ChrObjList.get_data( ichr ).ammo != 0 && ChrObjList.get_data( ichr ).ammoknown ) ) )
             {
                 pstate->argument = LATCHBUTTON_LEFT;
                 returncode = btrue;
@@ -3876,7 +3876,7 @@ Uint8 scr_SpawnAttachedParticle( ego_script_state * pstate, ego_ai_bundle * pbdl
         ichr = iholder;
     }
 
-    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
+    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
     returncode = VALID_PRT( iprt );
 
@@ -3902,7 +3902,7 @@ Uint8 scr_SpawnExactParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_se
 
     {
         fvec3_t vtmp = VECT3( pstate->x, pstate->y, pstate->distance );
-        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF(MAX_CHR), 0, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
+        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF( MAX_CHR ), 0, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
     }
 
     returncode = VALID_PRT( iprt );
@@ -4302,7 +4302,7 @@ Uint8 scr_ChildDoActionOverride( ego_script_state * pstate, ego_ai_bundle * pbdl
     {
         int action;
 
-        ego_chr * pchild = ChrList.get_valid_ptr(pself->child);
+        ego_chr * pchild = ChrObjList.get_valid_pdata( pself->child );
 
         action = mad_get_action( pchild->inst.imad, pstate->argument );
 
@@ -4370,7 +4370,7 @@ Uint8 scr_set_ChildState( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ChrList.lst[pself->child].ai.state = pstate->argument;
+    ChrObjList.get_data( pself->child ).ai.state = pstate->argument;
 
     SCRIPT_FUNCTION_END();
 }
@@ -4393,12 +4393,12 @@ Uint8 scr_SpawnAttachedSizedParticle( ego_script_state * pstate, ego_ai_bundle *
         ichr = pchr->attachedto;
     }
 
-    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
+    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
     returncode = bfalse;
 
     if ( VALID_PRT( iprt ) )
     {
-        returncode = ego_prt::set_size( PrtList.get_valid_ptr(iprt), pstate->turn );
+        returncode = ego_prt::set_size( PrtObjList.get_valid_pdata( iprt ), pstate->turn );
     }
 
     SCRIPT_FUNCTION_END();
@@ -4503,7 +4503,7 @@ Uint8 scr_SpawnAttachedFacedParticle( ego_script_state * pstate, ego_ai_bundle *
         ichr = pchr->attachedto;
     }
 
-    iprt = spawn_one_particle( pchr->pos, CLIP_TO_16BITS( pstate->turn ), pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
+    iprt = spawn_one_particle( pchr->pos, CLIP_TO_16BITS( pstate->turn ), pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
     returncode = VALID_PRT( iprt );
 
@@ -4885,7 +4885,7 @@ Uint8 scr_SpawnAttachedHolderParticle( ego_script_state * pstate, ego_ai_bundle 
         ichr = pchr->attachedto;
     }
 
-    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ichr, pstate->distance, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
+    iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, ichr, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
     returncode = VALID_PRT( iprt );
 
@@ -5050,7 +5050,7 @@ Uint8 scr_TargetIsMounted( ego_script_state * pstate, ego_ai_bundle * pbdl_self 
     ichr = pself_target->attachedto;
     if ( INGAME_CHR( ichr ) )
     {
-        returncode = ChrList.lst[ichr].ismount;
+        returncode = ChrObjList.get_data( ichr ).ismount;
     }
 
     SCRIPT_FUNCTION_END();
@@ -5226,10 +5226,10 @@ Uint8 scr_set_EnchantBoostValues( ego_script_state * pstate, ego_ai_bundle * pbd
     returncode = bfalse;
     if ( INGAME_ENC( iTmp ) )
     {
-        EncList.lst[iTmp].owner_mana = pstate->argument;
-        EncList.lst[iTmp].owner_life = pstate->distance;
-        EncList.lst[iTmp].target_mana = pstate->x;
-        EncList.lst[iTmp].target_life = pstate->y;
+        EncObjList.get_data( iTmp ).owner_mana = pstate->argument;
+        EncObjList.get_data( iTmp ).owner_life = pstate->distance;
+        EncObjList.get_data( iTmp ).target_mana = pstate->x;
+        EncObjList.get_data( iTmp ).target_life = pstate->y;
 
         returncode = btrue;
     }
@@ -5252,24 +5252,24 @@ Uint8 scr_SpawnCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     pos.y = pstate->y;
     pos.z = pstate->distance;
 
-    ichr = spawn_one_character( pos, pchr->profile_ref, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF(MAX_CHR) );
+    ichr = spawn_one_character( pos, pchr->profile_ref, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF( MAX_CHR ) );
 
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->obj_base.base_name );
+            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->get_pparent()->base_name );
         }
     }
     else
     {
-        ego_chr * pchild = ChrList.get_valid_ptr(ichr);
+        ego_chr * pchild = ChrObjList.get_valid_pdata( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
         {
-            ego_chr::request_terminate( ichr );
-            ichr = CHR_REF(MAX_CHR);
+            ego_obj_chr::request_terminate( ichr );
+            ichr = CHR_REF( MAX_CHR );
         }
         else
         {
@@ -5307,25 +5307,25 @@ Uint8 scr_SpawnExactCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbd
     pos.y = pstate->y;
     pos.z = pstate->distance;
 
-    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF(MAX_CHR) );
+    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF( MAX_CHR ) );
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
             ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
-            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->obj_base.base_name, NULL == pcap ? "INVALID" : pcap->classname, pstate->argument );
+            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->get_pparent()->base_name, NULL == pcap ? "INVALID" : pcap->classname, pstate->argument );
         }
     }
     else
     {
-        ego_chr * pchild = ChrList.get_valid_ptr(ichr);
+        ego_chr * pchild = ChrObjList.get_valid_pdata( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
         {
-            ego_chr::request_terminate( ichr );
-            ichr = CHR_REF(MAX_CHR);
+            ego_obj_chr::request_terminate( ichr );
+            ichr = CHR_REF( MAX_CHR );
         }
         else
         {
@@ -5399,14 +5399,14 @@ Uint8 scr_SpawnExactChaseParticle( ego_script_state * pstate, ego_ai_bundle * pb
 
     {
         fvec3_t vtmp = VECT3( pstate->x, pstate->y, pstate->distance );
-        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF(MAX_CHR), 0, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
+        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF( MAX_CHR ), 0, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
     }
 
     returncode = VALID_PRT( iprt );
 
     if ( returncode )
     {
-        PrtList.lst[iprt].target_ref = pself->target;
+        PrtObjList.get_data( iprt ).target_ref = pself->target;
     }
 
     SCRIPT_FUNCTION_END();
@@ -5464,20 +5464,20 @@ Uint8 scr_UnkurseTargetInventory( ego_script_state * pstate, ego_ai_bundle * pbd
     ichr = pself_target->holdingwhich[SLOT_LEFT];
     if ( INGAME_CHR( ichr ) )
     {
-        ChrList.lst[ichr].iskursed = bfalse;
+        ChrObjList.get_data( ichr ).iskursed = bfalse;
     }
 
     ichr = pself_target->holdingwhich[SLOT_RIGHT];
     if ( INGAME_CHR( ichr ) )
     {
-        ChrList.lst[ichr].iskursed = bfalse;
+        ChrObjList.get_data( ichr ).iskursed = bfalse;
     }
 
     PACK_BEGIN_LOOP( ichr, pself_target->pack.next )
     {
         if ( INGAME_CHR( ichr ) )
         {
-            ChrList.lst[ichr].iskursed = bfalse;
+            ChrObjList.get_data( ichr ).iskursed = bfalse;
         }
     }
     PACK_END_LOOP( ichr );
@@ -5547,7 +5547,7 @@ Uint8 scr_TargetDoActionSetFrame( ego_script_state * pstate, ego_ai_bundle * pbd
     if ( INGAME_CHR( pself->target ) )
     {
         int action;
-        ego_chr * pself_target = ChrList.get_valid_ptr(pself->target);
+        ego_chr * pself_target = ChrObjList.get_valid_pdata( pself->target );
 
         action = mad_get_action( pself_target->inst.imad, pstate->argument );
 
@@ -5730,7 +5730,7 @@ Uint8 scr_HeldInLeftHand( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ichr = pchr->attachedto;
     if ( INGAME_CHR( ichr ) )
     {
-        returncode = ( ChrList.lst[ichr].holdingwhich[SLOT_LEFT] == pself->index );
+        returncode = ( ChrObjList.get_data( ichr ).holdingwhich[SLOT_LEFT] == pself->index );
     }
 
     SCRIPT_FUNCTION_END();
@@ -5758,7 +5758,7 @@ Uint8 scr_set_ChildAmmo( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ChrList.lst[pself->child].ammo = pstate->argument;
+    ChrObjList.get_data( pself->child ).ammo = pstate->argument;
 
     SCRIPT_FUNCTION_END();
 }
@@ -5809,11 +5809,11 @@ Uint8 scr_IdentifyTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     returncode = bfalse;
     ichr = pself->target;
-    if ( ChrList.lst[ichr].ammomax != 0 )  ChrList.lst[ichr].ammoknown = btrue;
-    if ( 0 == strcmp( "Blah", ChrList.lst[ichr].name ) )
+    if ( ChrObjList.get_data( ichr ).ammomax != 0 )  ChrObjList.get_data( ichr ).ammoknown = btrue;
+    if ( 0 == strcmp( "Blah", ChrObjList.get_data( ichr ).name ) )
     {
-        returncode = !ChrList.lst[ichr].nameknown;
-        ChrList.lst[ichr].nameknown = btrue;
+        returncode = !ChrObjList.get_data( ichr ).nameknown;
+        ChrObjList.get_data( ichr ).nameknown = btrue;
     }
 
     pcap = ego_chr::get_pcap( pself->target );
@@ -6323,9 +6323,9 @@ Uint8 scr_set_VolumeNearestTeammate( ego_script_state * pstate, ego_ai_bundle * 
     sTmp = 0;
     while(sTmp < MAX_CHR)
     {
-    if(INGAME_CHR(sTmp) && ChrList.lst[sTmp].alive && ChrList.lst[sTmp].Team == pchr->Team)
+    if(INGAME_CHR(sTmp) && ChrObjList.get_data(sTmp).alive && ChrObjList.get_data(sTmp).Team == pchr->Team)
     {
-    distance = ABS(PCamera->trackx-ChrList.lst[sTmp].pos_old.x)+ABS(PCamera->tracky-ChrList.lst[sTmp].pos_old.y);
+    distance = ABS(PCamera->trackx-ChrObjList.get_data(sTmp).pos_old.x)+ABS(PCamera->tracky-ChrObjList.get_data(sTmp).pos_old.y);
     if(distance < iTmp)  iTmp = distance;
     }
     sTmp++;
@@ -6379,7 +6379,7 @@ Uint8 scr_TargetPayForArmor( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
     if ( !INGAME_CHR( pself->target ) ) return bfalse;
 
-    pself_target = ChrList.get_valid_ptr(pself->target);
+    pself_target = ChrObjList.get_valid_pdata( pself->target );
 
     pcap = ego_chr::get_pcap( pself->target );         // The Target's model
     if ( NULL == pcap )  return bfalse;
@@ -6522,14 +6522,14 @@ Uint8 scr_SpawnExactParticleEndSpawn( ego_script_state * pstate, ego_ai_bundle *
 
     {
         fvec3_t vtmp = VECT3( pstate->x, pstate->y, pstate->distance );
-        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF(MAX_CHR), 0, pchr->team, ichr, PRT_REF(MAX_PRT), 0, CHR_REF(MAX_CHR) );
+        iprt = spawn_one_particle( vtmp, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, CHR_REF( MAX_CHR ), 0, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
     }
 
     returncode = VALID_PRT( iprt );
 
     if ( returncode )
     {
-        PrtList.lst[iprt].spawncharacterstate = pstate->turn;
+        PrtObjList.get_data( iprt ).spawncharacterstate = pstate->turn;
     }
 
     SCRIPT_FUNCTION_END();
@@ -6698,11 +6698,11 @@ Uint8 scr_HolderBlocked( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     if ( INGAME_CHR( iattached ) )
     {
-        BIT_FIELD bits = ChrList.lst[iattached].ai.alert;
+        BIT_FIELD bits = ChrObjList.get_data( iattached ).ai.alert;
 
         if ( HAS_SOME_BITS( bits, ALERTIF_BLOCKED ) )
         {
-            CHR_REF iattacked = ChrList.lst[iattached].ai.attacklast;
+            CHR_REF iattacked = ChrObjList.get_data( iattached ).ai.attacklast;
 
             if ( INGAME_CHR( iattacked ) )
             {
@@ -6889,7 +6889,7 @@ Uint8 scr_Backstabbed( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     if ( HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
     {
         // Who is the dirty backstabber?
-        ego_chr * pattacker = ChrList.get_valid_ptr(pself->attacklast);
+        ego_chr * pattacker = ChrObjList.get_valid_pdata( pself->attacklast );
         if ( !ACTIVE_PCHR( pattacker ) ) return bfalse;
 
         // Only if hit from behind
@@ -7163,19 +7163,19 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
     pos.y = pstate->y;
     pos.z = pstate->distance;
 
-    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, FACE_NORTH, NULL, CHR_REF(MAX_CHR) );
+    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, FACE_NORTH, NULL, CHR_REF( MAX_CHR ) );
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
             ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
-            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->obj_base.base_name, NULL == pcap ? "IVALID" : pcap->classname, pstate->argument );
+            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->get_pparent()->base_name, NULL == pcap ? "IVALID" : pcap->classname, pstate->argument );
         }
     }
     else
     {
-        ego_chr * pchild = ChrList.get_valid_ptr(ichr);
+        ego_chr * pchild = ChrObjList.get_valid_pdata( ichr );
 
         Uint8 grip = ( Uint8 )CLIP( pstate->distance, ATTACH_INVENTORY, ATTACH_RIGHT );
 
@@ -7190,7 +7190,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
                 pchild->attachedto = pself->target;  // Make grab work
                 scr_run_chr_script( ego_ai_bundle::set( &tmp_bdl_ai, pchild ) );  // Empty the grabbed messages
 
-                pchild->attachedto = CHR_REF(MAX_CHR);  // Fix grab
+                pchild->attachedto = CHR_REF( MAX_CHR );  // Fix grab
 
                 // Set some AI values
                 pself->child = ichr;
@@ -7201,8 +7201,8 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
             // No more room!
             else
             {
-                ego_chr::request_terminate( ichr );
-                ichr = CHR_REF(MAX_CHR);
+                ego_obj_chr::request_terminate( ichr );
+                ichr = CHR_REF( MAX_CHR );
             }
         }
         else if ( grip == ATTACH_LEFT || grip == ATTACH_RIGHT )
@@ -7227,8 +7227,8 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
             // Grip is already used
             else
             {
-                ego_chr::request_terminate( ichr );
-                ichr = CHR_REF(MAX_CHR);
+                ego_obj_chr::request_terminate( ichr );
+                ichr = CHR_REF( MAX_CHR );
             }
         }
         else
@@ -7239,8 +7239,8 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
             // technically this should never occur since we are limiting the attachment points above
             if ( !ego_chr::get_safe( pchild, NULL ) )
             {
-                ego_chr::request_terminate( ichr );
-                ichr = CHR_REF(MAX_CHR);
+                ego_obj_chr::request_terminate( ichr );
+                ichr = CHR_REF( MAX_CHR );
             }
         }
     }
@@ -7602,7 +7602,7 @@ Uint8 scr_set_ChildContent( ego_script_state * pstate, ego_ai_bundle * pbdl_self
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ChrList.lst[pself->child].ai.content = pstate->argument;
+    ChrObjList.get_data( pself->child ).ai.content = pstate->argument;
 
     SCRIPT_FUNCTION_END();
 }

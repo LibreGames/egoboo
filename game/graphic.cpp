@@ -1239,7 +1239,7 @@ void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t dra
     TX_REF icon_ref;
     Uint8  draw_sparkle;
 
-    ego_chr * pitem = !INGAME_CHR( item ) ? NULL : ChrList.get_valid_ptr(item);
+    ego_chr * pitem = !INGAME_CHR( item ) ? NULL : ChrObjList.get_valid_pdata( item );
 
     // grab the icon reference
     icon_ref = ego_chr::get_icon_ref( item );
@@ -1271,7 +1271,7 @@ int draw_character_xp_bar( const CHR_REF & character, float x, float y )
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return y;
-    pchr = ChrList.get_valid_ptr(character);
+    pchr = ChrObjList.get_valid_pdata( character );
 
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return y;
@@ -1309,7 +1309,7 @@ int draw_status( const CHR_REF & character, float x, float y )
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return y;
-    pchr = ChrList.get_valid_ptr(character);
+    pchr = ChrObjList.get_valid_pdata( character );
 
     pcap = ego_chr::get_pcap( character );
     if ( NULL == pcap ) return y;
@@ -1425,7 +1425,7 @@ void draw_map()
                 ego_cap * pcap;
 
                 if ( !INGAME_CHR( ichr ) ) continue;
-                pchr = ChrList.get_valid_ptr(ichr);
+                pchr = ChrObjList.get_valid_pdata( ichr );
 
                 pcap = ego_chr::get_pcap( ichr );
                 if ( NULL == pcap ) continue;
@@ -1470,7 +1470,7 @@ void draw_map()
 
                 if ( INPUT_BITS_NONE != ppla->device.bits && INGAME_CHR( ppla->index ) )
                 {
-                    ego_chr * pchr = ChrList.get_valid_ptr(ppla->index);
+                    ego_chr * pchr = ChrObjList.get_valid_pdata( ppla->index );
                     if ( pchr->alive )
                     {
                         draw_blip( 0.75f, COLOR_WHITE, pchr->pos.x, pchr->pos.y, btrue );
@@ -1510,7 +1510,7 @@ int draw_fps( int y )
 #if EGO_DEBUG
 
 #    if defined(DEBUG_BSP) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtList.count_free() );
+        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtObjList.count_free() );
         y = _draw_string_raw( 0, y, "BSP collisions %d", CHashList_inserted );
         y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", chr_stoppedby_tests + chr_pressure_tests, prt_stoppedby_tests + prt_pressure_tests );
 #    endif
@@ -1597,7 +1597,7 @@ int draw_debug_character( CHR_REF ichr, int y )
     ego_chr   *pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return y;
-    pchr = ChrList.get_valid_ptr(ichr);
+    pchr = ChrObjList.get_valid_pdata( ichr );
 
     return y;
 }
@@ -1613,7 +1613,7 @@ int draw_debug_player( PLA_REF ipla, int y )
     if ( DEFINED_CHR( ppla->index ) )
     {
         CHR_REF ichr = ppla->index;
-        ego_chr  *pchr = ChrList.get_valid_ptr(ichr);
+        ego_chr  *pchr = ChrObjList.get_valid_pdata( ichr );
 
         y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", REF_TO_INT( ipla ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
@@ -1645,7 +1645,7 @@ int draw_debug( int y )
         ego_player * ppla = PlaStack.lst + ipla;
         if ( DEFINED_CHR( ppla->index ) )
         {
-            ego_chr * pchr = ChrList.get_valid_ptr(ppla->index);
+            ego_chr * pchr = ChrObjList.get_valid_pdata( ppla->index );
 
             y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", REF_TO_INT( ipla ), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
         }
@@ -1665,7 +1665,7 @@ int draw_debug( int y )
         STRING text;
 
         y = _draw_string_raw( 0, y, "!!!DEBUG MODE-6!!!" );
-        y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtList.count_free() );
+        y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtObjList.count_free() );
         y = _draw_string_raw( 0, y, "~~FREECHR %d", chr_count_free() );
         y = _draw_string_raw( 0, y, "~~MACHINE %d", local_machine );
         if ( PMod->exportvalid ) snprintf( text, SDL_arraysize( text ), "~~EXPORT: TRUE" );
@@ -1973,7 +1973,7 @@ void render_shadow( const CHR_REF & character )
     ego_chr * pchr;
 
     if ( IS_ATTACHED_CHR( character ) ) return;
-    pchr = ChrList.get_valid_ptr(character);
+    pchr = ChrObjList.get_valid_pdata( character );
 
     // if the character is hidden, not drawn at all, so no shadow
     if ( pchr->is_hidden || 0 == pchr->shadow_size ) return;
@@ -2102,7 +2102,7 @@ void render_bad_shadow( const CHR_REF & character )
     ego_chr * pchr;
 
     if ( IS_ATTACHED_CHR( character ) ) return;
-    pchr = ChrList.get_valid_ptr(character);
+    pchr = ChrObjList.get_valid_pdata( character );
 
     // if the character is hidden, not drawn at all, so no shadow
     if ( pchr->is_hidden || pchr->shadow_size == 0 ) return;
@@ -2191,7 +2191,7 @@ void update_all_chr_instance()
         ego_chr * pchr;
 
         if ( !INGAME_CHR( cnt ) ) continue;
-        pchr = ChrList.get_valid_ptr(cnt);
+        pchr = ChrObjList.get_valid_pdata( cnt );
 
         if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
 
@@ -2394,7 +2394,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                         GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );  // GL_COLOR_BUFFER_BIT - use the alpha channel to modulate the transparency
 
                         ichr  = dolist[rcnt].ichr;
-                        itile = ChrList.lst[ichr].onwhichgrid;
+                        itile = ChrObjList.get_data( ichr ).onwhichgrid;
 
                         if ( mesh_grid_is_valid( pmesh, itile ) && ( 0 != mesh_test_fx( pmesh, itile, MPDFX_DRAWREF ) ) )
                         {
@@ -2407,7 +2407,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                         Uint32 itile;
                         PRT_REF iprt;
                         iprt = dolist[rcnt].iprt;
-                        itile = PrtList.lst[iprt].onwhichgrid;
+                        itile = PrtObjList.get_data( iprt ).onwhichgrid;
 
                         GL_DEBUG( glDisable )( GL_CULL_FACE );
 
@@ -2505,7 +2505,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                 for ( cnt = 0; cnt < dolist_count; cnt++ )
                 {
                     CHR_REF ichr = dolist[cnt].ichr;
-                    if ( 0 == ChrList.lst[ichr].shadow_size ) continue;
+                    if ( 0 == ChrObjList.get_data( ichr ).shadow_size ) continue;
 
                     render_bad_shadow( ichr );
                 }
@@ -2516,7 +2516,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                 for ( cnt = 0; cnt < dolist_count; cnt++ )
                 {
                     CHR_REF ichr = dolist[cnt].ichr;
-                    if ( 0 == ChrList.lst[ichr].shadow_size ) continue;
+                    if ( 0 == ChrObjList.get_data( ichr ).shadow_size ) continue;
 
                     render_shadow( ichr );
                 }
@@ -2595,7 +2595,7 @@ void render_scene_trans()
         if ( MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
         {
             CHR_REF  ichr = dolist[rcnt].ichr;
-            ego_chr * pchr = ChrList.get_valid_ptr(ichr);
+            ego_chr * pchr = ChrObjList.get_valid_pdata( ichr );
             ego_chr_instance * pinst = &( pchr->inst );
 
             GL_DEBUG( glEnable )( GL_CULL_FACE );         // GL_ENABLE_BIT
@@ -3350,7 +3350,7 @@ ego_billboard_data * ego_billboard_data::init( ego_billboard_data * pbb )
     memset( pbb, 0, sizeof( *pbb ) );
 
     pbb->tex_ref = INVALID_TX_TEXTURE;
-    pbb->ichr    = CHR_REF(MAX_CHR);
+    pbb->ichr    = CHR_REF( MAX_CHR );
 
     pbb->tint[RR] = pbb->tint[GG] = pbb->tint[BB] = pbb->tint[AA] = 1.0f;
     pbb->tint_add[AA] -= 1.0f / 100.0f;
@@ -3386,7 +3386,7 @@ bool_t ego_billboard_data::update( ego_billboard_data * pbb )
     if ( NULL == pbb || !pbb->valid ) return bfalse;
 
     if ( !INGAME_CHR( pbb->ichr ) ) return bfalse;
-    pchr = ChrList.get_valid_ptr(pbb->ichr);
+    pchr = ChrObjList.get_valid_pdata( pbb->ichr );
 
     // determine where the new position should be
     ego_chr::get_MatUp( pchr, &vup );
@@ -3520,7 +3520,7 @@ void BillboardList_update_all()
             is_invalid = btrue;
         }
 
-        if ( !INGAME_CHR( pbb->ichr ) || IS_ATTACHED_PCHR( ChrList.get_valid_ptr(pbb->ichr )) )
+        if ( !INGAME_CHR( pbb->ichr ) || IS_ATTACHED_PCHR( ChrObjList.get_valid_pdata( pbb->ichr ) ) )
         {
             is_invalid = btrue;
         }
@@ -3532,7 +3532,7 @@ void BillboardList_update_all()
             // unlink it from the character
             if ( INGAME_CHR( pbb->ichr ) )
             {
-                ChrList.lst[pbb->ichr].ibillboard = INVALID_BILLBOARD;
+                ChrObjList.get_data( pbb->ichr ).ibillboard = INVALID_BILLBOARD;
             }
 
             // deallocate the billboard
@@ -3658,7 +3658,7 @@ bool_t render_billboard( ego_camera * pcam, ego_billboard_data * pbb, float scal
     if ( NULL == pbb || !pbb->valid ) return bfalse;
 
     // do not display for objects that are mounted or being held
-    if ( INGAME_CHR( pbb->ichr ) && IS_ATTACHED_PCHR( ChrList.get_valid_ptr(pbb->ichr )) ) return bfalse;
+    if ( INGAME_CHR( pbb->ichr ) && IS_ATTACHED_PCHR( ChrObjList.get_valid_pdata( pbb->ichr ) ) ) return bfalse;
 
     ptex = TxTexture_get_ptr( pbb->tex_ref );
 
@@ -4067,7 +4067,7 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr )
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
 
     if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr  = ChrList.get_valid_ptr(ichr);
+    pchr  = ChrObjList.get_valid_pdata( ichr );
     pinst = &( pchr->inst );
 
     if ( pinst->indolist ) return btrue;
@@ -4117,14 +4117,14 @@ bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt )
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtList.get_valid_ptr(iprt);
+    pprt = PrtObjList.get_valid_pdata( iprt );
     pinst = &( pprt->inst );
 
     if ( pinst->indolist ) return btrue;
 
     if ( 0 == pinst->size || pprt->is_hidden || !mesh_grid_is_valid( pmesh, pprt->onwhichgrid ) ) return bfalse;
 
-    dolist[dolist_count].ichr = CHR_REF(MAX_CHR);
+    dolist[dolist_count].ichr = CHR_REF( MAX_CHR );
     dolist[dolist_count].iprt = iprt;
     dolist_count++;
 
@@ -4146,11 +4146,11 @@ void dolist_make( ego_mpd   * pmesh )
     {
         if ( MAX_PRT == dolist[cnt].iprt && MAX_CHR != dolist[cnt].ichr )
         {
-            ChrList.lst[ dolist[cnt].ichr ].inst.indolist = bfalse;
+            ChrObjList.get_data( dolist[cnt].ichr ).inst.indolist = bfalse;
         }
         else if ( MAX_CHR == dolist[cnt].ichr && MAX_PRT != dolist[cnt].iprt )
         {
-            PrtList.lst[ dolist[cnt].iprt ].inst.indolist = bfalse;
+            PrtObjList.get_data( dolist[cnt].iprt ).inst.indolist = bfalse;
         }
     }
     dolist_count = 0;
@@ -4161,7 +4161,7 @@ void dolist_make( ego_mpd   * pmesh )
         ego_chr * pchr;
 
         if ( !INGAME_CHR( ichr ) ) continue;
-        pchr = ChrList.get_valid_ptr(ichr);
+        pchr = ChrObjList.get_valid_pdata( ichr );
 
         if ( !pchr->pack.is_packed )
         {
@@ -4210,11 +4210,11 @@ void dolist_sort( ego_camera * pcam, bool_t do_reflect )
 
             if ( do_reflect )
             {
-                pos_tmp = mat_getTranslate( ChrList.lst[ichr].inst.ref.matrix );
+                pos_tmp = mat_getTranslate( ChrObjList.get_data( ichr ).inst.ref.matrix );
             }
             else
             {
-                pos_tmp = mat_getTranslate( ChrList.lst[ichr].inst.matrix );
+                pos_tmp = mat_getTranslate( ChrObjList.get_data( ichr ).inst.matrix );
             }
 
             vtmp = fvec3_sub( pos_tmp.v, pcam->pos.v );
@@ -4225,11 +4225,11 @@ void dolist_sort( ego_camera * pcam, bool_t do_reflect )
 
             if ( do_reflect )
             {
-                vtmp = fvec3_sub( PrtList.lst[iprt].inst.pos.v, pcam->pos.v );
+                vtmp = fvec3_sub( PrtObjList.get_data( iprt ).inst.pos.v, pcam->pos.v );
             }
             else
             {
-                vtmp = fvec3_sub( PrtList.lst[iprt].inst.ref_pos.v, pcam->pos.v );
+                vtmp = fvec3_sub( PrtObjList.get_data( iprt ).inst.ref_pos.v, pcam->pos.v );
             }
         }
         else
@@ -4917,13 +4917,13 @@ void do_chr_flashing()
         if ( !INGAME_CHR( ichr ) ) continue;
 
         // Do flashing
-        if ( HAS_NO_BITS( true_frame, ChrList.lst[ichr].flashand ) && ChrList.lst[ichr].flashand != DONTFLASH )
+        if ( HAS_NO_BITS( true_frame, ChrObjList.get_data( ichr ).flashand ) && ChrObjList.get_data( ichr ).flashand != DONTFLASH )
         {
             flash_character( ichr, 255 );
         }
 
         // Do blacking
-        if ( HAS_NO_BITS( true_frame, SEEKURSEAND ) && local_stats.seekurse_level && ChrList.lst[ichr].iskursed )
+        if ( HAS_NO_BITS( true_frame, SEEKURSEAND ) && local_stats.seekurse_level && ChrObjList.get_data( ichr ).iskursed )
         {
             flash_character( ichr, 0 );
         }

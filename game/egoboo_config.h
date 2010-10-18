@@ -81,9 +81,9 @@
 
 #undef  DEBUG_OBJECT_SPAWN    ///< Log debug info for every object spawned
 
-#undef   DEBUG_PRT_LIST      ///< Track every single deletion from the PrtList to make sure the same element is not deleted twice. Prevents corruption of the PrtList.free_lst
-#undef   DEBUG_ENC_LIST      ///< Track every single deletion from the EncList to make sure the same element is not deleted twice. Prevents corruption of the EncList.free_lst
-#undef   DEBUG_CHR_LIST      ///< Track every single deletion from the ChrList to make sure the same element is not deleted twice. Prevents corruption of the ChrList.free_lst
+#undef   DEBUG_PRT_LIST      ///< Track every single deletion from the PrtObjList to make sure the same element is not deleted twice. Prevents corruption of the PrtObjList.free_lst
+#undef   DEBUG_ENC_LIST      ///< Track every single deletion from the EncObjList to make sure the same element is not deleted twice. Prevents corruption of the EncObjList.free_lst
+#undef   DEBUG_CHR_LIST      ///< Track every single deletion from the ChrObjList to make sure the same element is not deleted twice. Prevents corruption of the ChrObjList.free_lst
 
 #define CLIP_LIGHT_FANS      ///< is the light_fans() function going to be throttled?
 #define CLIP_ALL_LIGHT_FANS  ///< a switch for selecting how the fans will be updated

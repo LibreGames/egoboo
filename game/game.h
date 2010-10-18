@@ -91,9 +91,9 @@ struct ego_game_process_data
 
     static ego_game_process_data * ctor( ego_game_process_data * ptr )
     {
-        if( NULL == ptr ) return NULL;
+        if ( NULL == ptr ) return NULL;
 
-        memset(ptr,0,sizeof(*ptr) );
+        memset( ptr, 0, sizeof( *ptr ) );
 
         ptr->menu_depth = -1;
         ptr->pause_key_ready = btrue;
@@ -106,7 +106,7 @@ struct ego_game_process_data
 struct ego_game_process : public ego_game_process_data, public ego_process
 {
 
-    static ego_game_process * ctor(ego_game_process * ptr);
+    static ego_game_process * ctor( ego_game_process * ptr );
 
     // "process" management
     static int Run( ego_game_process * gproc, double frameDuration );

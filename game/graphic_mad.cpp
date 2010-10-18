@@ -77,7 +77,7 @@ bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint3
     oglx_texture_t   * ptex;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr  = ChrList.get_valid_ptr(character);
+    pchr  = ChrObjList.get_valid_pdata( character );
     pinst = &( pchr->inst );
 
     if ( !LOADED_MAD( pinst->imad ) ) return bfalse;
@@ -262,7 +262,7 @@ bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, Uint32 b
     oglx_texture_t   * ptex;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr  = ChrList.get_valid_ptr(character);
+    pchr  = ChrObjList.get_valid_pdata( character );
     pinst = &( pchr->inst );
 
     if ( !LOADED_MAD( pinst->imad ) ) return bfalse;
@@ -431,7 +431,7 @@ bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bi
     bool_t retval;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrList.get_valid_ptr(character);
+    pchr = ChrObjList.get_valid_pdata( character );
 
     if ( pchr->is_hidden ) return bfalse;
 
@@ -469,7 +469,7 @@ bool_t render_one_mad_ref( const CHR_REF & ichr )
     GLXvector4f tint;
 
     if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr = ChrList.get_valid_ptr(ichr);
+    pchr = ChrObjList.get_valid_pdata( ichr );
     pinst = &( pchr->inst );
 
     if ( pchr->is_hidden ) return bfalse;
@@ -543,7 +543,7 @@ void render_chr_bbox( ego_chr * pchr )
     //    ego_chr * pplayer_chr = pla_get_pchr(ipla);
     //    if( NULL == pplayer_chr ) continue;
 
-    //    if( pchr->obj_base.index == pplayer_chr->onwhichplatform_ref )
+    //    if( pchr->get_ego_obj().index == pplayer_chr->onwhichplatform_ref )
     //    {
     //        render_player_platforms = btrue;
     //        break;
@@ -781,7 +781,7 @@ void chr_draw_attached_grip( ego_chr * pchr )
     if ( !ACTIVE_PCHR( pchr ) ) return;
 
     if ( !DEFINED_CHR( pchr->attachedto ) ) return;
-    pholder = ChrList.get_valid_ptr(pchr->attachedto);
+    pholder = ChrObjList.get_valid_pdata( pchr->attachedto );
 
     pholder_cap = pro_get_pcap( pholder->profile_ref );
     if ( NULL == pholder_cap ) return;
@@ -894,7 +894,7 @@ void chr_instance_update_lighting_base( ego_chr_instance * pinst, ego_chr * pchr
 
     // reduce the amount of updates to an average of about 1 every 2 frames, but dither
     // the updating so that not all objects update on the same frame
-    pinst->lighting_frame_all = frame_all + (( frame_all + pchr->obj_base.guid ) & 0x03 );
+    pinst->lighting_frame_all = frame_all + (( frame_all + pchr->get_pparent()->guid ) & 0x03 );
 
     if ( !LOADED_MAD( pinst->imad ) ) return;
     pmad = MadStack.lst + pinst->imad;

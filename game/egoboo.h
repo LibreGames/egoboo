@@ -193,13 +193,13 @@ struct ego_main_process_data
 
     char * argv0;
 
-    ego_main_process_data() { ego_main_process_data::ctor(this); }
+    ego_main_process_data() { ego_main_process_data::ctor( this ); }
 
     static ego_main_process_data * ctor( ego_main_process_data * ptr )
     {
-        if( NULL == ptr ) return NULL;
+        if ( NULL == ptr ) return NULL;
 
-        memset(ptr,0,sizeof(*ptr) );
+        memset( ptr, 0, sizeof( *ptr ) );
 
         ptr->screenshot_keyready = btrue;
 
@@ -211,7 +211,7 @@ struct ego_main_process : public ego_main_process_data, public ego_process
 {
     static ego_main_process * init( ego_main_process * eproc, int argc, char **argv );
 
-    static ego_main_process * ctor(ego_main_process * ptr)
+    static ego_main_process * ctor( ego_main_process * ptr )
     {
         ego_process::ctor( ptr );
         ego_main_process_data::ctor( ptr );

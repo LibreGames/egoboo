@@ -106,59 +106,95 @@ struct ego_enc_data
 //--------------------------------------------------------------------------------------------
 
 /// The definition of a single Egoboo enchantment
-/// This "inherits" from ego_object
+/// This "inherits" from ego_obj
 struct ego_enc : public ego_enc_data
 {
-    ego_object obj_base;
+    friend struct ego_obj_enc;
 
+private:
+    const ego_obj_enc * _parent_obj_ptr;
+
+public:
     ego_enc_spawn_data  spawn_data;
 
-    ego_enc()  { ego_enc::ctor( this ); };
-    ~ego_enc() { ego_enc::dtor( this ); };
+    explicit ego_enc( ego_obj_enc * _parent ) : _parent_obj_ptr( _parent ) { ego_enc::ctor( this ); }
+    ~ego_enc() { ego_enc::dtor( this ); }
+
+    const ego_obj_enc * cget_pparent() const { return _parent_obj_ptr; }
+    ego_obj_enc       * get_pparent()  const { return ( ego_obj_enc * )_parent_obj_ptr; }
 
     static ego_enc * ctor( ego_enc * penc );
     static ego_enc * dtor( ego_enc * penc );
 
-    static ENC_REF value_filled( const ENC_REF by_reference enchant_idx, int value_idx );
-    static void    apply_set( const ENC_REF by_reference  enchant_idx, int value_idx, const PRO_REF by_reference profile );
-    static void    apply_add( const ENC_REF by_reference  enchant_idx, int value_idx, const EVE_REF by_reference enchanttype );
-    static void    remove_set( const ENC_REF by_reference  enchant_idx, int value_idx );
-    static void    remove_add( const ENC_REF by_reference  enchant_idx, int value_idx );
+    static ENC_REF value_filled( const ENC_REF & enchant_idx, int value_idx );
+    static void    apply_set( const ENC_REF &  enchant_idx, int value_idx, const PRO_REF & profile );
+    static void    apply_add( const ENC_REF &  enchant_idx, int value_idx, const EVE_REF & enchanttype );
+    static void    remove_set( const ENC_REF &  enchant_idx, int value_idx );
+    static void    remove_add( const ENC_REF &  enchant_idx, int value_idx );
 
-    static bool_t request_terminate( const ENC_REF by_reference  ienc );
+    static INLINE PRO_REF   get_ipro( const ENC_REF & ienc );
+    static INLINE ego_pro * get_ppro( const ENC_REF & ienc );
 
-    static ego_enc * run_object( ego_enc * penc );
+    static INLINE CHR_REF   get_iowner( const ENC_REF & ienc );
+    static INLINE ego_chr * get_powner( const ENC_REF & ienc );
 
-    static ego_enc * run_object_construct( ego_enc * penc, int max_iterations );
-    static ego_enc * run_object_initialize( ego_enc * penc, int max_iterations );
-    static ego_enc * run_object_activate( ego_enc * penc, int max_iterations );
-    static ego_enc * run_object_deinitialize( ego_enc * penc, int max_iterations );
-    static ego_enc * run_object_deconstruct( ego_enc * penc, int max_iterations );
+    static INLINE EVE_REF   get_ieve( const ENC_REF & ienc );
+    static INLINE ego_eve * get_peve( const ENC_REF & ienc );
 
-    static INLINE PRO_REF   get_ipro( const ENC_REF by_reference ienc );
-    static INLINE ego_pro * get_ppro( const ENC_REF by_reference ienc );
+    static INLINE IDSZ      get_idszremove( const ENC_REF & ienc );
+    static INLINE bool_t    is_removed( const ENC_REF & ienc, const PRO_REF & test_profile );
 
-    static INLINE CHR_REF   get_iowner( const ENC_REF by_reference ienc );
-    static INLINE ego_chr * get_powner( const ENC_REF by_reference ienc );
-
-    static INLINE EVE_REF   get_ieve( const ENC_REF by_reference ienc );
-    static INLINE ego_eve * get_peve( const ENC_REF by_reference ienc );
-
-    static INLINE IDSZ      get_idszremove( const ENC_REF by_reference ienc );
-    static INLINE bool_t    is_removed( const ENC_REF by_reference ienc, const PRO_REF by_reference test_profile );
-
-private:
-    static bool_t    dealloc( ego_enc * penc );
-
-    static ego_enc * do_object_constructing( ego_enc * penc );
-    static ego_enc * do_object_initializing( ego_enc * penc );
-    static ego_enc * do_object_deinitializing( ego_enc * penc );
-    static ego_enc * do_object_processing( ego_enc * penc );
-    static ego_enc * do_object_destructing( ego_enc * penc );
+protected:
+    static ego_enc * alloc( ego_enc * penc );
+    static ego_enc * dealloc( ego_enc * penc );
 
     static ego_enc * do_init( ego_enc * penc );
     static ego_enc * do_active( ego_enc * penc );
     static ego_enc * do_deinit( ego_enc * penc );
+};
+
+
+//--------------------------------------------------------------------------------------------
+struct ego_obj_enc : public ego_obj
+{
+    typedef ego_enc data_type;
+
+    ego_enc & get_enc();
+    ego_enc * get_penc();
+
+    ego_obj_enc() : _enc_data( this ) { ctor( this, bfalse ); }
+    ~ego_obj_enc() { dtor( this, bfalse ); }
+
+    // This container "has a" ego_enc, so we need some way of accessing it
+    // These have to have generic names to that t_ego_obj_lst<> can access the data
+    // for all container types
+    ego_enc & get_data()  { return _enc_data; }
+    ego_enc * get_pdata() { return &_enc_data; }
+
+    const ego_enc & cget_data()  const { return _enc_data; }
+    const ego_enc * cget_pdata() const { return &_enc_data; }
+
+    static ego_obj_enc * ctor( ego_obj_enc * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_enc::ctor( pobj->get_pdata() ); return pobj; };
+    static ego_obj_enc * dtor( ego_obj_enc * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_enc::dtor( pobj->get_pdata() ); return pobj; };
+
+    // global enc configuration functions
+    static ego_obj_enc * run( ego_obj_enc * penc );
+    static ego_obj_enc * run_construct( ego_obj_enc * pprt, int max_iterations );
+    static ego_obj_enc * run_initialize( ego_obj_enc * pprt, int max_iterations );
+    static ego_obj_enc * run_activate( ego_obj_enc * pprt, int max_iterations );
+    static ego_obj_enc * run_deinitialize( ego_obj_enc * pprt, int max_iterations );
+    static ego_obj_enc * run_deconstruct( ego_obj_enc * pprt, int max_iterations );
+
+    static bool_t    request_terminate( const ENC_REF & ienc );
+
+    static ego_obj_enc * do_constructing( ego_obj_enc * penc );
+    static ego_obj_enc * do_initializing( ego_obj_enc * penc );
+    static ego_obj_enc * do_deinitializing( ego_obj_enc * penc );
+    static ego_obj_enc * do_processing( ego_obj_enc * penc );
+    static ego_obj_enc * do_destructing( ego_obj_enc * penc );
+
+protected:
+    ego_enc _enc_data;
 
 };
 
@@ -171,18 +207,18 @@ void enchant_system_end();
 
 void   init_all_eve();
 void   release_all_eve();
-bool_t release_one_eve( const EVE_REF by_reference ieve );
+bool_t release_one_eve( const EVE_REF & ieve );
 
 void    update_all_enchants();
 void    cleanup_all_enchants();
 
 void    increment_all_enchant_update_counters( void );
-bool_t  remove_enchant( const ENC_REF by_reference  enchant_idx, ENC_REF *  enchant_parent );
+bool_t  remove_enchant( const ENC_REF &  enchant_idx, ENC_REF *  enchant_parent );
 bool_t  remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz );
 
-ENC_REF spawn_one_enchant( const CHR_REF by_reference owner, const CHR_REF by_reference target, const CHR_REF by_reference spawner, const ENC_REF by_reference ego_enc_override, const PRO_REF by_reference modeloptional );
-EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF by_reference profile );
-ENC_REF cleanup_enchant_list( const ENC_REF by_reference ienc, ENC_REF * ego_enc_parent );
+ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const CHR_REF & spawner, const ENC_REF & ego_enc_override, const PRO_REF & modeloptional );
+EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF & profile );
+ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent );
 
 #define  remove_all_character_enchants( ICHR ) remove_all_enchants_with_idsz( ICHR, IDSZ_NONE )
 

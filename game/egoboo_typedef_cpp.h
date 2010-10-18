@@ -30,28 +30,28 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct list_object_state
+struct cpp_list_state
 {
     size_t index;        ///< what is the index position in the object list?
     bool_t allocated;    ///< The object has been allocated
     bool_t in_free_list; ///< the object is currently in the free list
     bool_t in_used_list; ///< the object is currently in the used list
 
-    list_object_state( size_t index = ( size_t )( ~0L ) ) 
-    { 
-        list_object_state::ctor( this, index ); 
+    cpp_list_state( size_t index = ( size_t )( ~0L ) )
+    {
+        cpp_list_state::ctor( this, index );
     }
-    ~list_object_state() 
-    { 
-        list_object_state::dtor( this ); 
+    ~cpp_list_state()
+    {
+        cpp_list_state::dtor( this );
     }
 
-    static list_object_state * ctor( list_object_state *, size_t index = ( size_t )( ~0L ) );
-    static list_object_state * dtor( list_object_state * );
-    static list_object_state * clear( list_object_state *, size_t index = ( size_t )( ~0L ) );
-    static list_object_state * set_allocated( list_object_state *, bool_t val );
-    static list_object_state * set_used( list_object_state *, bool_t val );
-    static list_object_state * set_free( list_object_state *, bool_t val );
+    static cpp_list_state * ctor( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
+    static cpp_list_state * dtor( cpp_list_state * );
+    static cpp_list_state * clear( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
+    static cpp_list_state * set_allocated( cpp_list_state *, bool_t val );
+    static cpp_list_state * set_used( cpp_list_state *, bool_t val );
+    static cpp_list_state * set_free( cpp_list_state *, bool_t val );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -142,8 +142,25 @@ public:
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// a simple list template that tracks free elements
 
+/// an "interface" that should be inherited by every object that is
+/// stored in t_cpp_list
+struct cpp_list_client
+{
+    cpp_list_state * get_plist() { return &_cpp_list_state_data; }
+    cpp_list_state & get_list()  { return _cpp_list_state_data;  }
+
+    const bool_t get_allocated() const { return _cpp_list_state_data.allocated; }
+    const size_t get_index()     const { return _cpp_list_state_data.index;     }
+
+    const bool_t in_free_list() const { return _cpp_list_state_data.in_free_list; }
+    const bool_t in_used_list() const { return _cpp_list_state_data.in_used_list; }
+
+protected:
+    cpp_list_state _cpp_list_state_data;
+};
+
+// a simple list template that tracks free elements
 template < typename _ty, size_t _sz >
 struct t_cpp_list
 {
@@ -164,14 +181,14 @@ struct t_cpp_list
 
     bool_t validate_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
 
-    bool_t    add_free( const t_reference<_ty> & ref );
-    bool_t    add_used( const t_reference<_ty> & ref );
+    egoboo_rv add_free( const t_reference<_ty> & ref );
+    egoboo_rv add_used( const t_reference<_ty> & ref );
 
     bool_t    remove_free( const t_reference<_ty> & ref );
     bool_t    remove_used( const t_reference<_ty> & ref );
 
     egoboo_rv free_one( const t_reference<_ty> & ichr );
-    egoboo_rv get_free( size_t index = (~0) );
+    egoboo_rv get_free( size_t index = ( ~0 ) );
 
 protected:
     int get_used_list_index( const t_reference<_ty> & ref );

@@ -49,12 +49,15 @@ struct ego_pro;
 struct ego_billboard_data;
 struct ego_ai_state;
 
+struct ego_chr;
+struct ego_obj_chr;
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // no bounds checking
-#define IS_FLYING_CHR_RAW(ICHR)   ( (ChrList.lst[ICHR].is_flying_jump || ChrList.lst[ICHR].is_flying_platform) )
-#define IS_PACKED_CHR_RAW(ICHR)   ( ChrList.lst[ICHR].pack.is_packed )
-#define IS_ATTACHED_CHR_RAW(ICHR) ( (DEFINED_CHR(ChrList.lst[ICHR].attachedto) || ChrList.lst[ICHR].pack.is_packed) )
+#define IS_FLYING_CHR_RAW(ICHR)   ( (ChrObjList.get_data(ICHR).is_flying_jump || ChrObjList.get_data(ICHR).is_flying_platform) )
+#define IS_PACKED_CHR_RAW(ICHR)   ( ChrObjList.get_data(ICHR).pack.is_packed )
+#define IS_ATTACHED_CHR_RAW(ICHR) ( (DEFINED_CHR(ChrObjList.get_data(ICHR).attachedto) || ChrObjList.get_data(ICHR).pack.is_packed) )
 
 #define IS_INVICTUS_PCHR_RAW(PCHR) ( ( VALID_PLA( (PCHR)->is_which_player ) ? PlaStack.lst[(PCHR)->is_which_player].wizard_mode : bfalse ) || (PCHR)->invictus )
 #define IS_FLYING_PCHR_RAW(PCHR)   ( ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
@@ -162,7 +165,7 @@ struct ego_pack
 bool_t pack_add_item( ego_pack * ppack, CHR_REF item );
 bool_t pack_remove_item( ego_pack * ppack, CHR_REF iparent, CHR_REF iitem );
 
-#define PACK_BEGIN_LOOP(IT,INIT) IT = INIT; while( MAX_CHR != IT ) { CHR_REF IT##_internal = ChrList.lst[IT].pack.next;
+#define PACK_BEGIN_LOOP(IT,INIT) IT = INIT; while( MAX_CHR != IT ) { CHR_REF IT##_internal = ChrObjList.get_data(IT).pack.next;
 #define PACK_END_LOOP(IT) IT = IT##_internal; }
 
 //--------------------------------------------------------------------------------------------
@@ -181,8 +184,8 @@ struct ego_chr_spawn_data
 
 //--------------------------------------------------------------------------------------------
 
-/// The definition of the character object
-/// This "inherits" for ego_object
+/// The definition of the character data
+/// This has been separated from ego_chr so that it can be initialized easily without upsetting anuthing else
 struct ego_chr_data
 {
     // character state
@@ -330,7 +333,7 @@ struct ego_chr_data
     int           darkvision_level;
     int           see_kurse_level;
     int           see_invisible_level;
-    IDSZ_node_t      skills[MAX_IDSZ_MAP_SIZE];
+    IDSZ_node_t   skills[MAX_IDSZ_MAP_SIZE];
 
     /// collision info
 
@@ -344,10 +347,10 @@ struct ego_chr_data
     ego_bumper     bump;
     ego_bumper     bump_save;
 
-    ego_bumper     bump_1;       ///< the loosest collision volume that mimics the current bump
-    ego_oct_bb       chr_cv;       ///< the collision volume determined by the model's points.
-    ego_oct_bb       chr_min_cv;   ///< the smallest collision volume.
-    ego_oct_bb       chr_max_cv;   ///< the largest collision volume. For character, particle, and platform collisions.
+    ego_bumper   bump_1;       ///< the loosest collision volume that mimics the current bump
+    ego_oct_bb   chr_cv;       ///< the collision volume determined by the model's points.
+    ego_oct_bb   chr_min_cv;   ///< the smallest collision volume.
+    ego_oct_bb   chr_max_cv;   ///< the largest collision volume. For character, particle, and platform collisions.
 
     Uint8        stoppedby;                     ///< Collision mask
 
@@ -403,33 +406,38 @@ struct ego_chr_data
     static ego_chr_data * ctor( ego_chr_data * );
     static ego_chr_data * dtor( ego_chr_data * );
 
-    static bool_t         dealloc( ego_chr_data * pchr );
+    static ego_chr_data * dealloc( ego_chr_data * pchr );
 };
 
+//--------------------------------------------------------------------------------------------
+/// The definition of the character
+/// This encapsulates all the character functions and some extra data
 struct ego_chr : public ego_chr_data
 {
-    ego_object        obj_base;
+    friend struct ego_obj_chr;
+
+private:
+
+    /// a hook to ego_obj_chr, which is the parent container of this object
+    const ego_obj_chr * _parent_obj_ptr;
+
+public:
+
+    // some extra data
     ego_chr_spawn_data  spawn_data;
+    ego_BSP_leaf        bsp_leaf;
 
-    ego_BSP_leaf      bsp_leaf;
-
-    ego_chr();
+    // constructors and destructors
+    explicit ego_chr( ego_obj_chr * _parent );
     ~ego_chr();
 
+    // The public means of accessing the parent ego_obj_chr object
+    const ego_obj_chr * cget_pparent() const { return _parent_obj_ptr; }
+    ego_obj_chr       * get_pparent()  const { return ( ego_obj_chr * )_parent_obj_ptr; }
+
+    // memory management
     static ego_chr * ctor( ego_chr * );
     static ego_chr * dtor( ego_chr * );
-
-    static bool_t dealloc( ego_chr * pchr );
-
-    // global chr configuration functions
-    static ego_chr * run_object( ego_chr * pchr );
-    static ego_chr * run_object_construct( ego_chr * pprt, int max_iterations );
-    static ego_chr * run_object_initialize( ego_chr * pprt, int max_iterations );
-    static ego_chr * run_object_activate( ego_chr * pprt, int max_iterations );
-    static ego_chr * run_object_deinitialize( ego_chr * pprt, int max_iterations );
-    static ego_chr * run_object_deconstruct( ego_chr * pprt, int max_iterations );
-
-    static bool_t    request_terminate( const CHR_REF by_reference ichr );
 
     // matrix related functions
     static egoboo_rv  update_matrix( ego_chr * pchr, bool_t update_size );
@@ -525,16 +533,67 @@ struct ego_chr : public ego_chr_data
     static INLINE bool_t get_MatForward( ego_chr *pchr, fvec3_t   * pvec );
     static INLINE bool_t get_MatTranslate( ego_chr *pchr, fvec3_t   * pvec );
 
-    static ego_chr * do_object_constructing( ego_chr * pchr );
-    static ego_chr * do_object_initializing( ego_chr * pchr );
-    static ego_chr * do_object_deinitializing( ego_chr * pchr );
-    static ego_chr * do_object_processing( ego_chr * pchr );
-    static ego_chr * do_object_destructing( ego_chr * pchr );
+protected:
+    static ego_chr * alloc( ego_chr * pchr );
+    static ego_chr * dealloc( ego_chr * pchr );
+
+    static ego_chr * do_init( ego_chr * pchr );
+    static ego_chr * do_process( ego_chr * pchr );
+    static ego_chr * do_deinit( ego_chr * pchr );
+};
+
+//--------------------------------------------------------------------------------------------
+/// A refinement of the ego_obj and the actual container that will be stored in the t_cpp_list<>
+/// This adds functions for implementing the state machine on this object (the run* and do* functions)
+/// and encapsulates the character data
+
+struct ego_obj_chr : public ego_obj
+{
+    // a type definition so that parent struct t_ego_obj_lst<> can define a function
+    // to get at the actual character data. For instance ChrObjList.get_pdata() to return
+    // a pointer to the character data
+    typedef ego_chr data_type;
+
+    // constructors and destructors
+    ego_obj_chr() : _chr_data( this ) { ctor( this, bfalse ); }
+    ~ego_obj_chr() { dtor( this, bfalse ); }
+
+    // This container "has a" ego_chr, so we need some way of accessing it
+    // These have to have generic names to that t_ego_obj_lst<> can access the data
+    // for all container types
+    ego_chr & get_data()  { return _chr_data; }
+    ego_chr * get_pdata() { return &_chr_data; }
+
+    const ego_chr & cget_data()  const { return _chr_data; }
+    const ego_chr * cget_pdata() const { return &_chr_data; }
+
+    // memory management
+    static ego_obj_chr * ctor( ego_obj_chr * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_chr::ctor( pobj->get_pdata() ); return pobj; };
+    static ego_obj_chr * dtor( ego_obj_chr * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_chr::ctor( pobj->get_pdata() ); return pobj; };
+
+    // global configuration functions
+    static ego_obj_chr * run( ego_obj_chr * pchr );
+    static ego_obj_chr * run_construct( ego_obj_chr * pprt, int max_iterations );
+    static ego_obj_chr * run_initialize( ego_obj_chr * pprt, int max_iterations );
+    static ego_obj_chr * run_activate( ego_obj_chr * pprt, int max_iterations );
+    static ego_obj_chr * run_deinitialize( ego_obj_chr * pprt, int max_iterations );
+    static ego_obj_chr * run_deconstruct( ego_obj_chr * pprt, int max_iterations );
+
+    static bool_t        request_terminate( const CHR_REF & ichr );
+
+protected:
+
+    static ego_obj_chr * dealloc( ego_obj_chr * pobj );
+
+    // private implementations of the configuration functions
+    static ego_obj_chr * do_constructing( ego_obj_chr * pchr );
+    static ego_obj_chr * do_initializing( ego_obj_chr * pchr );
+    static ego_obj_chr * do_deinitializing( ego_obj_chr * pchr );
+    static ego_obj_chr * do_processing( ego_obj_chr * pchr );
+    static ego_obj_chr * do_destructing( ego_obj_chr * pchr );
 
 private:
-    static ego_chr * ego_chr::do_init( ego_chr * pchr );
-    static ego_chr * ego_chr::do_deinit( ego_chr * pchr );
-    static ego_chr * ego_chr::do_processing( ego_chr * pchr );
+    ego_chr _chr_data;
 };
 
 //--------------------------------------------------------------------------------------------

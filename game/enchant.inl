@@ -34,10 +34,10 @@ CHR_REF ego_enc::get_iowner( const ENC_REF by_reference ienc )
 {
     ego_enc * penc;
 
-    if ( !DEFINED_ENC( ienc ) ) return CHR_REF(MAX_CHR);
-    penc = EncList.get_valid_ptr(ienc);
+    if ( !DEFINED_ENC( ienc ) ) return CHR_REF( MAX_CHR );
+    penc = EncObjList.get_valid_pdata( ienc );
 
-    if ( !INGAME_CHR( penc->owner_ref ) ) return CHR_REF(MAX_CHR);
+    if ( !INGAME_CHR( penc->owner_ref ) ) return CHR_REF( MAX_CHR );
 
     return penc->owner_ref;
 }
@@ -48,11 +48,11 @@ ego_chr * ego_enc::get_powner( const ENC_REF by_reference ienc )
     ego_enc * penc;
 
     if ( !DEFINED_ENC( ienc ) ) return NULL;
-    penc = EncList.get_valid_ptr(ienc);
+    penc = EncObjList.get_valid_pdata( ienc );
 
     if ( !INGAME_CHR( penc->owner_ref ) ) return NULL;
 
-    return ChrList.get_valid_ptr(penc->owner_ref);
+    return ChrObjList.get_valid_pdata( penc->owner_ref );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ EVE_REF ego_enc::get_ieve( const ENC_REF by_reference ienc )
     ego_enc * penc;
 
     if ( !DEFINED_ENC( ienc ) ) return ( EVE_REF )MAX_EVE;
-    penc = EncList.get_valid_ptr(ienc);
+    penc = EncObjList.get_valid_pdata( ienc );
 
     if ( !LOADED_EVE( penc->eve_ref ) ) return ( EVE_REF )MAX_EVE;
 
@@ -74,7 +74,7 @@ ego_eve * ego_enc::get_peve( const ENC_REF by_reference ienc )
     ego_enc * penc;
 
     if ( !DEFINED_ENC( ienc ) ) return NULL;
-    penc = EncList.get_valid_ptr(ienc);
+    penc = EncObjList.get_valid_pdata( ienc );
 
     if ( !LOADED_EVE( penc->eve_ref ) ) return NULL;
 
@@ -87,7 +87,7 @@ PRO_REF  ego_enc::get_ipro( const ENC_REF by_reference ienc )
     ego_enc * penc;
 
     if ( !DEFINED_ENC( ienc ) ) return ( PRO_REF )MAX_PROFILE;
-    penc = EncList.get_valid_ptr(ienc);
+    penc = EncObjList.get_valid_pdata( ienc );
 
     if ( !LOADED_PRO( penc->profile_ref ) ) return ( PRO_REF )MAX_PROFILE;
 
@@ -100,7 +100,7 @@ ego_pro * ego_enc::get_ppro( const ENC_REF by_reference ienc )
     ego_enc * penc;
 
     if ( !DEFINED_ENC( ienc ) ) return NULL;
-    penc = EncList.get_valid_ptr(ienc);
+    penc = EncObjList.get_valid_pdata( ienc );
 
     if ( !LOADED_PRO( penc->profile_ref ) ) return NULL;
 

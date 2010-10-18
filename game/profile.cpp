@@ -1378,16 +1378,16 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
     ego_obj_BSP::chr_count = 0;
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ChrList.lst[ichr].bsp_leaf.next     = NULL;
-        ChrList.lst[ichr].bsp_leaf.inserted = bfalse;
+        ChrObjList.get_data( ichr ).bsp_leaf.next     = NULL;
+        ChrObjList.get_data( ichr ).bsp_leaf.inserted = bfalse;
     }
 
     // unlink all used particle nodes
     ego_obj_BSP::prt_count = 0;
     for ( iprt = 0; iprt < MAX_PRT; iprt++ )
     {
-        PrtList.lst[iprt].bsp_leaf.next     = NULL;
-        PrtList.lst[iprt].bsp_leaf.inserted = bfalse;
+        PrtObjList.get_data( iprt ).bsp_leaf.next     = NULL;
+        PrtObjList.get_data( iprt ).bsp_leaf.inserted = bfalse;
     }
 
     return btrue;
@@ -1404,9 +1404,9 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
     {
         // reset a couple of things here
         pchr->holdingweight             = 0;
-        pchr->targetplatform_ref     = CHR_REF(MAX_CHR);
+        pchr->targetplatform_ref     = CHR_REF( MAX_CHR );
         pchr->targetplatform_overlap = 0.0f;
-        pchr->targetmount_ref        = CHR_REF(MAX_CHR);
+        pchr->targetmount_ref        = CHR_REF( MAX_CHR );
         pchr->targetmount_overlap    = 0.0f;
 
         // try to insert the character
@@ -1422,7 +1422,7 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
     PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
         // reset a couple of things here
-        prt_bdl.prt_ptr->targetplatform_ref     = CHR_REF(MAX_CHR);
+        prt_bdl.prt_ptr->targetplatform_ref     = CHR_REF( MAX_CHR );
         prt_bdl.prt_ptr->targetplatform_overlap = 0.0f;
 
         // try to insert the particle

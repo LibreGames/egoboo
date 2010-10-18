@@ -888,7 +888,7 @@ void   LoopedList_init()
 
         LoopedList.lst[cnt].channel = INVALID_SOUND_CHANNEL;
         LoopedList.lst[cnt].chunk   = NULL;
-        LoopedList.lst[cnt].object  = CHR_REF(MAX_CHR);
+        LoopedList.lst[cnt].object  = CHR_REF( MAX_CHR );
 
         tnc = REF_TO_INT( cnt );
         LoopedList.used_ref[tnc] = LOOPED_COUNT;
@@ -951,7 +951,7 @@ bool_t LoopedList_free_one( size_t index )
     ref = ( LOOP_REF )index;
     LoopedList.lst[ref].channel = INVALID_SOUND_CHANNEL;
     LoopedList.lst[ref].chunk   = NULL;
-    LoopedList.lst[ref].object  = CHR_REF(MAX_CHR);
+    LoopedList.lst[ref].object  = CHR_REF( MAX_CHR );
 
     return btrue;
 }
@@ -993,7 +993,7 @@ void LoopedList_clear()
             // clear out the data
             LoopedList.lst[cnt].channel = INVALID_SOUND_CHANNEL;
             LoopedList.lst[cnt].chunk   = NULL;
-            LoopedList.lst[cnt].object  = CHR_REF(MAX_CHR);
+            LoopedList.lst[cnt].object  = CHR_REF( MAX_CHR );
         }
     }
 
@@ -1101,7 +1101,7 @@ void looped_update_all_sound()
         else
         {
             // make the sound stick to the object
-            diff = fvec3_sub( ChrList.lst[plooped->object].pos.v, PCamera->track_pos.v );
+            diff = fvec3_sub( ChrObjList.get_data( plooped->object ).pos.v, PCamera->track_pos.v );
 
             _update_stereo_channel( plooped->channel, diff );
         }

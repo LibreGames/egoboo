@@ -146,7 +146,7 @@ CHR_REF PassageStack_who_is_blocking( const PASS_REF & passage, const CHR_REF & 
     /// @details ZZ@> This function makes a passage passable
 
     // Skip invalid passages
-    if ( INVALID_PASSAGE( passage ) ) return CHR_REF(MAX_CHR);
+    if ( INVALID_PASSAGE( passage ) ) return CHR_REF( MAX_CHR );
 
     return ego_passage::who_is_blocking( PassageStack.lst + passage, isrc, idsz, targeting_bits, require_item );
 }
@@ -231,7 +231,7 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
 
     if ( !VALID_PASSAGE( passage ) ) return;
 
-    if ( !INGAME_CHR( owner ) || !ChrList.lst[owner].alive ) return;
+    if ( !INGAME_CHR( owner ) || !ChrObjList.get_data( owner ).alive ) return;
 
     ishop = ShopStack_get_free();
     if ( !VALID_SHOP( ishop ) ) return;
@@ -246,7 +246,7 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
         ego_chr * pchr;
 
         if ( !INGAME_CHR( ichr ) ) continue;
-        pchr = ChrList.get_valid_ptr(ichr);
+        pchr = ChrObjList.get_valid_pdata( ichr );
 
         if ( pchr->isitem )
         {
@@ -432,20 +432,20 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
     CHR_REF character, foundother;
     ego_chr *psrc;
 
-    if ( NULL == ppass ) return CHR_REF(MAX_CHR);
+    if ( NULL == ppass ) return CHR_REF( MAX_CHR );
 
     // Skip if the one who is looking doesn't exist
-    if ( !INGAME_CHR( isrc ) ) return CHR_REF(MAX_CHR);
-    psrc = ChrList.get_valid_ptr(isrc);
+    if ( !INGAME_CHR( isrc ) ) return CHR_REF( MAX_CHR );
+    psrc = ChrObjList.get_valid_pdata( isrc );
 
     // Look at each character
-    foundother = CHR_REF(MAX_CHR);
+    foundother = CHR_REF( MAX_CHR );
     for ( character = 0; character < MAX_CHR; character++ )
     {
         ego_chr * pchr;
 
         if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrList.get_valid_ptr(character);
+        pchr = ChrObjList.get_valid_pdata( character );
 
         // don't do scenery objects unless we allow items
         if ( !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) && pchr->phys.weight == INFINITE_WEIGHT ) continue;
@@ -503,7 +503,7 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
 bool_t ego_passage::check_music( ego_passage * ppass )
 {
     bool_t retval = bfalse;
-    CHR_REF character = CHR_REF(MAX_CHR);
+    CHR_REF character = CHR_REF( MAX_CHR );
     PASS_REF passage;
 
     PLA_REF ipla;
@@ -525,7 +525,7 @@ bool_t ego_passage::check_music( ego_passage * ppass )
         character = ppla->index;
 
         if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrList.get_valid_ptr(character);
+        pchr = ChrObjList.get_valid_pdata( character );
 
         if ( !VALID_PLA( pchr->is_which_player ) || !pchr->alive || pchr->pack.is_packed ) continue;
 
@@ -567,7 +567,7 @@ bool_t ego_passage::close( ego_passage * ppass )
             ego_chr *pchr;
 
             if ( !INGAME_CHR( character ) ) continue;
-            pchr = ChrList.get_valid_ptr(character);
+            pchr = ChrObjList.get_valid_pdata( character );
 
             // Don't do held items
             if ( IS_ATTACHED_PCHR( pchr ) ) continue;

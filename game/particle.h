@@ -28,6 +28,11 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+struct ego_obj_prt;
+struct ego_prt;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 // Particles
 
 #define MAXPARTICLEIMAGE                256         ///< Number of particle images ( frames )
@@ -193,28 +198,27 @@ struct ego_prt_data
     static bool_t         dealloc( ego_prt_data * pdata );
 };
 
+//--------------------------------------------------------------------------------------------
 /// The definition of the particle object
 struct ego_prt : public ego_prt_data
 {
-    ego_object obj_base;              ///< the "inheritance" from ego_object
-    bool_t     obj_base_display;      ///< a variable that would be added to a custom ego_object
+    friend struct ego_obj_prt;
 
+private:
+    const ego_obj_prt * _parent_obj_ptr;
+
+public:
     ego_prt_spawn_data  spawn_data;
+    ego_BSP_leaf        bsp_leaf;
 
-    ego_BSP_leaf          bsp_leaf;
-
-    ego_prt() { ego_prt::ctor( this ); }
+    explicit ego_prt( ego_obj_prt * _parent ) : _parent_obj_ptr( _parent ) { ego_prt::ctor( this ); }
     ~ego_prt() { ego_prt::dtor( this ); }
+
+    const ego_obj_prt * cget_pparent() const { return _parent_obj_ptr; }
+    ego_obj_prt       * get_pparent()        { return ( ego_obj_prt * )_parent_obj_ptr; }
 
     static ego_prt * ctor( ego_prt * pprt );
     static ego_prt * dtor( ego_prt * pprt );
-
-    static ego_prt * run_object( ego_prt * pprt );
-    static ego_prt * run_object_construct( ego_prt * pprt, int max_iterations );
-    static ego_prt * run_object_initialize( ego_prt * pprt, int max_iterations );
-    static ego_prt * run_object_activate( ego_prt * pprt, int max_iterations );
-    static ego_prt * run_object_deinitialize( ego_prt * pprt, int max_iterations );
-    static ego_prt * run_object_deconstruct( ego_prt * pprt, int max_iterations );
 
     static bool_t    set_pos( ego_prt * pprt, fvec3_base_t pos );
     static float *   get_pos_v( ego_prt * pprt );
@@ -229,24 +233,61 @@ struct ego_prt : public ego_prt_data
     static INLINE float      get_scale( ego_prt * pprt );
 
 private:
-    static bool_t  dealloc( ego_prt * pprt );
-
-    static ego_prt * do_object_constructing( ego_prt * pprt );
-    static ego_prt * do_object_initializing( ego_prt * pprt );
-    static ego_prt * do_object_processing( ego_prt * pprt );
-    static ego_prt * do_object_deinitializing( ego_prt * pprt );
-    static ego_prt * do_object_destructing( ego_prt * pprt );
+    static ego_prt * alloc( ego_prt * pprt );
+    static ego_prt * dealloc( ego_prt * pprt );
 
     static ego_prt * do_init( ego_prt * pprt );
     static ego_prt * do_active( ego_prt * pprt );
     static ego_prt * do_deinit( ego_prt * pprt );
 };
 
+//--------------------------------------------------------------------------------------------
+// the container object for the particle list
+struct ego_obj_prt : public ego_obj
+{
+    typedef ego_prt data_type;
+
+    /// the flag for limbo particles
+    bool_t  obj_base_display;
+
+    ego_obj_prt() : _prt_data( this ) { ctor( this, bfalse ); };
+    ~ego_obj_prt() { dtor( this, bfalse ); };
+
+    ego_prt & get_data()  { return _prt_data; }
+    ego_prt * get_pdata() { return &_prt_data; }
+
+    const ego_prt & cget_data() const { return _prt_data; }
+    const ego_prt * cget_pdata()const { return &_prt_data; }
+
+    static ego_obj_prt * set_limbo( ego_obj_prt * pbase, bool_t val );
+
+    static ego_obj_prt * ctor( ego_obj_prt * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_prt::ctor( pobj->get_pdata() ); return pobj; };
+    static ego_obj_prt * dtor( ego_obj_prt * pobj, bool_t recursive = btrue ) { if ( NULL == pobj ) return NULL; if ( recursive ) ego_prt::dtor( pobj->get_pdata() ); return pobj; };
+
+    // global prt configuration functions
+    static ego_obj_prt * run( ego_obj_prt * pprt );
+    static ego_obj_prt * run_construct( ego_obj_prt * pprt, int max_iterations );
+    static ego_obj_prt * run_initialize( ego_obj_prt * pprt, int max_iterations );
+    static ego_obj_prt * run_activate( ego_obj_prt * pprt, int max_iterations );
+    static ego_obj_prt * run_deinitialize( ego_obj_prt * pprt, int max_iterations );
+    static ego_obj_prt * run_deconstruct( ego_obj_prt * pprt, int max_iterations );
+
+protected:
+    static bool_t    request_terminate( const PRT_REF & iprt );
+
+    static ego_obj_prt * do_constructing( ego_obj_prt * pprt );
+    static ego_obj_prt * do_initializing( ego_obj_prt * pprt );
+    static ego_obj_prt * do_deinitializing( ego_obj_prt * pprt );
+    static ego_obj_prt * do_processing( ego_obj_prt * pprt );
+    static ego_obj_prt * do_destructing( ego_obj_prt * pprt );
+
+private:
+    ego_prt _prt_data;
+};
+
 // counters for debugging wall collisions
 extern int prt_stoppedby_tests;
 extern int prt_pressure_tests;
-
-ego_prt * prt_object_set_limbo( ego_prt * pbase, bool_t val );
 
 //--------------------------------------------------------------------------------------------
 struct ego_prt_bundle
