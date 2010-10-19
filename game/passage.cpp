@@ -243,7 +243,7 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
     // flag every item in the shop as a shop item
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ego_chr * pchr = ChrObjList.get_valid_pdata( ichr );
+        ego_chr * pchr = ChrObjList.get_pdata( ichr );
         if ( NULL == pchr ) continue;
 
         if ( !INGAME_PCHR( pchr ) ) continue;
@@ -436,13 +436,13 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
 
     // Skip if the one who is looking doesn't exist
     if ( !INGAME_CHR( isrc ) ) return CHR_REF( MAX_CHR );
-    psrc = ChrObjList.get_valid_pdata( isrc );
+    psrc = ChrObjList.get_pdata( isrc );
 
     // Look at each character
     foundother = CHR_REF( MAX_CHR );
     for ( character = 0; character < MAX_CHR; character++ )
     {
-        ego_chr * pchr = ChrObjList.get_valid_pdata( character );
+        ego_chr * pchr = ChrObjList.get_pdata( character );
         if ( NULL == pchr ) continue;
 
         if ( !INGAME_PCHR( pchr ) ) continue;
@@ -525,7 +525,7 @@ bool_t ego_passage::check_music( ego_passage * ppass )
         character = ppla->index;
 
         if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrObjList.get_valid_pdata( character );
+        pchr = ChrObjList.get_pdata( character );
 
         if ( !VALID_PLA( pchr->is_which_player ) || !pchr->alive || pchr->pack.is_packed ) continue;
 
@@ -564,7 +564,7 @@ bool_t ego_passage::close( ego_passage * ppass )
         // Make sure it isn't blocked
         for ( character = 0; character < MAX_CHR; character++ )
         {
-            ego_chr * pchr = ChrObjList.get_valid_pdata( character );
+            ego_chr * pchr = ChrObjList.get_pdata( character );
             if ( NULL == pchr ) continue;
 
             if ( !INGAME_PCHR( pchr ) ) continue;

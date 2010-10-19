@@ -31,7 +31,7 @@ INLINE PIP_REF ego_prt::get_ipip( const PRT_REF by_reference iprt )
     ego_prt * pprt;
 
     if ( !DEFINED_PRT( iprt ) ) return ( PIP_REF )MAX_PIP;
-    pprt = PrtObjList.get_valid_pdata( iprt );
+    pprt = PrtObjList.get_pdata( iprt );
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return ( PIP_REF )MAX_PIP;
 
@@ -44,7 +44,7 @@ INLINE ego_pip * ego_prt::get_ppip( const PRT_REF by_reference iprt )
     ego_prt * pprt;
 
     if ( !DEFINED_PRT( iprt ) ) return NULL;
-    pprt = PrtObjList.get_valid_pdata( iprt );
+    pprt = PrtObjList.get_pdata( iprt );
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return NULL;
 
@@ -135,7 +135,7 @@ INLINE CHR_REF ego_prt::get_iowner( const PRT_REF by_reference iprt, int depth )
     if ( depth > ( signed )maxparticles - ( signed )PrtObjList.free_count ) return CHR_REF( MAX_CHR );
 
     if ( !DEFINED_PRT( iprt ) ) return CHR_REF( MAX_CHR );
-    pprt = PrtObjList.get_valid_pdata( iprt );
+    pprt = PrtObjList.get_pdata( iprt );
 
     if ( DEFINED_CHR( pprt->owner_ref ) )
     {

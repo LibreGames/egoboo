@@ -34,7 +34,7 @@ extern "C"
 #define MAX_MAD         MAX_PROFILE
 
 /// Model tags
-    enum
+    enum e_madfx_bits
     {
         MADFX_INVICTUS       = ( 1 <<  0 ),                    ///< I  Make the character invincible
         MADFX_ACTLEFT        = ( 1 <<  1 ),                    ///< AL Activate left item

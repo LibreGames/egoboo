@@ -81,12 +81,12 @@
     return returncode;
 
 #define SET_TARGET_0(ITARGET)         pself->target = ITARGET;
-#define SET_TARGET_1(ITARGET,PTARGET) if( NULL != PTARGET ) { PTARGET = (!INGAME_CHR(ITARGET) ? NULL : ChrObjList.get_valid_pdata(ITARGET) ); }
+#define SET_TARGET_1(ITARGET,PTARGET) if( NULL != PTARGET ) { PTARGET = (!INGAME_CHR(ITARGET) ? NULL : ChrObjList.get_pdata(ITARGET) ); }
 #define SET_TARGET(ITARGET,PTARGET)   SET_TARGET_0( ITARGET ); SET_TARGET_1(ITARGET,PTARGET)
 
 #define SCRIPT_REQUIRE_TARGET(PTARGET) \
     if( !INGAME_CHR(pself->target) ) return bfalse; \
-    PTARGET = ChrObjList.get_valid_pdata(pself->target);
+    PTARGET = ChrObjList.get_pdata(pself->target);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -556,7 +556,7 @@ Uint8 scr_FindPath( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     {
         float fx, fy;
 
-        ego_chr * pself_target = ChrObjList.get_valid_pdata( pself->target );
+        ego_chr * pself_target = ChrObjList.get_pdata( pself->target );
 
         if ( pstate->distance != MOVE_FOLLOW )
         {
@@ -1119,34 +1119,38 @@ Uint8 scr_DropWeapons( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ichr = pchr->holdingwhich[SLOT_LEFT];
     if ( INGAME_CHR( ichr ) )
     {
+        ego_chr * tmp_pchr = ChrObjList.get_pdata( ichr );
+
         detach_character_from_mount( ichr, btrue, btrue );
         if ( pchr->ismount )
         {
             fvec3_t tmp_pos;
 
-            ChrObjList.get_data( ichr ).vel.z    = DISMOUNTZVEL;
-            ChrObjList.get_data( ichr ).jump_time = JUMP_DELAY;
+            tmp_pchr->vel.z    = DISMOUNTZVEL;
+            tmp_pchr->jump_time = JUMP_DELAY;
 
-            tmp_pos = ego_chr::get_pos( ChrObjList.get_valid_pdata( ichr ) );
+            tmp_pos = ego_chr::get_pos( tmp_pchr );
             tmp_pos.z += DISMOUNTZVEL;
-            ego_chr::set_pos( ChrObjList.get_valid_pdata( ichr ), tmp_pos.v );
+            ego_chr::set_pos( tmp_pchr, tmp_pos.v );
         }
     }
 
     ichr = pchr->holdingwhich[SLOT_RIGHT];
     if ( INGAME_CHR( ichr ) )
     {
+        ego_chr * tmp_pchr = ChrObjList.get_pdata( ichr );
+
         detach_character_from_mount( ichr, btrue, btrue );
         if ( pchr->ismount )
         {
             fvec3_t tmp_pos;
 
-            ChrObjList.get_data( ichr ).vel.z    = DISMOUNTZVEL;
-            ChrObjList.get_data( ichr ).jump_time = JUMP_DELAY;
+            tmp_pchr->vel.z    = DISMOUNTZVEL;
+            tmp_pchr->jump_time = JUMP_DELAY;
 
-            tmp_pos = ego_chr::get_pos( ChrObjList.get_valid_pdata( ichr ) );
+            tmp_pos = ego_chr::get_pos( tmp_pchr );
             tmp_pos.z += DISMOUNTZVEL;
-            ego_chr::set_pos( ChrObjList.get_valid_pdata( ichr ), tmp_pos.v );
+            ego_chr::set_pos( tmp_pchr, tmp_pos.v );
         }
     }
 
@@ -1166,7 +1170,7 @@ Uint8 scr_TargetDoAction( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     returncode = bfalse;
     if ( INGAME_CHR( pself->target ) )
     {
-        ego_chr * pself_target = ChrObjList.get_valid_pdata( pself->target );
+        ego_chr * pself_target = ChrObjList.get_pdata( pself->target );
 
         if ( pself_target->alive )
         {
@@ -1852,7 +1856,7 @@ Uint8 scr_SpawnCharacter( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     }
     else
     {
-        ego_chr * pchild = ChrObjList.get_valid_pdata( ichr );
+        ego_chr * pchild = ChrObjList.get_pdata( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
@@ -2108,11 +2112,12 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
-    returncode = VALID_PRT( iprt );
+    ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
+    returncode = (NULL != pprt);
+
     if ( returncode )
     {
         fvec3_t tmp_pos;
-        ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
 
         // attach the particle
         place_particle_at_vertex( pprt, pself->index, pstate->distance );
@@ -4302,7 +4307,7 @@ Uint8 scr_ChildDoActionOverride( ego_script_state * pstate, ego_ai_bundle * pbdl
     {
         int action;
 
-        ego_chr * pchild = ChrObjList.get_valid_pdata( pself->child );
+        ego_chr * pchild = ChrObjList.get_pdata( pself->child );
 
         action = mad_get_action( pchild->inst.imad, pstate->argument );
 
@@ -4394,11 +4399,13 @@ Uint8 scr_SpawnAttachedSizedParticle( ego_script_state * pstate, ego_ai_bundle *
     }
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
-    returncode = bfalse;
 
-    if ( VALID_PRT( iprt ) )
+    ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
+    returncode = (NULL != pprt);
+
+    if ( returncode )
     {
-        returncode = ego_prt::set_size( PrtObjList.get_valid_pdata( iprt ), pstate->turn );
+        returncode = ego_prt::set_size( pprt, pstate->turn );
     }
 
     SCRIPT_FUNCTION_END();
@@ -5263,7 +5270,7 @@ Uint8 scr_SpawnCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     }
     else
     {
-        ego_chr * pchild = ChrObjList.get_valid_pdata( ichr );
+        ego_chr * pchild = ChrObjList.get_pdata( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
@@ -5319,7 +5326,7 @@ Uint8 scr_SpawnExactCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbd
     }
     else
     {
-        ego_chr * pchild = ChrObjList.get_valid_pdata( ichr );
+        ego_chr * pchild = ChrObjList.get_pdata( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
@@ -5547,7 +5554,7 @@ Uint8 scr_TargetDoActionSetFrame( ego_script_state * pstate, ego_ai_bundle * pbd
     if ( INGAME_CHR( pself->target ) )
     {
         int action;
-        ego_chr * pself_target = ChrObjList.get_valid_pdata( pself->target );
+        ego_chr * pself_target = ChrObjList.get_pdata( pself->target );
 
         action = mad_get_action( pself_target->inst.imad, pstate->argument );
 
@@ -6379,7 +6386,7 @@ Uint8 scr_TargetPayForArmor( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
     if ( !INGAME_CHR( pself->target ) ) return bfalse;
 
-    pself_target = ChrObjList.get_valid_pdata( pself->target );
+    pself_target = ChrObjList.get_pdata( pself->target );
 
     pcap = ego_chr::get_pcap( pself->target );         // The Target's model
     if ( NULL == pcap )  return bfalse;
@@ -6889,7 +6896,7 @@ Uint8 scr_Backstabbed( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     if ( HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
     {
         // Who is the dirty backstabber?
-        ego_chr * pattacker = ChrObjList.get_valid_pdata( pself->attacklast );
+        ego_chr * pattacker = ChrObjList.get_pdata( pself->attacklast );
         if ( !ACTIVE_PCHR( pattacker ) ) return bfalse;
 
         // Only if hit from behind
@@ -7175,7 +7182,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
     }
     else
     {
-        ego_chr * pchild = ChrObjList.get_valid_pdata( ichr );
+        ego_chr * pchild = ChrObjList.get_pdata( ichr );
 
         Uint8 grip = ( Uint8 )CLIP( pstate->distance, ATTACH_INVENTORY, ATTACH_RIGHT );
 

@@ -32,7 +32,7 @@ struct ego_prt;
 //--------------------------------------------------------------------------------------------
 #define PLATTOLERANCE       50                     ///< Platform tolerance...
 
-enum
+enum e_phys_collision_tolerance_bits
 {
     PHYS_CLOSE_TOLERANCE_NONE = 0,
     PHYS_CLOSE_TOLERANCE_OBJ1 = ( 1 << 0 ),

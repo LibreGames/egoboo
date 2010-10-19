@@ -232,7 +232,7 @@ bool_t link_push_module()
         // Is it alive?
         if ( !INGAME_CHR( ppla->index ) ) continue;
         ichr = ppla->index;
-        pchr = ChrObjList.get_valid_pdata( ichr );
+        pchr = ChrObjList.get_pdata( ichr );
 
         if ( pentry->hero_count < LINK_HEROES_MAX )
         {

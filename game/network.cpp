@@ -1820,7 +1820,7 @@ void unbuffer_one_player_latch_download( ego_player * ppla )
     if ( NULL == ppla ) return;
 
     if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrObjList.get_valid_pdata( ppla->index );
+    pchr = ChrObjList.get_pdata( ppla->index );
 
     pchr->latch.raw_valid = btrue;
     pchr->latch.raw.dir[kX] = ppla->net_latch.raw[kX];
@@ -1842,7 +1842,7 @@ void unbuffer_one_player_latch_do_respawn( ego_player * ppla )
     if ( NULL == ppla ) return;
 
     if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrObjList.get_valid_pdata( ppla->index );
+    pchr = ChrObjList.get_pdata( ppla->index );
 
     if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans.b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
     {
@@ -2285,7 +2285,7 @@ ego_chr  * pla_get_pchr( const PLA_REF & iplayer )
 
     if ( !INGAME_CHR( pplayer->index ) ) return NULL;
 
-    return ChrObjList.get_valid_pdata( pplayer->index );
+    return ChrObjList.get_pdata( pplayer->index );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2300,7 +2300,7 @@ latch_2d_t pla_convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src
     // is there a valid character?
     if ( !DEFINED_CHR( ppla->index ) ) return dst;
 
-    return ego_chr::convert_latch_2d( ChrObjList.get_valid_pdata( ppla->index ), src );
+    return ego_chr::convert_latch_2d( ChrObjList.get_pdata( ppla->index ), src );
 }
 
 //--------------------------------------------------------------------------------------------

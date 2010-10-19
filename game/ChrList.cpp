@@ -72,7 +72,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    for ( cnt = 0; cnt < MAX_CHR; cnt++ )
 //    {
 //        CHR_REF ichr = ( CHR_REF )(( MAX_CHR - 1 ) - cnt );
-//        ego_chr * pchr = ChrObjList.get_valid_pdata(ichr);
+//        ego_chr * pchr = ChrObjList.get_pdata(ichr);
 //
 //        // blank out all the data, including the obj_base data
 //        memset( pchr, 0, sizeof( *pchr ) );
@@ -92,7 +92,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //
 //    for ( ichr = 0; ichr < MAX_CHR; ichr++ )
 //    {
-//        ego_obj_chr::do_deconstruct( ChrObjList.get_valid_pdata(ichr), 100 );
+//        ego_obj_chr::do_deconstruct( ChrObjList.get_pdata(ichr), 100 );
 //    }
 //
 //    ChrObjList.free_count = 0;
@@ -212,7 +212,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    ego_obj * pbase;
 //
 //    if ( !ALLOCATED_CHR( ichr ) ) return rv_fail;
-//    pchr = ChrObjList.get_valid_pdata(ichr);
+//    pchr = ChrObjList.get_pdata(ichr);
 //
 //    pbase = POBJ_GET_PBASE( pchr );
 //    if ( NULL == pbase ) return rv_error;
@@ -535,13 +535,13 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    if ( VALID_CHR_REF( ichr ) )
 //    {
 //        // allocate the new one
-//        POBJ_ALLOCATE( ChrObjList.get_valid_pdata(ichr), REF_TO_INT(ichr) );
+//        POBJ_ALLOCATE( ChrObjList.get_pdata(ichr), REF_TO_INT(ichr) );
 //    }
 //
 //    if ( VALID_CHR( ichr ) )
 //    {
 //        // construct the new structure
-//        ego_obj_chr::do_construct( ChrObjList.get_valid_pdata(ichr), 100 );
+//        ego_obj_chr::do_construct( ChrObjList.get_pdata(ichr), 100 );
 //    }
 //
 //    return ichr;
@@ -560,7 +560,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //        CHR_REF ichr = chr_activation_list[cnt];
 //
 //        if ( !VALID_CHR( ichr ) ) continue;
-//        pchr = ChrObjList.get_valid_pdata(ichr);
+//        pchr = ChrObjList.get_pdata(ichr);
 //
 //        ego_obj::grant_on( POBJ_GET_PBASE( pchr ) );
 //    }
@@ -614,7 +614,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    }
 //
 //    // at least mark the object as "waiting to be terminated"
-//    POBJ_REQUEST_TERMINATE( ChrObjList.get_valid_pdata(ichr ));
+//    POBJ_REQUEST_TERMINATE( ChrObjList.get_pdata(ichr ));
 //
 //    return retval;
 //}

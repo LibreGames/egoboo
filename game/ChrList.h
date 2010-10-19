@@ -60,8 +60,8 @@
 
 // Macros automate looping through the ChrObjList. This hides code which defers the creation and deletion of
 // objects until the loop terminates, so that the length of the list will not change during the loop.
-#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {size_t IT##_internal; int chr_loop_start_depth = ChrObjList.loop_depth; ChrObjList.loop_depth++; for(IT##_internal=0;IT##_internal<ChrObjList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrObjList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrObjList.get_valid_pdata(IT);
-#define CHR_BEGIN_LOOP_BSP(IT, PCHR)     {size_t IT##_internal; int chr_loop_start_depth = ChrObjList.loop_depth; ChrObjList.loop_depth++; for(IT##_internal=0;IT##_internal<ChrObjList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrObjList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrObjList.get_valid_pdata(IT); if( !PCHR->bsp_leaf.inserted ) continue;
+#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR)  {size_t IT##_internal; int chr_loop_start_depth = ChrObjList.loop_depth; ChrObjList.loop_depth++; for(IT##_internal=0;IT##_internal<ChrObjList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrObjList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrObjList.get_pdata(IT);
+#define CHR_BEGIN_LOOP_BSP(IT, PCHR)     {size_t IT##_internal; int chr_loop_start_depth = ChrObjList.loop_depth; ChrObjList.loop_depth++; for(IT##_internal=0;IT##_internal<ChrObjList.used_count;IT##_internal++) { CHR_REF IT; ego_chr * PCHR = NULL; IT = (CHR_REF)ChrObjList.used_ref[IT##_internal]; if(!ACTIVE_CHR (IT)) continue; PCHR =  ChrObjList.get_pdata(IT); if( !PCHR->bsp_leaf.inserted ) continue;
 #define CHR_END_LOOP() } ChrObjList.loop_depth--; if(chr_loop_start_depth != ChrObjList.loop_depth) EGOBOO_ASSERT(bfalse); ChrObjList.cleanup(); }
 
 // Macros to determine whether the character is in the game or not.

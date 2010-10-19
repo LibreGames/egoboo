@@ -178,8 +178,11 @@ struct t_cpp_list
 
     _ty * get_ptr( const t_reference<_ty> & ref );
 
-    size_t           count_free() { return free_count; }
-    size_t           count_used() { return used_count; }
+    size_t free_full() { return free_count >= _sz; }
+    size_t used_full() { return used_count >= _sz; }
+
+    size_t count_free() { return free_count; }
+    size_t count_used() { return used_count; }
 
     bool_t validate_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
 
@@ -189,8 +192,15 @@ struct t_cpp_list
     bool_t    remove_free( const t_reference<_ty> & ref );
     bool_t    remove_used( const t_reference<_ty> & ref );
 
-    egoboo_rv free_one( const t_reference<_ty> & ichr );
-    egoboo_rv get_free( size_t index = ( ~0 ) );
+    egoboo_rv free_one( const t_reference<_ty> & ref );
+    size_t    get_free();
+
+    void shrink_free();
+    void shrink_used();
+
+    void compact_free();
+    void compact_used();
+
 
 protected:
     int get_used_list_index( const t_reference<_ty> & ref );
