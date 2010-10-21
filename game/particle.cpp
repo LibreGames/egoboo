@@ -55,7 +55,7 @@ const float buoyancy_friction = 0.2f;          // how fast does a "cloud-like" o
 int ego_prt::stoppedby_tests = 0;
 int ego_prt::pressure_tests = 0;
 
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_pip, PipStack, MAX_PIP );
+t_cpp_stack< ego_pip, MAX_PIP  > PipStack;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ ego_prt_data * ego_prt_data::alloc( ego_prt_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
-    /* do something here */
+    /* add something here */
 
     return pdata;
 }
@@ -98,7 +98,7 @@ ego_prt_data * ego_prt_data::dealloc( ego_prt_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
-    /* do something here */
+    /* add something here */
 
     return pdata;
 }
@@ -357,8 +357,8 @@ ego_prt * ego_prt::do_init( ego_prt * pprt )
     if ( !LOADED_PIP( pdata->ipip ) )
     {
         log_debug( "spawn_one_particle() - cannot spawn particle with invalid pip == %d (owner == %d(\"%s\"), profile == %d(\"%s\"))\n",
-                   REF_TO_INT( pdata->ipip ), REF_TO_INT( pdata->chr_origin ), DEFINED_CHR( pdata->chr_origin ) ? ChrObjList.get_data( pdata->chr_origin ).name : "INVALID",
-                   REF_TO_INT( pdata->iprofile ), LOADED_PRO( pdata->iprofile ) ? ProList.lst[pdata->iprofile].name : "INVALID" );
+                   (pdata->ipip ).get_value(), (pdata->chr_origin ).get_value(), DEFINED_CHR( pdata->chr_origin ) ? ChrObjList.get_data( pdata->chr_origin ).name : "INVALID",
+                   (pdata->iprofile ).get_value(), LOADED_PRO( pdata->iprofile ) ? ProList.lst[pdata->iprofile].name : "INVALID" );
 
         return NULL;
     }
@@ -385,7 +385,7 @@ ego_prt * ego_prt::do_init( ego_prt * pprt )
     pprt->team        = pdata->team;
     pprt->owner_ref   = loc_chr_origin;
     pprt->parent_ref  = pdata->prt_origin;
-    pprt->parent_guid = VALID_PRT( pdata->prt_origin ) ? PrtObjList.lst[pdata->prt_origin].guid : (( Uint32 )( ~0 ) );
+    pprt->parent_guid = VALID_PRT( pdata->prt_origin ) ? PrtObjList.get_obj( pdata->prt_origin ).guid : (( Uint32 )( ~0 ) );
     pprt->damagetype  = ppip->damagetype;
     pprt->lifedrain   = ppip->lifedrain;
     pprt->manadrain   = ppip->manadrain;
@@ -743,24 +743,18 @@ ego_obj_prt * ego_obj_prt::run_activate( ego_obj_prt * pobj, int max_iterations 
     if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if the particle is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_procing + 1 ) )
+    if ( pbase->get_proc().action > ( int )( ego_obj_processing + 1 ) )
     {
         ego_obj_prt * tmp_prt = ego_obj_prt::run_deconstruct( pobj, max_iterations );
         if ( tmp_prt == pobj ) return NULL;
     }
 
     iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action < ego_obj_procing && iterations < max_iterations )
+    while ( NULL != pobj && pbase->get_proc().action < ego_obj_processing && iterations < max_iterations )
     {
         ego_obj_prt * ptmp = ego_obj_prt::run( pobj );
         if ( ptmp != pobj ) return NULL;
         iterations++;
-    }
-
-    EGOBOO_ASSERT( pbase->get_proc().action == ego_obj_procing );
-    if ( pbase->get_proc().action == ego_obj_procing )
-    {
-        PrtObjList.add_used( GET_REF_PPRT_OBJ( pobj ) );
     }
 
     return pobj;
@@ -857,7 +851,7 @@ ego_obj_prt * ego_obj_prt::run( ego_obj_prt * pobj )
             pobj = ego_obj_prt::do_initializing( pobj );
             break;
 
-        case ego_obj_procing:
+        case ego_obj_processing:
             pobj = ego_obj_prt::do_processing( pobj );
             break;
 
@@ -878,9 +872,9 @@ ego_obj_prt * ego_obj_prt::run( ego_obj_prt * pobj )
     {
         pbase->update_guid = INVALID_UPDATE_GUID;
     }
-    else if ( ego_obj_procing == pbase->get_proc().action )
+    else if ( ego_obj_processing == pbase->get_proc().action )
     {
-        pbase->update_guid = PrtObjList.update_guid;
+        pbase->update_guid = PrtObjList.update_guid();
     }
 
     return pobj;
@@ -928,7 +922,7 @@ ego_obj_prt * ego_obj_prt::do_initializing( ego_obj_prt * pobj )
     if ( NULL == pprt ) return pobj;
 
     // request that we be turned on
-    pbase->get_req().turn_me_on = btrue;
+    pbase->proc_req_on( btrue );
 
     // do something about being turned on
     if ( 0 == PrtObjList.loop_depth )
@@ -1060,8 +1054,8 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
     if ( !LOADED_PIP( ipip ) )
     {
         log_debug( "spawn_one_particle() - cannot spawn particle with invalid pip == %d (owner == %d(\"%s\"), profile == %d(\"%s\"))\n",
-                   REF_TO_INT( ipip ), REF_TO_INT( chr_origin ), INGAME_CHR( chr_origin ) ? ChrObjList.get_data( chr_origin ).name : "INVALID",
-                   REF_TO_INT( iprofile ), LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
+                   (ipip ).get_value(), (chr_origin ).get_value(), INGAME_CHR( chr_origin ) ? ChrObjList.get_data( chr_origin ).name : "INVALID",
+                   (iprofile ).get_value(), LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
 
         return PRT_REF( MAX_PRT );
     }
@@ -1130,14 +1124,14 @@ float prt_calc_mesh_pressure( ego_prt * pprt, float test_pos[] )
     if ( NULL == test_pos ) test_pos = ego_prt::get_pos_v( pprt );
     if ( NULL == test_pos ) return 0;
 
-    mesh_mpdfx_tests = 0;
-    mesh_bound_tests = 0;
-    mesh_pressure_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
+    ego_mpd::bound_tests = 0;
+    ego_mpd::pressure_tests = 0;
     {
-        retval = mesh_get_pressure( PMesh, test_pos, 0.0f, stoppedby );
+        retval = ego_mpd::get_pressure( PMesh, test_pos, 0.0f, stoppedby );
     }
-    ego_prt::stoppedby_tests += mesh_mpdfx_tests;
-    ego_prt::pressure_tests += mesh_pressure_tests;
+    ego_prt::stoppedby_tests += ego_mpd::mpdfx_tests;
+    ego_prt::pressure_tests += ego_mpd::pressure_tests;
 
     return retval;
 }
@@ -1165,7 +1159,7 @@ fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
     // calculate the radius based on whether the particle is on camera
     /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
-    if ( mesh_grid_is_valid( PMesh, pprt->onwhichgrid ) )
+    if ( ego_mpd::grid_is_valid( PMesh, pprt->onwhichgrid ) )
     {
         if ( PMesh->tmem.tile_list[ pprt->onwhichgrid ].inrenderlist )
         {
@@ -1173,14 +1167,14 @@ fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
         }
     }
 
-    mesh_mpdfx_tests = 0;
-    mesh_bound_tests = 0;
-    mesh_pressure_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
+    ego_mpd::bound_tests = 0;
+    ego_mpd::pressure_tests = 0;
     {
-        retval = mesh_get_diff( PMesh, test_pos, radius, center_pressure, stoppedby );
+        retval = ego_mpd::get_diff( PMesh, test_pos, radius, center_pressure, stoppedby );
     }
-    ego_prt::stoppedby_tests += mesh_mpdfx_tests;
-    ego_prt::pressure_tests += mesh_pressure_tests;
+    ego_prt::stoppedby_tests += ego_mpd::mpdfx_tests;
+    ego_prt::pressure_tests += ego_mpd::pressure_tests;
 
     return retval;
 }
@@ -1207,14 +1201,14 @@ BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * p
     if ( NULL == test_pos ) test_pos = ego_prt::get_pos_v( pprt );
     if ( NULL == test_pos ) return 0;
 
-    mesh_mpdfx_tests = 0;
-    mesh_bound_tests = 0;
-    mesh_pressure_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
+    ego_mpd::bound_tests = 0;
+    ego_mpd::pressure_tests = 0;
     {
-        retval = mesh_hit_wall( PMesh, test_pos, 0.0f, stoppedby, nrm, pressure );
+        retval = ego_mpd::hit_wall( PMesh, test_pos, 0.0f, stoppedby, nrm, pressure );
     }
-    ego_prt::stoppedby_tests += mesh_mpdfx_tests;
-    ego_prt::pressure_tests += mesh_pressure_tests;
+    ego_prt::stoppedby_tests += ego_mpd::mpdfx_tests;
+    ego_prt::pressure_tests += ego_mpd::pressure_tests;
 
     return retval;
 }
@@ -1242,14 +1236,14 @@ bool_t prt_test_wall( ego_prt * pprt, float test_pos[] )
     if ( NULL == test_pos ) return 0;
 
     // do the wall test
-    mesh_mpdfx_tests = 0;
-    mesh_bound_tests = 0;
-    mesh_pressure_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
+    ego_mpd::bound_tests = 0;
+    ego_mpd::pressure_tests = 0;
     {
-        retval = mesh_test_wall( PMesh, test_pos, 0.0f, stoppedby, NULL );
+        retval = ego_mpd::test_wall( PMesh, test_pos, 0.0f, stoppedby, NULL );
     }
-    ego_prt::stoppedby_tests += mesh_mpdfx_tests;
-    ego_prt::pressure_tests += mesh_pressure_tests;
+    ego_prt::stoppedby_tests += ego_mpd::mpdfx_tests;
+    ego_prt::pressure_tests += ego_mpd::pressure_tests;
 
     return retval;
 }
@@ -1326,7 +1320,7 @@ ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, e
     if ( NULL == penviro ) penviro = &( loc_pprt->enviro );
 
     //---- particle "floor" level
-    penviro->grid_level  = mesh_get_level( PMesh, loc_pprt->pos.x, loc_pprt->pos.y );
+    penviro->grid_level  = ego_mpd::get_level( PMesh, loc_pprt->pos.x, loc_pprt->pos.y );
     penviro->floor_level = penviro->grid_level;
 
     //---- The actual level of the character.
@@ -1352,14 +1346,14 @@ ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, e
         itile = loc_pprt->onwhichgrid;
     }
 
-    if ( mesh_grid_is_valid( PMesh, itile ) )
+    if ( ego_mpd::grid_is_valid( PMesh, itile ) )
     {
         penviro->grid_twist = PMesh->gmem.grid_list[itile].twist;
     }
 
     // the "watery-ness" of whatever water might be here
     penviro->is_watery = water.is_water && penviro->inwater;
-    penviro->is_slippy = !penviro->is_watery && ( 0 != mesh_test_fx( PMesh, loc_pprt->onwhichgrid, MPDFX_SLIPPY ) );
+    penviro->is_slippy = !penviro->is_watery && ( 0 != ego_mpd::test_fx( PMesh, loc_pprt->onwhichgrid, MPDFX_SLIPPY ) );
 
     //---- traction
     penviro->traction = 1.0f;
@@ -1386,7 +1380,7 @@ ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, e
             penviro->traction /= hillslide * ( 1.0f - penviro->floor_lerp ) + 1.0f * penviro->floor_lerp;
         }
     }
-    else if ( mesh_grid_is_valid( PMesh, loc_pprt->onwhichgrid ) )
+    else if ( ego_mpd::grid_is_valid( PMesh, loc_pprt->onwhichgrid ) )
     {
         penviro->traction = ABS( map_twist_nrm[penviro->grid_twist].z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
 
@@ -1415,7 +1409,7 @@ ego_prt_bundle * move_one_particle_get_environment( ego_prt_bundle * pbdl_prt, e
         // Make the characters slide
         penviro->friction_hrz = noslipfriction;
 
-        if ( mesh_grid_is_valid( PMesh, loc_pprt->onwhichgrid ) && penviro->is_slippy )
+        if ( ego_mpd::grid_is_valid( PMesh, loc_pprt->onwhichgrid ) && penviro->is_slippy )
         {
             // It's slippy all right...
             penviro->friction_hrz = slippyfriction;
@@ -2054,10 +2048,10 @@ bool_t prt_is_over_water( const PRT_REF & iprt )
 
     if ( !VALID_PRT( iprt ) ) return bfalse;
 
-    fan = mesh_get_tile( PMesh, PrtObjList.get_data( iprt ).pos.x, PrtObjList.get_data( iprt ).pos.y );
-    if ( mesh_grid_is_valid( PMesh, fan ) )
+    fan = ego_mpd::get_tile( PMesh, PrtObjList.get_data( iprt ).pos.x, PrtObjList.get_data( iprt ).pos.y );
+    if ( ego_mpd::grid_is_valid( PMesh, fan ) )
     {
-        if ( 0 != mesh_test_fx( PMesh, fan, MPDFX_WATER ) )  return btrue;
+        if ( 0 != ego_mpd::test_fx( PMesh, fan, MPDFX_WATER ) )  return btrue;
     }
 
     return bfalse;
@@ -2230,7 +2224,7 @@ void release_all_pip()
                 if ( LOADED_PIP( cnt ) )
                 {
                     ego_pip * ppip = PipStack.lst + cnt;
-                    fprintf( ftmp, "index == %d\tname == \"%s\"\tcreate_count == %d\trequest_count == %d\n", REF_TO_INT( cnt ), ppip->name, ppip->prt_create_count, ppip->prt_request_count );
+                    fprintf( ftmp, "index == %d\tname == \"%s\"\tcreate_count == %d\trequest_count == %d\n", (cnt ).get_value(), ppip->name, ppip->prt_create_count, ppip->prt_request_count );
                 }
             }
 
@@ -2569,7 +2563,7 @@ ego_prt_bundle * prt_update_do_water( ego_prt_bundle * pbdl_prt )
     loc_ppip = pbdl_prt->pip_ptr;
     penviro  = &( loc_pprt->enviro );
 
-    inwater = ( pbdl_prt->prt_ptr->pos.z < water.surface_level ) && ( 0 != mesh_test_fx( PMesh, pbdl_prt->prt_ptr->onwhichgrid, MPDFX_WATER ) );
+    inwater = ( pbdl_prt->prt_ptr->pos.z < water.surface_level ) && ( 0 != ego_mpd::test_fx( PMesh, pbdl_prt->prt_ptr->onwhichgrid, MPDFX_WATER ) );
 
     if ( inwater && water.is_water && pbdl_prt->pip_ptr->end_water )
     {
@@ -2938,7 +2932,7 @@ bool_t prt_update_safe_raw( ego_prt * pprt )
         pprt->safe_valid = btrue;
         pprt->safe_pos   = ego_prt::get_pos( pprt );
         pprt->safe_time  = update_wld;
-        pprt->safe_grid  = mesh_get_tile( PMesh, pprt->pos.x, pprt->pos.y );
+        pprt->safe_grid  = ego_mpd::get_tile( PMesh, pprt->pos.x, pprt->pos.y );
 
         retval = btrue;
     }
@@ -2961,7 +2955,7 @@ bool_t prt_update_safe( ego_prt * pprt, bool_t force )
     }
     else
     {
-        new_grid = mesh_get_tile( PMesh, pprt->pos.x, pprt->pos.y );
+        new_grid = ego_mpd::get_tile( PMesh, pprt->pos.x, pprt->pos.y );
 
         if ( INVALID_TILE == new_grid )
         {
@@ -3011,8 +3005,8 @@ bool_t prt_update_pos( ego_prt * pprt )
 {
     if ( !VALID_PPRT( pprt ) ) return bfalse;
 
-    pprt->onwhichgrid  = mesh_get_tile( PMesh, pprt->pos.x, pprt->pos.y );
-    pprt->onwhichblock = mesh_get_block( PMesh, pprt->pos.x, pprt->pos.y );
+    pprt->onwhichgrid  = ego_mpd::get_tile( PMesh, pprt->pos.x, pprt->pos.y );
+    pprt->onwhichblock = ego_mpd::get_block( PMesh, pprt->pos.x, pprt->pos.y );
 
     // update whether the current character position is safe
     prt_update_safe( pprt, bfalse );
@@ -3850,7 +3844,7 @@ ego_obj_prt * ego_obj_prt::dealloc( ego_obj_prt * pobj )
     // deallocate this struct
     if ( !VALID_PBASE( pobj ) ) return pobj;
 
-    /* do something here */
+    /* add something here */
 
     return pobj;
 }
@@ -3898,7 +3892,7 @@ ego_obj_prt * ego_obj_prt::alloc( ego_obj_prt * pobj )
     // allocate this struct
     if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
 
-    /* do something here */
+    /* add something here */
 
     return pobj;
 }

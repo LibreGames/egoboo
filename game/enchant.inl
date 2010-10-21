@@ -30,7 +30,7 @@
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
-CHR_REF ego_enc::get_iowner( const ENC_REF by_reference ienc )
+CHR_REF ego_enc::get_iowner( const ENC_REF & ienc )
 {
     ego_enc * penc;
 
@@ -43,7 +43,7 @@ CHR_REF ego_enc::get_iowner( const ENC_REF by_reference ienc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * ego_enc::get_powner( const ENC_REF by_reference ienc )
+ego_chr * ego_enc::get_powner( const ENC_REF & ienc )
 {
     ego_enc * penc;
 
@@ -56,7 +56,7 @@ ego_chr * ego_enc::get_powner( const ENC_REF by_reference ienc )
 }
 
 //--------------------------------------------------------------------------------------------
-EVE_REF ego_enc::get_ieve( const ENC_REF by_reference ienc )
+EVE_REF ego_enc::get_ieve( const ENC_REF & ienc )
 {
     ego_enc * penc;
 
@@ -69,7 +69,7 @@ EVE_REF ego_enc::get_ieve( const ENC_REF by_reference ienc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_eve * ego_enc::get_peve( const ENC_REF by_reference ienc )
+ego_eve * ego_enc::get_peve( const ENC_REF & ienc )
 {
     ego_enc * penc;
 
@@ -82,7 +82,7 @@ ego_eve * ego_enc::get_peve( const ENC_REF by_reference ienc )
 }
 
 //--------------------------------------------------------------------------------------------
-PRO_REF  ego_enc::get_ipro( const ENC_REF by_reference ienc )
+PRO_REF  ego_enc::get_ipro( const ENC_REF & ienc )
 {
     ego_enc * penc;
 
@@ -95,7 +95,7 @@ PRO_REF  ego_enc::get_ipro( const ENC_REF by_reference ienc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_pro * ego_enc::get_ppro( const ENC_REF by_reference ienc )
+ego_pro * ego_enc::get_ppro( const ENC_REF & ienc )
 {
     ego_enc * penc;
 
@@ -108,7 +108,7 @@ ego_pro * ego_enc::get_ppro( const ENC_REF by_reference ienc )
 }
 
 //--------------------------------------------------------------------------------------------
-IDSZ ego_enc::get_idszremove( const ENC_REF by_reference ienc )
+IDSZ ego_enc::get_idszremove( const ENC_REF & ienc )
 {
     ego_eve * peve = ego_enc::get_peve( ienc );
     if ( NULL == peve ) return IDSZ_NONE;
@@ -117,7 +117,7 @@ IDSZ ego_enc::get_idszremove( const ENC_REF by_reference ienc )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_enc::is_removed( const ENC_REF by_reference ienc, const PRO_REF by_reference test_profile )
+bool_t ego_enc::is_removed( const ENC_REF & ienc, const PRO_REF & test_profile )
 {
     IDSZ idsz_remove;
 

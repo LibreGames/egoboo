@@ -26,8 +26,6 @@
 #    error egoboo_typedef_cpp.h should only be included if you are compling as c++
 #endif
 
-#include <exception>
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 struct cpp_list_state
@@ -49,11 +47,14 @@ struct cpp_list_state
 
     static cpp_list_state * ctor( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
     static cpp_list_state * dtor( cpp_list_state * );
-    static cpp_list_state * clear( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
 
     static cpp_list_state * set_allocated( cpp_list_state *, bool_t val );
     static cpp_list_state * set_used( cpp_list_state *, bool_t val );
     static cpp_list_state * set_free( cpp_list_state *, bool_t val );
+
+private:
+
+    static cpp_list_state * clear( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -121,10 +122,6 @@ template <typename _ty> class t_reference
         t_reference<_ty> & operator -- ()      { if ( 0 == ref ) CPP_EGOBOO_ASSERT( NULL == "t_reference()::operator -- underflow" ); --ref; return *this; }
 };
 
-#define CPP_DECLARE_REF( TYPE, NAME ) typedef t_reference<TYPE> NAME
-
-#define CPP_REF_TO_INT(X) ((X).get_value())
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // a simple array template
@@ -140,7 +137,126 @@ public:
     _ty * operator + ( const t_reference<_ty> & ref ) { const REF_T val = ref.get_value(); /* if ( val > _sz ) CPP_EGOBOO_ASSERT( NULL == "t_cpp_ary::operator + - index out of range" ); */ return lst + val; }
 };
 
-#define CPP_DECLARE_T_ARY(TYPE, NAME, COUNT) t_cpp_ary<TYPE, COUNT> NAME
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+template < typename _ty, size_t _sz >
+struct t_cpp_map
+{
+private:
+
+    unsigned                             _id;
+    std::map< const REF_T, const _ty * > _map;
+
+public:
+
+    /// a custom iterator that tracks additions and removals to the
+    /// t_cpp_map::_map
+    struct iterator
+    {
+        friend struct t_cpp_map<_ty, _sz>;
+
+        explicit iterator() { _id = unsigned( -1 ); _valid = bfalse; }
+
+        typedef typename std::map< const REF_T, const _ty * >           _map_t;
+        typedef typename std::map< const REF_T, const _ty * >::iterator _it_t;
+        typedef typename std::pair< const REF_T, const _ty * >          _it_val_t;
+
+        /// overload this operator to pass it on to the base iterator
+        const _it_val_t& operator*() const
+        {
+            return _i.operator*();
+        }
+
+        /// overload this operator to pass it on to the base iterator
+        const _it_val_t *operator->() const
+        {
+            return _i.operator->();
+        }
+
+private:
+        explicit iterator( _it_t & it, unsigned id )
+        {
+            _i     = it;
+            _id    = id;
+            _valid = btrue;
+        }
+
+        _it_t     _i;
+        unsigned  _id;
+        bool_t    _valid;
+    };
+
+    t_cpp_map() { _id = unsigned( -1 ); }
+
+    bool_t ref_validate( const t_reference<_ty> & ref )
+    {
+        return ref < _sz;
+    }
+
+    unsigned get_id() { return _id; }
+    _ty    * get_ptr( const t_reference<_ty> & ref );
+    bool_t   has_ref( const t_reference<_ty> & ref );
+    bool_t   add( const t_reference<_ty> & ref, const _ty * val );
+    bool_t   remove( const t_reference<_ty> & ref );
+
+    void     clear() { _map.clear(); _id = unsigned( -1 ); };
+    size_t   size()  { return _map.size(); }
+
+    iterator iterator_begin()
+    {
+        return iterator( _map.begin(), _id );
+    }
+
+    bool_t iterator_end( iterator & it )
+    {
+        if ( !iterator_validate( it ) ) bfalse;
+
+        return it._i == _map.end();
+    }
+
+    iterator & iterator_increment( iterator & it )
+    {
+        if ( !iterator_validate( it ) ) return it;
+
+        it._i++;
+
+        return it;
+    }
+
+protected:
+
+    iterator & iterator_invalidate( iterator & it )
+    {
+        it._id    = unsigned( -1 );
+        it._valid = bfalse;
+        it._i     = _map.end();
+
+        return it;
+    }
+
+    bool_t iterator_validate( iterator & it )
+    {
+        if ( !it._valid )
+        {
+            return bfalse;
+        }
+
+        if ( _id != it._id )
+        {
+            iterator_invalidate( it );
+            return bfalse;
+        }
+
+        if ( _map.end() == it._i )
+        {
+            iterator_invalidate( it );
+            return bfalse;
+        }
+
+        return btrue;
+    }
+
+};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -167,21 +283,25 @@ template < typename _ty, size_t _sz >
 struct t_cpp_list
 {
     unsigned update_guid;
-    size_t   used_count;
-    size_t   free_count;
+
+    size_t   _used_count;
+    size_t   _free_count;
     size_t   used_ref[_sz];
     size_t   free_ref[_sz];
 
-    CPP_DECLARE_T_ARY( _ty, lst, _sz );
+    t_cpp_ary<_ty, _sz> lst;
 
-    t_cpp_list() { used_count = free_count = 0; update_guid = 0; }
+    size_t   used_count() { return _used_count; }
+    size_t   free_count() { return _free_count; }
+
+    t_cpp_list() { _used_count = _free_count = 0; update_guid = 0; }
 
     _ty * get_ptr( const t_reference<_ty> & ref );
 
-    size_t free_full() { return free_count >= _sz; }
+    size_t free_full() { return.free_count() >= _sz; }
     size_t used_full() { return used_count >= _sz; }
 
-    size_t count_free() { return free_count; }
+    size_t count_free() { return.free_count(); }
     size_t count_used() { return used_count; }
 
     bool_t validate_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
@@ -201,7 +321,6 @@ struct t_cpp_list
     void compact_free();
     void compact_used();
 
-
 protected:
     int get_used_list_index( const t_reference<_ty> & ref );
     int get_free_list_index( const t_reference<_ty> & ref );
@@ -209,10 +328,6 @@ protected:
     bool_t remove_free_index( int index );
     bool_t remove_used_index( int index );
 };
-
-#define CPP_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)    extern t_cpp_list<TYPE, COUNT> NAME
-#define CPP_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT) static t_cpp_list<TYPE, COUNT> NAME
-#define CPP_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT) ACCESS t_cpp_list<TYPE, COUNT> NAME
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -223,16 +338,75 @@ struct t_cpp_stack
 {
     unsigned update_guid;
     int      count;
-    CPP_DECLARE_T_ARY( _ty, lst, _sz );
+    t_cpp_ary<_ty, _sz> lst;
 
     t_cpp_stack() { count = 0; update_guid = 0; }
 };
 
-#define CPP_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      extern t_cpp_stack<TYPE, COUNT> NAME
-#define CPP_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  static t_cpp_stack<TYPE, COUNT> NAME
-#define CPP_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) ACCESS t_cpp_stack<TYPE, COUNT> NAME
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+/// a template-like declaration of a dynamically allocated array
+
+template<typename _ty>
+struct t_dary
+{
+    size_t   size;
+    size_t   top;
+    _ty    * ary;
+
+    t_dary() { clear(this); }
+    ~t_dary() { dtor(this); }
+
+    static bool_t   alloc( t_dary * pary, size_t sz );
+    static bool_t   dealloc(t_dary * pary );
+    static t_dary * ctor(t_dary * pary, size_t sz);
+    static t_dary * dtor(t_dary * pary );
+
+
+    static size_t   get_top( t_dary * pary );
+    static size_t   get_size( t_dary * pary );
+
+    static _ty *    pop_back( t_dary * pary );
+    static bool_t   push_back( t_dary * pary, _ty val );
+
+private:
+
+    static void     clear( t_dary * pary );
+};
+
+
+#define DECLARE_DYNAMIC_ARY(ARY_T, ELEM_T) typedef t_dary<ELEM_T> ARY_T;
+
+#define INSTANTIATE_DYNAMIC_ARY(ARY_T, NAME) ARY_T NAME;
+
+#define IMPLEMENT_DYNAMIC_ARY(ARY_T, _ty) 
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+/// a template-like declaration of a statically allocated array
+
+#define DECLARE_STATIC_ARY_TYPE(ARY_T, ELEM_T, SIZE) \
+    struct s_STATIC_ARY_##ARY_T \
+    { \
+        int    count;     \
+        ELEM_T ary[SIZE]; \
+    }; \
+    typedef struct s_STATIC_ARY_##ARY_T ARY_T##_t
+
+#define DECLARE_EXTERN_STATIC_ARY(ARY_T, NAME) extern ARY_T##_t NAME;
+#define STATIC_ARY_INIT_VALS {0}
+#define INSTANTIATE_STATIC_ARY(ARY_T, NAME) ARY_T##_t NAME = STATIC_ARY_INIT_VALS;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 #define _egoboo_typedef_cpp_h
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#include "egoboo_typedef_cpp.inl"
+
 

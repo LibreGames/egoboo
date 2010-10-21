@@ -53,6 +53,21 @@ struct ego_lighting_cache_base
     float             max_light;  ///< max amplitude of direct light
     float             max_delta;  ///< max change in the light amplitude
     lighting_vector_t lighting;   ///< light from +x,-x, +y,-y, +z,-z, ambient
+
+    ego_lighting_cache_base() { clear(this); }
+
+    ego_lighting_cache_base * ctor(ego_lighting_cache_base * ptr) { return clear(ptr); }
+
+private:
+
+    static ego_lighting_cache_base * clear(ego_lighting_cache_base * ptr) 
+    { 
+        if( NULL == ptr ) return ptr;
+
+        memset( ptr, 0, sizeof(*ptr) );
+
+        return ptr;
+    }
 };
 
 ego_lighting_cache_base * lighting_cache_base_init( ego_lighting_cache_base * pdata );
@@ -67,6 +82,8 @@ struct ego_lighting_cache
 
     ego_lighting_cache_base low;
     ego_lighting_cache_base hgh;
+
+    ego_lighting_cache() { max_light = max_light = 0.0f; }
 };
 
 ego_lighting_cache * lighting_cache_init( ego_lighting_cache * pdata );

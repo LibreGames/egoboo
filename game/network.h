@@ -133,7 +133,7 @@ struct ego_player
     latch_input_t           net_latch;
 };
 
-DECLARE_STACK_EXTERN( ego_player, PlaStack, MAX_PLAYER );                         ///< Stack for keeping track of players
+extern t_cpp_stack< ego_player, MAX_PLAYER  > PlaStack;                         ///< Stack for keeping track of players
 extern int local_numlpla;                                   ///< Number of local players
 
 #define VALID_PLA_RANGE(IPLA) ( ((IPLA) >= 0) && ((IPLA) < MAX_PLAYER) )
@@ -143,11 +143,11 @@ extern int local_numlpla;                                   ///< Number of local
 ego_player *     pla_ctor( ego_player * ppla );
 ego_player *     pla_dtor( ego_player * ppla );
 ego_player *     pla_reinit( ego_player * ppla );
-CHR_REF        pla_get_ichr( const PLA_REF by_reference iplayer );
-struct ego_chr * pla_get_pchr( const PLA_REF by_reference iplayer );
-latch_2d_t     pla_convert_latch_2d( const PLA_REF by_reference iplayer, const latch_2d_t by_reference src );
+CHR_REF        pla_get_ichr( const PLA_REF & iplayer );
+struct ego_chr * pla_get_pchr( const PLA_REF & iplayer );
+latch_2d_t     pla_convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src );
 
-ego_player*      net_get_ppla( const CHR_REF by_reference ichr );
+ego_player*      net_get_ppla( const CHR_REF & ichr );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

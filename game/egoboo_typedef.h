@@ -25,6 +25,18 @@
 #include "egoboo_config.h"
 
 #include <SDL_types.h>
+
+// include these before the memory stuff because the Fluid Studios Memory manager
+// redefines the new operator in a way that ther STL doesn't like.
+// And we do not want mmgr to be tracking internal allocation inside the STL, anyway!
+#if defined(__cplusplus)
+#   include <deque>
+#   include <map>
+#   include <stack>
+#   include <queue>
+#   include <exception>
+#endif
+
 #include "egoboo_mem.h"
 
 #if defined(__cplusplus)
@@ -305,106 +317,6 @@ extern "C"
 
 #define INVALID_UPDATE_GUID ((unsigned)(~((unsigned)0)))
 
-//#define C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT) \
-//    struct s_c_list__##TYPE__##NAME           \
-//    {                                         \
-//        unsigned update_guid;                 \
-//        size_t   used_count;                  \
-//        size_t   free_count;                  \
-//        size_t   used_ref[COUNT];             \
-//        size_t   free_ref[COUNT];             \
-//        C_DECLARE_T_ARY(TYPE, lst, COUNT);    \
-//    }
-//
-//#define C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)   \
-//    C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT);        \
-//    extern struct s_c_list__##TYPE__##NAME NAME
-//
-//#define C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT) \
-//    C_DEFINE_LIST_TYPE(TYPE, NAME, COUNT);        \
-//    static struct s_c_list__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0, 0}
-//
-//#define C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT) ACCESS struct s_c_list__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0, 0}
-//
-////--------------------------------------------------------------------------------------------
-////--------------------------------------------------------------------------------------------
-//// a simple stack structure
-//
-//#define C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT) \
-//    struct s_c_stack__##TYPE__##NAME           \
-//    {                                          \
-//        unsigned update_guid;                  \
-//        int  count;                            \
-//        C_DECLARE_T_ARY(TYPE, lst, COUNT);     \
-//    }
-//
-//#define C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT) \
-//    C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT);       \
-//    extern struct s_c_stack__##TYPE__##NAME NAME
-//
-//#define C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT) \
-//    C_DEFINE_STACK_TYPE(TYPE, NAME, COUNT);       \
-//    static struct s_c_stack__##TYPE__##NAME NAME = {0}
-//
-//#define C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) ACCESS struct s_c_stack__##TYPE__##NAME NAME = {INVALID_UPDATE_GUID, 0}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-/// a template-like declaration of a dynamically allocated array
-#define DECLARE_DYNAMIC_ARY(ARY_T, ELEM_T) \
-    struct s_DYNAMIC_ARY_##ARY_T \
-    { \
-        size_t   alloc; \
-        size_t   top;  \
-        ELEM_T * ary; \
-    }; \
-    typedef struct s_DYNAMIC_ARY_##ARY_T ARY_T##_t; \
-    \
-    ARY_T##_t * ARY_T##_ctor( ARY_T##_t * pary, size_t sz ); \
-    ARY_T##_t * ARY_T##_dtor( ARY_T##_t * pary ); \
-    bool_t      ARY_T##_alloc( ARY_T##_t * pary, size_t sz ); \
-    bool_t      ARY_T##_free( ARY_T##_t * pary ); \
-    void        ARY_T##_clear( ARY_T##_t * pary ); \
-    bool_t      ARY_T##_push_back( ARY_T##_t * pary, ELEM_T val ); \
-    size_t      ARY_T##_get_top( ARY_T##_t * pary ); \
-    size_t      ARY_T##_get_size( ARY_T##_t * pary ); \
-    ELEM_T *    ARY_T##_pop_back( ARY_T##_t * pary ); \
-    bool_t      ARY_T##_push_back( ARY_T##_t * pary , ELEM_T val );
-
-#define DYNAMIC_ARY_INIT_VALS {0,0,NULL}
-
-#define INSTANTIATE_DYNAMIC_ARY(ARY_T, NAME) ARY_T##_t NAME = DYNAMIC_ARY_INIT_VALS;
-
-#define IMPLEMENT_DYNAMIC_ARY(ARY_T, ELEM_T) \
-    bool_t      ARY_T##_alloc( ARY_T##_t * pary, size_t sz )  { if(NULL == pary) return bfalse; ARY_T##_free( pary ); pary->ary = EGOBOO_NEW_ARY( ELEM_T, sz );  pary->alloc = (NULL == pary->ary) ? 0 : sz; return btrue; } \
-    bool_t      ARY_T##_free(ARY_T##_t * pary )               { if(NULL == pary) return bfalse; EGOBOO_DELETE_ARY(pary->ary); pary->alloc = 0; pary->top = 0; return btrue; } \
-    ARY_T##_t * ARY_T##_ctor(ARY_T##_t * pary, size_t sz)     { if(NULL == pary) return NULL;   memset(pary, 0, sizeof(*pary)); if( !ARY_T##_alloc(pary, sz) ) return NULL; return pary; } \
-    ARY_T##_t * ARY_T##_dtor(ARY_T##_t * pary )               { if(NULL == pary) return NULL;   ARY_T##_free(pary); memset(pary, 0, sizeof(*pary)); return pary; } \
-    \
-    void   ARY_T##_clear( ARY_T##_t * pary )                  { if(NULL != pary) pary->top = 0; } \
-    size_t ARY_T##_get_top( ARY_T##_t * pary )                { return (NULL == pary->ary) ? 0 : pary->top; } \
-    size_t ARY_T##_get_size( ARY_T##_t * pary )               { return (NULL == pary->ary) ? 0 : pary->alloc; } \
-    \
-    ELEM_T * ARY_T##_pop_back( ARY_T##_t * pary )              { if( NULL == pary || 0 == pary->top ) return NULL; --pary->top; return &(pary->ary[pary->top]); } \
-    bool_t   ARY_T##_push_back( ARY_T##_t * pary, ELEM_T val ) { bool_t retval = bfalse; if( NULL == pary ) return bfalse; if (pary->top < pary->alloc) { pary->ary[pary->top] = val; pary->top++; retval = btrue; } return retval; }
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-/// a template-like declaration of a statically allocated array
-
-#define DECLARE_STATIC_ARY_TYPE(ARY_T, ELEM_T, SIZE) \
-    struct s_STATIC_ARY_##ARY_T \
-    { \
-        int    count;     \
-        ELEM_T ary[SIZE]; \
-    }; \
-    typedef struct s_STATIC_ARY_##ARY_T ARY_T##_t
-
-#define DECLARE_EXTERN_STATIC_ARY(ARY_T, NAME) extern ARY_T##_t NAME;
-#define STATIC_ARY_INIT_VALS {0}
-#define INSTANTIATE_STATIC_ARY(ARY_T, NAME) ARY_T##_t NAME = STATIC_ARY_INIT_VALS;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -425,15 +337,11 @@ extern "C"
 
 #if defined(__cplusplus)
 
-#   define by_reference &
-
 #   define EGOBOO_ASSERT(X) CPP_EGOBOO_ASSERT(X)
 
 #   define _EGOBOO_ASSERT(X) C_EGOBOO_ASSERT(X)
 
 #else
-
-#   define by_reference             /* no passing by reference in c */
 
 #   define EGOBOO_ASSERT(X) C_EGOBOO_ASSERT(X)
 
@@ -445,31 +353,8 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 // implementation of forward declaration of references
 
+
 #if defined(__cplusplus)
-
-#   define REF_TO_INT(X)  CPP_REF_TO_INT(X)
-#   define _REF_TO_INT(X) C_REF_TO_INT(X)
-
-#   define DECLARE_T_ARY(TYPE, NAME, COUNT)              CPP_DECLARE_T_ARY(TYPE, NAME, COUNT)
-
-#   define DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)        CPP_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)
-#   define INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)     CPP_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)
-#   define INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)     CPP_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)
-
-#    define DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      CPP_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)
-#    define INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  CPP_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
-#    define INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) CPP_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
-
-// use an underscore to force the c implementation
-#   define _DECLARE_T_ARY(TYPE, NAME, COUNT)              C_DECLARE_T_ARY(TYPE, NAME, COUNT)
-
-#   define _DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)        C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)
-#   define _INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)     C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)
-#   define _INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)     C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)
-
-#    define _DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)
-#    define _INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
-#    define _INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
 
     typedef struct s_oglx_texture oglx_texture_t;
 
@@ -491,71 +376,25 @@ extern "C"
     struct mnu_module;
     struct ego_tx_request;
 
-    typedef s_oglx_texture oglx_texture_t;
+    typedef t_reference<ego_cap>               CAP_REF;
+    typedef t_reference<ego_obj_chr>           CHR_REF;
+    typedef t_reference<ego_team>              TEAM_REF;
+    typedef t_reference<ego_eve>               EVE_REF;
+    typedef t_reference<ego_obj_enc>           ENC_REF;
+    typedef t_reference<ego_mad>               MAD_REF;
+    typedef t_reference<ego_player>            PLA_REF;
+    typedef t_reference<ego_pip>               PIP_REF;
+    typedef t_reference<ego_obj_prt>           PRT_REF;
+    typedef t_reference<ego_passage>           PASS_REF;
+    typedef t_reference<ego_shop>              SHOP_REF;
+    typedef t_reference<ego_pro>               PRO_REF;
+    typedef t_reference<oglx_texture_t>        TX_REF;
+    typedef t_reference<ego_billboard_data>    BBOARD_REF;
+    typedef t_reference<snd_looped_sound_data> LOOP_REF;
+    typedef t_reference<mnu_module>            MOD_REF;
+    typedef t_reference<MOD_REF>               MOD_REF_REF;
+    typedef t_reference<ego_tx_request>        TREQ_REF;
 
-    CPP_DECLARE_REF( ego_cap, CAP_REF );
-    CPP_DECLARE_REF( ego_obj_chr, CHR_REF );
-    CPP_DECLARE_REF( ego_team, TEAM_REF );
-    CPP_DECLARE_REF( ego_eve, EVE_REF );
-    CPP_DECLARE_REF( ego_obj_enc, ENC_REF );
-    CPP_DECLARE_REF( ego_mad, MAD_REF );
-    CPP_DECLARE_REF( ego_player, PLA_REF );
-    CPP_DECLARE_REF( ego_pip, PIP_REF );
-    CPP_DECLARE_REF( ego_obj_prt, PRT_REF );
-    CPP_DECLARE_REF( ego_passage, PASS_REF );
-    CPP_DECLARE_REF( ego_shop, SHOP_REF );
-    CPP_DECLARE_REF( ego_pro, PRO_REF );
-    CPP_DECLARE_REF( oglx_texture_t, TX_REF );
-    CPP_DECLARE_REF( ego_billboard_data, BBOARD_REF );
-    CPP_DECLARE_REF( snd_looped_sound_data, LOOP_REF );
-    CPP_DECLARE_REF( mnu_module, MOD_REF );
-    CPP_DECLARE_REF( MOD_REF, MOD_REF_REF );
-    CPP_DECLARE_REF( ego_tx_request, TREQ_REF );
-
-//#else
-//
-//#   define REF_TO_INT(X)  C_REF_TO_INT(X)
-//#   define _REF_TO_INT(X) C_REF_TO_INT(X)
-//
-//#   define DECLARE_T_ARY(TYPE, NAME, COUNT)              C_DECLARE_T_ARY(TYPE, NAME, COUNT)
-//
-//#   define DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)        C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)
-//#   define INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)     C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)
-//#   define INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)     C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)
-//
-//#    define DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)
-//#    define INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
-//#    define INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
-//
-//// use an underscore to force the c implementation
-//#   define _DECLARE_T_ARY(TYPE, NAME, COUNT)              C_DECLARE_T_ARY(TYPE, NAME, COUNT)
-//
-//#   define _DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)        C_DECLARE_LIST_EXTERN(TYPE, NAME, COUNT)
-//#   define _INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)     C_INSTANTIATE_LIST_STATIC(TYPE,NAME, COUNT)
-//#   define _INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)     C_INSTANTIATE_LIST(ACCESS,TYPE,NAME, COUNT)
-//
-//#    define _DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)      C_DECLARE_STACK_EXTERN(TYPE, NAME, COUNT)
-//#    define _INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)  C_INSTANTIATE_STACK_STATIC(TYPE, NAME, COUNT)
-//#    define _INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT) C_INSTANTIATE_STACK(ACCESS, TYPE, NAME, COUNT)
-//
-//    C_DECLARE_REF( CAP_REF );
-//    C_DECLARE_REF( CHR_REF );
-//    C_DECLARE_REF( TEAM_REF );
-//    C_DECLARE_REF( EVE_REF );
-//    C_DECLARE_REF( ENC_REF );
-//    C_DECLARE_REF( MAD_REF );
-//    C_DECLARE_REF( PLA_REF );
-//    C_DECLARE_REF( PIP_REF );
-//    C_DECLARE_REF( PRT_REF );
-//    C_DECLARE_REF( PASS_REF );
-//    C_DECLARE_REF( SHOP_REF );
-//    C_DECLARE_REF( PRO_REF );
-//    C_DECLARE_REF( TX_REF );
-//    C_DECLARE_REF( BBOARD_REF );
-//    C_DECLARE_REF( LOOP_REF );
-//    C_DECLARE_REF( MOD_REF );
-//    C_DECLARE_REF( TREQ_REF );
-//    C_DECLARE_REF( MOD_REF_REF );
 #endif
 
 //--------------------------------------------------------------------------------------------

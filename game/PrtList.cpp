@@ -28,7 +28,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_particle_list PrtObjList;
+PrtObjList_t PrtObjList;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ PRT_REF ego_particle_list::allocate_activate( const PRT_REF & iprt )
         }
 
         // allocate the new one
-        POBJ_ALLOCATE( PrtObjList.get_ptr( iprt ), REF_TO_INT( iprt ) );
+        POBJ_ALLOCATE( PrtObjList.get_ptr( iprt ), (iprt ).get_value() );
     }
 
     if ( ALLOCATED_PRT( iprt ) )
@@ -161,14 +161,14 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
     PRT_REF iprt( MAX_PRT );
 
     // do we need to override the base function?
-    bool_t needs_search = ( force && 0 == PrtObjList.free_count );
+    bool_t needs_search = ( force && 0 == PrtObjList.free_count() );
 
     if ( needs_search )
     {
         iprt = allocate_find();
         iprt = allocate_activate( iprt );
     }
-    else if ( force || PrtObjList.free_count > ( maxparticles / 4 ) )
+    else if ( force || PrtObjList.free_count() > ( maxparticles / 4 ) )
     {
         iprt = t_ego_obj_lst<ego_obj_prt, MAX_PRT>::allocate( override );
     }
@@ -179,7 +179,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 ////--------------------------------------------------------------------------------------------
 ////--------------------------------------------------------------------------------------------
 //
-//INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_prt, PrtObjList, MAX_PRT );
+//t_cpp_list< ego_prt, MAX_PRT  > PrtObjList;
 //
 //static size_t  prt_termination_count = 0;
 //static PRT_REF prt_termination_list[MAX_PRT];
@@ -215,7 +215,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //    if ( maxparticles > MAX_PRT ) maxparticles = MAX_PRT;
 //
 //    // free all the particles
-//    PrtObjList.free_count = 0;
+//    PrtObjList.free_count() = 0;
 //    PrtObjList.used_count = 0;
 //    for ( cnt = 0; cnt < MAX_PRT; cnt++ )
 //    {
@@ -248,7 +248,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //        ego_obj_prt::run_deconstruct( PrtObjList.get_valid_pdata(cnt), 100 );
 //    }
 //
-//    PrtObjList.free_count = 0;
+//    PrtObjList.free_count() = 0;
 //    PrtObjList.used_count = 0;
 //    for ( cnt = 0; cnt < MAX_PRT; cnt++ )
 //    {
@@ -291,7 +291,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //    size_t  cnt;
 //    PRT_REF iprt;
 //
-//    for ( cnt = 0; cnt < PrtObjList.free_count; cnt++ )
+//    for ( cnt = 0; cnt < PrtObjList.free_count(); cnt++ )
 //    {
 //        bool_t removed = bfalse;
 //
@@ -345,7 +345,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //    }
 //
 //    // blank out the unused elements of the free list
-//    for ( iprt = PrtObjList.free_count; iprt < MAX_PRT; iprt++ )
+//    for ( iprt = PrtObjList.free_count(); iprt < MAX_PRT; iprt++ )
 //    {
 //        PrtObjList.free_ref[iprt] = MAX_PRT;
 //    }
@@ -429,15 +429,15 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //
 //    size_t retval = MAX_PRT;
 //
-//    if ( PrtObjList.free_count > 0 )
+//    if ( PrtObjList.free_count() > 0 )
 //    {
-//        PrtObjList.free_count--;
-//        PrtObjList.update_guid++;
+//        PrtObjList.free_count()--;
+//        PrtObjList.update_guid()++;
 //
-//        retval = PrtObjList.free_ref[PrtObjList.free_count];
+//        retval = PrtObjList.free_ref[PrtObjList.free_count()];
 //
 //        // completely remove it from the free list
-//        PrtObjList.free_ref[PrtObjList.free_count] = MAX_PRT;
+//        PrtObjList.free_ref[PrtObjList.free_count()] = MAX_PRT;
 //
 //        if ( VALID_PRT_REF( retval ) )
 //        {
@@ -461,7 +461,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //    // Return MAX_PRT if we can't find one
 //    iprt = PRT_REF(MAX_PRT);
 //
-//    if ( 0 == PrtObjList.free_count )
+//    if ( 0 == PrtObjList.free_count() )
 //    {
 //        if ( force )
 //        {
@@ -555,7 +555,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //    }
 //    else
 //    {
-//        if ( PrtObjList.free_count > ( maxparticles / 4 ) )
+//        if ( PrtObjList.free_count() > ( maxparticles / 4 ) )
 //        {
 //            // Just grab the next one
 //            iprt = PrtList_get_free();
@@ -612,7 +612,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //
 //    if ( !VALID_PRT_REF( iprt ) ) return retval;
 //
-//    for ( cnt = 0; cnt < PrtObjList.free_count; cnt++ )
+//    for ( cnt = 0; cnt < PrtObjList.free_count(); cnt++ )
 //    {
 //        if ( iprt == PrtObjList.free_ref[cnt] )
 //        {
@@ -642,12 +642,12 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //    EGOBOO_ASSERT( !PrtObjList.get_data(iprt).get_proc().in_free_list );
 //
 //    retval = bfalse;
-//    if ( PrtObjList.free_count < maxparticles )
+//    if ( PrtObjList.free_count() < maxparticles )
 //    {
-//        PrtObjList.free_ref[PrtObjList.free_count] = iprt;
+//        PrtObjList.free_ref[PrtObjList.free_count()] = iprt;
 //
-//        PrtObjList.free_count++;
-//        PrtObjList.update_guid++;
+//        PrtObjList.free_count()++;
+//        PrtObjList.update_guid()++;
 //
 //        cpp_list_state::set_free( &( PrtObjList.get_data(iprt).get_proc() ), btrue );
 //
@@ -663,7 +663,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //    PRT_REF iprt;
 //
 //    // was it found?
-//    if ( index < 0 || ( size_t )index >= PrtObjList.free_count ) return bfalse;
+//    if ( index < 0 || ( size_t )index >= PrtObjList.free_count() ) return bfalse;
 //
 //    iprt = PrtObjList.free_ref[index];
 //
@@ -677,13 +677,13 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //    }
 //
 //    // shorten the list
-//    PrtObjList.free_count--;
-//    PrtObjList.update_guid++;
+//    PrtObjList.free_count()--;
+//    PrtObjList.update_guid()++;
 //
-//    if ( PrtObjList.free_count > 0 )
+//    if ( PrtObjList.free_count() > 0 )
 //    {
 //        // swap the last element for the deleted element
-//        SWAP( size_t, PrtObjList.free_ref[index], PrtObjList.free_ref[PrtObjList.free_count] );
+//        SWAP( size_t, PrtObjList.free_ref[index], PrtObjList.free_ref[PrtObjList.free_count()] );
 //    }
 //
 //    return btrue;
@@ -740,7 +740,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //        PrtObjList.used_ref[PrtObjList.used_count] = iprt;
 //
 //        PrtObjList.used_count++;
-//        PrtObjList.update_guid++;
+//        PrtObjList.update_guid()++;
 //
 //        cpp_list_state::set_used( &( PrtObjList.get_data(iprt).get_proc() ), btrue );
 //
@@ -771,7 +771,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //
 //    // shorten the list
 //    PrtObjList.used_count--;
-//    PrtObjList.update_guid++;
+//    PrtObjList.update_guid()++;
 //
 //    if ( PrtObjList.used_count > 0 )
 //    {
@@ -837,7 +837,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //        retval = btrue;
 //    }
 //
-//    PrtObjList.lst[iprt].req.turn_me_on = btrue;
+//    PrtObjList.get_obj(iprt).proc_req_on( btrue );
 //
 //    return retval;
 //}

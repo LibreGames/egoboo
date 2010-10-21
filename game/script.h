@@ -185,8 +185,8 @@ struct ego_ai_state
     static bool_t         dealloc( ego_ai_state * pself );
     static ego_ai_state * reconstruct( ego_ai_state * pself );
 
-    static void           spawn( ego_ai_state * pself, const CHR_REF by_reference index, const PRO_REF by_reference iobj, Uint16 rank );
-    static bool_t         set_bumplast( ego_ai_state * pself, const CHR_REF by_reference  ichr );
+    static void           spawn( ego_ai_state * pself, const CHR_REF & index, const PRO_REF & iobj, Uint16 rank );
+    static bool_t         set_bumplast( ego_ai_state * pself, const CHR_REF &  ichr );
     static bool_t         get_wp( ego_ai_state * pself );
     static bool_t         ensure_wp( ego_ai_state * pself );
     static bool_t         set_changed( ego_ai_state * pself );
@@ -238,7 +238,7 @@ struct ego_ai_bundle
 
 void  scr_run_chr_script( ego_ai_bundle * pbdl_ai );
 
-void issue_order( const CHR_REF by_reference character, Uint32 order );
+void issue_order( const CHR_REF & character, Uint32 order );
 void issue_special_order( Uint32 order, IDSZ idsz );
 void set_alerts( ego_ai_bundle * pbdl_ai );
 

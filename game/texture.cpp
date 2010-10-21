@@ -29,7 +29,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INSTANTIATE_LIST( ACCESS_TYPE_NONE, oglx_texture_t, TxTexture, TX_TEXTURE_COUNT );
+t_cpp_list< oglx_texture_t, TX_TEXTURE_COUNT  > TxTexture;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ void TxTexture_clear_data()
     {
         TxTexture.free_ref[tnc] = cnt;
     }
-    TxTexture.free_count = tnc;
+    TxTexture._free_count = tnc;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -123,12 +123,12 @@ TX_REF TxTexture_get_free( const TX_REF & itex )
     }
     else if ( itex < 0 || itex >= TX_TEXTURE_COUNT )
     {
-        if ( TxTexture.free_count > 0 )
+        if ( TxTexture._free_count > 0 )
         {
-            TxTexture.free_count--;
+            TxTexture._free_count--;
             TxTexture.update_guid++;
 
-            retval = TxTexture.free_ref[TxTexture.free_count];
+            retval = TxTexture.free_ref[TxTexture._free_count];
         }
         else
         {
@@ -143,16 +143,16 @@ TX_REF TxTexture_get_free( const TX_REF & itex )
         oglx_texture_Release( TxTexture.lst + ( TX_REF )itex );
 
         // if this index is on the free stack, remove it
-        for ( i = 0; i < TxTexture.free_count; i++ )
+        for ( i = 0; i < TxTexture._free_count; i++ )
         {
             if ( TxTexture.free_ref[i] == itex )
             {
-                if ( TxTexture.free_count > 0 )
+                if ( TxTexture._free_count > 0 )
                 {
-                    TxTexture.free_count--;
+                    TxTexture._free_count--;
                     TxTexture.update_guid++;
 
-                    SWAP( size_t, TxTexture.free_ref[i], TxTexture.free_ref[TxTexture.free_count] );
+                    SWAP( size_t, TxTexture.free_ref[i], TxTexture.free_ref[TxTexture._free_count] );
                 }
                 break;
             }
@@ -176,22 +176,22 @@ bool_t TxTexture_free_one( const TX_REF & itex )
 
         // determine whether this texture is already in the list of free textures
         // that is an error
-        for ( cnt = 0; cnt < TxTexture.free_count; cnt++ )
+        for ( cnt = 0; cnt < TxTexture._free_count; cnt++ )
         {
             if ( itex == TxTexture.free_ref[cnt] ) return bfalse;
         }
     }
 #endif
 
-    if ( TxTexture.free_count >= TX_TEXTURE_COUNT )
+    if ( TxTexture._free_count >= TX_TEXTURE_COUNT )
         return bfalse;
 
     // do not put anything below TX_LAST back onto the SDL_free stack
     if ( itex >= TX_LAST )
     {
-        TxTexture.free_ref[TxTexture.free_count] = REF_TO_INT( itex );
+        TxTexture.free_ref[TxTexture._free_count] = (itex ).get_value();
 
-        TxTexture.free_count++;
+        TxTexture._free_count++;
         TxTexture.update_guid++;
     }
 

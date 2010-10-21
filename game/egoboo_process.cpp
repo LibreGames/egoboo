@@ -25,123 +25,222 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_process * ego_process::clear( ego_process * ptr )
+ego_process_engine ProcessEngine;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_process_data * ego_process_data::clear( ego_process_data * pdata )
 {
-    if ( NULL == ptr ) return ptr;
+    if ( NULL == pdata ) return pdata;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    memset( pdata, 0, sizeof( *pdata ) );
 
-    return ptr;
+    pdata->terminated = btrue;
+    pdata->result     = -1;
+
+    return pdata;
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 ego_process * ego_process::ctor( ego_process * proc )
 {
+    proc = clear( proc );
     if ( NULL == proc ) return proc;
 
-    proc = ego_process::clear( proc );
-    if ( NULL == proc ) return proc;
-
-    proc->terminated = btrue;
+    /* add something here */
 
     return proc;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_process::start( ego_process * proc )
+ego_process * ego_process::clear( ego_process * proc )
 {
-    if ( NULL == proc ) return bfalse;
+    if ( NULL == proc ) return proc;
 
-    // choose the correct proc->state
-    if ( proc->terminated || proc->state > proc_leaving )
+    ego_process_data * pdata = ego_process_data::clear( proc->get_pdata() );
+    if ( NULL == pdata ) return proc;
+
+    /* add something here */
+
+    return proc;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_process::start ()
+{
+    if ( NULL == this ) return rv_error;
+
+    // choose the correct state
+    if ( terminated || state > proc_leaving )
     {
         // must re-initialize the process
-        proc->state = proc_beginning;
+        state = proc_beginning;
     }
-    if ( proc->state > proc_entering )
+    if ( state > proc_entering )
     {
         // the process is already initialized, just put it back in
         // proc_entering mode
-        proc->state = proc_entering;
+        state = proc_entering;
     }
 
     // tell it to run
-    proc->terminated = bfalse;
-    proc->valid      = btrue;
-    proc->paused     = bfalse;
+    terminated = bfalse;
+    valid      = btrue;
+    paused     = bfalse;
 
-    return btrue;
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_process::kill( ego_process * proc )
+egoboo_rv ego_process::kill ()
 {
-    if ( NULL == proc ) return bfalse;
-    if ( !ego_process::validate( proc ) ) return btrue;
+    egoboo_rv val_state = validate();
+    if( rv_error == val_state ) return rv_error;
+    else if ( rv_fail == val_state ) return rv_success;
 
     // turn the process back on with an order to commit suicide
-    proc->paused = bfalse;
-    proc->killme = btrue;
+    paused = bfalse;
+    killme = btrue;
 
-    return btrue;
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_process::validate( ego_process * proc )
+egoboo_rv ego_process::validate ()
 {
-    if ( NULL == proc ) return bfalse;
+    if ( NULL == this ) return rv_error;
 
-    if ( !proc->valid || proc->terminated )
+    if ( !valid || terminated )
     {
-        ego_process::terminate( proc );
+        terminate();
     }
 
-    return proc->valid;
+    return valid ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_process::terminate( ego_process * proc )
+egoboo_rv ego_process::terminate ()
 {
-    if ( NULL == proc ) return bfalse;
+    if ( NULL == this ) return rv_error;
 
-    proc->valid      = bfalse;
-    proc->terminated = btrue;
-    proc->state      = proc_beginning;
+    valid      = bfalse;
+    terminated = btrue;
+    state      = proc_beginning;
 
-    return btrue;
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_process::pause( ego_process * proc )
-{
-    bool_t old_value;
-
-    if ( !ego_process::validate( proc ) ) return bfalse;
-
-    old_value    = proc->paused;
-    proc->paused = btrue;
-
-    return old_value != proc->paused;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_process::resume( ego_process * proc )
+egoboo_rv ego_process::pause ()
 {
     bool_t old_value;
 
-    if ( !ego_process::validate( proc ) ) return bfalse;
+    egoboo_rv val_state = validate();
+    if( rv_success != val_state ) return val_state;
 
-    old_value    = proc->paused;
-    proc->paused = bfalse;
+    old_value = paused;
+    paused    = btrue;
 
-    return old_value != proc->paused;
+    return old_value != paused ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_process::running( ego_process * proc )
+egoboo_rv ego_process::resume ()
 {
-    if ( !ego_process::validate( proc ) ) return bfalse;
+    bool_t old_value;
 
-    return !proc->paused;
+    egoboo_rv val_state = validate();
+    if( rv_success != val_state ) return val_state;
+
+    old_value = paused;
+    paused    = bfalse;
+
+    return old_value != paused ? rv_success : rv_fail;
 }
 
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_process::running ()
+{
+    egoboo_rv val_state = validate();
+    if( rv_success != val_state ) return val_state;
+
+    return !paused  ? rv_success : rv_fail;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+int ego_process_engine::run( ego_process * proc, double dt )
+{
+    bool_t valid;
+    int    result;
+
+    // in an invalid pointer, return an error
+    if ( NULL == proc || !proc->validate() ) return rv_error;
+
+    // update the timimg information
+    proc->dtime = dt;
+
+    // exit unless the pause is turned off
+    if ( proc->paused ) return rv_success;
+
+    // allow a process to go through several states
+    valid = btrue;
+    result = -1;
+    while ( valid && -1 == result )
+    {
+        egoboo_rv retval = do_run( proc );
+
+        result = proc->result;
+        valid  = proc->validate() && (rv_error != retval);
+    };
+
+    return proc->result;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_process_engine::do_run( ego_process * proc )
+{
+    // assume that the state can't be handled
+    egoboo_rv handled = rv_error;
+
+    // in an invalid pointer, return an error
+    if ( NULL == proc ) return rv_error;
+
+    // set the state to leaving on an error or on "kill me"
+    if ( rv_fail != proc->killme )
+    {
+        proc->state = proc_leaving;
+    }
+
+    // handle various states
+    handled = rv_error;
+    switch ( proc->state )
+    {
+        case proc_beginning:
+            handled = proc->do_beginning(  );
+            break;
+
+        case proc_entering:
+            handled = proc->do_entering(  );
+            break;
+
+        case proc_running:
+            handled = proc->do_running(  );
+            break;
+
+        case proc_leaving:
+            handled = proc->do_leaving(  );
+            break;
+
+        case proc_finishing:
+            handled = proc->do_finishing(  );
+            break;
+
+        default:
+            handled = rv_error;
+    }
+
+    return handled;
+}

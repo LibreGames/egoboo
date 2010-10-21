@@ -32,7 +32,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INSTANTIATE_LIST_STATIC( ego_tx_request, TxReqList, MAX_TX_TEXTURE_REQ );
+static t_cpp_list< ego_tx_request, MAX_TX_TEXTURE_REQ  > TxReqList;
 
 static bool_t _rpc_system_initialized = bfalse;
 static int    _rpc_system_guid;
@@ -191,8 +191,8 @@ void TxReqList_ctor()
     TREQ_REF ireq;
     size_t   idx;
 
-    TxReqList.free_count = 0;
-    TxReqList.used_count = 0;
+    TxReqList._free_count = 0;
+    TxReqList._used_count = 0;
     for ( idx = 0; idx < MAX_TX_TEXTURE_REQ; idx++ )
     {
         TxReqList.free_ref[idx] = MAX_TX_TEXTURE_REQ;
@@ -210,12 +210,12 @@ void TxReqList_ctor()
         ego_tx_request::ctor( preq, -1 );
 
         // set the index
-        preq->index = REF_TO_INT( ireq );
+        preq->index = (ireq ).get_value();
 
         // push the characters onto the free stack
-        TxReqList.free_ref[TxReqList.free_count] = TxReqList.free_count;
+        TxReqList.free_ref[TxReqList._free_count] = TxReqList._free_count;
 
-        TxReqList.free_count++;
+        TxReqList._free_count++;
         TxReqList.update_guid++;
     }
 }
@@ -232,8 +232,8 @@ void TxReqList_dtor()
         ego_tx_request::dtor( TxReqList.lst + ireq );
     }
 
-    TxReqList.free_count = 0;
-    TxReqList.used_count = 0;
+    TxReqList._free_count = 0;
+    TxReqList._used_count = 0;
     for ( idx = 0; idx < MAX_ENC; idx++ )
     {
         TxReqList.free_ref[idx] = MAX_TX_TEXTURE_REQ;
@@ -248,12 +248,12 @@ size_t TxReqList_get_free( int type )
 
     size_t retval = MAX_TX_TEXTURE_REQ;
 
-    if ( TxReqList.free_count > 0 )
+    if ( TxReqList._free_count > 0 )
     {
-        TxReqList.free_count--;
+        TxReqList._free_count--;
         TxReqList.update_guid++;
 
-        retval = TxReqList.free_ref[TxReqList.free_count];
+        retval = TxReqList.free_ref[TxReqList._free_count];
     }
 
     if ( retval >= 0 && retval < MAX_TX_TEXTURE_REQ )
@@ -283,7 +283,7 @@ bool_t TxReqList_free_one( int ireq )
         size_t cnt;
         // determine whether this character is already in the list of free textures
         // that is an error
-        for ( cnt = 0; cnt < TxReqList.free_count; cnt++ )
+        for ( cnt = 0; cnt < TxReqList._free_count; cnt++ )
         {
             if (( TREQ_REF )ireq == TxReqList.free_ref[cnt] ) return bfalse;
         }
@@ -292,11 +292,11 @@ bool_t TxReqList_free_one( int ireq )
 
     // push it on the free stack
     retval = bfalse;
-    if ( TxReqList.free_count < MAX_TX_TEXTURE_REQ )
+    if ( TxReqList._free_count < MAX_TX_TEXTURE_REQ )
     {
-        TxReqList.free_ref[TxReqList.free_count] = ireq;
+        TxReqList.free_ref[TxReqList._free_count] = ireq;
 
-        TxReqList.free_count++;
+        TxReqList._free_count++;
         TxReqList.update_guid++;
 
         retval = btrue;
@@ -317,7 +317,7 @@ bool_t TxReqList_timestep()
     bool_t retval;
 
     // grab the index the 1st ting
-    index = TxReqList.used_count - 1;
+    index = TxReqList._used_count - 1;
     if ( index < 0 ) return bfalse;
     preq = TxReqList.lst + ( TREQ_REF )index;
 

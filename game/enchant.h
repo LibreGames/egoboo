@@ -57,7 +57,7 @@ struct ego_eve : public ego_eve_data
 };
 
 /// Enchantment template
-DECLARE_STACK_EXTERN( ego_eve, EveStack, MAX_EVE );
+extern t_cpp_stack< ego_eve, MAX_EVE  > EveStack;
 
 #define VALID_EVE_RANGE( IEVE ) ( ((IEVE) >= 0) && ((IEVE) < MAX_EVE) )
 #define LOADED_EVE( IEVE )      ( VALID_EVE_RANGE( IEVE ) && EveStack.lst[IEVE].loaded )

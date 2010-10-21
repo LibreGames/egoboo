@@ -81,7 +81,20 @@ struct ego_GLvertex
 
     GLXvector4f col;      ///< the total vertex-dependent lighting (ambient + directional)
 
-    ego_GLvertex() { memset( this, 0, sizeof( *this ) ); }
+    ego_GLvertex() { clear(this); }
+
+    ego_GLvertex * ctor(ego_GLvertex * ptr) { return clear(ptr); }
+
+private:
+
+    static ego_GLvertex * clear(ego_GLvertex * ptr)
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -216,19 +229,21 @@ struct ego_billboard_data
     static bool_t               update( ego_billboard_data * pbb );
     static bool_t               printf_ttf( ego_billboard_data * pbb, TTF_Font *font, SDL_Color color, const char * format, ... );
 
+private:
+
     static ego_billboard_data * clear( ego_billboard_data * pbb );
 };
 
 typedef ego_billboard_data ego_billboard_data_t;
 
-DECLARE_LIST_EXTERN( ego_billboard_data, BillboardList, BILLBOARD_COUNT );
+extern t_cpp_list< ego_billboard_data, BILLBOARD_COUNT  > BillboardList;
 
 void               BillboardList_init_all();
 void               BillboardList_update_all();
 void               BillboardList_free_all();
 size_t             BillboardList_get_free( Uint32 lifetime_secs );
 bool_t             BillboardList_free_one( size_t ibb );
-ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF by_reference  ibb );
+ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF &  ibb );
 
 #define VALID_BILLBOARD_RANGE( IBB ) ( ( (IBB) >= 0 ) && ( (IBB) < BILLBOARD_COUNT ) )
 #define VALID_BILLBOARD( IBB )       ( VALID_BILLBOARD_RANGE( IBB ) && BillboardList.lst[IBB].valid )
@@ -295,24 +310,24 @@ void   do_flip_pages();
 
 void   dolist_sort( struct ego_camera * pcam, bool_t do_reflect );
 void   dolist_make( ego_mpd   * pmesh );
-bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF by_reference ichr );
-bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF by_reference iprt );
+bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr );
+bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt );
 
-void draw_one_icon( const TX_REF by_reference icontype, float x, float y, Uint8 sparkle );
+void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle );
 void draw_one_font( int fonttype, float x, float y );
 void draw_map_texture( float x, float y );
 int  draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks );
 int  draw_string( float x, float y, const char *format, ... );
 int  draw_wrap_string( const char *szText, float x, float y, int maxx );
-int  draw_status( const CHR_REF by_reference character, float x, float y );
+int  draw_status( const CHR_REF & character, float x, float y );
 void draw_text();
-void draw_one_character_icon( const CHR_REF by_reference item, float x, float y, bool_t draw_ammo );
+void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t draw_ammo );
 void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map );
 void draw_all_lines( struct ego_camera * pcam );
 
 void   render_world( struct ego_camera * pcam );
-void   render_shadow( const CHR_REF by_reference character );
-void   render_bad_shadow( const CHR_REF by_reference character );
+void   render_shadow( const CHR_REF & character );
+void   render_bad_shadow( const CHR_REF & character );
 void   render_scene( ego_mpd   * pmesh, struct ego_camera * pcam );
 bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond );
 bool_t render_aabb( ego_aabb * pbbox );

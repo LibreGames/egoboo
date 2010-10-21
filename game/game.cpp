@@ -362,7 +362,7 @@ void export_all_players( bool_t require_local )
     CHR_REF character, item;
 
     // Don't export if the module isn't running
-    if ( !ego_process::running( GProc ) ) return;
+    if ( (rv_success != GProc->running()) ) return;
 
     // Stop if export isn't valid
     if ( !PMod->exportvalid ) return;
@@ -437,10 +437,10 @@ void log_madused_vfs( const char *savename )
                 CAP_REF icap = pro_get_icap( cnt );
                 MAD_REF imad = pro_get_imad( cnt );
 
-                vfs_printf( hFileWrite, "%3d %32s %s\n", REF_TO_INT( cnt ), CapStack.lst[icap].classname, MadStack.lst[imad].name );
+                vfs_printf( hFileWrite, "%3d %32s %s\n", (cnt ).get_value(), CapStack.lst[icap].classname, MadStack.lst[imad].name );
             }
-            else if ( cnt <= 36 )    vfs_printf( hFileWrite, "%3d  %32s.\n", REF_TO_INT( cnt ), "Slot reserved for import players" );
-            else                    vfs_printf( hFileWrite, "%3d  %32s.\n", REF_TO_INT( cnt ), "Slot Unused" );
+            else if ( cnt <= 36 )    vfs_printf( hFileWrite, "%3d  %32s.\n", (cnt ).get_value(), "Slot reserved for import players" );
+            else                    vfs_printf( hFileWrite, "%3d  %32s.\n", (cnt ).get_value(), "Slot Unused" );
         }
 
         vfs_close( hFileWrite );
@@ -586,7 +586,7 @@ void activate_alliance_file_vfs( /*const char *modname*/ )
 
             fget_string( fileread, szTemp, SDL_arraysize( szTemp ) );
             teamb = ( szTemp[0] - 'A' ) % TEAM_MAX;
-            TeamStack.lst[teama].hatesteam[REF_TO_INT( teamb )] = bfalse;
+            TeamStack.lst[teama].hatesteam[(teamb ).get_value()] = bfalse;
         }
 
         vfs_close( fileread );
@@ -615,7 +615,7 @@ void update_all_objects()
 //--------------------------------------------------------------------------------------------
 void move_all_objects()
 {
-    mesh_mpdfx_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
 
     move_all_particles();
     move_all_characters();
@@ -797,7 +797,7 @@ int update_game()
             {
                 if ( cfg.difficulty < GAME_HARD && local_stats.allpladead && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revivetimer )
                 {
-                    respawn_character( ichr );
+                    ego_chr::respawn( ichr );
                     pchr->experience *= EXPKEEP;        // Apply xp Penalty
 
                     if ( cfg.difficulty > GAME_EASY )
@@ -926,7 +926,7 @@ void game_update_timers()
     ticks_now  = egoboo_get_ticks();
 
     // check to make sure that the game is running
-    if ( !ego_process::running( GProc ) || GProc->mod_paused )
+    if ( (rv_success != GProc->running()) || GProc->mod_paused )
     {
         // for a local game, force the function to ignore the accumulation of time
         // until you re-join the game
@@ -1044,7 +1044,7 @@ int game_do_menu( ego_menu_process * mproc )
         // force the menu to be displayed immediately when the game stops
         mproc->dtime = 1.0f / ( float )cfg.framelimit;
     }
-    else if ( !ego_process::running( GProc ) )
+    else if ( rv_success != GProc->running() )
     {
         // the menu's frame rate is controlled by a timer
         mproc->ticks_now = SDL_GetTicks();
@@ -1098,11 +1098,17 @@ ego_game_process * ego_game_process::ctor( ego_game_process * gproc )
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_game_process::do_beginning( ego_game_process * gproc )
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_game_process::do_beginning()
 {
+    if( NULL == this )  return rv_error;
+    result = -1;
+
+    if ( !validate() ) return rv_error;
+
     BillboardList_init_all();
 
-    gproc->escape_latch = bfalse;
+    escape_latch = bfalse;
 
     // initialize math objects
     make_randie();
@@ -1134,12 +1140,12 @@ int ego_game_process::do_beginning( ego_game_process * gproc )
     if ( !game_begin_module( pickedmodule_path, ( Uint32 )~0 ) )
     {
         // failure - kill the game process
-        ego_process::kill( gproc );
-        ego_process::resume( MProc );
+        kill();
+        MProc->resume();
     }
 
     // Initialize the process
-    gproc->valid = btrue;
+    valid = btrue;
 
     // initialize all the profile variables
     PROFILE_RESET( game_update_loop );
@@ -1177,25 +1183,36 @@ int ego_game_process::do_beginning( ego_game_process * gproc )
 
     ego_obj_BSP::ctor( &ego_obj_BSP::root, &mpd_BSP::root );
 
-    return 1;
+    // go to the next state
+    result = 0;
+    state = proc_entering;
+
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_game_process::do_running( ego_game_process * gproc )
+egoboo_rv ego_game_process::do_running()
 {
     int update_loops = 0;
 
-    if ( !ego_process::validate( gproc ) ) return -1;
+    if( NULL == this )  return rv_error;
+    result = -1;
 
-    gproc->was_active  = gproc->valid;
+    if ( !validate() ) return rv_error;
 
-    if ( gproc->paused ) return 0;
+    was_active  = valid;
 
-    gproc->ups_ticks_now = SDL_GetTicks();
-    if (( !single_frame_mode && gproc->ups_ticks_now > gproc->ups_ticks_next ) || ( single_frame_mode && single_update_requested ) )
+    if ( paused )
+    {
+        result = 0;
+        return rv_success;
+    }
+
+    ups_ticks_now = SDL_GetTicks();
+    if (( !single_frame_mode && ups_ticks_now > ups_ticks_next ) || ( single_frame_mode && single_update_requested ) )
     {
         // UPS limit
-        gproc->ups_ticks_next = gproc->ups_ticks_now + UPDATE_SKIP / 4;
+        ups_ticks_next = ups_ticks_now + UPDATE_SKIP / 4;
 
         PROFILE_BEGIN( game_update_loop );
         {
@@ -1209,7 +1226,7 @@ int ego_game_process::do_running( ego_game_process * gproc )
             game_update_timers();
 
             // do the updates
-            if ( gproc->mod_paused && !network_initialized() )
+            if ( mod_paused && !network_initialized() )
             {
                 clock_wld = clock_all;
             }
@@ -1287,12 +1304,12 @@ int ego_game_process::do_running( ego_game_process * gproc )
     }
 
     // Do the display stuff
-    gproc->fps_ticks_now = SDL_GetTicks();
-    if (( !single_frame_mode && gproc->fps_ticks_now > gproc->fps_ticks_next ) || ( single_frame_mode && single_frame_requested ) )
+    fps_ticks_now = SDL_GetTicks();
+    if (( !single_frame_mode && fps_ticks_now > fps_ticks_next ) || ( single_frame_mode && single_frame_requested ) )
     {
         // FPS limit
         float  frameskip = ( float )TICKS_PER_SEC / ( float )cfg.framelimit;
-        gproc->fps_ticks_next = gproc->fps_ticks_now + frameskip;
+        fps_ticks_next = fps_ticks_now + frameskip;
 
         PROFILE_BEGIN( gfx_loop );
         {
@@ -1313,11 +1330,11 @@ int ego_game_process::do_running( ego_game_process * gproc )
         single_frame_requested = bfalse;
     }
 
-    if ( gproc->escape_requested )
+    if ( escape_requested )
     {
-        gproc->escape_requested = bfalse;
+        escape_requested = bfalse;
 
-        if ( !gproc->escape_latch )
+        if ( !escape_latch )
         {
             if ( PMod->beat )
             {
@@ -1328,24 +1345,36 @@ int ego_game_process::do_running( ego_game_process * gproc )
                 game_begin_menu( MProc, emnu_GamePaused );
             }
 
-            gproc->escape_latch = btrue;
-            gproc->mod_paused   = btrue;
+            escape_latch = btrue;
+            mod_paused   = btrue;
         }
     }
 
-    return 0;
+    // requiring result == 0 will never allow this to self-terminate
+    result = 0;
+
+    // go to the next state?
+    if( 1 == result )
+    {
+        state = proc_leaving;
+    }
+
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_game_process::do_leaving( ego_game_process * gproc )
+egoboo_rv ego_game_process::do_leaving()
 {
-    if ( !ego_process::validate( gproc ) ) return -1;
+    if( NULL == this )  return rv_error;
+    result = -1;
+
+    if ( !validate() ) return rv_error;
 
     // get rid of all module data
     game_quit_module();
 
     // resume the menu
-    ego_process::resume( MProc );
+    MProc->resume();
 
     // deallocate any dynamically allocated collision memory
     collision_system_end();
@@ -1376,68 +1405,42 @@ int ego_game_process::do_leaving( ego_game_process * gproc )
     PROFILE_FREE( PassageStack_check_music );
     PROFILE_FREE( cl_talkToHost );
 
-    return 1;
+    result = 1;
+
+    // go to the next state
+    if( 1 == result )
+    {
+        state  = proc_finishing;
+        killme = bfalse;
+    }
+
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_game_process::Run( ego_game_process * gproc, double frameDuration )
+egoboo_rv ego_game_process::do_finishing()
 {
-    int result = 0, proc_result = 0;
+    if( NULL == this )  return rv_error;
+    result = -1;
 
-    if ( !ego_process::validate( gproc ) ) return -1;
-    gproc->dtime = frameDuration;
+    if ( !validate() ) return rv_error;
 
-    if ( gproc->paused ) return 0;
-
-    if ( gproc->killme )
+    // resume the menu process
+    if( NULL != MProc )
     {
-        gproc->state = proc_leaving;
+        MProc->resume();
     }
 
-    switch ( gproc->state )
-    {
-        case proc_beginning:
-            proc_result = ego_game_process::do_beginning( gproc );
+    // shut off the game process
+    terminate();
 
-            if ( 1 == proc_result )
-            {
-                gproc->state = proc_entering;
-            }
-            break;
 
-        case proc_entering:
-            // proc_result = ego_game_process::do_entering( gproc );
+    result = 0;
 
-            gproc->state = proc_running;
-            break;
-
-        case proc_running:
-            proc_result = ego_game_process::do_running( gproc );
-
-            if ( 1 == proc_result )
-            {
-                gproc->state = proc_leaving;
-            }
-            break;
-
-        case proc_leaving:
-            proc_result = ego_game_process::do_leaving( gproc );
-
-            if ( 1 == proc_result )
-            {
-                gproc->state  = proc_finishing;
-                gproc->killme = bfalse;
-            }
-            break;
-
-        case proc_finishing:
-            ego_process::terminate( gproc );
-            ego_process::resume( MProc );
-            break;
-    }
-
-    return result;
+    return rv_success;
 }
+
+
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1718,8 +1721,8 @@ void do_damage_tiles()
         if ( IS_ATTACHED_PCHR( pchr ) ) continue;
 
         // are we on a damage tile?
-        if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
-        if ( 0 == mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_DAMAGE ) ) continue;
+        if ( !ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
+        if ( 0 == ego_mpd::test_fx( PMesh, pchr->onwhichgrid, MPDFX_DAMAGE ) ) continue;
 
         // are we low enough?
         if ( pchr->pos.z > pchr->enviro.grid_level + DAMAGERAISE ) continue;
@@ -1896,7 +1899,7 @@ void do_weather_spawn_particles()
             ego_player * tmp_ppla = NULL;
             ego_chr    * tmp_pchr = NULL;
 
-            weather_ipla = ( PLA_REF )(( REF_TO_INT( weather_ipla ) + 1 ) % MAX_PLAYER );
+            weather_ipla = ( PLA_REF )(( (weather_ipla ).get_value() + 1 ) % MAX_PLAYER );
 
             tmp_ppla = PlaStack.lst + weather_ipla;
             if ( !tmp_ppla->valid ) continue;
@@ -2636,7 +2639,7 @@ void tilt_characters_to_terrain()
     {
         if ( !INGAME_CHR( cnt ) ) continue;
 
-        if ( pchr->stickybutt && mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
+        if ( pchr->stickybutt && ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) )
         {
             twist = PMesh->gmem.grid_list[pchr->onwhichgrid].twist;
             pchr->ori.map_facing_y = map_twist_y[twist];
@@ -2917,7 +2920,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
     if ( psp_info->attach == ATTACH_NONE )
     {
         // Free character
-        psp_info->parent = REF_TO_INT( new_object );
+        psp_info->parent = (new_object ).get_value();
         make_one_character_matrix( new_object );
     }
 
@@ -2971,7 +2974,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             {
                 if ( pobject->profile_ref <= import_data.max_slot && pobject->profile_ref < MAX_PROFILE )
                 {
-                    int islot = REF_TO_INT( pobject->profile_ref );
+                    int islot = (pobject->profile_ref ).get_value();
 
                     if ( import_data.slot_lst[islot] == local_import_slot[tnc] )
                     {
@@ -3543,15 +3546,15 @@ egoboo_rv game_update_imports()
         if ( tnc == loadplayer_count )
         {
             retval = rv_fail;
-            log_warning( "game_update_imports() - cannot find exported file for \"%s\" (\"%s\") \n", ChrObjList.lst[character].base_name, str_encode_path( ChrObjList.get_data( character ).name ) ) ;
+            log_warning( "game_update_imports() - cannot find exported file for \"%s\" (\"%s\") \n", ChrObjList.get_obj( character ).base_name, str_encode_path( ChrObjList.get_data( character ).name ) ) ;
             continue;
         }
 
         // grab the controls from the currently loaded players
         // calculate the slot from the current player count
-        player_idx = REF_TO_INT( player );
+        player_idx = (player ).get_value();
         local_import_control[player_idx] = ppla->device.bits;
-        local_import_slot[player_idx]    = REF_TO_INT( player ) * MAXIMPORTPERPLAYER;
+        local_import_slot[player_idx]    = (player ).get_value() * MAXIMPORTPERPLAYER;
         player++;
 
         // Copy the character to the import directory
@@ -3599,7 +3602,7 @@ void game_release_module_data()
     passage_system_clear();
 
     ptmp = PMesh;
-    mesh_destroy( &ptmp );
+    ego_mpd::destroy( &ptmp );
 
     // restore the original statically allocated ego_mpd   header
     PMesh = _mesh + 0;
@@ -3756,14 +3759,14 @@ bool_t game_begin_menu( ego_menu_process * mproc, which_menu_t which )
 {
     if ( NULL == mproc ) return bfalse;
 
-    if ( !ego_process::running( mproc ) )
+    if ( !mproc->running() )
     {
         GProc->menu_depth = mnu_get_menu_depth();
     }
 
     if ( mnu_begin_menu( which ) )
     {
-        ego_process::start( mproc );
+        mproc->start( );
     }
 
     return btrue;
@@ -3776,7 +3779,7 @@ void game_end_menu( ego_menu_process * mproc )
 
     if ( mnu_get_menu_depth() <= GProc->menu_depth )
     {
-        ego_process::resume( mproc );
+        mproc->resume();
         GProc->menu_depth = -1;
     }
 }
@@ -3841,13 +3844,13 @@ float get_mesh_level( ego_mpd   * pmesh, float x, float y, bool_t waterwalk )
 
     float zdone;
 
-    zdone = mesh_get_level( pmesh, x, y );
+    zdone = ego_mpd::get_level( pmesh, x, y );
 
     if ( waterwalk && water.surface_level > zdone && water.is_water )
     {
-        int tile = mesh_get_tile( pmesh, x, y );
+        int tile = ego_mpd::get_tile( pmesh, x, y );
 
-        if ( 0 != mesh_test_fx( pmesh, tile, MPDFX_WATER ) )
+        if ( 0 != ego_mpd::test_fx( pmesh, tile, MPDFX_WATER ) )
         {
             zdone = water.surface_level;
         }
@@ -4322,10 +4325,10 @@ bool_t collide_ray_with_mesh( ego_line_of_sight_info * plos )
         }
 
         // check to see if the "ray" collides with the mesh
-        fan = mesh_get_tile_int( PMesh, ix, iy );
+        fan = ego_mpd::get_tile_int( PMesh, ix, iy );
         if ( INVALID_TILE != fan && fan != fan_last )
         {
-            Uint32 collide_fx = mesh_test_fx( PMesh, fan, plos->stopped_by );
+            Uint32 collide_fx = ego_mpd::test_fx( PMesh, fan, plos->stopped_by );
             // collide the ray with the mesh
 
             if ( 0 != collide_fx )
@@ -5179,13 +5182,13 @@ bool_t do_item_pickup( const CHR_REF & ichr, const CHR_REF & iitem )
 //--------------------------------------------------------------------------------------------
 float get_mesh_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y, bool_t waterwalk )
 {
-    float zdone = mesh_get_max_vertex_0( pmesh, grid_x, grid_y );
+    float zdone = ego_mpd::get_max_vertex_0( pmesh, grid_x, grid_y );
 
     if ( waterwalk && water.surface_level > zdone && water.is_water )
     {
-        int tile = mesh_get_tile( pmesh, grid_x, grid_y );
+        int tile = ego_mpd::get_tile( pmesh, grid_x, grid_y );
 
-        if ( 0 != mesh_test_fx( pmesh, tile, MPDFX_WATER ) )
+        if ( 0 != ego_mpd::test_fx( pmesh, tile, MPDFX_WATER ) )
         {
             zdone = water.surface_level;
         }
@@ -5197,13 +5200,13 @@ float get_mesh_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y, bool_t w
 //--------------------------------------------------------------------------------------------
 float get_mesh_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, ego_oct_bb   * pbump, bool_t waterwalk )
 {
-    float zdone = mesh_get_max_vertex_1( pmesh, grid_x, grid_y, pbump->mins[OCT_X], pbump->mins[OCT_Y], pbump->maxs[OCT_X], pbump->maxs[OCT_Y] );
+    float zdone = ego_mpd::get_max_vertex_1( pmesh, grid_x, grid_y, pbump->mins[OCT_X], pbump->mins[OCT_Y], pbump->maxs[OCT_X], pbump->maxs[OCT_Y] );
 
     if ( waterwalk && water.surface_level > zdone && water.is_water )
     {
-        int tile = mesh_get_tile( pmesh, grid_x, grid_y );
+        int tile = ego_mpd::get_tile( pmesh, grid_x, grid_y );
 
-        if ( 0 != mesh_test_fx( pmesh, tile, MPDFX_WATER ) )
+        if ( 0 != ego_mpd::test_fx( pmesh, tile, MPDFX_WATER ) )
         {
             zdone = water.surface_level;
         }
@@ -5308,7 +5311,7 @@ float get_chr_level( ego_mpd   * pmesh, ego_chr * pchr )
             ftmp = -grid_x + grid_y;
             if ( ftmp < bump.mins[OCT_YX] || ftmp > bump.maxs[OCT_YX] ) continue;
 
-            itile = mesh_get_tile_int( pmesh, ix, iy );
+            itile = ego_mpd::get_tile_int( pmesh, ix, iy );
             if ( INVALID_TILE == itile ) continue;
 
             grid_vert_x[grid_vert_count] = ix;

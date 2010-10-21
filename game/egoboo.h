@@ -193,9 +193,13 @@ struct ego_main_process_data
 
     char * argv0;
 
-    ego_main_process_data() { ego_main_process_data::ctor( this ); }
+    ego_main_process_data() { clear( this ); }
 
-    static ego_main_process_data * ctor( ego_main_process_data * ptr )
+    static ego_main_process_data * ctor( ego_main_process_data * ptr ) { return clear( ptr ); }
+
+private:
+
+    static ego_main_process_data * clear( ego_main_process_data * ptr )
     {
         if ( NULL == ptr ) return NULL;
 
@@ -209,9 +213,20 @@ struct ego_main_process_data
 
 struct ego_main_process : public ego_main_process_data, public ego_process
 {
+    ego_main_process() { ctor(this); }
+
     static ego_main_process * init( ego_main_process * eproc, int argc, char **argv );
 
     static ego_main_process * ctor( ego_main_process * ptr )
+    {
+        if( NULL == ptr ) return ptr;
+
+        /* add something here */
+
+        return ptr;
+    }
+
+    static ego_main_process * do_ctor( ego_main_process * ptr )
     {
         ego_process::ctor( ptr );
         ego_main_process_data::ctor( ptr );
@@ -221,10 +236,10 @@ struct ego_main_process : public ego_main_process_data, public ego_process
 
     static int Run( ego_main_process * eproc, double frameDuration );
 
-    static int do_beginning( ego_main_process * eproc );
-    static int do_running( ego_main_process * eproc );
-    static int do_leaving( ego_main_process * eproc );
-    static int do_running( ego_main_process * eproc, double frameDuration );
+    virtual egoboo_rv do_beginning();
+    virtual egoboo_rv do_running();
+    virtual egoboo_rv do_leaving();
+    virtual egoboo_rv do_finishing();
 };
 
 extern ego_main_process * EProc;

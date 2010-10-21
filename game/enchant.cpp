@@ -41,7 +41,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_eve, EveStack, MAX_EVE );
+t_cpp_stack< ego_eve, MAX_EVE  > EveStack;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -244,7 +244,7 @@ bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         ENC_REF ienc_last, ienc_now;
 
         ego_chr * ptarget =  ChrObjList.get_valid_pdata( penc->target_ref );
-        if( NULL != ptarget )
+        if ( NULL != ptarget )
         {
             if ( ptarget->firstenchant == ienc )
             {
@@ -658,7 +658,7 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
                     case SETMORPH:
                         // Special handler for morph
                         penc->setsave[value_idx] = ptarget->skin;
-                        change_character( character, profile, 0, ENC_LEAVE_ALL ); // ENC_LEAVE_FIRST);
+                        ego_chr::change_profile( character, profile, 0, ENC_LEAVE_ALL ); // ENC_LEAVE_FIRST);
                         break;
 
                     case SETCHANNEL:
@@ -870,7 +870,7 @@ ego_enc * ego_enc::do_init( ego_enc * penc )
     // Convert from local pdata->eve_ref to global enchant profile
     if ( !LOADED_EVE( pdata->eve_ref ) )
     {
-        log_debug( "spawn_one_enchant() - cannot spawn enchant with invalid enchant template (\"eve\") == %d\n", REF_TO_INT( pdata->eve_ref ) );
+        log_debug( "spawn_one_enchant() - cannot spawn enchant with invalid enchant template (\"eve\") == %d\n", (pdata->eve_ref ).get_value() );
 
         return NULL;
     }
@@ -1188,24 +1188,18 @@ ego_obj_enc * ego_obj_enc::run_activate( ego_obj_enc * pobj, int max_iterations 
     if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if the enchant is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_procing + 1 ) )
+    if ( pbase->get_proc().action > ( int )( ego_obj_processing + 1 ) )
     {
         ego_obj_enc * tmp_enc = ego_obj_enc::run_deconstruct( pobj, max_iterations );
         if ( tmp_enc == pobj ) return NULL;
     }
 
     iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action < ego_obj_procing && iterations < max_iterations )
+    while ( NULL != pobj && pbase->get_proc().action < ego_obj_processing && iterations < max_iterations )
     {
         ego_obj_enc * ptmp = ego_obj_enc::run( pobj );
         if ( ptmp != pobj ) return NULL;
         iterations++;
-    }
-
-    EGOBOO_ASSERT( pbase->get_proc().action == ego_obj_procing );
-    if ( pbase->get_proc().action == ego_obj_procing )
-    {
-        EncObjList.add_used( GET_REF_PENC_OBJ( pobj ) );
     }
 
     return pobj;
@@ -1302,7 +1296,7 @@ ego_obj_enc * ego_obj_enc::run( ego_obj_enc * pobj )
             pobj = ego_obj_enc::do_initializing( pobj );
             break;
 
-        case ego_obj_procing:
+        case ego_obj_processing:
             pobj = ego_obj_enc::do_processing( pobj );
             break;
 
@@ -1323,9 +1317,9 @@ ego_obj_enc * ego_obj_enc::run( ego_obj_enc * pobj )
     {
         pbase->update_guid = INVALID_UPDATE_GUID;
     }
-    else if ( ego_obj_procing == pbase->get_proc().action )
+    else if ( ego_obj_processing == pbase->get_proc().action )
     {
-        pbase->update_guid = EncObjList.update_guid;
+        pbase->update_guid = EncObjList.update_guid();
     }
 
     return pobj;
@@ -1373,7 +1367,7 @@ ego_obj_enc * ego_obj_enc::do_initializing( ego_obj_enc * pobj )
     if ( NULL == penc ) return pobj;
 
     // request that we be turned on
-    pbase->get_req().turn_me_on = btrue;
+    pbase->proc_req_on( btrue );
 
     // do something about being turned on
     if ( 0 == EncObjList.loop_depth )
@@ -1526,7 +1520,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
 
         if ( !LOADED_PRO( loc_profile ) )
         {
-            log_warning( "spawn_one_enchant() - no valid profile for the spawning character \"%s\"(%d).\n", ChrObjList.lst[spawner].base_name, REF_TO_INT( spawner ) );
+            log_warning( "spawn_one_enchant() - no valid profile for the spawning character \"%s\"(%d).\n", ChrObjList.get_obj( spawner ).base_name, (spawner ).get_value() );
             return ( ENC_REF )MAX_ENC;
         }
     }
@@ -1534,7 +1528,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     eve_ref = pro_get_ieve( loc_profile );
     if ( !LOADED_EVE( eve_ref ) )
     {
-        log_warning( "spawn_one_enchant() - the object \"%s\"(%d) does not have an enchant profile.\n", ProList.lst[loc_profile].name, REF_TO_INT( loc_profile ) );
+        log_warning( "spawn_one_enchant() - the object \"%s\"(%d) does not have an enchant profile.\n", ProList.lst[loc_profile].name, (loc_profile ).get_value() );
 
         return ( ENC_REF )MAX_ENC;
     }
@@ -1761,7 +1755,7 @@ void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
 
         case SETMORPH:
             // Need special handler for when this is removed
-            change_character( character, ptarget->basemodel_ref, penc->setsave[value_idx], ENC_LEAVE_ALL );
+            ego_chr::change_profile( character, ptarget->basemodel_ref, penc->setsave[value_idx], ENC_LEAVE_ALL );
             break;
 
         case SETCHANNEL:
@@ -1974,7 +1968,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         }
 
         // fix any loops in the enchant list
-        if ( ego_enc_used[REF_TO_INT( ego_enc_next )] )
+        if ( ego_enc_used[(ego_enc_next ).get_value()] )
         {
             EncObjList.get_data( ego_enc_now ).nextenchant_ref = MAX_ENC;
             break;
@@ -1986,12 +1980,12 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         if ( !INGAME_ENC( ego_enc_now ) )
         {
             remove_enchant( ego_enc_now, ego_enc_parent );
-            ego_enc_used[REF_TO_INT( ego_enc_now )] = btrue;
+            ego_enc_used[(ego_enc_now ).get_value()] = btrue;
         }
         else
         {
             // store this enchant in the list of used enchants
-            ego_enc_used[REF_TO_INT( ego_enc_now )] = btrue;
+            ego_enc_used[(ego_enc_now ).get_value()] = btrue;
 
             // keep track of the first valid enchant
             if ( MAX_ENC == first_valid_enchant )
@@ -2178,7 +2172,7 @@ ego_obj_enc * ego_obj_enc::dealloc( ego_obj_enc * pobj )
     // deallocate this struct
     if ( !VALID_PBASE( pobj ) ) return pobj;
 
-    /* do something here */
+    /* add something here */
 
     return pobj;
 }
@@ -2203,7 +2197,7 @@ ego_obj_enc * ego_obj_enc::alloc( ego_obj_enc * pobj )
     // allocate this struct
     if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
 
-    /* do something here */
+    /* add something here */
 
     return pobj;
 }

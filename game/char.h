@@ -487,7 +487,7 @@ public:
     static ego_chr *  update_hide( ego_chr * pchr );
     static egoboo_rv  update_collision_size( ego_chr * pchr, bool_t update_matrix );
     static bool_t     matrix_valid( ego_chr * pchr );
-    static bool_t     get_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp );
+    static bool_t     generate_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp );
 
     // generic accessors
     static void set_enviro_grid_level( ego_chr * pchr, float level );
@@ -503,22 +503,22 @@ public:
     static bool_t  set_pos( ego_chr * pchr, fvec3_base_t pos );
     static float * get_pos_v( ego_chr * pchr );
     static bool_t set_maxaccel( ego_chr * pchr, float new_val );
-    static int     get_price( const CHR_REF by_reference ichr );
-    static CHR_REF get_lowest_attachment( const CHR_REF by_reference ichr, bool_t non_item );
-    static const char * get_name( const CHR_REF by_reference ichr, Uint32 bits );
-    static const char * get_dir_name( const CHR_REF by_reference ichr );
+    static int     get_price( const CHR_REF & ichr );
+    static CHR_REF get_lowest_attachment( const CHR_REF & ichr, bool_t non_item );
+    static const char * get_name( const CHR_REF & ichr, Uint32 bits );
+    static const char * get_dir_name( const CHR_REF & ichr );
     static int get_skill( ego_chr *pchr, IDSZ whichskill );
-    static const char * get_gender_possessive( const CHR_REF by_reference ichr, char buffer[], size_t buffer_len );
-    static const char * get_gender_name( const CHR_REF by_reference ichr, char buffer[], size_t buffer_len );
+    static const char * get_gender_possessive( const CHR_REF & ichr, char buffer[], size_t buffer_len );
+    static const char * get_gender_name( const CHR_REF & ichr, char buffer[], size_t buffer_len );
 
     // these accessor functions are too complex to be inlined
-    static MAD_REF        get_imad( const CHR_REF by_reference ichr );
-    static struct ego_mad * get_pmad( const CHR_REF by_reference ichr );
-    static TX_REF         get_icon_ref( const CHR_REF by_reference item );
+    static MAD_REF        get_imad( const CHR_REF & ichr );
+    static struct ego_mad * get_pmad( const CHR_REF & ichr );
+    static TX_REF         get_icon_ref( const CHR_REF & item );
 
     // animation stuff
     static Uint32    get_framefx( ego_chr * pchr );
-    static void      set_frame( const CHR_REF by_reference character, int action, int frame, int lip );
+    static void      set_frame( const CHR_REF & character, int action, int frame, int lip );
     static egoboo_rv set_action( ego_chr * pchr, int action, bool_t action_ready, bool_t override_action );
     static egoboo_rv set_anim( ego_chr * pchr, int action, int frame, bool_t action_ready, bool_t override_action );
     static egoboo_rv start_anim( ego_chr * pchr, int action, bool_t action_ready, bool_t override_action );
@@ -537,27 +537,27 @@ public:
 
     // INLINE functions
 
-    static INLINE PRO_REF  get_ipro( const CHR_REF by_reference ichr );
-    static INLINE CAP_REF  get_icap( const CHR_REF by_reference ichr );
-    static INLINE EVE_REF  get_ieve( const CHR_REF by_reference ichr );
-    static INLINE PIP_REF  get_ipip( const CHR_REF by_reference ichr, int ipip );
-    static INLINE TEAM_REF get_iteam( const CHR_REF by_reference ichr );
-    static INLINE TEAM_REF get_iteam_base( const CHR_REF by_reference ichr );
+    static INLINE PRO_REF  get_ipro( const CHR_REF & ichr );
+    static INLINE CAP_REF  get_icap( const CHR_REF & ichr );
+    static INLINE EVE_REF  get_ieve( const CHR_REF & ichr );
+    static INLINE PIP_REF  get_ipip( const CHR_REF & ichr, int ipip );
+    static INLINE TEAM_REF get_iteam( const CHR_REF & ichr );
+    static INLINE TEAM_REF get_iteam_base( const CHR_REF & ichr );
 
-    static INLINE ego_pro * get_ppro( const CHR_REF by_reference ichr );
-    static INLINE ego_cap * get_pcap( const CHR_REF by_reference ichr );
-    static INLINE ego_eve * get_peve( const CHR_REF by_reference ichr );
-    static INLINE ego_pip * get_ppip( const CHR_REF by_reference ichr, int ipip );
+    static INLINE ego_pro * get_ppro( const CHR_REF & ichr );
+    static INLINE ego_cap * get_pcap( const CHR_REF & ichr );
+    static INLINE ego_eve * get_peve( const CHR_REF & ichr );
+    static INLINE ego_pip * get_ppip( const CHR_REF & ichr, int ipip );
 
     static INLINE Mix_Chunk      * get_chunk_ptr( ego_chr * pchr, int index );
-    static INLINE Mix_Chunk      * get_chunk( const CHR_REF by_reference ichr, int index );
-    static INLINE ego_team         * get_pteam( const CHR_REF by_reference ichr );
-    static INLINE ego_team         * get_pteam_base( const CHR_REF by_reference ichr );
-    static INLINE ego_ai_state     * get_pai( const CHR_REF by_reference ichr );
-    static INLINE ego_chr_instance * get_pinstance( const CHR_REF by_reference ichr );
+    static INLINE Mix_Chunk      * get_chunk( const CHR_REF & ichr, int index );
+    static INLINE ego_team         * get_pteam( const CHR_REF & ichr );
+    static INLINE ego_team         * get_pteam_base( const CHR_REF & ichr );
+    static INLINE ego_ai_state     * get_pai( const CHR_REF & ichr );
+    static INLINE ego_chr_instance * get_pinstance( const CHR_REF & ichr );
 
-    static INLINE IDSZ       get_idsz( const CHR_REF by_reference ichr, int type );
-    static INLINE latch_2d_t convert_latch_2d( const ego_chr * pchr, const latch_2d_t by_reference src );
+    static INLINE IDSZ       get_idsz( const CHR_REF & ichr, int type );
+    static INLINE latch_2d_t convert_latch_2d( const ego_chr * pchr, const latch_2d_t & src );
 
     static INLINE void update_size( ego_chr * pchr );
     static INLINE void init_size( ego_chr * pchr, ego_cap * pcap );
@@ -567,14 +567,23 @@ public:
     static INLINE void set_height( ego_chr * pchr, float height );
     static INLINE void set_fat( ego_chr * pchr, float fat );
 
-    static INLINE bool_t has_idsz( const CHR_REF by_reference ichr, IDSZ idsz );
-    static INLINE bool_t is_type_idsz( const CHR_REF by_reference ichr, IDSZ idsz );
-    static INLINE bool_t has_vulnie( const CHR_REF by_reference item, const PRO_REF by_reference weapon_profile );
+    static INLINE bool_t has_idsz( const CHR_REF & ichr, IDSZ idsz );
+    static INLINE bool_t is_type_idsz( const CHR_REF & ichr, IDSZ idsz );
+    static INLINE bool_t has_vulnie( const CHR_REF & item, const PRO_REF & weapon_profile );
 
     static INLINE bool_t get_MatUp( ego_chr *pchr, fvec3_t   * pvec );
     static INLINE bool_t get_MatRight( ego_chr *pchr, fvec3_t   * pvec );
     static INLINE bool_t get_MatForward( ego_chr *pchr, fvec3_t   * pvec );
     static INLINE bool_t get_MatTranslate( ego_chr *pchr, fvec3_t   * pvec );
+
+    static egoboo_rv update_instance( ego_chr * pchr );
+
+    static void change_profile( const CHR_REF & ichr, const PRO_REF & profile_new, Uint8 skin, Uint8 leavewhich );
+
+    static void respawn( const CHR_REF & character );
+
+    static int change_armor( const CHR_REF & character, int skin );
+
 
 protected:
 
@@ -597,6 +606,10 @@ protected:
     static ego_chr * do_process( ego_chr * pchr );
     static ego_chr * do_deinit( ego_chr * pchr );
     static ego_chr * do_dtor( ego_chr * pchr );
+
+    static int change_skin( const CHR_REF & character, Uint32 skin );
+
+    static egoboo_rv matrix_cache_needs_update( ego_chr * pchr, ego_matrix_cache * pmc );
 
 private:
 
@@ -669,6 +682,7 @@ struct ego_obj_chr : public ego_obj
     /// Ask the "egoboo object process" to terminate itself
     static bool_t        request_terminate( const CHR_REF & ichr );
 
+
 protected:
 
     //---- memory management
@@ -704,11 +718,11 @@ private:
 // list definitions
 //--------------------------------------------------------------------------------------------
 
-DECLARE_STACK_EXTERN( ego_team, TeamStack, TEAM_MAX );
+extern t_cpp_stack< ego_team, TEAM_MAX  > TeamStack;
 
 #define VALID_TEAM_RANGE( ITEAM ) ( ((ITEAM) >= 0) && ((ITEAM) < TEAM_MAX) )
 
-DECLARE_STACK_EXTERN( ego_cap,  CapStack,  MAX_PROFILE );
+extern t_cpp_stack< ego_cap, MAX_PROFILE  > CapStack;
 
 #define VALID_CAP_RANGE( ICAP ) ( ((ICAP) >= 0) && ((ICAP) < MAX_CAP) )
 #define LOADED_CAP( ICAP )       ( VALID_CAP_RANGE( ICAP ) && CapStack.lst[ICAP].loaded )
@@ -720,34 +734,34 @@ DECLARE_STACK_EXTERN( ego_cap,  CapStack,  MAX_PROFILE );
 void character_system_begin();
 void character_system_end();
 
-void drop_money( const CHR_REF by_reference character, int money );
-void call_for_help( const CHR_REF by_reference character );
-void give_experience( const CHR_REF by_reference character, int amount, xp_type xptype, bool_t override_invictus );
-void give_team_experience( const TEAM_REF by_reference team, int amount, xp_type xptype );
-int  damage_character( const CHR_REF by_reference character, FACING_T direction,
+void drop_money( const CHR_REF & character, int money );
+void call_for_help( const CHR_REF & character );
+void give_experience( const CHR_REF & character, int amount, xp_type xptype, bool_t override_invictus );
+void give_team_experience( const TEAM_REF & team, int amount, xp_type xptype );
+int  damage_character( const CHR_REF & character, FACING_T direction,
                        IPair damage, Uint8 damagetype, TEAM_REF team,
                        CHR_REF attacker, BIT_FIELD effects, bool_t ignore_invictus );
-void kill_character( const CHR_REF by_reference character, const CHR_REF by_reference killer, bool_t ignore_invictus );
-bool_t heal_character( const CHR_REF by_reference character, const CHR_REF by_reference healer, int amount, bool_t ignore_invictus );
-void spawn_poof( const CHR_REF by_reference character, const PRO_REF by_reference profile );
-void spawn_defense_ping( ego_chr *pchr, const CHR_REF by_reference attacker );
+void kill_character( const CHR_REF & character, const CHR_REF & killer, bool_t ignore_invictus );
+bool_t heal_character( const CHR_REF & character, const CHR_REF & healer, int amount, bool_t ignore_invictus );
+void spawn_poof( const CHR_REF & character, const PRO_REF & profile );
+void spawn_defense_ping( ego_chr *pchr, const CHR_REF & attacker );
 
-void reset_character_alpha( const CHR_REF by_reference character );
-void reset_character_accel( const CHR_REF by_reference character );
-bool_t detach_character_from_mount( const CHR_REF by_reference character, Uint8 ignorekurse, Uint8 doshop );
+void reset_character_alpha( const CHR_REF & character );
+void reset_character_accel( const CHR_REF & character );
+bool_t detach_character_from_mount( const CHR_REF & character, Uint8 ignorekurse, Uint8 doshop );
 
-bool_t remove_item_from_pack( const CHR_REF by_reference pack_holder, const CHR_REF by_reference item_ref );
+bool_t remove_item_from_pack( const CHR_REF & pack_holder, const CHR_REF & item_ref );
 
-void flash_character_height( const CHR_REF by_reference character, Uint8 valuelow, Sint16 low, Uint8 valuehigh, Sint16 high );
-void flash_character( const CHR_REF by_reference character, Uint8 value );
+void flash_character_height( const CHR_REF & character, Uint8 valuelow, Sint16 low, Uint8 valuehigh, Sint16 high );
+void flash_character( const CHR_REF & character, Uint8 value );
 
-void free_one_character_in_game( const CHR_REF by_reference character );
-//void make_one_weapon_matrix( const CHR_REF by_reference iweap, const CHR_REF by_reference iholder, bool_t do_phys  );
+void free_one_character_in_game( const CHR_REF & character );
+//void make_one_weapon_matrix( const CHR_REF & iweap, const CHR_REF & iholder, bool_t do_phys  );
 void make_all_character_matrices( bool_t do_physics );
-void free_inventory_in_game( const CHR_REF by_reference character );
+void free_inventory_in_game( const CHR_REF & character );
 
 void keep_weapons_with_holders();
-void make_one_character_matrix( const CHR_REF by_reference cnt );
+void make_one_character_matrix( const CHR_REF & cnt );
 
 void update_all_characters( void );
 void move_all_characters( void );
@@ -755,8 +769,8 @@ void cleanup_all_characters( void );
 
 void increment_all_character_update_counters( void );
 
-void do_level_up( const CHR_REF by_reference character );
-bool_t setup_xp_table( const CHR_REF by_reference character );
+void do_level_up( const CHR_REF & character );
+bool_t setup_xp_table( const CHR_REF & character );
 
 void free_all_chraracters();
 
@@ -765,35 +779,32 @@ bool_t chr_test_wall( ego_chr * pchr, float test_pos[] );
 
 int chr_count_free();
 
-CHR_REF spawn_one_character( fvec3_t   pos, const PRO_REF by_reference profile, const TEAM_REF by_reference team, Uint8 skin, FACING_T facing, const char *name, const CHR_REF by_reference override );
-void    respawn_character( const CHR_REF by_reference character );
-int     change_armor( const CHR_REF by_reference character, int skin );
-void    change_character( const CHR_REF by_reference cnt, const PRO_REF by_reference profile, Uint8 skin, Uint8 leavewhich );
-void    change_character_full( const CHR_REF by_reference ichr, const PRO_REF by_reference profile, Uint8 skin, Uint8 leavewhich );
-bool_t  cost_mana( const CHR_REF by_reference character, int amount, const CHR_REF by_reference killer );
-void    switch_team( const CHR_REF by_reference character, const TEAM_REF by_reference team );
-void    issue_clean( const CHR_REF by_reference character );
-int     restock_ammo( const CHR_REF by_reference character, IDSZ idsz );
-void    attach_character_to_mount( const CHR_REF by_reference character, const CHR_REF by_reference mount, grip_offset_t grip_off );
-bool_t  chr_inventory_add_item( const CHR_REF by_reference item, const CHR_REF by_reference character );
-CHR_REF chr_inventory_remove_item( const CHR_REF by_reference character, grip_offset_t grip_off, bool_t ignorekurse );
-void    drop_all_idsz( const CHR_REF by_reference character, IDSZ idsz_min, IDSZ idsz_max );
-bool_t  drop_all_items( const CHR_REF by_reference character );
-bool_t  character_grab_stuff( const CHR_REF by_reference chara, grip_offset_t grip, bool_t people );
+CHR_REF spawn_one_character( fvec3_t   pos, const PRO_REF & profile, const TEAM_REF & team, Uint8 skin, FACING_T facing, const char *name, const CHR_REF & override );
+void    change_character_full( const CHR_REF & ichr, const PRO_REF & profile, Uint8 skin, Uint8 leavewhich );
+bool_t  cost_mana( const CHR_REF & character, int amount, const CHR_REF & killer );
+void    switch_team( const CHR_REF & character, const TEAM_REF & team );
+void    issue_clean( const CHR_REF & character );
+int     restock_ammo( const CHR_REF & character, IDSZ idsz );
+void    attach_character_to_mount( const CHR_REF & character, const CHR_REF & mount, grip_offset_t grip_off );
+bool_t  chr_inventory_add_item( const CHR_REF & item, const CHR_REF & character );
+CHR_REF chr_inventory_remove_item( const CHR_REF & character, grip_offset_t grip_off, bool_t ignorekurse );
+void    drop_all_idsz( const CHR_REF & character, IDSZ idsz_min, IDSZ idsz_max );
+bool_t  drop_all_items( const CHR_REF & character );
+bool_t  character_grab_stuff( const CHR_REF & chara, grip_offset_t grip, bool_t people );
 
-egoboo_rv  export_one_character_quest_vfs( const char *szSaveName, const CHR_REF by_reference character );
-bool_t     export_one_character_name_vfs( const char *szSaveName, const CHR_REF by_reference character );
-bool_t     export_one_character_profile_vfs( const char *szSaveName, const CHR_REF by_reference character );
-bool_t     export_one_character_skin_vfs( const char *szSaveName, const CHR_REF by_reference character );
+egoboo_rv  export_one_character_quest_vfs( const char *szSaveName, const CHR_REF & character );
+bool_t     export_one_character_name_vfs( const char *szSaveName, const CHR_REF & character );
+bool_t     export_one_character_profile_vfs( const char *szSaveName, const CHR_REF & character );
+bool_t     export_one_character_skin_vfs( const char *szSaveName, const CHR_REF & character );
 CAP_REF    load_one_character_profile_vfs( const char *szLoadName, int slot_override, bool_t required );
 
-void character_swipe( const CHR_REF by_reference cnt, slot_t slot );
+void character_swipe( const CHR_REF & cnt, slot_t slot );
 
-bool_t is_invictus_direction( FACING_T direction, const CHR_REF by_reference character, Uint16 effects );
+bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uint16 effects );
 
 void   init_slot_idsz();
 
-struct ego_billboard_data * chr_make_text_billboard( const CHR_REF by_reference ichr, const char * txt, SDL_Color text_color, GLXvector4f tint, int lifetime_secs, BIT_FIELD opt_bits );
+struct ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char * txt, SDL_Color text_color, GLXvector4f tint, int lifetime_secs, BIT_FIELD opt_bits );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -821,24 +832,23 @@ void character_system_end();
 
 void   init_all_cap();
 void   release_all_cap();
-bool_t release_one_cap( const CAP_REF by_reference icap );
+bool_t release_one_cap( const CAP_REF & icap );
 
 void reset_teams();
 
 bool_t apply_reflection_matrix( ego_chr_instance * pinst, float grid_level );
 
 // generic helper functions
-bool_t  chr_teleport( const CHR_REF by_reference ichr, float x, float y, float z, FACING_T facing_z );
-CHR_REF chr_has_inventory_idsz( const CHR_REF by_reference ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last );
-CHR_REF chr_holding_idsz( const CHR_REF by_reference ichr, IDSZ idsz );
-CHR_REF chr_has_item_idsz( const CHR_REF by_reference ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last );
-bool_t  chr_can_see_object( const CHR_REF by_reference ichr, const CHR_REF by_reference iobj );
-bool_t  chr_can_mount( const CHR_REF by_reference ichr_a, const CHR_REF by_reference ichr_b );
+bool_t  chr_teleport( const CHR_REF & ichr, float x, float y, float z, FACING_T facing_z );
+CHR_REF chr_has_inventory_idsz( const CHR_REF & ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last );
+CHR_REF chr_holding_idsz( const CHR_REF & ichr, IDSZ idsz );
+CHR_REF chr_has_item_idsz( const CHR_REF & ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last );
+bool_t  chr_can_see_object( const CHR_REF & ichr, const CHR_REF & iobj );
+bool_t  chr_can_mount( const CHR_REF & ichr_a, const CHR_REF & ichr_b );
 bool_t  chr_is_attacking( ego_chr *pchr );
 bool_t  chr_calc_environment( ego_chr * pchr );
-void    chr_instance_get_tint( ego_chr_instance * pinst, GLfloat * tint, Uint32 bits );
 int     convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
-int     convert_grip_to_global_points( const CHR_REF by_reference iholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
+int     convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
 
 const char * describe_value( float value, float maxval, int * rank_ptr );
 const char * describe_damage( float value, float maxval, int * rank_ptr );

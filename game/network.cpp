@@ -66,7 +66,7 @@ static void net_startNewPacket();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_player, PlaStack, MAX_PLAYER );
+t_cpp_stack< ego_player, MAX_PLAYER  > PlaStack;
 
 int         lag  = 3;                       // Lag tolerance
 Uint32      numplatimes = 0;
@@ -1028,7 +1028,7 @@ void cl_talkToHost()
             // Find the local players
             if ( INPUT_BITS_NONE != ppla->device.bits )
             {
-                packet_addUnsignedByte( REF_TO_INT( player ) );                      // The player index
+                packet_addUnsignedByte( (player ).get_value() );                      // The player index
 
                 packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
                 packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
@@ -1076,7 +1076,7 @@ void sv_talkToRemotes()
 
                 if ( !ppla->valid ) continue;
 
-                packet_addUnsignedByte( REF_TO_INT( player ) );                      // The player index
+                packet_addUnsignedByte( (player ).get_value() );                      // The player index
 
                 packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
                 packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
@@ -1848,7 +1848,7 @@ void unbuffer_one_player_latch_do_respawn( ego_player * ppla )
     {
         if ( !pchr->alive && 0 == revivetimer )
         {
-            respawn_character( ppla->index );
+            ego_chr::respawn( ppla->index );
             TeamStack.lst[pchr->team].leader = ppla->index;
             ADD_BITS( pchr->ai.alert, ALERTIF_CLEANEDUP );
 

@@ -50,12 +50,12 @@ static bool_t  phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nr
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t phys_estimate_chr_chr_normal( oct_vec_t opos_a, oct_vec_t opos_b, oct_vec_t odepth, float exponent, fvec3_base_t nrm )
+bool_t phys_estimate_chr_chr_normal( ego_oct_vec & opos_a, ego_oct_vec & opos_b, ego_oct_vec & odepth, float exponent, fvec3_base_t nrm )
 {
     bool_t retval;
 
     // is everything valid?
-    if ( NULL == opos_a || NULL == opos_b || NULL == odepth || NULL == nrm ) return bfalse;
+    if ( NULL == nrm ) return bfalse;
 
     // initialize the vector
     nrm[kX] = nrm[kY] = nrm[kZ] = 0.0f;
@@ -134,7 +134,7 @@ bool_t phys_estimate_chr_chr_normal( oct_vec_t opos_a, oct_vec_t opos_b, oct_vec
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_oct_bb::intersect_index( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
+egoboo_rv ego_oct_bb::intersect_index( int index, ego_oct_bb & src1, ego_oct_vec & opos1, ego_oct_vec & ovel1, ego_oct_bb & src2, ego_oct_vec & opos2, ego_oct_vec & ovel2, float *tmin, float *tmax )
 {
     float diff;
     float time[4];
@@ -167,7 +167,7 @@ egoboo_rv ego_oct_bb::intersect_index( int index, ego_oct_bb   src1, oct_vec_t o
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_oct_bb::intersect_index_close( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax )
+egoboo_rv ego_oct_bb::intersect_index_close( int index, ego_oct_bb & src1, ego_oct_vec & opos1, ego_oct_vec & ovel1, ego_oct_bb & src2, ego_oct_vec & opos2, ego_oct_vec & ovel2, float *tmin, float *tmax )
 {
     egoboo_rv retval = rv_error;
     float     diff;
@@ -226,15 +226,15 @@ egoboo_rv ego_oct_bb::intersect_index_close( int index, ego_oct_bb   src1, oct_v
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_intersect_oct_bb( ego_oct_bb   src1_orig, fvec3_t pos1, fvec3_t vel1, ego_oct_bb   src2_orig, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
+bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2_orig, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
 {
     /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
     ///               Designed to determine whether a bullet particle will interact with character.
 
     ego_oct_bb    src1, src2;
     ego_oct_bb    exp1, exp2;
-    oct_vec_t opos1, opos2;
-    oct_vec_t ovel1, ovel2;
+    ego_oct_vec opos1, opos2;
+    ego_oct_vec ovel1, ovel2;
 
     int    cnt, index;
     bool_t found;
@@ -249,11 +249,11 @@ bool_t phys_intersect_oct_bb( ego_oct_bb   src1_orig, fvec3_t pos1, fvec3_t vel1
     if ( NULL == tmax ) tmax = &local_tmax;
 
     // convert the position and velocity vectors to octagonal format
-    oct_vec_ctor( ovel1, vel1 );
-    oct_vec_ctor( opos1, pos1 );
+    ego_oct_vec::ctor( &ovel1, vel1 );
+    ego_oct_vec::ctor( &opos1, pos1 );
 
-    oct_vec_ctor( ovel2, vel2 );
-    oct_vec_ctor( opos2, pos2 );
+    ego_oct_vec::ctor( &ovel2, vel2 );
+    ego_oct_vec::ctor( &opos2, pos2 );
 
     // cycle through the coordinates to see when the two volumes might coincide
     found = bfalse;
@@ -354,7 +354,7 @@ bool_t phys_intersect_oct_bb( ego_oct_bb   src1_orig, fvec3_t pos1, fvec3_t vel1
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t phys_expand_oct_bb( ego_oct_bb   src, fvec3_t vel, float tmin, float tmax, ego_oct_bb   * pdst )
+bool_t phys_expand_oct_bb( ego_oct_bb & src, fvec3_t vel, float tmin, float tmax, ego_oct_bb   * pdst )
 {
     /// @details BB@> use the velocity of an object and its ego_oct_bb   to determine the
     ///               amount of territory that an object will cover in the range [tmin,tmax].
@@ -472,8 +472,8 @@ ego_breadcrumb * breadcrumb_init_chr( ego_breadcrumb * bc, ego_chr * pchr )
     bc->pos.y  = ( floor( pchr->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
     bc->pos.z  = pchr->pos.z;
 
-    bc->grid   = mesh_get_tile( PMesh, bc->pos.x, bc->pos.y );
-    bc->valid  = ( 0 == mesh_test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) );
+    bc->grid   = ego_mpd::get_tile( PMesh, bc->pos.x, bc->pos.y );
+    bc->valid  = ( 0 == ego_mpd::test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) );
 
     bc->id = breadcrumb_guid++;
 
@@ -506,8 +506,8 @@ ego_breadcrumb * breadcrumb_init_prt( ego_breadcrumb * bc, ego_prt * pprt )
     bc->pos.x  = ( floor( bc->pos.x / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
     bc->pos.y  = ( floor( bc->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
 
-    bc->grid   = mesh_get_tile( PMesh, bc->pos.x, bc->pos.y );
-    bc->valid  = ( 0 == mesh_test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) );
+    bc->grid   = ego_mpd::get_tile( PMesh, bc->pos.x, bc->pos.y );
+    bc->valid  = ( 0 == ego_mpd::test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) );
 
     bc->id = breadcrumb_guid++;
 
@@ -598,7 +598,7 @@ void breadcrumb_list_validate( ego_breadcrumb_list * lst )
         }
         else
         {
-            if ( 0 != mesh_test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) )
+            if ( 0 != ego_mpd::test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) )
             {
                 bc->valid = bfalse;
                 invalid_cnt++;
@@ -1055,7 +1055,7 @@ bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, 
 // OBSOLETE CODE
 //--------------------------------------------------------------------------------------------
 
-//bool_t ego_oct_bb::intersect_close( ego_oct_bb   src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb   src2, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
+//bool_t ego_oct_bb::intersect_close( ego_oct_bb & src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
 //{
 //    /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
 //    ///               Designed to determine whether a bullet particle will interact with character.
@@ -1063,8 +1063,8 @@ bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, 
 //    ego_oct_bb   exp1, exp2;
 //    ego_oct_bb   intersection;
 //
-//    oct_vec_t opos1, opos2;
-//    oct_vec_t ovel1, ovel2;
+//    ego_oct_vec opos1, opos2;
+//    ego_oct_vec ovel1, ovel2;
 //
 //    int    cnt, index;
 //    bool_t found;
@@ -1087,11 +1087,11 @@ bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, 
 //    }
 //
 //    // convert the position and velocity vectors to octagonal format
-//    oct_vec_ctor( ovel1, vel1 );
-//    oct_vec_ctor( opos1, pos1 );
+//    ego_oct_vec::ctor( ovel1, vel1 );
+//    ego_oct_vec::ctor( opos1, pos1 );
 //
-//    oct_vec_ctor( ovel2, vel2 );
-//    oct_vec_ctor( opos2, pos2 );
+//    ego_oct_vec::ctor( ovel2, vel2 );
+//    ego_oct_vec::ctor( opos2, pos2 );
 //
 //    // cycle through the coordinates to see when the two volumes might coincide
 //    found = bfalse;

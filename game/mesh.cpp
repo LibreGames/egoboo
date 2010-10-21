@@ -39,29 +39,6 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // mesh initialization - not accessible by scripts
-static void   mesh_init_tile_offset( ego_mpd   * pmesh );
-static void   mesh_make_vrtstart( ego_mpd   * pmesh );
-
-static ego_grid_mem *  grid_mem_ctor( ego_grid_mem * pmem );
-static ego_grid_mem *  grid_mem_dtor( ego_grid_mem * pmem );
-static bool_t        grid_mem_alloc( ego_grid_mem * pmem, ego_mpd_info * pinfo );
-static bool_t        grid_mem_free( ego_grid_mem * pmem );
-static void          grid_make_fanstart( ego_grid_mem * pmesh, ego_mpd_info * pinfo );
-
-static ego_tile_mem *    tile_mem_ctor( ego_tile_mem * pmem );
-static ego_tile_mem *    tile_mem_dtor( ego_tile_mem * pmem );
-static bool_t          tile_mem_free( ego_tile_mem * pmem );
-static bool_t          tile_mem_alloc( ego_tile_mem * pmem, ego_mpd_info * pinfo );
-
-static ego_mpd_info * mesh_info_ctor( ego_mpd_info * pinfo );
-static ego_mpd_info * mesh_info_dtor( ego_mpd_info * pinfo );
-static void             mesh_info_init( ego_mpd_info * pinfo, int numvert, size_t tiles_x, size_t tiles_y );
-
-// some twist/normal functions
-static bool_t mesh_make_normals( ego_mpd   * pmesh );
-
-static bool_t mesh_convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src );
-static bool_t mesh_make_bbox( ego_mpd   * pmesh );
 
 static float grid_get_mix( float u0, float u, float v0, float v );
 
@@ -71,24 +48,26 @@ ego_mpd     mesh;
 
 mpd_BSP mpd_BSP::root;
 
-int mesh_mpdfx_tests = 0;
-int mesh_bound_tests = 0;
-int mesh_pressure_tests = 0;
+int ego_mpd::mpdfx_tests = 0;
+int ego_mpd::bound_tests = 0;
+int ego_mpd::pressure_tests = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mpd_info * mesh_info_ctor( ego_mpd_info * pinfo )
+ego_mpd_info * ego_mpd_info::ctor( ego_mpd_info * pinfo )
 {
     if ( NULL == pinfo ) return pinfo;
 
-    memset( pinfo, 0, sizeof( *pinfo ) );
+    /* add something here */
 
     return pinfo;
 }
 
 //--------------------------------------------------------------------------------------------
-void mesh_info_init( ego_mpd_info * pinfo, int numvert, size_t tiles_x, size_t tiles_y )
+ego_mpd_info * ego_mpd_info::init( ego_mpd_info * pinfo, int numvert, size_t tiles_x, size_t tiles_y )
 {
+    if( NULL == pinfo ) return pinfo;
+
     // set the desired number of tiles
     pinfo->tiles_x = tiles_x;
     pinfo->tiles_y = tiles_y;
@@ -100,62 +79,55 @@ void mesh_info_init( ego_mpd_info * pinfo, int numvert, size_t tiles_x, size_t t
         numvert = MAXMESHVERTICES * pinfo->tiles_count;
     };
     pinfo->vertcount = numvert;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_mpd_info * mesh_info_dtor( ego_mpd_info * pinfo )
-{
-    if ( NULL == pinfo ) return NULL;
-
-    memset( pinfo, 0, sizeof( *pinfo ) );
 
     return pinfo;
 }
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_tile_mem::ego_tile_mem() { tile_mem_ctor( this ); }
-ego_tile_mem::~ego_tile_mem() { tile_mem_dtor( this ); }
+ego_mpd_info * ego_mpd_info::dtor( ego_mpd_info * pinfo )
+{
+    if ( NULL == pinfo ) return NULL;
 
-ego_tile_mem * tile_mem_ctor( ego_tile_mem * pmem )
+    /* add something here */
+
+    return clear( pinfo );
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+ego_tile_mem * ego_tile_mem::ctor( ego_tile_mem * pmem )
 {
     if ( NULL == pmem ) return pmem;
 
-    memset( pmem, 0, sizeof( *pmem ) );
+    /* add something here */
 
     return pmem;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tile_mem * tile_mem_dtor( ego_tile_mem * pmem )
+ego_tile_mem * ego_tile_mem::dtor( ego_tile_mem * pmem )
 {
     if ( NULL == pmem ) return NULL;
 
-    tile_mem_free( pmem );
+    ego_tile_mem::dealloc( pmem );
 
-    memset( pmem, 0, sizeof( *pmem ) );
-
-    return pmem;
+    return clear(pmem);
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mpd::ego_mpd() { mesh_ctor( this ); }
-ego_mpd::~ego_mpd() { mesh_dtor( this ); }
-
-ego_mpd   * mesh_ctor( ego_mpd   * pmesh )
+ego_mpd   * ego_mpd::ctor( ego_mpd * pmesh )
 {
     /// @details BB@> initialize the ego_mpd   structure
 
     if ( NULL != pmesh )
     {
-        memset( pmesh, 0, sizeof( *pmesh ) );
+        ego_mpd::init_tile_offset( pmesh );
 
-        mesh_init_tile_offset( pmesh );
-
-        tile_mem_ctor( &( pmesh->tmem ) );
-        grid_mem_ctor( &( pmesh->gmem ) );
-        mesh_info_ctor( &( pmesh->info ) );
+        ego_tile_mem::ctor( &( pmesh->tmem ) );
+        ego_grid_mem::ctor( &( pmesh->gmem ) );
+        ego_mpd_info::ctor( &( pmesh->info ) );
     }
 
     // global initialization
@@ -165,64 +137,62 @@ ego_mpd   * mesh_ctor( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * mesh_dtor( ego_mpd   * pmesh )
+ego_mpd   * ego_mpd::dtor( ego_mpd   * pmesh )
 {
     if ( NULL == pmesh ) return NULL;
 
-    if ( NULL == tile_mem_dtor( &( pmesh->tmem ) ) ) return NULL;
-    if ( NULL == grid_mem_dtor( &( pmesh->gmem ) ) ) return NULL;
-    if ( NULL == mesh_info_dtor( &( pmesh->info ) ) ) return NULL;
+    if ( NULL == ego_tile_mem::dtor( &( pmesh->tmem ) ) ) return NULL;
+    if ( NULL == ego_grid_mem::dtor( &( pmesh->gmem ) ) ) return NULL;
+    if ( NULL == ego_mpd_info::dtor( &( pmesh->info ) ) ) return NULL;
 
     // delete the mesh BSP data
     mpd_BSP::dtor( &mpd_BSP::root );
 
-    return pmesh;
+    return clear(pmesh);
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * mesh_renew( ego_mpd   * pmesh )
+ego_mpd   * ego_mpd::renew( ego_mpd   * pmesh )
 {
-    pmesh = mesh_dtor( pmesh );
+    pmesh = ego_mpd::dtor( pmesh );
 
-    return mesh_ctor( pmesh );
+    return ego_mpd::ctor( pmesh );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * mesh_ctor_1( ego_mpd   * pmesh, int tiles_x, int tiles_y )
+ego_mpd   * ego_mpd::ctor_1( ego_mpd   * pmesh, int tiles_x, int tiles_y )
 {
 
     if ( NULL == pmesh ) return pmesh;
 
-    memset( pmesh, 0, sizeof( *pmesh ) );
-
     // intitalize the mesh info using the max number of vertices for each tile
-    mesh_info_init( &( pmesh->info ), -1, tiles_x, tiles_y );
+    ego_mpd_info::init( &( pmesh->info ), -1, tiles_x, tiles_y );
 
     // allocate the mesh memory
-    tile_mem_alloc( &( pmesh->tmem ), &( pmesh->info ) );
-    grid_mem_alloc( &( pmesh->gmem ), &( pmesh->info ) );
+    ego_tile_mem::alloc( &( pmesh->tmem ), &( pmesh->info ) );
+    ego_grid_mem::alloc( &( pmesh->gmem ), &( pmesh->info ) );
 
     return pmesh;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * mesh_create( ego_mpd   * pmesh, int tiles_x, int tiles_y )
+ego_mpd   * ego_mpd::create( ego_mpd   * pmesh, int tiles_x, int tiles_y )
 {
     if ( NULL == pmesh )
     {
         pmesh = EGOBOO_NEW( ego_mpd );
-        pmesh = mesh_ctor( pmesh );
+        pmesh = ego_mpd::ctor( pmesh );
     }
 
-    return mesh_ctor_1( pmesh, tiles_x, tiles_y );
+    return ego_mpd::ctor_1( pmesh, tiles_x, tiles_y );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_destroy( ego_mpd   ** ppmesh )
+bool_t ego_mpd::destroy( ego_mpd   ** ppmesh )
 {
     if ( NULL == ppmesh || NULL == *ppmesh ) return bfalse;
 
-    mesh_dtor( *ppmesh );
+    ego_mpd::dtor( *ppmesh );
 
     *ppmesh = NULL;
 
@@ -230,7 +200,7 @@ bool_t mesh_destroy( ego_mpd   ** ppmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-void mesh_init_tile_offset( ego_mpd   * pmesh )
+void ego_mpd::init_tile_offset( ego_mpd   * pmesh )
 {
     int cnt;
 
@@ -243,7 +213,7 @@ void mesh_init_tile_offset( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_remove_ambient( ego_mpd   * pmesh )
+bool_t ego_mpd::remove_ambient( ego_mpd   * pmesh )
 {
     /// @details BB@> remove extra ambient light in the lightmap
 
@@ -266,7 +236,7 @@ bool_t mesh_remove_ambient( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_recalc_twist( ego_mpd   * pmesh )
+bool_t ego_mpd::recalc_twist( ego_mpd   * pmesh )
 {
     Uint32 fan;
     ego_mpd_info * pinfo;
@@ -289,12 +259,12 @@ bool_t mesh_recalc_twist( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image )
+bool_t ego_mpd::set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image )
 {
     ego_tile_info * ptile;
     Uint16 tile_value, tile_upper, tile_lower;
 
-    if ( !mesh_grid_is_valid( pmesh, tile ) ) return bfalse;
+    if ( !ego_mpd::grid_is_valid( pmesh, tile ) ) return bfalse;
     ptile = pmesh->tmem.tile_list + tile;
 
     // get the upper and lower bits for this tile image
@@ -306,11 +276,11 @@ bool_t mesh_set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image )
     pmesh->tmem.tile_list[tile].img = tile_upper | tile_lower;
 
     // update the pre-computed texture info
-    return mesh_update_texture( pmesh, tile );
+    return ego_mpd::update_texture( pmesh, tile );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_update_texture( ego_mpd   * pmesh, Uint32 tile )
+bool_t ego_mpd::update_texture( ego_mpd   * pmesh, Uint32 tile )
 {
     size_t mesh_vrt;
     int    tile_vrt;
@@ -328,7 +298,7 @@ bool_t mesh_update_texture( ego_mpd   * pmesh, Uint32 tile )
     pgmem = &( pmesh->gmem );
     pinfo = &( pmesh->info );
 
-    if ( !mesh_grid_is_valid( pmesh, tile ) ) return bfalse;
+    if ( !ego_mpd::grid_is_valid( pmesh, tile ) ) return bfalse;
     ptile = ptmem->tile_list + tile;
 
     image = TILE_GET_LOWER_BITS( ptile->img );
@@ -349,7 +319,7 @@ bool_t mesh_update_texture( ego_mpd   * pmesh, Uint32 tile )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_make_texture( ego_mpd   * pmesh )
+bool_t ego_mpd::make_texture( ego_mpd   * pmesh )
 {
     Uint32 cnt;
     ego_mpd_info * pinfo;
@@ -360,23 +330,23 @@ bool_t mesh_make_texture( ego_mpd   * pmesh )
     // set the texture coordinate for every vertex
     for ( cnt = 0; cnt < pinfo->tiles_count; cnt++ )
     {
-        mesh_update_texture( pmesh, cnt );
+        ego_mpd::update_texture( pmesh, cnt );
     }
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * mesh_finalize( ego_mpd   * pmesh )
+ego_mpd   * ego_mpd::finalize( ego_mpd   * pmesh )
 {
     if ( NULL == pmesh ) return NULL;
 
-    mesh_make_vrtstart( pmesh );
-    mesh_remove_ambient( pmesh );
-    mesh_recalc_twist( pmesh );
-    mesh_make_normals( pmesh );
-    mesh_make_bbox( pmesh );
-    mesh_make_texture( pmesh );
+    ego_mpd::make_vrtstart( pmesh );
+    ego_mpd::remove_ambient( pmesh );
+    ego_mpd::recalc_twist( pmesh );
+    ego_mpd::make_normals( pmesh );
+    ego_mpd::make_bbox( pmesh );
+    ego_mpd::make_texture( pmesh );
 
     // initialize the mesh's BSP structure with the mesh tiles
     mpd_BSP::ctor( &mpd_BSP::root, pmesh );
@@ -385,7 +355,7 @@ ego_mpd   * mesh_finalize( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src )
+bool_t ego_mpd::convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src )
 {
     Uint32 cnt;
 
@@ -402,18 +372,18 @@ bool_t mesh_convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src )
     pinfo_src = &( pmesh_src->info );
 
     // clear out all data in the destination mesh
-    if ( NULL == mesh_renew( pmesh_dst ) ) return bfalse;
+    if ( NULL == ego_mpd::renew( pmesh_dst ) ) return bfalse;
     ptmem_dst = &( pmesh_dst->tmem );
     pgmem_dst = &( pmesh_dst->gmem );
     pinfo_dst = &( pmesh_dst->info );
 
     // set up the destination mesh from the source mesh
-    mesh_info_init( pinfo_dst, pinfo_src->vertcount, pinfo_src->tiles_x, pinfo_src->tiles_y );
+    ego_mpd_info::init( pinfo_dst, pinfo_src->vertcount, pinfo_src->tiles_x, pinfo_src->tiles_y );
 
-    allocated_dst = tile_mem_alloc( ptmem_dst, pinfo_dst );
+    allocated_dst = ego_tile_mem::alloc( ptmem_dst, pinfo_dst );
     if ( !allocated_dst ) return bfalse;
 
-    allocated_dst = grid_mem_alloc( pgmem_dst, pinfo_dst );
+    allocated_dst = ego_grid_mem::alloc( pgmem_dst, pinfo_dst );
     if ( !allocated_dst ) return bfalse;
 
     // copy all the per-tile info
@@ -461,7 +431,7 @@ bool_t mesh_convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * mesh_load( const char *modname, ego_mpd   * pmesh )
+ego_mpd * mesh_load( const char *modname, ego_mpd   * pmesh )
 {
     // trap bad module names
     if ( !VALID_CSTR( modname ) ) return pmesh;
@@ -471,7 +441,7 @@ ego_mpd   * mesh_load( const char *modname, ego_mpd   * pmesh )
         // create a new mesh if we are passed a NULL pointer
         if ( NULL == pmesh )
         {
-            pmesh = mesh_ctor( pmesh );
+            pmesh = ego_mpd::ctor( pmesh );
         }
         else
         {
@@ -480,7 +450,7 @@ ego_mpd   * mesh_load( const char *modname, ego_mpd   * pmesh )
         if ( NULL == pmesh ) return pmesh;
 
         // free any memory that has been allocated
-        pmesh = mesh_renew( pmesh );
+        pmesh = ego_mpd::renew( pmesh );
     }
 
     // actually do the loading
@@ -493,7 +463,7 @@ ego_mpd   * mesh_load( const char *modname, ego_mpd   * pmesh )
         pmpd = mpd_load( vfs_resolveReadFilename( "mp_data/level.mpd" ), &local_mpd );
 
         // convert it into a convenient version for Egoboo
-        if ( !mesh_convert( pmesh, pmpd ) )
+        if ( !ego_mpd::convert( pmesh, pmpd ) )
         {
             pmesh = NULL;
         }
@@ -503,45 +473,41 @@ ego_mpd   * mesh_load( const char *modname, ego_mpd   * pmesh )
     }
 
     // do some calculation to set up the mpd as a game mesh
-    pmesh = mesh_finalize( pmesh );
+    pmesh = ego_mpd::finalize( pmesh );
 
     return pmesh;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_grid_mem::ego_grid_mem() { grid_mem_ctor( this ); }
-ego_grid_mem::~ego_grid_mem() { grid_mem_dtor( this ); }
-
-ego_grid_mem * grid_mem_ctor( ego_grid_mem * pmem )
-{
-    if ( NULL == pmem ) return pmem;
-
-    memset( pmem, 0, sizeof( *pmem ) );
-
-    return pmem;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_grid_mem * grid_mem_dtor( ego_grid_mem * pmem )
+ego_grid_mem * ego_grid_mem::ctor( ego_grid_mem * pmem )
 {
     if ( NULL == pmem ) return NULL;
 
-    grid_mem_free( pmem );
-
-    memset( pmem, 0, sizeof( *pmem ) );
+    /* add something here */
 
     return pmem;
 }
 
+
 //--------------------------------------------------------------------------------------------
-bool_t grid_mem_alloc( ego_grid_mem * pgmem, ego_mpd_info * pinfo )
+ego_grid_mem * ego_grid_mem::dtor( ego_grid_mem * pmem )
+{
+    if ( NULL == pmem ) return NULL;
+
+    ego_grid_mem::dealloc( pmem );
+
+    return clear(pmem);
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_grid_mem::alloc( ego_grid_mem * pgmem, ego_mpd_info * pinfo )
 {
 
     if ( NULL == pgmem || NULL == pinfo || 0 == pinfo->vertcount ) return bfalse;
 
     // free any memory already allocated
-    if ( !grid_mem_free( pgmem ) ) return bfalse;
+    if ( !ego_grid_mem::dealloc( pgmem ) ) return bfalse;
 
     if ( pinfo->vertcount > MESH_MAXTOTALVERTRICES )
     {
@@ -569,29 +535,29 @@ bool_t grid_mem_alloc( ego_grid_mem * pgmem, ego_mpd_info * pinfo )
 
     // allocate per-grid memory
     pgmem->grid_list = EGOBOO_NEW_ARY( ego_grid_info, pgmem->grid_count );
-    if ( NULL == pgmem->grid_list ) goto grid_mem_alloc_fail;
+    if ( NULL == pgmem->grid_list ) goto ego_grid_mem_alloc_fail;
 
     // helper info
     pgmem->blockstart = EGOBOO_NEW_ARY( Uint32, pgmem->blocks_y );
-    if ( NULL == pgmem->blockstart ) goto grid_mem_alloc_fail;
+    if ( NULL == pgmem->blockstart ) goto ego_grid_mem_alloc_fail;
 
     pgmem->tilestart  = EGOBOO_NEW_ARY( Uint32, pinfo->tiles_y );
-    if ( NULL == pgmem->tilestart ) goto grid_mem_alloc_fail;
+    if ( NULL == pgmem->tilestart ) goto ego_grid_mem_alloc_fail;
 
     // initialize the fanstart/blockstart data
-    grid_make_fanstart( pgmem, pinfo );
+    ego_grid_mem::make_fanstart( pgmem, pinfo );
 
     return btrue;
 
-grid_mem_alloc_fail:
+ego_grid_mem_alloc_fail:
 
-    grid_mem_free( pgmem );
-    log_error( "grid_mem_alloc() - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n" );
+    ego_grid_mem::dealloc( pgmem );
+    log_error( "ego_grid_mem::alloc() - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n" );
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t grid_mem_free( ego_grid_mem * pmem )
+bool_t ego_grid_mem::dealloc( ego_grid_mem * pmem )
 {
     if ( NULL == pmem ) return bfalse;
 
@@ -607,13 +573,13 @@ bool_t grid_mem_free( ego_grid_mem * pmem )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t tile_mem_alloc( ego_tile_mem * pmem, ego_mpd_info * pinfo )
+bool_t ego_tile_mem::alloc( ego_tile_mem * pmem, ego_mpd_info * pinfo )
 {
 
     if ( NULL == pmem || NULL == pinfo || 0 == pinfo->vertcount ) return bfalse;
 
     // free any memory already allocated
-    if ( !tile_mem_free( pmem ) ) return bfalse;
+    if ( !ego_tile_mem::dealloc( pmem ) ) return bfalse;
 
     if ( pinfo->vertcount > MESH_MAXTOTALVERTRICES )
     {
@@ -645,13 +611,13 @@ bool_t tile_mem_alloc( ego_tile_mem * pmem, ego_mpd_info * pinfo )
 
 mesh_mem_alloc_fail:
 
-    tile_mem_free( pmem );
-    log_error( "tile_mem_alloc() - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n" );
+    ego_tile_mem::dealloc( pmem );
+    log_error( "ego_tile_mem::alloc() - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n" );
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t tile_mem_free( ego_tile_mem * pmem )
+bool_t ego_tile_mem::dealloc( ego_tile_mem * pmem )
 {
     if ( NULL == pmem ) return bfalse;
 
@@ -672,14 +638,14 @@ bool_t tile_mem_free( ego_tile_mem * pmem )
 }
 
 //--------------------------------------------------------------------------------------------
-void grid_make_fanstart( ego_grid_mem * pgmem, ego_mpd_info * pinfo )
+ego_grid_mem * ego_grid_mem::make_fanstart( ego_grid_mem * pgmem, ego_mpd_info * pinfo )
 {
     /// @details ZZ@> This function builds a look up table to ease calculating the
     ///    fan number given an x,y pair
 
     int cnt;
 
-    if ( NULL == pgmem || NULL == pinfo ) return;
+    if ( NULL == pgmem || NULL == pinfo ) return pgmem;
 
     // do the tilestart
     for ( cnt = 0; cnt < pinfo->tiles_y; cnt++ )
@@ -703,10 +669,12 @@ void grid_make_fanstart( ego_grid_mem * pgmem, ego_mpd_info * pinfo )
     {
         pgmem->blockstart[cnt] = pgmem->blocks_x * cnt;
     }
+
+    return pgmem;
 }
 
 //--------------------------------------------------------------------------------------------
-void mesh_make_vrtstart( ego_mpd   * pmesh )
+void ego_mpd::make_vrtstart( ego_mpd   * pmesh )
 {
     size_t vert;
     Uint32 tile;
@@ -815,7 +783,7 @@ Uint8 cartman_get_fan_twist( ego_mpd   * pmesh, Uint32 tile )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_make_bbox( ego_mpd   * pmesh )
+bool_t ego_mpd::make_bbox( ego_mpd   * pmesh )
 {
     /// @details BB@> set the bounding box for each tile, and for the entire mesh
 
@@ -881,7 +849,7 @@ bool_t mesh_make_bbox( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_make_normals( ego_mpd   * pmesh )
+bool_t ego_mpd::make_normals( ego_mpd   * pmesh )
 {
     /// @details BB@> this function calculates a set of normals for the 4 corners
     ///               of a given tile. It is supposed to generate smooth normals for
@@ -921,8 +889,8 @@ bool_t mesh_make_normals( ego_mpd   * pmesh )
             int iy_off[4] = {0, 0, 1, 1};
             int i, j, k;
 
-            fan0 = mesh_get_tile_int( pmesh, ix, iy );
-            if ( !mesh_grid_is_valid( pmesh, fan0 ) ) continue;
+            fan0 = ego_mpd::get_tile_int( pmesh, ix, iy );
+            if ( !ego_mpd::grid_is_valid( pmesh, fan0 ) ) continue;
 
             nrm_lst[0].x = ptmem->nlst[fan0][XX];
             nrm_lst[0].y = ptmem->nlst[fan0][YY];
@@ -956,9 +924,9 @@ bool_t mesh_make_normals( ego_mpd   * pmesh )
                     jx = ix + loc_ix_off[j];
                     jy = iy + loc_iy_off[j];
 
-                    fan1 = mesh_get_tile_int( pmesh, jx, jy );
+                    fan1 = ego_mpd::get_tile_int( pmesh, jx, jy );
 
-                    if ( mesh_grid_is_valid( pmesh, fan1 ) )
+                    if ( ego_mpd::grid_is_valid( pmesh, fan1 ) )
                     {
                         nrm_lst[j].x = ptmem->nlst[fan1][XX];
                         nrm_lst[j].y = ptmem->nlst[fan1][YY];
@@ -1044,8 +1012,8 @@ bool_t mesh_make_normals( ego_mpd   * pmesh )
     //                {
     //                    jx = ix + dx;
 
-    //                    fan1 = mesh_get_tile_int(pmesh, jx, jy);
-    //                    if ( mesh_grid_is_valid(pmesh, fan1) )
+    //                    fan1 = ego_mpd::get_tile_int( pmesh, jx, jy);
+    //                    if ( ego_mpd::grid_is_valid( pmesh, fan1) )
     //                    {
     //                        float wt;
 
@@ -1094,17 +1062,17 @@ bool_t mesh_make_normals( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t grid_light_one_corner( ego_mpd   * pmesh, int fan, float height, float nrm[], float * plight )
+bool_t ego_mpd::grid_light_one_corner( ego_mpd   * pmesh, int fan, float height, float nrm[], float * plight )
 {
     bool_t             reflective;
     ego_lighting_cache * lighting;
 
-    if ( NULL == pmesh || NULL == plight || !mesh_grid_is_valid( pmesh, fan ) ) return bfalse;
+    if ( NULL == pmesh || NULL == plight || !ego_mpd::grid_is_valid( pmesh, fan ) ) return bfalse;
 
     // get the grid lighting
     lighting = &( pmesh->gmem.grid_list[fan].cache );
 
-    reflective = ( 0 != mesh_test_fx( pmesh, fan, MPDFX_DRAWREF ) );
+    reflective = ( 0 != ego_mpd::test_fx( pmesh, fan, MPDFX_DRAWREF ) );
 
     // evaluate the grid lighting at this node
     if ( reflective )
@@ -1128,7 +1096,7 @@ bool_t grid_light_one_corner( ego_mpd   * pmesh, int fan, float height, float nr
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_test_one_corner( ego_mpd   * pmesh, GLXvector3f pos, float * pdelta )
+bool_t ego_mpd::test_one_corner( ego_mpd   * pmesh, GLXvector3f pos, float * pdelta )
 {
     float loc_delta, low_delta, hgh_delta;
     float hgh_wt, low_wt;
@@ -1149,15 +1117,15 @@ bool_t mesh_test_one_corner( ego_mpd   * pmesh, GLXvector3f pos, float * pdelta 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_light_one_corner( ego_mpd   * pmesh, int itile, GLXvector3f pos, GLXvector3f nrm, float * plight )
+bool_t ego_mpd::light_one_corner( ego_mpd   * pmesh, int itile, GLXvector3f pos, GLXvector3f nrm, float * plight )
 {
     ego_lighting_cache grid_light;
     bool_t reflective;
 
-    if ( !mesh_grid_is_valid( pmesh, itile ) ) return bfalse;
+    if ( !ego_mpd::grid_is_valid( pmesh, itile ) ) return bfalse;
 
     // add in the effect of this lighting cache node
-    reflective = ( 0 != mesh_test_fx( pmesh, itile, MPDFX_DRAWREF ) );
+    reflective = ( 0 != ego_mpd::test_fx( pmesh, itile, MPDFX_DRAWREF ) );
 
     // interpolate the lighting for the given corner of the mesh
     grid_lighting_interpolate( pmesh, &grid_light, pos[XX], pos[YY] );
@@ -1180,7 +1148,7 @@ bool_t mesh_light_one_corner( ego_mpd   * pmesh, int itile, GLXvector3f pos, GLX
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_test_corners( ego_mpd   * pmesh, int itile, float threshold )
+bool_t ego_mpd::test_corners( ego_mpd   * pmesh, int itile, float threshold )
 {
     bool_t retval;
     int corner;
@@ -1189,7 +1157,7 @@ bool_t mesh_test_corners( ego_mpd   * pmesh, int itile, float threshold )
     light_cache_t * lcache;
     light_cache_t * d1_cache;
 
-    if ( NULL == pmesh || !mesh_grid_is_valid( pmesh, itile ) ) return bfalse;
+    if ( NULL == pmesh || !ego_mpd::grid_is_valid( pmesh, itile ) ) return bfalse;
     ptmem = &( pmesh->tmem );
 
     // get the normal and lighting cache for this tile
@@ -1208,7 +1176,7 @@ bool_t mesh_test_corners( ego_mpd   * pmesh, int itile, float threshold )
         plight = ( *lcache ) + corner;
         ppos   = ptmem->plst + ptmem->tile_list[itile].vrtstart + corner;
 
-        mesh_test_one_corner( pmesh, *ppos, &delta );
+        ego_mpd::test_one_corner( pmesh, *ppos, &delta );
 
         if ( 0.0f == *plight )
         {
@@ -1229,7 +1197,7 @@ bool_t mesh_test_corners( ego_mpd   * pmesh, int itile, float threshold )
 }
 
 //--------------------------------------------------------------------------------------------
-float mesh_light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep )
+float ego_mpd::light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep )
 {
     int corner;
     float max_delta;
@@ -1241,7 +1209,7 @@ float mesh_light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep
     light_cache_t  * lcache;
     light_cache_t  * d1_cache, * d2_cache;
 
-    if ( NULL == pmesh || !mesh_grid_is_valid( pmesh, itile ) ) return 0.0f;
+    if ( NULL == pmesh || !ego_mpd::grid_is_valid( pmesh, itile ) ) return 0.0f;
     pinfo = &( pmesh->info );
     ptmem = &( pmesh->tmem );
     pgmem = &( pmesh->gmem );
@@ -1269,7 +1237,7 @@ float mesh_light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep
         ppos    = ptmem->plst + ptmem->tile_list[itile].vrtstart + corner;
 
         light_new = 0.0f;
-        mesh_light_one_corner( pmesh, itile, *ppos, *pnrm, &light_new );
+        ego_mpd::light_one_corner( pmesh, itile, *ppos, *pnrm, &light_new );
 
         if ( *plight != light_new )
         {
@@ -1305,7 +1273,7 @@ float mesh_light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_interpolate_vertex( ego_tile_mem * pmem, int fan, float pos[], float * plight )
+bool_t ego_tile_mem::interpolate_vertex( ego_tile_mem * pmem, int fan, float pos[], float * plight )
 {
     int cnt;
     int ix_off[4] = {0, 1, 1, 0}, iy_off[4] = {0, 0, 1, 1};
@@ -1382,7 +1350,7 @@ struct mesh_wall_data
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, struct mesh_wall_data * pdata )
+bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, struct mesh_wall_data * pdata )
 {
     /// @details BB@> an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
 
@@ -1435,7 +1403,7 @@ bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD b
     if ( pdata->iy_min < 0 || pdata->iy_max >= pdata->pinfo->tiles_y )
     {
         pass |= ( MPDFX_IMPASS | MPDFX_WALL );
-        mesh_bound_tests++;
+        ego_mpd::bound_tests++;
     }
     if ( 0 != ( pass & bits ) ) return btrue;
 
@@ -1443,7 +1411,7 @@ bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD b
     if ( pdata->ix_min < 0 || pdata->ix_max >= pdata->pinfo->tiles_x )
     {
         pass |= ( MPDFX_IMPASS | MPDFX_WALL );
-        mesh_bound_tests++;
+        ego_mpd::bound_tests++;
     }
     if ( 0 != ( pass & bits ) ) return btrue;
 
@@ -1465,7 +1433,7 @@ bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD b
 
             // since we KNOW that this is in range, allow raw access to the data structure
             ADD_BITS( pass, pdata->glist[itile].fx );
-            mesh_mpdfx_tests++;
+            ego_mpd::mpdfx_tests++;
 
             if ( HAS_SOME_BITS( pass, bits ) ) return btrue;
         }
@@ -1475,7 +1443,7 @@ bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD b
 }
 
 //--------------------------------------------------------------------------------------------
-float mesh_get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits )
+float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits )
 {
     const float tile_area = GRID_SIZE * GRID_SIZE;
 
@@ -1560,15 +1528,15 @@ float mesh_get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
 
             if ( tile_valid )
             {
-                itile = mesh_get_tile_int( pmesh, ix, iy );
-                tile_valid = mesh_grid_is_valid( pmesh, itile );
+                itile = ego_mpd::get_tile_int( pmesh, ix, iy );
+                tile_valid = ego_mpd::grid_is_valid( pmesh, itile );
                 if ( !tile_valid )
                 {
                     is_blocked = btrue;
                 }
                 else
                 {
-                    is_blocked = ( 0 != mesh_has_some_mpdfx( glist[itile].fx, bits ) );
+                    is_blocked = ( 0 != ego_mpd::has_some_mpdfx( glist[itile].fx, bits ) );
                 }
             }
 
@@ -1620,7 +1588,7 @@ float mesh_get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
 
                 loc_pressure += area_ratio;
 
-                mesh_pressure_tests++;
+                ego_mpd::pressure_tests++;
             }
         }
     }
@@ -1629,7 +1597,7 @@ float mesh_get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
 }
 
 //--------------------------------------------------------------------------------------------
-fvec2_t mesh_get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, Uint32 bits )
+fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, Uint32 bits )
 {
     /// @details BB@> determine the shortest "way out", but creating an array of "pressures"
     /// with each element representing the pressure when the object is moved in different directions
@@ -1654,7 +1622,7 @@ fvec2_t mesh_get_diff( ego_mpd   * pmesh, float pos[], float radius, float cente
 
             if ( 4 == cnt ) continue;
 
-            pressure_ary[cnt] = mesh_get_pressure( pmesh, jitter_pos.v, radius, bits );
+            pressure_ary[cnt] = ego_mpd::get_pressure( pmesh, jitter_pos.v, radius, bits );
         }
     }
 
@@ -1705,7 +1673,7 @@ fvec2_t mesh_get_diff( ego_mpd   * pmesh, float pos[], float radius, float cente
 }
 
 //--------------------------------------------------------------------------------------------
-BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, float nrm[], float * pressure )
+BIT_FIELD ego_mpd::hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, float nrm[], float * pressure )
 {
     /// @details BB@> an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
 
@@ -1732,7 +1700,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
     // Do te simplest test.
     // Initializes the shared mesh_wall_data struct, so no need to do it again
     // Eliminates all cases of bad source data, so no need to test them again.
-    if ( !mesh_test_wall( pmesh, pos, radius, bits, &data ) ) return 0;
+    if ( !ego_mpd::test_wall( pmesh, pos, radius, bits, &data ) ) return 0;
 
     pass = loc_pass = 0;
     nrm[kX] = nrm[kY] = 0.0f;
@@ -1755,7 +1723,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
             }
 
             invalid = btrue;
-            mesh_bound_tests++;
+            ego_mpd::bound_tests++;
         }
 
         for ( ix = data.ix_min; ix <= data.ix_max; ix++ )
@@ -1775,16 +1743,16 @@ BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
                 }
 
                 invalid = btrue;
-                mesh_bound_tests++;
+                ego_mpd::bound_tests++;
             }
 
             if ( !invalid )
             {
-                itile = mesh_get_tile_int( pmesh, ix, iy );
-                if ( mesh_grid_is_valid( pmesh, itile ) )
+                itile = ego_mpd::get_tile_int( pmesh, ix, iy );
+                if ( ego_mpd::grid_is_valid( pmesh, itile ) )
                 {
                     BIT_FIELD mpdfx   = data.glist[itile].fx;
-                    bool_t is_blocked = ( 0 != mesh_has_some_mpdfx( mpdfx, bits ) );
+                    bool_t is_blocked = ( 0 != ego_mpd::has_some_mpdfx( mpdfx, bits ) );
 
                     if ( is_blocked )
                     {
@@ -1839,7 +1807,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
 
         if ( needs_pressure )
         {
-            *pressure = mesh_get_pressure( pmesh, pos, radius, bits );
+            *pressure = ego_mpd::get_pressure( pmesh, pos, radius, bits );
         }
     }
 
@@ -1848,7 +1816,7 @@ BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-float mesh_get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y )
+float ego_mpd::get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y )
 {
     Uint32 itile;
     int type;
@@ -1858,7 +1826,7 @@ float mesh_get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y )
 
     if ( NULL == pmesh ) return 0.0f;
 
-    itile = mesh_get_tile_int( pmesh, grid_x, grid_y );
+    itile = ego_mpd::get_tile_int( pmesh, grid_x, grid_y );
 
     if ( INVALID_TILE == itile ) return 0.0f;
 
@@ -1877,7 +1845,7 @@ float mesh_get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y )
 }
 
 //--------------------------------------------------------------------------------------------
-float mesh_get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xmin, float ymin, float xmax, float ymax )
+float ego_mpd::get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xmin, float ymin, float xmax, float ymax )
 {
     Uint32 itile, cnt;
     int type;
@@ -1889,7 +1857,7 @@ float mesh_get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xm
 
     if ( NULL == pmesh ) return 0.0f;
 
-    itile = mesh_get_tile_int( pmesh, grid_x, grid_y );
+    itile = ego_mpd::get_tile_int( pmesh, grid_x, grid_y );
 
     if ( INVALID_TILE == itile ) return 0.0f;
 
@@ -1973,10 +1941,6 @@ ego_tile_info * ego_tile_info_alloc_ary( size_t count )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-mpd_BSP  ::mpd_BSP() { memset( this, 0, sizeof( *this ) ); }
-mpd_BSP  ::mpd_BSP( ego_mpd   * pmesh ) { mpd_BSP::ctor( this, pmesh ); }
-mpd_BSP  ::~mpd_BSP()  { mpd_BSP::dtor( this ); }
-
 mpd_BSP * mpd_BSP::ctor( mpd_BSP * pbsp, ego_mpd   * pmesh )
 {
     /// @details BB@> Create a new BSP tree for the mesh.
@@ -2028,7 +1992,7 @@ bool_t mpd_BSP::alloc( mpd_BSP * pbsp, ego_mpd   * pmesh )
     if ( 0 == pmesh->gmem.grid_count ) return bfalse;
 
     // allocate the ego_BSP_leaf   list, the containers for the actual tiles
-    ego_BSP_leaf_ary_ctor( &( pbsp->nodes ), pmesh->gmem.grid_count );
+    ego_BSP_leaf_ary::ctor( &( pbsp->nodes ), pmesh->gmem.grid_count );
     if ( NULL == pbsp->nodes.ary ) return bfalse;
 
     // set up the initial bounding volume size
@@ -2060,7 +2024,7 @@ bool_t mpd_BSP::dealloc( mpd_BSP * pbsp )
     ego_BSP_tree::dealloc( &( pbsp->tree ) );
 
     // deallocate the nodes
-    ego_BSP_leaf_ary_dtor( &( pbsp->nodes ) );
+    ego_BSP_leaf_ary::dtor( &( pbsp->nodes ) );
 
     return btrue;
 }
@@ -2093,7 +2057,7 @@ bool_t mpd_BSP::fill( mpd_BSP * pbsp )
 }
 
 //--------------------------------------------------------------------------------------------
-int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst )
+int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst )
 {
     /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
@@ -2104,18 +2068,18 @@ int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_
 
     colst->top = 0;
 
-    if ( 0 == colst->alloc ) return 0;
+    if ( 0 == colst->size ) return 0;
 
     return ego_BSP_tree::collide( &( pbsp->tree ), paabb, colst );
 }
 
 ////--------------------------------------------------------------------------------------------
-//bool_t mpd_BSP::insert_node( mpd_BSP * pbsp, ego_BSP_leaf   * pnode, int depth, int address_x[], int address_y[] )
+//bool_t mpd_BSP::insert_node( mpd_BSP * pbsp, ego_BSP_leaf * pnode, int depth, int address_x[], int address_y[] )
 //{
 //    int i;
 //    bool_t retval;
 //    Uint32 index;
-//    ego_BSP_branch   * pbranch, * pbranch_new;
+//    ego_BSP_branch * pbranch, * pbranch_new;
 //    ego_BSP_tree   * ptree = &( pbsp->tree );
 //
 //    retval = bfalse;

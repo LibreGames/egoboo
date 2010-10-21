@@ -89,7 +89,13 @@ struct ego_game_process_data
     int    fps_ticks_next, fps_ticks_now;
     int    ups_ticks_next, ups_ticks_now;
 
-    static ego_game_process_data * ctor( ego_game_process_data * ptr )
+    ego_game_process_data() { clear( this); }
+
+    static ego_game_process_data * ctor( ego_game_process_data * ptr ) { return clear(ptr); }
+
+private:
+
+    static ego_game_process_data * clear( ego_game_process_data * ptr )
     {
         if ( NULL == ptr ) return NULL;
 
@@ -111,10 +117,11 @@ struct ego_game_process : public ego_game_process_data, public ego_process
     // "process" management
     static int Run( ego_game_process * gproc, double frameDuration );
 
-    static int do_beginning( ego_game_process * gproc );
-    static int do_running( ego_game_process * gproc );
-    static int do_grunning( ego_game_process * gproc );
-    static int do_leaving( ego_game_process * gproc );
+protected:
+    virtual egoboo_rv do_beginning();
+    virtual egoboo_rv do_running();
+    virtual egoboo_rv do_leaving();
+    virtual egoboo_rv do_finishing();
 };
 
 extern ego_game_process * GProc;
@@ -325,7 +332,7 @@ void   game_finish_module();
 bool_t game_begin_module( const char * modname, Uint32 seed );
 
 // Exporting stuff
-void export_one_character( const CHR_REF by_reference character, const CHR_REF by_reference owner, int number, bool_t is_local );
+void export_one_character( const CHR_REF & character, const CHR_REF & owner, int number, bool_t is_local );
 void export_all_players( bool_t require_local );
 
 // Messages
@@ -338,25 +345,25 @@ void show_magic_status( int statindex );
 void reset_end_text();
 
 // Particles
-int     number_of_attached_particles( const CHR_REF by_reference character );
-int     spawn_bump_particles( const CHR_REF by_reference character, const PRT_REF by_reference particle );
-void    disaffirm_attached_particles( const CHR_REF by_reference character );
-int     reaffirm_attached_particles( const CHR_REF by_reference character );
-ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF by_reference character, int vertex_offset );
+int     number_of_attached_particles( const CHR_REF & character );
+int     spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle );
+void    disaffirm_attached_particles( const CHR_REF & character );
+int     reaffirm_attached_particles( const CHR_REF & character );
+ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, int vertex_offset );
 
 // Statlist
-void statlist_add( const CHR_REF by_reference character );
-void statlist_move_to_top( const CHR_REF by_reference character );
+void statlist_add( const CHR_REF & character );
+void statlist_move_to_top( const CHR_REF & character );
 void statlist_sort();
 
 /// Player
-void   set_one_player_latch( const PLA_REF by_reference player );
-bool_t add_player( const CHR_REF by_reference character, const PLA_REF by_reference player, Uint32 device );
+void   set_one_player_latch( const PLA_REF & player );
+bool_t add_player( const CHR_REF & character, const PLA_REF & player, Uint32 device );
 
 // AI targeting
 CHR_REF chr_find_target( struct ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits );
 CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
-                         const PIP_REF by_reference particletype, const TEAM_REF by_reference team, const CHR_REF by_reference donttarget, const CHR_REF by_reference oldtarget );
+                         const PIP_REF & particletype, const TEAM_REF & team, const CHR_REF & donttarget, const CHR_REF & oldtarget );
 
 // object initialization
 void  free_all_objects( void );
@@ -379,7 +386,7 @@ bool_t game_choose_module( int imod, int seed );
 
 int game_do_menu( struct ego_menu_process * mproc );
 
-void expand_escape_codes( const CHR_REF by_reference ichr, struct ego_script_state * pstate, char * src, char * src_end, char * dst, char * dst_end );
+void expand_escape_codes( const CHR_REF & ichr, struct ego_script_state * pstate, char * src, char * src_end, char * dst, char * dst_end );
 
 void upload_wawalite();
 
@@ -389,7 +396,7 @@ bool_t game_module_reset( ego_game_module_data * pinst, Uint32 seed );
 bool_t game_module_start( ego_game_module_data * pinst );
 bool_t game_module_stop( ego_game_module_data * pinst );
 
-bool_t check_target( struct ego_chr * psrc, const CHR_REF by_reference ichr_test, IDSZ idsz, BIT_FIELD targeting_bits );
+bool_t check_target( struct ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_FIELD targeting_bits );
 
 void attach_all_particles();
 
@@ -399,11 +406,11 @@ bool_t write_wawalite( const char *modname, struct s_wawalite_data * pdata );
 Uint8 get_local_alpha( int alpha );
 Uint8 get_local_light( int light );
 
-bool_t do_shop_drop( const CHR_REF by_reference idropper, const CHR_REF by_reference iitem );
+bool_t do_shop_drop( const CHR_REF & idropper, const CHR_REF & iitem );
 
-bool_t do_shop_buy( const CHR_REF by_reference ipicker, const CHR_REF by_reference ichr );
-bool_t do_shop_steal( const CHR_REF by_reference ithief, const CHR_REF by_reference iitem );
-bool_t do_item_pickup( const CHR_REF by_reference ichr, const CHR_REF by_reference iitem );
+bool_t do_shop_buy( const CHR_REF & ipicker, const CHR_REF & ichr );
+bool_t do_shop_steal( const CHR_REF & ithief, const CHR_REF & iitem );
+bool_t do_item_pickup( const CHR_REF & ichr, const CHR_REF & iitem );
 
 bool_t get_chr_regeneration( struct ego_chr * pchr, int *pliferegen, int * pmanaregen );
 

@@ -161,7 +161,7 @@ struct mnu_module
 #define VALID_MOD( IMOD )       ( VALID_MOD_RANGE( IMOD ) && IMOD < mnu_ModList.count && mnu_ModList.lst[IMOD].loaded )
 #define INVALID_MOD( IMOD )     ( !VALID_MOD_RANGE( IMOD ) || IMOD >= mnu_ModList.count || !mnu_ModList.lst[IMOD].loaded )
 
-INSTANTIATE_STACK_STATIC( mnu_module, mnu_ModList, MAX_MODULE );
+static t_cpp_stack< mnu_module, MAX_MODULE  > mnu_ModList;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -226,7 +226,7 @@ static ego_GameTips mnu_GameTip = { 0 };
 #define TITLE_TEXTURE_COUNT   MAX_MODULE
 #define INVALID_TITLE_TEXTURE TITLE_TEXTURE_COUNT
 
-INSTANTIATE_STACK_STATIC( oglx_texture_t, TxTitleImage, TITLE_TEXTURE_COUNT ); // OpenGL title image surfaces
+static t_cpp_stack< oglx_texture_t, TITLE_TEXTURE_COUNT  > TxTitleImage; // OpenGL title image surfaces
 
 ego_menu_process * MProc             = &_mproc;
 bool_t           start_new_player  = bfalse;
@@ -355,8 +355,13 @@ void mnu_stack_clear()
 //--------------------------------------------------------------------------------------------
 // The implementation of the menu process
 //--------------------------------------------------------------------------------------------
-int ego_menu_process::do_beginning( ego_menu_process * mproc )
+egoboo_rv  ego_menu_process::do_beginning()
 {
+    if( NULL == this )  return rv_error;
+    result = -1;
+
+    if ( !validate() ) return rv_error;
+
     // play some music
     sound_play_song( MENU_SONG, 0, -1 );
 
@@ -367,37 +372,45 @@ int ego_menu_process::do_beginning( ego_menu_process * mproc )
     // this will not change unless a new module is downloaded for a network menu?
     mnu_load_all_module_info();
 
-    // initialize the process state
-    mproc->valid = btrue;
+    // go on to the next state
+    result = 1;
+    state  = proc_entering;
 
-    return 1;
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_menu_process::do_running( ego_menu_process * mproc )
+egoboo_rv  ego_menu_process::do_running()
 {
     int menuResult;
 
-    if ( !ego_process::validate( mproc ) ) return -1;
+    if( NULL == this )  return rv_error;
+    result = -1;
 
-    mproc->was_active = mproc->valid;
+    if ( !validate() ) return rv_error;
 
-    if ( mproc->paused ) return 0;
+    was_active = valid;
+
+    if ( paused )
+    {
+        result = 0;
+        return rv_success;
+    }
 
     // play the menu music
-    mnu_draw_background = !ego_process::running( GProc );
-    menuResult          = game_do_menu( mproc );
+    mnu_draw_background = rv_success != (rv_success == GProc->running());
+    menuResult          = game_do_menu( this );
 
     switch ( menuResult )
     {
         case MENU_SELECT:
             // go ahead and start the game
-            ego_process::pause( mproc );
+            pause();
             break;
 
         case MENU_QUIT:
             // the user selected "quit"
-            ego_process::kill( mproc );
+            kill();
             break;
     }
 
@@ -408,16 +421,28 @@ int ego_menu_process::do_running( ego_menu_process * mproc )
 
         // We have exited the menu and restarted the game
         GProc->mod_paused = bfalse;
-        ego_process::pause( MProc );
+        MProc->pause();
     }
 
-    return 0;
+    // this obviously cannot self-terminate
+    result = 0;
+
+    // go on to the next state?
+    if ( 1 == result )
+    {
+        state = proc_leaving;
+    }
+
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_menu_process::do_leaving( ego_menu_process * mproc )
+egoboo_rv  ego_menu_process::do_leaving()
 {
-    if ( !ego_process::validate( mproc ) ) return -1;
+    if( NULL == this )  return rv_error;
+    result = -1;
+
+    if ( !validate() ) return rv_error;
 
     // terminate the menu system
     menu_system_end();
@@ -425,71 +450,31 @@ int ego_menu_process::do_leaving( ego_menu_process * mproc )
     // finish the menu song
     sound_finish_song( 500 );
 
-    return 1;
+    result = 1;
+
+    if ( 1 == result )
+    {
+        state  = proc_finishing;
+        killme = bfalse;
+    }
+
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_menu_process::Run( ego_menu_process * mproc, double frameDuration )
+egoboo_rv ego_menu_process::do_finishing()
 {
-    int result = 0, proc_result = 0;
+    if( NULL == this )  return rv_error;
+    result = -1;
 
-    if ( !ego_process::validate( mproc ) ) return -1;
-    mproc->dtime = frameDuration;
+    if ( !validate() ) return rv_error;
 
-    if ( mproc->paused ) return 0;
+    // terminate this process
+    terminate();
 
-    if ( mproc->killme )
-    {
-        mproc->state = proc_leaving;
-    }
-
-    switch ( mproc->state )
-    {
-        case proc_beginning:
-            proc_result = ego_menu_process::do_beginning( mproc );
-
-            if ( 1 == proc_result )
-            {
-                mproc->state = proc_entering;
-            }
-            break;
-
-        case proc_entering:
-            // proc_result = ego_menu_process::do_entering( mproc );
-
-            mproc->state = proc_running;
-            break;
-
-        case proc_running:
-            proc_result = ego_menu_process::do_running( mproc );
-
-            if ( 1 == proc_result )
-            {
-                mproc->state = proc_leaving;
-            }
-            break;
-
-        case proc_leaving:
-            proc_result = ego_menu_process::do_leaving( mproc );
-
-            if ( 1 == proc_result )
-            {
-                mproc->state  = proc_finishing;
-                mproc->killme = bfalse;
-            }
-            break;
-
-        case proc_finishing:
-            ego_process::terminate( mproc );
-            break;
-
-        default:
-        case proc_invalid:
-            break;
-    }
-
-    return result;
+    return rv_success;
 }
+
 
 //--------------------------------------------------------------------------------------------
 // Code for global initialization/deinitialization of the menu system
@@ -720,7 +705,7 @@ int doMainMenu( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                 }
 
                 // load the menu image
@@ -1003,7 +988,7 @@ int doSinglePlayerMenu( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                 }
 
                 // Load resources for this menu
@@ -1455,7 +1440,7 @@ int doChooseModule( float deltaTime )
                 // initialize the buttons
                 for ( i = 0; i < but_count; i++ )
                 {
-                    memset( w_buttons + i, 0, sizeof( ui_Widget ) );
+                    ui_Widget::reset( w_buttons + i );
 
                     ui_Widget::set_id( w_buttons + i, i );
                     ui_Widget::set_text( w_buttons + i, ui_just_centerleft, NULL, sz_buttons[i] );
@@ -1464,7 +1449,7 @@ int doChooseModule( float deltaTime )
                 // initialize the labels
                 for ( i = 0; i < lab_count; i++ )
                 {
-                    memset( w_labels + i, 0, sizeof( ui_Widget ) );
+                    ui_Widget::reset( w_labels + i );;
 
                     ui_Widget::set_id( w_labels + i, UI_Nothing );
                     ui_Widget::set_text( w_labels + i, ui_just_centerleft, NULL, sz_labels[i] );
@@ -1523,7 +1508,7 @@ int doChooseModule( float deltaTime )
                         if ( FILTER_HIDDEN == mnu_ModList.lst[imod].base.moduletype )  continue;
 
                         // starter module
-                        validModules[numValidModules] = REF_TO_INT( imod );
+                        validModules[numValidModules] = (imod ).get_value();
                         numValidModules++;
                     }
                     else
@@ -1535,7 +1520,7 @@ int doChooseModule( float deltaTime )
                         if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.maxplayers ) continue;
 
                         // regular module
-                        validModules[numValidModules] = REF_TO_INT( imod );
+                        validModules[numValidModules] = (imod ).get_value();
                         numValidModules++;
                     }
                 }
@@ -1708,7 +1693,7 @@ int doChooseModule( float deltaTime )
                     if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_select ) )
                     {
                         // go to the next menu with this module selected
-                        selectedModule = REF_TO_INT( validModules[selectedModule] );
+                        selectedModule = (validModules[selectedModule] ).get_value();
                         menuState = MM_Leaving;
                     }
                 }
@@ -2352,7 +2337,7 @@ int doChoosePlayer( float deltaTime )
 
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
@@ -2948,7 +2933,7 @@ int doOptions( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                 }
 
                 // set up menu variables
@@ -3503,7 +3488,7 @@ int doOptionsInput( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
@@ -3511,7 +3496,7 @@ int doOptionsInput( float deltaTime )
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
                     // set up the w_labels
-                    ui_Widget::ctor( w_labels + cnt );
+                    ui_Widget::reset( w_labels + cnt );
                     ui_Widget::set_text( w_labels + cnt, ui_just_centered, menuFont, sz_labels[cnt] );
                 }
 
@@ -4252,14 +4237,14 @@ int doOptionsGame( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // set up the w_buttons
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
                     // set up the w_labels
-                    ui_Widget::ctor( w_labels + cnt );
+                    ui_Widget::reset( w_labels + cnt );
                     ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
@@ -4765,14 +4750,14 @@ int doOptionsAudio( float deltaTime )
                 // set up the w_buttons
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centered, NULL, sz_buttons[cnt] );
                 }
 
                 // set up the w_labels
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    ui_Widget::ctor( w_labels + cnt );
+                    ui_Widget::reset( w_labels + cnt );
                     ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
@@ -5593,14 +5578,14 @@ int doOptionsVideo( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 // set up the w_labels
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    ui_Widget::ctor( w_labels + cnt );
+                    ui_Widget::reset( w_labels + cnt );
                     ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
@@ -6508,7 +6493,7 @@ int doGamePaused( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                 }
 
                 if ( PMod->exportvalid && !local_stats.allpladead ) sz_buttons[0] = "Save and Exit";
@@ -6716,7 +6701,7 @@ int doShowEndgame( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    ui_Widget::ctor( w_buttons + cnt, cnt );
+                    ui_Widget::reset( w_buttons + cnt, cnt );
                 }
 
                 mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
@@ -6839,7 +6824,7 @@ int doShowEndgame( float deltaTime )
                 {
                     game_finish_module();
                     pickedmodule_index = -1;
-                    ego_process::kill( GProc );
+                    GProc->kill();
                 }
 
                 // free the widgets
@@ -7017,7 +7002,7 @@ int doMenu( float deltaTime )
                     if ( !reloaded )
                     {
                         game_finish_module();
-                        ego_process::kill( GProc );
+                        GProc->kill();
                     }
 
                     result = MENU_QUIT;
@@ -7210,7 +7195,7 @@ void mnu_load_all_module_images_vfs()
 
             mnu_ModList.lst[imod].tex_index = TxTitleImage_load_one_vfs( loadname );
 
-            vfs_printf( filesave, "%02d.  %s\n", REF_TO_INT( imod ), mnu_ModList.lst[imod].vfs_path );
+            vfs_printf( filesave, "%02d.  %s\n", (imod ).get_value(), mnu_ModList.lst[imod].vfs_path );
         }
         else
         {
@@ -7287,7 +7272,7 @@ int mnu_get_mod_number( const char *szModName )
     {
         if ( 0 == strcmp( mnu_ModList.lst[modnum].vfs_path, szModName ) )
         {
-            retval = REF_TO_INT( modnum );
+            retval = (modnum ).get_value();
             break;
         }
     }
@@ -7496,7 +7481,7 @@ void mnu_ModList_release_images()
     for ( cnt = 0; cnt < mnu_ModList.count; cnt++ )
     {
         if ( !mnu_ModList.lst[cnt].loaded ) continue;
-        tnc = REF_TO_INT( cnt );
+        tnc = (cnt ).get_value();
 
         TxTitleImage_release_one( mnu_ModList.lst[cnt].tex_index );
         mnu_ModList.lst[cnt].tex_index = INVALID_TITLE_TEXTURE;

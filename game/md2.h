@@ -46,7 +46,18 @@ struct ego_MD2_Vertex
     fvec3_t nrm;
     int     normal;  ///< index to id-normal array
 
-    ego_MD2_Vertex() { memset( this, 0, sizeof( *this ) ); }
+    ego_MD2_Vertex() { clear(this); }
+
+private:
+
+    static ego_MD2_Vertex * clear( ego_MD2_Vertex * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -54,7 +65,18 @@ struct ego_MD2_TexCoord
 {
     fvec2_t tex;
 
-    ego_MD2_TexCoord() { memset( this, 0, sizeof( *this ) ); }
+    ego_MD2_TexCoord() { clear(this); }
+
+private:
+
+    static ego_MD2_TexCoord * clear( ego_MD2_TexCoord * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -78,6 +100,8 @@ struct ego_MD2_Frame
 protected:
     static ego_MD2_Frame * ctor( ego_MD2_Frame * pframe, size_t size );
     static ego_MD2_Frame * dtor( ego_MD2_Frame * pframe );
+
+private:
     static ego_MD2_Frame * clear( ego_MD2_Frame * pframe );
 };
 
@@ -109,8 +133,10 @@ struct ego_MD2_GLCommand
 protected:
     static ego_MD2_GLCommand * ctor( ego_MD2_GLCommand * m );
     static ego_MD2_GLCommand * dtor( ego_MD2_GLCommand * m );
-    static ego_MD2_GLCommand * clear( ego_MD2_GLCommand * m );
     static ego_MD2_GLCommand * delete_list( ego_MD2_GLCommand * command_ptr, int command_count );
+
+private:
+    static ego_MD2_GLCommand * clear( ego_MD2_GLCommand * m );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -134,7 +160,6 @@ struct ego_MD2_Model
     // CTORS
     static ego_MD2_Model * create( void );
     static void            destroy( ego_MD2_Model ** m );
-    static ego_MD2_Model * clear( ego_MD2_Model * ptr );
 
     static ego_MD2_Model * new_vector( int n );
     static void            delete_vector( ego_MD2_Model * v, int n );
@@ -154,6 +179,7 @@ private:
     ego_MD2_Model() { ctor( this ); }
     ~ego_MD2_Model() { dtor( this ); }
 
+    static ego_MD2_Model * clear( ego_MD2_Model * ptr );
 };
 
 #define _md2_h

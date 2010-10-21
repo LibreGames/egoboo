@@ -37,20 +37,20 @@
 // FORWARD DECLARARIONS
 //--------------------------------------------------------------------------------------------
 // ego_cap accessor functions
-INLINE bool_t cap_is_type_idsz( const CAP_REF by_reference icap, IDSZ test_idsz );
-INLINE bool_t cap_has_idsz( const CAP_REF by_reference icap, IDSZ idsz );
+INLINE bool_t cap_is_type_idsz( const CAP_REF & icap, IDSZ test_idsz );
+INLINE bool_t cap_has_idsz( const CAP_REF & icap, IDSZ idsz );
 
 //--------------------------------------------------------------------------------------------
 // ego_team accessor functions
-INLINE CHR_REF  team_get_ileader( const TEAM_REF by_reference iteam );
-INLINE ego_chr  * team_get_pleader( const TEAM_REF by_reference iteam );
+INLINE CHR_REF  team_get_ileader( const TEAM_REF & iteam );
+INLINE ego_chr  * team_get_pleader( const TEAM_REF & iteam );
 
-INLINE bool_t team_hates_team( const TEAM_REF by_reference ipredator_team, const TEAM_REF by_reference iprey_team );
+INLINE bool_t team_hates_team( const TEAM_REF & ipredator_team, const TEAM_REF & iprey_team );
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
-INLINE bool_t cap_is_type_idsz( const CAP_REF by_reference icap, IDSZ test_idsz )
+INLINE bool_t cap_is_type_idsz( const CAP_REF & icap, IDSZ test_idsz )
 {
     /// @details BB@> check IDSZ_PARENT and IDSZ_TYPE to see if the test_idsz matches. If we are not
     ///     picky (i.e. IDSZ_NONE == test_idsz), then it matches any valid item.
@@ -68,7 +68,7 @@ INLINE bool_t cap_is_type_idsz( const CAP_REF by_reference icap, IDSZ test_idsz 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t cap_has_idsz( const CAP_REF by_reference icap, IDSZ idsz )
+INLINE bool_t cap_has_idsz( const CAP_REF & icap, IDSZ idsz )
 {
     /// @details BB@> does idsz match any of the stored values in pcap->idsz[]?
     ///               Matches anything if not picky (idsz == IDSZ_NONE)
@@ -97,7 +97,7 @@ INLINE bool_t cap_has_idsz( const CAP_REF by_reference icap, IDSZ idsz )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF team_get_ileader( const TEAM_REF by_reference iteam )
+INLINE CHR_REF team_get_ileader( const TEAM_REF & iteam )
 {
     CHR_REF ichr;
 
@@ -110,7 +110,7 @@ INLINE CHR_REF team_get_ileader( const TEAM_REF by_reference iteam )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_chr  * team_get_pleader( const TEAM_REF by_reference iteam )
+INLINE ego_chr  * team_get_pleader( const TEAM_REF & iteam )
 {
     CHR_REF ichr;
 
@@ -123,18 +123,18 @@ INLINE ego_chr  * team_get_pleader( const TEAM_REF by_reference iteam )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t team_hates_team( const TEAM_REF by_reference ipredator_team, const TEAM_REF by_reference iprey_team )
+INLINE bool_t team_hates_team( const TEAM_REF & ipredator_team, const TEAM_REF & iprey_team )
 {
     /// @details BB@> a wrapper function for access to the hatesteam data
 
     if ( ipredator_team >= TEAM_MAX || iprey_team >= TEAM_MAX ) return bfalse;
 
-    return TeamStack.lst[ipredator_team].hatesteam[ REF_TO_INT( iprey_team )];
+    return TeamStack.lst[ipredator_team].hatesteam[ (iprey_team ).get_value()];
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE PRO_REF ego_chr::get_ipro( const CHR_REF by_reference ichr )
+INLINE PRO_REF ego_chr::get_ipro( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -147,7 +147,7 @@ INLINE PRO_REF ego_chr::get_ipro( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE CAP_REF ego_chr::get_icap( const CHR_REF by_reference ichr )
+INLINE CAP_REF ego_chr::get_icap( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -158,7 +158,7 @@ INLINE CAP_REF ego_chr::get_icap( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE EVE_REF ego_chr::get_ieve( const CHR_REF by_reference ichr )
+INLINE EVE_REF ego_chr::get_ieve( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -169,7 +169,7 @@ INLINE EVE_REF ego_chr::get_ieve( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE PIP_REF ego_chr::get_ipip( const CHR_REF by_reference ichr, int ipip )
+INLINE PIP_REF ego_chr::get_ipip( const CHR_REF & ichr, int ipip )
 {
     ego_chr * pchr;
 
@@ -180,7 +180,7 @@ INLINE PIP_REF ego_chr::get_ipip( const CHR_REF by_reference ichr, int ipip )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE TEAM_REF ego_chr::get_iteam( const CHR_REF by_reference ichr )
+INLINE TEAM_REF ego_chr::get_iteam( const CHR_REF & ichr )
 {
     ego_chr * pchr;
     int iteam;
@@ -188,14 +188,14 @@ INLINE TEAM_REF ego_chr::get_iteam( const CHR_REF by_reference ichr )
     if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_DAMAGE;
     pchr = ChrObjList.get_pdata( ichr );
 
-    iteam = REF_TO_INT( pchr->team );
+    iteam = (pchr->team ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
 
     return ( TEAM_REF )iteam;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE TEAM_REF ego_chr::get_iteam_base( const CHR_REF by_reference ichr )
+INLINE TEAM_REF ego_chr::get_iteam_base( const CHR_REF & ichr )
 {
     ego_chr * pchr;
     int iteam;
@@ -203,14 +203,14 @@ INLINE TEAM_REF ego_chr::get_iteam_base( const CHR_REF by_reference ichr )
     if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_MAX;
     pchr = ChrObjList.get_pdata( ichr );
 
-    iteam = REF_TO_INT( pchr->baseteam );
+    iteam = (pchr->baseteam ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
 
     return ( TEAM_REF )iteam;
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_pro * ego_chr::get_ppro( const CHR_REF by_reference ichr )
+INLINE ego_pro * ego_chr::get_ppro( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -223,7 +223,7 @@ INLINE ego_pro * ego_chr::get_ppro( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_cap * ego_chr::get_pcap( const CHR_REF by_reference ichr )
+INLINE ego_cap * ego_chr::get_pcap( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -234,7 +234,7 @@ INLINE ego_cap * ego_chr::get_pcap( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_eve * ego_chr::get_peve( const CHR_REF by_reference ichr )
+INLINE ego_eve * ego_chr::get_peve( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -245,7 +245,7 @@ INLINE ego_eve * ego_chr::get_peve( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_pip * ego_chr::get_ppip( const CHR_REF by_reference ichr, int ipip )
+INLINE ego_pip * ego_chr::get_ppip( const CHR_REF & ichr, int ipip )
 {
     ego_chr * pchr;
 
@@ -256,7 +256,7 @@ INLINE ego_pip * ego_chr::get_ppip( const CHR_REF by_reference ichr, int ipip )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Mix_Chunk * ego_chr::get_chunk( const CHR_REF by_reference ichr, int index )
+INLINE Mix_Chunk * ego_chr::get_chunk( const CHR_REF & ichr, int index )
 {
     ego_chr * pchr;
 
@@ -275,7 +275,7 @@ INLINE Mix_Chunk * ego_chr::get_chunk_ptr( ego_chr * pchr, int index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_team * ego_chr::get_pteam( const CHR_REF by_reference ichr )
+INLINE ego_team * ego_chr::get_pteam( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -288,7 +288,7 @@ INLINE ego_team * ego_chr::get_pteam( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_team * ego_chr::get_pteam_base( const CHR_REF by_reference ichr )
+INLINE ego_team * ego_chr::get_pteam_base( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -301,7 +301,7 @@ INLINE ego_team * ego_chr::get_pteam_base( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_ai_state * ego_chr::get_pai( const CHR_REF by_reference ichr )
+INLINE ego_ai_state * ego_chr::get_pai( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -312,7 +312,7 @@ INLINE ego_ai_state * ego_chr::get_pai( const CHR_REF by_reference ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_chr_instance * ego_chr::get_pinstance( const CHR_REF by_reference ichr )
+INLINE ego_chr_instance * ego_chr::get_pinstance( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
@@ -323,7 +323,7 @@ INLINE ego_chr_instance * ego_chr::get_pinstance( const CHR_REF by_reference ich
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE IDSZ ego_chr::get_idsz( const CHR_REF by_reference ichr, int type )
+INLINE IDSZ ego_chr::get_idsz( const CHR_REF & ichr, int type )
 {
     ego_cap * pcap;
 
@@ -336,7 +336,7 @@ INLINE IDSZ ego_chr::get_idsz( const CHR_REF by_reference ichr, int type )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t ego_chr::has_idsz( const CHR_REF by_reference ichr, IDSZ idsz )
+INLINE bool_t ego_chr::has_idsz( const CHR_REF & ichr, IDSZ idsz )
 {
     /// @details BB@> a wrapper for cap_has_idsz
 
@@ -346,7 +346,7 @@ INLINE bool_t ego_chr::has_idsz( const CHR_REF by_reference ichr, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t ego_chr::is_type_idsz( const CHR_REF by_reference item, IDSZ test_idsz )
+INLINE bool_t ego_chr::is_type_idsz( const CHR_REF & item, IDSZ test_idsz )
 {
     /// @details BB@> check IDSZ_PARENT and IDSZ_TYPE to see if the test_idsz matches. If we are not
     ///     picky (i.e. IDSZ_NONE == test_idsz), then it matches any valid item.
@@ -359,7 +359,7 @@ INLINE bool_t ego_chr::is_type_idsz( const CHR_REF by_reference item, IDSZ test_
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t ego_chr::has_vulnie( const CHR_REF by_reference item, const PRO_REF by_reference test_profile )
+INLINE bool_t ego_chr::has_vulnie( const CHR_REF & item, const PRO_REF & test_profile )
 {
     /// @details BB@> is item vulnerable to the type in profile test_profile?
 
@@ -602,7 +602,7 @@ INLINE void ego_chr::set_height( ego_chr * pchr, float height )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE latch_2d_t ego_chr::convert_latch_2d( const ego_chr * pchr, const latch_2d_t by_reference src )
+INLINE latch_2d_t ego_chr::convert_latch_2d( const ego_chr * pchr, const latch_2d_t & src )
 {
     latch_2d_t dst = src;
 

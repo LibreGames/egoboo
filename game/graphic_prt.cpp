@@ -51,7 +51,7 @@ int get_prt_texture_style( const TX_REF & itex )
     int index;
 
     index = -1;
-    switch ( REF_TO_INT( itex ) )
+    switch ( (itex ).get_value() )
     {
         case TX_PARTICLE_TRANS:
             index = 0;
@@ -171,7 +171,7 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], s
 
             if ( dist > 0 )
             {
-                reg[numparticle].index = REF_TO_INT( prt_bdl.prt_ref );
+                reg[numparticle].index = (prt_bdl.prt_ref ).get_value();
                 reg[numparticle].dist  = dist;
                 numparticle++;
             }
@@ -428,7 +428,7 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
 
             if ( dist > 0 )
             {
-                reg[numparticle].index = REF_TO_INT( iprt );
+                reg[numparticle].index = (iprt ).get_value();
                 reg[numparticle].dist  = dist;
                 numparticle++;
             }
@@ -587,7 +587,7 @@ void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, float 
 
     if ( NULL == vlst || NULL == pinst ) return;
 
-    switch ( REF_TO_INT( pinst->texture_ref ) )
+    switch ( (pinst->texture_ref ).get_value() )
     {
         default:
         case TX_PARTICLE_TRANS:

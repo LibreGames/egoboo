@@ -35,7 +35,7 @@ enum e_ego_obj_actions
     ego_obj_nothing        = ego_action_invalid,
     ego_obj_constructing   = ego_action_beginning,   ///< The object has been allocated and had its critical variables filled with safe values
     ego_obj_initializing   = ego_action_entering,    ///< The object is being initialized/re-initialized
-    ego_obj_procing     = ego_action_running,     ///< The object is fully activated
+    ego_obj_processing     = ego_action_running,     ///< The object is fully activated
     ego_obj_deinitializing = ego_action_leaving,     ///< The object is being de-initialized
     ego_obj_destructing    = ego_action_finishing,   ///< The object is being destructed
 
@@ -51,6 +51,8 @@ typedef enum e_ego_obj_actions ego_obj_actions_t;
 /// the "egoboo process"
 struct ego_obj_proc
 {
+    friend struct ego_obj_proc_data;
+
     // basic flags for where the object is in the creation/desctuction process
     bool_t               valid;       ///< The object is a valid object
     bool_t               constructed; ///< The object has been initialized
@@ -67,7 +69,6 @@ struct ego_obj_proc
 
     static ego_obj_proc * ctor( ego_obj_proc * );
     static ego_obj_proc * dtor( ego_obj_proc * );
-    static ego_obj_proc * clear( ego_obj_proc * ptr );
 
     static ego_obj_proc * set_valid( ego_obj_proc *, bool_t val );
 
@@ -80,6 +81,10 @@ struct ego_obj_proc
     static ego_obj_proc * invalidate( ego_obj_proc * );
 
     static ego_obj_proc * begin_waiting( ego_obj_proc * );
+
+private:
+
+    static ego_obj_proc * clear( ego_obj_proc * ptr );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -88,6 +93,8 @@ struct ego_obj_proc
 /// Users can make requests for changes in the machine state by setting these values.
 struct ego_obj_req
 {
+    friend struct ego_obj_proc_data;
+
     bool_t  unpause_me;  ///< request to un-pause the object
     bool_t  pause_me;    ///< request to pause the object
     bool_t  turn_me_on;  ///< request to turn on the object
@@ -96,6 +103,9 @@ struct ego_obj_req
 
     static ego_obj_req * ctor( ego_obj_req * ptr );
     static ego_obj_req * dtor( ego_obj_req * ptr );
+
+private:
+
     static ego_obj_req * clear( ego_obj_req* ptr );
 };
 
@@ -125,15 +135,20 @@ struct ego_obj_proc_data
     egoboo_rv proc_set_wait();
     egoboo_rv proc_set_process();
 
-    egoboo_rv proc_set_kill();
+    egoboo_rv proc_set_killed( bool_t val );
+    egoboo_rv proc_set_on( bool_t val );
     egoboo_rv proc_set_spawning( bool_t val );
+
+    egoboo_rv proc_req_kill();
+    egoboo_rv proc_req_on( bool_t val );
+    egoboo_rv proc_req_pause( bool_t val );
 
     egoboo_rv proc_do_on();
 
 private:
     // "process" control control
     ego_obj_proc _proc_data;   ///< The state of the object_base "process"
-    ego_obj_req     _req_data;    ///< place for making requests to change the state
+    ego_obj_req  _req_data;    ///< place for making requests to change the state
 };
 
 //--------------------------------------------------------------------------------------------
@@ -318,7 +333,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 #define INITIALIZING_PBASE( PBASE )       ( CONSTRUCTED_PBASE( PBASE ) && STATE_INITIALIZING_PBASE(PBASE) )
 
 /// Is the object in the active state?
-#define STATE_PROCESSING_PBASE( PBASE ) ( ego_obj_procing == (PBASE)->cget_proc().action )
+#define STATE_PROCESSING_PBASE( PBASE ) ( ego_obj_processing == (PBASE)->cget_proc().action )
 /// Is the object active?
 #define ACTIVE_PBASE( PBASE )           ( INITIALIZED_PBASE( PBASE ) && STATE_PROCESSING_PBASE(PBASE) && FLAG_ON_PBASE(PBASE) && !FLAG_KILLED_PBASE( PBASE ) )
 
@@ -351,6 +366,9 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 
 /// Grab the state of object that "inherits" from ego_obj
 #define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_CGET_PBASE( POBJ ) ) ) ? ego_obj_nothing : (POBJ)->get_ego_obj().get_index() )
+
+/// Is the object active?
+#define DEFINED_PBASE( PBASE )  ( FLAG_ON_PBASE(PBASE) && !FLAG_KILLED_PBASE( PBASE ) )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

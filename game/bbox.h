@@ -56,11 +56,35 @@ enum e_octagonal_axes
 };
 
 /// a "vector" that measures distances based on the axes of an octagonal bounding box
-typedef float oct_vec_t[OCT_COUNT];
+typedef float oct_vec_base_t[OCT_COUNT];
 
-bool_t oct_vec_ctor( oct_vec_t ovec, fvec3_t pos );
+struct ego_oct_vec
+{
+    oct_vec_base_t v;
 
-#define OCT_VEC_INIT_VALS { 0,0,0,0,0 }
+    ego_oct_vec( ) { clear( this ); }
+
+    ego_oct_vec( oct_vec_base_t & vals ) { clear( this ); memmove( &v, &vals, sizeof(v) ); }
+
+    ego_oct_vec( fvec3_t & vec ) { clear( this ); ctor( this, vec ); }
+
+    float & operator [] (size_t index) { return v[index]; }
+
+    const float & operator [] (size_t index) const  { return v[index]; }
+
+    static ego_oct_vec * ctor( ego_oct_vec * ovec, fvec3_t pos );
+
+private:
+
+    static ego_oct_vec * clear( ego_oct_vec * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        return ptr;
+    }
+};
 
 //--------------------------------------------------------------------------------------------
 
@@ -71,25 +95,24 @@ bool_t oct_vec_ctor( oct_vec_t ovec, fvec3_t pos );
 
 struct ego_oct_bb
 {
-    oct_vec_t mins,  maxs;
+    ego_oct_vec mins,  maxs;
 
-    ego_oct_bb() { memset( this, 0, sizeof( *this ) ); }
+    ego_oct_bb() {}
 
-    static ego_oct_bb * ctor( ego_oct_bb   * pobb );
-    static bool_t       do_union( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   * pdst );
-    static bool_t       do_intersection( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   * pdst );
-    static bool_t       empty( ego_oct_bb   src1 );
+    static ego_oct_bb * ctor( ego_oct_bb * pobb );
+    static bool_t       do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst );
+    static bool_t       do_intersection( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst );
+    static bool_t       empty( ego_oct_bb & src1 );
 
     static void         downgrade( ego_oct_bb * psrc, ego_bumper bump_stt, ego_bumper bump_base, ego_bumper * p_bump, ego_oct_bb   * pdst );
-    static bool_t       add_vector( const ego_oct_bb src, const fvec3_base_t vec, ego_oct_bb   * pdst );
+    static bool_t       add_vector( const ego_oct_bb & src, const fvec3_base_t vec, ego_oct_bb   * pdst );
 
-    static egoboo_rv intersect_index( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax );
-    static egoboo_rv intersect_index_close( int index, ego_oct_bb   src1, oct_vec_t opos1, oct_vec_t ovel1, ego_oct_bb   src2, oct_vec_t opos2, oct_vec_t ovel2, float *tmin, float *tmax );
+    static egoboo_rv intersect_index( int index, ego_oct_bb & src1, ego_oct_vec & opos1, ego_oct_vec & ovel1, ego_oct_bb & src2, ego_oct_vec & opos2, ego_oct_vec & ovel2, float *tmin, float *tmax );
+    static egoboo_rv intersect_index_close( int index, ego_oct_bb & src1, ego_oct_vec & opos1, ego_oct_vec & ovel1, ego_oct_bb & src2, ego_oct_vec & opos2, ego_oct_vec & ovel2, float *tmin, float *tmax );
 };
 
-#define OCT_BB_INIT_VALS { OCT_VEC_INIT_VALS, OCT_VEC_INIT_VALS }
-
 //--------------------------------------------------------------------------------------------
+
 struct ego_lod_aabb
 {
     int    sub_used;
@@ -101,22 +124,33 @@ struct ego_lod_aabb
 
     ego_aabb  bb;
 
-    ego_lod_aabb() { memset( this, 0, sizeof( *this ) ); }
+    ego_lod_aabb() { used = bfalse; sub_used = level = address = 0; weight = 0.0f; }
 };
 
 //--------------------------------------------------------------------------------------------
 struct ego_aabb_lst
 {
-    int       count;
+    int            count;
     ego_lod_aabb * list;
 
-    ego_aabb_lst();
-    ~ego_aabb_lst();
+    ego_aabb_lst() { clear(this); }
+    ~ego_aabb_lst() { dtor( this ); }
 
-    static EGO_CONST ego_aabb_lst   * ctor( ego_aabb_lst   * lst );
-    static EGO_CONST ego_aabb_lst   * dtor( ego_aabb_lst   * lst );
-    static EGO_CONST ego_aabb_lst   * renew( ego_aabb_lst   * lst );
-    static EGO_CONST ego_aabb_lst   * alloc( ego_aabb_lst   * lst, int count );
+    static const ego_aabb_lst   * ctor( ego_aabb_lst   * lst );
+    static const ego_aabb_lst   * dtor( ego_aabb_lst   * lst );
+    static const ego_aabb_lst   * renew( ego_aabb_lst   * lst );
+    static const ego_aabb_lst   * alloc( ego_aabb_lst   * lst, int count );
+
+private:
+
+    static ego_aabb_lst * clear( ego_aabb_lst * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -125,10 +159,23 @@ struct ego_aabb_ary
     int         count;
     ego_aabb_lst   * list;
 
-    static EGO_CONST ego_aabb_ary * ctor( ego_aabb_ary * ary );
-    static EGO_CONST ego_aabb_ary * dtor( ego_aabb_ary * ary );
-    static EGO_CONST ego_aabb_ary * renew( ego_aabb_ary * ary );
-    static EGO_CONST ego_aabb_ary * alloc( ego_aabb_ary * ary, int count );
+    ego_aabb_ary() { clear(this); }
+    ~ego_aabb_ary() { dtor(this); }
+
+    static ego_aabb_ary * ctor( ego_aabb_ary * ary ) { ary = dtor(ary); ary = clear(ary); return ary; }
+    static ego_aabb_ary * dtor( ego_aabb_ary * ary );
+    static ego_aabb_ary * renew( ego_aabb_ary * ary );
+    static ego_aabb_ary * alloc( ego_aabb_ary * ary, int count );
+
+private:
+    static ego_aabb_ary * clear( ego_aabb_ary * ptr )
+    { 
+        if( NULL == ptr ) return ptr;
+
+        memset( ptr, 0, sizeof(*ptr) );
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -142,12 +189,25 @@ struct ego_OVolume
 
     ego_oct_bb   oct;
 
+    ego_OVolume() { clear(this); }
+
     static ego_OVolume do_merge( ego_OVolume * pv1, ego_OVolume * pv2 );
     static ego_OVolume do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 );
     static bool_t      draw( ego_OVolume * cv, bool_t draw_square, bool_t draw_diamond );
     static bool_t      shift( ego_OVolume * cv_src, fvec3_t * pos_src, ego_OVolume *cv_dst );
     static bool_t      unshift( ego_OVolume * cv_src, fvec3_t * pos_src, ego_OVolume *cv_dst );
     static bool_t      refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolume );
+
+private:
+    static ego_OVolume * clear(ego_OVolume * ptr)
+    {
+        if( NULL == ptr ) return NULL;
+
+        ptr->lod = -1;
+        ptr->needs_shape = ptr->needs_position = bfalse;
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------

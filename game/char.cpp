@@ -72,20 +72,14 @@ static IDSZ    inventory_idsz[INVEN_COUNT];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_cap, CapStack, MAX_PROFILE );
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_team, TeamStack, TEAM_MAX );
+t_cpp_stack< ego_cap, MAX_PROFILE  > CapStack;
+t_cpp_stack< ego_team, TEAM_MAX  > TeamStack;
 
 int ego_chr::stoppedby_tests = 0;
 int ego_chr::pressure_tests = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static ego_chr_instance * chr_instance_ctor( ego_chr_instance * pinst );
-static ego_chr_instance * chr_instance_dtor( ego_chr_instance * pinst );
-static bool_t           chr_instance_alloc( ego_chr_instance * pinst, size_t vlst_size );
-static bool_t           chr_instance_free( ego_chr_instance * pinst );
-static bool_t           chr_spawn_instance( ego_chr_instance * pinst, const PRO_REF & profile, Uint8 skin );
-static bool_t           chr_instance_set_mad( ego_chr_instance * pinst, const MAD_REF & imad );
 
 static CHR_REF chr_pack_has_a_stack( const CHR_REF & item, const CHR_REF & character );
 static bool_t  chr_pack_add_item( const CHR_REF & item, const CHR_REF & character );
@@ -109,8 +103,6 @@ static int  cmp_matrix_cache( const void * vlhs, const void * vrhs );
 static bool_t chr_upload_cap( ego_chr * pchr, ego_cap * pcap );
 
 void cleanup_one_character( ego_chr * pchr );
-
-static bool_t chr_instance_update_ref( ego_chr_instance * pinst, float grid_level, bool_t need_matrix );
 
 static void chr_log_script_time( const CHR_REF & ichr );
 
@@ -154,7 +146,7 @@ void character_system_end()
 //--------------------------------------------------------------------------------------------
 int chr_count_free()
 {
-    return ChrObjList.free_count;
+    return ChrObjList.free_count();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -276,7 +268,7 @@ void keep_weapons_with_holders()
                 {
                     ego_chr * tmp_chr = ChrObjList.get_pdata( iattached );
 
-                    if( NULL != tmp_chr)
+                    if ( NULL != tmp_chr )
                     {
                         ego_chr::set_pos( tmp_chr, ego_chr::get_pos_v( pchr ) );
 
@@ -380,7 +372,7 @@ void chr_log_script_time( const CHR_REF & ichr )
     if ( NULL != ftmp )
     {
         fprintf( ftmp, "update == %d\tindex == %d\tname == \"%s\"\tclassname == \"%s\"\ttotal_time == %e\ttotal_calls == %f\n",
-                 update_wld, REF_TO_INT( ichr ), pchr->name, pcap->classname,
+                 update_wld, (ichr ).get_value(), pchr->name, pcap->classname,
                  pchr->ai._clktime, pchr->ai._clkcount );
         fflush( ftmp );
         fclose( ftmp );
@@ -543,7 +535,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
             vertex = (( signed )pchr->inst.vrt_count ) - vertex_offset;
 
             // do the automatic update
-            chr_instance_update_vertices( &( pchr->inst ), vertex, vertex, bfalse );
+            ego_chr_instance::update_vertices( &( pchr->inst ), vertex, vertex, bfalse );
 
             // Calculate vertex_offset point locations with linear interpolation and other silly things
             point[0].x = pchr->inst.vrt_lst[vertex].pos[XX];
@@ -736,7 +728,7 @@ float chr_get_mesh_pressure( ego_chr * pchr, float test_pos[] )
     // calculate the radius based on whether the character is on camera
     /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
-    if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
+    if ( ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
         if ( PMesh->tmem.tile_list[ pchr->onwhichgrid ].inrenderlist )
         {
@@ -744,14 +736,14 @@ float chr_get_mesh_pressure( ego_chr * pchr, float test_pos[] )
         }
     }
 
-    mesh_mpdfx_tests = 0;
-    mesh_bound_tests = 0;
-    mesh_pressure_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
+    ego_mpd::bound_tests = 0;
+    ego_mpd::pressure_tests = 0;
     {
-        retval = mesh_get_pressure( PMesh, test_pos, radius, pchr->stoppedby );
+        retval = ego_mpd::get_pressure( PMesh, test_pos, radius, pchr->stoppedby );
     }
-    ego_chr::stoppedby_tests += mesh_mpdfx_tests;
-    ego_chr::pressure_tests += mesh_pressure_tests;
+    ego_chr::stoppedby_tests += ego_mpd::mpdfx_tests;
+    ego_chr::pressure_tests += ego_mpd::pressure_tests;
 
     return retval;
 }
@@ -772,7 +764,7 @@ fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure )
     // calculate the radius based on whether the character is on camera
     /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
-    if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
+    if ( ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
         if ( PMesh->tmem.tile_list[ pchr->onwhichgrid ].inrenderlist )
         {
@@ -780,14 +772,14 @@ fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure )
         }
     }
 
-    mesh_mpdfx_tests = 0;
-    mesh_bound_tests = 0;
-    mesh_pressure_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
+    ego_mpd::bound_tests = 0;
+    ego_mpd::pressure_tests = 0;
     {
-        retval = mesh_get_diff( PMesh, test_pos, radius, center_pressure, pchr->stoppedby );
+        retval = ego_mpd::get_diff( PMesh, test_pos, radius, center_pressure, pchr->stoppedby );
     }
-    ego_chr::stoppedby_tests += mesh_mpdfx_tests;
-    ego_chr::pressure_tests += mesh_pressure_tests;
+    ego_chr::stoppedby_tests += ego_mpd::mpdfx_tests;
+    ego_chr::pressure_tests += ego_mpd::pressure_tests;
 
     return retval;
 }
@@ -811,7 +803,7 @@ BIT_FIELD chr_hit_wall( ego_chr * pchr, float test_pos[], float nrm[], float * p
     // calculate the radius based on whether the character is on camera
     /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
-    if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
+    if ( ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
         if ( PMesh->tmem.tile_list[ pchr->onwhichgrid ].inrenderlist )
         {
@@ -819,14 +811,14 @@ BIT_FIELD chr_hit_wall( ego_chr * pchr, float test_pos[], float nrm[], float * p
         }
     }
 
-    mesh_mpdfx_tests = 0;
-    mesh_bound_tests = 0;
-    mesh_pressure_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
+    ego_mpd::bound_tests = 0;
+    ego_mpd::pressure_tests = 0;
     {
-        retval = mesh_hit_wall( PMesh, test_pos, radius, pchr->stoppedby, nrm, pressure );
+        retval = ego_mpd::hit_wall( PMesh, test_pos, radius, pchr->stoppedby, nrm, pressure );
     }
-    ego_chr::stoppedby_tests += mesh_mpdfx_tests;
-    ego_chr::pressure_tests  += mesh_pressure_tests;
+    ego_chr::stoppedby_tests += ego_mpd::mpdfx_tests;
+    ego_chr::pressure_tests  += ego_mpd::pressure_tests;
 
     return retval;
 }
@@ -847,7 +839,7 @@ bool_t chr_test_wall( ego_chr * pchr, float test_pos[] )
     // calculate the radius based on whether the character is on camera
     /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
-    if ( mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) )
+    if ( ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) )
     {
         if ( PMesh->tmem.tile_list[ pchr->onwhichgrid ].inrenderlist )
         {
@@ -858,14 +850,14 @@ bool_t chr_test_wall( ego_chr * pchr, float test_pos[] )
     if ( NULL == test_pos ) test_pos = pchr->pos.v;
 
     // do the wall test
-    mesh_mpdfx_tests = 0;
-    mesh_bound_tests = 0;
-    mesh_pressure_tests = 0;
+    ego_mpd::mpdfx_tests = 0;
+    ego_mpd::bound_tests = 0;
+    ego_mpd::pressure_tests = 0;
     {
-        retval = mesh_test_wall( PMesh, test_pos, radius, pchr->stoppedby, NULL );
+        retval = ego_mpd::test_wall( PMesh, test_pos, radius, pchr->stoppedby, NULL );
     }
-    ego_chr::stoppedby_tests += mesh_mpdfx_tests;
-    ego_chr::pressure_tests += mesh_pressure_tests;
+    ego_chr::stoppedby_tests += ego_mpd::mpdfx_tests;
+    ego_chr::pressure_tests += ego_mpd::pressure_tests;
 
     return retval;
 }
@@ -1438,7 +1430,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
         vertex    = pchr_a->inst.vrt_count - grip_off;
 
         // do the automatic update
-        chr_instance_update_vertices( &( pchr_a->inst ), vertex, vertex, bfalse );
+        ego_chr_instance::update_vertices( &( pchr_a->inst ), vertex, vertex, bfalse );
 
         // Calculate grip_off point locations with linear interpolation and other silly things
         point[0].x = pchr_a->inst.vrt_lst[vertex].pos[XX];
@@ -2491,7 +2483,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
         }
         else if ( required && overrideslots )
         {
-            log_error( "Object slot %i used twice (%s, %s)\n", REF_TO_INT( icap ), pcap->name, szLoadName );
+            log_error( "Object slot %i used twice (%s, %s)\n", (icap ).get_value(), pcap->name, szLoadName );
         }
         else
         {
@@ -3208,7 +3200,7 @@ ego_chr * ego_chr::do_init( ego_chr * pchr )
 
     // Make sure the pchr->spawn_data.team is valid
     loc_team = pchr->spawn_data.team;
-    iteam = REF_TO_INT( loc_team );
+    iteam = (loc_team ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
     loc_team = ( TEAM_REF )iteam;
 
@@ -3359,13 +3351,13 @@ ego_chr * ego_chr::do_init( ego_chr * pchr )
     }
 
     // initialize the character instance
-    chr_spawn_instance( &( pchr->inst ), pchr->spawn_data.profile, pchr->spawn_data.skin );
+    ego_chr_instance::spawn( &( pchr->inst ), pchr->spawn_data.profile, pchr->spawn_data.skin );
 
     // force the calculation of the matrix
     ego_chr::update_matrix( pchr, btrue );
 
     // force the instance to update
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
 
     // determine whether the object is hidden
     ego_chr::update_hide( pchr );
@@ -3401,7 +3393,7 @@ ego_chr * ego_chr::do_process( ego_chr * pchr )
     if ( NULL == pcap ) return pchr;
 
     // do the character interaction with water
-    if ( !pchr->is_hidden && pchr->pos.z < water.surface_level && ( 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER ) ) )
+    if ( !pchr->is_hidden && pchr->pos.z < water.surface_level && ( 0 != ego_mpd::test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER ) ) )
     {
         // do splash and ripple
         if ( !pchr->enviro.inwater )
@@ -3573,7 +3565,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 
     if ( profile >= MAX_PROFILE )
     {
-        log_warning( "spawn_one_character() - profile value too large %d out of %d\n", REF_TO_INT( profile ), MAX_PROFILE );
+        log_warning( "spawn_one_character() - profile value too large %d out of %d\n", (profile ).get_value(), MAX_PROFILE );
         return CHR_REF( MAX_CHR );
     }
 
@@ -3581,7 +3573,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     {
         if ( profile > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "spawn_one_character() - trying to spawn using invalid profile %d\n", REF_TO_INT( profile ) );
+            log_warning( "spawn_one_character() - trying to spawn using invalid profile %d\n", (profile ).get_value() );
         }
         return CHR_REF( MAX_CHR );
     }
@@ -3590,7 +3582,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     ichr = ChrObjList.allocate( override );
     if ( !DEFINED_CHR( ichr ) )
     {
-        log_warning( "spawn_one_character() - failed to spawn character (invalid index number %d?)\n", REF_TO_INT( ichr ) );
+        log_warning( "spawn_one_character() - failed to spawn character (invalid index number %d?)\n", (ichr ).get_value() );
         return CHR_REF( MAX_CHR );
     }
 
@@ -3612,7 +3604,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 #if defined(DEBUG_OBJECT_SPAWN) && EGO_DEBUG
     {
         CAP_REF icap = pro_get_icap( profile );
-        log_debug( "spawn_one_character() - slot: %i, index: %i, name: %s, class: %s\n", REF_TO_INT( profile ), REF_TO_INT( ichr ), name, CapStack.lst[icap].classname );
+        log_debug( "spawn_one_character() - slot: %i, index: %i, name: %s, class: %s\n", (profile ).get_value(), (ichr ).get_value(), name, CapStack.lst[icap].classname );
     }
 #endif
 
@@ -3620,7 +3612,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 }
 
 //--------------------------------------------------------------------------------------------
-void respawn_character( const CHR_REF & character )
+void ego_chr::respawn( const CHR_REF & character )
 {
     /// @details ZZ@> This function respawns a character
 
@@ -3693,7 +3685,7 @@ void respawn_character( const CHR_REF & character )
     PACK_END_LOOP( item );
 
     // re-initialize the instance
-    chr_spawn_instance( &( pchr->inst ), pchr->profile_ref, pchr->skin );
+    ego_chr_instance::spawn( &( pchr->inst ), pchr->profile_ref, pchr->skin );
     ego_chr::update_matrix( pchr, btrue );
 
     // determine whether the object is hidden
@@ -3705,11 +3697,11 @@ void respawn_character( const CHR_REF & character )
         new_attached_prt_count = number_of_attached_particles( character );
     }
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
-int chr_change_skin( const CHR_REF & character, Uint32 skin )
+int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
 {
     ego_chr * pchr;
     ego_pro * ppro;
@@ -3728,7 +3720,7 @@ int chr_change_skin( const CHR_REF & character, Uint32 skin )
         // make sure that the instance has a valid imad
         if ( NULL != ppro && !LOADED_MAD( pinst->imad ) )
         {
-            if ( chr_instance_set_mad( pinst, ppro->imad ) )
+            if ( ego_chr_instance::set_mad( pinst, ppro->imad ) )
             {
                 ego_chr::update_collision_size( pchr, btrue );
             }
@@ -3778,7 +3770,7 @@ int chr_change_skin( const CHR_REF & character, Uint32 skin )
 }
 
 //--------------------------------------------------------------------------------------------
-int change_armor( const CHR_REF & character, int skin )
+int ego_chr::change_armor( const CHR_REF & character, int skin )
 {
     /// @details ZZ@> This function changes the armor of the character
 
@@ -3811,7 +3803,7 @@ int change_armor( const CHR_REF & character, int skin )
 
     // Change the skin
     pcap = ego_chr::get_pcap( character );
-    skin = chr_change_skin( character, skin );
+    skin = ego_chr::change_skin( character, skin );
 
     // Change stats associated with skin
     pchr->defense = pcap->defense[skin];
@@ -3878,7 +3870,7 @@ void change_character_full( const CHR_REF & ichr, const PRO_REF & profile, Uint8
     strncpy( MadStack.lst[imad_old].name, MadStack.lst[imad_new].name, SDL_arraysize( MadStack.lst[imad_old].name ) );
 
     // change their model
-    change_character( ichr, profile, skin, leavewhich );
+    ego_chr::change_profile( ichr, profile, skin, leavewhich );
 
     // set the base model to the new model, too
     ChrObjList.get_data( ichr ).basemodel_ref = profile;
@@ -3951,7 +3943,7 @@ bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, Uint16 vr
 }
 
 //--------------------------------------------------------------------------------------------
-void change_character( const CHR_REF & ichr, const PRO_REF & profile_new, Uint8 skin, Uint8 leavewhich )
+void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new, Uint8 skin, Uint8 leavewhich )
 {
     /// @details ZZ@> This function polymorphs a character, changing stats, dropping weapons
 
@@ -4163,10 +4155,10 @@ void change_character( const CHR_REF & ichr, const PRO_REF & profile_new, Uint8 
     pchr->anim_speed_run   = pcap_new->anim_speed_run;
 
     // initialize the instance
-    chr_spawn_instance( &( pchr->inst ), profile_new, skin );
+    ego_chr_instance::spawn( &( pchr->inst ), profile_new, skin );
     ego_chr::update_matrix( pchr, btrue );
 
-    // Action stuff that must be down after chr_spawn_instance()
+    // Action stuff that must be down after ego_chr_instance::spawn()
     pchr->inst.action_ready = bfalse;
     pchr->inst.action_keep  = bfalse;
     pchr->inst.action_loop  = bfalse;
@@ -4180,10 +4172,10 @@ void change_character( const CHR_REF & ichr, const PRO_REF & profile_new, Uint8 
         pchr->inst.action_keep = btrue;
     }
 
-    // Set the skin after changing the model in chr_spawn_instance()
-    change_armor( ichr, skin );
+    // Set the skin after changing the model in ego_chr_instance::spawn()
+    ego_chr::change_armor( ichr, skin );
 
-    // Must set the weapon grip AFTER the model is changed in chr_spawn_instance()
+    // Must set the weapon grip AFTER the model is changed in ego_chr_instance::spawn()
     if ( INGAME_CHR( pchr->attachedto ) )
     {
         set_weapongrip( ichr, pchr->attachedto, slot_to_grip_offset( pchr->inwhich_slot ) );
@@ -4216,7 +4208,7 @@ void change_character( const CHR_REF & ichr, const PRO_REF & profile_new, Uint8 
 
     ego_ai_state::set_changed( &( pchr->ai ) );
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5435,7 +5427,7 @@ ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_
 
     // The flying height of the character, the maximum of tile level, platform level and water level
     loc_penviro->fly_level = loc_penviro->walk_level;
-    if ( 0 != mesh_test_fx( PMesh, loc_pchr->onwhichgrid, MPDFX_WATER ) )
+    if ( 0 != ego_mpd::test_fx( PMesh, loc_pchr->onwhichgrid, MPDFX_WATER ) )
     {
         loc_penviro->fly_level = MAX( loc_penviro->walk_level, water.surface_level );
     }
@@ -5460,7 +5452,7 @@ ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_
 
     //---- the "twist" of the floor
     loc_penviro->grid_twist = TWIST_FLAT;
-    if ( mesh_grid_is_valid( PMesh, itile ) )
+    if ( ego_mpd::grid_is_valid( PMesh, itile ) )
     {
         loc_penviro->grid_twist = PMesh->gmem.grid_list[itile].twist;
     }
@@ -5485,7 +5477,7 @@ ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_
     loc_penviro->is_slippy = bfalse;
     if ( NULL == pplatform )
     {
-        loc_penviro->is_slippy = !loc_penviro->is_watery && ( 0 != mesh_test_fx( PMesh, loc_pchr->onwhichgrid, MPDFX_SLIPPY ) );
+        loc_penviro->is_slippy = !loc_penviro->is_watery && ( 0 != ego_mpd::test_fx( PMesh, loc_pchr->onwhichgrid, MPDFX_SLIPPY ) );
     }
 
     //---- traction
@@ -5521,7 +5513,7 @@ ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_
 
     // Make the characters slide on flippy surfaces
     loc_penviro->friction_hrz = noslipfriction;
-    if ( mesh_grid_is_valid( PMesh, loc_pchr->onwhichgrid ) && loc_penviro->is_slippy )
+    if ( ego_mpd::grid_is_valid( PMesh, loc_pchr->onwhichgrid ) && loc_penviro->is_slippy )
     {
         // It's slippy all right...
         loc_penviro->friction_hrz = slippyfriction;
@@ -6933,7 +6925,7 @@ void increment_all_character_update_counters()
     {
         ego_obj * pbase;
 
-        pbase = ChrObjList.lst + cnt;
+        pbase = ChrObjList.get_ptr( ChrObjList_t::reference( cnt ) );
         if ( !ACTIVE_PBASE( pbase ) ) continue;
 
         pbase->update_count++;
@@ -7021,50 +7013,37 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_reflection_cache * chr_reflection_cache_init( ego_chr_reflection_cache * pcache )
+void ego_chr_instance::clear_cache( ego_chr_instance * pinst )
 {
-    if ( NULL == pcache ) return pcache;
-
-    memset( pcache, 0, sizeof( *pcache ) );
-
-    pcache->alpha = 127;
-    pcache->light = 255;
-
-    return pcache;
-}
-
-//--------------------------------------------------------------------------------------------
-void chr_instance_clear_cache( ego_chr_instance * pinst )
-{
-    /// @details BB@> force chr_instance_update_vertices() recalculate the vertices the next time
+    /// @details BB@> force ego_chr_instance::update_vertices() recalculate the vertices the next time
     ///     the function is called
 
     vlst_cache_init( &( pinst->save ) );
 
-    matrix_cache_init( &( pinst->matrix_cache ) );
+    ego_matrix_cache::init( &( pinst->matrix_cache ) );
 
-    chr_reflection_cache_init( &( pinst->ref ) );
+    ego_chr_reflection_cache::init( &( pinst->ref ) );
 
     pinst->lighting_update_wld = 0;
     pinst->lighting_frame_all  = 0;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_instance * chr_instance_dtor( ego_chr_instance * pinst )
+ego_chr_instance * ego_chr_instance::dtor( ego_chr_instance * pinst )
 {
     if ( NULL == pinst ) return pinst;
 
-    chr_instance_free( pinst );
+    ego_chr_instance::dealloc( pinst );
 
     EGOBOO_ASSERT( NULL == pinst->vrt_lst );
 
     memset( pinst, 0, sizeof( *pinst ) );
 
-    return pinst;
+    return clear(pinst);
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_instance * chr_instance_ctor( ego_chr_instance * pinst )
+ego_chr_instance * ego_chr_instance::ctor( ego_chr_instance * pinst )
 {
     Uint32 cnt;
 
@@ -7077,7 +7056,7 @@ ego_chr_instance * chr_instance_ctor( ego_chr_instance * pinst )
     pinst->vrt_count = 0;
 
     // set the initial cache parameters
-    chr_instance_clear_cache( pinst );
+    ego_chr_instance::clear_cache( pinst );
 
     // Set up initial fade in lighting
     pinst->color_amb = 0;
@@ -7087,7 +7066,7 @@ ego_chr_instance * chr_instance_ctor( ego_chr_instance * pinst )
     }
 
     // clear out the matrix cache
-    matrix_cache_init( &( pinst->matrix_cache ) );
+    ego_matrix_cache::init( &( pinst->matrix_cache ) );
 
     // the matrix should never be referenced if the cache is not valid,
     // but it never pays to have a 0 matrix...
@@ -7106,7 +7085,7 @@ ego_chr_instance * chr_instance_ctor( ego_chr_instance * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_free( ego_chr_instance * pinst )
+bool_t ego_chr_instance::dealloc( ego_chr_instance * pinst )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -7117,11 +7096,11 @@ bool_t chr_instance_free( ego_chr_instance * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_alloc( ego_chr_instance * pinst, size_t vlst_size )
+bool_t ego_chr_instance::alloc( ego_chr_instance * pinst, size_t vlst_size )
 {
     if ( NULL == pinst ) return bfalse;
 
-    chr_instance_free( pinst );
+    ego_chr_instance::dealloc( pinst );
 
     if ( 0 == vlst_size ) return btrue;
 
@@ -7135,7 +7114,7 @@ bool_t chr_instance_alloc( ego_chr_instance * pinst, size_t vlst_size )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_set_mad( ego_chr_instance * pinst, const MAD_REF & imad )
+bool_t ego_chr_instance::set_mad( ego_chr_instance * pinst, const MAD_REF & imad )
 {
     /// @details BB@> try to set the model used by the character instance.
     ///     If this fails, it leaves the old data. Just to be safe it
@@ -7166,7 +7145,7 @@ bool_t chr_instance_set_mad( ego_chr_instance * pinst, const MAD_REF & imad )
     if ( pinst->vrt_count != vlst_size )
     {
         updated = btrue;
-        chr_instance_alloc( pinst, vlst_size );
+        ego_chr_instance::alloc( pinst, vlst_size );
     }
 
     // set the frames to frame 0 of this object's data
@@ -7182,15 +7161,15 @@ bool_t chr_instance_set_mad( ego_chr_instance * pinst, const MAD_REF & imad )
     if ( updated )
     {
         // update the vertex and lighting cache
-        chr_instance_clear_cache( pinst );
-        chr_instance_update_vertices( pinst, -1, -1, btrue );
+        ego_chr_instance::clear_cache( pinst );
+        ego_chr_instance::update_vertices( pinst, -1, -1, btrue );
     }
 
     return updated;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_instance_update_ref( ego_chr_instance * pinst, float grid_level, bool_t need_matrix )
+bool_t ego_chr_instance::update_ref( ego_chr_instance * pinst, float grid_level, bool_t need_matrix )
 {
     int trans_temp;
 
@@ -7231,7 +7210,7 @@ bool_t chr_instance_update_ref( ego_chr_instance * pinst, float grid_level, bool
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_spawn_instance( ego_chr_instance * pinst, const PRO_REF & profile, Uint8 skin )
+bool_t ego_chr_instance::spawn( ego_chr_instance * pinst, const PRO_REF & profile, Uint8 skin )
 {
     Sint8 greensave = 0, redsave = 0, bluesave = 0;
 
@@ -7246,7 +7225,7 @@ bool_t chr_spawn_instance( ego_chr_instance * pinst, const PRO_REF & profile, Ui
     bluesave  = pinst->blushift;
 
     // clear the instance
-    chr_instance_ctor( pinst );
+    ego_chr_instance::ctor( pinst );
 
     if ( !LOADED_PRO( profile ) ) return bfalse;
     pobj = ProList.lst + profile;
@@ -7264,13 +7243,13 @@ bool_t chr_spawn_instance( ego_chr_instance * pinst, const PRO_REF & profile, Ui
     pinst->blushift  = bluesave;
 
     // model parameters
-    chr_instance_set_mad( pinst, pro_get_imad( profile ) );
+    ego_chr_instance::set_mad( pinst, pro_get_imad( profile ) );
 
     // set the initial action, all actions override it
-    chr_instance_play_action( pinst, ACTION_DA, btrue );
+    ego_chr_instance::play_action( pinst, ACTION_DA, btrue );
 
     // upload these parameters to the reflection cache, but don't compute the matrix
-    chr_instance_update_ref( pinst, 0, bfalse );
+    ego_chr_instance::update_ref( pinst, 0, bfalse );
 
     return btrue;
 }
@@ -7352,7 +7331,7 @@ BBOARD_REF chr_add_billboard( const CHR_REF & ichr, Uint32 lifetime_secs )
 
     if ( INVALID_BILLBOARD != pchr->ibillboard )
     {
-        BillboardList_free_one( REF_TO_INT( pchr->ibillboard ) );
+        BillboardList_free_one( (pchr->ibillboard ).get_value() );
         pchr->ibillboard = INVALID_BILLBOARD;
     }
 
@@ -7393,7 +7372,7 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
     if ( rv < 0 )
     {
         pchr->ibillboard = INVALID_BILLBOARD;
-        BillboardList_free_one( REF_TO_INT( ibb ) );
+        BillboardList_free_one( (ibb ).get_value() );
         pbb = NULL;
     }
     else
@@ -7663,7 +7642,7 @@ egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
     }
 
     // make sure the bounding box is calculated properly
-    if ( rv_error == chr_instance_update_bbox( &( pchr->inst ) ) )
+    if ( rv_error == ego_chr_instance::update_bbox( &( pchr->inst ) ) )
     {
         return rv_error;
     }
@@ -7998,11 +7977,11 @@ void reset_teams()
         // Make the team hate everyone
         for ( teamb = 0; teamb < TEAM_MAX; teamb++ )
         {
-            TeamStack.lst[teama].hatesteam[REF_TO_INT( teamb )] = btrue;
+            TeamStack.lst[teama].hatesteam[(teamb ).get_value()] = btrue;
         }
 
         // Make the team like itself
-        TeamStack.lst[teama].hatesteam[REF_TO_INT( teama )] = bfalse;
+        TeamStack.lst[teama].hatesteam[(teama ).get_value()] = bfalse;
 
         // Set defaults
         TeamStack.lst[teama].leader = NOLEADER;
@@ -8014,7 +7993,7 @@ void reset_teams()
     for ( teama = 0; teama < TEAM_MAX; teama++ )
     {
         TeamStack.lst[teama].hatesteam[TEAM_NULL] = bfalse;
-        TeamStack.lst[( TEAM_REF )TEAM_NULL].hatesteam[REF_TO_INT( teama )] = bfalse;
+        TeamStack.lst[( TEAM_REF )TEAM_NULL].hatesteam[(teama ).get_value()] = bfalse;
     }
 }
 
@@ -8127,7 +8106,7 @@ bool_t ego_ai_state::set_changed( ego_ai_state * pai )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_matrix_cache * matrix_cache_init( ego_matrix_cache * mcache )
+ego_matrix_cache * ego_matrix_cache::init( ego_matrix_cache * mcache )
 {
     /// @details BB@> clear out the matrix cache data
 
@@ -8219,7 +8198,7 @@ int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::get_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp )
+bool_t ego_chr::generate_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp )
 {
     /// @details BB@> grab the matrix cache data for a given character and put it into mc_tmp.
 
@@ -8342,7 +8321,7 @@ int convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_
     else
     {
         // update the grip vertices
-        chr_instance_update_grip_verts( &( pholder->inst ), grip_verts, GRIP_VERTS );
+        ego_chr_instance::update_grip_verts( &( pholder->inst ), grip_verts, GRIP_VERTS );
 
         // copy the vertices into dst_point[]
         for ( point_count = 0, cnt = 0; cnt < GRIP_VERTS; cnt++, point_count++ )
@@ -8432,7 +8411,7 @@ bool_t apply_one_weapon_matrix( ego_chr * pweap, ego_matrix_cache * mc_tmp )
         ego_chr::set_pos( pweap, nupoint[0].v );
 
         // make sure we have the right data
-        ego_chr::get_matrix_cache( pweap, mc_tmp );
+        ego_chr::generate_matrix_cache( pweap, mc_tmp );
 
         // add in the appropriate mods
         // this is a hybrid character and weapon matrix
@@ -8619,7 +8598,7 @@ int cmp_matrix_cache( const void * vlhs, const void * vrhs )
     //---- check for differences in the MAT_WEAPON data
     if ( HAS_SOME_BITS( plhs->type_bits, MAT_WEAPON ) )
     {
-        itmp = ( signed )REF_TO_INT( plhs->grip_chr ) - ( signed )REF_TO_INT( prhs->grip_chr );
+        itmp = ( signed )(plhs->grip_chr ).get_value() - ( signed )(prhs->grip_chr ).get_value();
         if ( 0 != itmp ) goto cmp_matrix_cache_end;
 
         itmp = ( signed )plhs->grip_slot - ( signed )prhs->grip_slot;
@@ -8677,7 +8656,7 @@ cmp_matrix_cache_end:
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv matrix_cache_needs_update( ego_chr * pchr, ego_matrix_cache * pmc )
+egoboo_rv ego_chr::matrix_cache_needs_update( ego_chr * pchr, ego_matrix_cache * pmc )
 {
     /// @details BB@> determine whether a matrix cache has become invalid and needs to be updated
 
@@ -8689,13 +8668,15 @@ egoboo_rv matrix_cache_needs_update( ego_chr * pchr, ego_matrix_cache * pmc )
     if ( NULL == pmc ) pmc = &local_mc;
 
     // get the matrix data that is supposed to be used to make the matrix
-    ego_chr::get_matrix_cache( pchr, pmc );
+    ego_chr::generate_matrix_cache( pchr, pmc );
 
     // compare that data to the actual data used to make the matrix
     needs_cache_update = ( 0 != cmp_matrix_cache( pmc, &( pchr->inst.matrix_cache ) ) );
 
     return needs_cache_update ? rv_success : rv_fail;
 }
+
+
 
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
@@ -8737,7 +8718,7 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
     }
 
     // does the matrix cache need an update at all?
-    retval = matrix_cache_needs_update( pchr, &mc_tmp );
+    retval = ego_chr::matrix_cache_needs_update( pchr, &mc_tmp );
     if ( rv_error == retval ) return rv_error;
     needs_update = ( rv_success == retval );
 
@@ -8748,7 +8729,7 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
         ego_chr   * ptarget = ChrObjList.get_pdata( mc_tmp.grip_chr );
 
         // has that character changes its animation?
-        grip_retval = chr_instance_update_grip_verts( &( ptarget->inst ), mc_tmp.grip_verts, GRIP_VERTS );
+        grip_retval = ego_chr_instance::update_grip_verts( &( ptarget->inst ), mc_tmp.grip_verts, GRIP_VERTS );
 
         if ( rv_error   == grip_retval ) return rv_error;
         if ( rv_success == grip_retval ) needs_update = btrue;
@@ -9021,7 +9002,7 @@ void ego_chr::set_redshift( ego_chr * pchr, int rs )
 
     pchr->inst.redshift = rs;
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9031,7 +9012,7 @@ void ego_chr::set_grnshift( ego_chr * pchr, int gs )
 
     pchr->inst.grnshift = gs;
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9041,7 +9022,7 @@ void ego_chr::set_blushift( ego_chr * pchr, int bs )
 
     pchr->inst.blushift = bs;
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9051,7 +9032,7 @@ void ego_chr::set_sheen( ego_chr * pchr, int sheen )
 
     pchr->inst.sheen = sheen;
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9061,7 +9042,7 @@ void ego_chr::set_alpha( ego_chr * pchr, int alpha )
 
     pchr->inst.alpha = CLIP( alpha, 0, 255 );
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9071,7 +9052,7 @@ void ego_chr::set_light( ego_chr * pchr, int light )
 
     pchr->inst.light = CLIP( light, 0, 255 );
 
-    chr_instance_update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9095,7 +9076,7 @@ void ego_chr::set_jump_number_reset( ego_chr * pchr, int number )
 }
 
 //--------------------------------------------------------------------------------------------
-void chr_instance_get_tint( ego_chr_instance * pinst, GLfloat * tint, BIT_FIELD bits )
+void ego_chr_instance::get_tint( ego_chr_instance * pinst, GLfloat * tint, BIT_FIELD bits )
 {
     int i;
     float weight_sum;
@@ -9391,7 +9372,7 @@ egoboo_rv ego_chr::set_action( ego_chr * pchr, int action, bool_t action_ready, 
 
     if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
 
-    retval = chr_instance_set_action( &( pchr->inst ), action, action_ready, override_action );
+    retval = ego_chr_instance::set_action( &( pchr->inst ), action, action_ready, override_action );
     if ( rv_success != retval ) return retval;
 
     chr_invalidate_child_instances( pchr );
@@ -9406,7 +9387,7 @@ egoboo_rv ego_chr::start_anim( ego_chr * pchr, int action, bool_t action_ready, 
 
     if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
 
-    retval = chr_instance_start_anim( &( pchr->inst ), action, action_ready, override_action );
+    retval = ego_chr_instance::start_anim( &( pchr->inst ), action, action_ready, override_action );
     if ( rv_success != retval ) return retval;
 
     chr_invalidate_child_instances( pchr );
@@ -9421,7 +9402,7 @@ egoboo_rv ego_chr::set_anim( ego_chr * pchr, int action, int frame, bool_t actio
 
     if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
 
-    retval = chr_instance_set_anim( &( pchr->inst ), action, frame, action_ready, override_action );
+    retval = ego_chr_instance::set_anim( &( pchr->inst ), action, frame, action_ready, override_action );
     if ( rv_success != retval ) return retval;
 
     chr_invalidate_child_instances( pchr );
@@ -9436,7 +9417,7 @@ egoboo_rv ego_chr::increment_action( ego_chr * pchr )
 
     if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
 
-    retval = chr_instance_increment_action( &( pchr->inst ) );
+    retval = ego_chr_instance::increment_action( &( pchr->inst ) );
     if ( rv_success != retval ) return retval;
 
     chr_invalidate_child_instances( pchr );
@@ -9455,7 +9436,7 @@ egoboo_rv ego_chr::increment_frame( ego_chr * pchr )
     pmad = ego_chr::get_pmad( GET_REF_PCHR( pchr ) );
     if ( NULL == pmad ) return rv_error;
 
-    retval = chr_instance_increment_frame( &( pchr->inst ), pmad, pchr->attachedto );
+    retval = ego_chr_instance::increment_frame( &( pchr->inst ), pmad, pchr->attachedto );
     if ( rv_success != retval ) return retval;
 
     chr_invalidate_child_instances( pchr );
@@ -9470,7 +9451,7 @@ egoboo_rv ego_chr::play_action( ego_chr * pchr, int action, bool_t action_ready 
 
     if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
 
-    retval = chr_instance_play_action( &( pchr->inst ), action, action_ready );
+    retval = ego_chr_instance::play_action( &( pchr->inst ), action, action_ready );
     if ( rv_success != retval ) return retval;
 
     chr_invalidate_child_instances( pchr );
@@ -9492,7 +9473,7 @@ MAD_REF ego_chr::get_imad( const CHR_REF & ichr )
         MAD_REF imad_tmp = pro_get_imad( pchr->profile_ref );
         if ( LOADED_MAD( imad_tmp ) )
         {
-            if ( chr_instance_set_mad( &( pchr->inst ), imad_tmp ) )
+            if ( ego_chr_instance::set_mad( &( pchr->inst ), imad_tmp ) )
             {
                 ego_chr::update_collision_size( pchr, btrue );
             }
@@ -9517,7 +9498,7 @@ ego_mad * ego_chr::get_pmad( const CHR_REF & ichr )
         MAD_REF imad_tmp = pro_get_imad( pchr->profile_ref );
         if ( LOADED_MAD( imad_tmp ) )
         {
-            chr_instance_set_mad( &( pchr->inst ), imad_tmp );
+            ego_chr_instance::set_mad( &( pchr->inst ), imad_tmp );
         }
     }
 
@@ -9552,8 +9533,8 @@ bool_t chr_update_pos( ego_chr * pchr )
 {
     if ( !VALID_PCHR( pchr ) ) return bfalse;
 
-    pchr->onwhichgrid   = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
-    pchr->onwhichblock  = mesh_get_block( PMesh, pchr->pos.x, pchr->pos.y );
+    pchr->onwhichgrid   = ego_mpd::get_tile( PMesh, pchr->pos.x, pchr->pos.y );
+    pchr->onwhichblock  = ego_mpd::get_block( PMesh, pchr->pos.x, pchr->pos.y );
 
     // update whether the current character position is safe
     ego_chr::update_safe( pchr, bfalse );
@@ -9882,7 +9863,7 @@ bool_t chr_bump_grid( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel,
         }
     }
 
-    // try to get a normal from the mesh_get_diff() function
+    // try to get a normal from the ego_mpd::get_diff() function
     if ( !found_nrm )
     {
         fvec2_t diff;
@@ -10176,7 +10157,7 @@ bool_t ego_chr::update_breadcrumb( ego_chr * pchr, bool_t force )
     }
     else
     {
-        new_grid = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
+        new_grid = ego_mpd::get_tile( PMesh, pchr->pos.x, pchr->pos.y );
 
         if ( INVALID_TILE == new_grid )
         {
@@ -10226,7 +10207,7 @@ bool_t ego_chr::update_safe_raw( ego_chr * pchr )
         pchr->safe_valid = btrue;
         pchr->safe_pos   = ego_chr::get_pos( pchr );
         pchr->safe_time  = update_wld;
-        pchr->safe_grid  = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
+        pchr->safe_grid  = ego_mpd::get_tile( PMesh, pchr->pos.x, pchr->pos.y );
 
         retval = btrue;
     }
@@ -10249,7 +10230,7 @@ bool_t ego_chr::update_safe( ego_chr * pchr, bool_t force )
     }
     else
     {
-        new_grid = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
+        new_grid = ego_mpd::get_tile( PMesh, pchr->pos.x, pchr->pos.y );
 
         if ( INVALID_TILE == new_grid )
         {
@@ -10898,9 +10879,9 @@ bool_t chr_is_over_water( ego_chr *pchr )
 
     if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
-    if ( !water.is_water || !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return bfalse;
+    if ( !water.is_water || !ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) ) return bfalse;
 
-    return 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER );
+    return 0 != ego_mpd::test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -10972,7 +10953,7 @@ ego_chr_data * ego_chr_data::alloc( ego_chr_data * pdata )
     if ( NULL == pdata ) return pdata;
 
     // allocate
-    chr_instance_ctor( &( pdata->inst ) );
+    ego_chr_instance::ctor( &( pdata->inst ) );
 
     return pdata;
 }
@@ -10984,7 +10965,7 @@ ego_chr_data * ego_chr_data::dealloc( ego_chr_data * pdata )
 
     if ( NULL == pdata ) return pdata;
 
-    chr_instance_dtor( &( pdata->inst ) );
+    ego_chr_instance::dtor( &( pdata->inst ) );
 
     EGOBOO_ASSERT( NULL == pdata->inst.vrt_lst );
 
@@ -11017,7 +10998,7 @@ ego_chr_data * ego_chr_data::dtor( ego_chr_data * pdata )
     if ( NULL == pdata ) return NULL;
 
     // remove it from the BillboardList
-    BillboardList_free_one( REF_TO_INT( pdata->ibillboard ) );
+    BillboardList_free_one( (pdata->ibillboard ).get_value() );
 
     // remove it from the LoopedList
     LoopedList_remove( pdata->loopedsound_channel );
@@ -11131,7 +11112,7 @@ ego_chr_data * ego_chr_data::do_ctor( ego_chr_data * pdata )
     //---- call the constructors of the dependent classes
 
     // set the instance values to safe values
-    chr_instance_ctor( &( pdata->inst ) );
+    ego_chr_instance::ctor( &( pdata->inst ) );
 
     // initialize the ai_state
     ego_ai_state::ctor( &( pdata->ai ) );
@@ -11147,7 +11128,7 @@ ego_chr_data * ego_chr_data::do_dtor( ego_chr_data * pdata )
     //---- call the destructors of the dependent classes
 
     // set the instance values to safe values
-    chr_instance_dtor( &( pdata->inst ) );
+    ego_chr_instance::dtor( &( pdata->inst ) );
 
     // initialize the ai_state
     ego_ai_state::dtor( &( pdata->ai ) );
@@ -11347,7 +11328,7 @@ ego_obj_chr * ego_obj_chr::dealloc( ego_obj_chr * pobj )
     // deallocate this struct
     if ( !VALID_PBASE( pobj ) ) return pobj;
 
-    /* do something here */
+    /* add something here */
 
     return pobj;
 }
@@ -11372,7 +11353,7 @@ ego_obj_chr * ego_obj_chr::alloc( ego_obj_chr * pobj )
     // allocate this struct
     if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
 
-    /* do something here */
+    /* add something here */
 
     return pobj;
 }
@@ -11458,24 +11439,18 @@ ego_obj_chr * ego_obj_chr::run_activate( ego_obj_chr * pobj, int max_iterations 
     if ( !VALID_PBASE( pbase ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_procing + 1 ) )
+    if ( pbase->get_proc().action > ( int )( ego_obj_processing + 1 ) )
     {
         ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
         if ( tmp_chr == pobj ) return NULL;
     }
 
     iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action < ego_obj_procing && iterations < max_iterations )
+    while ( NULL != pobj && pbase->get_proc().action < ego_obj_processing && iterations < max_iterations )
     {
         ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
         if ( ptmp != pobj ) return NULL;
         iterations++;
-    }
-
-    EGOBOO_ASSERT( pbase->get_proc().action == ego_obj_procing );
-    if ( pbase->get_proc().action == ego_obj_procing )
-    {
-        ChrObjList.add_used( GET_REF_PCHR_OBJ( pobj ) );
     }
 
     return pobj;
@@ -11571,7 +11546,7 @@ ego_obj_chr * ego_obj_chr::run( ego_obj_chr * pobj )
             pobj = ego_obj_chr::do_initializing( pobj );
             break;
 
-        case ego_obj_procing:
+        case ego_obj_processing:
             pobj = ego_obj_chr::do_processing( pobj );
             break;
 
@@ -11592,9 +11567,9 @@ ego_obj_chr * ego_obj_chr::run( ego_obj_chr * pobj )
     {
         pbase->update_guid = INVALID_UPDATE_GUID;
     }
-    else if ( ego_obj_procing == pbase->get_proc().action )
+    else if ( ego_obj_processing == pbase->get_proc().action )
     {
-        pbase->update_guid = ChrObjList.update_guid;
+        pbase->update_guid = ChrObjList.update_guid();
     }
 
     return pobj;
@@ -11648,7 +11623,7 @@ ego_obj_chr * ego_obj_chr::do_initializing( ego_obj_chr * pobj )
     if ( NULL == pchr ) return pobj;
 
     // request that we be turned on
-    pbase->get_req().turn_me_on = btrue;
+    pbase->proc_req_on( btrue );
 
     // do something about being turned on
     if ( 0 == ChrObjList.loop_depth )
@@ -11775,5 +11750,28 @@ bool_t ego_obj_chr::request_terminate( const CHR_REF & ichr )
     POBJ_REQUEST_TERMINATE( ChrObjList.get_valid_ptr( ichr ) );
 
     return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_chr::update_instance( ego_chr * pchr )
+{
+    ego_chr_instance * pinst;
+    egoboo_rv retval;
+
+    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
+    pinst = &( pchr->inst );
+
+    // make sure that the vertices are interpolated
+    retval = ego_chr_instance::update_vertices( pinst, -1, -1, btrue );
+    if ( rv_error == retval )
+    {
+        return rv_error;
+    }
+
+    // do the basic lighting
+    ego_chr_instance::update_lighting_base( pinst, pchr, bfalse );
+
+    return retval;
 }
 

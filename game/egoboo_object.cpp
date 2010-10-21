@@ -85,7 +85,7 @@ ego_obj_proc * ego_obj_proc::end_initialization( ego_obj_proc * ptr )
     ptr->constructed = btrue;
     ptr->initialized = btrue;
 
-    ptr->action = ego_obj_procing;
+    ptr->action = ego_obj_processing;
 
     return ptr;
 }
@@ -225,6 +225,57 @@ egoboo_rv ego_obj_proc_data::proc_validate( bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
+egoboo_rv ego_obj_proc_data::proc_req_kill()
+{
+    if ( NULL == this ) return rv_error;
+
+    if ( !_proc_data.valid ) return rv_error;
+
+    if ( _proc_data.killed ) return rv_success;
+
+    // save the old value
+    bool_t was_kill_me = _req_data.kill_me;
+
+    // do the request
+    _req_data.kill_me = btrue;
+
+    // turn the object off
+    proc_set_on( bfalse );
+
+    return was_kill_me ? rv_fail : rv_success;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_obj_proc_data::proc_req_on( bool_t val )
+{
+    if ( NULL == this ) return rv_error;
+
+    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+
+    bool_t needed = ( val != _req_data.turn_me_on );
+
+    _req_data.turn_me_on  = val;
+    _req_data.turn_me_off = !val;
+
+    return needed ? rv_success : rv_fail;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_obj_proc_data::proc_req_pause( bool_t val )
+{
+    if ( NULL == this ) return rv_error;
+
+    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+
+    bool_t needed = ( val != _req_data.pause_me );
+
+    _req_data.pause_me   = val;
+    _req_data.unpause_me = !val;
+
+    return needed ? rv_success : rv_fail;
+}
+
+//--------------------------------------------------------------------------------------------
 egoboo_rv ego_obj_proc_data::proc_set_wait()
 {
     ego_obj_proc * rv;
@@ -250,37 +301,53 @@ egoboo_rv ego_obj_proc_data::proc_set_process()
     if ( !_proc_data.constructed || !_proc_data.initialized )
         return rv_fail;
 
-    _proc_data.action  = ego_obj_procing;
+    _proc_data.action  = ego_obj_processing;
 
     return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_set_kill()
+egoboo_rv ego_obj_proc_data::proc_set_killed( bool_t val )
 {
-    bool_t was_killed;
-
     if ( NULL == this ) return rv_error;
 
-    // don't bother if it's already dead
+    // don't bother if it's dead
     if ( !_proc_data.valid ) return rv_error;
 
-    was_killed = _proc_data.killed;
+    bool_t was_killed = _proc_data.killed;
 
-    // request the kill
-    _req_data.kill_me = btrue;
+    // set the killed value
+    _proc_data.killed = val;
 
-    // turn it off
-    _proc_data.on = bfalse;
+    // clear all requests
+    _req_data.kill_me  = bfalse;
 
     return was_killed ? rv_fail : rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
+egoboo_rv ego_obj_proc_data::proc_set_on( bool_t val )
+{
+    if ( NULL == this ) return rv_error;
+
+    // don't bother if it's dead
+    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+
+    bool_t was_on = _proc_data.on;
+
+    // turn it off
+    _proc_data.on = val;
+
+    // clear all requests
+    _req_data.turn_me_on  = bfalse;
+    _req_data.turn_me_off = bfalse;
+
+    return was_on ? rv_fail : rv_success;
+}
+
+//--------------------------------------------------------------------------------------------
 egoboo_rv ego_obj_proc_data::proc_do_on()
 {
-    bool_t old_on;
-
     if ( NULL == this ) return rv_error;
 
     if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
@@ -288,23 +355,22 @@ egoboo_rv ego_obj_proc_data::proc_do_on()
     // anything to do?
     if ( !_req_data.turn_me_on && !_req_data.turn_me_off ) return rv_error;
 
-    old_on = _proc_data.on;
+    // assume no change
+    bool_t on_val = _proc_data.on;
 
+    // poll the requests
     // let turn_me_off override turn_me_on
     if ( _req_data.turn_me_off )
     {
-        _proc_data.on = bfalse;
+        on_val = bfalse;
     }
     else if ( _req_data.turn_me_on )
     {
-        _proc_data.on = btrue;
+        on_val = btrue;
     }
 
-    // reset the requests
-    _req_data.turn_me_on  = bfalse;
-    _req_data.turn_me_off = bfalse;
-
-    return ( old_on == _proc_data.on ) ? rv_fail : rv_success;
+    // actually set the value
+    return proc_set_on( on_val );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -515,7 +581,7 @@ ego_obj * ego_obj::req_terminate( ego_obj * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
-    pbase->proc_set_kill();
+    pbase->proc_req_kill();
 
     return pbase;
 }
@@ -530,10 +596,7 @@ ego_obj * ego_obj::grant_terminate( ego_obj * pbase )
 
     if ( !obj_prc_ptr->valid || obj_prc_ptr->killed ) return pbase;
 
-    // turn it off
-    obj_prc_ptr->on = bfalse;
-
-    // if it was constructed, you want to destruct it
+    // figure out the next step in killing the object
     if ( obj_prc_ptr->initialized )
     {
         // jump to deinitializing
@@ -544,10 +607,13 @@ ego_obj * ego_obj::grant_terminate( ego_obj * pbase )
         // jump to deconstructing
         ego_obj::end_deinitializing( pbase );
     }
-    else
+    else if ( obj_prc_ptr->killed )
     {
         ego_obj::end_killing( pbase );
     }
+
+    // turn it off
+    pbase->proc_set_on( bfalse );
 
     return pbase;
 }

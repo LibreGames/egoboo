@@ -38,12 +38,17 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-extern const ego_ui_Just ui_just_nothing    = { UI_JUST_NON, UI_JUST_NON };
-extern const ego_ui_Just ui_just_topleft    = { UI_JUST_LOW, UI_JUST_LOW };
-extern const ego_ui_Just ui_just_topcenter  = { UI_JUST_LOW, UI_JUST_MID };
-extern const ego_ui_Just ui_just_topright   = { UI_JUST_LOW, UI_JUST_HGH };
-extern const ego_ui_Just ui_just_centered   = { UI_JUST_MID, UI_JUST_MID };
-extern const ego_ui_Just ui_just_centerleft = { UI_JUST_MID, UI_JUST_LOW };
+struct UiContext;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+const ego_ui_Just ui_just_nothing    = { UI_JUST_NON, UI_JUST_NON };
+const ego_ui_Just ui_just_topleft    = { UI_JUST_LOW, UI_JUST_LOW };
+const ego_ui_Just ui_just_topcenter  = { UI_JUST_LOW, UI_JUST_MID };
+const ego_ui_Just ui_just_topright   = { UI_JUST_LOW, UI_JUST_HGH };
+const ego_ui_Just ui_just_centered   = { UI_JUST_MID, UI_JUST_MID };
+const ego_ui_Just ui_just_centerleft = { UI_JUST_MID, UI_JUST_LOW };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -55,6 +60,10 @@ struct ego_ui_control_info
     float  scr[2];
     float  vrt[2];
 };
+
+static void ui_joy_init( UiContext * pctxt );
+static void ui_cursor_update();
+static bool_t ui_joy_set( SDL_JoyAxisEvent * evt_ptr );
 
 /// The data to describe the UI state
 struct UiContext
@@ -86,6 +95,27 @@ struct UiContext
 
     // define the inverse transform
     float iaw, iah, ibw, ibh;
+
+    UiContext() { clear(this); }
+
+    static UiContext * clear( UiContext * ptr )
+    {
+        memset( ptr, 0, sizeof(*ptr) );
+
+        ptr->active = UI_Nothing;
+        ptr->hot    = UI_Nothing;
+
+        // define the forward transform
+        ptr->aw = ptr->ah = 1.0f;
+
+        // define the inverse transform
+        ptr->iaw = ptr->iah = 1.0f;
+
+        ui_joy_init( ptr );
+
+        return ptr;
+    }
+
 };
 
 static struct UiContext ui_context;
@@ -106,10 +136,6 @@ static void ui_screen_to_virtual_abs( float rx, float ry, float *vx, float *vy )
 static void ui_virtual_to_screen_rel( float vx, float vy, float *rx, float *ry );
 static void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy );
 
-static void ui_joy_init();
-static void ui_cursor_update();
-static bool_t ui_joy_set( SDL_JoyAxisEvent * evt_ptr );
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // Core functions
@@ -118,16 +144,12 @@ int ui_begin( const char *default_font, int default_font_size )
     // initialize the font handler
     fnt_init();
 
-    memset( &ui_context, 0, sizeof( ui_context ) );
-
-    ui_context.active = ui_context.hot = UI_Nothing;
+    UiContext::clear( &ui_context );
 
     ui_context.defaultFontSize = default_font_size;
     strncpy( ui_context.defaultFontName, default_font, SDL_arraysize( ui_context.defaultFontName ) );
 
     ui_set_virtual_screen( sdl_scr.x, sdl_scr.y, sdl_scr.x, sdl_scr.y );
-
-    ui_joy_init();
 
     return 1;
 }
@@ -145,7 +167,7 @@ void ui_end()
     // clear out the active font
     ui_context.activeFont = NULL;
 
-    memset( &ui_context, 0, sizeof( ui_context ) );
+    UiContext::clear( &ui_context );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1552,7 +1574,7 @@ ui_Widget * ui_Widget::clear( ui_Widget * pw, ui_id_t id )
     pw->id = id;
 
     // assume it is a button
-    pw->display_mask  = UI_DISPLAY_BUTTON;
+    pw->display_mask  = (UI_Nothing != id) ? UI_DISPLAY_BUTTON : 0;
 
     return pw;
 }
@@ -1569,7 +1591,17 @@ ui_Widget * ui_Widget::dtor( ui_Widget * pw )
     if ( NULL == pw ) return pw;
 
     dealloc( pw );
-    ui_Widget::ctor( pw );
+
+    return ui_Widget::clear( pw );
+}
+
+//--------------------------------------------------------------------------------------------
+ui_Widget * ui_Widget::reset( ui_Widget * pw, ui_id_t id )
+{
+    if ( NULL == pw ) return pw;
+
+    ui_Widget::dtor( pw );
+    ui_Widget::ctor( pw, id );
 
     return pw;
 }
@@ -1591,8 +1623,6 @@ bool_t ui_Widget::dealloc( ui_Widget * pw )
         pw->img     = NULL;
         pw->img_own = bfalse;
     }
-
-    ui_Widget::clear( pw );
 
     return btrue;
 }
@@ -1766,18 +1796,20 @@ TTF_Font * ui_loadFont( const char * font_name, float vpointSize )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void ui_joy_init()
+void ui_joy_init( UiContext * pctxt )
 {
     int cnt;
 
+    if( NULL == pctxt ) return;
+
     for ( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
     {
-        memset( ui_context.joys + cnt, 0, sizeof( ego_ui_control_info ) );
+        memset( pctxt->joys + cnt, 0, sizeof( ego_ui_control_info ) );
     }
 
-    memset( &( ui_context.joy ), 0, sizeof( ego_ui_control_info ) );
+    memset( &( pctxt->joy ), 0, sizeof( ego_ui_control_info ) );
 
-    memset( &( ui_context.mouse ), 0, sizeof( ego_ui_control_info ) );
+    memset( &( pctxt->mouse ), 0, sizeof( ego_ui_control_info ) );
 }
 
 //--------------------------------------------------------------------------------------------

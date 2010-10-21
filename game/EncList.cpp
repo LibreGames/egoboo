@@ -27,12 +27,12 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
+EncObjList_t EncObjList;
 
 ////--------------------------------------------------------------------------------------------
 ////--------------------------------------------------------------------------------------------
 //
-//INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_enc, EncObjList, MAX_ENC );
+//t_cpp_list< ego_enc, MAX_ENC  > EncObjList;
 //
 //static size_t  ego_enc_termination_count = 0;
 //static ENC_REF ego_enc_termination_list[MAX_ENC];
@@ -61,7 +61,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //{
 //    int cnt;
 //
-//    EncObjList.free_count = 0;
+//    EncObjList.free_count() = 0;
 //    EncObjList.used_count = 0;
 //    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
 //    {
@@ -94,7 +94,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //        ego_obj_enc::run_deconstruct( EncObjList.get_valid_pdata(cnt), 100 );
 //    }
 //
-//    EncObjList.free_count = 0;
+//    EncObjList.free_count() = 0;
 //    EncObjList.used_count = 0;
 //    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
 //    {
@@ -137,7 +137,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //    size_t cnt;
 //    ENC_REF ienc;
 //
-//    for ( cnt = 0; cnt < EncObjList.free_count; cnt++ )
+//    for ( cnt = 0; cnt < EncObjList.free_count(); cnt++ )
 //    {
 //        bool_t removed = bfalse;
 //
@@ -198,7 +198,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //    }
 //
 //    // blank out the unused elements of the free list
-//    for ( cnt = EncObjList.free_count; cnt < MAX_ENC; cnt++ )
+//    for ( cnt = EncObjList.free_count(); cnt < MAX_ENC; cnt++ )
 //    {
 //        EncObjList.free_ref[cnt] = MAX_ENC;
 //    }
@@ -267,15 +267,15 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //
 //    size_t retval = MAX_ENC;
 //
-//    if ( EncObjList.free_count > 0 )
+//    if ( EncObjList.free_count() > 0 )
 //    {
-//        EncObjList.free_count--;
-//        EncObjList.update_guid++;
+//        EncObjList.free_count()--;
+//        EncObjList.update_guid()++;
 //
-//        retval = EncObjList.free_ref[EncObjList.free_count];
+//        retval = EncObjList.free_ref[EncObjList.free_count()];
 //
 //        // completely remove it from the free list
-//        EncObjList.free_ref[EncObjList.free_count] = MAX_ENC;
+//        EncObjList.free_ref[EncObjList.free_count()] = MAX_ENC;
 //
 //        if ( VALID_ENC_REF( retval ) )
 //        {
@@ -306,7 +306,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //
 //    if ( !VALID_ENC_REF( ienc ) ) return retval;
 //
-//    for ( cnt = 0; cnt < EncObjList.free_count; cnt++ )
+//    for ( cnt = 0; cnt < EncObjList.free_count(); cnt++ )
 //    {
 //        if ( ienc == EncObjList.free_ref[cnt] )
 //        {
@@ -336,12 +336,12 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //    EGOBOO_ASSERT( !EncObjList.get_data(ienc).get_proc().in_free_list );
 //
 //    retval = bfalse;
-//    if ( EncObjList.free_count < MAX_ENC )
+//    if ( EncObjList.free_count() < MAX_ENC )
 //    {
-//        EncObjList.free_ref[EncObjList.free_count] = ienc;
+//        EncObjList.free_ref[EncObjList.free_count()] = ienc;
 //
-//        EncObjList.free_count++;
-//        EncObjList.update_guid++;
+//        EncObjList.free_count()++;
+//        EncObjList.update_guid()++;
 //
 //        cpp_list_state::set_free( &( EncObjList.get_data(ienc).get_proc() ), btrue );
 //
@@ -357,7 +357,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //    ENC_REF ienc;
 //
 //    // was it found?
-//    if ( index < 0 || ( size_t )index >= EncObjList.free_count ) return bfalse;
+//    if ( index < 0 || ( size_t )index >= EncObjList.free_count() ) return bfalse;
 //
 //    ienc = EncObjList.free_ref[index];
 //
@@ -371,13 +371,13 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //    }
 //
 //    // shorten the list
-//    EncObjList.free_count--;
-//    EncObjList.update_guid++;
+//    EncObjList.free_count()--;
+//    EncObjList.update_guid()++;
 //
-//    if ( EncObjList.free_count > 0 )
+//    if ( EncObjList.free_count() > 0 )
 //    {
 //        // swap the last element for the deleted element
-//        SWAP( size_t, EncObjList.free_ref[index], EncObjList.free_ref[EncObjList.free_count] );
+//        SWAP( size_t, EncObjList.free_ref[index], EncObjList.free_ref[EncObjList.free_count()] );
 //    }
 //
 //    return btrue;
@@ -435,7 +435,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //        EncObjList.used_ref[EncObjList.used_count] = ienc;
 //
 //        EncObjList.used_count++;
-//        EncObjList.update_guid++;
+//        EncObjList.update_guid()++;
 //
 //        cpp_list_state::set_used( &( EncObjList.get_data(ienc).get_proc() ), btrue );
 //
@@ -466,7 +466,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //
 //    // shorten the list
 //    EncObjList.used_count--;
-//    EncObjList.update_guid++;
+//    EncObjList.update_guid()++;
 //
 //    if ( EncObjList.used_count > 0 )
 //    {
@@ -498,7 +498,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //        {
 //            int override_index = EncList_get_free_list_index( override );
 //
-//            if ( override_index < 0 || ( size_t )override_index >= EncObjList.free_count )
+//            if ( override_index < 0 || ( size_t )override_index >= EncObjList.free_count() )
 //            {
 //                ienc = ( ENC_REF )MAX_ENC;
 //            }
@@ -517,7 +517,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //
 //        if ( MAX_ENC == ienc )
 //        {
-//            log_warning( "EncList_allocate() - failed to override a enchant? enchant %d already spawned? \n", REF_TO_INT( override ) );
+//            log_warning( "EncList_allocate() - failed to override a enchant? enchant %d already spawned? \n", (override ).get_value() );
 //        }
 //    }
 //    else
@@ -596,7 +596,7 @@ t_ego_obj_lst<ego_obj_enc, MAX_ENC> EncObjList;
 //        retval = btrue;
 //    }
 //
-//    EncObjList.lst[ienc].req.turn_me_on = btrue;
+//    EncObjList.get_obj(ienc).proc_req_on( btrue );
 //
 //    return retval;
 //}

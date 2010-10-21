@@ -66,8 +66,6 @@ ego_camera * ego_camera::ctor( ego_camera * pcam )
     fvec3_t   t2 = {{0, 0, -1}};
     fvec3_t   t3 = {{0, 1, 0}};
 
-    memset( pcam, 0, sizeof( *pcam ) );
-
     pcam->move_mode = pcam->move_mode_old = CAM_PLAYER;
     pcam->turn_mode = cfg.autoturncamera;
 
@@ -239,7 +237,7 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
     x     = pcam->track_pos.x;
     y     = pcam->track_pos.y;
     z     = pcam->track_pos.z;
-    level = 128 + mesh_get_level( pmesh, x, y );
+    level = 128 + ego_mpd::get_level( pmesh, x, y );
 
     if ( CAM_FREE == pcam->move_mode )
     {
@@ -278,7 +276,7 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
             pcam->turnadd -= CAM_TURN_KEY;
         }
 
-        pcam->track_pos.z = 128 + mesh_get_level( pmesh, pcam->track_pos.x, pcam->track_pos.y );
+        pcam->track_pos.z = 128 + ego_mpd::get_level( pmesh, pcam->track_pos.x, pcam->track_pos.y );
     }
     else if ( CAM_RESET == pcam->move_mode )
     {

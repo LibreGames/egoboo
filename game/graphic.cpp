@@ -124,7 +124,7 @@ static bool_t             gfx_page_clear_requested = btrue;
 
 static float dynalight_keep = 0.9f;
 
-INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_billboard_data, BillboardList, BILLBOARD_COUNT );
+t_cpp_list< ego_billboard_data, BILLBOARD_COUNT  > BillboardList;
 
 PROFILE_DECLARE( render_scene_init );
 PROFILE_DECLARE( render_scene_mesh );
@@ -1511,7 +1511,7 @@ int draw_fps( int y )
 #if EGO_DEBUG
 
 #    if defined(DEBUG_BSP) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtObjList.count_free() );
+        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtObjList.free_count() );
         y = _draw_string_raw( 0, y, "BSP collisions %d", CHashList_inserted );
         y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", ego_chr::stoppedby_tests + ego_chr::pressure_tests, ego_prt::stoppedby_tests + ego_prt::pressure_tests );
 #    endif
@@ -1616,7 +1616,7 @@ int draw_debug_player( PLA_REF ipla, int y )
         CHR_REF ichr = ppla->index;
         ego_chr  *pchr = ChrObjList.get_pdata( ichr );
 
-        y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", REF_TO_INT( ipla ),
+        y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", (ipla ).get_value(),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_CRUSH] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_POKE ] ),
@@ -1626,7 +1626,7 @@ int draw_debug_player( PLA_REF ipla, int y )
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ICE  ] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ZAP  ] ) );
 
-        y = _draw_string_raw( 0, y, "~~PLA%d %5.1f %5.1f", REF_TO_INT( ipla ), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
+        y = _draw_string_raw( 0, y, "~~PLA%d %5.1f %5.1f", (ipla ).get_value(), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
     }
 
     return y;
@@ -1648,7 +1648,7 @@ int draw_debug( int y )
         {
             ego_chr * pchr = ChrObjList.get_pdata( ppla->index );
 
-            y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", REF_TO_INT( ipla ), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
+            y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", (ipla ).get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
         }
     }
 
@@ -1666,7 +1666,7 @@ int draw_debug( int y )
         STRING text;
 
         y = _draw_string_raw( 0, y, "!!!DEBUG MODE-6!!!" );
-        y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtObjList.count_free() );
+        y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtObjList.free_count() );
         y = _draw_string_raw( 0, y, "~~FREECHR %d", chr_count_free() );
         y = _draw_string_raw( 0, y, "~~MACHINE %d", local_machine );
         if ( PMod->exportvalid ) snprintf( text, SDL_arraysize( text ), "~~EXPORT: TRUE" );
@@ -1980,7 +1980,7 @@ void render_shadow( const CHR_REF & character )
     if ( pchr->is_hidden || 0 == pchr->shadow_size ) return;
 
     // no shadow if off the mesh
-    if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return;
+    if ( !ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) ) return;
 
     // no shadow if invalid tile image
     if ( TILE_IS_FANOFF( PMesh->tmem.tile_list[pchr->onwhichgrid] ) ) return;
@@ -1994,7 +1994,7 @@ void render_shadow( const CHR_REF & character )
     if ( alpha <= 0.0f ) return;
 
     // much reduced shadow if on a reflective tile
-    if ( 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_DRAWREF ) )
+    if ( 0 != ego_mpd::test_fx( PMesh, pchr->onwhichgrid, MPDFX_DRAWREF ) )
     {
         alpha *= 0.1f;
     }
@@ -2109,7 +2109,7 @@ void render_bad_shadow( const CHR_REF & character )
     if ( pchr->is_hidden || pchr->shadow_size == 0 ) return;
 
     // no shadow if off the mesh
-    if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) return;
+    if ( !ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) ) return;
 
     // no shadow if invalid tile image
     if ( TILE_IS_FANOFF( PMesh->tmem.tile_list[pchr->onwhichgrid] ) ) return;
@@ -2122,7 +2122,7 @@ void render_bad_shadow( const CHR_REF & character )
     if ( pchr->inst.light <= INVISIBLE || pchr->inst.alpha <= INVISIBLE ) return;
 
     // much reduced shadow if on a reflective tile
-    if ( 0 != mesh_test_fx( PMesh, pchr->onwhichgrid, MPDFX_DRAWREF ) )
+    if ( 0 != ego_mpd::test_fx( PMesh, pchr->onwhichgrid, MPDFX_DRAWREF ) )
     {
         alpha *= 0.1f;
     }
@@ -2194,9 +2194,9 @@ void update_all_chr_instance()
 
         if ( !INGAME_PCHR( pchr ) ) continue;
 
-        if ( !mesh_grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
+        if ( !ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
 
-        if ( rv_success == chr_update_instance( pchr ) )
+        if ( rv_success == ego_chr::update_instance( pchr ) )
         {
             // the instance has changed, refresh the collision bound
             ego_chr::update_collision_size( pchr, btrue );
@@ -2397,7 +2397,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                         ichr  = dolist[rcnt].ichr;
                         itile = ChrObjList.get_data( ichr ).onwhichgrid;
 
-                        if ( mesh_grid_is_valid( pmesh, itile ) && ( 0 != mesh_test_fx( pmesh, itile, MPDFX_DRAWREF ) ) )
+                        if ( ego_mpd::grid_is_valid( pmesh, itile ) && ( 0 != ego_mpd::test_fx( pmesh, itile, MPDFX_DRAWREF ) ) )
                         {
                             GL_DEBUG( glColor4f )( 1, 1, 1, 1 );          // GL_CURRENT_BIT
                             render_one_mad_ref( ichr );
@@ -2416,7 +2416,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                         GL_DEBUG( glEnable )( GL_BLEND );                    // GL_ENABLE_BIT - allow transparent objects
                         GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );     // GL_COLOR_BUFFER_BIT - set the default particle blending
 
-                        if ( mesh_grid_is_valid( pmesh, itile ) && ( 0 != mesh_test_fx( pmesh, itile, MPDFX_DRAWREF ) ) )
+                        if ( ego_mpd::grid_is_valid( pmesh, itile ) && ( 0 != ego_mpd::test_fx( pmesh, itile, MPDFX_DRAWREF ) ) )
                         {
                             render_one_prt_ref( iprt );
                         }
@@ -2555,7 +2555,7 @@ void render_scene_solid()
 
             if ( NULL != pinst && pinst->alpha == 255 && pinst->light == 255 )
             {
-                chr_instance_get_tint( pinst, tint, CHR_SOLID );
+                ego_chr_instance::get_tint( pinst, tint, CHR_SOLID );
 
                 render_one_mad( dolist[cnt].ichr, tint, CHR_SOLID );
             }
@@ -2607,7 +2607,7 @@ void render_scene_trans()
                 GL_DEBUG( glEnable )( GL_BLEND );                                     // GL_ENABLE_BIT
                 GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );      // GL_COLOR_BUFFER_BIT
 
-                chr_instance_get_tint( pinst, tint, CHR_ALPHA );
+                ego_chr_instance::get_tint( pinst, tint, CHR_ALPHA );
 
                 render_one_mad( ichr, tint, CHR_ALPHA );
             }
@@ -2617,7 +2617,7 @@ void render_scene_trans()
                 GL_DEBUG( glEnable )( GL_BLEND );           // GL_ENABLE_BIT
                 GL_DEBUG( glBlendFunc )( GL_ONE, GL_ONE );  // GL_COLOR_BUFFER_BIT
 
-                chr_instance_get_tint( pinst, tint, CHR_LIGHT );
+                ego_chr_instance::get_tint( pinst, tint, CHR_LIGHT );
 
                 render_one_mad( ichr, tint, CHR_LIGHT );
             }
@@ -2627,7 +2627,7 @@ void render_scene_trans()
                 GL_DEBUG( glEnable )( GL_BLEND );             // GL_ENABLE_BIT
                 GL_DEBUG( glBlendFunc )( GL_ONE, GL_ONE );    // GL_COLOR_BUFFER_BIT
 
-                chr_instance_get_tint( pinst, tint, CHR_PHONG );
+                ego_chr_instance::get_tint( pinst, tint, CHR_PHONG );
 
                 render_one_mad( ichr, tint, CHR_PHONG );
             }
@@ -3232,15 +3232,15 @@ float grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, 
     ix = floor( pos[XX] / GRID_SIZE );
     iy = floor( pos[YY] / GRID_SIZE );
 
-    fan[0] = mesh_get_tile_int( pmesh, ix,     iy );
-    fan[1] = mesh_get_tile_int( pmesh, ix + 1, iy );
-    fan[2] = mesh_get_tile_int( pmesh, ix,     iy + 1 );
-    fan[3] = mesh_get_tile_int( pmesh, ix + 1, iy + 1 );
+    fan[0] = ego_mpd::get_tile_int( pmesh, ix,     iy );
+    fan[1] = ego_mpd::get_tile_int( pmesh, ix + 1, iy );
+    fan[2] = ego_mpd::get_tile_int( pmesh, ix,     iy + 1 );
+    fan[3] = ego_mpd::get_tile_int( pmesh, ix + 1, iy + 1 );
 
     for ( cnt = 0; cnt < 4; cnt++ )
     {
         cache_list[cnt] = NULL;
-        if ( mesh_grid_is_valid( pmesh, fan[cnt] ) )
+        if ( ego_mpd::grid_is_valid( pmesh, fan[cnt] ) )
         {
             cache_list[cnt] = &( glist[fan[cnt]].cache );
         }
@@ -3268,15 +3268,15 @@ bool_t grid_lighting_interpolate( ego_mpd   * pmesh, ego_lighting_cache * dst, f
     ix = floor( fx / GRID_SIZE );
     iy = floor( fy / GRID_SIZE );
 
-    fan[0] = mesh_get_tile_int( pmesh, ix,     iy );
-    fan[1] = mesh_get_tile_int( pmesh, ix + 1, iy );
-    fan[2] = mesh_get_tile_int( pmesh, ix,     iy + 1 );
-    fan[3] = mesh_get_tile_int( pmesh, ix + 1, iy + 1 );
+    fan[0] = ego_mpd::get_tile_int( pmesh, ix,     iy );
+    fan[1] = ego_mpd::get_tile_int( pmesh, ix + 1, iy );
+    fan[2] = ego_mpd::get_tile_int( pmesh, ix,     iy + 1 );
+    fan[3] = ego_mpd::get_tile_int( pmesh, ix + 1, iy + 1 );
 
     for ( cnt = 0; cnt < 4; cnt++ )
     {
         cache_list[cnt] = NULL;
-        if ( mesh_grid_is_valid( pmesh, fan[cnt] ) )
+        if ( ego_mpd::grid_is_valid( pmesh, fan[cnt] ) )
         {
             cache_list[cnt] = &( glist[fan[cnt]].cache );
         }
@@ -3494,7 +3494,7 @@ void BillboardList_clear_data()
     {
         BillboardList.free_ref[cnt] = cnt;
     }
-    BillboardList.free_count = cnt;
+    BillboardList._free_count = cnt;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3548,7 +3548,7 @@ void BillboardList_update_all()
             }
 
             // deallocate the billboard
-            BillboardList_free_one( REF_TO_INT( cnt ) );
+            BillboardList_free_one( (cnt ).get_value() );
         }
         else
         {
@@ -3577,7 +3577,7 @@ size_t BillboardList_get_free( Uint32 lifetime_secs )
     size_t             ibb  = INVALID_BILLBOARD;
     ego_billboard_data * pbb  = NULL;
 
-    if ( BillboardList.free_count <= 0 ) return INVALID_BILLBOARD;
+    if ( BillboardList._free_count <= 0 ) return INVALID_BILLBOARD;
 
     if ( 0 == lifetime_secs ) return INVALID_BILLBOARD;
 
@@ -3585,10 +3585,10 @@ size_t BillboardList_get_free( Uint32 lifetime_secs )
     if ( INVALID_TX_TEXTURE == itex ) return INVALID_BILLBOARD;
 
     // grab the top index
-    BillboardList.free_count--;
+    BillboardList._free_count--;
     BillboardList.update_guid++;
 
-    ibb = BillboardList.free_ref[BillboardList.free_count];
+    ibb = BillboardList.free_ref[BillboardList._free_count];
 
     if ( VALID_BILLBOARD_RANGE( ibb ) )
     {
@@ -3628,20 +3628,20 @@ bool_t BillboardList_free_one( size_t ibb )
 
         // determine whether this texture is already in the list of free textures
         // that is an error
-        for ( cnt = 0; cnt < BillboardList.free_count; cnt++ )
+        for ( cnt = 0; cnt < BillboardList._free_count; cnt++ )
         {
             if ( ibb == BillboardList.free_ref[cnt] ) return bfalse;
         }
     }
 #endif
 
-    if ( BillboardList.free_count >= BILLBOARD_COUNT )
+    if ( BillboardList._free_count >= BILLBOARD_COUNT )
         return bfalse;
 
     // do not put anything below TX_LAST back onto the SDL_free stack
-    BillboardList.free_ref[BillboardList.free_count] = ibb;
+    BillboardList.free_ref[BillboardList._free_count] = ibb;
 
-    BillboardList.free_count++;
+    BillboardList._free_count++;
     BillboardList.update_guid++;
 
     return btrue;
@@ -4088,7 +4088,7 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr )
     if ( NULL == pcap ) return bfalse;
 
     itile = pchr->onwhichgrid;
-    if ( !mesh_grid_is_valid( pmesh, itile ) ) return bfalse;
+    if ( !ego_mpd::grid_is_valid( pmesh, itile ) ) return bfalse;
 
     if ( pmesh->tmem.tile_list[itile].inrenderlist )
     {
@@ -4134,7 +4134,7 @@ bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt )
 
     if ( pinst->indolist ) return btrue;
 
-    if ( 0 == pinst->size || pprt->is_hidden || !mesh_grid_is_valid( pmesh, pprt->onwhichgrid ) ) return bfalse;
+    if ( 0 == pinst->size || pprt->is_hidden || !ego_mpd::grid_is_valid( pmesh, pprt->onwhichgrid ) ) return bfalse;
 
     dolist[dolist_count].ichr = CHR_REF( MAX_CHR );
     dolist[dolist_count].iprt = iprt;
@@ -4184,7 +4184,7 @@ void dolist_make( ego_mpd   * pmesh )
 
     PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
-        if ( mesh_grid_is_valid( pmesh, prt_bdl.prt_ptr->onwhichgrid ) )
+        if ( ego_mpd::grid_is_valid( pmesh, prt_bdl.prt_ptr->onwhichgrid ) )
         {
             // Add the character
             dolist_add_prt( pmesh, prt_bdl.prt_ref );
@@ -4497,7 +4497,7 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
             renderlist.all_count++;
 
             // Put each tile in one other list, for shadows and relections
-            if ( 0 != mesh_test_fx( pmesh, cnt, MPDFX_SHA ) )
+            if ( 0 != ego_mpd::test_fx( pmesh, cnt, MPDFX_SHA ) )
             {
                 renderlist.sha[renderlist.sha_count] = cnt;
                 renderlist.sha_count++;
@@ -4508,7 +4508,7 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
                 renderlist.ref_count++;
             }
 
-            if ( 0 != mesh_test_fx( pmesh, cnt, MPDFX_DRAWREF ) )
+            if ( 0 != ego_mpd::test_fx( pmesh, cnt, MPDFX_DRAWREF ) )
             {
                 renderlist.drf[renderlist.drf_count] = cnt;
                 renderlist.drf_count++;
@@ -4519,7 +4519,7 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
                 renderlist.ndr_count++;
             }
 
-            if ( 0 != mesh_test_fx( pmesh, cnt, MPDFX_WATER ) )
+            if ( 0 != ego_mpd::test_fx( pmesh, cnt, MPDFX_WATER ) )
             {
                 renderlist.wat[renderlist.wat_count] = cnt;
                 renderlist.wat_count++;
@@ -5062,11 +5062,11 @@ void do_clear_screen()
     bool_t try_clear;
 
     try_clear = bfalse;
-    if ( ego_process::running( GProc ) && GProc->state > proc_beginning )
+    if ( (rv_success == GProc->running()) && GProc->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
-    else if ( ego_process::running( MProc ) && MProc->state > proc_beginning )
+    else if ( (rv_success == MProc->running()) && MProc->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
@@ -5082,8 +5082,8 @@ void do_clear_screen()
         GL_DEBUG( glClear )( GL_DEPTH_BUFFER_BIT );
 
         // clear the color buffer only if necessary
-        game_needs_clear = gfx.clearson && ego_process::running( GProc );
-        menu_needs_clear = mnu_draw_background && ego_process::running( MProc );
+        game_needs_clear = gfx.clearson && (rv_success == GProc->running());
+        menu_needs_clear = mnu_draw_background && (rv_success == MProc->running());
 
         if ( game_needs_clear || menu_needs_clear )
         {
@@ -5098,11 +5098,11 @@ void do_flip_pages()
     bool_t try_flip;
 
     try_flip = bfalse;
-    if ( ego_process::running( GProc ) && GProc->state > proc_beginning )
+    if ( (rv_success == GProc->running()) && GProc->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }
-    else if ( ego_process::running( MProc ) && MProc->state > proc_beginning )
+    else if ( (rv_success == MProc->running()) && MProc->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }
@@ -5211,7 +5211,7 @@ void light_fans( ego_renderlist * prlist )
         ego_tile_info * ptile;
 
         fan = prlist->all[entry];
-        if ( !mesh_grid_is_valid( pmesh, fan ) ) continue;
+        if ( !ego_mpd::grid_is_valid( pmesh, fan ) ) continue;
 
         ptile = ptmem->tile_list + fan;
 
@@ -5244,7 +5244,7 @@ void light_fans( ego_renderlist * prlist )
         // if there's no need for an update, go to the next tile
         if ( !needs_update ) continue;
 
-        delta = mesh_light_corners( prlist->pmesh, fan, local_mesh_lighting_keep );
+        delta = ego_mpd::light_corners( prlist->pmesh, fan, local_mesh_lighting_keep );
 
 #if defined(CLIP_LIGHT_FANS)
         // use the actual measured change in the intensity at the tile edge to
@@ -5300,7 +5300,7 @@ void light_fans( ego_renderlist * prlist )
             ego_tile_info * ptile;
 
             fan = prlist->all[entry];
-            if ( !mesh_grid_is_valid( pmesh, fan ) ) continue;
+            if ( !ego_mpd::grid_is_valid( pmesh, fan ) ) continue;
 
             ptile = ptmem->tile_list + fan;
 
@@ -5324,7 +5324,7 @@ void light_fans( ego_renderlist * prlist )
             for ( /* nothing */ ; ivrt < numvertices; ivrt++, vertex++ )
             {
                 light = 0;
-                mesh_interpolate_vertex( ptmem, fan, ptmem->plst[vertex], &light );
+                ego_tile_mem::interpolate_vertex( ptmem, fan, ptmem->plst[vertex], &light );
 
                 light = CLIP( light, 0.0f, 255.0f );
                 ptmem->clst[vertex][RR] =
@@ -5437,7 +5437,7 @@ void gfx_make_dynalist( ego_camera * pcam )
     {
         prt_bdl.prt_ptr->inview = bfalse;
 
-        if ( !mesh_grid_is_valid( PMesh, prt_bdl.prt_ptr->onwhichgrid ) ) continue;
+        if ( !ego_mpd::grid_is_valid( PMesh, prt_bdl.prt_ptr->onwhichgrid ) ) continue;
 
         prt_bdl.prt_ptr->inview = PMesh->tmem.tile_list[prt_bdl.prt_ptr->onwhichgrid].inrenderlist;
 
@@ -5539,7 +5539,7 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
     for ( entry = 0; entry < renderlist.all_count; entry++ )
     {
         fan = renderlist.all[entry];
-        if ( !mesh_grid_is_valid( pmesh, fan ) ) continue;
+        if ( !ego_mpd::grid_is_valid( pmesh, fan ) ) continue;
 
         ix = fan % pinfo->tiles_x;
         iy = fan / pinfo->tiles_x;
@@ -5614,7 +5614,7 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
 
         // grab each grid box in the "frustum"
         fan = renderlist.all[entry];
-        if ( !mesh_grid_is_valid( pmesh, fan ) ) continue;
+        if ( !ego_mpd::grid_is_valid( pmesh, fan ) ) continue;
 
         ix = fan % pinfo->tiles_x;
         iy = fan / pinfo->tiles_x;

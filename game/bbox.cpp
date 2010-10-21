@@ -46,26 +46,21 @@ static int cv_point_data_cmp( const void * pleft, const void * pright );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_aabb_lst::ego_aabb_lst() { ego_aabb_lst::ctor( this ); }
-ego_aabb_lst::~ego_aabb_lst() { ego_aabb_lst::dtor( this ); }
-
-EGO_CONST ego_aabb_lst * ego_aabb_lst::ctor( ego_aabb_lst   * lst )
+const ego_aabb_lst * ego_aabb_lst::ctor( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
-    memset( lst, 0, sizeof( *lst ) );
-
-    return lst;
+    return dtor( lst );
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST ego_aabb_lst   * ego_aabb_lst::dtor( ego_aabb_lst   * lst )
+const ego_aabb_lst   * ego_aabb_lst::dtor( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
     if ( lst->count > 0 )
     {
-        EGOBOO_DELETE( lst->list );
+        EGOBOO_DELETE_ARY( lst->list );
     }
 
     lst->count = 0;
@@ -75,7 +70,7 @@ EGO_CONST ego_aabb_lst   * ego_aabb_lst::dtor( ego_aabb_lst   * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST ego_aabb_lst   * ego_aabb_lst::renew( ego_aabb_lst   * lst )
+const ego_aabb_lst   * ego_aabb_lst::renew( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
@@ -84,7 +79,7 @@ EGO_CONST ego_aabb_lst   * ego_aabb_lst::renew( ego_aabb_lst   * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST ego_aabb_lst   * ego_aabb_lst::alloc( ego_aabb_lst   * lst, int count )
+const ego_aabb_lst   * ego_aabb_lst::alloc( ego_aabb_lst   * lst, int count )
 {
     if ( NULL == lst ) return NULL;
 
@@ -104,17 +99,7 @@ EGO_CONST ego_aabb_lst   * ego_aabb_lst::alloc( ego_aabb_lst   * lst, int count 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-EGO_CONST ego_aabb_ary * bbox_ary_ctor( ego_aabb_ary * ary )
-{
-    if ( NULL == ary ) return NULL;
-
-    memset( ary, 0, sizeof( *ary ) );
-
-    return ary;
-}
-
-//--------------------------------------------------------------------------------------------
-EGO_CONST ego_aabb_ary * bbox_ary_dtor( ego_aabb_ary * ary )
+ego_aabb_ary * ego_aabb_ary::dtor( ego_aabb_ary * ary )
 {
     int i;
 
@@ -137,19 +122,19 @@ EGO_CONST ego_aabb_ary * bbox_ary_dtor( ego_aabb_ary * ary )
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST ego_aabb_ary * bbox_ary_renew( ego_aabb_ary * ary )
+ego_aabb_ary * ego_aabb_ary::renew( ego_aabb_ary * ary )
 {
     if ( NULL == ary ) return NULL;
-    bbox_ary_dtor( ary );
-    return bbox_ary_ctor( ary );
+    ego_aabb_ary::dtor( ary );
+    return ego_aabb_ary::ctor( ary );
 }
 
 //--------------------------------------------------------------------------------------------
-EGO_CONST ego_aabb_ary * bbox_ary_alloc( ego_aabb_ary * ary, int count )
+ego_aabb_ary * ego_aabb_ary::alloc( ego_aabb_ary * ary, int count )
 {
     if ( NULL == ary ) return NULL;
 
-    bbox_ary_dtor( ary );
+    ego_aabb_ary::dtor( ary );
 
     if ( count > 0 )
     {
@@ -168,10 +153,6 @@ EGO_CONST ego_aabb_ary * bbox_ary_alloc( ego_aabb_ary * ary, int count )
 ego_OVolume ego_OVolume::do_merge( ego_OVolume * pv1, ego_OVolume * pv2 )
 {
     ego_OVolume rv;
-
-    // construct the ego_OVolume
-    memset( &rv, 0, sizeof( rv ) );
-    rv.lod = -1;
 
     if ( NULL == pv1 && NULL == pv2 )
     {
@@ -234,10 +215,6 @@ ego_OVolume ego_OVolume::do_merge( ego_OVolume * pv1, ego_OVolume * pv2 )
 ego_OVolume ego_OVolume::do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 )
 {
     ego_OVolume rv;
-
-    // construct the ego_OVolume
-    memset( &rv, 0, sizeof( rv ) );
-    rv.lod = -1;
 
     if ( NULL == pv1 || NULL == pv2 )
     {
@@ -937,17 +914,17 @@ void points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t oct_vec_ctor( oct_vec_t ovec , fvec3_t pos )
+ego_oct_vec * ego_oct_vec::ctor( ego_oct_vec * ovec , fvec3_t pos )
 {
-    if ( NULL == ovec ) return bfalse;
+    if ( NULL == ovec ) return ovec;
 
-    ovec[OCT_X ] =  pos.x;
-    ovec[OCT_Y ] =  pos.y;
-    ovec[OCT_Z ] =  pos.z;
-    ovec[OCT_XY] =  pos.x + pos.y;
-    ovec[OCT_YX] = -pos.x + pos.y;
+    (*ovec)[OCT_X ] =  pos.x;
+    (*ovec)[OCT_Y ] =  pos.y;
+    (*ovec)[OCT_Z ] =  pos.z;
+    (*ovec)[OCT_XY] =  pos.x + pos.y;
+    (*ovec)[OCT_YX] = -pos.x + pos.y;
 
-    return btrue;
+    return ovec;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -975,17 +952,18 @@ bool_t bumper_to_oct_bb_0( ego_bumper src, ego_oct_bb   * pdst )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_oct_bb   * ego_oct_bb::ctor( ego_oct_bb   * pobb )
+ego_oct_bb * ego_oct_bb::ctor( ego_oct_bb * pobb )
 {
-    if ( NULL == pobb ) return NULL;
+    if(NULL == pobb) return NULL;
 
-    memset( pobb, 0, sizeof( *pobb ) );
+    new( &(pobb->mins) ) ego_oct_vec;
+    new( &(pobb->maxs) ) ego_oct_vec;
 
     return pobb;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_oct_bb::do_union( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   * pdst )
+bool_t ego_oct_bb::do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst )
 {
     /// @details BB@> find the union of two ego_oct_bb
 
@@ -1010,7 +988,7 @@ bool_t ego_oct_bb::do_union( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_oct_bb::do_intersection( ego_oct_bb   src1, ego_oct_bb   src2, ego_oct_bb   * pdst )
+bool_t ego_oct_bb::do_intersection( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst )
 {
     /// @details BB@> find the intersection of two ego_oct_bb
 
@@ -1035,7 +1013,7 @@ bool_t ego_oct_bb::do_intersection( ego_oct_bb   src1, ego_oct_bb   src2, ego_oc
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_oct_bb::add_vector( const ego_oct_bb   src, const fvec3_base_t vec, ego_oct_bb   * pdst )
+bool_t ego_oct_bb::add_vector( const ego_oct_bb & src, const fvec3_base_t vec, ego_oct_bb * pdst )
 {
     /// @details BB@> shift the bounding box by the vector vec
 
@@ -1062,7 +1040,7 @@ bool_t ego_oct_bb::add_vector( const ego_oct_bb   src, const fvec3_base_t vec, e
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_oct_bb::empty( ego_oct_bb   src1 )
+bool_t ego_oct_bb::empty( ego_oct_bb & src1 )
 {
     int cnt;
     bool_t rv;

@@ -189,13 +189,13 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
         FILE * scr_file = ( NULL == debug_script_file ) ? stdout : debug_script_file;
 
         fprintf( scr_file,  "\n\n--------\n%d - %s\n", script_error_index, script_error_name );
-        fprintf( scr_file,  "%d - %s\n", REF_TO_INT( script_error_model ), script_error_classname );
+        fprintf( scr_file,  "%d - %s\n", (script_error_model ).get_value(), script_error_classname );
 
         // who are we related to?
-        fprintf( scr_file,  "\tindex  == %d\n", REF_TO_INT( pai->index ) );
-        fprintf( scr_file,  "\ttarget == %d\n", REF_TO_INT( pai->target ) );
-        fprintf( scr_file,  "\towner  == %d\n", REF_TO_INT( pai->owner ) );
-        fprintf( scr_file,  "\tchild  == %d\n", REF_TO_INT( pai->child ) );
+        fprintf( scr_file,  "\tindex  == %d\n", (pai->index ).get_value() );
+        fprintf( scr_file,  "\ttarget == %d\n", (pai->target ).get_value() );
+        fprintf( scr_file,  "\towner  == %d\n", (pai->owner ).get_value() );
+        fprintf( scr_file,  "\tchild  == %d\n", (pai->child ).get_value() );
 
         // some local storage
         fprintf( scr_file,  "\talert     == %x\n", pai->alert );
@@ -205,13 +205,13 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
         fprintf( scr_file,  "\tupdate_wld == %d\n", update_wld );
 
         // ai memory from the last event
-        fprintf( scr_file,  "\tbumplast       == %d\n", REF_TO_INT( pai->bumplast ) );
-        fprintf( scr_file,  "\tattacklast     == %d\n", REF_TO_INT( pai->attacklast ) );
-        fprintf( scr_file,  "\thitlast        == %d\n", REF_TO_INT( pai->hitlast ) );
+        fprintf( scr_file,  "\tbumplast       == %d\n", (pai->bumplast ).get_value() );
+        fprintf( scr_file,  "\tattacklast     == %d\n", (pai->attacklast ).get_value() );
+        fprintf( scr_file,  "\thitlast        == %d\n", (pai->hitlast ).get_value() );
         fprintf( scr_file,  "\tdirectionlast  == %d\n", pai->directionlast );
         fprintf( scr_file,  "\tdamagetypelast == %d\n", pai->damagetypelast );
-        fprintf( scr_file,  "\tlastitemused   == %d\n", REF_TO_INT( pai->lastitemused ) );
-        fprintf( scr_file,  "\ttarget_old     == %d\n", REF_TO_INT( pai->target_old ) );
+        fprintf( scr_file,  "\tlastitemused   == %d\n", (pai->lastitemused ).get_value() );
+        fprintf( scr_file,  "\ttarget_old     == %d\n", (pai->target_old ).get_value() );
 
         // message handling
         fprintf( scr_file,  "\torder == %d\n", pai->order_value );
@@ -455,7 +455,7 @@ Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
     returncode = btrue;
     if ( MAX_OPCODE == valuecode )
     {
-        log_message( "SCRIPT ERROR: scr_run_function() - model == %d, class name == \"%s\" - Unknown opcode found!\n", REF_TO_INT( script_error_model ), script_error_classname );
+        log_message( "SCRIPT ERROR: scr_run_function() - model == %d, class name == \"%s\" - Unknown opcode found!\n", (script_error_model ).get_value(), script_error_classname );
         return bfalse;
     }
 
@@ -1347,7 +1347,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARSELFINDEX:
                 varname = "SELFINDEX";
-                iTmp = REF_TO_INT( pbdl_ai->chr_ref );
+                iTmp = (pbdl_ai->chr_ref ).get_value();
                 break;
 
             case VAROWNERX:
@@ -1461,8 +1461,8 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARTARGETTEAM:
                 varname = "TARGETTEAM";
-                iTmp = ( NULL == ptarget ) ? 0 : REF_TO_INT( ptarget->team );
-                //iTmp = REF_TO_INT( ego_chr::get_iteam( pself->target ) );
+                iTmp = ( NULL == ptarget ) ? 0 : (ptarget->team ).get_value();
+                //iTmp = (ego_chr::get_iteam( pself->target ).get_value() );
                 break;
 
             case VARTARGETARMOR:
@@ -1501,7 +1501,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
                 break;
 
             default:
-                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Unknown variable found!\n", REF_TO_INT( script_error_model ), script_error_classname );
+                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Unknown variable found!\n", (script_error_model ).get_value(), script_error_classname );
                 break;
         }
     }
@@ -1548,7 +1548,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
             }
             else
             {
-                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Cannot divide by zero!\n", REF_TO_INT( script_error_model ), script_error_classname );
+                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Cannot divide by zero!\n", (script_error_model ).get_value(), script_error_classname );
             }
             break;
 
@@ -1560,12 +1560,12 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
             }
             else
             {
-                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Cannot modulo by zero!\n", REF_TO_INT( script_error_model ), script_error_classname );
+                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Cannot modulo by zero!\n", (script_error_model ).get_value(), script_error_classname );
             }
             break;
 
         default:
-            log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - unknown op\n", REF_TO_INT( script_error_model ), script_error_classname );
+            log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - unknown op\n", (script_error_model ).get_value(), script_error_classname );
             break;
     }
 
@@ -1650,9 +1650,9 @@ bool_t ego_waypoint_list::push( ego_waypoint_list * plst, float x, float y, floa
     if ( NULL == plst ) return bfalse;
 
     level = 0.0f;
-    if ( INVALID_TILE != mesh_get_tile( PMesh, x, y ) )
+    if ( INVALID_TILE != ego_mpd::get_tile( PMesh, x, y ) )
     {
-        level = mesh_get_level( PMesh, x, y );
+        level = ego_mpd::get_level( PMesh, x, y );
     }
 
     // add the value

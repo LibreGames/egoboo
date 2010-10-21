@@ -61,16 +61,16 @@ enum e_global_tx_type
 #define INVALID_TX_TEXTURE TX_TEXTURE_COUNT
 
 // declare special arrays of textures
-DECLARE_LIST_EXTERN( oglx_texture_t, TxTexture, TX_TEXTURE_COUNT );
+extern t_cpp_list< oglx_texture_t, TX_TEXTURE_COUNT  > TxTexture;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void             TxTexture_init_all();
 void             TxTexture_delete_all();
 void             TxTexture_release_all();
-TX_REF           TxTexture_get_free( const TX_REF by_reference itex );
-bool_t           TxTexture_free_one( const TX_REF by_reference  itex );
-TX_REF           TxTexture_load_one_vfs( const char *filename, const TX_REF by_reference  itex_src, Uint32 key );
-oglx_texture_t * TxTexture_get_ptr( const TX_REF by_reference itex );
+TX_REF           TxTexture_get_free( const TX_REF & itex );
+bool_t           TxTexture_free_one( const TX_REF &  itex );
+TX_REF           TxTexture_load_one_vfs( const char *filename, const TX_REF &  itex_src, Uint32 key );
+oglx_texture_t * TxTexture_get_ptr( const TX_REF & itex );
 
 void             TxTexture_reload_all();

@@ -27,12 +27,12 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
+ChrObjList_t ChrObjList;
 
 ////--------------------------------------------------------------------------------------------
 ////--------------------------------------------------------------------------------------------
 //
-//INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_chr, ChrObjList, MAX_CHR );
+//t_cpp_list< ego_chr, MAX_CHR  > ChrObjList;
 //
 //static size_t  chr_termination_count = 0;
 //static CHR_REF chr_termination_list[MAX_CHR];
@@ -61,7 +61,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //{
 //    int cnt;
 //
-//    ChrObjList.free_count = 0;
+//    ChrObjList.free_count() = 0;
 //    ChrObjList.used_count = 0;
 //    for ( cnt = 0; cnt < MAX_CHR; cnt++ )
 //    {
@@ -78,7 +78,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //        memset( pchr, 0, sizeof( *pchr ) );
 //
 //        // character "initializer"
-//        ego_obj::ctor( POBJ_GET_PBASE( pchr ), REF_TO_INT(ichr) );
+//        ego_obj::ctor( POBJ_GET_PBASE( pchr ), (ichr).get_value() );
 //
 //        ChrObjList.add_free( ichr );
 //    }
@@ -95,7 +95,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //        ego_obj_chr::do_deconstruct( ChrObjList.get_pdata(ichr), 100 );
 //    }
 //
-//    ChrObjList.free_count = 0;
+//    ChrObjList.free_count() = 0;
 //    ChrObjList.used_count = 0;
 //    for ( cnt = 0; cnt < MAX_CHR; cnt++ )
 //    {
@@ -138,7 +138,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    size_t cnt;
 //    CHR_REF ichr;
 //
-//    for ( cnt = 0; cnt < ChrObjList.free_count; cnt++ )
+//    for ( cnt = 0; cnt < ChrObjList.free_count(); cnt++ )
 //    {
 //        bool_t removed = bfalse;
 //
@@ -193,7 +193,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    }
 //
 //    // blank out the unused elements of the free list
-//    for ( cnt = ChrObjList.free_count; cnt < MAX_CHR; cnt++ )
+//    for ( cnt = ChrObjList.free_count(); cnt < MAX_CHR; cnt++ )
 //    {
 //        ChrObjList.free_ref[cnt] = MAX_CHR;
 //    }
@@ -262,15 +262,15 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //
 //    size_t retval = MAX_CHR;
 //
-//    if ( ChrObjList.free_count > 0 )
+//    if ( ChrObjList.free_count() > 0 )
 //    {
-//        ChrObjList.free_count--;
-//        ChrObjList.update_guid++;
+//        ChrObjList.free_count()--;
+//        ChrObjList.update_guid()++;
 //
-//        retval = ChrObjList.free_ref[ChrObjList.free_count];
+//        retval = ChrObjList.free_ref[ChrObjList.free_count()];
 //
 //        // completely remove it from the free list
-//        ChrObjList.free_ref[ChrObjList.free_count] = MAX_CHR;
+//        ChrObjList.free_ref[ChrObjList.free_count()] = MAX_CHR;
 //
 //        if ( VALID_CHR_IDX( retval ) )
 //        {
@@ -303,7 +303,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //
 //    if ( !VALID_CHR_REF( ichr ) ) return retval;
 //
-//    for ( cnt = 0; cnt < ChrObjList.free_count; cnt++ )
+//    for ( cnt = 0; cnt < ChrObjList.free_count(); cnt++ )
 //    {
 //        if ( ichr == ChrObjList.free_ref[cnt] )
 //        {
@@ -333,12 +333,12 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    EGOBOO_ASSERT( !ChrObjList.get_data(ichr).get_proc().in_free_list );
 //
 //    retval = rv_fail;
-//    if ( ChrObjList.free_count < MAX_CHR )
+//    if ( ChrObjList.free_count() < MAX_CHR )
 //    {
-//        ChrObjList.free_ref[ChrObjList.free_count] = REF_TO_INT(ichr);
+//        ChrObjList.free_ref[ChrObjList.free_count()] = (ichr).get_value();
 //
-//        ChrObjList.free_count++;
-//        ChrObjList.update_guid++;
+//        ChrObjList.free_count()++;
+//        ChrObjList.update_guid()++;
 //
 //        cpp_list_state::set_free( &( ChrObjList.get_data(ichr).get_proc() ), btrue );
 //
@@ -354,7 +354,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    CHR_REF ichr;
 //
 //    // was it found?
-//    if ( index < 0 || ( size_t )index >= ChrObjList.free_count ) return bfalse;
+//    if ( index < 0 || ( size_t )index >= ChrObjList.free_count() ) return bfalse;
 //
 //    ichr = ChrObjList.free_ref[index];
 //
@@ -368,13 +368,13 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    }
 //
 //    // shorten the list
-//    ChrObjList.free_count--;
-//    ChrObjList.update_guid++;
+//    ChrObjList.free_count()--;
+//    ChrObjList.update_guid()++;
 //
-//    if ( ChrObjList.free_count > 0 )
+//    if ( ChrObjList.free_count() > 0 )
 //    {
 //        // swap the last element for the deleted element
-//        SWAP( size_t, ChrObjList.free_ref[index], ChrObjList.free_ref[ChrObjList.free_count] );
+//        SWAP( size_t, ChrObjList.free_ref[index], ChrObjList.free_ref[ChrObjList.free_count()] );
 //    }
 //
 //    return btrue;
@@ -429,10 +429,10 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    retval = bfalse;
 //    if ( ChrObjList.used_count < MAX_CHR )
 //    {
-//        ChrObjList.used_ref[ChrObjList.used_count] = REF_TO_INT(ichr);
+//        ChrObjList.used_ref[ChrObjList.used_count] = (ichr).get_value();
 //
 //        ChrObjList.used_count++;
-//        ChrObjList.update_guid++;
+//        ChrObjList.update_guid()++;
 //
 //        cpp_list_state::set_used( &( ChrObjList.get_data(ichr).get_proc() ), btrue );
 //
@@ -463,7 +463,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //
 //    // shorten the list
 //    ChrObjList.used_count--;
-//    ChrObjList.update_guid++;
+//    ChrObjList.update_guid()++;
 //
 //    if ( ChrObjList.used_count > 0 )
 //    {
@@ -495,14 +495,14 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //        {
 //            int override_index = ChrObjList.get_free_list_index( override );
 //
-//            if ( override_index < 0 || ( size_t )override_index >= ChrObjList.free_count )
+//            if ( override_index < 0 || ( size_t )override_index >= ChrObjList.free_count() )
 //            {
 //                ichr = ( CHR_REF )MAX_CHR;
 //            }
 //            else
 //            {
 //                // store the "wrong" value in the override character's index
-//                ChrObjList.free_ref[override_index] = REF_TO_INT(ichr);
+//                ChrObjList.free_ref[override_index] = (ichr).get_value();
 //
 //                // fix the in_free_list values
 //                cpp_list_state::set_free( &( ChrObjList.get_data(ichr).get_proc() ), btrue );
@@ -514,7 +514,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //
 //        if ( MAX_CHR == ichr )
 //        {
-//            log_warning( "ChrObjList.allocate() - failed to override a character? character %d already spawned? \n", REF_TO_INT( override ) );
+//            log_warning( "ChrObjList.allocate() - failed to override a character? character %d already spawned? \n", (override ).get_value() );
 //        }
 //    }
 //    else
@@ -535,7 +535,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //    if ( VALID_CHR_REF( ichr ) )
 //    {
 //        // allocate the new one
-//        POBJ_ALLOCATE( ChrObjList.get_pdata(ichr), REF_TO_INT(ichr) );
+//        POBJ_ALLOCATE( ChrObjList.get_pdata(ichr), (ichr).get_value() );
 //    }
 //
 //    if ( VALID_CHR( ichr ) )
@@ -593,7 +593,7 @@ t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList;
 //        retval = btrue;
 //    }
 //
-//    ChrObjList.lst[ichr].req.turn_me_on = btrue;
+//    ChrObjList.get_obj(ichr).proc_req_on( btrue );
 //
 //    return retval;
 //}

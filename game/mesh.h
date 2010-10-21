@@ -29,6 +29,7 @@
 struct ego_mpd;
 
 struct mesh_wall_data;
+struct ego_mpd_info;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -65,13 +66,13 @@ typedef float       light_cache_t[4];
 // the BSP structure housing the mesh
 struct mpd_BSP
 {
-    ego_oct_bb         volume;
-    ego_BSP_leaf_ary_t nodes;
-    ego_BSP_tree       tree;
+    ego_oct_bb       volume;
+    ego_BSP_leaf_ary nodes;
+    ego_BSP_tree     tree;
 
-    mpd_BSP();
-    mpd_BSP( ego_mpd   * pmesh );
-    ~mpd_BSP();
+    mpd_BSP()                    { /* nothing */ }
+    mpd_BSP( ego_mpd   * pmesh ) { ctor( this, pmesh ); }
+    ~mpd_BSP()                   { dtor( this ); }
 
     static mpd_BSP root;
 
@@ -82,7 +83,7 @@ struct mpd_BSP
 
     static bool_t    fill( mpd_BSP * pbsp );
 
-    static int       collide( mpd_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst );
+    static int       collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -126,12 +127,14 @@ struct ego_grid_info
     Uint8            a, l;                     ///< the raw mesh lighting... pretty much ignored
     ego_lighting_cache cache;                    ///< the per-grid lighting info
 
-    ego_grid_info() { memset( this, 0, sizeof( *this ) ); }
+    ego_grid_info() { fx = 0; twist = 0; a = l = 0; }
 };
 
 //--------------------------------------------------------------------------------------------
 struct ego_grid_mem
 {
+    friend struct ego_mpd;
+
     int             grids_x;                          ///< Size in grids
     int             grids_y;
     size_t          grid_count;                       ///< how many grids
@@ -149,8 +152,28 @@ struct ego_grid_mem
     // the per-grid info
     ego_grid_info* grid_list;                        ///< tile command info
 
-    ego_grid_mem();
-    ~ego_grid_mem();
+    ego_grid_mem() { clear(this); ctor(this); }
+    ~ego_grid_mem() { dtor( this ); }
+
+    static ego_grid_mem * ctor( ego_grid_mem * pmem );
+    static ego_grid_mem * dtor( ego_grid_mem * pmem );
+
+protected:
+
+    static bool_t alloc( ego_grid_mem * pmem, ego_mpd_info * pinfo );
+    static bool_t dealloc( ego_grid_mem * pmem );
+
+    static ego_grid_mem * make_fanstart( ego_grid_mem * pgmem, ego_mpd_info * pinfo );
+
+private:
+    static ego_grid_mem * ego_grid_mem::clear( ego_grid_mem * pmem )
+    {
+        if ( NULL == pmem ) return pmem;
+
+        memset( pmem, 0, sizeof( *pmem ) );
+
+        return pmem;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -162,7 +185,7 @@ struct ego_tile_mem
     ego_aabb           bbox;                             ///< bounding box for the entire mesh
 
     // the per-tile info
-    size_t           tile_count;                       ///< number of tiles
+    size_t         tile_count;                       ///< number of tiles
     ego_tile_info* tile_list;                        ///< tile command info
 
     // the per-vertex info to be presented to OpenGL
@@ -172,8 +195,32 @@ struct ego_tile_mem
     GLXvector3f   * clst;                              ///< the color list (for lighting the mesh)
     GLXvector3f   * nlst;                              ///< the normal list
 
-    ego_tile_mem();
-    ~ego_tile_mem();
+    ego_tile_mem() { clear(this); ctor(this); };
+    ~ego_tile_mem() { dtor(this); };
+
+    static ego_tile_mem *  ctor( ego_tile_mem * pmem );
+    static ego_tile_mem *  dtor( ego_tile_mem * pmem );
+    static bool_t          dealloc( ego_tile_mem * pmem );
+    static bool_t          alloc( ego_tile_mem * pmem, ego_mpd_info * pinfo );
+
+    static bool_t          interpolate_vertex( ego_tile_mem * pmem, int fan, float pos[], float * plight );
+
+private:
+    static ego_tile_mem * clear(ego_tile_mem * ptr)
+    {
+        if( NULL == ptr ) return ptr;
+
+        ptr->tile_count = 0;
+        ptr->tile_list = NULL;
+
+        ptr->vert_count = 0;
+        ptr->plst = NULL;
+        ptr->tlst = NULL;
+        ptr->clst = NULL;
+        ptr->nlst = NULL;
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -187,7 +234,24 @@ struct ego_mpd_info
     int             tiles_y;
     Uint32          tiles_count;                      ///< Number of tiles
 
-    ego_mpd_info() { memset( this, 0, sizeof( *this ) ); }
+    ego_mpd_info() { clear(this); ctor( this ); }
+    ~ego_mpd_info() { dtor(this); }
+
+    static ego_mpd_info * ctor( ego_mpd_info * pinfo );
+    static ego_mpd_info * dtor( ego_mpd_info * pinfo );
+
+    static ego_mpd_info * init( ego_mpd_info * pinfo, int numvert, size_t tiles_x, size_t tiles_y );
+
+private:
+
+    static ego_mpd_info * clear( ego_mpd_info * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -196,52 +260,103 @@ struct ego_mpd_info
 struct ego_mpd
 {
     ego_mpd_info  info;
-    ego_tile_mem      tmem;
-    ego_grid_mem      gmem;
+    ego_tile_mem  tmem;
+    ego_grid_mem  gmem;
 
-    fvec2_t         tileoff[MAXTILETYPE];     ///< Tile texture offset
+    fvec2_t       tileoff[MAXTILETYPE];     ///< Tile texture offset
 
-    ego_mpd();
-    ~ego_mpd();
+    static int mpdfx_tests;
+    static int bound_tests;
+    static int pressure_tests;
+
+    ego_mpd()  { clear(this); ctor(this); };
+    ~ego_mpd() { dtor(this); }
+
+    static ego_mpd   * create( ego_mpd   * pmesh, int tiles_x, int tiles_y );
+    static bool_t      destroy( ego_mpd   ** pmesh );
+
+    static ego_mpd   * ctor( ego_mpd   * pmesh );
+    static ego_mpd   * dtor( ego_mpd   * pmesh );
+    static ego_mpd   * renew( ego_mpd   * pmesh );
+
+    //---- loading functions
+    static bool_t    convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src );
+    static ego_mpd * finalize( ego_mpd   * pmesh );
+
+    //---- wall interaction
+    static BIT_FIELD hit_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, float nrm[], float * pressure );
+    static bool_t    test_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, mesh_wall_data * private_data );
+    static fvec2_t   get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, BIT_FIELD bits );
+    static float     get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits );
+
+    static float     get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y );
+    static float     get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xmin, float ymin, float xmax, float ymax );
+
+    //---- texture stuff
+    static bool_t    set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image );
+    static bool_t    update_texture( ego_mpd   * pmesh, Uint32 tile );
+    static bool_t    make_texture( ego_mpd   * pmesh );
+
+    //---- lighting
+    static float     light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep );
+    static bool_t    test_corners( ego_mpd   * pmesh, int itile, float threshold );
+    static bool_t    grid_light_one_corner( ego_mpd * pmesh, int fan, float height, float nrm[], float * plight );
+    static bool_t    remove_ambient( ego_mpd   * pmesh );
+    static bool_t    light_one_corner( ego_mpd   * pmesh, int itile, GLXvector3f pos, GLXvector3f nrm, float * plight );
+    static bool_t    test_one_corner( ego_mpd   * pmesh, GLXvector3f pos, float * pdelta );
+
+    //---- INLINE functions
+
+    static INLINE float  get_level( ego_mpd   * pmesh, float x, float y );
+    static INLINE Uint32 get_block( ego_mpd   * pmesh, float pos_x, float pos_y );
+    static INLINE Uint32 get_tile( ego_mpd   * pmesh, float pos_x, float pos_y );
+
+    static INLINE Uint32 get_block_int( ego_mpd   * pmesh, int block_x, int block_y );
+    static INLINE Uint32 get_tile_int( ego_mpd   * pmesh, int grid_x,  int grid_y );
+
+    static INLINE BIT_FIELD test_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags );
+    static INLINE bool_t    clear_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags );
+    static INLINE bool_t    add_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags );
+
+    static INLINE BIT_FIELD has_some_mpdfx( BIT_FIELD mpdfx, BIT_FIELD test );
+    static INLINE bool_t    grid_is_valid( ego_mpd   * pmpd, Uint32 id );
+
+protected:
+
+    static void   init_tile_offset( ego_mpd   * pmesh );
+    static void   make_vrtstart( ego_mpd   * pmesh );
+
+    // some twist/normal functions
+    static bool_t make_normals( ego_mpd   * pmesh );
+
+    static bool_t make_bbox( ego_mpd   * pmesh );
+
+    
+    static bool_t      recalc_twist( ego_mpd   * pmesh );
+
+private:
+    static ego_mpd * ctor_1( ego_mpd   * pmesh, int tiles_x, int tiles_y );
+
+    static ego_mpd * clear( ego_mpd   * pmesh )
+    {
+        if( NULL == pmesh ) return pmesh;
+
+        init_tile_offset(pmesh);
+
+        return pmesh;
+    }
+
 };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-
-extern int mesh_mpdfx_tests;
-extern int mesh_bound_tests;
-extern int mesh_pressure_tests;
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_mpd   * mesh_create( ego_mpd   * pmesh, int tiles_x, int tiles_y );
-bool_t      mesh_destroy( ego_mpd   ** pmesh );
-
-ego_mpd   * mesh_ctor( ego_mpd   * pmesh );
-ego_mpd   * mesh_dtor( ego_mpd   * pmesh );
-ego_mpd   * mesh_renew( ego_mpd   * pmesh );
 
 // loading/saving
 ego_mpd   * mesh_load( const char *modname, ego_mpd   * pmesh );
 
 void   mesh_make_twist();
 
-float  mesh_light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep );
-bool_t mesh_test_corners( ego_mpd   * pmesh, int itile, float threshold );
-bool_t mesh_interpolate_vertex( ego_tile_mem * pmem, int itile, float pos[], float * plight );
 
-bool_t grid_light_one_corner( ego_mpd   * pmesh, int fan, float height, float nrm[], float * plight );
 
-BIT_FIELD mesh_hit_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, float nrm[], float * pressure );
-bool_t mesh_test_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, mesh_wall_data * private_data );
-
-float mesh_get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y );
-float mesh_get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xmin, float ymin, float xmax, float ymax );
-
-bool_t mesh_set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image );
-bool_t mesh_update_texture( ego_mpd   * pmesh, Uint32 tile );
-
-fvec2_t mesh_get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, BIT_FIELD bits );
-float mesh_get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits );
 
 Uint8 cartman_get_fan_twist( ego_mpd   * pmesh, Uint32 tile );

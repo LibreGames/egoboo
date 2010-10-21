@@ -73,7 +73,7 @@ bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
     if ( NULL == pmesh ) return bfalse;
     ptmem  = &( pmesh->tmem );
 
-    if ( !mesh_grid_is_valid( pmesh, itile ) ) return bfalse;
+    if ( !ego_mpd::grid_is_valid( pmesh, itile ) ) return bfalse;
     ptile = ptmem->tile_list + itile;
 
     // do not render the itile if the image image is invalid
@@ -82,7 +82,7 @@ bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
     image = TILE_GET_LOWER_BITS( ptile->img ); // Tile image
     type  = ptile->type;                       // Command type ( index to points in itile )
 
-    if ( 0 == mesh_test_fx( pmesh, itile, MPDFX_ANIM ) ) return btrue;
+    if ( 0 == ego_mpd::test_fx( pmesh, itile, MPDFX_ANIM ) ) return btrue;
 
     // Animate the tiles
     if ( type >= ( MAXMESHTYPE >> 1 ) )
@@ -104,7 +104,7 @@ bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
     image    = frame_add + basetile;
 
     // actually update the animated texture info
-    return mesh_set_texture( pmesh, itile, image );
+    return ego_mpd::set_texture( pmesh, itile, image );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
     if ( NULL == pmesh ) return;
     ptmem  = &( pmesh->tmem );
 
-    if ( !mesh_grid_is_valid( pmesh, itile ) ) return;
+    if ( !ego_mpd::grid_is_valid( pmesh, itile ) ) return;
     ptile = ptmem->tile_list + itile;
 
     // do not render the itile if the image image is invalid
@@ -215,7 +215,7 @@ void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
     pgmem  = &( pmesh->gmem );
     pinfo  = &( pmesh->info );
 
-    if ( !mesh_grid_is_valid( pmesh, itile ) ) return;
+    if ( !ego_mpd::grid_is_valid( pmesh, itile ) ) return;
     ptile = ptmem->tile_list + itile;
     pgrid = pgmem->grid_list + itile;
 
@@ -302,7 +302,7 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
     ptmem = &( pmesh->tmem );
     pgmem = &( pmesh->gmem );
 
-    if ( !mesh_grid_is_valid( pmesh, itile ) ) return;
+    if ( !ego_mpd::grid_is_valid( pmesh, itile ) ) return;
     ptile = ptmem->tile_list + itile;
 
     falpha = FF_TO_FLOAT( water.layer[layer].alpha );
@@ -378,8 +378,8 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
             v[cnt].tex[TT] = fy_off[cnt] + offv;
 
             // get the lighting info from the grid
-            itile = mesh_get_tile_int( pmesh, jx, jy );
-            if ( grid_light_one_corner( pmesh, itile, v[cnt].pos[ZZ], nrm, &dlight ) )
+            itile = ego_mpd::get_tile_int( pmesh, jx, jy );
+            if ( ego_mpd::grid_light_one_corner( pmesh, itile, v[cnt].pos[ZZ], nrm, &dlight ) )
             {
                 // take the v[cnt].color from the tnc vertices so that it is oriented prroperly
                 v[cnt].col[RR] = dlight * INV_FF + alight;

@@ -51,12 +51,12 @@ struct snd_looped_sound_data
     CHR_REF     object;
 };
 
-INSTANTIATE_LIST_STATIC( snd_looped_sound_data, LoopedList, LOOPED_COUNT );
+static t_cpp_list< snd_looped_sound_data, LOOPED_COUNT  > LoopedList;
 
 //#if !defined(DEBUG_CPP_LISTS)
 //
 //#elif defined(__cplusplus)
-//    INSTANTIATE_LIST( static, snd_looped_sound_data, LoopedList, LOOPED_COUNT );
+//    static t_cpp_list< snd_looped_sound_data, LOOPED_COUNT  > LoopedList;
 //#endif
 
 static void   LoopedList_init();
@@ -575,7 +575,7 @@ int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const C
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
 
     // only play sound effects if the game is running
-    if ( !ego_process::running( GProc ) )  return INVALID_SOUND_CHANNEL;
+    if ( rv_success != (rv_success == GProc->running()) )  return INVALID_SOUND_CHANNEL;
 
     // measure the distance in tiles
     diff = fvec3_sub( pos.v, PCamera->track_pos.v );
@@ -617,7 +617,7 @@ int sound_play_chunk_full( Mix_Chunk * pchunk )
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
 
     // only play sound effects if the game is running
-    if ( !ego_process::running( GProc ) )  return INVALID_SOUND_CHANNEL;
+    if ( rv_success != (rv_success == GProc->running()) )  return INVALID_SOUND_CHANNEL;
 
     // play the sound
     channel = Mix_PlayChannel( -1, pchunk, 0 );
@@ -890,13 +890,13 @@ void   LoopedList_init()
         LoopedList.lst[cnt].chunk   = NULL;
         LoopedList.lst[cnt].object  = CHR_REF( MAX_CHR );
 
-        tnc = REF_TO_INT( cnt );
+        tnc = (cnt ).get_value();
         LoopedList.used_ref[tnc] = LOOPED_COUNT;
         LoopedList.free_ref[tnc] = tnc;
     }
 
-    LoopedList.used_count = 0;
-    LoopedList.free_count = LOOPED_COUNT;
+    LoopedList._used_count = 0;
+    LoopedList._free_count = LOOPED_COUNT;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -907,7 +907,7 @@ bool_t LoopedList_validate()
     bool_t retval;
 
     retval = btrue;
-    if ( LOOPED_COUNT != LoopedList.free_count + LoopedList.used_count )
+    if ( LOOPED_COUNT != LoopedList._free_count + LoopedList._used_count )
     {
         // punt!
         LoopedList_clear();
@@ -927,24 +927,24 @@ bool_t LoopedList_free_one( size_t index )
     if ( !LoopedList_validate() ) return bfalse;
 
     // is the index actually free?
-    for ( cnt = 0; cnt < LoopedList.used_count; cnt++ )
+    for ( cnt = 0; cnt < LoopedList._used_count; cnt++ )
     {
         if ( index == LoopedList.used_ref[cnt] ) break;
     }
 
     // was anything found?
-    if ( cnt >= LoopedList.used_count ) return bfalse;
+    if ( cnt >= LoopedList._used_count ) return bfalse;
 
     // swap the value with the one on the top of the stack
-    SWAP( size_t, LoopedList.used_ref[cnt], LoopedList.used_ref[LoopedList.used_count-1] );
+    SWAP( size_t, LoopedList.used_ref[cnt], LoopedList.used_ref[LoopedList._used_count-1] );
 
-    LoopedList.used_count--;
+    LoopedList._used_count--;
     LoopedList.update_guid++;
 
     // push the value onto the free stack
-    LoopedList.free_ref[LoopedList.free_count] = index;
+    LoopedList.free_ref[LoopedList._free_count] = index;
 
-    LoopedList.free_count++;
+    LoopedList._free_count++;
     LoopedList.update_guid++;
 
     // clear out the data
@@ -963,15 +963,15 @@ size_t LoopedList_get_free()
 
     if ( !LoopedList_validate() ) return bfalse;
 
-    LoopedList.free_count--;
+    LoopedList._free_count--;
     LoopedList.update_guid++;
 
-    index = LoopedList.free_ref[LoopedList.free_count];
+    index = LoopedList.free_ref[LoopedList._free_count];
 
     // push the value onto the used stack
-    LoopedList.used_ref[LoopedList.used_count] = index;
+    LoopedList.used_ref[LoopedList._used_count] = index;
 
-    LoopedList.used_count++;
+    LoopedList._used_count++;
     LoopedList.update_guid++;
 
     return index;
@@ -1009,7 +1009,7 @@ size_t LoopedList_add( Mix_Chunk * sound, int channel, const CHR_REF &  ichr )
 
     if ( NULL == sound || INVALID_SOUND_CHANNEL == channel || !INGAME_CHR( ichr ) ) return LOOPED_COUNT;
 
-    if ( LoopedList.used_count >= LOOPED_COUNT ) return LOOPED_COUNT;
+    if ( LoopedList._used_count >= LOOPED_COUNT ) return LOOPED_COUNT;
     if ( !LoopedList_validate() ) return LOOPED_COUNT;
 
     index = LoopedList_get_free();
@@ -1034,12 +1034,12 @@ bool_t LoopedList_remove( int channel )
     size_t cnt;
     bool_t retval;
 
-    if ( 0 == LoopedList.used_count ) return bfalse;
+    if ( 0 == LoopedList._used_count ) return bfalse;
 
     if ( !LoopedList_validate() ) return bfalse;
 
     retval = bfalse;
-    for ( cnt = 0; cnt < LoopedList.used_count; cnt++ )
+    for ( cnt = 0; cnt < LoopedList._used_count; cnt++ )
     {
         size_t index = LoopedList.used_ref[cnt];
 
@@ -1076,7 +1076,7 @@ void looped_update_all_sound()
 {
     size_t cnt;
 
-    for ( cnt = 0; cnt < LoopedList.used_count; cnt++ )
+    for ( cnt = 0; cnt < LoopedList._used_count; cnt++ )
     {
         fvec3_t   diff;
         size_t    index;
@@ -1124,10 +1124,10 @@ bool_t looped_stop_object_sounds( const CHR_REF &  ichr )
 
     freed = 0;
     found = btrue;
-    while ( found && LoopedList.used_count > 0 )
+    while ( found && LoopedList._used_count > 0 )
     {
         found = bfalse;
-        for ( cnt = 0; cnt < LoopedList.used_count; cnt++ )
+        for ( cnt = 0; cnt < LoopedList._used_count; cnt++ )
         {
             LOOP_REF ref;
 

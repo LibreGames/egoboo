@@ -50,7 +50,7 @@ ego_pro_import import_data;
 size_t bookicon_count   = 0;
 TX_REF bookicon_ref[MAX_SKIN];                      // The first book icon
 
-INSTANTIATE_LIST( ACCESS_TYPE_NONE, ego_pro, ProList, MAX_PROFILE );
+t_cpp_list< ego_pro, MAX_PROFILE  > ProList;
 INSTANTIATE_STATIC_ARY( MessageOffsetAry, MessageOffset );
 
 Uint32  message_buffer_carat = 0;                           // Where to put letter
@@ -219,7 +219,7 @@ int ProList_search_free( const PRO_REF & iobj )
     // determine whether this character is already in the list of free textures
     // that is an error
     retval = -1;
-    for ( cnt = 0; cnt < ProList.free_count; cnt++ )
+    for ( cnt = 0; cnt < ProList._free_count; cnt++ )
     {
         if ( iobj == ProList.free_ref[cnt] )
         {
@@ -238,13 +238,13 @@ size_t ProList_pop_free( int idx )
 
     size_t retval;
 
-    if ( idx >= 0 && ( size_t )idx < ProList.free_count )
+    if ( idx >= 0 && ( size_t )idx < ProList._free_count )
     {
         // move the index idx to the top
         int idx_top, idx_bottom;
 
         idx_bottom = idx;
-        idx_top    = ProList.free_count - 1;
+        idx_top    = ProList._free_count - 1;
 
         // make sure this is a valid case
         if ( idx_top > idx_bottom && idx_top > 1 )
@@ -255,12 +255,12 @@ size_t ProList_pop_free( int idx )
 
     // just pop off the top index
     retval = MAX_PROFILE;
-    if ( ProList.free_count > 0 )
+    if ( ProList._free_count > 0 )
     {
-        ProList.free_count--;
+        ProList._free_count--;
         ProList.update_guid++;
 
-        retval = ProList.free_ref[ProList.free_count];
+        retval = ProList.free_ref[ProList._free_count];
     }
 
     return retval;
@@ -281,11 +281,11 @@ bool_t ProList_push_free( const PRO_REF & iobj )
 
     // push it on the free stack
     retval = bfalse;
-    if ( ProList.free_count < MAX_PROFILE )
+    if ( ProList._free_count < MAX_PROFILE )
     {
-        ProList.free_ref[ProList.free_count] = REF_TO_INT( iobj );
+        ProList.free_ref[ProList._free_count] = (iobj ).get_value();
 
-        ProList.free_count++;
+        ProList._free_count++;
         ProList.update_guid++;
 
         retval = btrue;
@@ -304,7 +304,7 @@ void ProList_init()
 
     PRO_REF cnt;
 
-    ProList.free_count = 0;
+    ProList._free_count = 0;
     for ( cnt = 0; cnt < MAX_PROFILE; cnt++ )
     {
         // make sure we don't get a stupid warning
@@ -800,7 +800,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
         }
         else if ( required && overrideslots )
         {
-            log_error( "load_one_profile_vfs() - object slot %i used twice (%s, %s)\n", REF_TO_INT( iobj ), pobj->name, tmploadname );
+            log_error( "load_one_profile_vfs() - object slot %i used twice (%s, %s)\n", (iobj ).get_value(), pobj->name, tmploadname );
         }
         else
         {
@@ -813,7 +813,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     iobj = ProList_get_free( iobj );
     if ( !VALID_PRO_RANGE( iobj ) )
     {
-        log_warning( "load_one_profile_vfs() - Cannot allocate object %d (\"%s\")\n", REF_TO_INT( iobj ), tmploadname );
+        log_warning( "load_one_profile_vfs() - Cannot allocate object %d (\"%s\")\n", (iobj ).get_value(), tmploadname );
         return MAX_PROFILE;
     }
 
@@ -822,7 +822,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
 
     // load the character profile
     pobj->icap = load_one_character_profile_vfs( tmploadname, islot, bfalse );
-    islot = REF_TO_INT( pobj->icap );
+    islot = (pobj->icap ).get_value();
 
     // Load the model for this iobj
     pobj->imad = load_one_model_profile_vfs( tmploadname, ( MAD_REF )islot );
@@ -1244,7 +1244,7 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
     /// @details BB@> insert a character's ego_BSP_leaf   into the ego_BSP_tree
 
     bool_t       retval;
-    ego_BSP_leaf   * pleaf;
+    ego_BSP_leaf * pleaf;
     ego_BSP_tree   * ptree;
 
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
@@ -1298,7 +1298,7 @@ bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_prt_bundle * pbdl_prt )
     /// @details BB@> insert a particle's ego_BSP_leaf   into the ego_BSP_tree
 
     bool_t       retval;
-    ego_BSP_leaf   * pleaf;
+    ego_BSP_leaf * pleaf;
     ego_BSP_tree   * ptree;
 
     ego_prt *loc_pprt;
@@ -1443,7 +1443,7 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst )
+int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst )
 {
     /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
@@ -1454,18 +1454,18 @@ int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_le
 
     colst->top = 0;
 
-    if ( 0 == colst->alloc ) return 0;
+    if ( 0 == colst->size ) return 0;
 
     return ego_BSP_tree::collide( &( pbsp->tree ), paabb, colst );
 }
 
 ////--------------------------------------------------------------------------------------------
-//bool_t ego_obj_BSP::insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf   * pleaf, int depth, int address_x[], int address_y[], int address_z[] )
+//bool_t ego_obj_BSP::insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pleaf, int depth, int address_x[], int address_y[], int address_z[] )
 //{
 //    int i;
 //    bool_t retval;
 //    Uint32 index;
-//    ego_BSP_branch   * pbranch, * pbranch_new;
+//    ego_BSP_branch * pbranch, * pbranch_new;
 //    ego_BSP_tree   * ptree = &( pbsp->tree );
 //
 //    retval = bfalse;
@@ -1506,7 +1506,7 @@ int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_le
 //
 
 ////--------------------------------------------------------------------------------------------
-//bool_t ego_obj_BSP::collide_branch( ego_BSP_branch   * pbranch, ego_oct_bb   * pvbranch, ego_oct_bb   * pvobj, int_ary_t * colst )
+//bool_t ego_obj_BSP::collide_branch( ego_BSP_branch * pbranch, ego_oct_bb   * pvbranch, ego_oct_bb   * pvobj, int_ary * colst )
 //{
 //    /// @details BB@> Recursively search the BSP tree for collisions with the pvobj
 //    //      Return bfalse if we need to break out of the recursive search for any reason.
@@ -1587,11 +1587,11 @@ int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_le
 //
 
 ////--------------------------------------------------------------------------------------------
-//bool_t ego_obj_BSP::collide_nodes( ego_BSP_leaf   leaf_lst[], ego_oct_bb   * pvobj, int_ary_t * colst )
+//bool_t ego_obj_BSP::collide_nodes( ego_BSP_leaf   leaf_lst[], ego_oct_bb   * pvobj, int_ary * colst )
 //{
 //    /// @details BB@> check for collisions with the given node list
 //
-//    ego_BSP_leaf   * pleaf;
+//    ego_BSP_leaf * pleaf;
 //    ego_oct_bb      int_ov, * pnodevol;
 //
 //    if ( NULL == leaf_lst || NULL == pvobj ) return bfalse;

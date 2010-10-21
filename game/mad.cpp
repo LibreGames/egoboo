@@ -41,7 +41,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_mad, MadStack, MAX_MAD );
+t_cpp_stack< ego_mad, MAX_MAD  > MadStack;
 
 static STRING  szModelName     = EMPTY_CSTR;      ///< MD2 Model name
 static char    cActionName[ACTION_COUNT][2];      ///< Two letter name code
@@ -65,12 +65,6 @@ static void mad_heal_actions( const MAD_REF & imad, const char * loadname );
 //static void md2_get_transvertices( const MAD_REF & imad );
 //static int  vertexconnected( md2_ogl_commandlist_t * pclist, int vertex );
 
-static ego_mad * mad_ctor( ego_mad * pmad );
-static ego_mad * mad_dtor( ego_mad * pmad );
-static ego_mad * mad_reconstruct( ego_mad * pmad );
-static bool_t    mad_free( ego_mad * pmad );
-static ego_mad * mad_clear( ego_mad * pmad );
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void MadList_init()
@@ -83,9 +77,9 @@ void MadList_init()
         ego_mad * pmad = MadStack.lst + cnt;
 
         // blank out all the data, including the obj_base data
-        mad_dtor( pmad );
+        ego_mad::dtor( pmad );
 
-        mad_reconstruct( pmad );
+        ego_mad::reconstruct( pmad );
     }
 }
 
@@ -96,7 +90,7 @@ void MadList_dtor()
 
     for ( cnt = 0; cnt < MAX_MAD; cnt++ )
     {
-        mad_dtor( MadStack.lst + cnt );
+        ego_mad::dtor( MadStack.lst + cnt );
     }
 }
 
@@ -706,7 +700,7 @@ MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF & ima
     pmad = MadStack.lst + imad;
 
     // clear out the mad
-    mad_reconstruct( pmad );
+    ego_mad::reconstruct( pmad );
 
     // mark it as used
     pmad->loaded = btrue;
@@ -923,7 +917,7 @@ void mad_rip_actions( const MAD_REF & imad )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mad * mad_clear( ego_mad * pmad )
+ego_mad * ego_mad::clear( ego_mad * pmad )
 {
     if ( NULL == pmad ) return pmad;
 
@@ -933,7 +927,7 @@ ego_mad * mad_clear( ego_mad * pmad )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mad_free( ego_mad * pmad )
+bool_t ego_mad::dealloc( ego_mad * pmad )
 {
     /// Free all allocated memory
 
@@ -945,7 +939,7 @@ bool_t mad_free( ego_mad * pmad )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mad * mad_reconstruct( ego_mad * pmad )
+ego_mad * ego_mad::reconstruct( ego_mad * pmad )
 {
     /// @details BB@> initialize the character data to safe values
     ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
@@ -955,9 +949,9 @@ ego_mad * mad_reconstruct( ego_mad * pmad )
 
     if ( NULL == pmad ) return NULL;
 
-    mad_free( pmad );
+    ego_mad::dealloc( pmad );
 
-    pmad = mad_clear( pmad );
+    pmad = ego_mad::clear( pmad );
 
     strncpy( pmad->name, "*NONE*", SDL_arraysize( pmad->name ) );
 
@@ -971,9 +965,9 @@ ego_mad * mad_reconstruct( ego_mad * pmad )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mad * mad_ctor( ego_mad * pmad )
+ego_mad * ego_mad::ctor( ego_mad * pmad )
 {
-    if ( NULL == mad_reconstruct( pmad ) ) return NULL;
+    if ( NULL == ego_mad::reconstruct( pmad ) ) return NULL;
 
     // nothing to do yet
 
@@ -981,14 +975,14 @@ ego_mad * mad_ctor( ego_mad * pmad )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mad * mad_dtor( ego_mad * pmad )
+ego_mad * ego_mad::dtor( ego_mad * pmad )
 {
     /// @details BB@> deinitialize the character data
 
     if ( NULL == pmad || !pmad->loaded ) return NULL;
 
     // deinitialize the object
-    mad_reconstruct( pmad );
+    ego_mad::reconstruct( pmad );
 
     // "destruct" the base object
     pmad->loaded = bfalse;
@@ -1003,7 +997,7 @@ void init_all_mad()
 
     for ( cnt = 0; cnt < MAX_MAD; cnt++ )
     {
-        mad_reconstruct( MadStack.lst + cnt );
+        ego_mad::reconstruct( MadStack.lst + cnt );
     }
 }
 
@@ -1029,7 +1023,7 @@ bool_t release_one_mad( const MAD_REF & imad )
     if ( !pmad->loaded ) return btrue;
 
     // free any md2 data
-    mad_reconstruct( pmad );
+    ego_mad::reconstruct( pmad );
 
     return btrue;
 }

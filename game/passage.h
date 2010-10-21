@@ -60,7 +60,7 @@ struct ego_passage : public s_passage_data
     static void    flash( ego_passage * ppass, Uint8 color );
     static bool_t  point_is_in( ego_passage * ppass, float xpos, float ypos );
     static bool_t  object_is_in( ego_passage * ppass, float xpos, float ypos, float radius );
-    static CHR_REF who_is_blocking( ego_passage * ppass, const CHR_REF by_reference isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item );
+    static CHR_REF who_is_blocking( ego_passage * ppass, const CHR_REF & isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item );
     static bool_t  check_music( ego_passage * ppass );
     static bool_t  close( ego_passage * ppass );
 };
@@ -68,7 +68,7 @@ struct ego_passage : public s_passage_data
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-DECLARE_STACK_EXTERN( ego_passage, PassageStack, MAX_PASS );
+extern t_cpp_stack< ego_passage, MAX_PASS  > PassageStack;
 
 #define VALID_PASSAGE_RANGE( IPASS ) ( ((IPASS) >= 0) && ((IPASS) <   MAX_PASS) )
 #define VALID_PASSAGE( IPASS )       ( VALID_PASSAGE_RANGE( IPASS ) && ((IPASS) <  PassageStack.count) )
@@ -84,7 +84,7 @@ struct ego_shop
     CHR_REF  owner;    ///< Who gets the gold?
 };
 
-DECLARE_STACK_EXTERN( ego_shop, ShopStack, MAX_SHOP );
+extern t_cpp_stack< ego_shop, MAX_SHOP  > ShopStack;
 
 #define VALID_SHOP_RANGE( ISHOP ) ( ((ISHOP) >= 0) && ((ISHOP) <   MAX_SHOP) )
 #define VALID_SHOP( ISHOP )       ( VALID_SHOP_RANGE( ISHOP ) && ((ISHOP) <  ShopStack.count) )
@@ -99,12 +99,12 @@ void   activate_passages_file_vfs();
 
 void     PassageStack_check_music();
 void     PassageStack_add_one( ego_passage * pdata );
-bool_t   PassageStack_open( const PASS_REF by_reference ipassage );
-bool_t   PassageStack_close_one( const PASS_REF by_reference ipassage );
-void     PassageStack_flash( const PASS_REF by_reference ipassage, Uint8 color );
-CHR_REF  PassageStack_who_is_blocking( const PASS_REF by_reference passage, const CHR_REF by_reference isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item );
-bool_t   PassageStack_point_is_inside( const PASS_REF by_reference ipassage, float xpos, float ypos );
-bool_t   PassageStack_object_is_inside( const PASS_REF by_reference ipassage, float xpos, float ypos, float radius );
+bool_t   PassageStack_open( const PASS_REF & ipassage );
+bool_t   PassageStack_close_one( const PASS_REF & ipassage );
+void     PassageStack_flash( const PASS_REF & ipassage, Uint8 color );
+CHR_REF  PassageStack_who_is_blocking( const PASS_REF & passage, const CHR_REF & isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item );
+bool_t   PassageStack_point_is_inside( const PASS_REF & ipassage, float xpos, float ypos );
+bool_t   PassageStack_object_is_inside( const PASS_REF & ipassage, float xpos, float ypos, float radius );
 
-void     ShopStack_add_one( const CHR_REF by_reference owner, const PASS_REF by_reference ipassage );
+void     ShopStack_add_one( const CHR_REF & owner, const PASS_REF & ipassage );
 CHR_REF  ShopStack_find_owner( int ix, int iy );

@@ -134,16 +134,16 @@ struct ego_pro
 //--------------------------------------------------------------------------------------------
 // the profile list
 
-DECLARE_LIST_EXTERN( ego_pro, ProList, MAX_PROFILE );
+extern t_cpp_list< ego_pro, MAX_PROFILE  > ProList;
 
 int          pro_get_slot_vfs( const char * tmploadname, int slot_override );
-const char * pro_create_chop( const PRO_REF by_reference profile_ref );
-bool_t       pro_load_chop_vfs( const PRO_REF by_reference profile_ref, const char *szLoadname );
+const char * pro_create_chop( const PRO_REF & profile_ref );
+bool_t       pro_load_chop_vfs( const PRO_REF & profile_ref, const char *szLoadname );
 
 void    ProList_init();
 //void    ProList_free_all();
-size_t  ProList_get_free( const PRO_REF by_reference override_ref );
-bool_t  ProList_free_one( const PRO_REF by_reference object_ref );
+size_t  ProList_get_free( const PRO_REF & override_ref );
+bool_t  ProList_free_one( const PRO_REF & object_ref );
 
 #define VALID_PRO_RANGE( IOBJ ) ( ((IOBJ) >= 0) && ((IOBJ) < MAX_PROFILE) )
 #define LOADED_PRO( IOBJ )       ( VALID_PRO_RANGE( IOBJ ) && ProList.lst[IOBJ].loaded )
@@ -160,6 +160,9 @@ struct ego_obj_BSP
     static int         chr_count;      ///< the number of characters in the ego_obj_BSP::root structure
     static int         prt_count;      ///< the number of particles  in the ego_obj_BSP::root structure
 
+    ego_obj_BSP() {};
+    ~ego_obj_BSP() { dtor(this); };
+
     static bool_t ctor( ego_obj_BSP * pbsp, struct mpd_BSP   * pmesh_bsp );
     static bool_t dtor( ego_obj_BSP * pbsp );
 
@@ -169,11 +172,11 @@ struct ego_obj_BSP
     static bool_t fill( ego_obj_BSP * pbsp );
     static bool_t empty( ego_obj_BSP * pbsp );
 
-    //bool_t insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf   * pnode, int depth, int address_x[], int address_y[], int address_z[] );
+    //bool_t insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pnode, int depth, int address_x[], int address_y[], int address_z[] );
     static bool_t insert_chr( ego_obj_BSP * pbsp, struct ego_chr * pchr );
     static bool_t insert_prt( ego_obj_BSP * pbsp, struct ego_prt_bundle * pbdl_prt );
 
-    static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb   * paabb, ego_BSP_leaf_pary_t * colst );
+    static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -196,14 +199,14 @@ void profile_system_begin();
 void profile_system_end();
 
 void   init_all_profiles();
-int    load_profile_skins_vfs( const char * tmploadname, const PRO_REF by_reference object_ref );
-void   load_all_messages_vfs( const char *loadname, const PRO_REF by_reference object_ref );
+int    load_profile_skins_vfs( const char * tmploadname, const PRO_REF & object_ref );
+void   load_all_messages_vfs( const char *loadname, const PRO_REF & object_ref );
 void   release_all_pro_data();
 void   release_all_profiles();
 void   release_all_pro();
 void   release_all_local_pips();
-bool_t release_one_pro( const PRO_REF by_reference object_ref );
-bool_t release_one_local_pips( const PRO_REF by_reference object_ref );
+bool_t release_one_pro( const PRO_REF & object_ref );
+bool_t release_one_local_pips( const PRO_REF & object_ref );
 
 int load_one_profile_vfs( const char* tmploadname, int slot_override );
 

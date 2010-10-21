@@ -29,8 +29,8 @@
 
 #include <SDL.h>
 
-#define UI_Nothing (ui_id_t)(-1)
-#define UI_Invalid (ui_id_t)(-2)
+#define UI_Nothing ui_id_t(-1)
+#define UI_Invalid ui_id_t(-2)
 
 typedef Uint32 ui_id_t;
 
@@ -116,8 +116,7 @@ struct ui_Widget
 
     static ui_Widget * ctor( ui_Widget * pw, ui_id_t id = UI_Nothing );
     static ui_Widget * dtor( ui_Widget * pw );
-
-    static ui_Widget * clear( ui_Widget * pw, ui_id_t id = UI_Nothing );
+    static ui_Widget * reset( ui_Widget * pw, ui_id_t id = UI_Nothing  );
     static bool_t      dealloc( ui_Widget * pw );
 
     static ui_buttonValues Behavior( ui_Widget * pw );
@@ -144,7 +143,7 @@ struct ui_Widget
     static bool_t set_pos( ui_Widget * pw, float x, float y );
     static bool_t set_id( ui_Widget * pw, ui_id_t id );
 
-private:
+protected:
     static void   setActive( ui_Widget * pw );
     static void   setHot( ui_Widget * pw );
 
@@ -154,6 +153,11 @@ private:
     static bool_t update_text_pos( ui_Widget * pw );
     static bool_t update_bound( ui_Widget * pw, frect_t * pbound );
     static bool_t set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, va_list args );
+
+private:
+
+    static ui_Widget * clear( ui_Widget * pw, ui_id_t id = UI_Nothing );
+
 };
 
 // Initialize or shut down the ui system

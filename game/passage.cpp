@@ -37,8 +37,8 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_passage, PassageStack, MAX_PASS );
-INSTANTIATE_STACK( ACCESS_TYPE_NONE, ego_shop,    ShopStack, MAX_SHOP );
+t_cpp_stack< ego_passage, MAX_PASS  > PassageStack;
+t_cpp_stack< ego_shop, MAX_SHOP  > ShopStack;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -352,8 +352,8 @@ bool_t ego_passage::do_open( ego_passage * ppass )
         {
             for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
             {
-                fan = mesh_get_tile_int( PMesh, x, y );
-                mesh_clear_fx( PMesh, fan, MPDFX_WALL | MPDFX_IMPASS );
+                fan = ego_mpd::get_tile_int( PMesh, x, y );
+                ego_mpd::clear_fx( PMesh, fan, MPDFX_WALL | MPDFX_IMPASS );
             }
         }
     }
@@ -373,9 +373,9 @@ void ego_passage::flash( ego_passage * ppass, Uint8 color )
     {
         for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
         {
-            fan = mesh_get_tile_int( PMesh, x, y );
+            fan = ego_mpd::get_tile_int( PMesh, x, y );
 
-            if ( !mesh_grid_is_valid( PMesh, fan ) ) continue;
+            if ( !ego_mpd::grid_is_valid( PMesh, fan ) ) continue;
 
             for ( cnt = 0; cnt < 4; cnt++ )
             {
@@ -604,8 +604,8 @@ bool_t ego_passage::close( ego_passage * ppass )
     {
         for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
         {
-            fan = mesh_get_tile_int( PMesh, x, y );
-            mesh_add_fx( PMesh, fan, ppass->mask );
+            fan = ego_mpd::get_tile_int( PMesh, x, y );
+            ego_mpd::add_fx( PMesh, fan, ppass->mask );
         }
     }
 

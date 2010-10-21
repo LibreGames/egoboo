@@ -113,6 +113,8 @@ struct ego_camera
     fvec3_t   vup;                 ///< the camera up vector
     fvec3_t   vrt;                 ///< the camera right vector
 
+    ego_camera() { clear(this); ctor(this); }
+    
     static ego_camera * ctor( ego_camera * pcam );
 
     static void         reset( ego_camera * pcam, struct ego_mpd * pmesh );
@@ -123,6 +125,16 @@ struct ego_camera
 
     static bool_t       reset_target( ego_camera * pcam, struct ego_mpd * pmesh );
     static void         rotmesh_init();
+
+private:
+    static ego_camera * clear( ego_camera * ptr )
+    {
+        if( NULL == ptr ) return ptr;
+
+        memset(ptr,0,sizeof(*ptr));
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------

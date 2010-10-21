@@ -46,7 +46,7 @@ struct ego_pip_data : public s_pip_data {};
 
 struct ego_pip : public ego_pip_data {};
 
-DECLARE_STACK_EXTERN( ego_pip, PipStack, MAX_PIP );
+extern t_cpp_stack< ego_pip, MAX_PIP  > PipStack;
 
 #define VALID_PIP_RANGE( IPIP ) ( ((IPIP) >= 0) && ((IPIP) < MAX_PIP) )
 #define LOADED_PIP( IPIP )       ( VALID_PIP_RANGE( IPIP ) && PipStack.lst[IPIP].loaded )
@@ -279,9 +279,9 @@ struct ego_prt : public ego_prt_data
     static void      set_level( ego_prt * pprt, float level );
 
     // INLINE functions
-    static INLINE PIP_REF    get_ipip( const PRT_REF by_reference particle );
-    static INLINE ego_pip  * get_ppip( const PRT_REF by_reference particle );
-    static INLINE CHR_REF    get_iowner( const PRT_REF by_reference iprt, int depth );
+    static INLINE PIP_REF    get_ipip( const PRT_REF & particle );
+    static INLINE ego_pip  * get_ppip( const PRT_REF & particle );
+    static INLINE CHR_REF    get_iowner( const PRT_REF & iprt, int depth );
     static INLINE bool_t     set_size( ego_prt *, int size );
     static INLINE float      get_scale( ego_prt * pprt );
 
@@ -428,6 +428,8 @@ struct ego_prt_bundle
     PIP_REF   pip_ref;
     ego_pip   * pip_ptr;
 
+    ego_prt_bundle( ego_prt * pprt = NULL ) { ctor( this ); if ( NULL != pprt ) set( this, pprt ); }
+
     static ego_prt_bundle * ctor( ego_prt_bundle * pbundle );
     static ego_prt_bundle * validate( ego_prt_bundle * pbundle );
     static ego_prt_bundle * set( ego_prt_bundle * pbundle, ego_prt * pprt );
@@ -444,30 +446,30 @@ void particle_physics_finalize_all( float dt );
 
 void   init_all_pip();
 void   release_all_pip();
-bool_t release_one_pip( const PIP_REF by_reference ipip );
+bool_t release_one_pip( const PIP_REF & ipip );
 
-void   free_one_particle_in_game( const PRT_REF by_reference particle );
+void   free_one_particle_in_game( const PRT_REF & particle );
 
 void update_all_particles( void );
 void move_all_particles( void );
 void cleanup_all_particles( void );
 void increment_all_particle_update_counters( void );
 
-void play_particle_sound( const PRT_REF by_reference particle, Sint8 sound );
+void play_particle_sound( const PRT_REF & particle, Sint8 sound );
 
-PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF by_reference iprofile, int pip_index,
-                            const CHR_REF by_reference chr_attach, Uint16 vrt_offset, const TEAM_REF by_reference team,
-                            const CHR_REF by_reference chr_origin, const PRT_REF by_reference prt_origin, int multispawn, const CHR_REF by_reference oldtarget );
+PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofile, int pip_index,
+                            const CHR_REF & chr_attach, Uint16 vrt_offset, const TEAM_REF & team,
+                            const CHR_REF & chr_origin, const PRT_REF & prt_origin, int multispawn, const CHR_REF & oldtarget );
 
 #define spawn_one_particle_global( pos, facing, ipip, multispawn ) spawn_one_particle( pos, facing, (PRO_REF)MAX_PROFILE, ipip, (CHR_REF)MAX_CHR, GRIP_LAST, (TEAM_REF)TEAM_NULL, (CHR_REF)MAX_CHR, (PRT_REF)MAX_PRT, multispawn, (CHR_REF)MAX_CHR );
 
 BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * pressure );
 bool_t    prt_test_wall( ego_prt * pprt, float test_pos[] );
-bool_t    prt_is_over_water( const PRT_REF by_reference particle );
+bool_t    prt_is_over_water( const PRT_REF & particle );
 bool_t    prt_request_free( ego_prt_bundle * pbdl_prt );
-bool_t    prt_request_free_ref( const PRT_REF by_reference iprt );
+bool_t    prt_request_free_ref( const PRT_REF & iprt );
 
-PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF by_reference pip_override );
+PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & pip_override );
 void    reset_particles();
 
 ego_prt_bundle * prt_calc_environment( ego_prt_bundle * pbdl );

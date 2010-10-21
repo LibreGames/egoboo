@@ -55,6 +55,8 @@ typedef enum e_matrix_cache_type matrix_cache_type_t;
 /// the data necessary to cache the last values required to create the character matrix
 struct ego_matrix_cache
 {
+    friend struct ego_chr;
+
     // is the cache data valid?
     bool_t valid;
 
@@ -83,9 +85,10 @@ struct ego_matrix_cache
 
     // the body fixed scaling
     fvec3_t  self_scale;
+
+    static ego_matrix_cache * init( ego_matrix_cache * mcache );
 };
 
-ego_matrix_cache * matrix_cache_init( ego_matrix_cache * mcache );
 
 //--------------------------------------------------------------------------------------------
 
@@ -102,6 +105,23 @@ struct ego_chr_reflection_cache
     Uint8      blushift;
 
     Uint32     update_wld;
+
+    ego_chr_reflection_cache() { clear(this); }
+
+    static ego_chr_reflection_cache * init( ego_chr_reflection_cache * pcache );
+
+private:
+    static ego_chr_reflection_cache * clear( ego_chr_reflection_cache * ptr )
+    {
+        if( NULL == ptr ) return ptr;
+
+        memset( ptr, 0, sizeof(*ptr) );
+
+        ptr->alpha = 127;
+        ptr->light = 255;
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -128,6 +148,9 @@ ego_vlst_cache * vlst_cache_init( ego_vlst_cache * );
 /// All the data that the renderer needs to draw the character
 struct ego_chr_instance
 {
+    friend struct ego_chr_data;
+    friend struct ego_chr;
+
     // position info
     fmat_4x4_t     matrix;           ///< Character's matrix
     ego_matrix_cache matrix_cache;     ///< Did we make one yet?
@@ -189,26 +212,50 @@ struct ego_chr_instance
     // FACING_T       light_turn_z;    ///< Character's light rotation 0 to 0xFFFF
     // Uint8          lightlevel_amb;  ///< 0-255, terrain light
     // Uint8          lightlevel_dir;  ///< 0-255, terrain light
+
+    ego_chr_instance() { clear(this); }
+    ~ego_chr_instance() { dtor(this); }
+
+    static egoboo_rv update_bbox( ego_chr_instance * pinst );
+    static egoboo_rv needs_update( ego_chr_instance * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match );
+    static egoboo_rv update_vertices( ego_chr_instance * pinst, int vmin, int vmax, bool_t force );
+    static egoboo_rv update_grip_verts( ego_chr_instance * pinst, Uint16 vrt_lst[], size_t vrt_count );
+
+    static egoboo_rv set_action( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action );
+    static egoboo_rv set_frame( ego_chr_instance * pinst, int frame );
+    static egoboo_rv start_anim( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action );
+    static egoboo_rv set_anim( ego_chr_instance * pinst, int action, int frame, bool_t action_ready, bool_t override_action );
+
+    static egoboo_rv increment_action( ego_chr_instance * pinst );
+    static egoboo_rv increment_frame( ego_chr_instance * pinst, ego_mad * pmad, const CHR_REF & imount );
+    static egoboo_rv play_action( ego_chr_instance * pinst, int action, bool_t actionready );
+
+    static void      get_tint( ego_chr_instance * pinst, GLfloat * tint, Uint32 bits );
+
+    static void      clear_cache( ego_chr_instance * pinst );
+
+protected:
+    static ego_chr_instance * ctor( ego_chr_instance * pinst );
+    static ego_chr_instance * dtor( ego_chr_instance * pinst );
+    static bool_t             alloc( ego_chr_instance * pinst, size_t vlst_size );
+    static bool_t             dealloc( ego_chr_instance * pinst );
+    static bool_t             spawn( ego_chr_instance * pinst, const PRO_REF & profile, Uint8 skin );
+    static bool_t             set_mad( ego_chr_instance * pinst, const MAD_REF & imad );
+
+    static void               update_lighting_base( ego_chr_instance * pinst, ego_chr * pchr, bool_t force );
+
+    static egoboo_rv          update_vlst_cache( ego_chr_instance * pinst, int vmax, int vmin, bool_t force, bool_t vertices_match, bool_t frames_match );
+    static bool_t             update_ref( ego_chr_instance * pinst, float grid_level, bool_t need_matrix );
+
+
+private:
+    static ego_chr_instance * clear( ego_chr_instance * ptr );
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_enviro( const CHR_REF by_reference character, GLXvector4f tint, Uint32 bits );
-bool_t render_one_mad_tex( const CHR_REF by_reference character, GLXvector4f tint, Uint32 bits );
-bool_t render_one_mad( const CHR_REF by_reference character, GLXvector4f tint, Uint32 bits );
-bool_t render_one_mad_ref( const CHR_REF by_reference tnc );
+bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint32 bits );
+bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, Uint32 bits );
+bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, Uint32 bits );
+bool_t render_one_mad_ref( const CHR_REF & tnc );
 
 void      update_all_chr_instance();
-egoboo_rv chr_update_instance( struct ego_chr * pchr );
-egoboo_rv chr_instance_update_bbox( ego_chr_instance * pinst );
-egoboo_rv chr_instance_needs_update( ego_chr_instance * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match );
-egoboo_rv chr_instance_update_vertices( ego_chr_instance * pinst, int vmin, int vmax, bool_t force );
-egoboo_rv chr_instance_update_grip_verts( ego_chr_instance * pinst, Uint16 vrt_lst[], size_t vrt_count );
-
-egoboo_rv chr_instance_set_action( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action );
-egoboo_rv chr_instance_set_frame( ego_chr_instance * pinst, int frame );
-egoboo_rv chr_instance_start_anim( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action );
-egoboo_rv chr_instance_set_anim( ego_chr_instance * pinst, int action, int frame, bool_t action_ready, bool_t override_action );
-
-egoboo_rv chr_instance_increment_action( ego_chr_instance * pinst );
-egoboo_rv chr_instance_increment_frame( ego_chr_instance * pinst, ego_mad * pmad, const CHR_REF by_reference imount );
-egoboo_rv chr_instance_play_action( ego_chr_instance * pinst, int action, bool_t actionready );

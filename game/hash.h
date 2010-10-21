@@ -46,9 +46,12 @@ struct ego_hash_node
 //--------------------------------------------------------------------------------------------
 struct ego_hash_list
 {
-    int            allocated;
-    int         *  subcount;
+    int              allocated;
+    int            * subcount;
     ego_hash_node ** sublist;
+
+    ego_hash_list() { clear(this); }
+    ~ego_hash_list() { dtor(this); }
 
     static ego_hash_list * create( int size );
     static bool_t          destroy( ego_hash_list ** );
@@ -68,6 +71,17 @@ struct ego_hash_list
     static bool_t          set_node( ego_hash_list *plst, int i, ego_hash_node * );
 
     static bool_t          insert_unique( ego_hash_list * phash, ego_hash_node * pnode );
+
+private:
+
+    static ego_hash_list * clear( ego_hash_list * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        memset( ptr, 0, sizeof( *ptr ) );
+
+        return ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------

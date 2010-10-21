@@ -45,8 +45,6 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void chr_instance_update_lighting_base( ego_chr_instance * pinst, ego_chr * pchr, bool_t force );
-
 static void draw_points( ego_chr * pchr, int vrt_offset, int verts );
 static void _draw_one_grip_raw( ego_chr_instance * pinst, ego_mad * pmad, int slot );
 static void draw_one_grip( ego_chr_instance * pinst, ego_mad * pmad, int slot );
@@ -57,8 +55,6 @@ static void render_chr_grips( ego_chr * pchr );
 static void render_chr_points( ego_chr * pchr );
 static bool_t render_chr_mount_cv( ego_chr * pchr );
 static bool_t render_chr_grip_cv( ego_chr * pchr, int grip_offset );
-
-static egoboo_rv chr_instance_update_vlst_cache( ego_chr_instance * pinst, int vmax, int vmin, bool_t force, bool_t vertices_match, bool_t frames_match );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -494,9 +490,9 @@ bool_t render_one_mad_ref( const CHR_REF & ichr )
             GL_DEBUG( glEnable )( GL_BLEND );                                 // GL_ENABLE_BIT
             GL_DEBUG( glBlendFunc )( GL_ALPHA, GL_ONE_MINUS_SRC_ALPHA );                        // GL_COLOR_BUFFER_BIT
 
-            chr_instance_get_tint( pinst, tint, CHR_ALPHA | CHR_REFLECT );
+            ego_chr_instance::get_tint( pinst, tint, CHR_ALPHA | CHR_REFLECT );
 
-            // the previous call to chr_instance_update_lighting_ref() has actually set the
+            // the previous call to ego_chr_instance::update_lighting_ref() has actually set the
             // alpha and light for all vertices
             render_one_mad( ichr, tint, CHR_ALPHA | CHR_REFLECT );
         }
@@ -506,9 +502,9 @@ bool_t render_one_mad_ref( const CHR_REF & ichr )
             GL_DEBUG( glEnable )( GL_BLEND );                                 // GL_ENABLE_BIT
             GL_DEBUG( glBlendFunc )( GL_ONE, GL_ONE );                        // GL_COLOR_BUFFER_BIT
 
-            chr_instance_get_tint( pinst, tint, CHR_LIGHT | CHR_REFLECT );
+            ego_chr_instance::get_tint( pinst, tint, CHR_LIGHT | CHR_REFLECT );
 
-            // the previous call to chr_instance_update_lighting_ref() has actually set the
+            // the previous call to ego_chr_instance::update_lighting_ref() has actually set the
             // alpha and light for all vertices
             render_one_mad( ichr, tint, CHR_LIGHT | CHR_REFLECT );
         }
@@ -518,7 +514,7 @@ bool_t render_one_mad_ref( const CHR_REF & ichr )
             GL_DEBUG( glEnable )( GL_BLEND );
             GL_DEBUG( glBlendFunc )( GL_ONE, GL_ONE );
 
-            chr_instance_get_tint( pinst, tint, CHR_PHONG | CHR_REFLECT );
+            ego_chr_instance::get_tint( pinst, tint, CHR_PHONG | CHR_REFLECT );
 
             render_one_mad( ichr, tint, CHR_PHONG | CHR_REFLECT );
         }
@@ -842,29 +838,7 @@ void chr_draw_grips( ego_chr * pchr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_update_instance( ego_chr * pchr )
-{
-    ego_chr_instance * pinst;
-    egoboo_rv retval;
-
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
-    pinst = &( pchr->inst );
-
-    // make sure that the vertices are interpolated
-    retval = chr_instance_update_vertices( pinst, -1, -1, btrue );
-    if ( rv_error == retval )
-    {
-        return rv_error;
-    }
-
-    // do the basic lighting
-    chr_instance_update_lighting_base( pinst, pchr, bfalse );
-
-    return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-void chr_instance_update_lighting_base( ego_chr_instance * pinst, ego_chr * pchr, bool_t force )
+void ego_chr_instance::update_lighting_base( ego_chr_instance * pinst, ego_chr * pchr, bool_t force )
 {
     /// @details BB@> determine the basic per-vertex lighting
 
@@ -950,7 +924,7 @@ void chr_instance_update_lighting_base( ego_chr_instance * pinst, ego_chr * pchr
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_update_bbox( ego_chr_instance * pinst )
+egoboo_rv ego_chr_instance::update_bbox( ego_chr_instance * pinst )
 {
     int           i, frame_count;
 
@@ -995,7 +969,7 @@ egoboo_rv chr_instance_update_bbox( ego_chr_instance * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_needs_update( ego_chr_instance * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match )
+egoboo_rv ego_chr_instance::needs_update( ego_chr_instance * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match )
 {
     /// @details BB@> determine whether some specific vertices of an instance need to be updated
     //                rv_error   means that the function was passed invalid values
@@ -1055,7 +1029,7 @@ egoboo_rv chr_instance_needs_update( ego_chr_instance * pinst, int vmin, int vma
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_update_vertices( ego_chr_instance * pinst, int vmin, int vmax, bool_t force )
+egoboo_rv ego_chr_instance::update_vertices( ego_chr_instance * pinst, int vmin, int vmax, bool_t force )
 {
     int    i, maxvert, frame_count, md2_vertices;
     bool_t vertices_match, frames_match;
@@ -1071,7 +1045,7 @@ egoboo_rv chr_instance_update_vertices( ego_chr_instance * pinst, int vmin, int 
     if ( NULL == pinst ) return rv_error;
     psave = &( pinst->save );
 
-    if ( rv_error == chr_instance_update_bbox( pinst ) )
+    if ( rv_error == ego_chr_instance::update_bbox( pinst ) )
     {
         return rv_error;
     }
@@ -1087,12 +1061,12 @@ egoboo_rv chr_instance_update_vertices( ego_chr_instance * pinst, int vmin, int 
     md2_vertices = md2_get_numVertices( pmd2 );
     if ( md2_vertices < 0 )
     {
-        log_error( "chr_instance_update_vertices() - md2 model has negative number of vertices.... is it corrupted?\n" );
+        log_error( "ego_chr_instance::update_vertices() - md2 model has negative number of vertices.... is it corrupted?\n" );
     }
 
     if ( pinst->vrt_count != ( size_t )md2_vertices )
     {
-        log_error( "chr_instance_update_vertices() - character instance vertex data does not match its md2\n" );
+        log_error( "ego_chr_instance::update_vertices() - character instance vertex data does not match its md2\n" );
     }
 
     // get the vertex list size from the chr_instance
@@ -1125,7 +1099,7 @@ egoboo_rv chr_instance_update_vertices( ego_chr_instance * pinst, int vmin, int 
         vmax = CLIP( vmax, 0, maxvert );
 
         // do we need to update?
-        retval = chr_instance_needs_update( pinst, vmin, vmax, &vertices_match, &frames_match );
+        retval = ego_chr_instance::needs_update( pinst, vmin, vmax, &vertices_match, &frames_match );
         if ( rv_error == retval ) return rv_error;            // rv_error == retval means some pointer or reference is messed up
         if ( rv_fail  == retval ) return rv_success;          // rv_fail  == retval means we do not need to update this round
     }
@@ -1134,7 +1108,7 @@ egoboo_rv chr_instance_update_vertices( ego_chr_instance * pinst, int vmin, int 
     frame_count = md2_get_numFrames( pmd2 );
     if ( pinst->frame_nxt >= frame_count || pinst->frame_lst >= frame_count )
     {
-        log_error( "chr_instance_update_vertices() - character instance frame is outside the range of its md2\n" );
+        log_error( "ego_chr_instance::update_vertices() - character instance frame is outside the range of its md2\n" );
     }
 
     // grab the frame data from the correct model
@@ -1208,11 +1182,11 @@ egoboo_rv chr_instance_update_vertices( ego_chr_instance * pinst, int vmin, int 
     }
 
     // update the saved parameters
-    return chr_instance_update_vlst_cache( pinst, vmax, vmin, force, vertices_match, frames_match );
+    return ego_chr_instance::update_vlst_cache( pinst, vmax, vmin, force, vertices_match, frames_match );
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_update_vlst_cache( ego_chr_instance * pinst, int vmax, int vmin, bool_t force, bool_t vertices_match, bool_t frames_match )
+egoboo_rv ego_chr_instance::update_vlst_cache( ego_chr_instance * pinst, int vmax, int vmin, bool_t force, bool_t vertices_match, bool_t frames_match )
 {
     // this is getting a bit ugly...
     // we need to do this calculation as little as possible, so it is important that the
@@ -1321,7 +1295,7 @@ egoboo_rv chr_instance_update_vlst_cache( ego_chr_instance * pinst, int vmax, in
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_update_grip_verts( ego_chr_instance * pinst, Uint16 vrt_lst[], size_t vrt_count )
+egoboo_rv ego_chr_instance::update_grip_verts( ego_chr_instance * pinst, Uint16 vrt_lst[], size_t vrt_count )
 {
     int vmin, vmax;
     Uint32 cnt;
@@ -1349,13 +1323,13 @@ egoboo_rv chr_instance_update_grip_verts( ego_chr_instance * pinst, Uint16 vrt_l
     if ( 0 == count ) return rv_fail;
 
     // force the vertices to update
-    retval = chr_instance_update_vertices( pinst, vmin, vmax, btrue );
+    retval = ego_chr_instance::update_vertices( pinst, vmin, vmax, btrue );
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_set_action( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action )
+egoboo_rv ego_chr_instance::set_action( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action )
 {
     int action_old;
     ego_mad * pmad;
@@ -1394,7 +1368,7 @@ egoboo_rv chr_instance_set_action( ego_chr_instance * pinst, int action, bool_t 
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_set_frame( ego_chr_instance * pinst, int frame )
+egoboo_rv ego_chr_instance::set_frame( ego_chr_instance * pinst, int frame )
 {
     ego_mad * pmad;
 
@@ -1428,22 +1402,22 @@ egoboo_rv chr_instance_set_frame( ego_chr_instance * pinst, int frame )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_set_anim( ego_chr_instance * pinst, int action, int frame, bool_t action_ready, bool_t override_action )
+egoboo_rv ego_chr_instance::set_anim( ego_chr_instance * pinst, int action, int frame, bool_t action_ready, bool_t override_action )
 {
     egoboo_rv retval;
 
     if ( NULL == pinst ) return rv_error;
 
-    retval = chr_instance_set_action( pinst, action, action_ready, override_action );
+    retval = ego_chr_instance::set_action( pinst, action, action_ready, override_action );
     if ( rv_success != retval ) return retval;
 
-    retval = chr_instance_set_frame( pinst, frame );
+    retval = ego_chr_instance::set_frame( pinst, frame );
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_start_anim( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action )
+egoboo_rv ego_chr_instance::start_anim( ego_chr_instance * pinst, int action, bool_t action_ready, bool_t override_action )
 {
     ego_mad * pmad;
 
@@ -1454,11 +1428,11 @@ egoboo_rv chr_instance_start_anim( ego_chr_instance * pinst, int action, bool_t 
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
     pmad = MadStack.lst + pinst->imad;
 
-    return chr_instance_set_anim( pinst, action, pmad->action_stt[action], action_ready, override_action );
+    return ego_chr_instance::set_anim( pinst, action, pmad->action_stt[action], action_ready, override_action );
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_increment_action( ego_chr_instance * pinst )
+egoboo_rv ego_chr_instance::increment_action( ego_chr_instance * pinst )
 {
     /// @details BB@> This function starts the next action for a character
 
@@ -1482,13 +1456,13 @@ egoboo_rv chr_instance_increment_action( ego_chr_instance * pinst )
     // D == "dance" and "W" == walk
     action_ready = ACTION_IS_TYPE( action, D ) || ACTION_IS_TYPE( action, W );
 
-    retval = chr_instance_start_anim( pinst, action, action_ready, btrue );
+    retval = ego_chr_instance::start_anim( pinst, action, action_ready, btrue );
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_increment_frame( ego_chr_instance * pinst, ego_mad * pmad, const CHR_REF & imount )
+egoboo_rv ego_chr_instance::increment_frame( ego_chr_instance * pinst, ego_mad * pmad, const CHR_REF & imount )
 {
     /// @details BB@> all the code necessary to move on to the next frame of the animation
 
@@ -1520,7 +1494,7 @@ egoboo_rv chr_instance_increment_frame( ego_chr_instance * pinst, ego_mad * pmad
             if ( INGAME_CHR( imount ) )
             {
                 tmp_action = mad_get_action( pinst->imad, ACTION_MI );
-                chr_instance_start_anim( pinst, tmp_action, btrue, btrue );
+                ego_chr_instance::start_anim( pinst, tmp_action, btrue, btrue );
             }
 
             // set the frame to the beginning of the action
@@ -1532,7 +1506,7 @@ egoboo_rv chr_instance_increment_frame( ego_chr_instance * pinst, ego_mad * pmad
         else
         {
             // Go on to the next action. don't let just anything interrupt it?
-            chr_instance_increment_action( pinst );
+            ego_chr_instance::increment_action( pinst );
         }
     }
 
@@ -1540,7 +1514,7 @@ egoboo_rv chr_instance_increment_frame( ego_chr_instance * pinst, ego_mad * pmad
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv chr_instance_play_action( ego_chr_instance * pinst, int action, bool_t action_ready )
+egoboo_rv ego_chr_instance::play_action( ego_chr_instance * pinst, int action, bool_t action_ready )
 {
     /// @details ZZ@> This function starts a generic action for a character
     ego_mad * pmad;
@@ -1552,7 +1526,7 @@ egoboo_rv chr_instance_play_action( ego_chr_instance * pinst, int action, bool_t
 
     action = mad_get_action( pinst->imad, action );
 
-    return chr_instance_start_anim( pinst, action, action_ready, btrue );
+    return ego_chr_instance::start_anim( pinst, action, action_ready, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1565,6 +1539,80 @@ ego_vlst_cache * vlst_cache_init( ego_vlst_cache * pcache )
 
     pcache->vmin = -1;
     pcache->vmax = -1;
+
+    return pcache;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_chr_instance * ego_chr_instance::clear( ego_chr_instance * ptr )
+{
+    if( NULL == ptr ) return ptr;
+
+    // position info
+    ptr->matrix = IdentityMatrix();           ///< Character's matrix
+
+    ptr->facing_z = 0;
+
+    // render mode info
+    ptr->alpha = 255;
+    ptr->light = 0;
+    ptr->sheen = 0;
+    ptr->enviro = bfalse;
+
+    // color info
+    ptr->redshift = 0;        ///< Color channel shifting
+    ptr->grnshift = 0;
+    ptr->blushift = 0;
+
+    // texture info
+    ptr->texture = INVALID_TX_TEXTURE;         ///< The texture id of the character's skin
+    ptr->uoffset = 0;         ///< For moving textures
+    ptr->voffset = 0;
+
+    // model info
+    ptr->imad = MAX_MAD;            ///< Character's model
+
+    // animation info
+    ptr->frame_nxt = 0;
+    ptr->frame_lst = 0;
+    ptr->ilip      = 0;
+    ptr->flip      = 0;
+    ptr->rate      = 1.0f;
+
+    // action info
+    ptr->action_ready = btrue;
+    ptr->action_which = ACTION_DA;
+    ptr->action_keep  = bfalse;
+    ptr->action_loop  = bfalse;
+    ptr->action_next  = ACTION_DA;
+
+    // lighting info
+    ptr->color_amb           = ~0;
+    ptr->max_light           = 0;
+    ptr->min_light           = 0;
+    ptr->lighting_update_wld = unsigned(-1); 
+    ptr->lighting_frame_all  = unsigned(-1);
+
+    ptr->vrt_count = 0;
+    ptr->vrt_lst   = NULL;
+
+    ptr->indolist = bfalse;
+
+    return ptr;
+}
+
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_chr_reflection_cache * ego_chr_reflection_cache::init( ego_chr_reflection_cache * pcache )
+{
+    if ( NULL == pcache ) return pcache;
+
+    pcache = clear(pcache);
+    if( NULL == pcache ) return pcache;
+
+    /* add something here */
 
     return pcache;
 }

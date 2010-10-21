@@ -498,7 +498,7 @@ Uint8 scr_AddWaypoint( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     /// @note BB@> the problem was that characters like Brom and Mim would set a waypoint inside a wall and then never be able to reach it,
     ///            so they would just keep bumping into the wall and do nothing else (unless maybe attacked or something)
 
-    if ( pbdl_self->cap_ptr->weight == 255 || !mesh_hit_wall( PMesh, pos.v, pchr->bump.size, pchr->stoppedby, nrm.v, &pressure ) )
+    if ( pbdl_self->cap_ptr->weight == 255 || !ego_mpd::hit_wall( PMesh, pos.v, pchr->bump.size, pchr->stoppedby, nrm.v, &pressure ) )
     {
         // yes it is safe. add it.
         returncode = ego_waypoint_list::push( &( pself->wp_lst ), pstate->x, pstate->y, pchr->fly_height );
@@ -1724,7 +1724,7 @@ Uint8 scr_ChangeTargetArmor( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     iTmp = pself_target->skin;
-    pstate->x = change_armor( pself->target, pstate->argument );
+    pstate->x = ego_chr::change_armor( pself->target, pstate->argument );
 
     pstate->argument = iTmp;  // The character's old armor
 
@@ -1896,7 +1896,7 @@ Uint8 scr_RespawnCharacter( ego_script_state * pstate, ego_ai_bundle * pbdl_self
 
     SCRIPT_FUNCTION_BEGIN();
 
-    respawn_character( pself->index );
+    ego_chr::respawn( pself->index );
 
     SCRIPT_FUNCTION_END();
 }
@@ -1910,7 +1910,7 @@ Uint8 scr_ChangeTile( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = mesh_set_texture( PMesh, pchr->onwhichgrid, pstate->argument );
+    returncode = ego_mpd::set_texture( PMesh, pchr->onwhichgrid, pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -2113,7 +2113,7 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
     ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
-    returncode = (NULL != pprt);
+    returncode = ( NULL != pprt );
 
     if ( returncode )
     {
@@ -2332,7 +2332,7 @@ Uint8 scr_BecomeSpell( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     iskin = pchr->skin;
 
     // change the spellbook to a spell effect
-    change_character( pself->index, ( PRO_REF )pself->content, 0, ENC_LEAVE_NONE );
+    ego_chr::change_profile( pself->index, ( PRO_REF )pself->content, 0, ENC_LEAVE_NONE );
 
     // set the spell effect parameters
     pself->content = 0;
@@ -2371,11 +2371,11 @@ Uint8 scr_BecomeSpellbook( ego_script_state * pstate, ego_ai_bundle * pbdl_self 
 
     // convert the spell effect to a spellbook
     old_profile = pchr->profile_ref;
-    change_character( pself->index, ( PRO_REF )SPELLBOOK, iskin, ENC_LEAVE_NONE );
+    ego_chr::change_profile( pself->index, ( PRO_REF )SPELLBOOK, iskin, ENC_LEAVE_NONE );
 
     // Reset the spellbook state so it doesn't burn up
     pself->state   = 0;
-    pself->content = REF_TO_INT( old_profile );
+    pself->content = (old_profile ).get_value();
 
     // set the spellbook animations
     pmad = ego_chr::get_pmad( pself->index );
@@ -3411,7 +3411,7 @@ Uint8 scr_DebugMessage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    debug_printf( "aistate %d, aicontent %d, target %d", pself->state, pself->content, REF_TO_INT( pself->target ) );
+    debug_printf( "aistate %d, aicontent %d, target %d", pself->state, pself->content, (pself->target ).get_value() );
     debug_printf( "tmpx %d, tmpy %d", pstate->x, pstate->y );
     debug_printf( "tmpdistance %d, tmpturn %d", pstate->distance, pstate->turn );
     debug_printf( "tmpargument %d, selfturn %d", pstate->argument, pchr->ori.facing_z );
@@ -4401,7 +4401,7 @@ Uint8 scr_SpawnAttachedSizedParticle( ego_script_state * pstate, ego_ai_bundle *
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
     ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
-    returncode = (NULL != pprt);
+    returncode = ( NULL != pprt );
 
     if ( returncode )
     {
@@ -4424,7 +4424,7 @@ Uint8 scr_ChangeArmor( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     pstate->x = pstate->argument;
     iTmp = pchr->skin;
-    pstate->x = change_armor( pself->index, pstate->argument );
+    pstate->x = ego_chr::change_armor( pself->index, pstate->argument );
     pstate->argument = iTmp;  // The character's old armor
 
     SCRIPT_FUNCTION_END();
@@ -5110,8 +5110,8 @@ Uint8 scr_get_TileXY( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = bfalse;
-    iTmp = mesh_get_tile( PMesh, pstate->x, pstate->y );
-    if ( mesh_grid_is_valid( PMesh, iTmp ) )
+    iTmp = ego_mpd::get_tile( PMesh, pstate->x, pstate->y );
+    if ( ego_mpd::grid_is_valid( PMesh, iTmp ) )
     {
         returncode = btrue;
         pstate->argument = CLIP_TO_08BITS( PMesh->tmem.tile_list[iTmp].img );
@@ -5130,8 +5130,8 @@ Uint8 scr_set_TileXY( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    iTmp       = mesh_get_tile( PMesh, pstate->x, pstate->y );
-    returncode = mesh_set_texture( PMesh, iTmp, pstate->argument );
+    iTmp       = ego_mpd::get_tile( PMesh, pstate->x, pstate->y );
+    returncode = ego_mpd::set_texture( PMesh, iTmp, pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5433,7 +5433,7 @@ Uint8 scr_CreateOrder( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    sTmp = ( REF_TO_INT( pself->target ) & 0x00FF ) << 24;
+    sTmp = ( (pself->target ).get_value() & 0x00FF ) << 24;
     sTmp |= (( pstate->x >> 6 ) & 0x03FF ) << 14;
     sTmp |= (( pstate->y >> 6 ) & 0x03FF ) << 4;
     sTmp |= ( pstate->argument & 0x000F );
@@ -5534,7 +5534,7 @@ Uint8 scr_RespawnTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    respawn_character( pself->target );
+    ego_chr::respawn( pself->target );
 
     SCRIPT_FUNCTION_END();
 }
@@ -7468,7 +7468,7 @@ Uint8 scr_MorphToTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     if ( !INGAME_CHR( pself->target ) ) return bfalse;
 
-    change_character( pself->index, pself_target->basemodel_ref, pself_target->skin, ENC_LEAVE_ALL );
+    ego_chr::change_profile( pself->index, pself_target->basemodel_ref, pself_target->skin, ENC_LEAVE_ALL );
 
     // let the resizing take some time
     pchr->fat_goto      = pself_target->fat;
@@ -7869,8 +7869,8 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
 
         if ( pchr->phys.weight * lerp_z <= 20 ) continue;
 
-        fan = mesh_get_tile( PMesh, pchr->pos.x, pchr->pos.y );
-        if ( mesh_grid_is_valid( PMesh, fan ) )
+        fan = ego_mpd::get_tile( PMesh, pchr->pos.x, pchr->pos.y );
+        if ( ego_mpd::grid_is_valid( PMesh, fan ) )
         {
             Uint16 img      = PMesh->tmem.tile_list[fan].img & 0x00FF;
             int highbits = PMesh->tmem.tile_list[fan].img & 0xFF00;
@@ -7892,7 +7892,7 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
 
             if ( img == endtile )
             {
-                useful = mesh_add_fx( PMesh, fan, mesh_fx_or );
+                useful = ego_mpd::add_fx( PMesh, fan, mesh_fx_or );
 
                 if ( become != 0 )
                 {
@@ -7902,7 +7902,7 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
 
             if ( PMesh->tmem.tile_list[fan].img != ( img | highbits ) )
             {
-                mesh_set_texture( PMesh, fan, img | highbits );
+                ego_mpd::set_texture( PMesh, fan, img | highbits );
             }
         }
     }
@@ -7975,9 +7975,9 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
     {
         for ( /*nothing*/; x <= ppass->area.xmax; x++ )
         {
-            fan = mesh_get_tile_int( PMesh, x, y );
+            fan = ego_mpd::get_tile_int( PMesh, x, y );
 
-            if ( mesh_grid_is_valid( PMesh, fan ) )
+            if ( ego_mpd::grid_is_valid( PMesh, fan ) )
             {
                 if ( CLIP_TO_08BITS( PMesh->tmem.tile_list[fan].img ) == tiletype )
                 {
@@ -7996,9 +7996,9 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
     {
         for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
         {
-            fan = mesh_get_tile_int( PMesh, x, y );
+            fan = ego_mpd::get_tile_int( PMesh, x, y );
 
-            if ( mesh_grid_is_valid( PMesh, fan ) )
+            if ( ego_mpd::grid_is_valid( PMesh, fan ) )
             {
 
                 if ( CLIP_TO_08BITS( PMesh->tmem.tile_list[fan].img ) == tiletype )

@@ -43,7 +43,13 @@ struct ego_menu_process_data
 
     int    ticks_next, ticks_now;
 
-    static ego_menu_process_data * ctor( ego_menu_process_data * ptr )
+    ego_menu_process_data() { clear(this); }
+
+    static ego_menu_process_data * ctor( ego_menu_process_data * ptr ) { return clear(ptr); }
+
+private:
+
+    static ego_menu_process_data * clear( ego_menu_process_data * ptr )
     {
         if ( NULL == ptr ) return NULL;
 
@@ -56,8 +62,11 @@ struct ego_menu_process_data
 /// a process that controls the menu system
 struct ego_menu_process : public ego_menu_process_data, public ego_process
 {
+    ego_menu_process() { ctor( this ); }
 
-    static ego_menu_process * ctor( ego_menu_process * ptr )
+    static ego_menu_process * ctor( ego_menu_process * ptr ) { return ptr; }
+
+    static ego_menu_process * do_ctor( ego_menu_process * ptr )
     {
         ego_process::ctor( ptr );
         ego_menu_process_data::ctor( ptr );
@@ -65,13 +74,12 @@ struct ego_menu_process : public ego_menu_process_data, public ego_process
         return ptr;
     }
 
+protected:
     // "process" management
-    static int Run( ego_menu_process * mproc, double frameDuration );
-
-    static int do_beginning( ego_menu_process * mproc );
-    static int do_running( ego_menu_process * mproc );
-    static int do_leaving( ego_menu_process * mproc );
-
+    virtual egoboo_rv do_beginning();
+    virtual egoboo_rv do_running();
+    virtual egoboo_rv do_leaving();
+    virtual egoboo_rv do_finishing();
 };
 
 //--------------------------------------------------------------------------------------------
@@ -168,7 +176,7 @@ const char *        mnu_ModList_get_name( int imod );
 // "public" module utilities
 int    mnu_get_mod_number( const char *szModName );
 bool_t mnu_test_by_name( const char *szModName );
-bool_t mnu_test_by_index( const MOD_REF by_reference modnumber, size_t buffer_len, char * buffer );
+bool_t mnu_test_by_index( const MOD_REF & modnumber, size_t buffer_len, char * buffer );
 
 // "public" reset of the autoformatting
 void autoformat_init( ego_gfx_config * pgfx );

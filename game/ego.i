@@ -53,6 +53,8 @@
 #define Sint16 signed short
 #define Sint32 signed int
 
+#define INLINE inline
+
 // this is in lieu of %include "ogl_include.h" which would give the user access to certain
 // lower-level graphics functions
 typedef float   GLfloat;

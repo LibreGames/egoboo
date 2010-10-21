@@ -77,7 +77,7 @@ typedef ego_hash_list CHashList_t;
 
 CHashList_t * CHashList_ctor( CHashList_t * pchlst, int size );
 CHashList_t * CHashList_dtor( CHashList_t * pchlst );
-bool_t        CHashList_insert_unique( CHashList_t * pchlst, ego_CoNode * pdata, CoNode_ary_t * cdata, HashNode_ary_t * hnlst );
+bool_t        CHashList_insert_unique( CHashList_t * pchlst, ego_CoNode * pdata, CoNode_ary * cdata, HashNode_ary * hnlst );
 
 CHashList_t * CHashList_get_Instance( int size );
 

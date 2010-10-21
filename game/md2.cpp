@@ -300,7 +300,7 @@ void ego_MD2_Model::scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, f
         for ( tnc = 0; tnc  < num_verts; tnc++ )
         {
             int       cnt;
-            oct_vec_t opos;
+            ego_oct_vec opos;
 
             pframe->vertex_lst[tnc].pos.x *= scale_x;
             pframe->vertex_lst[tnc].pos.y *= scale_y;
@@ -312,7 +312,7 @@ void ego_MD2_Model::scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, f
 
             fvec3_self_normalize( pframe->vertex_lst[tnc].nrm.v );
 
-            oct_vec_ctor( opos, pframe->vertex_lst[tnc].pos );
+            ego_oct_vec::ctor( &opos, pframe->vertex_lst[tnc].pos );
 
             // Re-calculate the bounding box for this frame
             if ( !bfound )
