@@ -97,7 +97,7 @@ private:
 
 //--------------------------------------------------------------------------------------------
 /// a concrete base class for "egoboo process" objects
-/// All other process types "inherit" this 
+/// All other process types "inherit" this
 struct ego_process : public ego_process_data, public i_ego_process
 {
     friend struct ego_process_engine;
@@ -116,13 +116,13 @@ struct ego_process : public ego_process_data, public i_ego_process
     egoboo_rv running();
 
     //---- basic implementation of the interface accessors
-    virtual i_ego_process * get_interface() { return static_cast<i_ego_process *>(this); }
-    virtual ego_process   * get_process()   { return static_cast< ego_process  *>(this); }
+    virtual i_ego_process * get_interface() { return static_cast<i_ego_process *>( this ); }
+    virtual ego_process   * get_process()   { return static_cast< ego_process  *>( this ); }
 
 protected:
 
     //---- construction/destruction
-    static ego_process * ctor ( ego_process * );
+    static ego_process * ctor( ego_process * );
 
     //---- implementation of the basic process behavior
     virtual egoboo_rv do_beginning() { result = -1; state = proc_entering;  return rv_success; }
@@ -137,7 +137,7 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------
-/// the basic engine for running a process. 
+/// the basic engine for running a process.
 struct ego_process_engine
 {
     /// the entry point for running a process

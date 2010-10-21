@@ -357,8 +357,8 @@ ego_prt * ego_prt::do_init( ego_prt * pprt )
     if ( !LOADED_PIP( pdata->ipip ) )
     {
         log_debug( "spawn_one_particle() - cannot spawn particle with invalid pip == %d (owner == %d(\"%s\"), profile == %d(\"%s\"))\n",
-                   (pdata->ipip ).get_value(), (pdata->chr_origin ).get_value(), DEFINED_CHR( pdata->chr_origin ) ? ChrObjList.get_data( pdata->chr_origin ).name : "INVALID",
-                   (pdata->iprofile ).get_value(), LOADED_PRO( pdata->iprofile ) ? ProList.lst[pdata->iprofile].name : "INVALID" );
+                   ( pdata->ipip ).get_value(), ( pdata->chr_origin ).get_value(), DEFINED_CHR( pdata->chr_origin ) ? ChrObjList.get_data( pdata->chr_origin ).name : "INVALID",
+                   ( pdata->iprofile ).get_value(), LOADED_PRO( pdata->iprofile ) ? ProList.lst[pdata->iprofile].name : "INVALID" );
 
         return NULL;
     }
@@ -1054,8 +1054,8 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
     if ( !LOADED_PIP( ipip ) )
     {
         log_debug( "spawn_one_particle() - cannot spawn particle with invalid pip == %d (owner == %d(\"%s\"), profile == %d(\"%s\"))\n",
-                   (ipip ).get_value(), (chr_origin ).get_value(), INGAME_CHR( chr_origin ) ? ChrObjList.get_data( chr_origin ).name : "INVALID",
-                   (iprofile ).get_value(), LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
+                   ( ipip ).get_value(), ( chr_origin ).get_value(), INGAME_CHR( chr_origin ) ? ChrObjList.get_data( chr_origin ).name : "INVALID",
+                   ( iprofile ).get_value(), LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
 
         return PRT_REF( MAX_PRT );
     }
@@ -2224,7 +2224,7 @@ void release_all_pip()
                 if ( LOADED_PIP( cnt ) )
                 {
                     ego_pip * ppip = PipStack.lst + cnt;
-                    fprintf( ftmp, "index == %d\tname == \"%s\"\tcreate_count == %d\trequest_count == %d\n", (cnt ).get_value(), ppip->name, ppip->prt_create_count, ppip->prt_request_count );
+                    fprintf( ftmp, "index == %d\tname == \"%s\"\tcreate_count == %d\trequest_count == %d\n", ( cnt ).get_value(), ppip->name, ppip->prt_create_count, ppip->prt_request_count );
                 }
             }
 

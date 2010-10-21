@@ -33,7 +33,7 @@ struct ego_BSP_aabb
     float_ary mids;
     float_ary maxs;
 
-    ego_BSP_aabb()             { dim = size_t(-1); };
+    ego_BSP_aabb()             { dim = size_t( -1 ); };
     ego_BSP_aabb( size_t dim ) { ctor( this, dim ); };
     ~ego_BSP_aabb()            { dtor( this ); };
 
@@ -50,7 +50,7 @@ struct ego_BSP_aabb
 private:
     static ego_BSP_aabb * clear( ego_BSP_aabb * ptr )
     {
-        if( NULL == ptr ) return ptr;
+        if ( NULL == ptr ) return ptr;
 
         ptr->dim = 0;
 
@@ -72,8 +72,8 @@ struct ego_BSP_leaf
 
     ego_BSP_aabb   bbox;
 
-    ego_BSP_leaf() { clear(this); } ;
-    ego_BSP_leaf(int dim, void * data, int type) { clear(this); ctor( this, dim, data, type ); } ;
+    ego_BSP_leaf() { clear( this ); } ;
+    ego_BSP_leaf( int dim, void * data, int type ) { clear( this ); ctor( this, dim, data, type ); } ;
     ~ego_BSP_leaf() { dtor( this ); };
 
     static ego_BSP_leaf * create( int dim, void * data, int type );
@@ -84,14 +84,14 @@ struct ego_BSP_leaf
 private:
     static ego_BSP_leaf * clear( ego_BSP_leaf * ptr )
     {
-        if( NULL == ptr ) return ptr;
+        if ( NULL == ptr ) return ptr;
 
         ptr->inserted = bfalse;
 
-        ptr->next = NULL; 
-        ptr->data_type = -1; 
-        ptr->data = NULL; 
-        ptr->index = size_t(-1);
+        ptr->next = NULL;
+        ptr->data_type = -1;
+        ptr->data = NULL;
+        ptr->index = size_t( -1 );
 
         return ptr;
     }
@@ -117,8 +117,8 @@ struct ego_BSP_branch
     ego_BSP_aabb      bbox;
     int               depth;
 
-    ego_BSP_branch()             { clear(this); }
-    ego_BSP_branch( size_t dim ) { clear(this); ctor( this, dim ); }
+    ego_BSP_branch()             { clear( this ); }
+    ego_BSP_branch( size_t dim ) { clear( this ); ctor( this, dim ); }
     ~ego_BSP_branch()            { dtor( this ); }
 
     static ego_BSP_branch * create( size_t dim );
@@ -139,7 +139,7 @@ struct ego_BSP_branch
 private:
     static ego_BSP_branch * clear( ego_BSP_branch * ptr )
     {
-        if( NULL == ptr ) return ptr;
+        if ( NULL == ptr ) return ptr;
 
         ptr->parent = NULL;
 
@@ -179,9 +179,9 @@ struct ego_BSP_tree
 
     ego_BSP_aabb          bbox;
 
-    ego_BSP_tree()                           { clear(this); };
+    ego_BSP_tree()                           { clear( this ); };
 
-    ego_BSP_tree( Sint32 dim, Sint32 depth ) { clear(this); ctor( this, dim, depth ); }
+    ego_BSP_tree( Sint32 dim, Sint32 depth ) { clear( this ); ctor( this, dim, depth ); }
     ~ego_BSP_tree()                          { dtor( this ); }
 
     static ego_BSP_tree   * create( size_t count );
@@ -222,9 +222,9 @@ protected:
     static bool_t             insert_infinite( ego_BSP_tree   * ptree, ego_BSP_leaf * pleaf );
 
 private:
-    static ego_BSP_tree * clear( ego_BSP_tree * ptr)
-    { 
-        if(NULL == ptr ) return ptr;
+    static ego_BSP_tree * clear( ego_BSP_tree * ptr )
+    {
+        if ( NULL == ptr ) return ptr;
 
         ptr->dimensions = 0;
         ptr->depth      = -1;

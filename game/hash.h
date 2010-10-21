@@ -50,8 +50,8 @@ struct ego_hash_list
     int            * subcount;
     ego_hash_node ** sublist;
 
-    ego_hash_list() { clear(this); }
-    ~ego_hash_list() { dtor(this); }
+    ego_hash_list() { clear( this ); }
+    ~ego_hash_list() { dtor( this ); }
 
     static ego_hash_list * create( int size );
     static bool_t          destroy( ego_hash_list ** );

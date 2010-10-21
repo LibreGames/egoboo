@@ -138,7 +138,7 @@ PRT_REF ego_particle_list::allocate_activate( const PRT_REF & iprt )
         }
 
         // allocate the new one
-        POBJ_ALLOCATE( PrtObjList.get_ptr( iprt ), (iprt ).get_value() );
+        POBJ_ALLOCATE( PrtObjList.get_ptr( iprt ), ( iprt ).get_value() );
     }
 
     if ( ALLOCATED_PRT( iprt ) )

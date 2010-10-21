@@ -1547,7 +1547,7 @@ ego_vlst_cache * vlst_cache_init( ego_vlst_cache * pcache )
 //--------------------------------------------------------------------------------------------
 ego_chr_instance * ego_chr_instance::clear( ego_chr_instance * ptr )
 {
-    if( NULL == ptr ) return ptr;
+    if ( NULL == ptr ) return ptr;
 
     // position info
     ptr->matrix = IdentityMatrix();           ///< Character's matrix
@@ -1591,8 +1591,8 @@ ego_chr_instance * ego_chr_instance::clear( ego_chr_instance * ptr )
     ptr->color_amb           = ~0;
     ptr->max_light           = 0;
     ptr->min_light           = 0;
-    ptr->lighting_update_wld = unsigned(-1); 
-    ptr->lighting_frame_all  = unsigned(-1);
+    ptr->lighting_update_wld = unsigned( -1 );
+    ptr->lighting_frame_all  = unsigned( -1 );
 
     ptr->vrt_count = 0;
     ptr->vrt_lst   = NULL;
@@ -1602,15 +1602,14 @@ ego_chr_instance * ego_chr_instance::clear( ego_chr_instance * ptr )
     return ptr;
 }
 
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 ego_chr_reflection_cache * ego_chr_reflection_cache::init( ego_chr_reflection_cache * pcache )
 {
     if ( NULL == pcache ) return pcache;
 
-    pcache = clear(pcache);
-    if( NULL == pcache ) return pcache;
+    pcache = clear( pcache );
+    if ( NULL == pcache ) return pcache;
 
     /* add something here */
 

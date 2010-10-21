@@ -375,7 +375,7 @@ ego_BSP_branch * ego_BSP_branch::dtor( ego_BSP_branch * B )
     EGOBOO_DELETE_ARY( B->child_lst );
     B->child_count = 0;
 
-    return clear(B);
+    return clear( B );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -707,7 +707,7 @@ ego_BSP_tree * ego_BSP_tree::dtor( ego_BSP_tree   * t )
 
     ego_BSP_tree::dealloc( t );
 
-    return clear(t);
+    return clear( t );
 }
 
 //--------------------------------------------------------------------------------------------

@@ -67,7 +67,7 @@ ego_process * ego_process::clear( ego_process * proc )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_process::start ()
+egoboo_rv ego_process::start()
 {
     if ( NULL == this ) return rv_error;
 
@@ -93,10 +93,10 @@ egoboo_rv ego_process::start ()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_process::kill ()
+egoboo_rv ego_process::kill()
 {
     egoboo_rv val_state = validate();
-    if( rv_error == val_state ) return rv_error;
+    if ( rv_error == val_state ) return rv_error;
     else if ( rv_fail == val_state ) return rv_success;
 
     // turn the process back on with an order to commit suicide
@@ -107,7 +107,7 @@ egoboo_rv ego_process::kill ()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_process::validate ()
+egoboo_rv ego_process::validate()
 {
     if ( NULL == this ) return rv_error;
 
@@ -120,7 +120,7 @@ egoboo_rv ego_process::validate ()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_process::terminate ()
+egoboo_rv ego_process::terminate()
 {
     if ( NULL == this ) return rv_error;
 
@@ -132,12 +132,12 @@ egoboo_rv ego_process::terminate ()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_process::pause ()
+egoboo_rv ego_process::pause()
 {
     bool_t old_value;
 
     egoboo_rv val_state = validate();
-    if( rv_success != val_state ) return val_state;
+    if ( rv_success != val_state ) return val_state;
 
     old_value = paused;
     paused    = btrue;
@@ -146,12 +146,12 @@ egoboo_rv ego_process::pause ()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_process::resume ()
+egoboo_rv ego_process::resume()
 {
     bool_t old_value;
 
     egoboo_rv val_state = validate();
-    if( rv_success != val_state ) return val_state;
+    if ( rv_success != val_state ) return val_state;
 
     old_value = paused;
     paused    = bfalse;
@@ -160,10 +160,10 @@ egoboo_rv ego_process::resume ()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_process::running ()
+egoboo_rv ego_process::running()
 {
     egoboo_rv val_state = validate();
-    if( rv_success != val_state ) return val_state;
+    if ( rv_success != val_state ) return val_state;
 
     return !paused  ? rv_success : rv_fail;
 }
@@ -193,7 +193,7 @@ int ego_process_engine::run( ego_process * proc, double dt )
         egoboo_rv retval = do_run( proc );
 
         result = proc->result;
-        valid  = proc->validate() && (rv_error != retval);
+        valid  = proc->validate() && ( rv_error != retval );
     };
 
     return proc->result;
@@ -219,23 +219,23 @@ egoboo_rv ego_process_engine::do_run( ego_process * proc )
     switch ( proc->state )
     {
         case proc_beginning:
-            handled = proc->do_beginning(  );
+            handled = proc->do_beginning( );
             break;
 
         case proc_entering:
-            handled = proc->do_entering(  );
+            handled = proc->do_entering( );
             break;
 
         case proc_running:
-            handled = proc->do_running(  );
+            handled = proc->do_running( );
             break;
 
         case proc_leaving:
-            handled = proc->do_leaving(  );
+            handled = proc->do_leaving( );
             break;
 
         case proc_finishing:
-            handled = proc->do_finishing(  );
+            handled = proc->do_finishing( );
             break;
 
         default:

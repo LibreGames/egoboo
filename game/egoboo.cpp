@@ -87,7 +87,7 @@ ego_local_shared_stats local_stats;
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_main_process::do_beginning()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -184,14 +184,14 @@ egoboo_rv ego_main_process::do_running()
     bool_t menu_valid, game_valid;
     bool_t mod_ctrl = bfalse, mod_shift = bfalse;
 
-     if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
 
     was_active  = valid;
 
-    menu_valid = MProc->validate(  );
+    menu_valid = MProc->validate( );
     game_valid = GProc->validate( );
     if ( !menu_valid && !game_valid )
     {
@@ -200,7 +200,7 @@ egoboo_rv ego_main_process::do_running()
         goto ego_main_process_do_running_end;
     }
 
-    if ( paused ) 
+    if ( paused )
     {
         result = 0;
         goto ego_main_process_do_running_end;
@@ -228,7 +228,7 @@ egoboo_rv ego_main_process::do_running()
     mod_ctrl  = SDLKEYDOWN( SDLK_LCTRL ) || SDLKEYDOWN( SDLK_RCTRL );
     mod_shift = SDLKEYDOWN( SDLK_LSHIFT ) || SDLKEYDOWN( SDLK_RSHIFT );
 
-    if ( pickedmodule_ready && (rv_success != MProc->running()) )
+    if ( pickedmodule_ready && ( rv_success != MProc->running() ) )
     {
         // a new module has been picked
 
@@ -403,7 +403,7 @@ ego_main_process_do_running_end:
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_main_process::do_leaving()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -449,7 +449,7 @@ egoboo_rv ego_main_process::do_leaving()
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_main_process::do_finishing()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -458,7 +458,6 @@ egoboo_rv ego_main_process::do_finishing()
 
     return rv_success;
 }
-
 
 //--------------------------------------------------------------------------------------------
 //int ego_main_process::Run( ego_main_process * eproc, double frameDuration )

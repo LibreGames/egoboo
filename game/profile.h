@@ -161,7 +161,7 @@ struct ego_obj_BSP
     static int         prt_count;      ///< the number of particles  in the ego_obj_BSP::root structure
 
     ego_obj_BSP() {};
-    ~ego_obj_BSP() { dtor(this); };
+    ~ego_obj_BSP() { dtor( this ); };
 
     static bool_t ctor( ego_obj_BSP * pbsp, struct mpd_BSP   * pmesh_bsp );
     static bool_t dtor( ego_obj_BSP * pbsp );

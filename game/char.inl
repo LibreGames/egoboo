@@ -129,7 +129,7 @@ INLINE bool_t team_hates_team( const TEAM_REF & ipredator_team, const TEAM_REF &
 
     if ( ipredator_team >= TEAM_MAX || iprey_team >= TEAM_MAX ) return bfalse;
 
-    return TeamStack.lst[ipredator_team].hatesteam[ (iprey_team ).get_value()];
+    return TeamStack.lst[ipredator_team].hatesteam[( iprey_team ).get_value()];
 }
 
 //--------------------------------------------------------------------------------------------
@@ -188,7 +188,7 @@ INLINE TEAM_REF ego_chr::get_iteam( const CHR_REF & ichr )
     if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_DAMAGE;
     pchr = ChrObjList.get_pdata( ichr );
 
-    iteam = (pchr->team ).get_value();
+    iteam = ( pchr->team ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
 
     return ( TEAM_REF )iteam;
@@ -203,7 +203,7 @@ INLINE TEAM_REF ego_chr::get_iteam_base( const CHR_REF & ichr )
     if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_MAX;
     pchr = ChrObjList.get_pdata( ichr );
 
-    iteam = (pchr->baseteam ).get_value();
+    iteam = ( pchr->baseteam ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
 
     return ( TEAM_REF )iteam;

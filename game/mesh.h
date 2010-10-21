@@ -152,7 +152,7 @@ struct ego_grid_mem
     // the per-grid info
     ego_grid_info* grid_list;                        ///< tile command info
 
-    ego_grid_mem() { clear(this); ctor(this); }
+    ego_grid_mem() { clear( this ); ctor( this ); }
     ~ego_grid_mem() { dtor( this ); }
 
     static ego_grid_mem * ctor( ego_grid_mem * pmem );
@@ -195,8 +195,8 @@ struct ego_tile_mem
     GLXvector3f   * clst;                              ///< the color list (for lighting the mesh)
     GLXvector3f   * nlst;                              ///< the normal list
 
-    ego_tile_mem() { clear(this); ctor(this); };
-    ~ego_tile_mem() { dtor(this); };
+    ego_tile_mem() { clear( this ); ctor( this ); };
+    ~ego_tile_mem() { dtor( this ); };
 
     static ego_tile_mem *  ctor( ego_tile_mem * pmem );
     static ego_tile_mem *  dtor( ego_tile_mem * pmem );
@@ -206,9 +206,9 @@ struct ego_tile_mem
     static bool_t          interpolate_vertex( ego_tile_mem * pmem, int fan, float pos[], float * plight );
 
 private:
-    static ego_tile_mem * clear(ego_tile_mem * ptr)
+    static ego_tile_mem * clear( ego_tile_mem * ptr )
     {
-        if( NULL == ptr ) return ptr;
+        if ( NULL == ptr ) return ptr;
 
         ptr->tile_count = 0;
         ptr->tile_list = NULL;
@@ -234,8 +234,8 @@ struct ego_mpd_info
     int             tiles_y;
     Uint32          tiles_count;                      ///< Number of tiles
 
-    ego_mpd_info() { clear(this); ctor( this ); }
-    ~ego_mpd_info() { dtor(this); }
+    ego_mpd_info() { clear( this ); ctor( this ); }
+    ~ego_mpd_info() { dtor( this ); }
 
     static ego_mpd_info * ctor( ego_mpd_info * pinfo );
     static ego_mpd_info * dtor( ego_mpd_info * pinfo );
@@ -269,8 +269,8 @@ struct ego_mpd
     static int bound_tests;
     static int pressure_tests;
 
-    ego_mpd()  { clear(this); ctor(this); };
-    ~ego_mpd() { dtor(this); }
+    ego_mpd()  { clear( this ); ctor( this ); };
+    ~ego_mpd() { dtor( this ); }
 
     static ego_mpd   * create( ego_mpd   * pmesh, int tiles_x, int tiles_y );
     static bool_t      destroy( ego_mpd   ** pmesh );
@@ -331,7 +331,6 @@ protected:
 
     static bool_t make_bbox( ego_mpd   * pmesh );
 
-    
     static bool_t      recalc_twist( ego_mpd   * pmesh );
 
 private:
@@ -339,9 +338,9 @@ private:
 
     static ego_mpd * clear( ego_mpd   * pmesh )
     {
-        if( NULL == pmesh ) return pmesh;
+        if ( NULL == pmesh ) return pmesh;
 
-        init_tile_offset(pmesh);
+        init_tile_offset( pmesh );
 
         return pmesh;
     }
@@ -355,8 +354,5 @@ private:
 ego_mpd   * mesh_load( const char *modname, ego_mpd   * pmesh );
 
 void   mesh_make_twist();
-
-
-
 
 Uint8 cartman_get_fan_twist( ego_mpd   * pmesh, Uint32 tile );

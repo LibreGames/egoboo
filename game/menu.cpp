@@ -178,12 +178,46 @@ struct ego_GameTips
     STRING local_hint[MENU_MAX_GAMETIPS]; //< Module specific hints and tips
 };
 
+struct s_mnu_stack
+{
+    bool_t push( which_menu_t menu )
+    {
+        if ( _data.size() >= MENU_STACK_COUNT ) return bfalse;
+
+        _data.push( menu );
+        return btrue;
+    }
+
+    size_t size() { return _data.size(); }
+
+    bool_t empty() { return _data.empty(); }
+
+    which_menu_t pop()
+    {
+        if ( _data.empty() ) return emnu_Main;
+
+        which_menu_t val = _data.top();
+        _data.pop();
+
+        return val;
+    }
+
+    which_menu_t peek()
+    {
+        if ( _data.empty() ) return emnu_Main;
+
+        return _data.top();
+    }
+
+private:
+    std::stack<which_menu_t> _data;
+};
+
 //--------------------------------------------------------------------------------------------
 // declaration of "private" variables
 //--------------------------------------------------------------------------------------------
 
-static int          mnu_stack_index = 0;
-static which_menu_t mnu_stack[MENU_STACK_COUNT];
+static s_mnu_stack mnu_stack;
 
 static which_menu_t mnu_whichMenu = emnu_Main;
 
@@ -247,12 +281,6 @@ ego_load_player_info loadplayer[MAXLOADPLAYER];
 // "private" function prototypes
 //--------------------------------------------------------------------------------------------
 
-// Implementation of the mnu_stack
-static bool_t       mnu_stack_push( which_menu_t menu );
-static which_menu_t mnu_stack_pop();
-static which_menu_t mnu_stack_peek();
-static void         mnu_stack_clear();
-
 // implementation of the mnu_Selected* arrays
 static bool_t  mnu_Selected_check_loadplayer( int loadplayer_idx );
 static bool_t  mnu_Selected_add( int loadplayer_idx );
@@ -299,65 +327,11 @@ static void mnu_release_one_module( const MOD_REF & imod );
 static void mnu_load_all_module_images_vfs();
 
 //--------------------------------------------------------------------------------------------
-// implementation of the menu stack
-//--------------------------------------------------------------------------------------------
-bool_t mnu_stack_push( which_menu_t menu )
-{
-    mnu_stack_index = CLIP( mnu_stack_index, 0, MENU_STACK_COUNT ) ;
-
-    if ( mnu_stack_index >= MENU_STACK_COUNT ) return bfalse;
-
-    mnu_stack[mnu_stack_index] = menu;
-    mnu_stack_index++;
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-which_menu_t mnu_stack_pop()
-{
-    if ( mnu_stack_index < 0 )
-    {
-        mnu_stack_index = 0;
-        return emnu_Main;
-    }
-    if ( mnu_stack_index > MENU_STACK_COUNT )
-    {
-        mnu_stack_index = MENU_STACK_COUNT;
-    }
-
-    if ( mnu_stack_index == 0 ) return emnu_Main;
-
-    mnu_stack_index--;
-    return mnu_stack[mnu_stack_index];
-}
-
-//--------------------------------------------------------------------------------------------
-which_menu_t mnu_stack_peek()
-{
-    which_menu_t return_menu = emnu_Main;
-
-    if ( mnu_stack_index > 0 )
-    {
-        return_menu = mnu_stack[mnu_stack_index-1];
-    }
-
-    return return_menu;
-}
-
-//--------------------------------------------------------------------------------------------
-void mnu_stack_clear()
-{
-    mnu_stack_index = 0;
-    mnu_stack[0] = emnu_Main;
-}
-
-//--------------------------------------------------------------------------------------------
 // The implementation of the menu process
 //--------------------------------------------------------------------------------------------
 egoboo_rv  ego_menu_process::do_beginning()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -384,7 +358,7 @@ egoboo_rv  ego_menu_process::do_running()
 {
     int menuResult;
 
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -398,7 +372,7 @@ egoboo_rv  ego_menu_process::do_running()
     }
 
     // play the menu music
-    mnu_draw_background = rv_success != (rv_success == GProc->running());
+    mnu_draw_background = rv_success != ( rv_success == GProc->running() );
     menuResult          = game_do_menu( this );
 
     switch ( menuResult )
@@ -439,7 +413,7 @@ egoboo_rv  ego_menu_process::do_running()
 //--------------------------------------------------------------------------------------------
 egoboo_rv  ego_menu_process::do_leaving()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -464,7 +438,7 @@ egoboo_rv  ego_menu_process::do_leaving()
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_menu_process::do_finishing()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -474,7 +448,6 @@ egoboo_rv ego_menu_process::do_finishing()
 
     return rv_success;
 }
-
 
 //--------------------------------------------------------------------------------------------
 // Code for global initialization/deinitialization of the menu system
@@ -536,138 +509,70 @@ void menu_system_end()
 }
 
 //--------------------------------------------------------------------------------------------
-// Interface for starting and stopping menus
-//--------------------------------------------------------------------------------------------
-bool_t mnu_begin_menu( which_menu_t which )
-{
-    if ( !mnu_stack_push( mnu_whichMenu ) ) return bfalse;
-    mnu_whichMenu = which;
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-void mnu_end_menu()
-{
-    mnu_whichMenu = mnu_stack_pop();
-}
-
-//--------------------------------------------------------------------------------------------
-int mnu_get_menu_depth()
-{
-    return mnu_stack_index;
-}
-
-//--------------------------------------------------------------------------------------------
 // Implementations of the various menus
 //--------------------------------------------------------------------------------------------
 
-#define BASE_MENU_STATE        \
-    int            state;      \
-    int            choice;     \
-    oglx_texture_t background
-
 #define MENU_BUTTONS(CNT)            \
-    ui_Widget    w_buttons[CNT];   \
-    const char    *sz_buttons[CNT+1]
+    ui_Widget             w_buttons[CNT];   \
+    static const char    *sz_buttons[CNT+1]
 
 #define MENU_LABELS(CNT)             \
-    ui_Widget    w_labels[CNT];    \
-    const char    *sz_labels[CNT+1]
+    ui_Widget          w_labels[CNT];    \
+    static const char *sz_labels[CNT+1]
 
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-//struct MainState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
-////--------------------------------------------------------------------------------------------
-//static MainState_t *MainState_ctor( MainState_t * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static MainState_t *MainState_dtor( MainState_t * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static MainState_t * doMainMenu_begin( MainState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = MainState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static MainState_t * doMainMenu_entering( MainState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static MainState_t * doMainMenu_running( MainState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static MainState_t * doMainMenu_leaving( MainState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static MainState_t * doMainMenu_finish( MainState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = MainState_ctor( ps );
-//
-//    return ps;
-//};
-
-//--------------------------------------------------------------------------------------------
-int doMainMenu( float deltaTime )
+struct mnu_state_data
 {
-    static int menuState = MM_Begin;
-    static oglx_texture_t background;
-    static oglx_texture_t logo;
-    static mnu_SlidyButtons but_state;
-    static int menuChoice = 0;
-    static SDL_Rect bg_rect, logo_rect;
+    int              menuState;
+    oglx_texture_t   background;
+    int              menuChoice;
+    mnu_SlidyButtons but_state;
 
-    int cnt;
+    int run( double deltaTime );
+    void begin( int state = MM_Begin );
+    void end();
+
+    void begin_widgets( ui_Widget lst[], size_t count );
+    void end_widgets( ui_Widget lst[], size_t count );
+
+    static void mnu_state_data::begin_menu( int which );
+    static void mnu_state_data::end_menu( int which );
+    static void mnu_state_data::switch_menu( int from, int to );
+};
+
+void mnu_state_data::begin( int state )
+{
+    menuState  = state;
+    menuChoice = 0;
+};
+
+void mnu_state_data::end()
+{
+    menuState  = MM_Begin;
+    oglx_texture_Release( &background );
+}
+
+void mnu_state_data::begin_widgets( ui_Widget lst[], size_t count )
+{
+    for ( int cnt = 0; cnt < count; cnt ++ )
+    {
+        ui_Widget::reset( lst + cnt, cnt );
+    }
+}
+
+void mnu_state_data::end_widgets( ui_Widget lst[], size_t count )
+{
+    for ( int cnt = 0; cnt < count; cnt ++ )
+    {
+        ui_Widget::dtor( lst + cnt );
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct Main_data : public mnu_state_data
+{
+    oglx_texture_t logo;
+    SDL_Rect bg_rect, logo_rect;
 
     enum e_buttons
     {
@@ -679,19 +584,119 @@ int doMainMenu( float deltaTime )
         but_sz_count
     };
 
-    // button widgets
-    static ui_Widget w_buttons[but_count];
-
     // Button labels.  Defined here for consistency's sake, rather than leaving them as constants
-    static const char *sz_buttons[but_sz_count] =
-    {
-        "New Game",
-        "Load Game",
-        "Options",
-        "Quit",
-        ""
-    };
+    MENU_BUTTONS( but_count );
 
+    Main_data() { begin(); }
+
+    int run( double deltaTime );
+
+    void begin( int state = MM_Begin );
+    void end();
+};
+
+const char * Main_data::sz_buttons[Main_data::but_sz_count] =
+{
+    "New Game",
+    "Load Game",
+    "Options",
+    "Quit",
+    ""
+};
+
+void Main_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+};
+
+void Main_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    oglx_texture_Release( &logo );
+};
+
+////--------------------------------------------------------------------------------------------
+//static Main_data *MainState_ctor( Main_data * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static Main_data *MainState_dtor( Main_data * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static Main_data * doMainMenu_begin( Main_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = MainState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static Main_data * doMainMenu_entering( Main_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static Main_data * doMainMenu_running( Main_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static Main_data * doMainMenu_leaving( Main_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static Main_data * doMainMenu_finish( Main_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = MainState_ctor( ps );
+//
+//    return ps;
+//};
+
+//--------------------------------------------------------------------------------------------
+int Main_data::run( double deltaTime )
+{
     float fminw = 1, fminh = 1, fmin = 1;
     int result = 0;
 
@@ -702,12 +707,6 @@ int doMainMenu( float deltaTime )
             menuChoice = 0;
 
             {
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    // clear the data
-                    ui_Widget::reset( w_buttons + cnt, cnt );
-                }
-
                 // load the menu image
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_main", INVALID_KEY );
 
@@ -840,15 +839,6 @@ int doMainMenu( float deltaTime )
 
         case MM_Finish:
             {
-                // Free the background texture; don't need to hold onto it
-                oglx_texture_Release( &background );
-
-                // free the widgets
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
-                }
-
                 // Set the next menu to load
                 result = menuChoice;
             }
@@ -867,93 +857,8 @@ int doMainMenu( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct SinglePlayerState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayerState_t *SinglePlayerState_ctor( SinglePlayerState_t * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayerState_t *SinglePlayerState_dtor( SinglePlayerState_t * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayerState_t * doSinglePlayerMenu_begin( SinglePlayerState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = SinglePlayerState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayerState_t * doSinglePlayerMenu_entering( SinglePlayerState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayerState_t * doSinglePlayerMenu_running( SinglePlayerState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayerState_t * doSinglePlayerMenu_leaving( SinglePlayerState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayerState_t * doSinglePlayerMenu_finish( SinglePlayerState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = SinglePlayerState_ctor( ps );
-//
-//    return ps;
-//};
-
-//--------------------------------------------------------------------------------------------
-int doSinglePlayerMenu( float deltaTime )
+struct SinglePlayer_data : public mnu_state_data
 {
-    static int menuState = MM_Begin;
-    static oglx_texture_t background;
-    static int menuChoice;
-    static mnu_SlidyButtons but_state;
 
     enum e_buttons
     {
@@ -965,18 +870,116 @@ int doSinglePlayerMenu( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget w_buttons[but_count];
+    MENU_BUTTONS( but_count );
 
-    static const char *sz_buttons[but_sz_count] =
-    {
-        "New Player",
-        "Load Saved Player",
-        "Back",
-        ""
-    };
+    SinglePlayer_data() { begin(); }
+
+    int run( double deltaTime );
+    void begin( int state = MM_Begin );
+    void end();
+};
+
+const char *SinglePlayer_data::sz_buttons[SinglePlayer_data::but_sz_count] =
+{
+    "New Player",
+    "Load Saved Player",
+    "Back",
+    ""
+};
+
+void SinglePlayer_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
+void SinglePlayer_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
+////--------------------------------------------------------------------------------------------
+//static SinglePlayer_data *SinglePlayerState_ctor( SinglePlayer_data * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayer_data *SinglePlayerState_dtor( SinglePlayer_data * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayer_data * doSinglePlayerMenu_begin( SinglePlayer_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = SinglePlayerState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayer_data * doSinglePlayerMenu_entering( SinglePlayer_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayer_data * doSinglePlayerMenu_running( SinglePlayer_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayer_data * doSinglePlayerMenu_leaving( SinglePlayer_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static SinglePlayer_data * doSinglePlayerMenu_finish( SinglePlayer_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = SinglePlayerState_ctor( ps );
+//
+//    return ps;
+//};
+
+//--------------------------------------------------------------------------------------------
+int SinglePlayer_data::run( double deltaTime )
+{
 
     int result = 0;
-    int cnt;
 
     switch ( menuState )
     {
@@ -985,12 +988,6 @@ int doSinglePlayerMenu( float deltaTime )
             menuChoice = 0;
 
             {
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    // clear the data
-                    ui_Widget::reset( w_buttons + cnt, cnt );
-                }
-
                 // Load resources for this menu
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_advent", TRANSCOLOR );
 
@@ -1081,15 +1078,6 @@ int doSinglePlayerMenu( float deltaTime )
 
         case MM_Finish:
             {
-                // Release the background texture
-                oglx_texture_Release( &background );
-
-                // free the widgets
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
-                }
-
                 // Set the next menu to load
                 result = menuChoice;
             }
@@ -1165,14 +1153,118 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct ChooseModuleState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct ChooseModule_data : public mnu_state_data
+{
+    int startIndex;
+    Uint8 keycooldown;
+
+    int numValidModules;
+    MOD_REF validModules[MAX_MODULE];
+
+    int moduleMenuOffsetX;
+    int moduleMenuOffsetY;
+
+    display_list_t * description_lst_ptr;
+    display_list_t * tip_lst_ptr;
+    display_item_t * beaten_tx_ptr;
+
+    enum e_buttons
+    {
+        but_filter_fwd,
+        but_fwd,
+        but_bck,
+        but_select,
+        but_exit,
+        but_count,
+        but_sz_count
+    };
+
+    MENU_BUTTONS( but_count );
+
+    enum e_labels
+    {
+        lab_description,
+        lab_filter,
+        lab_count,
+        lab_sz_count
+    };
+
+    // initial button strings
+    MENU_LABELS( lab_count );
+
+    int    selectedModule_old;
+    bool_t selectedModule_update;
+
+    ChooseModule_data() { begin(); }
+
+    int run( double deltaTime );
+    void begin( int state = MM_Begin );
+    void end();
+
+    static bool_t update_filter_label( ui_Widget * lab_ptr, int which );
+    static bool_t update_description( ui_Widget * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule );
+
+    static void update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size );
+    static bool_t update_select_button( ui_Widget * but_ptr, int count );
+};
+
+const char * ChooseModule_data::sz_buttons[ChooseModule_data::but_sz_count] =
+{
+    ">",             // but_filter_fwd
+    "->",            // but_fwd
+    "<-",            // but_bck
+    "Select Module", // but_select
+    "Back",          // but_exit
+    ""
+};
+
+const char * ChooseModule_data::sz_labels[ChooseModule_data::lab_sz_count] =
+{
+    "",               // lab_description
+    "All Modules",    // lab_filter
+    NULL
+};
+
+void ChooseModule_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
+
+    keycooldown = 0;
+
+    numValidModules = 0;
+
+    description_lst_ptr = NULL;
+    tip_lst_ptr         = NULL;
+    beaten_tx_ptr       = NULL;
+
+    selectedModule_old    = -1;
+    selectedModule_update = bfalse;
+}
+
+void ChooseModule_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    end_widgets( w_labels,  SDL_arraysize( w_labels ) );
+
+    numValidModules = 0;
+
+    // deallocate the list for the discription
+    description_lst_ptr = display_list_dtor( description_lst_ptr, btrue );
+
+    // free all other textures
+    beaten_tx_ptr = display_item_free( beaten_tx_ptr, btrue );
+
+    // deallocate the list for the tip
+    tip_lst_ptr = display_list_dtor( tip_lst_ptr, btrue );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static ChooseModuleState_t *ChooseModuleState_ctor( ChooseModuleState_t * ps )
+//static ChooseModule_data *ChooseModuleState_ctor( ChooseModule_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1182,7 +1274,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static ChooseModuleState_t *ChooseModuleState_dtor( ChooseModuleState_t * ps )
+//static ChooseModule_data *ChooseModuleState_dtor( ChooseModule_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1192,7 +1284,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static ChooseModuleState_t * doChooseModule_begin( ChooseModuleState_t * ps, float deltaTime )
+//static ChooseModule_data * doChooseModule_begin( ChooseModule_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1204,7 +1296,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ChooseModuleState_t * doChooseModule_entering( ChooseModuleState_t * ps, float deltaTime )
+//static ChooseModule_data * doChooseModule_entering( ChooseModule_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1214,7 +1306,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ChooseModuleState_t * doChooseModule_running( ChooseModuleState_t * ps, float deltaTime )
+//static ChooseModule_data * doChooseModule_running( ChooseModule_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1224,7 +1316,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ChooseModuleState_t * doChooseModule_leaving( ChooseModuleState_t * ps, float deltaTime )
+//static ChooseModule_data * doChooseModule_leaving( ChooseModule_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1234,7 +1326,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ChooseModuleState_t * doChooseModule_finish( ChooseModuleState_t * ps, float deltaTime )
+//static ChooseModule_data * doChooseModule_finish( ChooseModule_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1246,7 +1338,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doChooseModule_update_description( ui_Widget * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule )
+bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule )
 {
     int i;
 
@@ -1317,7 +1409,7 @@ bool_t doChooseModule_update_description( ui_Widget * lab_ptr, MOD_REF validModu
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doChooseModule_update_filter_label( ui_Widget * lab_ptr, int which )
+bool_t ChooseModule_data::update_filter_label( ui_Widget * lab_ptr, int which )
 {
     if ( NULL == lab_ptr ) return bfalse;
 
@@ -1337,68 +1429,9 @@ bool_t doChooseModule_update_filter_label( ui_Widget * lab_ptr, int which )
 }
 
 //--------------------------------------------------------------------------------------------
-int doChooseModule( float deltaTime )
+int ChooseModule_data::run( double deltaTime )
 {
     /// @details Choose the module
-
-    static oglx_texture_t background;
-    static int menuState = MM_Begin;
-    static int startIndex;
-    static Uint8 keycooldown = 0;
-
-    static int numValidModules;
-    static MOD_REF validModules[MAX_MODULE];
-
-    static int moduleMenuOffsetX;
-    static int moduleMenuOffsetY;
-
-    static display_list_t * description_lst_ptr = NULL;
-    static display_list_t * tip_lst_ptr = NULL;
-    static display_item_t     * beaten_tx_ptr = NULL;
-
-    enum e_buttons
-    {
-        but_filter_fwd,
-        but_fwd,
-        but_bck,
-        but_select,
-        but_exit,
-        but_count,
-        but_sz_count
-    };
-
-    // initial button strings
-    static const char * sz_buttons[but_sz_count] =
-    {
-        ">",             // but_filter_fwd
-        "->",            // but_fwd
-        "<-",            // but_bck
-        "Select Module", // but_select
-        "Back",          // but_exit
-        ""
-    };
-
-    enum e_labels
-    {
-        lab_description,
-        lab_filter,
-        lab_count,
-        lab_sz_count
-    };
-
-    // initial button strings
-    static const char * sz_labels[lab_sz_count] =
-    {
-        "",               // lab_description
-        "All Modules",    // lab_filter
-        NULL
-    };
-
-    static ui_Widget w_buttons[but_count];
-    static ui_Widget w_labels [lab_count];
-
-    static int    selectedModule_old    = -1;
-    static bool_t selectedModule_update = bfalse;
 
     int result = 0;
     int i, x, y;
@@ -1440,17 +1473,12 @@ int doChooseModule( float deltaTime )
                 // initialize the buttons
                 for ( i = 0; i < but_count; i++ )
                 {
-                    ui_Widget::reset( w_buttons + i );
-
-                    ui_Widget::set_id( w_buttons + i, i );
                     ui_Widget::set_text( w_buttons + i, ui_just_centerleft, NULL, sz_buttons[i] );
                 }
 
                 // initialize the labels
                 for ( i = 0; i < lab_count; i++ )
                 {
-                    ui_Widget::reset( w_labels + i );;
-
                     ui_Widget::set_id( w_labels + i, UI_Nothing );
                     ui_Widget::set_text( w_labels + i, ui_just_centerleft, NULL, sz_labels[i] );
                 }
@@ -1474,10 +1502,10 @@ int doChooseModule( float deltaTime )
                 ui_Widget::set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 250 );
 
                 // initialize the module description
-                doChooseModule_update_description( w_labels + lab_description, validModules, SDL_arraysize( validModules ), selectedModule );
+                ChooseModule_data::update_description( w_labels + lab_description, validModules, SDL_arraysize( validModules ), selectedModule );
 
                 // initialize the module filter text
-                doChooseModule_update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
+                ChooseModule_data::update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
 
                 beaten_tx_ptr = ui_updateText( beaten_tx_ptr, menuFont, 0, 0, "BEATEN" );
             }
@@ -1508,7 +1536,7 @@ int doChooseModule( float deltaTime )
                         if ( FILTER_HIDDEN == mnu_ModList.lst[imod].base.moduletype )  continue;
 
                         // starter module
-                        validModules[numValidModules] = (imod ).get_value();
+                        validModules[numValidModules] = ( imod ).get_value();
                         numValidModules++;
                     }
                     else
@@ -1520,7 +1548,7 @@ int doChooseModule( float deltaTime )
                         if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.maxplayers ) continue;
 
                         // regular module
-                        validModules[numValidModules] = (imod ).get_value();
+                        validModules[numValidModules] = ( imod ).get_value();
                         numValidModules++;
                     }
                 }
@@ -1681,7 +1709,7 @@ int doChooseModule( float deltaTime )
                 {
                     selectedModule_old = selectedModule;
 
-                    doChooseModule_update_description( w_labels + lab_description, validModules, SDL_arraysize( validModules ), selectedModule );
+                    ChooseModule_data::update_description( w_labels + lab_description, validModules, SDL_arraysize( validModules ), selectedModule );
                 }
 
                 // draw the description
@@ -1693,7 +1721,7 @@ int doChooseModule( float deltaTime )
                     if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_select ) )
                     {
                         // go to the next menu with this module selected
-                        selectedModule = (validModules[selectedModule] ).get_value();
+                        selectedModule = ( validModules[selectedModule] ).get_value();
                         menuState = MM_Leaving;
                     }
                 }
@@ -1735,7 +1763,7 @@ int doChooseModule( float deltaTime )
                             if ( mnu_moduleFilter > FILTER_NORMAL_END ) mnu_moduleFilter = FILTER_NORMAL_BEGIN;
                         }
 
-                        doChooseModule_update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
+                        ChooseModule_data::update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
                     }
                 }
             }
@@ -1748,29 +1776,6 @@ int doChooseModule( float deltaTime )
 
         case MM_Finish:
             {
-                oglx_texture_Release( &background );
-
-                // deallocate the list for the discription
-                display_list_ctor( description_lst_ptr, MAX_MENU_DISPLAY );
-
-                // initialize dthe buttons
-                for ( i = 0; i < but_count; i++ )
-                {
-                    ui_Widget::dealloc( w_buttons + i );
-                }
-
-                // initialize the labels
-                for ( i = 0; i < lab_count; i++ )
-                {
-                    ui_Widget::dealloc( w_labels + i );
-                }
-
-                // free all other textures
-                beaten_tx_ptr = display_item_free( beaten_tx_ptr, btrue );;
-
-                // deallocate the list for the tip
-                display_list_ctor( tip_lst_ptr, MAX_MENU_DISPLAY );
-
                 pickedmodule_index         = -1;
                 pickedmodule_path[0]       = CSTR_END;
                 pickedmodule_name[0]       = CSTR_END;
@@ -1815,115 +1820,31 @@ int doChooseModule( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doChoosePlayer_load_profiles( int player, ego_ChoosePlayer_profiles * pro_list )
-{
-    int    i;
-    CAP_REF ref_temp;
-    STRING  szFilename;
-    ego_ChoosePlayer_element * pdata;
-
-    // release all of the temporary profiles
-    release_all_profiles();
-    overrideslots = btrue;
-
-    if ( 0 == bookicon_count )
-    {
-        load_one_profile_vfs( "mp_data/globalobjects/book.obj", SPELLBOOK );
-    }
-
-    // release any data that we have accumulated
-    for ( i = 0; i < pro_list->count; i++ )
-    {
-        pdata = pro_list->pro_data + i;
-
-        TxTexture_free_one( pdata->tx_ref );
-
-        // initialize the data
-        pdata->cap_ref = MAX_CAP;
-        pdata->tx_ref  = INVALID_TX_TEXTURE;
-        chop_definition_init( &( pdata->chop ) );
-    }
-    pro_list->count = 0;
-
-    if ( player < 0 || player >= MAXLOADPLAYER || player >= loadplayer_count ) return bfalse;
-
-    // grab the player data
-    ref_temp = load_one_character_profile_vfs( loadplayer[player].dir, 0, bfalse );
-    if ( !LOADED_CAP( ref_temp ) )
-    {
-        return bfalse;
-    }
-
-    // go to the next element in the list
-    pdata = pro_list->pro_data + pro_list->count;
-    pro_list->count++;
-
-    // set the index of this object
-    pdata->cap_ref = ref_temp;
-
-    // grab the inventory data
-    for ( i = 0; i < MAXIMPORTOBJECTS; i++ )
-    {
-        int slot = i + 1;
-
-        snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj", loadplayer[player].dir, i );
-
-        // load the profile
-        ref_temp = load_one_character_profile_vfs( szFilename, slot, bfalse );
-        if ( LOADED_CAP( ref_temp ) )
-        {
-            ego_cap * pcap = CapStack.lst + ref_temp;
-
-            // go to the next element in the list
-            pdata = pro_list->pro_data + pro_list->count;
-            pro_list->count++;
-
-            pdata->cap_ref = ref_temp;
-
-            // load the icon
-            snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/icon%d", loadplayer[player].dir, i, MAX( 0, pcap->skin_override ) );
-            pdata->tx_ref = TxTexture_load_one_vfs( szFilename, ( TX_REF )INVALID_TX_TEXTURE, INVALID_KEY );
-
-            // load the naming
-            snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/naming.txt", loadplayer[player].dir, i );
-            chop_load_vfs( &chop_mem, szFilename, &( pdata->chop ) );
-        }
-    }
-
-    return btrue;
-}
-
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-struct ego_doChoosePlayer_stats_info
+struct Player_stats_info
 {
     ego_ChoosePlayer_profiles objects;
     int                     player;
     int                     player_last;
     display_item_t        * item_ptr;
 
-    ego_doChoosePlayer_stats_info()
+    Player_stats_info()
     {
         player      = -1;
         player_last = -1;
         item_ptr    = NULL;
     }
+
+    static Player_stats_info * ctor( Player_stats_info * ptr );
+    static Player_stats_info * dtor( Player_stats_info * ptr, bool_t owner );
 };
 
-#define PLAYER_STATS_INFO_INIT                  \
-    {                                               \
-        /* objects     */   PLAYER_PROFILES_INIT,   \
-        /* player      */   -1,                     \
-        /* player_last */   -1,                     \
-        /* item_ptr    */   NULL                    \
-    }
-
 //--------------------------------------------------------------------------------------------
-ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_ctor( ego_doChoosePlayer_stats_info * ptr )
+Player_stats_info * Player_stats_info::ctor( Player_stats_info * ptr )
 {
     if ( NULL == ptr )
     {
-        ptr = EGOBOO_NEW( ego_doChoosePlayer_stats_info );
+        ptr = EGOBOO_NEW( Player_stats_info );
     }
 
     // clear the data
@@ -1937,7 +1858,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_ctor( ego_doChoosePlay
 }
 
 //--------------------------------------------------------------------------------------------
-ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlayer_stats_info * ptr, bool_t owner )
+Player_stats_info * Player_stats_info::dtor( Player_stats_info * ptr, bool_t owner )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -1945,7 +1866,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 
     if ( !owner )
     {
-        ptr = doChoosePlayer_stats_info_ctor( ptr );
+        ptr = Player_stats_info::ctor( ptr );
     }
     else
     {
@@ -1957,14 +1878,99 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct ChoosePlayerState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct ChoosePlayer_data : public mnu_state_data
+{
+    int    startIndex_old, startIndex;
+    int    last_player_old;
+    int    last_player;
+    bool_t new_player;
+
+    int numVertical, numHorizontal;
+    Uint32 BitsInput[4];
+    bool_t device_on[4];
+
+    static const int x0 = 20, y0 = 20, icon_size = 42, text_width = 175, button_repeat = 47;
+
+    enum e_buttons
+    {
+        but_select,
+        but_back,
+        but_count,
+        but_sz_count
+    };
+
+    // button widgets
+    MENU_BUTTONS( but_count );
+
+    int mnu_selectedPlayerCount_old;
+
+    Player_stats_info stats_info;
+
+    ChoosePlayer_data() { begin(); }
+
+    int run( double deltaTime );
+    void begin( int state = MM_Begin );
+    void end();
+
+    static Player_stats_info * load_stats( Player_stats_info * ptr, int player, int mode );
+    static Player_stats_info * render_stats( Player_stats_info * ptr, int x, int y, int width, int height );
+    static bool_t ChoosePlayer_data::load_profiles( int player, ego_ChoosePlayer_profiles * pro_list );
+
+    static void   update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size );
+    static bool_t update_select_button( ui_Widget * but_ptr, int count );
+
+};
+
+const char * ChoosePlayer_data::sz_buttons[ChoosePlayer_data::but_sz_count] =
+{
+    "N/A",          // but_select
+    "Back",         // but_back
+    ""
+};
+
+void ChoosePlayer_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    startIndex_old  = 0;
+    startIndex      = 0;
+    last_player_old = -1;
+    last_player     = -1;
+    new_player      = bfalse;
+
+    mnu_selectedPlayerCount_old = -1;
+
+    Player_stats_info::ctor( &stats_info );
+
+    BitsInput[0] = INPUT_BITS_KEYBOARD;
+    device_on[0] = keyb.on;
+
+    BitsInput[1] = INPUT_BITS_MOUSE;
+    device_on[1] = mous.on;
+
+    BitsInput[2] = INPUT_BITS_JOYA;
+    device_on[2] = joy[0].on;
+
+    BitsInput[3] = INPUT_BITS_JOYB;
+    device_on[3] = joy[1].on;
+};
+
+void ChoosePlayer_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    // unload the player(s)
+    ChoosePlayer_data::load_stats( &stats_info, -1, 1 );
+
+    Player_stats_info::dtor( &stats_info, bfalse );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static ChoosePlayerState_t *ChoosePlayerState_ctor( ChoosePlayerState_t * ps )
+//static ChoosePlayer_data *ChoosePlayerState_ctor( ChoosePlayer_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1974,7 +1980,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static ChoosePlayerState_t *ChoosePlayerState_dtor( ChoosePlayerState_t * ps )
+//static ChoosePlayer_data *ChoosePlayerState_dtor( ChoosePlayer_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1984,7 +1990,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static ChoosePlayerState_t * doChoosePlayer_begin( ChoosePlayerState_t * ps, float deltaTime )
+//static ChoosePlayer_data * ChoosePlayer_data::begin( ChoosePlayer_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -1996,7 +2002,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ChoosePlayerState_t * doChoosePlayer_entering( ChoosePlayerState_t * ps, float deltaTime )
+//static ChoosePlayer_data * ChoosePlayer_data::entering( ChoosePlayer_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -2006,7 +2012,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ChoosePlayerState_t * doChoosePlayer_running( ChoosePlayerState_t * ps, float deltaTime )
+//static ChoosePlayer_data * ChoosePlayer_data::running( ChoosePlayer_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -2016,7 +2022,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ChoosePlayerState_t * doChoosePlayer_leaving( ChoosePlayerState_t * ps, float deltaTime )
+//static ChoosePlayer_data * ChoosePlayer_data::leaving( ChoosePlayer_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -2026,7 +2032,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ChoosePlayerState_t * doChoosePlayer_finish( ChoosePlayerState_t * ps, float deltaTime )
+//static ChoosePlayer_data * ChoosePlayer_data::finish( ChoosePlayer_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -2038,11 +2044,12 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_stats_info_dtor( ego_doChoosePlay
 //};
 
 //--------------------------------------------------------------------------------------------
-ego_doChoosePlayer_stats_info * doChoosePlayer_load_stats( ego_doChoosePlayer_stats_info * ptr, int player, int mode )
+//--------------------------------------------------------------------------------------------
+Player_stats_info * ChoosePlayer_data::load_stats( Player_stats_info * ptr, int player, int mode )
 {
     if ( NULL == ptr )
     {
-        ptr = doChoosePlayer_stats_info_ctor( ptr );
+        ptr = Player_stats_info::ctor( ptr );
     }
 
     if ( NULL == ptr ) return ptr;
@@ -2057,7 +2064,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_load_stats( ego_doChoosePlayer_st
     {
         case 0: // load new ptr->player data
 
-            if ( !doChoosePlayer_load_profiles( ptr->player, &ptr->objects ) )
+            if ( !ChoosePlayer_data::load_profiles( ptr->player, &ptr->objects ) )
             {
                 ptr->player_last = ptr->player;
                 ptr->player      = -1;
@@ -2080,7 +2087,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_load_stats( ego_doChoosePlayer_st
 }
 
 //--------------------------------------------------------------------------------------------
-ego_doChoosePlayer_stats_info * doChoosePlayer_render_stats( ego_doChoosePlayer_stats_info * ptr, int x, int y, int width, int height )
+Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, int x, int y, int width, int height )
 {
     int i, x1, y1;
 
@@ -2088,7 +2095,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_render_stats( ego_doChoosePlayer_
 
     if ( NULL == ptr )
     {
-        ptr = doChoosePlayer_stats_info_ctor( ptr );
+        ptr = Player_stats_info::ctor( ptr );
     }
 
     if ( NULL == ptr ) return ptr;
@@ -2231,7 +2238,7 @@ ego_doChoosePlayer_stats_info * doChoosePlayer_render_stats( ego_doChoosePlayer_
 }
 
 //--------------------------------------------------------------------------------------------
-void doChoosePlayer_update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size )
+void ChoosePlayer_data::update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size )
 {
     int lplayer, splayer;
     int i;
@@ -2255,7 +2262,7 @@ void doChoosePlayer_update_players( int numVertical, int startIndex, ui_Widget l
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doChoosePlayer_update_select_button( ui_Widget * but_ptr, int count )
+bool_t ChoosePlayer_data::update_select_button( ui_Widget * but_ptr, int count )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -2276,44 +2283,87 @@ bool_t doChoosePlayer_update_select_button( ui_Widget * but_ptr, int count )
 }
 
 //--------------------------------------------------------------------------------------------
-int doChoosePlayer( float deltaTime )
+bool_t ChoosePlayer_data::load_profiles( int player, ego_ChoosePlayer_profiles * pro_list )
 {
-    static int menuState = MM_Begin;
-    static oglx_texture_t background;
-    static mnu_SlidyButtons but_state;
+    int    i;
+    CAP_REF ref_temp;
+    STRING  szFilename;
+    ego_ChoosePlayer_element * pdata;
 
-    static int    startIndex_old = 0, startIndex = 0;
-    static int    last_player_old = -1;
-    static int    last_player     = -1;
-    static bool_t new_player = bfalse;
+    // release all of the temporary profiles
+    release_all_profiles();
+    overrideslots = btrue;
 
-    const int x0 = 20, y0 = 20, icon_size = 42, text_width = 175, button_repeat = 47;
-
-    static int numVertical, numHorizontal;
-    static Uint32 BitsInput[4];
-    static bool_t device_on[4];
-
-    enum e_buttons
+    if ( 0 == bookicon_count )
     {
-        but_select,
-        but_back,
-        but_count,
-        but_sz_count
-    };
+        load_one_profile_vfs( "mp_data/globalobjects/book.obj", SPELLBOOK );
+    }
 
-    // button widgets
-    static ui_Widget  w_buttons[but_count];
-
-    static const char * sz_buttons[but_sz_count] =
+    // release any data that we have accumulated
+    for ( i = 0; i < pro_list->count; i++ )
     {
-        "N/A",          // but_select
-        "Back",         // but_back
-        ""
-    };
+        pdata = pro_list->pro_data + i;
 
-    static int mnu_selectedPlayerCount_old = -1;
+        TxTexture_free_one( pdata->tx_ref );
 
-    static ego_doChoosePlayer_stats_info stats_info;
+        // initialize the data
+        pdata->cap_ref = MAX_CAP;
+        pdata->tx_ref  = INVALID_TX_TEXTURE;
+        chop_definition_init( &( pdata->chop ) );
+    }
+    pro_list->count = 0;
+
+    if ( player < 0 || player >= MAXLOADPLAYER || player >= loadplayer_count ) return bfalse;
+
+    // grab the player data
+    ref_temp = load_one_character_profile_vfs( loadplayer[player].dir, 0, bfalse );
+    if ( !LOADED_CAP( ref_temp ) )
+    {
+        return bfalse;
+    }
+
+    // go to the next element in the list
+    pdata = pro_list->pro_data + pro_list->count;
+    pro_list->count++;
+
+    // set the index of this object
+    pdata->cap_ref = ref_temp;
+
+    // grab the inventory data
+    for ( i = 0; i < MAXIMPORTOBJECTS; i++ )
+    {
+        int slot = i + 1;
+
+        snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj", loadplayer[player].dir, i );
+
+        // load the profile
+        ref_temp = load_one_character_profile_vfs( szFilename, slot, bfalse );
+        if ( LOADED_CAP( ref_temp ) )
+        {
+            ego_cap * pcap = CapStack.lst + ref_temp;
+
+            // go to the next element in the list
+            pdata = pro_list->pro_data + pro_list->count;
+            pro_list->count++;
+
+            pdata->cap_ref = ref_temp;
+
+            // load the icon
+            snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/icon%d", loadplayer[player].dir, i, MAX( 0, pcap->skin_override ) );
+            pdata->tx_ref = TxTexture_load_one_vfs( szFilename, ( TX_REF )INVALID_TX_TEXTURE, INVALID_KEY );
+
+            // load the naming
+            snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/naming.txt", loadplayer[player].dir, i );
+            chop_load_vfs( &chop_mem, szFilename, &( pdata->chop ) );
+        }
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+int ChoosePlayer_data::run( double deltaTime )
+{
 
     int result = 0;
     int i, j, x, y;
@@ -2324,8 +2374,6 @@ int doChoosePlayer( float deltaTime )
     {
         case MM_Begin:
             {
-                doChoosePlayer_stats_info_ctor( &stats_info );
-
                 last_player_old = -1;
                 last_player     = -1;
 
@@ -2337,7 +2385,6 @@ int doChoosePlayer( float deltaTime )
 
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
@@ -2352,20 +2399,12 @@ int doChoosePlayer( float deltaTime )
                 TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY );
 
                 TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY );
-                BitsInput[0] = INPUT_BITS_KEYBOARD;
-                device_on[0] = keyb.on;
 
                 TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY );
-                BitsInput[1] = INPUT_BITS_MOUSE;
-                device_on[1] = mous.on;
 
                 TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY );
-                BitsInput[2] = INPUT_BITS_JOYA;
-                device_on[2] = joy[0].on;
 
                 TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY );
-                BitsInput[3] = INPUT_BITS_JOYB;
-                device_on[3] = joy[1].on;
 
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_sleepy", TRANSCOLOR );
 
@@ -2408,7 +2447,7 @@ int doChoosePlayer( float deltaTime )
                     y += button_repeat;
                 };
 
-                doChoosePlayer_update_players( numVertical, startIndex, mnu_widgetList, SDL_arraysize( mnu_widgetList ) );
+                ChoosePlayer_data::update_players( numVertical, startIndex, mnu_widgetList, SDL_arraysize( mnu_widgetList ) );
 
                 if ( loadplayer_count < 10 )
                 {
@@ -2463,7 +2502,7 @@ int doChoosePlayer( float deltaTime )
                 {
                     mnu_selectedPlayerCount_old = mnu_selectedPlayerCount;
 
-                    doChoosePlayer_update_select_button( w_buttons + but_select, mnu_selectedPlayerCount );
+                    ChoosePlayer_data::update_select_button( w_buttons + but_select, mnu_selectedPlayerCount );
                 }
 
                 // use the mouse wheel to scan the characters
@@ -2492,7 +2531,7 @@ int doChoosePlayer( float deltaTime )
                 if ( startIndex_old != startIndex )
                 {
                     startIndex_old = startIndex;
-                    doChoosePlayer_update_players( numVertical, startIndex, mnu_widgetList, SDL_arraysize( mnu_widgetList ) );
+                    ChoosePlayer_data::update_players( numVertical, startIndex, mnu_widgetList, SDL_arraysize( mnu_widgetList ) );
                 }
 
                 // Draw the player selection buttons
@@ -2655,7 +2694,7 @@ int doChoosePlayer( float deltaTime )
                         // the player has been dismissed
 
                         // unload the player and release the rendering info
-                        doChoosePlayer_load_stats( &stats_info, last_player, 1 );
+                        ChoosePlayer_data::load_stats( &stats_info, last_player, 1 );
 
                         // get rid of the data
                         stats_info.item_ptr = display_item_free( stats_info.item_ptr, btrue );
@@ -2663,9 +2702,9 @@ int doChoosePlayer( float deltaTime )
                     else
                     {
                         // we have a new player, load the stats and render them
-                        doChoosePlayer_load_stats( &stats_info, last_player, 0 );
+                        ChoosePlayer_data::load_stats( &stats_info, last_player, 0 );
 
-                        doChoosePlayer_render_stats( &stats_info, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
+                        ChoosePlayer_data::render_stats( &stats_info, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
                     }
 
                 }
@@ -2677,17 +2716,17 @@ int doChoosePlayer( float deltaTime )
                 //    {
                 //        // load and display the new player data
                 //        new_player = bfalse;
-                //        rendered_stats_ptr = doChoosePlayer_show_stats( rendered_stats_ptr, last_player, 0, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
+                //        rendered_stats_ptr = ChoosePlayer_data::show_stats( rendered_stats_ptr, last_player, 0, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
                 //    }
                 //    else
                 //    {
                 //        // just display the new player data
-                //        rendered_stats_ptr = doChoosePlayer_show_stats( rendered_stats_ptr, last_player, 2, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
+                //        rendered_stats_ptr = ChoosePlayer_data::show_stats( rendered_stats_ptr, last_player, 2, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
                 //    }
                 //}
                 //else
                 //{
-                //    rendered_stats_ptr = doChoosePlayer_show_stats( rendered_stats_ptr, last_player, 1, GFX_WIDTH - 100, 10, 100, GFX_HEIGHT - 60 );
+                //    rendered_stats_ptr = ChoosePlayer_data::show_stats( rendered_stats_ptr, last_player, 1, GFX_WIDTH - 100, 10, 100, GFX_HEIGHT - 60 );
                 //}
 
                 // draw the stats
@@ -2728,24 +2767,8 @@ int doChoosePlayer( float deltaTime )
 
         case MM_Finish:
             {
-                // unload the player(s)
-                doChoosePlayer_load_stats( &stats_info, -1, 1 );
 
-                // free all allocated resources
-                doChoosePlayer_stats_info_dtor( &stats_info, bfalse );
-
-                oglx_texture_Release( &background );
                 TxTexture_free_one(( TX_REF )TX_BARS );
-
-                for ( cnt = 0; cnt < WIDGET_MAX; cnt++ )
-                {
-                    ui_Widget::dealloc( mnu_widgetList + cnt );
-                }
-
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
-                }
 
                 if ( 0 == mnu_selectedPlayerCount )
                 {
@@ -2809,94 +2832,8 @@ int doChoosePlayer( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct OptionsState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsState_t *OptionsState_ctor( OptionsState_t * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsState_t *OptionsState_dtor( OptionsState_t * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsState_t * doOptions_begin( OptionsState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = OptionsState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsState_t * doOptions_entering( OptionsState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsState_t * doOptions_running( OptionsState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsState_t * doOptions_leaving( OptionsState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsState_t * doOptions_finish( OptionsState_t * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = OptionsState_ctor( ps );
-//
-//    return ps;
-//};
-
-//--------------------------------------------------------------------------------------------
-int doOptions( float deltaTime )
+struct Options_data : public mnu_state_data
 {
-    static int menuState = MM_Begin;
-    static oglx_texture_t background;
-    static int menuChoice = 0;
-    static mnu_SlidyButtons but_state;
-
     enum e_buttons
     {
         but_game,
@@ -2909,20 +2846,117 @@ int doOptions( float deltaTime )
     };
 
     // button widgets
-    static ui_Widget w_buttons[but_count];
+    MENU_BUTTONS( but_count );
 
-    static const char *sz_buttons[but_sz_count] =
-    {
-        "Game Options",
-        "Audio Options",
-        "Input Controls",
-        "Video Settings",
-        "Back",
-        ""
-    };
+    Options_data() { begin(); }
 
+    int  run( double deltaTime );
+    void begin( int state = MM_Begin );
+    void end();
+};
+
+const char *Options_data::sz_buttons[Options_data::but_sz_count] =
+{
+    "Game Options",
+    "Audio Options",
+    "Input Controls",
+    "Video Settings",
+    "Back",
+    ""
+};
+
+void Options_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
+void Options_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
+////--------------------------------------------------------------------------------------------
+//static Options_data *OptionsState_ctor( Options_data * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static Options_data *OptionsState_dtor( Options_data * ps )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//static Options_data * doOptions_begin( Options_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    ps = OptionsState_ctor( ps );
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static Options_data * doOptions_entering( Options_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static Options_data * doOptions_running( Options_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static Options_data * doOptions_leaving( Options_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    return ps;
+//};
+//
+////--------------------------------------------------------------------------------------------
+//static Options_data * doOptions_finish( Options_data * ps, float deltaTime )
+//{
+//    if ( NULL == ps ) return ps;
+//
+//    /* BLAH */
+//
+//    ps = OptionsState_ctor( ps );
+//
+//    return ps;
+//};
+
+//--------------------------------------------------------------------------------------------
+int Options_data::run( double deltaTime )
+{
     int result = 0;
-    int cnt;
 
     switch ( menuState )
     {
@@ -2930,12 +2964,6 @@ int doOptions( float deltaTime )
             menuChoice = 0;
 
             {
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    // clear the data
-                    ui_Widget::reset( w_buttons + cnt, cnt );
-                }
-
                 // set up menu variables
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_gnome", TRANSCOLOR );
 
@@ -3046,9 +3074,6 @@ int doOptions( float deltaTime )
 
         case MM_Finish:
             {
-                // Free the background texture; don't need to hold onto it
-                oglx_texture_Release( &background );
-
                 result = menuChoice;
             }
 
@@ -3066,13 +3091,136 @@ int doOptions( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct OptionsInputState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
+struct OptionsInput_data : public mnu_state_data
+{
+    int waitingforinput;
+    int player;
+
+    enum e_buttons
+    {
+        but_jump   = CONTROL_JUMP,
+        but_luse   = CONTROL_LEFT_USE,
+        but_lget   = CONTROL_LEFT_GET,
+        but_lpack  = CONTROL_LEFT_PACK,
+        but_ruse   = CONTROL_RIGHT_USE,
+        but_rget   = CONTROL_RIGHT_GET,
+        but_rpack  = CONTROL_RIGHT_PACK,
+        but_cam    = CONTROL_CAMERA,
+        but_cleft  = CONTROL_CAMERA_LEFT,
+        but_cright = CONTROL_CAMERA_RIGHT,
+        but_cin    = CONTROL_CAMERA_IN,
+        but_cout   = CONTROL_CAMERA_OUT,
+        but_up     = CONTROL_UP,
+        but_down   = CONTROL_DOWN,
+        but_left   = CONTROL_LEFT,
+        but_right  = CONTROL_RIGHT,
+        but_player,
+        but_save,
+        but_count,
+        but_sz_count
+    };
+
+    MENU_BUTTONS( but_count );
+
+    enum e_labels
+    {
+        lab_jump   = but_jump,
+        lab_luse   = but_luse,
+        lab_lget   = but_lget,
+        lab_lpack  = but_lpack,
+        lab_ruse   = but_ruse,
+        lab_rget   = but_rget,
+        lab_rpack  = but_rpack,
+        lab_cam    = but_cam,
+        lab_cleft  = but_cleft,
+        lab_cright = but_cright,
+        lab_cin    = but_cin,
+        lab_cout   = but_cout,
+        lab_up     = but_up,
+        lab_down   = but_down,
+        lab_left   = but_left,
+        lab_right  = but_right,
+        lab_count,
+        lab_sz_count
+    };
+
+    MENU_LABELS( lab_count );
+
+    void begin( int state = MM_Begin );
+    void end();
+    int run( double deltaTime );
+
+    static bool_t update_one_button( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which );
+    static bool_t update_all_buttons( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput );
+    static int    update_control( ui_Widget lab_lst[], size_t lab_lst_size, int idevice, int which );
+    static bool_t update_player( ui_Widget * but_ptr, int player );
+};
+
+const char * OptionsInput_data::sz_buttons[OptionsInput_data::but_sz_count] =
+{
+    "...",              // but_jump   = CONTROL_JUMP,
+    "...",              // but_luse   = CONTROL_LEFT_USE,
+    "...",              // but_lget   = CONTROL_LEFT_GET,
+    "...",              // but_lpack  = CONTROL_LEFT_PACK,
+    "...",              // but_ruse   = CONTROL_RIGHT_USE,
+    "...",              // but_rget   = CONTROL_RIGHT_GET,
+    "...",              // but_rpack  = CONTROL_RIGHT_PACK,
+    "...",              // but_cam    = CONTROL_CAMERA,
+    "...",              // but_cleft  = CONTROL_CAMERA_LEFT,
+    "...",              // but_cright = CONTROL_CAMERA_RIGHT,
+    "...",              // but_cin    = CONTROL_CAMERA_IN,
+    "...",              // but_cout   = CONTROL_CAMERA_OUT,
+    "...",              // but_up     = CONTROL_UP,
+    "...",              // but_down   = CONTROL_DOWN,
+    "...",              // but_left   = CONTROL_LEFT,
+    "...",              // but_right  = CONTROL_RIGHT,
+    "Player ?",         // but_player
+    "Save Settings",    // but_save
+    ""
+};
+
+const char * OptionsInput_data::sz_labels[OptionsInput_data::lab_sz_count] =
+{
+    "Jump:",              // lab_jump   = CONTROL_JUMP,
+    "Use:",               // lab_luse   = CONTROL_LEFT_USE,
+    "Get/Drop:",          // lab_lget   = CONTROL_LEFT_GET,
+    "Inventory:",         // lab_lpack  = CONTROL_LEFT_PACK,
+    "Use:",               // lab_ruse   = CONTROL_RIGHT_USE,
+    "Get/Drop:",          // lab_rget   = CONTROL_RIGHT_GET,
+    "Inventory:",         // lab_rpack  = CONTROL_RIGHT_PACK,
+    "Camera:",            // lab_cam    = CONTROL_CAMERA,
+    "Rotate Left:",       // lab_cleft  = CONTROL_CAMERA_LEFT,
+    "Rotate Right:",      // lab_cright = CONTROL_CAMERA_RIGHT,
+    "Zoom In:",           // lab_cin    = CONTROL_CAMERA_IN,
+    "Zoom Out:",          // lab_cout   = CONTROL_CAMERA_OUT,
+    "Up:",                // lab_up     = CONTROL_UP,
+    "Down:",              // lab_down   = CONTROL_DOWN,
+    "Left:",              // lab_left   = CONTROL_LEFT,
+    "Right:",             // lab_right  = CONTROL_RIGHT,
+    ""
+};
+
+void OptionsInput_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
+
+    waitingforinput = -1;
+    player = 0;
+}
+
+void OptionsInput_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    end_widgets( w_labels,  SDL_arraysize( w_labels ) );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static OptionsInputState_t *OptionsInputState_ctor( OptionsInputState_t * ps )
+//static OptionsInput_data *OptionsInputState_ctor( OptionsInput_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3082,7 +3230,7 @@ int doOptions( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsInputState_t *OptionsInputState_dtor( OptionsInputState_t * ps )
+//static OptionsInput_data *OptionsInputState_dtor( OptionsInput_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3092,7 +3240,7 @@ int doOptions( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsInputState_t * doOptionsInput_begin( OptionsInputState_t * ps, float deltaTime )
+//static OptionsInput_data * OptionsInput_data::begin( OptionsInput_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3104,7 +3252,7 @@ int doOptions( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsInputState_t * doOptionsInput_entering( OptionsInputState_t * ps, float deltaTime )
+//static OptionsInput_data * OptionsInput_data::entering( OptionsInput_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3114,7 +3262,7 @@ int doOptions( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsInputState_t * doOptionsInput_running( OptionsInputState_t * ps, float deltaTime )
+//static OptionsInput_data * OptionsInput_data::running( OptionsInput_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3124,7 +3272,7 @@ int doOptions( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsInputState_t * doOptionsInput_leaving( OptionsInputState_t * ps, float deltaTime )
+//static OptionsInput_data * OptionsInput_data::leaving( OptionsInput_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3134,7 +3282,7 @@ int doOptions( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsInputState_t * doOptionsInput_finish( OptionsInputState_t * ps, float deltaTime )
+//static OptionsInput_data * OptionsInput_data::finish( OptionsInput_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3146,7 +3294,7 @@ int doOptions( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsInput_update_one_button( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
+bool_t OptionsInput_data::update_one_button( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
 {
     // update the name of a specific control
 
@@ -3168,7 +3316,7 @@ bool_t doOptionsInput_update_one_button( ui_Widget lab_lst[], size_t lab_lst_siz
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsInput_update_all_buttons( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput )
+bool_t OptionsInput_data::update_all_buttons( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput )
 {
     int i;
 
@@ -3179,14 +3327,14 @@ bool_t doOptionsInput_update_all_buttons( ui_Widget lab_lst[], size_t lab_lst_si
     {
         if ( i == waitingforinput ) continue;
 
-        doOptionsInput_update_one_button( lab_lst, lab_lst_size, pdevice, i );
+        OptionsInput_data::update_one_button( lab_lst, lab_lst_size, pdevice, i );
     }
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-int doOptionsInput_update_control( ui_Widget lab_lst[], size_t lab_lst_size, int idevice, int which )
+int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size, int idevice, int which )
 {
     // Grab the key/button input from the selected device
 
@@ -3290,14 +3438,14 @@ int doOptionsInput_update_control( ui_Widget lab_lst[], size_t lab_lst_size, int
 
     if ( -1 == retval )
     {
-        doOptionsInput_update_one_button( lab_lst, lab_lst_size, pdevice, which );
+        OptionsInput_data::update_one_button( lab_lst, lab_lst_size, pdevice, which );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsInput_update_player( ui_Widget * but_ptr, int player )
+bool_t OptionsInput_data::update_player( ui_Widget * but_ptr, int player )
 {
     Sint32              idevice, iicon;
     device_controls_t * pdevice;
@@ -3355,109 +3503,8 @@ bool_t doOptionsInput_update_player( ui_Widget * but_ptr, int player )
 }
 
 //--------------------------------------------------------------------------------------------
-int doOptionsInput( float deltaTime )
+int OptionsInput_data::run( double deltaTime )
 {
-    static int menuState = MM_Begin;
-    static int menuChoice = 0;
-    static int waitingforinput = -1;
-    static mnu_SlidyButtons but_state;
-
-    enum e_buttons
-    {
-        but_jump   = CONTROL_JUMP,
-        but_luse   = CONTROL_LEFT_USE,
-        but_lget   = CONTROL_LEFT_GET,
-        but_lpack  = CONTROL_LEFT_PACK,
-        but_ruse   = CONTROL_RIGHT_USE,
-        but_rget   = CONTROL_RIGHT_GET,
-        but_rpack  = CONTROL_RIGHT_PACK,
-        but_cam    = CONTROL_CAMERA,
-        but_cleft  = CONTROL_CAMERA_LEFT,
-        but_cright = CONTROL_CAMERA_RIGHT,
-        but_cin    = CONTROL_CAMERA_IN,
-        but_cout   = CONTROL_CAMERA_OUT,
-        but_up     = CONTROL_UP,
-        but_down   = CONTROL_DOWN,
-        but_left   = CONTROL_LEFT,
-        but_right  = CONTROL_RIGHT,
-        but_player,
-        but_save,
-        but_count,
-        but_sz_count
-    };
-
-    static const char * sz_buttons[but_sz_count] =
-    {
-        "...",              // but_jump   = CONTROL_JUMP,
-        "...",              // but_luse   = CONTROL_LEFT_USE,
-        "...",              // but_lget   = CONTROL_LEFT_GET,
-        "...",              // but_lpack  = CONTROL_LEFT_PACK,
-        "...",              // but_ruse   = CONTROL_RIGHT_USE,
-        "...",              // but_rget   = CONTROL_RIGHT_GET,
-        "...",              // but_rpack  = CONTROL_RIGHT_PACK,
-        "...",              // but_cam    = CONTROL_CAMERA,
-        "...",              // but_cleft  = CONTROL_CAMERA_LEFT,
-        "...",              // but_cright = CONTROL_CAMERA_RIGHT,
-        "...",              // but_cin    = CONTROL_CAMERA_IN,
-        "...",              // but_cout   = CONTROL_CAMERA_OUT,
-        "...",              // but_up     = CONTROL_UP,
-        "...",              // but_down   = CONTROL_DOWN,
-        "...",              // but_left   = CONTROL_LEFT,
-        "...",              // but_right  = CONTROL_RIGHT,
-        "Player ?",         // but_player
-        "Save Settings",    // but_save
-        ""
-    };
-
-    static ui_Widget w_buttons [but_count];
-
-    enum e_labels
-    {
-        lab_jump   = but_jump,
-        lab_luse   = but_luse,
-        lab_lget   = but_lget,
-        lab_lpack  = but_lpack,
-        lab_ruse   = but_ruse,
-        lab_rget   = but_rget,
-        lab_rpack  = but_rpack,
-        lab_cam    = but_cam,
-        lab_cleft  = but_cleft,
-        lab_cright = but_cright,
-        lab_cin    = but_cin,
-        lab_cout   = but_cout,
-        lab_up     = but_up,
-        lab_down   = but_down,
-        lab_left   = but_left,
-        lab_right  = but_right,
-        lab_count,
-        lab_sz_count
-    };
-
-    static ui_Widget w_labels  [lab_count];
-
-    static const char * sz_labels[lab_sz_count] =
-    {
-        "Jump:",              // lab_jump   = CONTROL_JUMP,
-        "Use:",               // lab_luse   = CONTROL_LEFT_USE,
-        "Get/Drop:",          // lab_lget   = CONTROL_LEFT_GET,
-        "Inventory:",         // lab_lpack  = CONTROL_LEFT_PACK,
-        "Use:",               // lab_ruse   = CONTROL_RIGHT_USE,
-        "Get/Drop:",          // lab_rget   = CONTROL_RIGHT_GET,
-        "Inventory:",         // lab_rpack  = CONTROL_RIGHT_PACK,
-        "Camera:",            // lab_cam    = CONTROL_CAMERA,
-        "Rotate Left:",       // lab_cleft  = CONTROL_CAMERA_LEFT,
-        "Rotate Right:",      // lab_cright = CONTROL_CAMERA_RIGHT,
-        "Zoom In:",           // lab_cin    = CONTROL_CAMERA_IN,
-        "Zoom Out:",          // lab_cout   = CONTROL_CAMERA_OUT,
-        "Up:",                // lab_up     = CONTROL_UP,
-        "Down:",              // lab_down   = CONTROL_DOWN,
-        "Left:",              // lab_left   = CONTROL_LEFT,
-        "Right:",             // lab_right  = CONTROL_RIGHT,
-        ""
-    };
-
-    static int player = 0;
-
     int result = 0;
     int cnt;
 
@@ -3487,16 +3534,12 @@ int doOptionsInput( float deltaTime )
                 // initialize the buttons
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    // clear the data
-                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 // initialize the labels
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    // set up the w_labels
-                    ui_Widget::reset( w_labels + cnt );
                     ui_Widget::set_text( w_labels + cnt, ui_just_centered, menuFont, sz_labels[cnt] );
                 }
 
@@ -3569,10 +3612,10 @@ int doOptionsInput( float deltaTime )
                 ui_Widget::set_button( w_buttons + but_player, buttonLeft + 300, GFX_HEIGHT -  90, 140, 50 );
 
                 // set images for widgets
-                doOptionsInput_update_player( w_buttons + but_player, player );
+                OptionsInput_data::update_player( w_buttons + but_player, player );
 
                 // initialize the text for all buttons
-                doOptionsInput_update_all_buttons( w_buttons, but_right + 1, pdevice, waitingforinput );
+                OptionsInput_data::update_all_buttons( w_buttons, but_right + 1, pdevice, waitingforinput );
             }
 
             // Fall trough ?
@@ -3591,12 +3634,12 @@ int doOptionsInput( float deltaTime )
                 // Someone pressed abort?
                 if ( -1 != waitingforinput && SDLKEYDOWN( SDLK_ESCAPE ) )
                 {
-                    doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                    OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
                     waitingforinput = -1;
                 }
 
                 // Update a control, if we are waiting for one
-                waitingforinput = doOptionsInput_update_control( w_buttons, but_right + 1, idevice, waitingforinput );
+                waitingforinput = OptionsInput_data::update_control( w_buttons, but_right + 1, idevice, waitingforinput );
 
                 // Left hand
                 ui_drawTextBoxImmediate( NULL, buttonLeft, GFX_HEIGHT - 525, 20, "LEFT HAND", NULL );
@@ -3606,7 +3649,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_luse ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_luse;
@@ -3621,7 +3664,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_lget ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_lget;
@@ -3635,7 +3678,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_lpack ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_lpack;
@@ -3651,7 +3694,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_ruse ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_ruse;
@@ -3666,7 +3709,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_rget ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_rget;
@@ -3680,7 +3723,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_rpack ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_rpack;
@@ -3696,7 +3739,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_jump ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_jump;
@@ -3710,7 +3753,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_up ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_up;
@@ -3724,7 +3767,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_down ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_down;
@@ -3738,7 +3781,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_left ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_left;
@@ -3752,7 +3795,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_right ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_right;
@@ -3769,7 +3812,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cam ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cam;
@@ -3783,7 +3826,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cin ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cin;
@@ -3797,7 +3840,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cout ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cout;
@@ -3811,7 +3854,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cleft ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cleft;
@@ -3825,7 +3868,7 @@ int doOptionsInput( float deltaTime )
                     if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_cright ) )
                     {
                         // update the previous button
-                        doOptionsInput_update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_one_button( w_buttons, but_right + 1, pdevice, waitingforinput );
 
                         // set the new button
                         waitingforinput = but_cright;
@@ -3857,10 +3900,10 @@ int doOptionsInput( float deltaTime )
                             idevice = pdevice->device;
                         }
 
-                        doOptionsInput_update_player( w_buttons + but_player, player );
+                        OptionsInput_data::update_player( w_buttons + but_player, player );
 
                         // update all buttons for this player
-                        doOptionsInput_update_all_buttons( w_buttons, but_right + 1, pdevice, waitingforinput );
+                        OptionsInput_data::update_all_buttons( w_buttons, but_right + 1, pdevice, waitingforinput );
                     }
                 }
 
@@ -3891,17 +3934,6 @@ int doOptionsInput( float deltaTime )
 
         case MM_Finish:
             {
-                // free the widgets
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
-                }
-
-                for ( cnt = 0; cnt < lab_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_labels + cnt );
-                }
-
                 // Set the next menu to load
                 result = 1;
             }
@@ -3920,22 +3952,98 @@ int doOptionsInput( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static bool_t doOptionsGame_update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty );
-static bool_t doOptionsGame_update_message_count( ui_Widget * lab_ptr, int message_count );
-static bool_t doOptionsGame_update_message_duration( ui_Widget * lab_ptr, Uint16 duration );
-static bool_t doOptionsGame_update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn );
-static bool_t doOptionsGame_update_fps( ui_Widget * lab_ptr, bool_t allowed );
-static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE type );
 
-//--------------------------------------------------------------------------------------------
-//struct OptionsGameState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct OptionsGame_data : public mnu_state_data
+{
+    int difficulty_old;
+
+    // button widgets
+    enum e_buttons
+    {
+        but_difficulty,       // Difficulty
+        but_msg_count,        // Max messages
+        but_msg_duration,     // Message duration
+        but_autoturn,         // Autoturn camera
+        but_fps,              // Show FPS
+        but_feedback,         // Feedback
+        but_save,             // Save button
+        but_count,
+        but_sz_count
+    };
+
+    MENU_BUTTONS( but_count );
+
+    enum e_labels
+    {
+        lab_difficulty   = but_difficulty,
+        lab_msg_count    = but_msg_count,
+        lab_msg_duration = but_msg_duration,
+        lab_autoturn     = but_autoturn,
+        lab_fps          = but_fps,
+        lab_feedback     = but_feedback,
+        lab_diff_desc,
+        lab_count,
+        lab_sz_count
+    };
+
+    MENU_LABELS( lab_count );
+
+    void begin( int state = MM_Begin );
+    void end();
+    int run( double deltaTime );
+
+    static bool_t update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty );
+    static bool_t update_message_count( ui_Widget * lab_ptr, int message_count );
+    static bool_t update_message_duration( ui_Widget * lab_ptr, Uint16 duration );
+    static bool_t update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn );
+    static bool_t update_fps( ui_Widget * lab_ptr, bool_t allowed );
+    static bool_t update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE type );
+};
+
+const char *OptionsGame_data::sz_buttons[OptionsGame_data::but_sz_count] =
+{
+    "N/A",            // but_difficulty
+    "N/A",            // but_msg_count
+    "N/A",            // but_msg_duration
+    "N/A",            // but_autoturn
+    "N/A",            // but_fps
+    "N/A",            // but_feedback
+    "Save Settings",  // but_save
+    ""
+};
+
+const char *OptionsGame_data::sz_labels[OptionsGame_data::lab_sz_count] =
+{
+    "Game Difficulty:",     // lab_difficulty
+    "Max  Messages:",       // lab_msg_count
+    "Message Duration:",    // lab_msg_duration
+    "Autoturn Camera:",     // lab_autoturn
+    "Display FPS:",         // lab_fps
+    "Floating Text:",       // lab_feedback
+    "N/A",                  // lab_diff_desc
+    ""
+};
+
+void OptionsGame_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
+
+    difficulty_old = 0;
+}
+
+void OptionsGame_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    end_widgets( w_labels,  SDL_arraysize( w_labels ) );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static OptionsGameState_t *OptionsGameState_ctor( OptionsGameState_t * ps )
+//static OptionsGame_data *OptionsGameState_ctor( OptionsGame_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3945,7 +4053,7 @@ static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE 
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsGameState_t *OptionsGameState_dtor( OptionsGameState_t * ps )
+//static OptionsGame_data *OptionsGameState_dtor( OptionsGame_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3955,7 +4063,7 @@ static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE 
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsGameState_t * doOptionsGame_begin( OptionsGameState_t * ps, float deltaTime )
+//static OptionsGame_data * OptionsGame_data::begin( OptionsGame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3967,7 +4075,7 @@ static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE 
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsGameState_t * doOptionsGame_entering( OptionsGameState_t * ps, float deltaTime )
+//static OptionsGame_data * OptionsGame_data::entering( OptionsGame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3977,7 +4085,7 @@ static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE 
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsGameState_t * doOptionsGame_running( OptionsGameState_t * ps, float deltaTime )
+//static OptionsGame_data * OptionsGame_data::running( OptionsGame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3987,7 +4095,7 @@ static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE 
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsGameState_t * doOptionsGame_leaving( OptionsGameState_t * ps, float deltaTime )
+//static OptionsGame_data * OptionsGame_data::leaving( OptionsGame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -3997,7 +4105,7 @@ static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE 
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsGameState_t * doOptionsGame_finish( OptionsGameState_t * ps, float deltaTime )
+//static OptionsGame_data * OptionsGame_data::finish( OptionsGame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -4009,7 +4117,7 @@ static bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE 
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty )
+bool_t OptionsGame_data::update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty )
 {
     // Fill out the difficulty description, and the button caption
 
@@ -4065,7 +4173,7 @@ bool_t doOptionsGame_update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_pt
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_message_count( ui_Widget * lab_ptr, int message_count )
+bool_t OptionsGame_data::update_message_count( ui_Widget * lab_ptr, int message_count )
 {
     bool_t retval;
 
@@ -4084,7 +4192,7 @@ bool_t doOptionsGame_update_message_count( ui_Widget * lab_ptr, int message_coun
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_message_duration( ui_Widget * lab_ptr, Uint16 duration )
+bool_t OptionsGame_data::update_message_duration( ui_Widget * lab_ptr, Uint16 duration )
 {
     bool_t retval;
 
@@ -4107,7 +4215,7 @@ bool_t doOptionsGame_update_message_duration( ui_Widget * lab_ptr, Uint16 durati
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn )
+bool_t OptionsGame_data::update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn )
 {
     bool_t retval;
 
@@ -4130,7 +4238,7 @@ bool_t doOptionsGame_update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_fps( ui_Widget * lab_ptr, bool_t allowed )
+bool_t OptionsGame_data::update_fps( ui_Widget * lab_ptr, bool_t allowed )
 {
     if ( NULL == lab_ptr ) return bfalse;
 
@@ -4138,7 +4246,7 @@ bool_t doOptionsGame_update_fps( ui_Widget * lab_ptr, bool_t allowed )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE type )
+bool_t OptionsGame_data::update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE type )
 {
     bool_t retval;
 
@@ -4157,73 +4265,11 @@ bool_t doOptionsGame_update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE type )
 }
 
 //--------------------------------------------------------------------------------------------
-int doOptionsGame( float deltaTime )
+int OptionsGame_data::run( double deltaTime )
 {
     /// @details Game options menu
 
-    static int menuState = MM_Begin;
-    static oglx_texture_t background;
-    static int menuChoice = 0;
-    static mnu_SlidyButtons but_state;
-    static int difficulty_old = 0;
-
     int cnt;
-
-    // button widgets
-    enum e_buttons
-    {
-        but_difficulty,       // Difficulty
-        but_msg_count,        // Max messages
-        but_msg_duration,     // Message duration
-        but_autoturn,         // Autoturn camera
-        but_fps,              // Show FPS
-        but_feedback,         // Feedback
-        but_save,             // Save button
-        but_count,
-        but_sz_count
-    };
-
-    static const char *sz_buttons[but_sz_count] =
-    {
-        "N/A",            // but_difficulty
-        "N/A",            // but_msg_count
-        "N/A",            // but_msg_duration
-        "N/A",            // but_autoturn
-        "N/A",            // but_fps
-        "N/A",            // but_feedback
-        "Save Settings",  // but_save
-        ""
-    };
-
-    static ui_Widget w_buttons[but_count];
-
-    enum e_labels
-    {
-        lab_difficulty   = but_difficulty,
-        lab_msg_count    = but_msg_count,
-        lab_msg_duration = but_msg_duration,
-        lab_autoturn     = but_autoturn,
-        lab_fps          = but_fps,
-        lab_feedback     = but_feedback,
-        lab_diff_desc,
-        lab_count,
-        lab_sz_count
-    };
-
-    static ui_Widget w_labels [lab_count];
-
-    static const char *sz_labels[lab_sz_count] =
-    {
-        "Game Difficulty:",     // lab_difficulty
-        "Max  Messages:",       // lab_msg_count
-        "Message Duration:",    // lab_msg_duration
-        "Autoturn Camera:",     // lab_autoturn
-        "Display FPS:",         // lab_fps
-        "Floating Text:",       // lab_feedback
-        "N/A",                  // lab_diff_desc
-        ""
-    };
-
     int  result = 0;
     int i;
 
@@ -4236,15 +4282,11 @@ int doOptionsGame( float deltaTime )
             {
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    // set up the w_buttons
-                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    // set up the w_labels
-                    ui_Widget::reset( w_labels + cnt );
                     ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
@@ -4260,7 +4302,7 @@ int doOptionsGame( float deltaTime )
                 mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
                 // set some special text
-                doOptionsGame_update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
+                OptionsGame_data::update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
 
                 // auto-format the buttons and labels
                 for ( i = but_difficulty; i <= but_feedback; i++ )
@@ -4291,11 +4333,11 @@ int doOptionsGame( float deltaTime )
                     ui_drawImage( 0, &background, ( GFX_WIDTH  / 2 ) + ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
                 }
 
-                doOptionsGame_update_message_count( w_buttons + but_msg_count, cfg.message_count_req );
-                doOptionsGame_update_message_duration( w_buttons + but_msg_duration, cfg.message_duration );
-                doOptionsGame_update_cam_autoturn( w_buttons + but_autoturn, cfg.autoturncamera );
-                doOptionsGame_update_fps( w_buttons + but_fps, cfg.fps_allowed );
-                doOptionsGame_update_feedback( w_buttons + but_feedback, cfg.feedback );
+                OptionsGame_data::update_message_count( w_buttons + but_msg_count, cfg.message_count_req );
+                OptionsGame_data::update_message_duration( w_buttons + but_msg_duration, cfg.message_duration );
+                OptionsGame_data::update_cam_autoturn( w_buttons + but_autoturn, cfg.autoturncamera );
+                OptionsGame_data::update_fps( w_buttons + but_fps, cfg.fps_allowed );
+                OptionsGame_data::update_feedback( w_buttons + but_feedback, cfg.feedback );
             }
 
             // Fall trough?
@@ -4326,7 +4368,7 @@ int doOptionsGame( float deltaTime )
                     if ( cfg.difficulty > GAME_HARD ) cfg.difficulty = 0;
 
                     // handle the difficulty description
-                    doOptionsGame_update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
+                    OptionsGame_data::update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
                 }
 
                 // Text messages
@@ -4340,7 +4382,7 @@ int doOptionsGame( float deltaTime )
                     if ( cfg.message_count_req < 4 && cfg.message_count_req != 0 ) cfg.message_count_req = 4;
 
                     // handle the difficulty description
-                    doOptionsGame_update_message_count( w_buttons + but_msg_count, cfg.message_count_req );
+                    OptionsGame_data::update_message_count( w_buttons + but_msg_count, cfg.message_count_req );
                 }
 
                 // Message time
@@ -4355,7 +4397,7 @@ int doOptionsGame( float deltaTime )
                         cfg.message_duration = 50;
                     }
 
-                    doOptionsGame_update_message_duration( w_buttons + but_msg_duration, cfg.message_duration );
+                    OptionsGame_data::update_message_duration( w_buttons + but_msg_duration, cfg.message_duration );
                 }
 
                 // Autoturn camera
@@ -4375,7 +4417,7 @@ int doOptionsGame( float deltaTime )
                         cfg.autoturncamera = CAM_TURN_AUTO;
                     }
 
-                    doOptionsGame_update_cam_autoturn( w_buttons + but_autoturn, cfg.autoturncamera );
+                    OptionsGame_data::update_cam_autoturn( w_buttons + but_autoturn, cfg.autoturncamera );
                 }
 
                 // Show the fps?
@@ -4384,7 +4426,7 @@ int doOptionsGame( float deltaTime )
                 {
                     cfg.fps_allowed = !cfg.fps_allowed;
 
-                    doOptionsGame_update_fps( w_buttons + but_fps, cfg.fps_allowed );
+                    OptionsGame_data::update_fps( w_buttons + but_fps, cfg.fps_allowed );
                 }
 
                 // Feedback
@@ -4413,7 +4455,7 @@ int doOptionsGame( float deltaTime )
                         cfg.feedback = FEEDBACK_OFF;
                     }
 
-                    doOptionsGame_update_feedback( w_buttons + but_feedback, cfg.feedback );
+                    OptionsGame_data::update_feedback( w_buttons + but_feedback, cfg.feedback );
                 }
 
                 // Save settings
@@ -4453,23 +4495,6 @@ int doOptionsGame( float deltaTime )
         case MM_Finish:
             // free all allocated data
             {
-                // Free the background texture; don't need to hold onto it
-                oglx_texture_Release( &background );
-
-                // free the widgets
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
-                }
-
-                for ( cnt = 0; cnt < lab_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_labels  + cnt );
-                }
-
-                ui_Widget::dealloc( w_labels + lab_diff_desc );
-                ui_Widget::dealloc( w_labels + lab_difficulty );
-
                 // Set the next menu to load
                 result = 1;
             }
@@ -4488,14 +4513,104 @@ int doOptionsGame( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct OptionsAudioState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct OptionsAudio_data : public mnu_state_data
+{
+    // button widgets
+    enum e_buttons
+    {
+        but_on,
+        but_vol,
+        but_mus_on,
+        but_mus_vol,
+        but_channels,
+        but_buffer,
+        but_quality,
+        but_footsteps,
+        but_save,
+        but_count,
+        but_sz_count
+    };
+
+    MENU_BUTTONS( but_count );
+
+    // label widgets
+    enum e_labels
+    {
+        lab_on,
+        lab_vol,
+        lab_mus_on,
+        lab_mus_vol,
+        lab_channels,
+        lab_buffer,
+        lab_quality,
+        lab_footsteps,
+        lab_count,
+        lab_sz_count
+    };
+
+    MENU_LABELS( lab_count );
+
+    void begin( int state = MM_Begin );
+    void end();
+    int run( double deltaTime );
+
+    static bool_t update_sound_on( ui_Widget * but_ptr, bool_t val );
+    static bool_t update_sound_volume( ui_Widget * but_ptr, Uint8 val );
+    static bool_t update_music_on( ui_Widget * but_ptr, bool_t val );
+    static bool_t update_music_volume( ui_Widget * but_ptr, Uint8 val );
+    static bool_t update_sound_channels( ui_Widget * but_ptr, Uint16 val );
+    static bool_t update_buffer_size( ui_Widget * but_ptr, Uint16 val );
+    static bool_t update_quality( ui_Widget * but_ptr, bool_t val );
+    static bool_t update_footfall( ui_Widget * but_ptr, bool_t val );
+    static bool_t update_settings( ego_config_data_t * pcfg );
+
+};
+
+const char *OptionsAudio_data::sz_buttons[OptionsAudio_data::but_sz_count] =
+{
+    "N/A",              // but_on
+    "N/A",              // but_vol
+    "N/A",              // but_mus_on
+    "N/A",              // but_mus_vol
+    "N/A",              // but_channels
+    "N/A",              // but_buffer
+    "N/A",              // but_quality
+    "N/A",              // but_footsteps
+    "Save Settings",    // but_save
+    ""
+};
+
+const char *OptionsAudio_data::sz_labels[OptionsAudio_data::lab_sz_count] =
+{
+    "Sound:",           // lab_on        - Enable sound
+    "Sound Volume:",    // lab_vol       - Sound volume
+    "Music:",           // lab_mus_on    - Enable music
+    "Music Volume:",    // lab_mus_vol   - Music volume
+    "Sound Channels:",  // lab_channels  - Sound channels
+    "Buffer Size:",     // lab_buffer    - Sound buffer
+    "Sound Quality:",   // lab_quality   - Sound quality
+    "Footstep Sounds:", // lab_footsteps - Play footsteps
+    ""
+};
+
+void OptionsAudio_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
+}
+
+void OptionsAudio_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    end_widgets( w_labels,  SDL_arraysize( w_labels ) );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static OptionsAudioState_t *OptionsAudioState_ctor( OptionsAudioState_t * ps )
+//static OptionsAudio_data *OptionsAudioState_ctor( OptionsAudio_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -4505,7 +4620,7 @@ int doOptionsGame( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsAudioState_t *OptionsAudioState_dtor( OptionsAudioState_t * ps )
+//static OptionsAudio_data *OptionsAudioState_dtor( OptionsAudio_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -4515,7 +4630,7 @@ int doOptionsGame( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsAudioState_t * doOptionsAudio_begin( OptionsAudioState_t * ps, float deltaTime )
+//static OptionsAudio_data * OptionsAudio_data::begin( OptionsAudio_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -4527,7 +4642,7 @@ int doOptionsGame( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsAudioState_t * doOptionsAudio_entering( OptionsAudioState_t * ps, float deltaTime )
+//static OptionsAudio_data * OptionsAudio_data::entering( OptionsAudio_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -4537,7 +4652,7 @@ int doOptionsGame( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsAudioState_t * doOptionsAudio_running( OptionsAudioState_t * ps, float deltaTime )
+//static OptionsAudio_data * OptionsAudio_data::running( OptionsAudio_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -4547,7 +4662,7 @@ int doOptionsGame( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsAudioState_t * doOptionsAudio_leaving( OptionsAudioState_t * ps, float deltaTime )
+//static OptionsAudio_data * OptionsAudio_data::leaving( OptionsAudio_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -4557,7 +4672,7 @@ int doOptionsGame( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsAudioState_t * doOptionsAudio_finish( OptionsAudioState_t * ps, float deltaTime )
+//static OptionsAudio_data * OptionsAudio_data::finish( OptionsAudio_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -4569,7 +4684,7 @@ int doOptionsGame( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_sound_on( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsAudio_data::update_sound_on( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4577,7 +4692,7 @@ bool_t doOptionsAudio_update_sound_on( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_sound_volume( ui_Widget * but_ptr, Uint8 val )
+bool_t OptionsAudio_data::update_sound_volume( ui_Widget * but_ptr, Uint8 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4585,7 +4700,7 @@ bool_t doOptionsAudio_update_sound_volume( ui_Widget * but_ptr, Uint8 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_music_on( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsAudio_data::update_music_on( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4593,7 +4708,7 @@ bool_t doOptionsAudio_update_music_on( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_music_volume( ui_Widget * but_ptr, Uint8 val )
+bool_t OptionsAudio_data::update_music_volume( ui_Widget * but_ptr, Uint8 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4601,7 +4716,7 @@ bool_t doOptionsAudio_update_music_volume( ui_Widget * but_ptr, Uint8 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_sound_channels( ui_Widget * but_ptr, Uint16 val )
+bool_t OptionsAudio_data::update_sound_channels( ui_Widget * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4609,7 +4724,7 @@ bool_t doOptionsAudio_update_sound_channels( ui_Widget * but_ptr, Uint16 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_buffer_size( ui_Widget * but_ptr, Uint16 val )
+bool_t OptionsAudio_data::update_buffer_size( ui_Widget * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4617,7 +4732,7 @@ bool_t doOptionsAudio_update_buffer_size( ui_Widget * but_ptr, Uint16 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_quality( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsAudio_data::update_quality( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4625,7 +4740,7 @@ bool_t doOptionsAudio_update_quality( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_footfall( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsAudio_data::update_footfall( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4633,7 +4748,7 @@ bool_t doOptionsAudio_update_footfall( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsAudio_update_settings( ego_config_data_t * pcfg )
+bool_t OptionsAudio_data::update_settings( ego_config_data_t * pcfg )
 {
     if ( NULL == pcfg ) return bfalse;
 
@@ -4658,14 +4773,9 @@ bool_t doOptionsAudio_update_settings( ego_config_data_t * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-int doOptionsAudio( float deltaTime )
+int OptionsAudio_data::run( double deltaTime )
 {
     /// @details Audio options menu
-
-    static int menuState = MM_Begin;
-    static oglx_texture_t background;
-    static int menuChoice = 0;
-    static mnu_SlidyButtons but_state;
 
     bool_t old_sound_allowed       = cfg.sound_allowed;
     Uint8  old_sound_volume        = cfg.sound_volume;
@@ -4675,68 +4785,6 @@ int doOptionsAudio( float deltaTime )
     Uint16 old_sound_buffer_size   = cfg.sound_buffer_size;
     bool_t old_sound_highquality   = cfg.sound_highquality;
     bool_t old_sound_footfall      = cfg.sound_footfall;
-
-    // button widgets
-    enum e_buttons
-    {
-        but_on,
-        but_vol,
-        but_mus_on,
-        but_mus_vol,
-        but_channels,
-        but_buffer,
-        but_quality,
-        but_footsteps,
-        but_save,
-        but_count,
-        but_sz_count
-    };
-
-    static const char *sz_buttons[but_sz_count] =
-    {
-        "N/A",              // but_on
-        "N/A",              // but_vol
-        "N/A",              // but_mus_on
-        "N/A",              // but_mus_vol
-        "N/A",              // but_channels
-        "N/A",              // but_buffer
-        "N/A",              // but_quality
-        "N/A",              // but_footsteps
-        "Save Settings",    // but_save
-        ""
-    };
-
-    static ui_Widget w_buttons[but_count];
-
-    // label widgets
-    enum e_labels
-    {
-        lab_on,
-        lab_vol,
-        lab_mus_on,
-        lab_mus_vol,
-        lab_channels,
-        lab_buffer,
-        lab_quality,
-        lab_footsteps,
-        lab_count,
-        lab_sz_count
-    };
-
-    static const char *sz_labels[lab_sz_count] =
-    {
-        "Sound:",           // lab_on        - Enable sound
-        "Sound Volume:",    // lab_vol       - Sound volume
-        "Music:",           // lab_mus_on    - Enable music
-        "Music Volume:",    // lab_mus_vol   - Music volume
-        "Sound Channels:",  // lab_channels  - Sound channels
-        "Buffer Size:",     // lab_buffer    - Sound buffer
-        "Sound Quality:",   // lab_quality   - Sound quality
-        "Footstep Sounds:", // lab_footsteps - Play footsteps
-        ""
-    };
-
-    static ui_Widget w_labels[lab_count];
 
     int result = 0;
     int cnt;
@@ -4750,14 +4798,12 @@ int doOptionsAudio( float deltaTime )
                 // set up the w_buttons
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
-                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centered, NULL, sz_buttons[cnt] );
                 }
 
                 // set up the w_labels
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    ui_Widget::reset( w_labels + cnt );
                     ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
@@ -4811,14 +4857,14 @@ int doOptionsAudio( float deltaTime )
                 old_sound_footfall      = cfg.sound_footfall;
 
                 // update button text
-                doOptionsAudio_update_sound_on( w_buttons + but_on,        cfg.sound_allowed );
-                doOptionsAudio_update_sound_volume( w_buttons + but_vol,       cfg.sound_volume );
-                doOptionsAudio_update_music_on( w_buttons + but_mus_on,    cfg.music_allowed );
-                doOptionsAudio_update_music_volume( w_buttons + but_mus_vol,   cfg.music_volume );
-                doOptionsAudio_update_sound_channels( w_buttons + but_channels,  cfg.sound_channel_count );
-                doOptionsAudio_update_buffer_size( w_buttons + but_buffer,    cfg.sound_buffer_size );
-                doOptionsAudio_update_quality( w_buttons + but_quality,   cfg.sound_highquality );
-                doOptionsAudio_update_footfall( w_buttons + but_footsteps, cfg.sound_footfall );
+                OptionsAudio_data::update_sound_on( w_buttons + but_on,        cfg.sound_allowed );
+                OptionsAudio_data::update_sound_volume( w_buttons + but_vol,       cfg.sound_volume );
+                OptionsAudio_data::update_music_on( w_buttons + but_mus_on,    cfg.music_allowed );
+                OptionsAudio_data::update_music_volume( w_buttons + but_mus_vol,   cfg.music_volume );
+                OptionsAudio_data::update_sound_channels( w_buttons + but_channels,  cfg.sound_channel_count );
+                OptionsAudio_data::update_buffer_size( w_buttons + but_buffer,    cfg.sound_buffer_size );
+                OptionsAudio_data::update_quality( w_buttons + but_quality,   cfg.sound_highquality );
+                OptionsAudio_data::update_footfall( w_buttons + but_footsteps, cfg.sound_footfall );
             }
 
             // Fall trough
@@ -4846,7 +4892,7 @@ int doOptionsAudio( float deltaTime )
                     if ( old_sound_allowed != cfg.sound_allowed )
                     {
                         old_sound_allowed = cfg.sound_allowed;
-                        doOptionsAudio_update_sound_on( w_buttons + but_on,        cfg.sound_allowed );
+                        OptionsAudio_data::update_sound_on( w_buttons + but_on,        cfg.sound_allowed );
                     }
                 }
 
@@ -4859,7 +4905,7 @@ int doOptionsAudio( float deltaTime )
                     if ( old_sound_volume != cfg.sound_volume )
                     {
                         old_sound_volume = cfg.sound_volume;
-                        doOptionsAudio_update_sound_volume( w_buttons + but_vol,       cfg.sound_volume );
+                        OptionsAudio_data::update_sound_volume( w_buttons + but_vol,       cfg.sound_volume );
                     }
                 }
 
@@ -4871,7 +4917,7 @@ int doOptionsAudio( float deltaTime )
                     if ( old_music_allowed != cfg.music_allowed )
                     {
                         old_music_allowed = cfg.music_allowed;
-                        doOptionsAudio_update_music_on( w_buttons + but_mus_on,    cfg.music_allowed );
+                        OptionsAudio_data::update_music_on( w_buttons + but_mus_on,    cfg.music_allowed );
                     }
                 }
 
@@ -4884,7 +4930,7 @@ int doOptionsAudio( float deltaTime )
                     if ( old_music_volume != cfg.music_volume )
                     {
                         old_music_volume = cfg.music_volume;
-                        doOptionsAudio_update_music_volume( w_buttons + but_mus_vol,   cfg.music_volume );
+                        OptionsAudio_data::update_music_volume( w_buttons + but_mus_vol,   cfg.music_volume );
                     }
                 }
 
@@ -4908,7 +4954,7 @@ int doOptionsAudio( float deltaTime )
                     if ( old_sound_channel_count != cfg.sound_channel_count )
                     {
                         old_sound_buffer_size = cfg.sound_channel_count;
-                        doOptionsAudio_update_sound_channels( w_buttons + but_channels,  cfg.sound_channel_count );
+                        OptionsAudio_data::update_sound_channels( w_buttons + but_channels,  cfg.sound_channel_count );
                     }
                 }
 
@@ -4932,7 +4978,7 @@ int doOptionsAudio( float deltaTime )
                     if ( old_sound_buffer_size != cfg.sound_buffer_size )
                     {
                         old_sound_buffer_size = cfg.sound_buffer_size;
-                        doOptionsAudio_update_buffer_size( w_buttons + but_buffer,    cfg.sound_buffer_size );
+                        OptionsAudio_data::update_buffer_size( w_buttons + but_buffer,    cfg.sound_buffer_size );
                     }
                 }
 
@@ -4944,7 +4990,7 @@ int doOptionsAudio( float deltaTime )
                     if ( old_sound_highquality != cfg.sound_highquality )
                     {
                         old_sound_highquality = cfg.sound_highquality;
-                        doOptionsAudio_update_quality( w_buttons + but_quality,   cfg.sound_highquality );
+                        OptionsAudio_data::update_quality( w_buttons + but_quality,   cfg.sound_highquality );
                     }
                 }
 
@@ -4956,14 +5002,14 @@ int doOptionsAudio( float deltaTime )
                     if ( old_sound_footfall != cfg.sound_footfall )
                     {
                         old_sound_footfall = cfg.sound_footfall;
-                        doOptionsAudio_update_footfall( w_buttons + but_footsteps, cfg.sound_footfall );
+                        OptionsAudio_data::update_footfall( w_buttons + but_footsteps, cfg.sound_footfall );
                     }
                 }
 
                 // Save settings
                 if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
                 {
-                    doOptionsAudio_update_settings( &cfg );
+                    OptionsAudio_data::update_settings( &cfg );
                     menuState = MM_Leaving;
                 }
 
@@ -4990,20 +5036,6 @@ int doOptionsAudio( float deltaTime )
 
         case MM_Finish:
             {
-                // Free the background texture; don't need to hold onto it
-                oglx_texture_Release( &background );
-
-                // release the widgets
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
-                }
-
-                for ( cnt = 0; cnt < lab_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_labels + cnt );
-                }
-
                 // Set the next menu to load
                 result = 1;
             }
@@ -5022,14 +5054,121 @@ int doOptionsAudio( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct OptionsVideoState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct OptionsVideo_data : public mnu_state_data
+{
+    bool_t widescreen;
+    float  aspect_ratio;
+    STRING sz_screen_size;
+
+    static const int max_anisotropic = 16;
+
+    enum e_buttons
+    {
+        but_antialiasing =  0,  // Antialaising
+        but_dither           ,  // Fast & ugly
+        but_fullscreen       ,  // Fullscreen
+        but_reflections      ,  // Reflections
+        but_filtering        ,  // Texture filtering
+        but_shadow           ,  // Shadows
+        but_zbuffer          ,  // Z bit
+        but_maxlights        ,  // Fog
+        but_3dfx             ,  // Special effects
+        but_multiwater       ,  // Multi water layer
+        but_widescreen       ,  // Widescreen
+        but_screensize       ,  // Screen resolution
+        but_maxparticles     ,  // Max particles
+        but_save             ,
+        but_count,
+        but_sz_count
+    };
+
+    MENU_BUTTONS( but_count );
+
+    enum e_labels
+    {
+        lab_antialiasing = but_antialiasing,
+        lab_dither       = but_dither,
+        lab_fullscreen   = but_fullscreen,
+        lab_reflections  = but_reflections,
+        lab_filtering    = but_filtering,
+        lab_shadow       = but_shadow,
+        lab_zbuffer      = but_zbuffer,
+        lab_maxlights    = but_maxlights,
+        lab_3dfx         = but_3dfx,
+        lab_multiwater   = but_multiwater,
+        lab_widescreen   = but_widescreen,
+        lab_screensize   = but_screensize,
+        lab_maxparticles = but_maxparticles,
+        lab_count,
+        lab_sz_count
+    };
+
+    // button widgets
+    MENU_LABELS( lab_count );
+
+    void begin( int state = MM_Begin );
+    void end();
+    int run( double deltaTime );
+
+    bool_t coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio );
+    int    fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size );
+    bool_t update_antialiasing( ui_Widget * but_ptr, Uint8 val );
+    bool_t update_texture_filter( ui_Widget * but_ptr, Uint8 val );
+    bool_t update_dither( ui_Widget * but_ptr, bool_t val );
+    bool_t update_fullscreen( ui_Widget * but_ptr, bool_t val );
+    bool_t update_reflections( ui_Widget * but_ptr, bool_t allowed, bool_t do_prt, Uint8 fade );
+    bool_t update_shadows( ui_Widget * but_ptr, bool_t allowed, bool_t sprite );
+    bool_t update_z_buffer( ui_Widget * but_ptr, int val );
+    bool_t update_max_lights( ui_Widget * but_ptr, int val );
+    bool_t update_3d_effects( ui_Widget * but_ptr, bool_t use_phong, bool_t use_perspective, bool_t overlay_allowed, bool_t background_allowed );
+    bool_t update_water_quality( ui_Widget * but_ptr, bool_t val );
+    bool_t update_max_particles( ui_Widget * but_ptr, Uint16 val );
+    bool_t update_widescreen( ui_Widget * but_ptr, bool_t val );
+    bool_t update_resolution( ui_Widget * but_ptr, int x, int y );
+    bool_t update_settings( ego_config_data_t * pcfg );
+
+};
+
+const char *OptionsVideo_data::sz_buttons[OptionsVideo_data::but_sz_count];
+
+const char *OptionsVideo_data::sz_labels[OptionsVideo_data::lab_sz_count] =
+{
+    "Antialiasing:",            // lab_antialiasing
+    "Dithering:",               // lab_dither
+    "Fullscreen:",              // lab_fullscreen
+    "Reflections:",             // lab_reflections
+    "Texture Filtering:",        // lab_filtering
+    "Shadows:",                 // lab_shadow
+    "Z Bit:",                   // lab_zbuffer
+    "Max Lights:",              // lab_maxlights
+    "Special Effects:",         // lab_3dfx
+    "Water Quality:",           // lab_multiwater
+    "Widescreen:",              // lab_widescreen
+    "Resolution:",              // lab_screensize
+    "Max Particles:",           // lab_maxparticles
+    ""
+};
+
+void OptionsVideo_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
+
+    sz_screen_size[0] = CSTR_END;
+}
+
+void OptionsVideo_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    end_widgets( w_labels,  SDL_arraysize( w_labels ) );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static OptionsVideoState_t *OptionsVideoState_ctor( OptionsVideoState_t * ps )
+//static OptionsVideo_data *OptionsVideoState_ctor( OptionsVideo_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -5039,7 +5178,7 @@ int doOptionsAudio( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsVideoState_t *OptionsVideoState_dtor( OptionsVideoState_t * ps )
+//static OptionsVideo_data *OptionsVideoState_dtor( OptionsVideo_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -5049,7 +5188,7 @@ int doOptionsAudio( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsVideoState_t * doOptionsVideo_begin( OptionsVideoState_t * ps, float deltaTime )
+//static OptionsVideo_data * OptionsVideo_data::begin( OptionsVideo_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -5061,7 +5200,7 @@ int doOptionsAudio( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsVideoState_t * doOptionsVideo_entering( OptionsVideoState_t * ps, float deltaTime )
+//static OptionsVideo_data * OptionsVideo_data::entering( OptionsVideo_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -5071,7 +5210,7 @@ int doOptionsAudio( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsVideoState_t * doOptionsVideo_running( OptionsVideoState_t * ps, float deltaTime )
+//static OptionsVideo_data * OptionsVideo_data::running( OptionsVideo_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -5081,7 +5220,7 @@ int doOptionsAudio( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsVideoState_t * doOptionsVideo_leaving( OptionsVideoState_t * ps, float deltaTime )
+//static OptionsVideo_data * OptionsVideo_data::leaving( OptionsVideo_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -5091,7 +5230,7 @@ int doOptionsAudio( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static OptionsVideoState_t * doOptionsVideo_finish( OptionsVideoState_t * ps, float deltaTime )
+//static OptionsVideo_data * OptionsVideo_data::finish( OptionsVideo_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -5103,7 +5242,7 @@ int doOptionsAudio( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsVideo_coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio )
+bool_t OptionsVideo_data::coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio )
 {
     /// @details BB@> coerce the aspect ratio of the screen to some standard size
 
@@ -5144,7 +5283,7 @@ bool_t doOptionsVideo_coerce_aspect_ratio( int width, int height, float * pratio
 }
 
 //--------------------------------------------------------------------------------------------
-int doOptionsVideo_fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
+int OptionsVideo_data::fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
 {
     STRING     sz_aspect_ratio = "unknown";
     float      req_screen_area  = ( float )pcfg->scrx_req * ( float )pcfg->scry_req;
@@ -5153,7 +5292,7 @@ int doOptionsVideo_fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_scr
 
     float       aspect_ratio;
 
-    doOptionsVideo_coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
+    OptionsVideo_data::coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
 
     found_rect = NULL;
     pprect = psdl_scr->video_mode_list;
@@ -5243,7 +5382,7 @@ int doOptionsVideo_fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_scr
 
                 // unknown
             default:
-                doOptionsVideo_coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
+                OptionsVideo_data::coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
                 break;
         }
     }
@@ -5254,7 +5393,7 @@ int doOptionsVideo_fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_scr
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_antialiasing( ui_Widget * but_ptr, Uint8 val )
+bool_t OptionsVideo_data::update_antialiasing( ui_Widget * but_ptr, Uint8 val )
 {
     bool_t retval = bfalse;
 
@@ -5273,7 +5412,7 @@ bool_t doVideoOptions_update_antialiasing( ui_Widget * but_ptr, Uint8 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_texture_filter( ui_Widget * but_ptr, Uint8 val )
+bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val )
 {
     bool_t retval = bfalse;
 
@@ -5320,7 +5459,7 @@ bool_t doVideoOptions_update_texture_filter( ui_Widget * but_ptr, Uint8 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_dither( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsVideo_data::update_dither( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5328,7 +5467,7 @@ bool_t doVideoOptions_update_dither( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_fullscreen( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsVideo_data::update_fullscreen( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5336,7 +5475,7 @@ bool_t doVideoOptions_update_fullscreen( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_reflections( ui_Widget * but_ptr, bool_t allowed, bool_t do_prt, Uint8 fade )
+bool_t OptionsVideo_data::update_reflections( ui_Widget * but_ptr, bool_t allowed, bool_t do_prt, Uint8 fade )
 {
     bool_t retval = bfalse;
 
@@ -5363,7 +5502,7 @@ bool_t doVideoOptions_update_reflections( ui_Widget * but_ptr, bool_t allowed, b
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_shadows( ui_Widget * but_ptr, bool_t allowed, bool_t sprite )
+bool_t OptionsVideo_data::update_shadows( ui_Widget * but_ptr, bool_t allowed, bool_t sprite )
 {
     bool_t retval = bfalse;
 
@@ -5386,7 +5525,7 @@ bool_t doVideoOptions_update_shadows( ui_Widget * but_ptr, bool_t allowed, bool_
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_z_buffer( ui_Widget * but_ptr, int val )
+bool_t OptionsVideo_data::update_z_buffer( ui_Widget * but_ptr, int val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5394,7 +5533,7 @@ bool_t doVideoOptions_update_z_buffer( ui_Widget * but_ptr, int val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_max_lights( ui_Widget * but_ptr, int val )
+bool_t OptionsVideo_data::update_max_lights( ui_Widget * but_ptr, int val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5402,7 +5541,7 @@ bool_t doVideoOptions_update_max_lights( ui_Widget * but_ptr, int val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_3d_effects( ui_Widget * but_ptr, bool_t use_phong, bool_t use_perspective, bool_t overlay_allowed, bool_t background_allowed )
+bool_t OptionsVideo_data::update_3d_effects( ui_Widget * but_ptr, bool_t use_phong, bool_t use_perspective, bool_t overlay_allowed, bool_t background_allowed )
 {
     bool_t retval = bfalse;
 
@@ -5429,7 +5568,7 @@ bool_t doVideoOptions_update_3d_effects( ui_Widget * but_ptr, bool_t use_phong, 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_water_quality( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsVideo_data::update_water_quality( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5437,7 +5576,7 @@ bool_t doVideoOptions_update_water_quality( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_max_particles( ui_Widget * but_ptr, Uint16 val )
+bool_t OptionsVideo_data::update_max_particles( ui_Widget * but_ptr, Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5445,7 +5584,7 @@ bool_t doVideoOptions_update_max_particles( ui_Widget * but_ptr, Uint16 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_widescreen( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsVideo_data::update_widescreen( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5453,7 +5592,7 @@ bool_t doVideoOptions_update_widescreen( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doVideoOptions_update_resolution( ui_Widget * but_ptr, int x, int y )
+bool_t OptionsVideo_data::update_resolution( ui_Widget * but_ptr, int x, int y )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5461,7 +5600,7 @@ bool_t doVideoOptions_update_resolution( ui_Widget * but_ptr, int x, int y )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t doOptionsVideo_update_settings( ego_config_data_t * pcfg )
+bool_t OptionsVideo_data::update_settings( ego_config_data_t * pcfg )
 {
     if ( NULL == pcfg ) return bfalse;
 
@@ -5479,83 +5618,9 @@ bool_t doOptionsVideo_update_settings( ego_config_data_t * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-int doOptionsVideo( float deltaTime )
+int OptionsVideo_data::run( double deltaTime )
 {
     /// @details Video options menu
-
-    const int max_anisotropic = 16;
-
-    static mnu_SlidyButtons but_state;
-
-    enum e_buttons
-    {
-        but_antialiasing =  0,  // Antialaising
-        but_dither           ,  // Fast & ugly
-        but_fullscreen       ,  // Fullscreen
-        but_reflections      ,  // Reflections
-        but_filtering        ,  // Texture filtering
-        but_shadow           ,  // Shadows
-        but_zbuffer          ,  // Z bit
-        but_maxlights        ,  // Fog
-        but_3dfx             ,  // Special effects
-        but_multiwater       ,  // Multi water layer
-        but_widescreen       ,  // Widescreen
-        but_screensize       ,  // Screen resolution
-        but_maxparticles     ,  // Max particles
-        but_save             ,
-        but_count,
-        but_sz_count
-    };
-
-    static ui_Widget w_buttons[but_count];
-    static const char *sz_buttons[but_sz_count];
-
-    enum e_labels
-    {
-        lab_antialiasing = but_antialiasing,
-        lab_dither       = but_dither,
-        lab_fullscreen   = but_fullscreen,
-        lab_reflections  = but_reflections,
-        lab_filtering    = but_filtering,
-        lab_shadow       = but_shadow,
-        lab_zbuffer      = but_zbuffer,
-        lab_maxlights    = but_maxlights,
-        lab_3dfx         = but_3dfx,
-        lab_multiwater   = but_multiwater,
-        lab_widescreen   = but_widescreen,
-        lab_screensize   = but_screensize,
-        lab_maxparticles = but_maxparticles,
-        lab_count,
-        lab_sz_count
-    };
-
-    // button widgets
-    static ui_Widget w_labels [lab_count];
-    static const char *sz_labels[lab_sz_count] =
-    {
-        "Antialiasing:",            // lab_antialiasing
-        "Dithering:",               // lab_dither
-        "Fullscreen:",              // lab_fullscreen
-        "Reflections:",             // lab_reflections
-        "Texture Filtering:",        // lab_filtering
-        "Shadows:",                 // lab_shadow
-        "Z Bit:",                   // lab_zbuffer
-        "Max Lights:",              // lab_maxlights
-        "Special Effects:",         // lab_3dfx
-        "Water Quality:",           // lab_multiwater
-        "Widescreen:",              // lab_widescreen
-        "Resolution:",              // lab_screensize
-        "Max Particles:",           // lab_maxparticles
-        ""
-    };
-
-    static int menuState = MM_Begin;
-    static oglx_texture_t background;
-    static int    menuChoice = 0;
-
-    static bool_t widescreen;
-    static float  aspect_ratio;
-    static STRING sz_screen_size;
 
     int cnt, result = 0;
 
@@ -5578,14 +5643,12 @@ int doOptionsVideo( float deltaTime )
                 for ( cnt = 0; cnt < but_count; cnt++ )
                 {
                     // clear the data
-                    ui_Widget::reset( w_buttons + cnt, cnt );
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
                 // set up the w_labels
                 for ( cnt = 0; cnt < lab_count; cnt++ )
                 {
-                    ui_Widget::reset( w_labels + cnt );
                     ui_Widget::set_text( w_labels + cnt, ui_just_centerleft, menuFont, sz_labels[cnt] );
                 }
 
@@ -5673,7 +5736,7 @@ int doOptionsVideo( float deltaTime )
 
                 if ( cfg.fullscreen_req && NULL != sdl_scr.video_mode_list )
                 {
-                    doOptionsVideo_fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
+                    OptionsVideo_data::fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
 
                     aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
                     widescreen = ( aspect_ratio > ( 4.0f / 3.0f ) );
@@ -5685,32 +5748,32 @@ int doOptionsVideo( float deltaTime )
                 }
 
                 // Load all the current video settings
-                doVideoOptions_update_antialiasing( w_buttons + but_antialiasing, cfg.multisamples );
+                OptionsVideo_data::update_antialiasing( w_buttons + but_antialiasing, cfg.multisamples );
 
                 // Texture filtering
-                doVideoOptions_update_texture_filter( w_buttons + but_filtering, cfg.texturefilter_req );
+                OptionsVideo_data::update_texture_filter( w_buttons + but_filtering, cfg.texturefilter_req );
 
-                doVideoOptions_update_dither( w_buttons + but_dither, cfg.use_dither );
+                OptionsVideo_data::update_dither( w_buttons + but_dither, cfg.use_dither );
 
-                doVideoOptions_update_fullscreen( w_buttons + but_fullscreen, cfg.fullscreen_req );
+                OptionsVideo_data::update_fullscreen( w_buttons + but_fullscreen, cfg.fullscreen_req );
 
-                doVideoOptions_update_reflections( w_buttons + but_reflections, cfg.reflect_allowed, cfg.reflect_prt, cfg.reflect_fade );
+                OptionsVideo_data::update_reflections( w_buttons + but_reflections, cfg.reflect_allowed, cfg.reflect_prt, cfg.reflect_fade );
 
-                doVideoOptions_update_shadows( w_buttons + but_shadow, cfg.shadow_allowed, cfg.shadow_sprite );
+                OptionsVideo_data::update_shadows( w_buttons + but_shadow, cfg.shadow_allowed, cfg.shadow_sprite );
 
-                doVideoOptions_update_z_buffer( w_buttons + but_zbuffer, cfg.scrz_req );
+                OptionsVideo_data::update_z_buffer( w_buttons + but_zbuffer, cfg.scrz_req );
 
-                doVideoOptions_update_max_lights( w_buttons + but_maxlights, cfg.dyna_count_req );
+                OptionsVideo_data::update_max_lights( w_buttons + but_maxlights, cfg.dyna_count_req );
 
-                doVideoOptions_update_3d_effects( w_buttons + but_3dfx, cfg.use_phong, cfg.use_perspective, cfg.overlay_allowed, cfg.background_allowed );
+                OptionsVideo_data::update_3d_effects( w_buttons + but_3dfx, cfg.use_phong, cfg.use_perspective, cfg.overlay_allowed, cfg.background_allowed );
 
-                doVideoOptions_update_water_quality( w_buttons + but_multiwater, cfg.twolayerwater_allowed );
+                OptionsVideo_data::update_water_quality( w_buttons + but_multiwater, cfg.twolayerwater_allowed );
 
-                doVideoOptions_update_max_particles( w_buttons + but_maxparticles, cfg.particle_count_req );
+                OptionsVideo_data::update_max_particles( w_buttons + but_maxparticles, cfg.particle_count_req );
 
-                doVideoOptions_update_widescreen( w_buttons + but_widescreen, widescreen );
+                OptionsVideo_data::update_widescreen( w_buttons + but_widescreen, widescreen );
 
-                doVideoOptions_update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
+                OptionsVideo_data::update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
             }
 
             menuState = MM_Running;
@@ -5749,7 +5812,7 @@ int doOptionsVideo( float deltaTime )
                 if ( cfg.multisamples > EGO_MAX_MULTISAMPLES ) cfg.multisamples = 0;
 
                 // update the button
-                doVideoOptions_update_antialiasing( w_buttons + but_antialiasing, cfg.multisamples );
+                OptionsVideo_data::update_antialiasing( w_buttons + but_antialiasing, cfg.multisamples );
             }
 
             // Dithering
@@ -5758,7 +5821,7 @@ int doOptionsVideo( float deltaTime )
             {
                 cfg.use_dither = !cfg.use_dither;
 
-                doVideoOptions_update_dither( w_buttons + but_dither, cfg.use_dither );
+                OptionsVideo_data::update_dither( w_buttons + but_dither, cfg.use_dither );
             }
 
             // Fullscreen
@@ -5767,7 +5830,7 @@ int doOptionsVideo( float deltaTime )
             {
                 cfg.fullscreen_req = !cfg.fullscreen_req;
 
-                doVideoOptions_update_fullscreen( w_buttons + but_fullscreen, cfg.fullscreen_req );
+                OptionsVideo_data::update_fullscreen( w_buttons + but_fullscreen, cfg.fullscreen_req );
             }
 
             // Reflection
@@ -5796,7 +5859,7 @@ int doOptionsVideo( float deltaTime )
                     cfg.reflect_prt     = bfalse;
                 }
 
-                doVideoOptions_update_reflections( w_buttons + but_reflections, cfg.reflect_allowed, cfg.reflect_prt, cfg.reflect_fade );
+                OptionsVideo_data::update_reflections( w_buttons + but_reflections, cfg.reflect_allowed, cfg.reflect_prt, cfg.reflect_fade );
             }
 
             // Texture Filtering
@@ -5812,7 +5875,7 @@ int doOptionsVideo( float deltaTime )
                     cfg.texturefilter_req = TX_UNFILTERED;
                 }
 
-                doVideoOptions_update_texture_filter( w_buttons + but_filtering, cfg.texturefilter_req );
+                OptionsVideo_data::update_texture_filter( w_buttons + but_filtering, cfg.texturefilter_req );
             }
 
             // Shadows
@@ -5837,7 +5900,7 @@ int doOptionsVideo( float deltaTime )
                     }
                 }
 
-                doVideoOptions_update_shadows( w_buttons + but_shadow, cfg.shadow_allowed, cfg.shadow_sprite );
+                OptionsVideo_data::update_shadows( w_buttons + but_shadow, cfg.shadow_allowed, cfg.shadow_sprite );
             }
 
             // Z bit
@@ -5859,7 +5922,7 @@ int doOptionsVideo( float deltaTime )
                 if ( cfg.scrz_req > 32 ) cfg.scrz_req = 8;            // Others can have up to 32 bit!
 #endif
 
-                doVideoOptions_update_z_buffer( w_buttons + but_zbuffer, cfg.scrz_req );
+                OptionsVideo_data::update_z_buffer( w_buttons + but_zbuffer, cfg.scrz_req );
             }
 
             // Max dynamic lights
@@ -5872,7 +5935,7 @@ int doOptionsVideo( float deltaTime )
 
                 if ( cfg.dyna_count_req > MAX_DYNA ) cfg.dyna_count_req = 8;
 
-                doVideoOptions_update_max_lights( w_buttons + but_maxlights, cfg.dyna_count_req );
+                OptionsVideo_data::update_max_lights( w_buttons + but_maxlights, cfg.dyna_count_req );
             }
 
             // Perspective correction, overlay, underlay and Phong mapping
@@ -5900,7 +5963,7 @@ int doOptionsVideo( float deltaTime )
                     cfg.background_allowed = btrue;
                 }
 
-                doVideoOptions_update_3d_effects( w_buttons + but_3dfx, cfg.use_phong, cfg.use_perspective, cfg.overlay_allowed, cfg.background_allowed );
+                OptionsVideo_data::update_3d_effects( w_buttons + but_3dfx, cfg.use_phong, cfg.use_perspective, cfg.overlay_allowed, cfg.background_allowed );
             }
 
             // Water Quality
@@ -5909,7 +5972,7 @@ int doOptionsVideo( float deltaTime )
             {
                 cfg.twolayerwater_allowed = !cfg.twolayerwater_allowed;
 
-                doVideoOptions_update_water_quality( w_buttons + but_multiwater, cfg.twolayerwater_allowed );
+                OptionsVideo_data::update_water_quality( w_buttons + but_multiwater, cfg.twolayerwater_allowed );
             }
 
             // Max particles
@@ -5922,7 +5985,7 @@ int doOptionsVideo( float deltaTime )
 
                 if ( cfg.particle_count_req > MAX_PRT ) cfg.particle_count_req = 256;
 
-                doVideoOptions_update_max_particles( w_buttons + but_maxparticles, cfg.particle_count_req );
+                OptionsVideo_data::update_max_particles( w_buttons + but_maxparticles, cfg.particle_count_req );
             }
 
             // Widescreen
@@ -5951,8 +6014,8 @@ int doOptionsVideo( float deltaTime )
                     cfg.scry_req = 600;
                 }
 
-                doVideoOptions_update_widescreen( w_buttons + but_widescreen, widescreen );
-                doVideoOptions_update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
+                OptionsVideo_data::update_widescreen( w_buttons + but_widescreen, widescreen );
+                OptionsVideo_data::update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
             }
 
             // Screen Resolution
@@ -5987,7 +6050,7 @@ int doOptionsVideo( float deltaTime )
                 if ( cfg.fullscreen_req && NULL != sdl_scr.video_mode_list )
                 {
                     // coerce the screen size to a valid fullscreen mode
-                    doOptionsVideo_fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
+                    OptionsVideo_data::fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
                 }
 
                 aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
@@ -5995,14 +6058,14 @@ int doOptionsVideo( float deltaTime )
                 // 1.539 is "half way" between normal aspect ratio (4/3) and anamorphic (16/9)
                 widescreen = ( aspect_ratio > ( 1.539f ) );
 
-                doVideoOptions_update_widescreen( w_buttons + but_widescreen, widescreen );
-                doVideoOptions_update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
+                OptionsVideo_data::update_widescreen( w_buttons + but_widescreen, widescreen );
+                OptionsVideo_data::update_resolution( w_buttons + but_screensize, cfg.scrx_req, cfg.scry_req );
             }
 
             // Save settings button
             if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
             {
-                doOptionsVideo_update_settings( &cfg );
+                OptionsVideo_data::update_settings( &cfg );
 
                 menuChoice = 1;
             }
@@ -6036,20 +6099,6 @@ int doOptionsVideo( float deltaTime )
 
         case MM_Finish:
             {
-                // Free the background texture; don't need to hold onto it
-                oglx_texture_Release( &background );
-
-                // free the widgets
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
-                }
-
-                for ( cnt = 0; cnt < lab_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_labels  + cnt );
-                }
-
                 // Set the next menu to load
                 result = menuChoice;
             }
@@ -6068,14 +6117,35 @@ int doOptionsVideo( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct ShowResultsState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct ShowResults_data : public mnu_state_data
+{
+    TTF_Font * ttf_ptr;
+    int        count;
+    char     * game_hint;
+    char       buffer[1024];
+
+    void begin( int state = MM_Begin );
+    void end();
+    int run( double deltaTime );
+};
+
+void ShowResults_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    ttf_ptr   = NULL;
+    game_hint = "wink ;)";
+
+    buffer[0] = CSTR_END;
+}
+
+void ShowResults_data::end()
+{
+    mnu_state_data::end();
+}
+
 ////--------------------------------------------------------------------------------------------
-//static ShowResultsState_t *ShowResultsState_ctor( ShowResultsState_t * ps )
+//static ShowResults_data *ShowResultsState_ctor( ShowResults_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6085,7 +6155,7 @@ int doOptionsVideo( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowResultsState_t *ShowResultsState_dtor( ShowResultsState_t * ps )
+//static ShowResults_data *ShowResultsState_dtor( ShowResults_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6095,7 +6165,7 @@ int doOptionsVideo( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowResultsState_t * doShowResults_begin( ShowResultsState_t * ps, float deltaTime )
+//static ShowResults_data * ShowResults_data::begin( ShowResults_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6107,7 +6177,7 @@ int doOptionsVideo( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowResultsState_t * doShowResults_entering( ShowResultsState_t * ps, float deltaTime )
+//static ShowResults_data * ShowResults_data::entering( ShowResults_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6117,7 +6187,7 @@ int doOptionsVideo( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowResultsState_t * doShowResults_running( ShowResultsState_t * ps, float deltaTime )
+//static ShowResults_data * ShowResults_data::running( ShowResults_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6127,7 +6197,7 @@ int doOptionsVideo( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowResultsState_t * doShowResults_leaving( ShowResultsState_t * ps, float deltaTime )
+//static ShowResults_data * ShowResults_data::leaving( ShowResults_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6137,7 +6207,7 @@ int doOptionsVideo( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowResultsState_t * doShowResults_finish( ShowResultsState_t * ps, float deltaTime )
+//static ShowResults_data * ShowResults_data::finish( ShowResults_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6149,15 +6219,8 @@ int doOptionsVideo( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-int doShowResults( float deltaTime )
+int ShowResults_data::run( double deltaTime )
 {
-    static TTF_Font      * ttf_ptr;
-
-    static int     menuState = MM_Begin;
-    static int     count;
-    static char*   game_hint;
-    static char    buffer[1024] = EMPTY_CSTR;
-
     int menuResult = 0;
 
     switch ( menuState )
@@ -6231,7 +6294,7 @@ int doShowResults( float deltaTime )
                 count++;
                 if ( count > UPDATE_SKIP )
                 {
-                    menuState  = MM_Leaving;
+                menuState  = MM_Leaving;
                 }
                 */
                 menuState  = MM_Leaving;
@@ -6262,14 +6325,33 @@ int doShowResults( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct NotImplementedState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct NotImplemented_data : public mnu_state_data
+{
+    ui_Widget w_buttons[1];
+
+    static const char * notImplementedMessage;
+
+    int run( double deltaTime );
+    void begin( int state = MM_Begin );
+    void end();
+};
+
+const char * NotImplemented_data::notImplementedMessage = "Not implemented yet!  Check back soon!";
+
+void NotImplemented_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
+void NotImplemented_data::end()
+{
+    mnu_state_data::end();
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static NotImplementedState_t *NotImplementedState_ctor( NotImplementedState_t * ps )
+//static NotImplemented_data *NotImplementedState_ctor( NotImplemented_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6279,7 +6361,7 @@ int doShowResults( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static NotImplementedState_t *NotImplementedState_dtor( NotImplementedState_t * ps )
+//static NotImplemented_data *NotImplementedState_dtor( NotImplemented_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6289,7 +6371,7 @@ int doShowResults( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static NotImplementedState_t * doNotImplemented_begin( NotImplementedState_t * ps, float deltaTime )
+//static NotImplemented_data * doNotImplemented_begin( NotImplemented_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6301,7 +6383,7 @@ int doShowResults( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static NotImplementedState_t * doNotImplemented_entering( NotImplementedState_t * ps, float deltaTime )
+//static NotImplemented_data * doNotImplemented_entering( NotImplemented_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6311,7 +6393,7 @@ int doShowResults( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static NotImplementedState_t * doNotImplemented_running( NotImplementedState_t * ps, float deltaTime )
+//static NotImplemented_data * doNotImplemented_running( NotImplemented_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6321,7 +6403,7 @@ int doShowResults( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static NotImplementedState_t * doNotImplemented_leaving( NotImplementedState_t * ps, float deltaTime )
+//static NotImplemented_data * doNotImplemented_leaving( NotImplemented_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6331,7 +6413,7 @@ int doShowResults( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static NotImplementedState_t * doNotImplemented_finish( NotImplementedState_t * ps, float deltaTime )
+//static NotImplemented_data * doNotImplemented_finish( NotImplemented_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6343,13 +6425,10 @@ int doShowResults( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-int doNotImplemented( float deltaTime )
+int NotImplemented_data::run( double deltaTime )
 {
     int x, y;
     int w, h;
-
-    ui_Widget w_buttons[1];
-    char notImplementedMessage[] = "Not implemented yet!  Check back soon!";
 
     fnt_getTextSize( ui_getFont(), &w, &h, notImplementedMessage );
     w += 50; // add some space on the sides
@@ -6371,14 +6450,51 @@ int doNotImplemented( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct GamePausedState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct GamePaused_data : public mnu_state_data
+{
+    // button widgets
+    enum
+    {
+        but_quit,
+        but_restart,
+        but_return,
+        but_options,
+        but_count,
+        but_sz_count
+    };
+
+    MENU_BUTTONS( but_count );
+
+    void begin( int state = MM_Begin );
+    void end();
+    int run( double deltaTime );
+};
+
+const char * GamePaused_data::sz_buttons[GamePaused_data::but_sz_count] =
+{
+    "Quit Module",
+    "Restart Module",
+    "Return to Module",
+    "Options",
+    ""
+};
+
+void GamePaused_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
+void GamePaused_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static GamePausedState_t *GamePausedState_ctor( GamePausedState_t * ps )
+//static GamePaused_data *GamePausedState_ctor( GamePaused_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6388,7 +6504,7 @@ int doNotImplemented( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static GamePausedState_t *GamePausedState_dtor( GamePausedState_t * ps )
+//static GamePaused_data *GamePausedState_dtor( GamePaused_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6398,7 +6514,7 @@ int doNotImplemented( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static GamePausedState_t * doGamePaused_begin( GamePausedState_t * ps, float deltaTime )
+//static GamePaused_data * GamePaused_data::begin( GamePaused_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6410,7 +6526,7 @@ int doNotImplemented( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static GamePausedState_t * doGamePaused_entering( GamePausedState_t * ps, float deltaTime )
+//static GamePaused_data * GamePaused_data::entering( GamePaused_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6420,7 +6536,7 @@ int doNotImplemented( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static GamePausedState_t * doGamePaused_running( GamePausedState_t * ps, float deltaTime )
+//static GamePaused_data * GamePaused_data::running( GamePaused_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6430,7 +6546,7 @@ int doNotImplemented( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static GamePausedState_t * doGamePaused_leaving( GamePausedState_t * ps, float deltaTime )
+//static GamePaused_data * GamePaused_data::leaving( GamePaused_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6440,7 +6556,7 @@ int doNotImplemented( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static GamePausedState_t * doGamePaused_finish( GamePausedState_t * ps, float deltaTime )
+//static GamePaused_data * GamePaused_data::finish( GamePaused_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6452,34 +6568,8 @@ int doNotImplemented( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-int doGamePaused( float deltaTime )
+int GamePaused_data::run( double deltaTime )
 {
-    static int menuState = MM_Begin;
-    static int menuChoice = 0;
-    static mnu_SlidyButtons but_state;
-
-    enum
-    {
-        but_quit,
-        but_restart,
-        but_return,
-        but_options,
-        but_count,
-        but_sz_count
-    };
-
-    // button widgets
-    static ui_Widget w_buttons[but_count];
-
-    static const char * sz_buttons[but_sz_count] =
-    {
-        "Quit Module",
-        "Restart Module",
-        "Return to Module",
-        "Options",
-        ""
-    };
-
     int result = 0, cnt;
 
     switch ( menuState )
@@ -6489,12 +6579,6 @@ int doGamePaused( float deltaTime )
             menuChoice = 0;
 
             {
-
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    // clear the data
-                    ui_Widget::reset( w_buttons + cnt, cnt );
-                }
 
                 if ( PMod->exportvalid && !local_stats.allpladead ) sz_buttons[0] = "Save and Exit";
                 else                                                sz_buttons[0] = "Quit Module";
@@ -6561,14 +6645,6 @@ int doGamePaused( float deltaTime )
 
         case MM_Finish:
             {
-                // Free the background texture; don't need to hold onto it
-
-                // free the widgets
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
-                }
-
                 // Set the next menu to load
                 result = menuChoice;
             }
@@ -6587,14 +6663,49 @@ int doGamePaused( float deltaTime )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//struct ShowEndgameState_t
-//{
-//    BASE_MENU_STATE;
-//};
-//
-//
+struct ShowEndgame_data : public mnu_state_data
+{
+    int x, y, w, h;
+
+    enum
+    {
+        but_exit,
+        but_count,
+        but_sz_count
+    };
+
+    // button widgets
+    MENU_BUTTONS( but_count );
+
+    ShowEndgame_data() { begin(); }
+
+    int run( double deltaTime );
+    void begin( int state = MM_Begin );
+    void end();
+};
+
+const char * ShowEndgame_data::sz_buttons[ShowEndgame_data::but_sz_count] =
+{
+    "BLAH",
+    ""
+};
+
+void ShowEndgame_data::begin( int state )
+{
+    mnu_state_data::begin( state );
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
+void ShowEndgame_data::end()
+{
+    mnu_state_data::end();
+
+    end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+}
+
 ////--------------------------------------------------------------------------------------------
-//static ShowEndgameState_t *ShowEndgameState_ctor( ShowEndgameState_t * ps )
+//static ShowEndgame_data *ShowEndgameState_ctor( ShowEndgame_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6604,7 +6715,7 @@ int doGamePaused( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowEndgameState_t *ShowEndgameState_dtor( ShowEndgameState_t * ps )
+//static ShowEndgame_data *ShowEndgameState_dtor( ShowEndgame_data * ps )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6614,7 +6725,7 @@ int doGamePaused( float deltaTime )
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowEndgameState_t * doShowEndgame_begin( ShowEndgameState_t * ps, float deltaTime )
+//static ShowEndgame_data * doShowEndgame_begin( ShowEndgame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6626,7 +6737,7 @@ int doGamePaused( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowEndgameState_t * doShowEndgame_entering( ShowEndgameState_t * ps, float deltaTime )
+//static ShowEndgame_data * doShowEndgame_entering( ShowEndgame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6636,7 +6747,7 @@ int doGamePaused( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowEndgameState_t * doShowEndgame_running( ShowEndgameState_t * ps, float deltaTime )
+//static ShowEndgame_data * doShowEndgame_running( ShowEndgame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6646,7 +6757,7 @@ int doGamePaused( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowEndgameState_t * doShowEndgame_leaving( ShowEndgameState_t * ps, float deltaTime )
+//static ShowEndgame_data * doShowEndgame_leaving( ShowEndgame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6656,7 +6767,7 @@ int doGamePaused( float deltaTime )
 //};
 //
 ////--------------------------------------------------------------------------------------------
-//static ShowEndgameState_t * doShowEndgame_finish( ShowEndgameState_t * ps, float deltaTime )
+//static ShowEndgame_data * doShowEndgame_finish( ShowEndgame_data * ps, float deltaTime )
 //{
 //    if ( NULL == ps ) return ps;
 //
@@ -6668,29 +6779,8 @@ int doGamePaused( float deltaTime )
 //};
 
 //--------------------------------------------------------------------------------------------
-int doShowEndgame( float deltaTime )
+int ShowEndgame_data::run( double deltaTime )
 {
-    static int menuState = MM_Begin;
-    static int menuChoice = 0;
-    static int x, y, w, h;
-    static mnu_SlidyButtons but_state;
-
-    enum
-    {
-        but_exit,
-        but_count,
-        but_sz_count
-    };
-
-    // button widgets
-    static ui_Widget w_buttons[but_count];
-
-    static const char * sz_buttons[but_sz_count] =
-    {
-        "BLAH",
-        ""
-    };
-
     int cnt, retval;
 
     retval = 0;
@@ -6698,12 +6788,6 @@ int doShowEndgame( float deltaTime )
     {
         case MM_Begin:
             {
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    // clear the data
-                    ui_Widget::reset( w_buttons + cnt, cnt );
-                }
-
                 mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
 
                 if ( PMod->exportvalid )
@@ -6812,10 +6896,14 @@ int doShowEndgame( float deltaTime )
 
                     // if we beat a beginner module, we want to
                     // go to ChoosePlayer instead of ChooseModule.
-                    if ( mnu_stack_peek() == emnu_ChooseModule )
+                    if ( mnu_stack.peek() == emnu_ChooseModule )
                     {
-                        mnu_stack_pop();
-                        mnu_stack_push( emnu_ChoosePlayer );
+                        // end the current menu
+                        mnu_state_data::end_menu( mnu_stack.pop() );
+
+                        // force the menu systen to jump to the emnu_ChoosePlayer menu
+                        mnu_state_data::end_menu( emnu_ChoosePlayer );
+                        mnu_stack.push( emnu_ChoosePlayer );
                     }
                 }
 
@@ -6825,12 +6913,6 @@ int doShowEndgame( float deltaTime )
                     game_finish_module();
                     pickedmodule_index = -1;
                     GProc->kill();
-                }
-
-                // free the widgets
-                for ( cnt = 0; cnt < but_count; cnt++ )
-                {
-                    ui_Widget::dealloc( w_buttons + cnt );
                 }
 
                 // Set the next menu to load
@@ -6850,6 +6932,108 @@ int doShowEndgame( float deltaTime )
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct MultiPlayer_data : public mnu_state_data
+{
+    MultiPlayer_data() { begin(); }
+
+    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
+    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
+    void end()                         { return mnu_state_data::end(); }
+};
+
+struct NewPlayer_data : public mnu_state_data
+{
+    NewPlayer_data() { begin(); }
+
+    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
+    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
+    void end()                         { return mnu_state_data::end(); }
+};
+
+struct HostGame_data : public mnu_state_data
+{
+    HostGame_data() { begin(); }
+
+    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
+    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
+    void end()                         { return mnu_state_data::end(); }
+};
+
+struct JoinGame_data : public mnu_state_data
+{
+    JoinGame_data() { begin(); }
+
+    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
+    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
+    void end()                         { return mnu_state_data::end(); }
+};
+
+struct LoadPlayer_data : public mnu_state_data
+{
+    LoadPlayer_data() { begin(); }
+
+    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
+    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
+    void end()                         { return mnu_state_data::end(); }
+};
+
+//struct XX_data
+//{
+//    XX_data() { begin(); }
+//
+//    int run( double deltaTime );
+//    void begin( int state = MM_Begin );
+//    void end();
+//};
+//
+//static XX_data XXState;
+//
+//struct XX_data
+//{
+//    XX_data() { begin(); }
+//
+//    int run( double deltaTime );
+//    void begin( int state = MM_Begin );
+//    void end();
+//};
+//
+//static XX_data XXState;
+//
+//struct XX_data
+//{
+//    XX_data() { begin(); }
+//
+//    int run( double deltaTime );
+//    void begin( int state = MM_Begin );
+//    void end();
+//};
+//
+//static XX_data XXState;
+
+//--------------------------------------------------------------------------------------------
+// Declare all menu states
+//--------------------------------------------------------------------------------------------
+static Main_data MainState;
+static SinglePlayer_data SinglePlayerState;
+static ChooseModule_data ChooseModuleState;
+static ChoosePlayer_data ChoosePlayerState;
+static Options_data OptionsState;
+static OptionsInput_data OptionsInputState;
+static OptionsGame_data OptionsGameState;
+static OptionsAudio_data OptionsAudioState;
+static OptionsVideo_data OptionsVideoState;
+static ShowResults_data ShowResultsState;
+static NotImplemented_data NotImplementedState;
+static GamePaused_data GamePausedState;
+static ShowEndgame_data ShowEndgameState;
+static MultiPlayer_data MultiPlayerState;
+static NewPlayer_data NewPlayerState;
+static HostGame_data HostGameState;
+static JoinGame_data JoinGameState;
+static LoadPlayer_data LoadPlayerState;
+
+//--------------------------------------------------------------------------------------------
 // place this last so that we do not have to prototype every menu function
 int doMenu( float deltaTime )
 {
@@ -6857,9 +7041,9 @@ int doMenu( float deltaTime )
 
     int retval, result = 0;
 
-    if ( mnu_whichMenu == emnu_Main )
+    if ( mnu_whichMenu == emnu_Main && mnu_stack.size() > 1 )
     {
-        mnu_stack_clear();
+        mnu_restart();
     };
 
     retval = MENU_NOTHING;
@@ -6867,7 +7051,7 @@ int doMenu( float deltaTime )
     switch ( mnu_whichMenu )
     {
         case emnu_Main:
-            result = doMainMenu( deltaTime );
+            result = MainState.run( deltaTime );
             if ( result != 0 )
             {
                 if ( result == 1 )      { mnu_begin_menu( emnu_ChooseModule ); start_new_player = btrue; }
@@ -6878,7 +7062,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_SinglePlayer:
-            result = doSinglePlayerMenu( deltaTime );
+            result = SinglePlayerState.run( deltaTime );
 
             if ( result != 0 )
             {
@@ -6905,7 +7089,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_ChooseModule:
-            result = doChooseModule( deltaTime );
+            result = ChooseModuleState.run( deltaTime );
 
             if ( result == -1 )     { mnu_end_menu(); retval = MENU_END; }
             else if ( result == 1 ) mnu_begin_menu( emnu_ShowMenuResults );  // imports are not valid (starter module)
@@ -6914,7 +7098,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_ChoosePlayer:
-            result = doChoosePlayer( deltaTime );
+            result = ChoosePlayerState.run( deltaTime );
 
             if ( result == -1 )     { mnu_end_menu(); retval = MENU_END; }
             else if ( result == 1 ) mnu_begin_menu( emnu_ChooseModule );
@@ -6922,7 +7106,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_Options:
-            result = doOptions( deltaTime );
+            result = OptionsState.run( deltaTime );
             if ( result != 0 )
             {
                 if ( result == 1 )      mnu_begin_menu( emnu_AudioOptions );
@@ -6934,7 +7118,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_GameOptions:
-            result = doOptionsGame( deltaTime );
+            result = OptionsGameState.run( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -6943,7 +7127,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_AudioOptions:
-            result = doOptionsAudio( deltaTime );
+            result = OptionsAudioState.run( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -6952,7 +7136,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_VideoOptions:
-            result = doOptionsVideo( deltaTime );
+            result = OptionsVideoState.run( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -6961,7 +7145,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_InputOptions:
-            result = doOptionsInput( deltaTime );
+            result = OptionsInputState.run( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -6970,7 +7154,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_ShowMenuResults:
-            result = doShowResults( deltaTime );
+            result = ShowResultsState.run( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -6979,7 +7163,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_GamePaused:
-            result = doGamePaused( deltaTime );
+            result = GamePausedState.run( deltaTime );
             if ( result != 0 )
             {
                 if ( result == 1 )
@@ -7029,7 +7213,7 @@ int doMenu( float deltaTime )
             break;
 
         case emnu_ShowEndgame:
-            result = doShowEndgame( deltaTime );
+            result = ShowEndgameState.run( deltaTime );
             if ( result == 1 )
             {
                 mnu_end_menu();
@@ -7039,7 +7223,7 @@ int doMenu( float deltaTime )
 
         case emnu_NotImplemented:
         default:
-            result = doNotImplemented( deltaTime );
+            result = NotImplementedState.run( deltaTime );
             if ( result != 0 )
             {
                 mnu_end_menu();
@@ -7195,7 +7379,7 @@ void mnu_load_all_module_images_vfs()
 
             mnu_ModList.lst[imod].tex_index = TxTitleImage_load_one_vfs( loadname );
 
-            vfs_printf( filesave, "%02d.  %s\n", (imod ).get_value(), mnu_ModList.lst[imod].vfs_path );
+            vfs_printf( filesave, "%02d.  %s\n", ( imod ).get_value(), mnu_ModList.lst[imod].vfs_path );
         }
         else
         {
@@ -7272,7 +7456,7 @@ int mnu_get_mod_number( const char *szModName )
     {
         if ( 0 == strcmp( mnu_ModList.lst[modnum].vfs_path, szModName ) )
         {
-            retval = (modnum ).get_value();
+            retval = ( modnum ).get_value();
             break;
         }
     }
@@ -7481,7 +7665,7 @@ void mnu_ModList_release_images()
     for ( cnt = 0; cnt < mnu_ModList.count; cnt++ )
     {
         if ( !mnu_ModList.lst[cnt].loaded ) continue;
-        tnc = (cnt ).get_value();
+        tnc = ( cnt ).get_value();
 
         TxTitleImage_release_one( mnu_ModList.lst[cnt].tex_index );
         mnu_ModList.lst[cnt].tex_index = INVALID_TITLE_TEXTURE;
@@ -8047,4 +8231,213 @@ void mnu_player_check_import( const char *dirname, bool_t initialize )
         foundfile = vfs_search_context_get_current( ctxt );
     }
     vfs_findClose( &ctxt );
+}
+
+void mnu_state_data::begin_menu( int which )
+{
+    switch ( which )
+    {
+        case emnu_Main:
+            MainState.begin();
+            break;
+
+        case emnu_SinglePlayer:
+            SinglePlayerState.begin();
+            break;
+
+        case emnu_MultiPlayer:
+            MultiPlayerState.begin();
+            break;
+
+        case emnu_ChooseModule:
+            ChooseModuleState.begin();
+            break;
+
+        case emnu_ChoosePlayer:
+            ChoosePlayerState.begin();
+            break;
+
+        case emnu_ShowMenuResults:
+            ShowResultsState.begin();
+            break;
+
+        case emnu_Options:
+            OptionsState.begin();
+            break;
+
+        case emnu_GameOptions:
+            OptionsGameState.begin();
+            break;
+
+        case emnu_VideoOptions:
+            OptionsVideoState.begin();
+            break;
+
+        case emnu_AudioOptions:
+            OptionsAudioState.begin();
+            break;
+
+        case emnu_InputOptions:
+            OptionsInputState.begin();
+            break;
+
+        case emnu_NewPlayer:
+            NewPlayerState.begin();
+            break;
+
+        case emnu_LoadPlayer:
+            LoadPlayerState.begin();
+            break;
+
+        case emnu_HostGame:
+            HostGameState.begin();
+            break;
+
+        case emnu_JoinGame:
+            JoinGameState.begin();
+            break;
+
+        case emnu_GamePaused:
+            GamePausedState.begin();
+            break;
+
+        case emnu_ShowEndgame:
+            ShowEndgameState.begin();
+            break;
+
+        case emnu_NotImplemented:
+            NotImplementedState.begin();
+            break;
+    }
+}
+
+void mnu_state_data::end_menu( int which )
+{
+    switch ( which )
+    {
+        case emnu_Main:
+            MainState.end();
+            break;
+
+        case emnu_SinglePlayer:
+            SinglePlayerState.end();
+            break;
+
+        case emnu_MultiPlayer:
+            MultiPlayerState.end();
+            break;
+
+        case emnu_ChooseModule:
+            ChooseModuleState.end();
+            break;
+
+        case emnu_ChoosePlayer:
+            ChoosePlayerState.end();
+            break;
+
+        case emnu_ShowMenuResults:
+            ShowResultsState.end();
+            break;
+
+        case emnu_Options:
+            OptionsState.end();
+            break;
+
+        case emnu_GameOptions:
+            OptionsGameState.end();
+            break;
+
+        case emnu_VideoOptions:
+            OptionsVideoState.end();
+            break;
+
+        case emnu_AudioOptions:
+            OptionsAudioState.end();
+            break;
+
+        case emnu_InputOptions:
+            OptionsInputState.end();
+            break;
+
+        case emnu_NewPlayer:
+            NewPlayerState.end();
+            break;
+
+        case emnu_LoadPlayer:
+            LoadPlayerState.end();
+            break;
+
+        case emnu_HostGame:
+            HostGameState.end();
+            break;
+
+        case emnu_JoinGame:
+            JoinGameState.end();
+            break;
+
+        case emnu_GamePaused:
+            GamePausedState.end();
+            break;
+
+        case emnu_ShowEndgame:
+            ShowEndgameState.end();
+            break;
+
+        case emnu_NotImplemented:
+            NotImplementedState.end();
+            break;
+    }
+}
+
+void mnu_state_data::switch_menu( int from, int to )
+{
+    mnu_state_data::end_menu( from );
+    mnu_state_data::begin_menu( to );
+}
+
+//--------------------------------------------------------------------------------------------
+// Interface for starting and stopping menus
+//--------------------------------------------------------------------------------------------
+bool_t mnu_begin_menu( which_menu_t which )
+{
+    // don't end this menu state since we will be coming back
+    if ( !mnu_stack.push( mnu_whichMenu ) ) return bfalse;
+
+    // begin the new menu state
+    mnu_state_data::begin_menu( which );
+    mnu_whichMenu = which;
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+void mnu_end_menu()
+{
+    // end this menu state
+    mnu_state_data::end_menu( mnu_whichMenu );
+
+    // begin the next menu state
+    which_menu_t which = mnu_stack.pop();
+    mnu_state_data::begin_menu( which );
+    mnu_whichMenu = which;
+}
+
+//--------------------------------------------------------------------------------------------
+int mnu_get_menu_depth()
+{
+    return mnu_stack.size();
+}
+
+//--------------------------------------------------------------------------------------------
+void mnu_restart()
+{
+    // end all of the menus that are being dumped
+    while ( !mnu_stack.empty() )
+    {
+        mnu_state_data::end_menu( mnu_stack.pop() );
+    }
+
+    // start the main menu
+    mnu_stack.push( emnu_Main );
+    mnu_state_data::begin_menu( emnu_Main );
 }

@@ -575,7 +575,7 @@ int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const C
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
 
     // only play sound effects if the game is running
-    if ( rv_success != (rv_success == GProc->running()) )  return INVALID_SOUND_CHANNEL;
+    if ( rv_success != ( rv_success == GProc->running() ) )  return INVALID_SOUND_CHANNEL;
 
     // measure the distance in tiles
     diff = fvec3_sub( pos.v, PCamera->track_pos.v );
@@ -617,7 +617,7 @@ int sound_play_chunk_full( Mix_Chunk * pchunk )
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
 
     // only play sound effects if the game is running
-    if ( rv_success != (rv_success == GProc->running()) )  return INVALID_SOUND_CHANNEL;
+    if ( rv_success != ( rv_success == GProc->running() ) )  return INVALID_SOUND_CHANNEL;
 
     // play the sound
     channel = Mix_PlayChannel( -1, pchunk, 0 );
@@ -890,7 +890,7 @@ void   LoopedList_init()
         LoopedList.lst[cnt].chunk   = NULL;
         LoopedList.lst[cnt].object  = CHR_REF( MAX_CHR );
 
-        tnc = (cnt ).get_value();
+        tnc = ( cnt ).get_value();
         LoopedList.used_ref[tnc] = LOOPED_COUNT;
         LoopedList.free_ref[tnc] = tnc;
     }

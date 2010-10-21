@@ -234,21 +234,21 @@ Uint8 CoNode_generate_hash( ego_CoNode * coll )
     AA = ( REF_T )( ~(( Uint32 )0 ) );
     if ( INGAME_CHR( coll->chra ) )
     {
-        AA = (coll->chra ).get_value();
+        AA = ( coll->chra ).get_value();
     }
     else if ( INGAME_PRT( coll->prta ) )
     {
-        AA = (coll->prta ).get_value();
+        AA = ( coll->prta ).get_value();
     }
 
     BB = ( REF_T )( ~(( Uint32 )0 ) );
     if ( INGAME_CHR( coll->chrb ) )
     {
-        BB = (coll->chrb ).get_value();
+        BB = ( coll->chrb ).get_value();
     }
     else if ( INGAME_PRT( coll->prtb ) )
     {
-        BB = (coll->prtb ).get_value();
+        BB = ( coll->prtb ).get_value();
     }
     else if ( FANOFF != coll->tileb )
     {
@@ -277,19 +277,19 @@ int CoNode_cmp( const void * vleft, const void * vright )
     if ( ftmp <= 0.0f ) return -1;
     else if ( ftmp >= 0.0f ) return 1;
 
-    itmp = ( signed )(pleft->chra ).get_value() - ( signed )(pright->chra ).get_value();
+    itmp = ( signed )( pleft->chra ).get_value() - ( signed )( pright->chra ).get_value();
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )(pleft->prta ).get_value() - ( signed )(pright->prta ).get_value();
+    itmp = ( signed )( pleft->prta ).get_value() - ( signed )( pright->prta ).get_value();
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )(pleft->chra ).get_value() - ( signed )(pright->chra ).get_value();
+    itmp = ( signed )( pleft->chra ).get_value() - ( signed )( pright->chra ).get_value();
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )(pleft->prtb ).get_value() - ( signed )(pright->prtb ).get_value();
+    itmp = ( signed )( pleft->prtb ).get_value() - ( signed )( pright->prtb ).get_value();
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )(pleft->chrb ).get_value() - ( signed )(pright->chrb ).get_value();
+    itmp = ( signed )( pleft->chrb ).get_value() - ( signed )( pright->chrb ).get_value();
     if ( 0 != itmp ) return itmp;
 
     itmp = ( signed )pleft->tileb - ( signed )pright->tileb;

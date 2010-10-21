@@ -46,7 +46,7 @@ struct ego_MD2_Vertex
     fvec3_t nrm;
     int     normal;  ///< index to id-normal array
 
-    ego_MD2_Vertex() { clear(this); }
+    ego_MD2_Vertex() { clear( this ); }
 
 private:
 
@@ -65,7 +65,7 @@ struct ego_MD2_TexCoord
 {
     fvec2_t tex;
 
-    ego_MD2_TexCoord() { clear(this); }
+    ego_MD2_TexCoord() { clear( this ); }
 
 private:
 

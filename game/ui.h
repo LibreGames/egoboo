@@ -111,12 +111,12 @@ struct ui_Widget
     float         vx, vy;
     float         vwidth, vheight;
 
-    ui_Widget()  { ui_Widget::ctor( this ); }
-    ~ui_Widget() { ui_Widget::dtor( this ); }
+    ui_Widget()  { clear( this ); }
+    ~ui_Widget() { dtor( this ); }
 
     static ui_Widget * ctor( ui_Widget * pw, ui_id_t id = UI_Nothing );
     static ui_Widget * dtor( ui_Widget * pw );
-    static ui_Widget * reset( ui_Widget * pw, ui_id_t id = UI_Nothing  );
+    static ui_Widget * reset( ui_Widget * pw, ui_id_t id = UI_Nothing );
     static bool_t      dealloc( ui_Widget * pw );
 
     static ui_buttonValues Behavior( ui_Widget * pw );
@@ -156,7 +156,7 @@ protected:
 
 private:
 
-    static ui_Widget * clear( ui_Widget * pw, ui_id_t id = UI_Nothing );
+    static ui_Widget * clear( ui_Widget * pw );
 
 };
 
@@ -213,5 +213,4 @@ void ui_set_virtual_screen( float vw, float vh, float ww, float wh );
 TTF_Font * ui_loadFont( const char * font_name, float vpointSize );
 
 #define _ui_h
-
 

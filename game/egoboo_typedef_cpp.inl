@@ -522,21 +522,21 @@ bool_t t_cpp_map<_ty, _sz>::remove( const t_reference<_ty> & ref )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-bool_t   t_dary<_ty>::alloc( t_dary<_ty> * pary, size_t sz )  
+bool_t   t_dary<_ty>::alloc( t_dary<_ty> * pary, size_t sz )
 {
-    if(NULL == pary) return bfalse;
+    if ( NULL == pary ) return bfalse;
     dealloc( pary );
     pary->ary = EGOBOO_NEW_ARY( _ty, sz );
-    pary->size = (NULL == pary->ary) ? 0 : sz;
+    pary->size = ( NULL == pary->ary ) ? 0 : sz;
     return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-bool_t   t_dary<_ty>::dealloc(t_dary<_ty> * pary )            
+bool_t   t_dary<_ty>::dealloc( t_dary<_ty> * pary )
 {
-    if(NULL == pary) return bfalse;
-    EGOBOO_DELETE_ARY(pary->ary);
+    if ( NULL == pary ) return bfalse;
+    EGOBOO_DELETE_ARY( pary->ary );
     pary->size = 0;
     pary->top = 0;
     return btrue;
@@ -544,60 +544,60 @@ bool_t   t_dary<_ty>::dealloc(t_dary<_ty> * pary )
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-t_dary<_ty> * t_dary<_ty>::ctor(t_dary<_ty> * pary, size_t sz)     
+t_dary<_ty> * t_dary<_ty>::ctor( t_dary<_ty> * pary, size_t sz )
 {
-    if(NULL == pary) return NULL;
+    if ( NULL == pary ) return NULL;
     dtor( pary );
-    if( !alloc(pary, sz) ) return NULL;
+    if ( !alloc( pary, sz ) ) return NULL;
     return pary;
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-t_dary<_ty> * t_dary<_ty>::dtor(t_dary<_ty> * pary )               
+t_dary<_ty> * t_dary<_ty>::dtor( t_dary<_ty> * pary )
 {
-    if(NULL == pary) return NULL;
-    dealloc(pary);
+    if ( NULL == pary ) return NULL;
+    dealloc( pary );
     return pary;
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-void     t_dary<_ty>::clear( t_dary<_ty> * pary )             
+void     t_dary<_ty>::clear( t_dary<_ty> * pary )
 {
-    if(NULL != pary) pary->top = 0;
+    if ( NULL != pary ) pary->top = 0;
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-size_t   t_dary<_ty>::get_top( t_dary<_ty> * pary )           
+size_t   t_dary<_ty>::get_top( t_dary<_ty> * pary )
 {
-    return (NULL == pary->ary) ? 0 : pary->top;
+    return ( NULL == pary->ary ) ? 0 : pary->top;
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-size_t   t_dary<_ty>::get_size( t_dary<_ty> * pary )          
+size_t   t_dary<_ty>::get_size( t_dary<_ty> * pary )
 {
-    return (NULL == pary->ary) ? 0 : pary->size;
+    return ( NULL == pary->ary ) ? 0 : pary->size;
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-_ty *    t_dary<_ty>::pop_back( t_dary<_ty> * pary )           
+_ty *    t_dary<_ty>::pop_back( t_dary<_ty> * pary )
 {
-    if( NULL == pary || 0 == pary->top ) return NULL;
+    if ( NULL == pary || 0 == pary->top ) return NULL;
     --pary->top;
-    return &(pary->ary[pary->top]);
+    return &( pary->ary[pary->top] );
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-bool_t   t_dary<_ty>::push_back( t_dary<_ty> * pary, _ty val ) 
+bool_t   t_dary<_ty>::push_back( t_dary<_ty> * pary, _ty val )
 {
     bool_t retval = bfalse;
-    if( NULL == pary ) return bfalse;
-    if (pary->top < pary->size) 
+    if ( NULL == pary ) return bfalse;
+    if ( pary->top < pary->size )
     {
         pary->ary[pary->top] = val;
         pary->top++;

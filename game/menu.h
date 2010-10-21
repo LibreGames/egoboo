@@ -43,9 +43,9 @@ struct ego_menu_process_data
 
     int    ticks_next, ticks_now;
 
-    ego_menu_process_data() { clear(this); }
+    ego_menu_process_data() { clear( this ); }
 
-    static ego_menu_process_data * ctor( ego_menu_process_data * ptr ) { return clear(ptr); }
+    static ego_menu_process_data * ctor( ego_menu_process_data * ptr ) { return clear( ptr ); }
 
 private:
 
@@ -158,6 +158,7 @@ int doMenu( float deltaTime );
 bool_t mnu_begin_menu( which_menu_t which );
 void   mnu_end_menu();
 int    mnu_get_menu_depth();
+void   mnu_restart();
 
 void  mnu_player_check_import( const char *dirname, bool_t initialize );
 

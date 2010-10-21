@@ -1616,7 +1616,7 @@ int draw_debug_player( PLA_REF ipla, int y )
         CHR_REF ichr = ppla->index;
         ego_chr  *pchr = ChrObjList.get_pdata( ichr );
 
-        y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", (ipla ).get_value(),
+        y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", ( ipla ).get_value(),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_CRUSH] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_POKE ] ),
@@ -1626,7 +1626,7 @@ int draw_debug_player( PLA_REF ipla, int y )
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ICE  ] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ZAP  ] ) );
 
-        y = _draw_string_raw( 0, y, "~~PLA%d %5.1f %5.1f", (ipla ).get_value(), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
+        y = _draw_string_raw( 0, y, "~~PLA%d %5.1f %5.1f", ( ipla ).get_value(), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
     }
 
     return y;
@@ -1648,7 +1648,7 @@ int draw_debug( int y )
         {
             ego_chr * pchr = ChrObjList.get_pdata( ppla->index );
 
-            y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", (ipla ).get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
+            y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", ( ipla ).get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
         }
     }
 
@@ -3548,7 +3548,7 @@ void BillboardList_update_all()
             }
 
             // deallocate the billboard
-            BillboardList_free_one( (cnt ).get_value() );
+            BillboardList_free_one(( cnt ).get_value() );
         }
         else
         {
@@ -5062,11 +5062,11 @@ void do_clear_screen()
     bool_t try_clear;
 
     try_clear = bfalse;
-    if ( (rv_success == GProc->running()) && GProc->state > proc_beginning )
+    if (( rv_success == GProc->running() ) && GProc->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
-    else if ( (rv_success == MProc->running()) && MProc->state > proc_beginning )
+    else if (( rv_success == MProc->running() ) && MProc->state > proc_beginning )
     {
         try_clear = gfx_page_clear_requested;
     }
@@ -5082,8 +5082,8 @@ void do_clear_screen()
         GL_DEBUG( glClear )( GL_DEPTH_BUFFER_BIT );
 
         // clear the color buffer only if necessary
-        game_needs_clear = gfx.clearson && (rv_success == GProc->running());
-        menu_needs_clear = mnu_draw_background && (rv_success == MProc->running());
+        game_needs_clear = gfx.clearson && ( rv_success == GProc->running() );
+        menu_needs_clear = mnu_draw_background && ( rv_success == MProc->running() );
 
         if ( game_needs_clear || menu_needs_clear )
         {
@@ -5098,11 +5098,11 @@ void do_flip_pages()
     bool_t try_flip;
 
     try_flip = bfalse;
-    if ( (rv_success == GProc->running()) && GProc->state > proc_beginning )
+    if (( rv_success == GProc->running() ) && GProc->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }
-    else if ( (rv_success == MProc->running()) && MProc->state > proc_beginning )
+    else if (( rv_success == MProc->running() ) && MProc->state > proc_beginning )
     {
         try_flip = gfx_page_flip_requested;
     }

@@ -918,11 +918,11 @@ ego_oct_vec * ego_oct_vec::ctor( ego_oct_vec * ovec , fvec3_t pos )
 {
     if ( NULL == ovec ) return ovec;
 
-    (*ovec)[OCT_X ] =  pos.x;
-    (*ovec)[OCT_Y ] =  pos.y;
-    (*ovec)[OCT_Z ] =  pos.z;
-    (*ovec)[OCT_XY] =  pos.x + pos.y;
-    (*ovec)[OCT_YX] = -pos.x + pos.y;
+    ( *ovec )[OCT_X ] =  pos.x;
+    ( *ovec )[OCT_Y ] =  pos.y;
+    ( *ovec )[OCT_Z ] =  pos.z;
+    ( *ovec )[OCT_XY] =  pos.x + pos.y;
+    ( *ovec )[OCT_YX] = -pos.x + pos.y;
 
     return ovec;
 }
@@ -954,10 +954,10 @@ bool_t bumper_to_oct_bb_0( ego_bumper src, ego_oct_bb   * pdst )
 //--------------------------------------------------------------------------------------------
 ego_oct_bb * ego_oct_bb::ctor( ego_oct_bb * pobb )
 {
-    if(NULL == pobb) return NULL;
+    if ( NULL == pobb ) return NULL;
 
-    new( &(pobb->mins) ) ego_oct_vec;
-    new( &(pobb->maxs) ) ego_oct_vec;
+    new( &( pobb->mins ) ) ego_oct_vec;
+    new( &( pobb->maxs ) ) ego_oct_vec;
 
     return pobb;
 }

@@ -96,11 +96,11 @@ struct UiContext
     // define the inverse transform
     float iaw, iah, ibw, ibh;
 
-    UiContext() { clear(this); }
+    UiContext() { clear( this ); }
 
     static UiContext * clear( UiContext * ptr )
     {
-        memset( ptr, 0, sizeof(*ptr) );
+        memset( ptr, 0, sizeof( *ptr ) );
 
         ptr->active = UI_Nothing;
         ptr->hot    = UI_Nothing;
@@ -1563,7 +1563,7 @@ bool_t ui_Widget::update_text_pos( ui_Widget * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-ui_Widget * ui_Widget::clear( ui_Widget * pw, ui_id_t id )
+ui_Widget * ui_Widget::clear( ui_Widget * pw )
 {
     if ( NULL == pw ) return pw;
 
@@ -1571,10 +1571,7 @@ ui_Widget * ui_Widget::clear( ui_Widget * pw, ui_id_t id )
     memset( pw, 0, sizeof( *pw ) );
 
     // set the id (probably UI_Nothing)
-    pw->id = id;
-
-    // assume it is a button
-    pw->display_mask  = (UI_Nothing != id) ? UI_DISPLAY_BUTTON : 0;
+    pw->id = UI_Nothing;
 
     return pw;
 }
@@ -1582,7 +1579,13 @@ ui_Widget * ui_Widget::clear( ui_Widget * pw, ui_id_t id )
 //--------------------------------------------------------------------------------------------
 ui_Widget * ui_Widget::ctor( ui_Widget * pw, ui_id_t id )
 {
-    return ui_Widget::clear( pw, id );
+    // set the id (probably UI_Nothing)
+    pw->id = id;
+
+    // assume it is a button
+    pw->display_mask  = ( UI_Nothing != id ) ? UI_DISPLAY_BUTTON : 0;
+
+    return pw;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1800,7 +1803,7 @@ void ui_joy_init( UiContext * pctxt )
 {
     int cnt;
 
-    if( NULL == pctxt ) return;
+    if ( NULL == pctxt ) return;
 
     for ( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
     {

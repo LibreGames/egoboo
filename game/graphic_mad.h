@@ -89,7 +89,6 @@ struct ego_matrix_cache
     static ego_matrix_cache * init( ego_matrix_cache * mcache );
 };
 
-
 //--------------------------------------------------------------------------------------------
 
 /// some pre-computed parameters for reflection
@@ -106,16 +105,16 @@ struct ego_chr_reflection_cache
 
     Uint32     update_wld;
 
-    ego_chr_reflection_cache() { clear(this); }
+    ego_chr_reflection_cache() { clear( this ); }
 
     static ego_chr_reflection_cache * init( ego_chr_reflection_cache * pcache );
 
 private:
     static ego_chr_reflection_cache * clear( ego_chr_reflection_cache * ptr )
     {
-        if( NULL == ptr ) return ptr;
+        if ( NULL == ptr ) return ptr;
 
-        memset( ptr, 0, sizeof(*ptr) );
+        memset( ptr, 0, sizeof( *ptr ) );
 
         ptr->alpha = 127;
         ptr->light = 255;
@@ -213,8 +212,8 @@ struct ego_chr_instance
     // Uint8          lightlevel_amb;  ///< 0-255, terrain light
     // Uint8          lightlevel_dir;  ///< 0-255, terrain light
 
-    ego_chr_instance() { clear(this); }
-    ~ego_chr_instance() { dtor(this); }
+    ego_chr_instance() { clear( this ); }
+    ~ego_chr_instance() { dtor( this ); }
 
     static egoboo_rv update_bbox( ego_chr_instance * pinst );
     static egoboo_rv needs_update( ego_chr_instance * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match );
@@ -246,7 +245,6 @@ protected:
 
     static egoboo_rv          update_vlst_cache( ego_chr_instance * pinst, int vmax, int vmin, bool_t force, bool_t vertices_match, bool_t frames_match );
     static bool_t             update_ref( ego_chr_instance * pinst, float grid_level, bool_t need_matrix );
-
 
 private:
     static ego_chr_instance * clear( ego_chr_instance * ptr );

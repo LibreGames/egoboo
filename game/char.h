@@ -584,7 +584,6 @@ public:
 
     static int change_armor( const CHR_REF & character, int skin );
 
-
 protected:
 
     //---- memory management
@@ -681,7 +680,6 @@ struct ego_obj_chr : public ego_obj
 
     /// Ask the "egoboo object process" to terminate itself
     static bool_t        request_terminate( const CHR_REF & ichr );
-
 
 protected:
 

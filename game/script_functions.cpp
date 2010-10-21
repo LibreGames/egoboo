@@ -2375,7 +2375,7 @@ Uint8 scr_BecomeSpellbook( ego_script_state * pstate, ego_ai_bundle * pbdl_self 
 
     // Reset the spellbook state so it doesn't burn up
     pself->state   = 0;
-    pself->content = (old_profile ).get_value();
+    pself->content = ( old_profile ).get_value();
 
     // set the spellbook animations
     pmad = ego_chr::get_pmad( pself->index );
@@ -3411,7 +3411,7 @@ Uint8 scr_DebugMessage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    debug_printf( "aistate %d, aicontent %d, target %d", pself->state, pself->content, (pself->target ).get_value() );
+    debug_printf( "aistate %d, aicontent %d, target %d", pself->state, pself->content, ( pself->target ).get_value() );
     debug_printf( "tmpx %d, tmpy %d", pstate->x, pstate->y );
     debug_printf( "tmpdistance %d, tmpturn %d", pstate->distance, pstate->turn );
     debug_printf( "tmpargument %d, selfturn %d", pstate->argument, pchr->ori.facing_z );
@@ -5433,7 +5433,7 @@ Uint8 scr_CreateOrder( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    sTmp = ( (pself->target ).get_value() & 0x00FF ) << 24;
+    sTmp = (( pself->target ).get_value() & 0x00FF ) << 24;
     sTmp |= (( pstate->x >> 6 ) & 0x03FF ) << 14;
     sTmp |= (( pstate->y >> 6 ) & 0x03FF ) << 4;
     sTmp |= ( pstate->argument & 0x000F );

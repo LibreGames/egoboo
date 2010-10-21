@@ -213,13 +213,13 @@ private:
 
 struct ego_main_process : public ego_main_process_data, public ego_process
 {
-    ego_main_process() { ctor(this); }
+    ego_main_process() { ctor( this ); }
 
     static ego_main_process * init( ego_main_process * eproc, int argc, char **argv );
 
     static ego_main_process * ctor( ego_main_process * ptr )
     {
-        if( NULL == ptr ) return ptr;
+        if ( NULL == ptr ) return ptr;
 
         /* add something here */
 

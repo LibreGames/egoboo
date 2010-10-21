@@ -64,13 +64,13 @@ struct ego_oct_vec
 
     ego_oct_vec( ) { clear( this ); }
 
-    ego_oct_vec( oct_vec_base_t & vals ) { clear( this ); memmove( &v, &vals, sizeof(v) ); }
+    ego_oct_vec( oct_vec_base_t & vals ) { clear( this ); memmove( &v, &vals, sizeof( v ) ); }
 
     ego_oct_vec( fvec3_t & vec ) { clear( this ); ctor( this, vec ); }
 
-    float & operator [] (size_t index) { return v[index]; }
+    float & operator []( size_t index ) { return v[index]; }
 
-    const float & operator [] (size_t index) const  { return v[index]; }
+    const float & operator []( size_t index ) const  { return v[index]; }
 
     static ego_oct_vec * ctor( ego_oct_vec * ovec, fvec3_t pos );
 
@@ -133,7 +133,7 @@ struct ego_aabb_lst
     int            count;
     ego_lod_aabb * list;
 
-    ego_aabb_lst() { clear(this); }
+    ego_aabb_lst() { clear( this ); }
     ~ego_aabb_lst() { dtor( this ); }
 
     static const ego_aabb_lst   * ctor( ego_aabb_lst   * lst );
@@ -159,20 +159,20 @@ struct ego_aabb_ary
     int         count;
     ego_aabb_lst   * list;
 
-    ego_aabb_ary() { clear(this); }
-    ~ego_aabb_ary() { dtor(this); }
+    ego_aabb_ary() { clear( this ); }
+    ~ego_aabb_ary() { dtor( this ); }
 
-    static ego_aabb_ary * ctor( ego_aabb_ary * ary ) { ary = dtor(ary); ary = clear(ary); return ary; }
+    static ego_aabb_ary * ctor( ego_aabb_ary * ary ) { ary = dtor( ary ); ary = clear( ary ); return ary; }
     static ego_aabb_ary * dtor( ego_aabb_ary * ary );
     static ego_aabb_ary * renew( ego_aabb_ary * ary );
     static ego_aabb_ary * alloc( ego_aabb_ary * ary, int count );
 
 private:
     static ego_aabb_ary * clear( ego_aabb_ary * ptr )
-    { 
-        if( NULL == ptr ) return ptr;
+    {
+        if ( NULL == ptr ) return ptr;
 
-        memset( ptr, 0, sizeof(*ptr) );
+        memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }
@@ -189,7 +189,7 @@ struct ego_OVolume
 
     ego_oct_bb   oct;
 
-    ego_OVolume() { clear(this); }
+    ego_OVolume() { clear( this ); }
 
     static ego_OVolume do_merge( ego_OVolume * pv1, ego_OVolume * pv2 );
     static ego_OVolume do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 );
@@ -199,9 +199,9 @@ struct ego_OVolume
     static bool_t      refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolume );
 
 private:
-    static ego_OVolume * clear(ego_OVolume * ptr)
+    static ego_OVolume * clear( ego_OVolume * ptr )
     {
-        if( NULL == ptr ) return NULL;
+        if ( NULL == ptr ) return NULL;
 
         ptr->lod = -1;
         ptr->needs_shape = ptr->needs_position = bfalse;

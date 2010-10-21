@@ -1028,7 +1028,7 @@ void cl_talkToHost()
             // Find the local players
             if ( INPUT_BITS_NONE != ppla->device.bits )
             {
-                packet_addUnsignedByte( (player ).get_value() );                      // The player index
+                packet_addUnsignedByte(( player ).get_value() );                      // The player index
 
                 packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
                 packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
@@ -1076,7 +1076,7 @@ void sv_talkToRemotes()
 
                 if ( !ppla->valid ) continue;
 
-                packet_addUnsignedByte( (player ).get_value() );                      // The player index
+                packet_addUnsignedByte(( player ).get_value() );                      // The player index
 
                 packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
                 packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion

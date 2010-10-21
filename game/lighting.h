@@ -54,17 +54,17 @@ struct ego_lighting_cache_base
     float             max_delta;  ///< max change in the light amplitude
     lighting_vector_t lighting;   ///< light from +x,-x, +y,-y, +z,-z, ambient
 
-    ego_lighting_cache_base() { clear(this); }
+    ego_lighting_cache_base() { clear( this ); }
 
-    ego_lighting_cache_base * ctor(ego_lighting_cache_base * ptr) { return clear(ptr); }
+    ego_lighting_cache_base * ctor( ego_lighting_cache_base * ptr ) { return clear( ptr ); }
 
 private:
 
-    static ego_lighting_cache_base * clear(ego_lighting_cache_base * ptr) 
-    { 
-        if( NULL == ptr ) return ptr;
+    static ego_lighting_cache_base * clear( ego_lighting_cache_base * ptr )
+    {
+        if ( NULL == ptr ) return ptr;
 
-        memset( ptr, 0, sizeof(*ptr) );
+        memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }

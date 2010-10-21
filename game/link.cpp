@@ -240,7 +240,7 @@ bool_t link_push_module()
             pentry->hero_count++;
 
             // copy some important info
-            phero->object_index = (pchr->profile_ref ).get_value();
+            phero->object_index = ( pchr->profile_ref ).get_value();
 
             phero->pos_stt.x    = pchr->pos_stt.x;
             phero->pos_stt.y    = pchr->pos_stt.y;

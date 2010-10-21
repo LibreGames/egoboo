@@ -283,7 +283,7 @@ bool_t ProList_push_free( const PRO_REF & iobj )
     retval = bfalse;
     if ( ProList._free_count < MAX_PROFILE )
     {
-        ProList.free_ref[ProList._free_count] = (iobj ).get_value();
+        ProList.free_ref[ProList._free_count] = ( iobj ).get_value();
 
         ProList._free_count++;
         ProList.update_guid++;
@@ -800,7 +800,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
         }
         else if ( required && overrideslots )
         {
-            log_error( "load_one_profile_vfs() - object slot %i used twice (%s, %s)\n", (iobj ).get_value(), pobj->name, tmploadname );
+            log_error( "load_one_profile_vfs() - object slot %i used twice (%s, %s)\n", ( iobj ).get_value(), pobj->name, tmploadname );
         }
         else
         {
@@ -813,7 +813,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     iobj = ProList_get_free( iobj );
     if ( !VALID_PRO_RANGE( iobj ) )
     {
-        log_warning( "load_one_profile_vfs() - Cannot allocate object %d (\"%s\")\n", (iobj ).get_value(), tmploadname );
+        log_warning( "load_one_profile_vfs() - Cannot allocate object %d (\"%s\")\n", ( iobj ).get_value(), tmploadname );
         return MAX_PROFILE;
     }
 
@@ -822,7 +822,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
 
     // load the character profile
     pobj->icap = load_one_character_profile_vfs( tmploadname, islot, bfalse );
-    islot = (pobj->icap ).get_value();
+    islot = ( pobj->icap ).get_value();
 
     // Load the model for this iobj
     pobj->imad = load_one_model_profile_vfs( tmploadname, ( MAD_REF )islot );

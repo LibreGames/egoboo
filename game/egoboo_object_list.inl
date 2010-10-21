@@ -280,7 +280,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::activate_object( const t_reference<_
     }
 
     // allocate the new one
-    ego_obj::allocate( pbase, (ref ).get_value() );
+    ego_obj::allocate( pbase, ( ref ).get_value() );
 
     _ty::run_construct( pobj, 100 );
 
@@ -307,7 +307,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::allocate( const t_reference<_ty> & o
     if ( !validate_ref( ref ) )
     {
         // we didn't get a valid reference
-        log_warning( "t_ego_obj_lst<>::allocate() - failed to override a object? Object at index %d already spawned? \n", (override ).get_value() );
+        log_warning( "t_ego_obj_lst<>::allocate() - failed to override a object? Object at index %d already spawned? \n", ( override ).get_value() );
     }
     else
     {

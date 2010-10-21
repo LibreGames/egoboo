@@ -362,7 +362,7 @@ void export_all_players( bool_t require_local )
     CHR_REF character, item;
 
     // Don't export if the module isn't running
-    if ( (rv_success != GProc->running()) ) return;
+    if (( rv_success != GProc->running() ) ) return;
 
     // Stop if export isn't valid
     if ( !PMod->exportvalid ) return;
@@ -437,10 +437,10 @@ void log_madused_vfs( const char *savename )
                 CAP_REF icap = pro_get_icap( cnt );
                 MAD_REF imad = pro_get_imad( cnt );
 
-                vfs_printf( hFileWrite, "%3d %32s %s\n", (cnt ).get_value(), CapStack.lst[icap].classname, MadStack.lst[imad].name );
+                vfs_printf( hFileWrite, "%3d %32s %s\n", ( cnt ).get_value(), CapStack.lst[icap].classname, MadStack.lst[imad].name );
             }
-            else if ( cnt <= 36 )    vfs_printf( hFileWrite, "%3d  %32s.\n", (cnt ).get_value(), "Slot reserved for import players" );
-            else                    vfs_printf( hFileWrite, "%3d  %32s.\n", (cnt ).get_value(), "Slot Unused" );
+            else if ( cnt <= 36 )    vfs_printf( hFileWrite, "%3d  %32s.\n", ( cnt ).get_value(), "Slot reserved for import players" );
+            else                    vfs_printf( hFileWrite, "%3d  %32s.\n", ( cnt ).get_value(), "Slot Unused" );
         }
 
         vfs_close( hFileWrite );
@@ -586,7 +586,7 @@ void activate_alliance_file_vfs( /*const char *modname*/ )
 
             fget_string( fileread, szTemp, SDL_arraysize( szTemp ) );
             teamb = ( szTemp[0] - 'A' ) % TEAM_MAX;
-            TeamStack.lst[teama].hatesteam[(teamb ).get_value()] = bfalse;
+            TeamStack.lst[teama].hatesteam[( teamb ).get_value()] = bfalse;
         }
 
         vfs_close( fileread );
@@ -926,7 +926,7 @@ void game_update_timers()
     ticks_now  = egoboo_get_ticks();
 
     // check to make sure that the game is running
-    if ( (rv_success != GProc->running()) || GProc->mod_paused )
+    if (( rv_success != GProc->running() ) || GProc->mod_paused )
     {
         // for a local game, force the function to ignore the accumulation of time
         // until you re-join the game
@@ -1101,7 +1101,7 @@ ego_game_process * ego_game_process::ctor( ego_game_process * gproc )
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_game_process::do_beginning()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -1195,7 +1195,7 @@ egoboo_rv ego_game_process::do_running()
 {
     int update_loops = 0;
 
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -1354,7 +1354,7 @@ egoboo_rv ego_game_process::do_running()
     result = 0;
 
     // go to the next state?
-    if( 1 == result )
+    if ( 1 == result )
     {
         state = proc_leaving;
     }
@@ -1365,7 +1365,7 @@ egoboo_rv ego_game_process::do_running()
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_game_process::do_leaving()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
@@ -1408,7 +1408,7 @@ egoboo_rv ego_game_process::do_leaving()
     result = 1;
 
     // go to the next state
-    if( 1 == result )
+    if ( 1 == result )
     {
         state  = proc_finishing;
         killme = bfalse;
@@ -1420,13 +1420,13 @@ egoboo_rv ego_game_process::do_leaving()
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_game_process::do_finishing()
 {
-    if( NULL == this )  return rv_error;
+    if ( NULL == this )  return rv_error;
     result = -1;
 
     if ( !validate() ) return rv_error;
 
     // resume the menu process
-    if( NULL != MProc )
+    if ( NULL != MProc )
     {
         MProc->resume();
     }
@@ -1434,13 +1434,10 @@ egoboo_rv ego_game_process::do_finishing()
     // shut off the game process
     terminate();
 
-
     result = 0;
 
     return rv_success;
 }
-
-
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1899,7 +1896,7 @@ void do_weather_spawn_particles()
             ego_player * tmp_ppla = NULL;
             ego_chr    * tmp_pchr = NULL;
 
-            weather_ipla = ( PLA_REF )(( (weather_ipla ).get_value() + 1 ) % MAX_PLAYER );
+            weather_ipla = ( PLA_REF )((( weather_ipla ).get_value() + 1 ) % MAX_PLAYER );
 
             tmp_ppla = PlaStack.lst + weather_ipla;
             if ( !tmp_ppla->valid ) continue;
@@ -2920,7 +2917,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
     if ( psp_info->attach == ATTACH_NONE )
     {
         // Free character
-        psp_info->parent = (new_object ).get_value();
+        psp_info->parent = ( new_object ).get_value();
         make_one_character_matrix( new_object );
     }
 
@@ -2974,7 +2971,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             {
                 if ( pobject->profile_ref <= import_data.max_slot && pobject->profile_ref < MAX_PROFILE )
                 {
-                    int islot = (pobject->profile_ref ).get_value();
+                    int islot = ( pobject->profile_ref ).get_value();
 
                     if ( import_data.slot_lst[islot] == local_import_slot[tnc] )
                     {
@@ -3552,9 +3549,9 @@ egoboo_rv game_update_imports()
 
         // grab the controls from the currently loaded players
         // calculate the slot from the current player count
-        player_idx = (player ).get_value();
+        player_idx = ( player ).get_value();
         local_import_control[player_idx] = ppla->device.bits;
-        local_import_slot[player_idx]    = (player ).get_value() * MAXIMPORTPERPLAYER;
+        local_import_slot[player_idx]    = ( player ).get_value() * MAXIMPORTPERPLAYER;
         player++;
 
         // Copy the character to the import directory

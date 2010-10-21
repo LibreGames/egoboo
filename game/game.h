@@ -89,9 +89,9 @@ struct ego_game_process_data
     int    fps_ticks_next, fps_ticks_now;
     int    ups_ticks_next, ups_ticks_now;
 
-    ego_game_process_data() { clear( this); }
+    ego_game_process_data() { clear( this ); }
 
-    static ego_game_process_data * ctor( ego_game_process_data * ptr ) { return clear(ptr); }
+    static ego_game_process_data * ctor( ego_game_process_data * ptr ) { return clear( ptr ); }
 
 private:
 

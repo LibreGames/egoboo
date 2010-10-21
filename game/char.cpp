@@ -372,7 +372,7 @@ void chr_log_script_time( const CHR_REF & ichr )
     if ( NULL != ftmp )
     {
         fprintf( ftmp, "update == %d\tindex == %d\tname == \"%s\"\tclassname == \"%s\"\ttotal_time == %e\ttotal_calls == %f\n",
-                 update_wld, (ichr ).get_value(), pchr->name, pcap->classname,
+                 update_wld, ( ichr ).get_value(), pchr->name, pcap->classname,
                  pchr->ai._clktime, pchr->ai._clkcount );
         fflush( ftmp );
         fclose( ftmp );
@@ -2483,7 +2483,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
         }
         else if ( required && overrideslots )
         {
-            log_error( "Object slot %i used twice (%s, %s)\n", (icap ).get_value(), pcap->name, szLoadName );
+            log_error( "Object slot %i used twice (%s, %s)\n", ( icap ).get_value(), pcap->name, szLoadName );
         }
         else
         {
@@ -3200,7 +3200,7 @@ ego_chr * ego_chr::do_init( ego_chr * pchr )
 
     // Make sure the pchr->spawn_data.team is valid
     loc_team = pchr->spawn_data.team;
-    iteam = (loc_team ).get_value();
+    iteam = ( loc_team ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
     loc_team = ( TEAM_REF )iteam;
 
@@ -3565,7 +3565,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 
     if ( profile >= MAX_PROFILE )
     {
-        log_warning( "spawn_one_character() - profile value too large %d out of %d\n", (profile ).get_value(), MAX_PROFILE );
+        log_warning( "spawn_one_character() - profile value too large %d out of %d\n", ( profile ).get_value(), MAX_PROFILE );
         return CHR_REF( MAX_CHR );
     }
 
@@ -3573,7 +3573,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     {
         if ( profile > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "spawn_one_character() - trying to spawn using invalid profile %d\n", (profile ).get_value() );
+            log_warning( "spawn_one_character() - trying to spawn using invalid profile %d\n", ( profile ).get_value() );
         }
         return CHR_REF( MAX_CHR );
     }
@@ -3582,7 +3582,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     ichr = ChrObjList.allocate( override );
     if ( !DEFINED_CHR( ichr ) )
     {
-        log_warning( "spawn_one_character() - failed to spawn character (invalid index number %d?)\n", (ichr ).get_value() );
+        log_warning( "spawn_one_character() - failed to spawn character (invalid index number %d?)\n", ( ichr ).get_value() );
         return CHR_REF( MAX_CHR );
     }
 
@@ -3604,7 +3604,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 #if defined(DEBUG_OBJECT_SPAWN) && EGO_DEBUG
     {
         CAP_REF icap = pro_get_icap( profile );
-        log_debug( "spawn_one_character() - slot: %i, index: %i, name: %s, class: %s\n", (profile ).get_value(), (ichr ).get_value(), name, CapStack.lst[icap].classname );
+        log_debug( "spawn_one_character() - slot: %i, index: %i, name: %s, class: %s\n", ( profile ).get_value(), ( ichr ).get_value(), name, CapStack.lst[icap].classname );
     }
 #endif
 
@@ -7039,7 +7039,7 @@ ego_chr_instance * ego_chr_instance::dtor( ego_chr_instance * pinst )
 
     memset( pinst, 0, sizeof( *pinst ) );
 
-    return clear(pinst);
+    return clear( pinst );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7331,7 +7331,7 @@ BBOARD_REF chr_add_billboard( const CHR_REF & ichr, Uint32 lifetime_secs )
 
     if ( INVALID_BILLBOARD != pchr->ibillboard )
     {
-        BillboardList_free_one( (pchr->ibillboard ).get_value() );
+        BillboardList_free_one(( pchr->ibillboard ).get_value() );
         pchr->ibillboard = INVALID_BILLBOARD;
     }
 
@@ -7372,7 +7372,7 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
     if ( rv < 0 )
     {
         pchr->ibillboard = INVALID_BILLBOARD;
-        BillboardList_free_one( (ibb ).get_value() );
+        BillboardList_free_one(( ibb ).get_value() );
         pbb = NULL;
     }
     else
@@ -7977,11 +7977,11 @@ void reset_teams()
         // Make the team hate everyone
         for ( teamb = 0; teamb < TEAM_MAX; teamb++ )
         {
-            TeamStack.lst[teama].hatesteam[(teamb ).get_value()] = btrue;
+            TeamStack.lst[teama].hatesteam[( teamb ).get_value()] = btrue;
         }
 
         // Make the team like itself
-        TeamStack.lst[teama].hatesteam[(teama ).get_value()] = bfalse;
+        TeamStack.lst[teama].hatesteam[( teama ).get_value()] = bfalse;
 
         // Set defaults
         TeamStack.lst[teama].leader = NOLEADER;
@@ -7993,7 +7993,7 @@ void reset_teams()
     for ( teama = 0; teama < TEAM_MAX; teama++ )
     {
         TeamStack.lst[teama].hatesteam[TEAM_NULL] = bfalse;
-        TeamStack.lst[( TEAM_REF )TEAM_NULL].hatesteam[(teama ).get_value()] = bfalse;
+        TeamStack.lst[( TEAM_REF )TEAM_NULL].hatesteam[( teama ).get_value()] = bfalse;
     }
 }
 
@@ -8598,7 +8598,7 @@ int cmp_matrix_cache( const void * vlhs, const void * vrhs )
     //---- check for differences in the MAT_WEAPON data
     if ( HAS_SOME_BITS( plhs->type_bits, MAT_WEAPON ) )
     {
-        itmp = ( signed )(plhs->grip_chr ).get_value() - ( signed )(prhs->grip_chr ).get_value();
+        itmp = ( signed )( plhs->grip_chr ).get_value() - ( signed )( prhs->grip_chr ).get_value();
         if ( 0 != itmp ) goto cmp_matrix_cache_end;
 
         itmp = ( signed )plhs->grip_slot - ( signed )prhs->grip_slot;
@@ -8675,8 +8675,6 @@ egoboo_rv ego_chr::matrix_cache_needs_update( ego_chr * pchr, ego_matrix_cache *
 
     return needs_cache_update ? rv_success : rv_fail;
 }
-
-
 
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
@@ -10998,7 +10996,7 @@ ego_chr_data * ego_chr_data::dtor( ego_chr_data * pdata )
     if ( NULL == pdata ) return NULL;
 
     // remove it from the BillboardList
-    BillboardList_free_one( (pdata->ibillboard ).get_value() );
+    BillboardList_free_one(( pdata->ibillboard ).get_value() );
 
     // remove it from the LoopedList
     LoopedList_remove( pdata->loopedsound_channel );

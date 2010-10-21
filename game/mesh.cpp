@@ -66,7 +66,7 @@ ego_mpd_info * ego_mpd_info::ctor( ego_mpd_info * pinfo )
 //--------------------------------------------------------------------------------------------
 ego_mpd_info * ego_mpd_info::init( ego_mpd_info * pinfo, int numvert, size_t tiles_x, size_t tiles_y )
 {
-    if( NULL == pinfo ) return pinfo;
+    if ( NULL == pinfo ) return pinfo;
 
     // set the desired number of tiles
     pinfo->tiles_x = tiles_x;
@@ -112,7 +112,7 @@ ego_tile_mem * ego_tile_mem::dtor( ego_tile_mem * pmem )
 
     ego_tile_mem::dealloc( pmem );
 
-    return clear(pmem);
+    return clear( pmem );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ ego_mpd   * ego_mpd::dtor( ego_mpd   * pmesh )
     // delete the mesh BSP data
     mpd_BSP::dtor( &mpd_BSP::root );
 
-    return clear(pmesh);
+    return clear( pmesh );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -489,7 +489,6 @@ ego_grid_mem * ego_grid_mem::ctor( ego_grid_mem * pmem )
     return pmem;
 }
 
-
 //--------------------------------------------------------------------------------------------
 ego_grid_mem * ego_grid_mem::dtor( ego_grid_mem * pmem )
 {
@@ -497,7 +496,7 @@ ego_grid_mem * ego_grid_mem::dtor( ego_grid_mem * pmem )
 
     ego_grid_mem::dealloc( pmem );
 
-    return clear(pmem);
+    return clear( pmem );
 }
 
 //--------------------------------------------------------------------------------------------

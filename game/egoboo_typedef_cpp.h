@@ -343,7 +343,6 @@ struct t_cpp_stack
     t_cpp_stack() { count = 0; update_guid = 0; }
 };
 
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -356,14 +355,13 @@ struct t_dary
     size_t   top;
     _ty    * ary;
 
-    t_dary() { clear(this); }
-    ~t_dary() { dtor(this); }
+    t_dary() { clear( this ); }
+    ~t_dary() { dtor( this ); }
 
     static bool_t   alloc( t_dary * pary, size_t sz );
-    static bool_t   dealloc(t_dary * pary );
-    static t_dary * ctor(t_dary * pary, size_t sz);
-    static t_dary * dtor(t_dary * pary );
-
+    static bool_t   dealloc( t_dary * pary );
+    static t_dary * ctor( t_dary * pary, size_t sz );
+    static t_dary * dtor( t_dary * pary );
 
     static size_t   get_top( t_dary * pary );
     static size_t   get_size( t_dary * pary );
@@ -376,12 +374,11 @@ private:
     static void     clear( t_dary * pary );
 };
 
-
 #define DECLARE_DYNAMIC_ARY(ARY_T, ELEM_T) typedef t_dary<ELEM_T> ARY_T;
 
 #define INSTANTIATE_DYNAMIC_ARY(ARY_T, NAME) ARY_T NAME;
 
-#define IMPLEMENT_DYNAMIC_ARY(ARY_T, _ty) 
+#define IMPLEMENT_DYNAMIC_ARY(ARY_T, _ty)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

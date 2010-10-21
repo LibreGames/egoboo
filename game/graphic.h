@@ -81,13 +81,13 @@ struct ego_GLvertex
 
     GLXvector4f col;      ///< the total vertex-dependent lighting (ambient + directional)
 
-    ego_GLvertex() { clear(this); }
+    ego_GLvertex() { clear( this ); }
 
-    ego_GLvertex * ctor(ego_GLvertex * ptr) { return clear(ptr); }
+    ego_GLvertex * ctor( ego_GLvertex * ptr ) { return clear( ptr ); }
 
 private:
 
-    static ego_GLvertex * clear(ego_GLvertex * ptr)
+    static ego_GLvertex * clear( ego_GLvertex * ptr )
     {
         if ( NULL == ptr ) return NULL;
 
