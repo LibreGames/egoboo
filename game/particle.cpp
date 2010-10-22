@@ -296,6 +296,19 @@ void free_one_particle_in_game( const PRT_REF & particle )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+ego_prt * ego_prt::do_construct( ego_prt * pprt )
+{
+    // this object has already been constructed as a part of the
+    // ego_obj_prt, so its parent is properly defined
+
+    ego_prt * rv = ego_prt::ctor_all( pprt, pprt->get_pparent() );
+
+    /* add something here */
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
 ego_prt * ego_prt::do_init( ego_prt * pprt )
 {
     PRT_REF            iprt;
@@ -644,6 +657,16 @@ ego_prt * ego_prt::do_deinit( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
+ego_prt * ego_prt::do_destruct( ego_prt * pprt )
+{
+    ego_prt * rv = ego_prt::dtor_all( pprt );
+
+    /* add something here */
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 ego_obj_prt * ego_obj_prt::run_construct( ego_obj_prt * pobj, int max_iterations )
 {
@@ -858,7 +881,7 @@ ego_obj_prt * ego_obj_prt::do_constructing( ego_obj_prt * pobj )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
 
     // run the constructor
-    ego_prt * pprt = ego_prt::ctor_all( pobj->get_pdata(), pobj );
+    ego_prt * pprt = ego_prt::do_construct( pobj->get_pdata() );
     if ( NULL == pprt ) return NULL;
 
     // move on to the next action
@@ -989,7 +1012,7 @@ ego_obj_prt * ego_obj_prt::do_destructing( ego_obj_prt * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the destructor
-    ego_prt * pprt = ego_prt::dtor_all( pobj->get_pdata() );
+    ego_prt * pprt = ego_prt::do_destruct( pobj->get_pdata() );
     if ( NULL == pprt ) return pobj;
 
     // move on to the next action (dead)
@@ -2337,25 +2360,20 @@ int prt_do_end_spawn( const PRT_REF & iprt )
 //--------------------------------------------------------------------------------------------
 void cleanup_all_particles()
 {
-    PRT_REF iprt;
-
     // do end-of-life care for particles. Must iterate over all particles since the
     // number of particles could change inside this list
-    for ( iprt = 0; iprt < maxparticles; iprt++ )
+    for ( int cnt = 0; cnt < MAX_PRT; cnt++ )
     {
-        ego_obj * pbase;
-        ego_prt             * pprt;
+        bool_t time_out;
 
-        bool_t prt_allocated;
+        ego_obj_prt * pobj = PrtObjList.get_valid_ptr( PRT_REF( cnt ) );
+        if ( NULL == pobj ) continue;
 
-        pprt  = PrtObjList.get_valid_pdata( iprt );
+        ego_prt * pprt = pobj->get_pdata();
         if ( NULL == pprt ) continue;
 
-        pbase = PDATA_GET_PBASE( pprt );
+        ego_obj * pbase = PDATA_GET_PBASE( pprt );
         if ( NULL == pbase ) continue;
-
-        prt_allocated = FLAG_VALID_PBASE( pbase );
-        if ( !prt_allocated ) continue;
 
         if ( FLAG_KILLED_PBASE( pbase ) )
         {
@@ -2367,9 +2385,9 @@ void cleanup_all_particles()
         {
             // the object is waiting to be killed, so
             // do all of the end of life care for the particle
-            prt_do_end_spawn( iprt );
+            prt_do_end_spawn( PRT_REF( cnt ) );
 
-            free_one_particle_in_game( iprt );
+            free_one_particle_in_game( PRT_REF( cnt ) );
 
             // tell the particle to finish deallocating itself
             ego_obj::end_processing( pbase );

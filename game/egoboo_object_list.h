@@ -39,7 +39,7 @@ struct t_ego_obj_lst
     t_ego_obj_lst()  { loop_depth = 0; }
     ~t_ego_obj_lst() { dtor_this(); }
 
-    INLINE bool_t validate_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
+    INLINE bool_t validate_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _sz; };
 
     void             init();
     void             dtor_this();
@@ -74,9 +74,6 @@ struct t_ego_obj_lst
 
 protected:
     reference get_free();
-
-    void      prune_free();
-    void      prune_used();
 
     void      clear_free_list();
 

@@ -816,6 +816,19 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+ego_enc * ego_enc::do_construct( ego_enc * penc )
+{
+    // this object has already been constructed as a part of the
+    // ego_obj_enc, so its parent is properly defined
+
+    ego_enc * rv =  ego_enc::ctor_all( penc, penc->get_pparent() );
+
+    /* add something here */
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
 ego_enc * ego_enc::do_init( ego_enc * penc )
 {
     ego_enc_spawn_data * pdata;
@@ -1092,6 +1105,17 @@ ego_enc * ego_enc::do_deinit( ego_enc * penc )
 
     return penc;
 }
+
+//--------------------------------------------------------------------------------------------
+ego_enc * ego_enc::do_destruct( ego_enc * penc )
+{
+    ego_enc * rv = ego_enc::dtor_all( penc );
+
+    /* add something here */
+
+    return rv;
+}
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 ego_obj_enc * ego_obj_enc::run_construct( ego_obj_enc * pobj, int max_iterations )
@@ -1307,7 +1331,7 @@ ego_obj_enc * ego_obj_enc::do_constructing( ego_obj_enc * pobj )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
 
     // run the constructor
-    ego_enc * penc = ego_enc::ctor_all( pobj->get_pdata(), pobj );
+    ego_enc * penc = ego_enc::do_construct( pobj->get_pdata() );
     if ( NULL == penc ) return pobj;
 
     // move on to the next action
@@ -1438,7 +1462,7 @@ ego_obj_enc * ego_obj_enc::do_destructing( ego_obj_enc * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the destructor
-    ego_enc * penc = ego_enc::dtor_all( pobj->get_pdata() );
+    ego_enc * penc = ego_enc::do_destruct( pobj->get_pdata() );
     if ( NULL == penc ) return pobj;
 
     // move on to the next action (dead)
@@ -1984,12 +2008,18 @@ void cleanup_all_enchants()
     /// @details ZZ@> this function scans all the enchants and removes any dead ones.
     ///               this happens only once a loop
 
-    ENC_BEGIN_LOOP_ACTIVE( ienc, penc )
+    for ( int cnt = 0; cnt < MAX_ENC; cnt++ )
     {
         ENC_REF * ego_enc_lst;
         ego_eve   * peve;
         bool_t    do_remove;
         bool_t valid_owner, valid_target;
+
+        ego_obj_enc * pobj = EncObjList.get_valid_ptr( ENC_REF( cnt ) );
+        if ( NULL == pobj ) continue;
+
+        ego_enc * penc = pobj->get_pdata();
+        if ( NULL == penc ) continue;
 
         // try to determine something about the parent
         ego_enc_lst = NULL;
@@ -2018,7 +2048,7 @@ void cleanup_all_enchants()
         peve = EveStack.lst + penc->eve_ref;
 
         do_remove = bfalse;
-        if ( WAITING_PBASE( PDATA_GET_PBASE( penc ) ) )
+        if ( WAITING_PBASE( pobj ) )
         {
             // the enchant has been marked for removal
             do_remove = btrue;
@@ -2046,10 +2076,10 @@ void cleanup_all_enchants()
 
         if ( do_remove )
         {
-            remove_enchant( ienc, NULL );
+            remove_enchant( ENC_REF( cnt ), NULL );
         }
     }
-    ENC_END_LOOP();
+
 }
 
 //--------------------------------------------------------------------------------------------

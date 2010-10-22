@@ -3167,6 +3167,19 @@ void ego_ai_state::spawn( ego_ai_state * pself, const CHR_REF & index, const PRO
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_construct( ego_chr * pchr )
+{
+    // this object has already been constructed as a part of the
+    // ego_obj_chr, so its parent is properly defined
+
+    ego_chr * rv =  ego_chr::ctor_all( pchr, pchr->get_pparent() );
+
+    /* add something here */
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
 ego_chr * ego_chr::do_init( ego_chr * pchr )
 {
     CHR_REF  ichr;
@@ -3546,6 +3559,16 @@ ego_chr * ego_chr::do_deinit( ego_chr * pchr )
     /* nothing to do yet */
 
     return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_destruct( ego_chr * pchr )
+{
+    ego_chr * rv = ego_chr::dtor_all( pchr );
+
+    /* add something here */
+
+    return rv;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -6891,15 +6914,18 @@ void move_all_characters( void )
 //--------------------------------------------------------------------------------------------
 void cleanup_all_characters()
 {
-    CHR_REF cnt;
+
 
     // Do poofing
-    for ( cnt = 0; cnt < MAX_CHR; cnt++ )
+    for ( int cnt = 0; cnt < MAX_CHR; cnt++ )
     {
-        ego_chr * pchr;
         bool_t time_out;
+        CHR_REF ichr( cnt );
 
-        pchr = ChrObjList.get_pdata( cnt );
+        ego_obj_chr * pobj = ChrObjList.get_valid_ptr( ichr );
+        if ( NULL == pobj ) continue;
+
+        ego_chr * pchr = pobj->get_pdata();
         if ( NULL == pchr ) continue;
 
         time_out = ( pchr->ai.poof_time >= 0 ) && ( pchr->ai.poof_time <= ( Sint32 )update_wld );
@@ -6909,10 +6935,10 @@ void cleanup_all_characters()
         cleanup_one_character( pchr );
 
         // free the character's inventory
-        free_inventory_in_game( cnt );
+        free_inventory_in_game( ichr );
 
         // free the character
-        free_one_character_in_game( cnt );
+        free_one_character_in_game( ichr );
     }
 }
 
@@ -11491,7 +11517,7 @@ ego_obj_chr * ego_obj_chr::do_constructing( ego_obj_chr * pobj )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
 
     // run the constructor
-    ego_chr * pchr = ego_chr::ctor_all( pobj->get_pdata(), pobj );
+    ego_chr * pchr = ego_chr::do_construct( pobj->get_pdata() );
     if ( NULL == pchr ) return pobj;
 
     // move on to the next action
@@ -11627,7 +11653,7 @@ ego_obj_chr * ego_obj_chr::do_destructing( ego_obj_chr * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the destructor
-    ego_chr * pchr = ego_chr::dtor_all( pobj->get_pdata() );
+    ego_chr * pchr = ego_chr::do_destruct( pobj->get_pdata() );
     if ( NULL == pchr ) return pobj;
 
     // move on to the next action (dead)

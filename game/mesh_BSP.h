@@ -23,6 +23,8 @@
 /// @brief
 /// @details
 
+#include <cmath>
+
 #include "egoboo_typedef.h"
 
 #include "bsp.h"

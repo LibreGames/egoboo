@@ -28,10 +28,15 @@
 #include <SDL.h>
 
 #if defined(__cplusplus)
-#    include <cassert>
-#    include <cstdio>
+
+#   if !defined(_H_MMGR_INCLUDED)
+#       include <cassert>
+#       include <cstdio>
+#   endif
+
 extern "C"
 {
+
 #else
 #    include <assert.h>
 #    include "file_common.h"

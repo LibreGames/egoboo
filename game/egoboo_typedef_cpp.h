@@ -174,7 +174,7 @@ public:
         }
 
 private:
-        explicit iterator( _it_t & it, unsigned id )
+        explicit iterator( _it_t it, unsigned id )
         {
             _i     = it;
             _id    = id;
@@ -209,13 +209,16 @@ private:
 
     bool_t iterator_end( iterator & it )
     {
-        if ( !iterator_validate( it ) ) bfalse;
+        // if the iterator is not valid, we ARE at the end
+        if ( !iterator_validate( it ) ) btrue;
 
         return it._i == _map.end();
     }
 
     iterator & iterator_increment( iterator & it )
     {
+        // if the iterator is not valid, this call will invalidate it.
+        // then just send back the invalid iterator
         if ( !iterator_validate( it ) ) return it;
 
         it._i++;

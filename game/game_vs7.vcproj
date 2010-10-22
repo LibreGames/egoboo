@@ -41,7 +41,7 @@
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="4"
 				CompileAs="0"
-				DisableSpecificWarnings="4127;4239;4130"
+				DisableSpecificWarnings="4127"
 				ShowIncludes="FALSE"/>
 			<Tool
 				Name="VCCustomBuildTool"/>

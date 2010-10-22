@@ -80,8 +80,7 @@ void t_ego_obj_lst< _ty, _sz >::init()
 
     for ( cnt = 0; cnt < _sz; cnt++ )
     {
-        size_t tnc = ( _sz - 1 ) - cnt;
-        _ty * pobj = ary + tnc;
+        _ty * pobj = ary + cnt;
 
         // destroy all dynamic data
         ego_obj::dtor_all( POBJ_GET_PBASE( pobj ) );
@@ -146,20 +145,20 @@ void t_ego_obj_lst< _ty, _sz >::update_used()
         // convert this back into a reference
         reference ref( idx );
 
-        // remove the element
-        used_map.remove( ref );
+        // grab some pointers
+        _ty * ptr = get_ptr( ref );
+        if ( NULL == ptr ) continue;
 
-        _ty * ptr = get_valid_ptr( ref );
-        if ( NULL != ptr )
-        {
-            ego_obj * pbase = ptr->get_pego_obj();
-            if ( NULL != pbase )
-            {
-                // tell the object that it is definitely NOT in the used list
-                cpp_list_state::set_used( pbase->get_plist(), bfalse );
-                cpp_list_state::set_free( pbase->get_plist(), btrue );
-            }
-        }
+        ego_obj * pbase = ptr->get_pego_obj();
+        if ( NULL == pbase ) continue;
+
+        // move the element from the used_map...
+        used_map.remove( ref );
+        cpp_list_state::set_used( pbase->get_plist(), bfalse );
+
+        // ...to the free_queue
+        free_queue.push( ref );
+        cpp_list_state::set_free( pbase->get_plist(), btrue );
     }
 
     // go through the object array and see if (God forbid) there is an
@@ -237,7 +236,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::get_free()
     /// @details BB@> This function returns a reference to the next free object.
     ///               On failure, the reference will be blank/invalid.
 
-    reference retval;
+    reference retval( _sz );
 
     while ( !free_queue.empty() )
     {
@@ -313,6 +312,15 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::allocate( const t_reference<_ty> & o
     {
         // the reference is valid, so activate the object
         ref = t_ego_obj_lst< _ty, _sz >::activate_object( ref );
+
+        _ty * pobj = ary + ref.get_value();
+
+        // add the value to the used map
+        used_map.add( ref, pobj );
+
+        // tell the object that it is definitely in the used list
+        cpp_list_state::set_used( pobj->get_plist(), btrue );
+        cpp_list_state::set_free( pobj->get_plist(), bfalse );
     }
 
     return ref;

@@ -30,6 +30,11 @@
 // redefines the new operator in a way that ther STL doesn't like.
 // And we do not want mmgr to be tracking internal allocation inside the STL, anyway!
 #if defined(__cplusplus)
+
+#if defined(_H_MMGR_INCLUDED)
+#error If mmgr.h is included before this point, the remapping of new and delete will cause problems
+#endif
+
 #   include <deque>
 #   include <map>
 #   include <stack>
