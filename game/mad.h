@@ -52,8 +52,8 @@ struct ego_mad
     // model data
     ego_MD2_Model * md2_ptr;                       ///< the pointer that will eventually be used
 
-    static ego_mad * ctor( ego_mad * pmad );
-    static ego_mad * dtor( ego_mad * pmad );
+    static ego_mad * ctor_this( ego_mad * pmad );
+    static ego_mad * dtor_this( ego_mad * pmad );
     static ego_mad * reconstruct( ego_mad * pmad );
 
 private:

@@ -191,17 +191,17 @@ struct ego_chr_data
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_chr_data()  { ego_chr_data::ctor( this ); };
+    explicit ego_chr_data()  { ego_chr_data::ctor_this( this ); };
 
     /// default destructor
-    ~ego_chr_data() { ego_chr_data::dtor( this ); };
+    ~ego_chr_data() { ego_chr_data::dtor_this( this ); };
 
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_chr_data * ctor( ego_chr_data * );
+    static ego_chr_data * ctor_this( ego_chr_data * );
     /// destruct this struct, ONLY
-    static ego_chr_data * dtor( ego_chr_data * );
+    static ego_chr_data * dtor_this( ego_chr_data * );
     /// set the critical variables to safe values
     static ego_chr_data * init( ego_chr_data * );
 
@@ -423,10 +423,10 @@ protected:
 
     //---- construction and destruction
 
-    /// construct this struct, and ALL dependent structs
-    static ego_chr_data * do_ctor( ego_chr_data * );
-    /// denstruct this struct, and ALL dependent structs
-    static ego_chr_data * do_dtor( ego_chr_data * );
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_chr_data * ctor_all( ego_chr_data * ptr ) { if ( NULL != ptr ) new( ptr ) ego_chr_data(); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_chr_data * dtor_all( ego_chr_data * ptr )  { if ( NULL != ptr ) ptr->~ego_chr_data(); return ptr; }
 
     //---- memory management
 
@@ -457,10 +457,10 @@ public:
     //---- constructors and destructors
 
     /// non-default constructor. We MUST know who our marent is
-    explicit ego_chr( ego_obj_chr * _pparent ) : _parent_obj_ptr( _pparent ) { ego_chr::ctor( this ); };
+    explicit ego_chr( ego_obj_chr * _pparent ) : _parent_obj_ptr( _pparent ) { ego_chr::ctor_this( this ); };
 
     /// default destructor
-    ~ego_chr() { ego_chr::dtor( this ); };
+    ~ego_chr() { ego_chr::dtor_this( this ); };
 
     //---- implementation of required accessors
 
@@ -474,9 +474,9 @@ public:
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_chr * ctor( ego_chr * pchr );
+    static ego_chr * ctor_this( ego_chr * pchr );
     /// destruct this struct, ONLY
-    static ego_chr * dtor( ego_chr * pchr );
+    static ego_chr * dtor_this( ego_chr * pchr );
     /// do some initialiation
     static ego_chr * init( ego_chr * pchr ) { return pchr; }
 
@@ -586,6 +586,13 @@ public:
 
 protected:
 
+    //---- construction and destruction
+
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_chr * ctor_all( ego_chr * ptr, ego_obj_chr * pparent ) { if ( NULL != ptr ) new( ptr ) ego_chr( pparent ); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_chr * dtor_all( ego_chr * ptr )  { if ( NULL != ptr ) ptr->~ego_chr(); return ptr; }
+
     //---- memory management
 
     /// allocate data for this struct, ONLY
@@ -600,11 +607,11 @@ protected:
 
     //---- private implementations of the configuration functions
 
-    static ego_chr * do_ctor( ego_chr * pchr );
+    static ego_chr * do_construct( ego_chr * pchr );
     static ego_chr * do_init( ego_chr * pchr );
     static ego_chr * do_process( ego_chr * pchr );
     static ego_chr * do_deinit( ego_chr * pchr );
-    static ego_chr * do_dtor( ego_chr * pchr );
+    static ego_chr * do_destruct( ego_chr * pchr );
 
     static int change_skin( const CHR_REF & character, Uint32 skin );
 
@@ -634,10 +641,10 @@ struct ego_obj_chr : public ego_obj
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_obj_chr() : _chr_data( this ) { ctor( this ); }
+    explicit ego_obj_chr() : _chr_data( this ) { ctor_this( this ); }
 
     /// default destructor
-    ~ego_obj_chr() { dtor( this ); }
+    ~ego_obj_chr() { dtor_this( this ); }
 
     //---- implementation of required accessors
 
@@ -654,14 +661,14 @@ struct ego_obj_chr : public ego_obj
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_obj_chr * ctor( ego_obj_chr * pobj );
+    static ego_obj_chr * ctor_this( ego_obj_chr * pobj );
     /// destruct this struct, ONLY
-    static ego_obj_chr * dtor( ego_obj_chr * pobj );
+    static ego_obj_chr * dtor_this( ego_obj_chr * pobj );
 
-    /// construct this struct, and ALL dependent structs
-    static ego_obj_chr * do_ctor( ego_obj_chr * pobj );
-    /// destruct this struct, and ALL dependent structs
-    static ego_obj_chr * do_dtor( ego_obj_chr * pobj );
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_obj_chr * ctor_all( ego_obj_chr * ptr ) { if ( NULL != ptr ) new( ptr ) ego_obj_chr(); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_obj_chr * dtor_all( ego_obj_chr * ptr )  { if ( NULL != ptr ) ptr->~ego_obj_chr(); return ptr; }
 
     //---- global configuration functions
 
@@ -817,7 +824,7 @@ struct ego_chr_bundle
     CAP_REF   cap_ref;
     ego_cap * cap_ptr;
 
-    static ego_chr_bundle * ctor( ego_chr_bundle * pbundle );
+    static ego_chr_bundle * ctor_this( ego_chr_bundle * pbundle );
     static ego_chr_bundle * validate( ego_chr_bundle * pbundle );
     static ego_chr_bundle * set( ego_chr_bundle * pbundle, ego_chr * pchr );
 };

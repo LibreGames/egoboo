@@ -55,13 +55,13 @@ void enchant_system_begin()
 void enchant_system_end()
 {
     release_all_eve();
-    EncObjList.dtor();
+    EncObjList.dtor_this();
 }
 
 //--------------------------------------------------------------------------------------------
 // struct ego_enc_data -
 //--------------------------------------------------------------------------------------------
-ego_enc_data * ego_enc_data::ctor( ego_enc_data * pdata )
+ego_enc_data * ego_enc_data::ctor_this( ego_enc_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
@@ -77,7 +77,7 @@ ego_enc_data * ego_enc_data::ctor( ego_enc_data * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_enc_data * ego_enc_data::dtor( ego_enc_data * pdata )
+ego_enc_data * ego_enc_data::dtor_this( ego_enc_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
@@ -158,38 +158,7 @@ ego_enc * ego_enc::do_dealloc( ego_enc * penc )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::do_ctor( ego_enc * penc )
-{
-    // construct this struct and all sub-struct
-
-    if ( NULL == penc ) return penc;
-
-    // call the data ctor
-    if ( NULL == ego_enc_data::ctor( penc ) ) return NULL;
-
-    // call the data ctor
-    if ( NULL == ego_enc::ctor( penc ) ) return NULL;
-
-    return penc;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::do_dtor( ego_enc * penc )
-{
-    // destruct this struct and all sub-struct
-
-    if ( NULL == penc ) return penc;
-
-    // destruct/free any dynamic data
-    ego_enc::dtor( penc );
-
-    // dealloc anything in the data
-    ego_enc_data::dtor( penc );
-
-    return penc;
-}
-//--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::ctor( ego_enc * penc )
+ego_enc * ego_enc::ctor_this( ego_enc * penc )
 {
     /// @details BB@> initialize the ego_enc
 
@@ -207,7 +176,7 @@ ego_enc * ego_enc::ctor( ego_enc * penc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::dtor( ego_enc * penc )
+ego_enc * ego_enc::dtor_this( ego_enc * penc )
 {
     if ( NULL == penc ) return penc;
 
@@ -1338,7 +1307,7 @@ ego_obj_enc * ego_obj_enc::do_constructing( ego_obj_enc * pobj )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
 
     // run the constructor
-    ego_enc * penc = ego_enc::do_ctor( pobj->get_pdata() );
+    ego_enc * penc = ego_enc::ctor_all( pobj->get_pdata(), pobj );
     if ( NULL == penc ) return pobj;
 
     // move on to the next action
@@ -1469,7 +1438,7 @@ ego_obj_enc * ego_obj_enc::do_destructing( ego_obj_enc * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the destructor
-    ego_enc * penc = ego_enc::do_dtor( pobj->get_pdata() );
+    ego_enc * penc = ego_enc::dtor_all( pobj->get_pdata() );
     if ( NULL == penc ) return pobj;
 
     // move on to the next action (dead)
@@ -2111,7 +2080,7 @@ bool_t ego_obj_enc::request_terminate( const ENC_REF & ienc )
 //--------------------------------------------------------------------------------------------
 // struct ego_obj_enc - memory management
 //--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::ctor( ego_obj_enc * pobj )
+ego_obj_enc * ego_obj_enc::ctor_this( ego_obj_enc * pobj )
 {
     // construct this struct, ONLY
 
@@ -2123,7 +2092,7 @@ ego_obj_enc * ego_obj_enc::ctor( ego_obj_enc * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::dtor( ego_obj_enc * pobj )
+ego_obj_enc * ego_obj_enc::dtor_this( ego_obj_enc * pobj )
 {
     // destruct this struct, ONLY
 
@@ -2133,35 +2102,6 @@ ego_obj_enc * ego_obj_enc::dtor( ego_obj_enc * pobj )
 
     // Sets the state to ego_obj_terminated automatically.
     POBJ_TERMINATE( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_ctor( ego_obj_enc * pobj )
-{
-    // construct this struct, and ALL dependent structs
-
-    pobj = ego_obj_enc::ctor( pobj );
-    if ( NULL == pobj ) return pobj;
-
-    ego_enc::do_ctor( pobj->get_pdata() );
-
-    // we are done constructing. move on to initializing.
-    ego_obj::end_constructing( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_dtor( ego_obj_enc * pobj )
-{
-    // destruct this struct, and ALL dependent structs
-
-    ego_enc::do_dtor( pobj->get_pdata() );
-
-    pobj = ego_obj_enc::dtor( pobj );
-    if ( NULL == pobj ) return pobj;
 
     return pobj;
 }

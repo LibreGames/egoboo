@@ -23,6 +23,9 @@
 
 #include "collision.h"
 
+#include "mesh_BSP.h"
+#include "object_BSP.h"
+
 #include "log.h"
 #include "hash.h"
 #include "game.h"
@@ -130,11 +133,6 @@ static ego_prt_bundle * update_prt_platform_attachment( ego_prt_bundle * pbdl );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-IMPLEMENT_DYNAMIC_ARY( CoNode_ary,   ego_CoNode );
-IMPLEMENT_DYNAMIC_ARY( HashNode_ary, ego_hash_node );
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 //static ego_bumplist bumplist[MAXMESHFAN/16];
 
 static CHashList_t   * _CHashList_ptr = NULL;
@@ -154,13 +152,16 @@ bool_t collision_system_begin()
 {
     if ( !_collision_system_initialized )
     {
-        if ( NULL == CoNode_ary::ctor( &_co_ary, CHR_MAX_COLLISIONS ) ) goto collision_system_begin_fail;
+        if ( NULL == CoNode_ary::alloc( &_co_ary, CHR_MAX_COLLISIONS ) ) goto collision_system_begin_fail;
 
-        if ( NULL == HashNode_ary::ctor( &_hn_ary, COLLISION_HASH_NODES ) ) goto collision_system_begin_fail;
+        if ( NULL == HashNode_ary::alloc( &_hn_ary, COLLISION_HASH_NODES ) ) goto collision_system_begin_fail;
 
-        if ( NULL == ego_BSP_leaf_pary::ctor( &_coll_leaf_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
+        if ( NULL == ego_BSP_leaf_pary::alloc( &_coll_leaf_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
 
-        if ( NULL == CoNode_ary::ctor( &_coll_node_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
+        if ( NULL == CoNode_ary::alloc( &_coll_node_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
+
+        // delete the object BSP data
+        ego_obj_BSP::dtor_this( &ego_obj_BSP::root );
 
         _collision_system_initialized = btrue;
     }
@@ -169,10 +170,10 @@ bool_t collision_system_begin()
 
 collision_system_begin_fail:
 
-    CoNode_ary::dtor( &_co_ary );
-    HashNode_ary::dtor( &_hn_ary );
-    ego_BSP_leaf_pary::dtor( &_coll_leaf_lst );
-    CoNode_ary::dtor( &_coll_node_lst );
+    CoNode_ary::dealloc( &_co_ary );
+    HashNode_ary::dealloc( &_hn_ary );
+    ego_BSP_leaf_pary::dealloc( &_coll_leaf_lst );
+    CoNode_ary::dealloc( &_coll_node_lst );
 
     _collision_system_initialized = bfalse;
 
@@ -188,15 +189,21 @@ void collision_system_end()
     {
         ego_hash_list::destroy( &_CHashList_ptr );
         _collision_hash_initialized = bfalse;
+
+        // delete the object BSP data
+        ego_obj_BSP::dtor_this( &ego_obj_BSP::root );
+
+        // delete the object BSP data
+        mpd_BSP::dtor_this( &mpd_BSP::root );
     }
     _CHashList_ptr = NULL;
 
     if ( _collision_system_initialized )
     {
-        CoNode_ary::dtor( &_co_ary );
-        HashNode_ary::dtor( &_hn_ary );
-        ego_BSP_leaf_pary::dtor( &_coll_leaf_lst );
-        CoNode_ary::dtor( &_coll_node_lst );
+        CoNode_ary::dealloc( &_co_ary );
+        HashNode_ary::dealloc( &_hn_ary );
+        ego_BSP_leaf_pary::dealloc( &_coll_leaf_lst );
+        CoNode_ary::dealloc( &_coll_node_lst );
 
         _collision_system_initialized = bfalse;
     }
@@ -302,13 +309,13 @@ int CoNode_cmp( const void * vleft, const void * vright )
 //--------------------------------------------------------------------------------------------
 CHashList_t * CHashList_ctor( CHashList_t * pchlst, int size )
 {
-    return ego_hash_list::ctor( pchlst, size );
+    return ego_hash_list::ctor_this( pchlst, size );
 }
 
 //--------------------------------------------------------------------------------------------
 CHashList_t * CHashList_dtor( CHashList_t * pchlst )
 {
-    return ego_hash_list::dtor( pchlst );
+    return ego_hash_list::dtor_this( pchlst );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -470,7 +477,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
     mi = &( PMesh->info );
 
     // allocate a ego_BSP_aabb   once, to be shared for all collision tests
-    ego_BSP_aabb::ctor( &tmp_aabb, ego_obj_BSP::root.tree.dimensions );
+    ego_BSP_aabb::ctor_this( &tmp_aabb, ego_obj_BSP::root.tree.dimensions );
 
     // renew the ego_CoNode hash table.
     ego_hash_list::renew( pchlst );
@@ -509,7 +516,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
                 bool_t      do_insert;
                 BIT_FIELD   test_platform;
 
-                pleaf = _coll_leaf_lst.ary[j];
+                pleaf = _coll_leaf_lst[j];
                 if ( NULL == pleaf ) continue;
 
                 // assume the worst
@@ -584,7 +591,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
                         // detect a when the possible collision occurred
 
                         // clear the collision volume
-                        ego_oct_bb::ctor( &( tmp_codata.cv ) );
+                        ego_oct_bb::ctor_this( &( tmp_codata.cv ) );
 
                         // platform physics overrides normal interactions, so
                         // do the platform test first
@@ -641,7 +648,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
     //            int coll_ref;
     //            ego_CoNode tmp_codata;
 
-    //            coll_ref = _coll_leaf_lst.ary[j];
+    //            coll_ref = _coll_leaf_lst[j];
 
     //            CoNode_ctor( &tmp_codata );
     //            tmp_codata.chra  = ichra;
@@ -670,7 +677,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
     //            int coll_ref;
     //            ego_CoNode tmp_codata;
 
-    //            coll_ref = _coll_leaf_lst.ary[j];
+    //            coll_ref = _coll_leaf_lst[j];
 
     //            CoNode_ctor( &tmp_codata );
     //            tmp_codata.prta  = iprta;
@@ -682,7 +689,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
     //}
 
     // do this manually in C
-    ego_BSP_aabb::dtor( &tmp_aabb );
+    ego_BSP_aabb::dtor_this( &tmp_aabb );
 
     return btrue;
 }
@@ -948,16 +955,16 @@ bool_t do_chr_platform_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b
     // determine how the characters can be attached
     // The surface that the object will rest on is given by chr_min_cv.maxs[OCT_Z],
     // not chr_max_cv.maxs[OCT_Z] or chr_cv.maxs[OCT_Z]
-    ego_oct_bb::ctor( &platform_min_cv );
+    ego_oct_bb::ctor_this( &platform_min_cv );
     if ( platform_a )
     {
-        ego_oct_vec::ctor( &opos_object, pchr_b->pos );
+        ego_oct_vec::ctor_this( &opos_object, pchr_b->pos );
         ego_oct_bb::add_vector( pchr_a->chr_min_cv, pchr_a->pos.v, &platform_min_cv );
         ego_oct_bb::add_vector( pchr_a->chr_max_cv, pchr_a->pos.v, &platform_max_cv );
     }
     else if ( platform_b )
     {
-        ego_oct_vec::ctor( &opos_object, pchr_a->pos );
+        ego_oct_vec::ctor_this( &opos_object, pchr_a->pos );
         ego_oct_bb::add_vector( pchr_b->chr_min_cv, pchr_b->pos.v, &platform_min_cv );
         ego_oct_bb::add_vector( pchr_b->chr_max_cv, pchr_b->pos.v, &platform_max_cv );
     }
@@ -1058,7 +1065,7 @@ bool_t do_prt_platform_detection( const PRT_REF & iprt_a, const CHR_REF & ichr_b
 
     // The surface that the object will rest on is given by chr_min_cv.maxs[OCT_Z],
     // not chr_max_cv.maxs[OCT_Z] or chr_cv.maxs[OCT_Z]
-    ego_oct_vec::ctor( &opos_object, pprt_a->pos );
+    ego_oct_vec::ctor_this( &opos_object, pprt_a->pos );
     ego_oct_bb::add_vector( pchr_b->chr_min_cv, pchr_b->pos.v, &platform_min_cv );
     ego_oct_bb::add_vector( pchr_b->chr_max_cv, pchr_b->pos.v, &platform_max_cv );
 
@@ -1300,7 +1307,7 @@ bool_t bump_all_platforms( CoNode_ary * pcn_ary )
     //---- Detect all platform attachments
     for ( cnt = 0; cnt < pcn_ary->top; cnt++ )
     {
-        d = pcn_ary->ary + cnt;
+        d = ( *pcn_ary ) + cnt;
 
         // only look at character-platform or particle-platform interactions interactions
         if ( MAX_PRT != d->prta && MAX_PRT != d->prtb ) continue;
@@ -1326,7 +1333,7 @@ bool_t bump_all_platforms( CoNode_ary * pcn_ary )
     // is still trying to find the best one
     for ( cnt = 0; cnt < pcn_ary->top; cnt++ )
     {
-        d = pcn_ary->ary + cnt;
+        d = ( *pcn_ary ) + cnt;
 
         // only look at character-character interactions
         //if ( MAX_PRT != d->prta && MAX_PRT != d->prtb ) continue;
@@ -1407,10 +1414,10 @@ egoboo_rv bump_prepare( ego_obj_BSP * pbsp )
     }
 
     // set up the collision node array
-    _co_ary.top = _co_ary.size;
+    _co_ary.top = _co_ary.size();
 
     // set up the hash node array
-    _hn_ary.top = _hn_ary.size;
+    _hn_ary.top = _hn_ary.size();
 
     // fill up the BSP structures
     fill_bumplists( pbsp );
@@ -1427,7 +1434,7 @@ egoboo_rv bump_prepare( ego_obj_BSP * pbsp )
 
         _coll_node_lst.top = 0;
 
-        ego_hash_list_iterator::ctor( &it );
+        ego_hash_list_iterator::ctor_this( &it );
         ego_hash_list_iterator::set_begin( &it, pchlst );
         for ( /* nothing */; !ego_hash_list_iterator::done( &it, pchlst ); ego_hash_list_iterator::next( &it, pchlst ) )
         {
@@ -1440,7 +1447,7 @@ egoboo_rv bump_prepare( ego_obj_BSP * pbsp )
         if ( _coll_node_lst.top > 1 )
         {
             // arrange the actual nodes by time order
-            qsort( _coll_node_lst.ary, _coll_node_lst.top, sizeof( ego_CoNode ), CoNode_cmp );
+            std::sort( _coll_node_lst.begin(), _coll_node_lst.end(), CoNode_greater() );
         }
     }
 
@@ -1471,7 +1478,7 @@ bool_t bump_all_mounts( CoNode_ary * pcn_ary )
     //---- Detect all mount attachments
     for ( cnt = 0; cnt < pcn_ary->top; cnt++ )
     {
-        d = pcn_ary->ary + cnt;
+        d = ( *pcn_ary ) + cnt;
 
         // only look at character-mount or particle-mount interactions interactions
         if ( MAX_PRT != d->prta && MAX_PRT != d->prtb ) continue;
@@ -1489,7 +1496,7 @@ bool_t bump_all_mounts( CoNode_ary * pcn_ary )
     // is still trying to find the best one
     for ( cnt = 0; cnt < pcn_ary->top; cnt++ )
     {
-        d = pcn_ary->ary + cnt;
+        d = ( *pcn_ary ) + cnt;
 
         // only look at character-character interactions
         if ( INGAME_CHR( d->chra ) && INGAME_CHR( d->chrb ) )
@@ -1521,7 +1528,7 @@ bool_t bump_all_mounts( CoNode_ary * pcn_ary )
 //    // Do mounts
 //    for ( cnt = 0; cnt < pcn_ary->top; cnt++ )
 //    {
-//        d = pcn_ary->ary + cnt;
+//        d = (*pcn_ary) + cnt;
 //
 //        // only look at character-character interactions
 //        if ( MAX_PRT != d->prtb ) continue;
@@ -1549,12 +1556,12 @@ bool_t bump_all_collisions( CoNode_ary * pcn_ary )
         // rearrange them without needing to change anything
         if ( !handled )
         {
-            handled = do_chr_chr_collision( pcn_ary->ary + cnt );
+            handled = do_chr_chr_collision(( *pcn_ary ) + cnt );
         }
 
         if ( !handled )
         {
-            handled = do_chr_prt_collision( pcn_ary->ary + cnt );
+            handled = do_chr_prt_collision(( *pcn_ary ) + cnt );
         }
     }
 
@@ -1953,8 +1960,8 @@ bool_t do_chr_chr_collision_interaction( ego_CoNode * d, ego_chr_bundle *pbdl_a,
     character_physics_get_mass_pair( loc_pchr_a, loc_pchr_b, &wta, &wtb );
 
     // create an "octagonal position" for each object
-    ego_oct_vec::ctor( &opos_a, loc_pchr_a->pos );
-    ego_oct_vec::ctor( &opos_b, loc_pchr_b->pos );
+    ego_oct_vec::ctor_this( &opos_a, loc_pchr_a->pos );
+    ego_oct_vec::ctor_this( &opos_b, loc_pchr_b->pos );
 
     // adjust the center-of-mass
     opos_a[OCT_Z] += ( loc_pchr_a->chr_min_cv.maxs[OCT_Z] + loc_pchr_a->chr_min_cv.mins[OCT_Z] ) * 0.5f;
@@ -3328,6 +3335,46 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
     return btrue;
 }
 
+bool CoNode_greater::operator()
+(
+    const ego_CoNode& _Left,
+    const ego_CoNode& _Right
+) const
+{
+    int   itmp;
+    float ftmp;
+
+    // sort by initial time first
+    ftmp = _Left.tmin - _Right.tmin;
+    if ( ftmp <= 0.0f ) return false;
+    else if ( ftmp >= 0.0f ) return true;
+
+    // fort by final time second
+    ftmp = _Left.tmax - _Right.tmax;
+    if ( ftmp <= 0.0f ) return false;
+    else if ( ftmp >= 0.0f ) return true;
+
+    itmp = ( signed )( _Left.chra ).get_value() - ( signed )( _Right.chra ).get_value();
+    if ( 0 != itmp ) return itmp > 0;
+
+    itmp = ( signed )( _Left.prta ).get_value() - ( signed )( _Right.prta ).get_value();
+    if ( 0 != itmp ) return itmp > 0;
+
+    itmp = ( signed )( _Left.chra ).get_value() - ( signed )( _Right.chra ).get_value();
+    if ( 0 != itmp ) return itmp > 0;
+
+    itmp = ( signed )( _Left.prtb ).get_value() - ( signed )( _Right.prtb ).get_value();
+    if ( 0 != itmp ) return itmp > 0;
+
+    itmp = ( signed )( _Left.chrb ).get_value() - ( signed )( _Right.chrb ).get_value();
+    if ( 0 != itmp ) return itmp > 0;
+
+    itmp = ( signed )_Left.tileb - ( signed )_Right.tileb;
+    if ( 0 != itmp ) return itmp > 0;
+
+    return false;
+}
+
 //--------------------------------------------------------------------------------------------
 //bool_t add_chr_chr_interaction( CHashList_t * pchlst, const CHR_REF & ichr_a, const CHR_REF & ichr_b, CoNode_ary * pcn_lst, HashNode_ary * phn_lst )
 //{
@@ -3383,7 +3430,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
 //        EGOBOO_ASSERT( HashNode_ary::get_top( phn_lst ) < COLLISION_HASH_NODES );
 //        n = HashNode_ary::pop_back( phn_lst );
 //
-//        ego_hash_node::ctor( n, ( void* )d );
+//        ego_hash_node::ctor_this( n, ( void* )d );
 //
 //        // insert the node
 //        pchlst->subcount[hashval]++;
@@ -3443,7 +3490,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
 //        EGOBOO_ASSERT( HashNode_ary::get_top( phn_lst ) < COLLISION_HASH_NODES );
 //        n = HashNode_ary::pop_back( phn_lst );
 //
-//        ego_hash_node::ctor( n, ( void* )d );
+//        ego_hash_node::ctor_this( n, ( void* )d );
 //
 //        // insert the node
 //        pchlst->subcount[hashval]++;

@@ -26,6 +26,7 @@
 #include "graphic.h"
 #include "font_ttf.h"
 #include "texture.h"
+#include "log.h"
 
 #include "ogl_debug.h"
 #include "SDL_extensions.h"
@@ -635,10 +636,14 @@ void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vw
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_Widget::drawButton( ui_Widget * pw )
+egoboo_rv ui_Widget::drawButton( ui_Widget * pw )
 {
     const GLfloat * pcolor = NULL;
     bool_t ui_active, ui_hot;
+
+    if ( NULL == pw ) return rv_error;
+
+    if ( !pw->on || 0 == DisplayMask_Test( pw, UI_DISPLAY_BUTTON ) ) return rv_fail;
 
     ui_active = ui_context.active == pw->id && ui_context.hot == pw->id;
     ui_hot    = ui_context.hot == pw->id;
@@ -689,15 +694,54 @@ void ui_Widget::drawButton( ui_Widget * pw )
     }
 
     ui_drawButton( pw->id, pw->vx, pw->vy, pw->vwidth, pw->vheight, pcolor );
+
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_Widget::drawImage( ui_Widget * pw )
+egoboo_rv ui_Widget::drawImage( ui_Widget * pw )
 {
-    if ( NULL != pw && NULL != pw->img )
+    if ( NULL == pw ) return rv_error;
+
+    if ( !pw->on || 0 == ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_IMAGE ) )
     {
-        ui_drawImage( pw->id, pw->img, pw->vx, pw->vy, pw->vwidth, pw->vheight, NULL );
+        return rv_fail;
     }
+
+    if ( NULL == pw->img )
+    {
+        return rv_success;
+    }
+
+    ui_Widget wtmp;
+
+    ui_Widget::shrink( &wtmp, pw, 5 );
+    wtmp.vwidth = wtmp.vheight;
+
+    ui_drawImage( wtmp.id, wtmp.img, wtmp.vx, wtmp.vy, wtmp.vwidth, wtmp.vheight, NULL );
+
+    return rv_success;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv ui_Widget::drawText( ui_Widget * pw )
+{
+    if ( NULL == pw ) return rv_error;
+
+    if ( !pw->on || 0 == ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_TEXT ) )
+    {
+        return rv_fail;
+    }
+
+    if ( NULL == pw->tx_lst )
+    {
+        return rv_success;
+    }
+
+    GL_DEBUG( glColor3f )( 1, 1, 1 );
+    display_list_draw( pw->tx_lst );
+
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -828,18 +872,26 @@ display_list_t * ui_updateTextBox_literal( display_list_t * tx_lst, TTF_Font * t
     GLsizei line_count;
     bool_t  local_dspl_lst;
 
-    // clear out any existing tx_lst
-    if ( NULL != tx_lst ) tx_lst = display_list_dealloc( tx_lst );
+    if ( NULL == ttf_ptr || NULL == text || '\0' == text[0] )
+    {
+        return display_list_dtor( tx_lst, bfalse );
+    }
 
     // use the default ui font?
     if ( NULL == ttf_ptr ) ttf_ptr = ui_getFont();
 
-    // create a  tx_lst, if needed
+    // since tx_lst is not returned from fnt_convertTextBox_literal,
+    // we must have a valid one to pass it
     local_dspl_lst = bfalse;
-    if ( NULL == tx_lst || 0 == display_list_used( tx_lst ) )
+    if ( NULL == tx_lst )
     {
         tx_lst = display_list_ctor( tx_lst, MAX_WIDGET_TEXT );
         local_dspl_lst = btrue;
+    }
+    else if ( 0 == display_list_used( tx_lst ) )
+    {
+        tx_lst = display_list_ctor( tx_lst, MAX_WIDGET_TEXT );
+        local_dspl_lst = bfalse;
     }
 
     // convert the virtual coordinates to screen coordinates
@@ -849,11 +901,13 @@ display_list_t * ui_updateTextBox_literal( display_list_t * tx_lst, TTF_Font * t
     // convert the text to a display_list using screen coordinates
     line_count = fnt_convertTextBox_literal( tx_lst, ttf_ptr, x1, y1, spacing, text );
 
-    // an error
-    if ( line_count > display_list_used( tx_lst ) )
+    if ( line_count <= 0 )
     {
-        // delete the display list data
         tx_lst = display_list_dtor( tx_lst, local_dspl_lst );
+    }
+    else if ( line_count > display_list_used( tx_lst ) )
+    {
+        log_warning( "The following text was too long for the requested text box\n****start****\n%s\n****end****\n", text );
     }
 
     return tx_lst;
@@ -867,8 +921,10 @@ display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr,
 
     char text[4096];
 
-    // clear out any existing tx_lst
-    if ( NULL != tx_lst ) tx_lst = display_list_dealloc( tx_lst );
+    if ( NULL == format || '\0' == format[0] )
+    {
+        return display_list_dtor( tx_lst, bfalse );
+    }
 
     // convert the text string
     vsnprintf_rv = vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
@@ -876,8 +932,7 @@ display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr,
     // some problem printing the text?
     if ( vsnprintf_rv < 0 )
     {
-        tx_lst = display_list_dtor( tx_lst, bfalse );
-        retval = tx_lst;
+        retval = display_list_dtor( tx_lst, bfalse );
     }
     else
     {
@@ -1093,41 +1148,20 @@ ui_buttonValues ui_Widget::Run( ui_Widget * pw )
 {
     ui_buttonValues result;
 
-    float img_w;
+    // is the widget even on?
+    if ( !pw->on ) return BUTTON_NOCHANGE;
 
     // Do all the logic type work for the button
     result = ui_Widget::Behavior( pw );
 
     // Draw the button part of the button
-    if ( 0 != ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_BUTTON ) )
-    {
-        ui_Widget::drawButton( pw );
-    }
+    ui_Widget::drawButton( pw );
 
     // draw any image on the left hand side of the button
-    img_w = 0;
-    if ( 0 != ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_IMAGE ) && NULL != pw->img )
-    {
-        ui_Widget wtmp;
-
-        // Draw the image part
-        GL_DEBUG( glColor3f )( 1, 1, 1 );
-
-        ui_Widget::shrink( &wtmp, pw, 5 );
-        wtmp.vwidth = wtmp.vheight;
-
-        ui_Widget::drawImage( &wtmp );
-
-        // get the non-virtual image width
-        img_w = pw->img->imgW * ui_context.aw;
-    }
+    ui_Widget::drawImage( pw );
 
     // And draw the text on the right hand side of any image
-    if ( 0 != ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_TEXT ) && NULL != pw->tx_lst )
-    {
-        GL_DEBUG( glColor3f )( 1, 1, 1 );
-        display_list_draw( pw->tx_lst );
-    }
+    ui_Widget::drawText( pw );
 
     return result;
 }
@@ -1572,12 +1606,13 @@ ui_Widget * ui_Widget::clear( ui_Widget * pw )
 
     // set the id (probably UI_Nothing)
     pw->id = UI_Nothing;
+    pw->on = btrue;
 
     return pw;
 }
 
 //--------------------------------------------------------------------------------------------
-ui_Widget * ui_Widget::ctor( ui_Widget * pw, ui_id_t id )
+ui_Widget * ui_Widget::ctor_this( ui_Widget * pw, ui_id_t id )
 {
     // set the id (probably UI_Nothing)
     pw->id = id;
@@ -1589,7 +1624,7 @@ ui_Widget * ui_Widget::ctor( ui_Widget * pw, ui_id_t id )
 }
 
 //--------------------------------------------------------------------------------------------
-ui_Widget * ui_Widget::dtor( ui_Widget * pw )
+ui_Widget * ui_Widget::dtor_this( ui_Widget * pw )
 {
     if ( NULL == pw ) return pw;
 
@@ -1603,8 +1638,8 @@ ui_Widget * ui_Widget::reset( ui_Widget * pw, ui_id_t id )
 {
     if ( NULL == pw ) return pw;
 
-    ui_Widget::dtor( pw );
-    ui_Widget::ctor( pw, id );
+    ui_Widget::dtor_this( pw );
+    ui_Widget::ctor_this( pw, id );
 
     return pw;
 }
@@ -1690,6 +1725,9 @@ bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font *
     va_list args;
     bool_t retval;
 
+    // turn the old text off
+    DisplayMask_Remove( pw, UI_DISPLAY_TEXT );
+
     // use the default ui font?
     if ( NULL == ttf_ptr )
     {
@@ -1704,6 +1742,12 @@ bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font *
 
     // we own this text
     pw->tx_own = btrue;
+
+    // turn any new text on
+    if ( NULL != pw->tx_lst )
+    {
+        DisplayMask_Add( pw, UI_DISPLAY_TEXT );
+    }
 
     return retval;
 }

@@ -67,8 +67,8 @@ struct ego_obj_proc
 
     ego_obj_actions_t    action;      ///< What action is it performing?
 
-    static ego_obj_proc * ctor( ego_obj_proc * );
-    static ego_obj_proc * dtor( ego_obj_proc * );
+    static ego_obj_proc * ctor_this( ego_obj_proc * );
+    static ego_obj_proc * dtor_this( ego_obj_proc * );
 
     static ego_obj_proc * set_valid( ego_obj_proc *, bool_t val );
 
@@ -101,8 +101,8 @@ struct ego_obj_req
     bool_t  turn_me_off; ///< request to turn on the object
     bool_t  kill_me;     ///< request to destroy the object
 
-    static ego_obj_req * ctor( ego_obj_req * ptr );
-    static ego_obj_req * dtor( ego_obj_req * ptr );
+    static ego_obj_req * ctor_this( ego_obj_req * ptr );
+    static ego_obj_req * dtor_this( ego_obj_req * ptr );
 
 private:
 
@@ -187,15 +187,19 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
     const ego_obj & cget_ego_obj() const { return *this; }
     const ego_obj * cget_pego_obj() const { return this; }
 
-    explicit ego_obj() { ctor( this ); }
-    ~ego_obj() { dtor( this ); }
+    explicit ego_obj( size_t index = size_t( -1 ) ) : cpp_list_client( index ) { ctor_this( this ); }
+    ~ego_obj() { dtor_this( this ); }
 
     // generic construction/destruction functions
-    static ego_obj * ctor( ego_obj * ptr ) { return ptr; }
-    static ego_obj * dtor( ego_obj * ptr ) { return ptr; }
+    static ego_obj * ctor_this( ego_obj * ptr ) { return ptr; }
+    static ego_obj * dtor_this( ego_obj * ptr ) { return ptr; }
 
-    static ego_obj * do_ctor( ego_obj *, size_t index );
-    static ego_obj * do_dtor( ego_obj * );
+    // use placement new and a destructor call
+    static ego_obj * ctor_all( ego_obj * ptr, size_t index )
+    {
+        if ( NULL != ptr )  ptr = new( ptr ) ego_obj( index ); return ptr;
+    }
+    static ego_obj * dtor_all( ego_obj * ptr )                { if ( NULL != ptr ) ptr->~ego_obj(); return ptr; }
 
     // memory management functions
     static ego_obj * allocate( ego_obj * pobj, size_t index );
@@ -276,7 +280,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
             ego_obj::spawn_depth++;\
         }\
     }\
-
+     
 #define POBJ_END_SPAWN( POBJ ) \
     if( (NULL != (POBJ)) && FLAG_VALID_PBASE(POBJ_CGET_PBASE(POBJ)) ) \
     {\
@@ -286,7 +290,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
             ego_obj::spawn_depth--;\
         }\
     }\
-
+     
 /// Is the object flagged as allocated?
 #define FLAG_ALLOCATED_PBASE( PBASE ) ( (PBASE)->get_allocated() )
 /// Is the object allocated?

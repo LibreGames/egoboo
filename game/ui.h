@@ -88,6 +88,7 @@ extern const ego_ui_Just ui_just_centerleft;
 /// The data describing the state of a UI widget
 struct ui_Widget
 {
+    bool_t          on;
     ui_id_t         id;
 
     // text info
@@ -112,14 +113,13 @@ struct ui_Widget
     float         vwidth, vheight;
 
     ui_Widget()  { clear( this ); }
-    ~ui_Widget() { dtor( this ); }
+    ~ui_Widget() { dtor_this( this ); }
 
-    static ui_Widget * ctor( ui_Widget * pw, ui_id_t id = UI_Nothing );
-    static ui_Widget * dtor( ui_Widget * pw );
+    static ui_Widget * ctor_this( ui_Widget * pw, ui_id_t id = UI_Nothing );
+    static ui_Widget * dtor_this( ui_Widget * pw );
     static ui_Widget * reset( ui_Widget * pw, ui_id_t id = UI_Nothing );
     static bool_t      dealloc( ui_Widget * pw );
 
-    static ui_buttonValues Behavior( ui_Widget * pw );
     static ui_buttonValues Run( ui_Widget * pw );
 
     static bool_t copy( ui_Widget * pw2, ui_Widget * pw1 );
@@ -147,8 +147,10 @@ protected:
     static void   setActive( ui_Widget * pw );
     static void   setHot( ui_Widget * pw );
 
-    static void drawButton( ui_Widget * pw );
-    static void drawImage( ui_Widget * pw );
+    static egoboo_rv       drawButton( ui_Widget * pw );
+    static egoboo_rv       drawImage( ui_Widget * pw );
+    static egoboo_rv       drawText( ui_Widget * pw );
+    static ui_buttonValues Behavior( ui_Widget * pw );
 
     static bool_t update_text_pos( ui_Widget * pw );
     static bool_t update_bound( ui_Widget * pw, frect_t * pbound );

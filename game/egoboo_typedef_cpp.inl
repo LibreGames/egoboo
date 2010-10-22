@@ -525,40 +525,29 @@ template<typename _ty>
 bool_t   t_dary<_ty>::alloc( t_dary<_ty> * pary, size_t sz )
 {
     if ( NULL == pary ) return bfalse;
-    dealloc( pary );
-    pary->ary = EGOBOO_NEW_ARY( _ty, sz );
-    pary->size = ( NULL == pary->ary ) ? 0 : sz;
+
+    if ( sz > 0 )
+    {
+        pary->resize( sz );
+    }
+    else
+    {
+        dealloc( pary );
+    }
+
     return btrue;
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-bool_t   t_dary<_ty>::dealloc( t_dary<_ty> * pary )
+bool_t t_dary<_ty>::dealloc( t_dary<_ty> * pary )
 {
     if ( NULL == pary ) return bfalse;
-    EGOBOO_DELETE_ARY( pary->ary );
-    pary->size = 0;
+
+    static_cast< std::vector<_ty> * >( pary )->clear();
     pary->top = 0;
+
     return btrue;
-};
-
-//--------------------------------------------------------------------------------------------
-template<typename _ty>
-t_dary<_ty> * t_dary<_ty>::ctor( t_dary<_ty> * pary, size_t sz )
-{
-    if ( NULL == pary ) return NULL;
-    dtor( pary );
-    if ( !alloc( pary, sz ) ) return NULL;
-    return pary;
-};
-
-//--------------------------------------------------------------------------------------------
-template<typename _ty>
-t_dary<_ty> * t_dary<_ty>::dtor( t_dary<_ty> * pary )
-{
-    if ( NULL == pary ) return NULL;
-    dealloc( pary );
-    return pary;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -572,14 +561,18 @@ void     t_dary<_ty>::clear( t_dary<_ty> * pary )
 template<typename _ty>
 size_t   t_dary<_ty>::get_top( t_dary<_ty> * pary )
 {
-    return ( NULL == pary->ary ) ? 0 : pary->top;
+    if ( NULL == pary ) return 0;
+
+    pary->top = std::min( pary->top, pary->size() );
+
+    return pary->top;
 };
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
 size_t   t_dary<_ty>::get_size( t_dary<_ty> * pary )
 {
-    return ( NULL == pary->ary ) ? 0 : pary->size;
+    return ( NULL == pary ) ? 0 : pary->size();
 };
 
 //--------------------------------------------------------------------------------------------
@@ -588,7 +581,7 @@ _ty *    t_dary<_ty>::pop_back( t_dary<_ty> * pary )
 {
     if ( NULL == pary || 0 == pary->top ) return NULL;
     --pary->top;
-    return &( pary->ary[pary->top] );
+    return &( pary->operator []( pary->top ) );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -596,12 +589,15 @@ template<typename _ty>
 bool_t   t_dary<_ty>::push_back( t_dary<_ty> * pary, _ty val )
 {
     bool_t retval = bfalse;
+
     if ( NULL == pary ) return bfalse;
-    if ( pary->top < pary->size )
+
+    if ( pary->top < pary->size() )
     {
-        pary->ary[pary->top] = val;
+        pary->operator []( pary->top ) = val;
         pary->top++;
         retval = btrue;
     }
+
     return retval;
 };

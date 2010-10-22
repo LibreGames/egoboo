@@ -77,7 +77,7 @@ void MadList_init()
         ego_mad * pmad = MadStack.lst + cnt;
 
         // blank out all the data, including the obj_base data
-        ego_mad::dtor( pmad );
+        ego_mad::dtor_this( pmad );
 
         ego_mad::reconstruct( pmad );
     }
@@ -90,7 +90,7 @@ void MadList_dtor()
 
     for ( cnt = 0; cnt < MAX_MAD; cnt++ )
     {
-        ego_mad::dtor( MadStack.lst + cnt );
+        ego_mad::dtor_this( MadStack.lst + cnt );
     }
 }
 
@@ -463,7 +463,11 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF & imad, int frame )
 
         if ( -1 == token_index )
         {
-            log_debug( "Model %s, frame %d, frame name \"%s\" has unknown frame effects command \"%s\"\n", szModelName, frame, cFrameName, ptmp );
+            // BB> disable this since the loader seems to be working perfectly fine as of 10-21-10
+            // the problem is that models that are edited with certain editors pad the frame number with
+            // zeros and that makes this interpreter think that there are excess unknown commands.
+
+            //log_debug( "Model %s, frame %d, frame name \"%s\" has unknown frame effects command \"%s\"\n", szModelName, frame, cFrameName, ptmp );
             ptmp++;
         }
         else
@@ -965,7 +969,7 @@ ego_mad * ego_mad::reconstruct( ego_mad * pmad )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mad * ego_mad::ctor( ego_mad * pmad )
+ego_mad * ego_mad::ctor_this( ego_mad * pmad )
 {
     if ( NULL == ego_mad::reconstruct( pmad ) ) return NULL;
 
@@ -975,7 +979,7 @@ ego_mad * ego_mad::ctor( ego_mad * pmad )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mad * ego_mad::dtor( ego_mad * pmad )
+ego_mad * ego_mad::dtor_this( ego_mad * pmad )
 {
     /// @details BB@> deinitialize the character data
 

@@ -43,7 +43,7 @@ ego_process_data * ego_process_data::clear( ego_process_data * pdata )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_process * ego_process::ctor( ego_process * proc )
+ego_process * ego_process::ctor_this( ego_process * proc )
 {
     proc = clear( proc );
     if ( NULL == proc ) return proc;

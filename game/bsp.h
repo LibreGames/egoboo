@@ -33,13 +33,14 @@ struct ego_BSP_aabb
     float_ary mids;
     float_ary maxs;
 
-    ego_BSP_aabb()             { dim = size_t( -1 ); };
-    ego_BSP_aabb( size_t dim ) { ctor( this, dim ); };
-    ~ego_BSP_aabb()            { dtor( this ); };
+    ego_BSP_aabb( size_t dim = 0 ) : mins( dim ), maxs( dim ), mids( dim ) { clear( this ); ctor_this( this, dim ); };
+    ~ego_BSP_aabb()                { dtor_this( this ); };
 
-    static ego_BSP_aabb * ctor( ego_BSP_aabb * pbb, size_t dim );
-    static ego_BSP_aabb * dtor( ego_BSP_aabb * pbb );
+    static ego_BSP_aabb * ctor_this( ego_BSP_aabb * pbb, size_t dim );
+    static ego_BSP_aabb * dtor_this( ego_BSP_aabb * pbb );
 
+    static ego_BSP_aabb * alloc( ego_BSP_aabb * pbb, size_t dim );
+    static ego_BSP_aabb * dealloc( ego_BSP_aabb * pbb );
     static bool_t         reset( ego_BSP_aabb * psrc );
     static bool_t         empty( ego_BSP_aabb * psrc1 );
     static bool_t         lhs_contains_rhs( ego_BSP_aabb * psrc1, ego_BSP_aabb * psrc2 );
@@ -72,14 +73,16 @@ struct ego_BSP_leaf
 
     ego_BSP_aabb   bbox;
 
-    ego_BSP_leaf() { clear( this ); } ;
-    ego_BSP_leaf( int dim, void * data, int type ) { clear( this ); ctor( this, dim, data, type ); } ;
-    ~ego_BSP_leaf() { dtor( this ); };
+    ego_BSP_leaf( int dim = 0, void * data = NULL, int type = -1 ) { clear( this ); ctor_this( this, dim, data, type ); } ;
+    ~ego_BSP_leaf() { dtor_this( this ); };
 
     static ego_BSP_leaf * create( int dim, void * data, int type );
     static bool_t         destroy( ego_BSP_leaf ** ppleaf );
-    static ego_BSP_leaf * ctor( ego_BSP_leaf * t, int dim, void * data, int type );
-    static ego_BSP_leaf * dtor( ego_BSP_leaf * t );
+    static ego_BSP_leaf * ctor_this( ego_BSP_leaf * t, int dim, void * data, int type );
+    static ego_BSP_leaf * dtor_this( ego_BSP_leaf * t );
+
+    static ego_BSP_leaf * alloc( ego_BSP_leaf * L, int dim );
+    static ego_BSP_leaf * dealloc( ego_BSP_leaf * L );
 
 private:
     static ego_BSP_leaf * clear( ego_BSP_leaf * ptr )
@@ -98,8 +101,8 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------
-DECLARE_DYNAMIC_ARY( ego_BSP_leaf_ary, ego_BSP_leaf );
-DECLARE_DYNAMIC_ARY( ego_BSP_leaf_pary, ego_BSP_leaf * );
+typedef t_dary<ego_BSP_leaf >  ego_BSP_leaf_ary;
+typedef t_dary<ego_BSP_leaf * >  ego_BSP_leaf_pary;
 
 //--------------------------------------------------------------------------------------------
 struct ego_BSP_branch
@@ -117,17 +120,16 @@ struct ego_BSP_branch
     ego_BSP_aabb      bbox;
     int               depth;
 
-    ego_BSP_branch()             { clear( this ); }
-    ego_BSP_branch( size_t dim ) { clear( this ); ctor( this, dim ); }
-    ~ego_BSP_branch()            { dtor( this ); }
-
     static ego_BSP_branch * create( size_t dim );
     static bool_t           destroy( ego_BSP_branch ** ppbranch );
+
     static ego_BSP_branch * create_ary( size_t ary_size, size_t dim );
     static bool_t           destroy_ary( size_t ary_size, ego_BSP_branch ** ppbranch );
-    static ego_BSP_branch * ctor( ego_BSP_branch * B, size_t dim );
-    static ego_BSP_branch * dtor( ego_BSP_branch * B );
+
     static bool_t           empty( ego_BSP_branch * pbranch );
+
+    static ego_BSP_branch * alloc( ego_BSP_branch * B, size_t dim );
+    static ego_BSP_branch * dealloc( ego_BSP_branch * B );
 
     static bool_t           insert_leaf( ego_BSP_branch * B, ego_BSP_leaf * n );
     static bool_t           insert_branch( ego_BSP_branch * B, int index, ego_BSP_branch * B2 );
@@ -136,7 +138,14 @@ struct ego_BSP_branch
     static bool_t           unlink( ego_BSP_branch * B );
     static bool_t           add_all_nodes( ego_BSP_branch * pbranch, ego_BSP_leaf_pary * colst );
 
+    ego_BSP_branch( size_t dim = 0 ) { clear( this ); ctor_this( this, dim ); }
+    ~ego_BSP_branch()                { dtor_this( this ); }
+
 private:
+
+    static ego_BSP_branch * ctor_this( ego_BSP_branch * B, size_t dim );
+    static ego_BSP_branch * dtor_this( ego_BSP_branch * B );
+
     static ego_BSP_branch * clear( ego_BSP_branch * ptr )
     {
         if ( NULL == ptr ) return ptr;
@@ -159,8 +168,8 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------
-DECLARE_DYNAMIC_ARY( ego_BSP_branch_ary, ego_BSP_branch );
-DECLARE_DYNAMIC_ARY( ego_BSP_branch_pary, ego_BSP_branch * );
+typedef t_dary<ego_BSP_branch >  ego_BSP_branch_ary;
+typedef t_dary<ego_BSP_branch * >  ego_BSP_branch_pary;
 
 //--------------------------------------------------------------------------------------------
 struct ego_BSP_tree
@@ -181,18 +190,17 @@ struct ego_BSP_tree
 
     ego_BSP_tree()                           { clear( this ); };
 
-    ego_BSP_tree( Sint32 dim, Sint32 depth ) { clear( this ); ctor( this, dim, depth ); }
-    ~ego_BSP_tree()                          { dtor( this ); }
+    ego_BSP_tree( Sint32 dim, Sint32 depth ) { clear( this ); ctor_this( this, dim, depth ); }
+    ~ego_BSP_tree()                          { dtor_this( this ); }
 
     static ego_BSP_tree   * create( size_t count );
     static bool_t           destroy( ego_BSP_tree   ** ptree );
 
-    static ego_BSP_tree   * ctor( ego_BSP_tree   * t, Sint32 dim, Sint32 depth );
-    static ego_BSP_tree   * dtor( ego_BSP_tree   * t );
-    static bool_t           alloc( ego_BSP_tree   * t, size_t count, size_t dim );
+    static ego_BSP_tree   * ctor_this( ego_BSP_tree   * t, Sint32 dim, Sint32 depth );
+    static ego_BSP_tree   * dtor_this( ego_BSP_tree   * t );
+    static bool_t           alloc( ego_BSP_tree   * t, Sint32 dim, Sint32 depth );
     static bool_t           dealloc( ego_BSP_tree   * t );
     static bool_t           init_0( ego_BSP_tree   * t );
-    //static ego_BSP_tree   * init_1( ego_BSP_tree   * t, Sint32 dim, Sint32 depth );
 
     static bool_t             clear_nodes( ego_BSP_tree   * t, bool_t recursive );
     static bool_t             dealloc_nodes( ego_BSP_tree   * t, bool_t recursive );

@@ -46,15 +46,15 @@ static int cv_point_data_cmp( const void * pleft, const void * pright );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-const ego_aabb_lst * ego_aabb_lst::ctor( ego_aabb_lst   * lst )
+const ego_aabb_lst * ego_aabb_lst::ctor_this( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
-    return dtor( lst );
+    return dtor_this( lst );
 }
 
 //--------------------------------------------------------------------------------------------
-const ego_aabb_lst   * ego_aabb_lst::dtor( ego_aabb_lst   * lst )
+const ego_aabb_lst   * ego_aabb_lst::dtor_this( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
@@ -74,8 +74,8 @@ const ego_aabb_lst   * ego_aabb_lst::renew( ego_aabb_lst   * lst )
 {
     if ( NULL == lst ) return NULL;
 
-    ego_aabb_lst::dtor( lst );
-    return ego_aabb_lst::ctor( lst );
+    ego_aabb_lst::dtor_this( lst );
+    return ego_aabb_lst::ctor_this( lst );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ const ego_aabb_lst   * ego_aabb_lst::alloc( ego_aabb_lst   * lst, int count )
 {
     if ( NULL == lst ) return NULL;
 
-    ego_aabb_lst::dtor( lst );
+    ego_aabb_lst::dtor_this( lst );
 
     if ( count > 0 )
     {
@@ -99,7 +99,7 @@ const ego_aabb_lst   * ego_aabb_lst::alloc( ego_aabb_lst   * lst, int count )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_aabb_ary * ego_aabb_ary::dtor( ego_aabb_ary * ary )
+ego_aabb_ary * ego_aabb_ary::dtor_this( ego_aabb_ary * ary )
 {
     int i;
 
@@ -109,7 +109,7 @@ ego_aabb_ary * ego_aabb_ary::dtor( ego_aabb_ary * ary )
     {
         for ( i = 0; i < ary->count; i++ )
         {
-            ego_aabb_lst::dtor( ary->list + i );
+            ego_aabb_lst::dtor_this( ary->list + i );
         }
 
         EGOBOO_DELETE( ary->list );
@@ -125,8 +125,8 @@ ego_aabb_ary * ego_aabb_ary::dtor( ego_aabb_ary * ary )
 ego_aabb_ary * ego_aabb_ary::renew( ego_aabb_ary * ary )
 {
     if ( NULL == ary ) return NULL;
-    ego_aabb_ary::dtor( ary );
-    return ego_aabb_ary::ctor( ary );
+    ego_aabb_ary::dtor_this( ary );
+    return ego_aabb_ary::ctor_this( ary );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ ego_aabb_ary * ego_aabb_ary::alloc( ego_aabb_ary * ary, int count )
 {
     if ( NULL == ary ) return NULL;
 
-    ego_aabb_ary::dtor( ary );
+    ego_aabb_ary::dtor_this( ary );
 
     if ( count > 0 )
     {
@@ -547,7 +547,7 @@ bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolum
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ego_CVolume::ctor( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume * pvb )
+bool_t ego_CVolume::ctor_this( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume * pvb )
 {
     bool_t retval;
     ego_CVolume cv;
@@ -914,7 +914,7 @@ void points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_oct_vec * ego_oct_vec::ctor( ego_oct_vec * ovec , fvec3_t pos )
+ego_oct_vec * ego_oct_vec::ctor_this( ego_oct_vec * ovec , fvec3_t pos )
 {
     if ( NULL == ovec ) return ovec;
 
@@ -952,7 +952,7 @@ bool_t bumper_to_oct_bb_0( ego_bumper src, ego_oct_bb   * pdst )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_oct_bb * ego_oct_bb::ctor( ego_oct_bb * pobb )
+ego_oct_bb * ego_oct_bb::ctor_this( ego_oct_bb * pobb )
 {
     if ( NULL == pobb ) return NULL;
 

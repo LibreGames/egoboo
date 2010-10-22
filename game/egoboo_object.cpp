@@ -32,7 +32,7 @@ Uint32 ego_obj::spawn_depth    = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::ctor( ego_obj_proc * ptr )
+ego_obj_proc * ego_obj_proc::ctor_this( ego_obj_proc * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -45,7 +45,7 @@ ego_obj_proc * ego_obj_proc::ctor( ego_obj_proc * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::dtor( ego_obj_proc * ptr )
+ego_obj_proc * ego_obj_proc::dtor_this( ego_obj_proc * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -153,7 +153,7 @@ ego_obj_proc * ego_obj_proc::invalidate( ego_obj_proc * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    ego_obj_proc::dtor( ptr );
+    ego_obj_proc::dtor_this( ptr );
 
     return ptr;
 }
@@ -185,13 +185,13 @@ ego_obj_proc * ego_obj_proc::begin_waiting( ego_obj_proc * ptr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_obj_req * ego_obj_req::ctor( ego_obj_req * ptr )
+ego_obj_req * ego_obj_req::ctor_this( ego_obj_req * ptr )
 {
     return ego_obj_req::clear( ptr );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_req * ego_obj_req::dtor( ego_obj_req * ptr )
+ego_obj_req * ego_obj_req::dtor_this( ego_obj_req * ptr )
 {
     return ego_obj_req::clear( ptr );
 }
@@ -390,38 +390,6 @@ egoboo_rv ego_obj_proc_data::proc_set_spawning( bool_t val )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::do_ctor( ego_obj * pbase, size_t index )
-{
-    if ( NULL == pbase ) return pbase;
-
-    pbase = ego_obj::ctor( pbase );
-    if ( NULL == pbase ) return pbase;
-
-    cpp_list_state::ctor( pbase->get_plist(), index );
-    ego_obj_proc::ctor( pbase->get_pproc() );
-    ego_obj_req::ctor( pbase->get_preq() );
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::do_dtor( ego_obj * pbase )
-{
-    if ( NULL == pbase ) return pbase;
-
-    cpp_list_state::dtor( pbase->get_plist() );
-
-    ego_obj_proc::dtor( pbase->get_pproc() );
-
-    ego_obj_req::dtor( pbase->get_preq() );
-
-    pbase = ego_obj::dtor( pbase );
-    if ( NULL == pbase ) return pbase;
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
 ego_obj * ego_obj::allocate( ego_obj * pbase, size_t index )
 {
     cpp_list_state tmp_lst_state;
@@ -433,7 +401,7 @@ ego_obj * ego_obj::allocate( ego_obj * pbase, size_t index )
     tmp_lst_state = pbase->get_list();
 
     // construct the a new state (this destroys the data in pbase->lst_state)
-    pbase = ego_obj::do_ctor( pbase, index );
+    pbase = ego_obj::ctor_all( pbase, index );
     if ( NULL == pbase ) return pbase;
 
     // restore the old pbase->lst_state

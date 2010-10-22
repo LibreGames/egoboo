@@ -37,16 +37,16 @@ struct cpp_list_state
 
     cpp_list_state( size_t index = ( size_t )( ~0L ) )
     {
-        cpp_list_state::ctor( this, index );
+        cpp_list_state::ctor_this( this, index );
     }
 
     ~cpp_list_state()
     {
-        cpp_list_state::dtor( this );
+        cpp_list_state::dtor_this( this );
     }
 
-    static cpp_list_state * ctor( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
-    static cpp_list_state * dtor( cpp_list_state * );
+    static cpp_list_state * ctor_this( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
+    static cpp_list_state * dtor_this( cpp_list_state * );
 
     static cpp_list_state * set_allocated( cpp_list_state *, bool_t val );
     static cpp_list_state * set_used( cpp_list_state *, bool_t val );
@@ -265,6 +265,8 @@ protected:
 /// stored in t_cpp_list
 struct cpp_list_client
 {
+    cpp_list_client( size_t index = size_t( -1 ) ) : _cpp_list_state_data( index ) {};
+
     cpp_list_state * get_plist() { return &_cpp_list_state_data; }
     cpp_list_state & get_list()  { return _cpp_list_state_data;  }
 
@@ -349,36 +351,39 @@ struct t_cpp_stack
 /// a template-like declaration of a dynamically allocated array
 
 template<typename _ty>
-struct t_dary
+struct t_dary : public std::vector< _ty >
 {
-    size_t   size;
-    size_t   top;
-    _ty    * ary;
+    size_t top;
 
-    t_dary() { clear( this ); }
-    ~t_dary() { dtor( this ); }
+    t_dary( size_t size = 0 )
+    {
+        top = 0;
+        if ( 0 != size ) std::vector< _ty >::resize( size );
+    }
 
     static bool_t   alloc( t_dary * pary, size_t sz );
     static bool_t   dealloc( t_dary * pary );
-    static t_dary * ctor( t_dary * pary, size_t sz );
-    static t_dary * dtor( t_dary * pary );
 
     static size_t   get_top( t_dary * pary );
     static size_t   get_size( t_dary * pary );
 
     static _ty *    pop_back( t_dary * pary );
     static bool_t   push_back( t_dary * pary, _ty val );
-
-private:
-
     static void     clear( t_dary * pary );
+
+    _ty & operator []( size_t offset )
+    {
+        CPP_EGOBOO_ASSERT( offset < size() );
+        return std::vector<_ty>::operator []( offset );
+    }
+
+    _ty * operator + ( size_t offset )
+    {
+        if ( offset > size() ) return NULL;
+
+        return &( operator []( offset ) );
+    }
 };
-
-#define DECLARE_DYNAMIC_ARY(ARY_T, ELEM_T) typedef t_dary<ELEM_T> ARY_T;
-
-#define INSTANTIATE_DYNAMIC_ARY(ARY_T, NAME) ARY_T NAME;
-
-#define IMPLEMENT_DYNAMIC_ARY(ARY_T, _ty)
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

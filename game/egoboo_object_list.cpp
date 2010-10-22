@@ -58,7 +58,7 @@ void flah()
     t_reference<blah> ref( 5 );
 
     test.init();
-    test.dtor();
+    test.dtor_this();
 
     test.update_used();
 

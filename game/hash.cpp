@@ -27,7 +27,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_node::dtor( ego_hash_node * n )
+bool_t ego_hash_node::dtor_this( ego_hash_node * n )
 {
     if ( NULL == n ) return bfalse;
 
@@ -37,7 +37,7 @@ bool_t ego_hash_node::dtor( ego_hash_node * n )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_hash_node * ego_hash_node::ctor( ego_hash_node * pn, void * data )
+ego_hash_node * ego_hash_node::ctor_this( ego_hash_node * pn, void * data )
 {
     if ( NULL == pn ) return pn;
 
@@ -53,7 +53,7 @@ ego_hash_node * ego_hash_node::create( void * data )
 {
     ego_hash_node * n = EGOBOO_NEW( ego_hash_node );
 
-    return ego_hash_node::ctor( n, data );
+    return ego_hash_node::ctor_this( n, data );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ bool_t ego_hash_node::destroy( ego_hash_node ** pn )
 
     if ( NULL == pn || NULL == *pn ) return bfalse;
 
-    retval = ego_hash_node::dtor( *pn );
+    retval = ego_hash_node::dtor_this( *pn );
 
     EGOBOO_DELETE( *pn );
 
@@ -130,7 +130,7 @@ ego_hash_node * ego_hash_node::remove( ego_hash_node lst[] )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_hash_list * ego_hash_list::ctor( ego_hash_list * lst, int hash_size )
+ego_hash_list * ego_hash_list::ctor_this( ego_hash_list * lst, int hash_size )
 {
     if ( NULL == lst ) return NULL;
 
@@ -142,7 +142,7 @@ ego_hash_list * ego_hash_list::ctor( ego_hash_list * lst, int hash_size )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_hash_list * ego_hash_list::dtor( ego_hash_list * lst )
+ego_hash_list * ego_hash_list::dtor_this( ego_hash_list * lst )
 {
     if ( NULL == lst ) return NULL;
 
@@ -180,7 +180,7 @@ ego_hash_list * ego_hash_list::create( int size )
 
     memset( rv, 0, sizeof( *rv ) );
 
-    return ego_hash_list::ctor( rv, size );
+    return ego_hash_list::ctor_this( rv, size );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ bool_t ego_hash_list::destroy( ego_hash_list ** plst )
 
     if ( NULL == plst || NULL == *plst ) return bfalse;
 
-    retval = ( NULL != ego_hash_list::dtor( *plst ) );
+    retval = ( NULL != ego_hash_list::dtor_this( *plst ) );
 
     EGOBOO_DELETE( *plst );
 
@@ -321,7 +321,7 @@ bool_t ego_hash_list::renew( ego_hash_list * lst )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_hash_list_iterator * ego_hash_list_iterator::ctor( ego_hash_list_iterator * it )
+ego_hash_list_iterator * ego_hash_list_iterator::ctor_this( ego_hash_list_iterator * it )
 {
     if ( NULL == it ) return NULL;
 
@@ -335,7 +335,7 @@ bool_t ego_hash_list_iterator::set_begin( ego_hash_list_iterator * it, ego_hash_
 {
     int i;
 
-    it = ego_hash_list_iterator::ctor( it );
+    it = ego_hash_list_iterator::ctor_this( it );
 
     if ( NULL == it || NULL == hlst ) return bfalse;
 

@@ -139,7 +139,7 @@ void character_system_begin()
 void character_system_end()
 {
     release_all_cap();
-    ChrObjList.dtor();
+    ChrObjList.dtor_this();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3134,7 +3134,7 @@ void ego_ai_state::spawn( ego_ai_state * pself, const CHR_REF & index, const PRO
     ego_pro * ppro;
     ego_cap * pcap;
 
-    pself = ego_ai_state::ctor( pself );
+    pself = ego_ai_state::ctor_this( pself );
 
     if ( NULL == pself || !DEFINED_CHR( index ) ) return;
     pchr = ChrObjList.get_pdata( index );
@@ -7029,7 +7029,7 @@ void ego_chr_instance::clear_cache( ego_chr_instance * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_instance * ego_chr_instance::dtor( ego_chr_instance * pinst )
+ego_chr_instance * ego_chr_instance::dtor_this( ego_chr_instance * pinst )
 {
     if ( NULL == pinst ) return pinst;
 
@@ -7043,7 +7043,7 @@ ego_chr_instance * ego_chr_instance::dtor( ego_chr_instance * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_instance * ego_chr_instance::ctor( ego_chr_instance * pinst )
+ego_chr_instance * ego_chr_instance::ctor_this( ego_chr_instance * pinst )
 {
     Uint32 cnt;
 
@@ -7225,7 +7225,7 @@ bool_t ego_chr_instance::spawn( ego_chr_instance * pinst, const PRO_REF & profil
     bluesave  = pinst->blushift;
 
     // clear the instance
-    ego_chr_instance::ctor( pinst );
+    ego_chr_instance::ctor_this( pinst );
 
     if ( !LOADED_PRO( profile ) ) return bfalse;
     pobj = ProList.lst + profile;
@@ -9579,7 +9579,7 @@ bool_t ego_chr::set_maxaccel( ego_chr * pchr, float new_val )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * ego_chr_bundle::ctor( ego_chr_bundle * pbundle )
+ego_chr_bundle * ego_chr_bundle::ctor_this( ego_chr_bundle * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
@@ -9633,7 +9633,7 @@ ego_chr_bundle * ego_chr_bundle::validate( ego_chr_bundle * pbundle )
 
 ego_chr_bundle__validate_fail:
 
-    return ego_chr_bundle::ctor( pbundle );
+    return ego_chr_bundle::ctor_this( pbundle );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9642,7 +9642,7 @@ ego_chr_bundle * ego_chr_bundle::set( ego_chr_bundle * pbundle, ego_chr * pchr )
     if ( NULL == pbundle ) return NULL;
 
     // blank out old data
-    pbundle = ego_chr_bundle::ctor( pbundle );
+    pbundle = ego_chr_bundle::ctor_this( pbundle );
 
     if ( NULL == pbundle || NULL == pchr ) return pbundle;
 
@@ -10951,7 +10951,7 @@ ego_chr_data * ego_chr_data::alloc( ego_chr_data * pdata )
     if ( NULL == pdata ) return pdata;
 
     // allocate
-    ego_chr_instance::ctor( &( pdata->inst ) );
+    ego_chr_instance::ctor_this( &( pdata->inst ) );
 
     return pdata;
 }
@@ -10963,7 +10963,7 @@ ego_chr_data * ego_chr_data::dealloc( ego_chr_data * pdata )
 
     if ( NULL == pdata ) return pdata;
 
-    ego_chr_instance::dtor( &( pdata->inst ) );
+    ego_chr_instance::dtor_this( &( pdata->inst ) );
 
     EGOBOO_ASSERT( NULL == pdata->inst.vrt_lst );
 
@@ -10971,7 +10971,7 @@ ego_chr_data * ego_chr_data::dealloc( ego_chr_data * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_data * ego_chr_data::ctor( ego_chr_data * pdata )
+ego_chr_data * ego_chr_data::ctor_this( ego_chr_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
@@ -10987,7 +10987,7 @@ ego_chr_data * ego_chr_data::ctor( ego_chr_data * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_data * ego_chr_data::dtor( ego_chr_data * pdata )
+ego_chr_data * ego_chr_data::dtor_this( ego_chr_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
@@ -11002,7 +11002,7 @@ ego_chr_data * ego_chr_data::dtor( ego_chr_data * pdata )
     LoopedList_remove( pdata->loopedsound_channel );
 
     // reset the ego_ai_state
-    ego_ai_state::dtor( &( pdata->ai ) );
+    ego_ai_state::dtor_this( &( pdata->ai ) );
 
     // set the critical values to safe ones
     pdata = ego_chr_data::init( pdata );
@@ -11099,53 +11099,16 @@ ego_chr_data * ego_chr_data::init( ego_chr_data * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_data * ego_chr_data::do_ctor( ego_chr_data * pdata )
-{
-    if ( NULL == pdata ) return pdata;
-
-    //---- call the constructor of the main classes
-    pdata = ego_chr_data::ctor( pdata );
-    if ( NULL == pdata ) return pdata;
-
-    //---- call the constructors of the dependent classes
-
-    // set the instance values to safe values
-    ego_chr_instance::ctor( &( pdata->inst ) );
-
-    // initialize the ai_state
-    ego_ai_state::ctor( &( pdata->ai ) );
-
-    return pdata;
-};
-
-//--------------------------------------------------------------------------------------------
-ego_chr_data * ego_chr_data::do_dtor( ego_chr_data * pdata )
-{
-    if ( NULL == pdata ) return pdata;
-
-    //---- call the destructors of the dependent classes
-
-    // set the instance values to safe values
-    ego_chr_instance::dtor( &( pdata->inst ) );
-
-    // initialize the ai_state
-    ego_ai_state::dtor( &( pdata->ai ) );
-
-    //---- call the destructor of the main classes
-    pdata = ego_chr_data::dtor( pdata );
-
-    return pdata;
-};
-
-//--------------------------------------------------------------------------------------------
 // struct ego_chr - memory management
 //--------------------------------------------------------------------------------------------
 ego_chr * ego_chr::alloc( ego_chr * pchr )
 {
     if ( NULL == pchr ) return pchr;
 
+    dealloc( pchr );
+
     // initialize the bsp node for this character
-    ego_BSP_leaf::ctor( &( pchr->bsp_leaf ), 3, pchr, 1 );
+    ego_BSP_leaf::ctor_this( &( pchr->bsp_leaf ), 3, pchr, 1 );
 
     return pchr;
 }
@@ -11155,7 +11118,7 @@ ego_chr * ego_chr::dealloc( ego_chr * pchr )
 {
     if ( NULL == pchr ) return pchr;
 
-    ego_BSP_leaf::dtor( &( pchr->bsp_leaf ) );
+    ego_BSP_leaf::dealloc( &( pchr->bsp_leaf ) );
 
     return pchr;
 }
@@ -11184,45 +11147,7 @@ ego_chr * ego_chr::do_dealloc( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::do_ctor( ego_chr * pchr )
-{
-    // construct this struct and all sub-struct
-
-    if ( NULL == pchr ) return pchr;
-
-    // deallocate any existing data
-    if ( VALID_PCHR( pchr ) )
-    {
-        // call the dtor
-        if ( NULL == ego_chr::dtor( pchr ) ) return NULL;
-    }
-
-    // call the data ctor
-    if ( NULL == ego_chr_data::ctor( pchr ) ) return NULL;
-
-    // call the data ctor
-    if ( NULL == ego_chr::ctor( pchr ) ) return NULL;
-
-    return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::do_dtor( ego_chr * pchr )
-{
-    // destruct this struct and all sub-struct
-
-    if ( NULL == pchr ) return pchr;
-
-    // destruct/free any dynamic data
-    ego_chr::dtor( pchr );
-
-    // dealloc anything in the data
-    ego_chr_data::dtor( pchr );
-
-    return pchr;
-}
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::ctor( ego_chr * pchr )
+ego_chr * ego_chr::ctor_this( ego_chr * pchr )
 {
     /// @details BB@> initialize the ego_chr
 
@@ -11248,7 +11173,7 @@ ego_chr * ego_chr::ctor( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::dtor( ego_chr * pchr )
+ego_chr * ego_chr::dtor_this( ego_chr * pchr )
 {
     if ( NULL == pchr ) return pchr;
 
@@ -11268,7 +11193,7 @@ ego_chr * ego_chr::dtor( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 // struct ego_obj_chr - memory management
 //--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::ctor( ego_obj_chr * pobj )
+ego_obj_chr * ego_obj_chr::ctor_this( ego_obj_chr * pobj )
 {
     // construct this struct, ONLY
 
@@ -11280,7 +11205,7 @@ ego_obj_chr * ego_obj_chr::ctor( ego_obj_chr * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::dtor( ego_obj_chr * pobj )
+ego_obj_chr * ego_obj_chr::dtor_this( ego_obj_chr * pobj )
 {
     // destruct this struct, ONLY
 
@@ -11290,32 +11215,6 @@ ego_obj_chr * ego_obj_chr::dtor( ego_obj_chr * pobj )
 
     // Sets the state to ego_obj_terminated automatically.
     POBJ_TERMINATE( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_ctor( ego_obj_chr * pobj )
-{
-    // construct this struct, and ALL dependent structs
-
-    pobj = ego_obj_chr::ctor( pobj );
-    if ( NULL == pobj ) return pobj;
-
-    ego_chr::do_ctor( pobj->get_pdata() );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_dtor( ego_obj_chr * pobj )
-{
-    // destruct this struct, and ALL dependent structs
-
-    ego_chr::do_dtor( pobj->get_pdata() );
-
-    pobj = ego_obj_chr::dtor( pobj );
-    if ( NULL == pobj ) return pobj;
 
     return pobj;
 }
@@ -11592,7 +11491,7 @@ ego_obj_chr * ego_obj_chr::do_constructing( ego_obj_chr * pobj )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
 
     // run the constructor
-    ego_chr * pchr = ego_chr::do_ctor( pobj->get_pdata() );
+    ego_chr * pchr = ego_chr::ctor_all( pobj->get_pdata(), pobj );
     if ( NULL == pchr ) return pobj;
 
     // move on to the next action
@@ -11728,7 +11627,7 @@ ego_obj_chr * ego_obj_chr::do_destructing( ego_obj_chr * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the destructor
-    ego_chr * pchr = ego_chr::do_dtor( pobj->get_pdata() );
+    ego_chr * pchr = ego_chr::dtor_all( pobj->get_pdata() );
     if ( NULL == pchr ) return pobj;
 
     // move on to the next action (dead)

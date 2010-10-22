@@ -43,9 +43,9 @@ float ego_MD2_Model::kNormals[EGO_NORMAL_COUNT][3] =
 //--------------------------------------------------------------------------------------------
 ego_MD2_Frame::ego_MD2_Frame()              { ego_MD2_Frame::clear( this ); }
 //--------------------------------------------------------------------------------------------
-ego_MD2_Frame::ego_MD2_Frame( size_t size ) { ego_MD2_Frame::ctor( this, size ); }
+ego_MD2_Frame::ego_MD2_Frame( size_t size ) { ego_MD2_Frame::ctor_this( this, size ); }
 //--------------------------------------------------------------------------------------------
-ego_MD2_Frame::~ego_MD2_Frame()             { ego_MD2_Frame::dtor( this ); }
+ego_MD2_Frame::~ego_MD2_Frame()             { ego_MD2_Frame::dtor_this( this ); }
 
 //--------------------------------------------------------------------------------------------
 ego_MD2_Frame * ego_MD2_Frame::clear( ego_MD2_Frame * pframe )
@@ -58,7 +58,7 @@ ego_MD2_Frame * ego_MD2_Frame::clear( ego_MD2_Frame * pframe )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_Frame * ego_MD2_Frame::ctor( ego_MD2_Frame * pframe, size_t size )
+ego_MD2_Frame * ego_MD2_Frame::ctor_this( ego_MD2_Frame * pframe, size_t size )
 {
     if ( NULL == pframe ) return pframe;
 
@@ -72,7 +72,7 @@ ego_MD2_Frame * ego_MD2_Frame::ctor( ego_MD2_Frame * pframe, size_t size )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_Frame * ego_MD2_Frame::dtor( ego_MD2_Frame * pframe )
+ego_MD2_Frame * ego_MD2_Frame::dtor_this( ego_MD2_Frame * pframe )
 {
     if ( NULL == pframe ) return pframe;
 
@@ -87,10 +87,10 @@ ego_MD2_Frame * ego_MD2_Frame::dtor( ego_MD2_Frame * pframe )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand::ego_MD2_GLCommand() { ego_MD2_GLCommand::ctor( this ); }
+ego_MD2_GLCommand::ego_MD2_GLCommand() { ego_MD2_GLCommand::ctor_this( this ); }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand::~ego_MD2_GLCommand() { ego_MD2_GLCommand::dtor( this ); }
+ego_MD2_GLCommand::~ego_MD2_GLCommand() { ego_MD2_GLCommand::dtor_this( this ); }
 
 //--------------------------------------------------------------------------------------------
 ego_MD2_GLCommand * ego_MD2_GLCommand::clear( ego_MD2_GLCommand * m )
@@ -103,7 +103,7 @@ ego_MD2_GLCommand * ego_MD2_GLCommand::clear( ego_MD2_GLCommand * m )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand * ego_MD2_GLCommand::ctor( ego_MD2_GLCommand * m )
+ego_MD2_GLCommand * ego_MD2_GLCommand::ctor_this( ego_MD2_GLCommand * m )
 {
     if ( NULL == m ) return m;
 
@@ -117,7 +117,7 @@ ego_MD2_GLCommand * ego_MD2_GLCommand::ctor( ego_MD2_GLCommand * m )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand * ego_MD2_GLCommand::dtor( ego_MD2_GLCommand * m )
+ego_MD2_GLCommand * ego_MD2_GLCommand::dtor_this( ego_MD2_GLCommand * m )
 {
     if ( NULL == m ) return m;
 
@@ -136,7 +136,7 @@ ego_MD2_GLCommand * ego_MD2_GLCommand::create()
 
     m = EGOBOO_NEW( ego_MD2_GLCommand );
 
-    ego_MD2_GLCommand::ctor( m );
+    ego_MD2_GLCommand::ctor_this( m );
 
     return m;
 }
@@ -146,7 +146,7 @@ ego_MD2_GLCommand * ego_MD2_GLCommand::new_vector( int n )
 {
     int i;
     ego_MD2_GLCommand * v = EGOBOO_NEW_ARY( ego_MD2_GLCommand, n );
-    for ( i = 0; i < n; i++ ) ego_MD2_GLCommand::ctor( v + i );
+    for ( i = 0; i < n; i++ ) ego_MD2_GLCommand::ctor_this( v + i );
     return v;
 }
 
@@ -155,7 +155,7 @@ void ego_MD2_GLCommand::destroy( ego_MD2_GLCommand ** m )
 {
     if ( NULL == m || NULL == * m ) return;
 
-    ego_MD2_GLCommand::dtor( *m );
+    ego_MD2_GLCommand::dtor_this( *m );
 
     EGOBOO_DELETE( *m );
 }
@@ -190,7 +190,7 @@ ego_MD2_Model * ego_MD2_Model::clear( ego_MD2_Model * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_Model * ego_MD2_Model::ctor( ego_MD2_Model * m )
+ego_MD2_Model * ego_MD2_Model::ctor_this( ego_MD2_Model * m )
 {
     if ( NULL == m ) return m;
 
@@ -217,7 +217,7 @@ void ego_MD2_Model::dealloc( ego_MD2_Model * m )
         int i;
         for ( i = 0; i < m->m_numFrames; i++ )
         {
-            ego_MD2_Frame::dtor( m->m_frames + i );
+            ego_MD2_Frame::dtor_this( m->m_frames + i );
         }
 
         EGOBOO_DELETE_ARY( m->m_frames );
@@ -230,7 +230,7 @@ void ego_MD2_Model::dealloc( ego_MD2_Model * m )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_Model * ego_MD2_Model::dtor( ego_MD2_Model * m )
+ego_MD2_Model * ego_MD2_Model::dtor_this( ego_MD2_Model * m )
 {
     if ( NULL == m ) return NULL;
 
@@ -244,7 +244,7 @@ ego_MD2_Model * ego_MD2_Model::create()
 {
     ego_MD2_Model * m = EGOBOO_NEW( ego_MD2_Model );
 
-    ego_MD2_Model::ctor( m );
+    ego_MD2_Model::ctor_this( m );
 
     return m;
 }
@@ -254,7 +254,7 @@ ego_MD2_Model * ego_MD2_Model::new_vector( int n )
 {
     int i;
     ego_MD2_Model * v = EGOBOO_NEW_ARY( ego_MD2_Model, n );
-    for ( i = 0; i < n; i++ ) ego_MD2_Model::ctor( v + i );
+    for ( i = 0; i < n; i++ ) ego_MD2_Model::ctor_this( v + i );
     return v;
 }
 
@@ -263,7 +263,7 @@ void ego_MD2_Model::destroy( ego_MD2_Model ** m )
 {
     if ( NULL == m || NULL == *m ) return;
 
-    ego_MD2_Model::dtor( *m );
+    ego_MD2_Model::dtor_this( *m );
 
     EGOBOO_DELETE( *m );
 }
@@ -273,7 +273,7 @@ void ego_MD2_Model::delete_vector( ego_MD2_Model * v, int n )
 {
     int i;
     if ( NULL == v || 0 == n ) return;
-    for ( i = 0; i < n; i++ ) ego_MD2_Model::dtor( v + i );
+    for ( i = 0; i < n; i++ ) ego_MD2_Model::dtor_this( v + i );
     EGOBOO_DELETE( v );
 }
 
@@ -312,7 +312,7 @@ void ego_MD2_Model::scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, f
 
             fvec3_self_normalize( pframe->vertex_lst[tnc].nrm.v );
 
-            ego_oct_vec::ctor( &opos, pframe->vertex_lst[tnc].pos );
+            ego_oct_vec::ctor_this( &opos, pframe->vertex_lst[tnc].pos );
 
             // Re-calculate the bounding box for this frame
             if ( !bfound )
@@ -404,7 +404,7 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
 
     for ( i = 0; i < md2_header.num_frames; i++ )
     {
-        ego_MD2_Frame::ctor( model->m_frames + i, md2_header.num_vertices );
+        ego_MD2_Frame::ctor_this( model->m_frames + i, md2_header.num_vertices );
     }
 
     // Load the texture coordinates from the file, normalizing them as we go

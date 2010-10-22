@@ -103,7 +103,7 @@ struct ego_process : public ego_process_data, public i_ego_process
     friend struct ego_process_engine;
 
     //---- construction/destruction
-    ego_process() { ctor( this ); }
+    ego_process() { ctor_this( this ); }
     virtual ~ego_process() {};
 
     //---- externally accessible means of interacting with the process
@@ -122,7 +122,7 @@ struct ego_process : public ego_process_data, public i_ego_process
 protected:
 
     //---- construction/destruction
-    static ego_process * ctor( ego_process * );
+    static ego_process * ctor_this( ego_process * );
 
     //---- implementation of the basic process behavior
     virtual egoboo_rv do_beginning() { result = -1; state = proc_entering;  return rv_success; }

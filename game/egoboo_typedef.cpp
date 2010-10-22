@@ -29,22 +29,13 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// implement simple type arrays
-IMPLEMENT_DYNAMIC_ARY( char_ary,   char );
-IMPLEMENT_DYNAMIC_ARY( short_ary,  short );
-IMPLEMENT_DYNAMIC_ARY( int_ary,    int );
-IMPLEMENT_DYNAMIC_ARY( float_ary,  float );
-IMPLEMENT_DYNAMIC_ARY( double_ary, double );
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-cpp_list_state * cpp_list_state::ctor( cpp_list_state * ptr, size_t idx )
+cpp_list_state * cpp_list_state::ctor_this( cpp_list_state * ptr, size_t idx )
 {
     return cpp_list_state::clear( ptr, idx );
 }
 
 //--------------------------------------------------------------------------------------------
-cpp_list_state * cpp_list_state::dtor( cpp_list_state * ptr )
+cpp_list_state * cpp_list_state::dtor_this( cpp_list_state * ptr )
 {
     return cpp_list_state::clear( ptr );
 }

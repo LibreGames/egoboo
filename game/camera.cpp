@@ -58,7 +58,7 @@ void ego_camera::rotmesh_init()
 }
 
 //--------------------------------------------------------------------------------------------
-ego_camera * ego_camera::ctor( ego_camera * pcam )
+ego_camera * ego_camera::ctor_this( ego_camera * pcam )
 {
     /// @details BB@> initialize the camera structure
 

@@ -95,11 +95,11 @@ struct mnu_SlidyButtons
     int top;
     int left;
 
-    mnu_SlidyButtons() { ctor( this ); }
-    ~mnu_SlidyButtons() { dtor( this ); }
+    mnu_SlidyButtons() { ctor_this( this ); }
+    ~mnu_SlidyButtons() { dtor_this( this ); }
 
-    static mnu_SlidyButtons * ctor( mnu_SlidyButtons * ps ) { return mnu_SlidyButtons::clear( ps ); }
-    static mnu_SlidyButtons * dtor( mnu_SlidyButtons * ps ) { return mnu_SlidyButtons::clear( ps ); }
+    static mnu_SlidyButtons * ctor_this( mnu_SlidyButtons * ps ) { return mnu_SlidyButtons::clear( ps ); }
+    static mnu_SlidyButtons * dtor_this( mnu_SlidyButtons * ps ) { return mnu_SlidyButtons::clear( ps ); }
 
     static mnu_SlidyButtons * clear( mnu_SlidyButtons * ps )
     {
@@ -472,12 +472,6 @@ int menu_system_begin()
     // allocate the menuTextureList
     menuTextureList_ptr = display_list_ctor( menuTextureList_ptr, MAX_MENU_DISPLAY );
 
-    // Figure out where to draw the copyright text
-    copyrightText_set_position( menuFont, copyrightText, 20 );
-
-    // Figure out where to draw the options text
-    tipText_set_position( menuFont, tipText, 20 );
-
     // construct the TxTitleImage array
     TxTitleImage_ctor();
 
@@ -522,35 +516,104 @@ void menu_system_end()
 
 struct mnu_state_data
 {
+    //---- the basic state variables for the menu state
     int              menuState;
-    oglx_texture_t   background;
     int              menuChoice;
+
+    //---- the background image
+    oglx_texture_t   background;
+    SDL_Rect         bg_rect;
+
+    //---- a stupid way of getting the inherited classes to tell this class where
+    //     all of its buttons are. The other way would be to allocate the buttons
+    //     dynamically.
+
     mnu_SlidyButtons but_state;
 
-    int run( double deltaTime );
-    void begin( int state = MM_Begin );
-    void end();
+    const char    ** slidy_text;           ///< the client strings
+    ui_Widget      * slidy_buttons;        ///< the client buttons
 
+    ui_Widget      * exit_button_ptr;             ///< pointer to the client exit button
+
+    void set_slidy_info( const char * text[], ui_Widget * buttons )
+    {
+        slidy_text    = text;
+        slidy_buttons = buttons;
+    }
+
+    //---- construction/destruction
+    mnu_state_data() { init(); }
+    void init();
+
+    //---- the state implementation
+    int run( double deltaTime );
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
+
+    //---- these functions should probably be encapsulated in the menu process,
+    //     rather than here
+    static void begin_menu( int which );
+    static void end_menu( int which );
+    static void switch_menu( int from, int to );
+
+    //---- asset management for the widgets
     void begin_widgets( ui_Widget lst[], size_t count );
     void end_widgets( ui_Widget lst[], size_t count );
 
-    static void mnu_state_data::begin_menu( int which );
-    static void mnu_state_data::end_menu( int which );
-    static void mnu_state_data::switch_menu( int from, int to );
+    void begin_labels( ui_Widget lst[], size_t count );
 };
+
+//--------------------------------------------------------------------------------------------
+void mnu_state_data::init()
+{
+    menuState  = MM_Begin;
+    menuChoice = 0;
+
+    slidy_text    = NULL;
+    slidy_buttons = NULL;
+
+    exit_button_ptr = NULL;
+}
 
 void mnu_state_data::begin( int state )
 {
+    init();
+
     menuState  = state;
-    menuChoice = 0;
+
+    format();
 };
 
+//--------------------------------------------------------------------------------------------
 void mnu_state_data::end()
 {
     menuState  = MM_Begin;
     oglx_texture_Release( &background );
 }
 
+//--------------------------------------------------------------------------------------------
+void mnu_state_data::format()
+{
+    autoformat_init( &gfx );
+
+    // assume the whole screen
+    bg_rect.x = 0.0f;
+    bg_rect.y = 0.0f;
+    bg_rect.w = GFX_WIDTH;
+    bg_rect.h = GFX_HEIGHT;
+
+    // Figure out where to draw the copyright text
+    copyrightText_set_position( menuFont, copyrightText, 20 );
+
+    // Figure out where to draw the options text
+    tipText_set_position( menuFont, tipText, 20 );
+
+    /* add something here */
+}
+
+//--------------------------------------------------------------------------------------------
 void mnu_state_data::begin_widgets( ui_Widget lst[], size_t count )
 {
     for ( int cnt = 0; cnt < count; cnt ++ )
@@ -559,12 +622,186 @@ void mnu_state_data::begin_widgets( ui_Widget lst[], size_t count )
     }
 }
 
+//--------------------------------------------------------------------------------------------
 void mnu_state_data::end_widgets( ui_Widget lst[], size_t count )
 {
     for ( int cnt = 0; cnt < count; cnt ++ )
     {
-        ui_Widget::dtor( lst + cnt );
+        ui_Widget::dtor_this( lst + cnt );
     }
+}
+
+//--------------------------------------------------------------------------------------------
+void mnu_state_data::begin_labels( ui_Widget lst[], size_t count )
+{
+    for ( int cnt = 0; cnt < count; cnt ++ )
+    {
+        ui_Widget::reset( lst + cnt, UI_Nothing );
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+
+/// A very basic base class implementation of the menu
+/// All this one does is the flying in and out of the slidy buttons
+/// drawing the background and polling the slidy buttons
+int mnu_state_data::run( double deltaTime )
+{
+    int retval;
+
+    // assume not changing states
+    retval = 0;
+
+    // do each state
+    switch ( menuState )
+    {
+        case MM_Begin:
+            // initialze the slidy buttons
+            menuChoice = -1;
+
+            mnu_SlidyButtons::init( &but_state, 1.0f, 0, slidy_text, slidy_buttons );
+
+            menuState = MM_Entering;
+
+            // changing states?
+            if ( MM_Begin != menuState )
+            {
+                retval = 1;
+            }
+            break;
+
+        case MM_Entering:
+            // animate the slidy button fly-in
+
+            if ( 0 == but_state.but_count )
+            {
+                menuState = MM_Running;
+            }
+            else
+            {
+
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
+                }
+
+                mnu_SlidyButtons::draw_all( &but_state );
+
+                // Let lerp wind down relative to the time elapsed
+                mnu_SlidyButtons::update_all( &but_state, -deltaTime );
+                if ( but_state.lerp <= 0.0f )
+                {
+                    menuState = MM_Running;
+                }
+            }
+
+            // changing states?
+            if ( MM_Entering != menuState )
+            {
+                retval = 1;
+            }
+            break;
+
+        case MM_Running:
+
+            // hang around until someone clicks the slidy button
+            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+
+            if ( mnu_draw_background )
+            {
+                ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
+            }
+
+            // Buttons
+            if ( 0 == but_state.but_count )
+            {
+                if ( NULL == exit_button_ptr || BUTTON_UP == ui_Widget::Run( exit_button_ptr ) )
+                {
+                    menuState = MM_Leaving;
+                }
+            }
+            else
+            {
+                for ( int cnt = 0; cnt < but_state.but_count; cnt++ )
+                {
+                    if ( BUTTON_UP == ui_Widget::Run( exit_button_ptr ) )
+                    {
+                        menuChoice = cnt;
+                    }
+                }
+            }
+
+            // escape also kills this menu
+            if ( SDLKEYDOWN( SDLK_ESCAPE ) )
+            {
+                menuState = MM_Leaving;
+            }
+
+            if ( MM_Leaving == menuState )
+            {
+                mnu_SlidyButtons::init( &but_state, 0.0f, 0, slidy_text, slidy_buttons );
+            }
+
+            // changing states?
+            if ( MM_Running != menuState )
+            {
+                retval = 1;
+            }
+
+            break;
+
+        case MM_Leaving:
+            // animate the slidy button fly-out
+            // Do the same stuff as in MM_Entering, but backwards
+
+            if ( 0 == but_state.but_count )
+            {
+                menuState = MM_Finish;
+            }
+            else
+            {
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
+
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
+                }
+
+                // Buttons
+                mnu_SlidyButtons::draw_all( &but_state );
+
+                // Let lerp wind up relative to the time elapsed
+                mnu_SlidyButtons::update_all( &but_state, deltaTime );
+                if ( but_state.lerp >= 1.0f )
+                {
+                    menuState = MM_Finish;
+                }
+            }
+
+            // changing states?
+            if ( MM_Leaving != menuState )
+            {
+                retval = 1;
+            }
+
+            break;
+
+        case MM_Finish:
+
+            // reset the ui
+            ui_Reset();
+
+            // make sure that if we come back to this menu, it resets properly
+            menuState = MM_Begin;
+
+            // finished
+            retval = 2;
+            break;
+    }
+
+    return retval;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -572,7 +809,7 @@ void mnu_state_data::end_widgets( ui_Widget lst[], size_t count )
 struct Main_data : public mnu_state_data
 {
     oglx_texture_t logo;
-    SDL_Rect bg_rect, logo_rect;
+    SDL_Rect       logo_rect;
 
     enum e_buttons
     {
@@ -587,12 +824,16 @@ struct Main_data : public mnu_state_data
     // Button labels.  Defined here for consistency's sake, rather than leaving them as constants
     MENU_BUTTONS( but_count );
 
-    Main_data() { begin(); }
+    //---- construction/destruction
+    Main_data() { init(); }
+    void init();
 
+    //---- the state implementation
     int run( double deltaTime );
 
-    void begin( int state = MM_Begin );
-    void end();
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 };
 
 const char * Main_data::sz_buttons[Main_data::but_sz_count] =
@@ -604,12 +845,19 @@ const char * Main_data::sz_buttons[Main_data::but_sz_count] =
     ""
 };
 
+void Main_data::init()
+{
+    /* add something here */
+}
+
 void Main_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
 
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
-};
+
+    mnu_state_data::begin( state );
+}
 
 void Main_data::end()
 {
@@ -618,86 +866,44 @@ void Main_data::end()
     end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
 
     oglx_texture_Release( &logo );
-};
+}
 
-////--------------------------------------------------------------------------------------------
-//static Main_data *MainState_ctor( Main_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static Main_data *MainState_dtor( Main_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static Main_data * doMainMenu_begin( Main_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = MainState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static Main_data * doMainMenu_entering( Main_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static Main_data * doMainMenu_running( Main_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static Main_data * doMainMenu_leaving( Main_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static Main_data * doMainMenu_finish( Main_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = MainState_ctor( ps );
-//
-//    return ps;
-//};
+void Main_data::format()
+{
+    float fminw = 1.0f, fminh = 1.0f, fmin = 1.0f;
+
+    mnu_state_data::format();
+
+    // calculate the centered position of the background
+    if ( 0 != background.imgW )
+    {
+        fminw = ( float ) MIN( GFX_WIDTH , background.imgW ) / ( float ) background.imgW;
+    }
+
+    if ( 0 != background.imgH )
+    {
+        fminh = ( float ) MIN( GFX_HEIGHT, background.imgH ) / ( float ) background.imgH;
+    }
+
+    fmin  = MIN( fminw, fminh );
+
+    bg_rect.w = background.imgW * fmin;
+    bg_rect.h = background.imgH * fmin;
+    bg_rect.x = ( GFX_WIDTH  - bg_rect.w ) * 0.5f;
+    bg_rect.y = ( GFX_HEIGHT - bg_rect.h ) * 0.5f;
+
+    // calculate the position of the logo
+    fmin  = MIN( bg_rect.w * 0.5f / logo.imgW, bg_rect.h * 0.5f / logo.imgH );
+
+    logo_rect.x = bg_rect.x;
+    logo_rect.y = bg_rect.y;
+    logo_rect.w = logo.imgW * fmin;
+    logo_rect.h = logo.imgH * fmin;
+}
 
 //--------------------------------------------------------------------------------------------
 int Main_data::run( double deltaTime )
 {
-    float fminw = 1, fminh = 1, fmin = 1;
     int result = 0;
 
     switch ( menuState )
@@ -713,23 +919,7 @@ int Main_data::run( double deltaTime )
                 // load the logo image
                 ego_texture_load_vfs( &logo,       "mp_data/menu/menu_logo", INVALID_KEY );
 
-                // calculate the centered position of the background
-                fminw = ( float ) MIN( GFX_WIDTH , background.imgW ) / ( float ) background.imgW;
-                fminh = ( float ) MIN( GFX_HEIGHT, background.imgH ) / ( float ) background.imgW;
-                fmin  = MIN( fminw, fminh );
-
-                bg_rect.w = background.imgW * fmin;
-                bg_rect.h = background.imgH * fmin;
-                bg_rect.x = ( GFX_WIDTH  - bg_rect.w ) * 0.5f;
-                bg_rect.y = ( GFX_HEIGHT - bg_rect.h ) * 0.5f;
-
-                // calculate the position of the logo
-                fmin  = MIN( bg_rect.w * 0.5f / logo.imgW, bg_rect.h * 0.5f / logo.imgH );
-
-                logo_rect.x = bg_rect.x;
-                logo_rect.y = bg_rect.y;
-                logo_rect.w = logo.imgW * fmin;
-                logo_rect.h = logo.imgH * fmin;
+                format();
 
                 mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
 
@@ -746,9 +936,15 @@ int Main_data::run( double deltaTime )
             {
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
                 if ( mnu_draw_background )
                 {
                     ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
+                }
+
+                if ( mnu_draw_background )
+                {
                     ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
                 }
 
@@ -770,12 +966,19 @@ int Main_data::run( double deltaTime )
 
             // Do normal run
             {
+                // auto-format the menu
+                format();
+
                 // Background
                 GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
                 if ( mnu_draw_background )
                 {
                     ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
+                }
+
+                if ( mnu_draw_background )
+                {
                     ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
                 }
 
@@ -816,11 +1019,17 @@ int Main_data::run( double deltaTime )
             // Do the same stuff as in MM_Entering, but backwards
 
             {
+                format();
+
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
                     ui_drawImage( 0, &background, bg_rect.x,   bg_rect.y,   bg_rect.w,   bg_rect.h, NULL );
+                }
+
+                if ( mnu_draw_background )
+                {
                     ui_drawImage( 0, &logo,       logo_rect.x, logo_rect.y, logo_rect.w, logo_rect.h, NULL );
                 }
 
@@ -872,11 +1081,16 @@ struct SinglePlayer_data : public mnu_state_data
     // button widgets
     MENU_BUTTONS( but_count );
 
-    SinglePlayer_data() { begin(); }
+    //---- construction/destruction
+    SinglePlayer_data() { init(); }
+    void init();
 
+    //---- the state implementation
     int run( double deltaTime );
-    void begin( int state = MM_Begin );
-    void end();
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 };
 
 const char *SinglePlayer_data::sz_buttons[SinglePlayer_data::but_sz_count] =
@@ -887,11 +1101,18 @@ const char *SinglePlayer_data::sz_buttons[SinglePlayer_data::but_sz_count] =
     ""
 };
 
+void SinglePlayer_data::init()
+{
+    /* add something here */
+}
+
 void SinglePlayer_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
 
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    mnu_state_data::begin( state );
 }
 
 void SinglePlayer_data::end()
@@ -901,79 +1122,15 @@ void SinglePlayer_data::end()
     end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
 }
 
-////--------------------------------------------------------------------------------------------
-//static SinglePlayer_data *SinglePlayerState_ctor( SinglePlayer_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayer_data *SinglePlayerState_dtor( SinglePlayer_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayer_data * doSinglePlayerMenu_begin( SinglePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = SinglePlayerState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayer_data * doSinglePlayerMenu_entering( SinglePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayer_data * doSinglePlayerMenu_running( SinglePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayer_data * doSinglePlayerMenu_leaving( SinglePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static SinglePlayer_data * doSinglePlayerMenu_finish( SinglePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = SinglePlayerState_ctor( ps );
-//
-//    return ps;
-//};
+void SinglePlayer_data::format()
+{
+    mnu_state_data::format();
+
+    bg_rect.x = GFX_WIDTH  - background.imgW;
+    bg_rect.y = 0.0f;
+    bg_rect.w = 0.0f;
+    bg_rect.h = 0.0f;
+}
 
 //--------------------------------------------------------------------------------------------
 int SinglePlayer_data::run( double deltaTime )
@@ -1004,10 +1161,12 @@ int SinglePlayer_data::run( double deltaTime )
             {
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
                 // Draw the background image
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // "Copyright" text
@@ -1023,11 +1182,14 @@ int SinglePlayer_data::run( double deltaTime )
             break;
 
         case MM_Running:
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
+
+            format();
 
             // Draw the background image
             if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
+                ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
             }
 
             // "Copyright" text
@@ -1059,9 +1221,12 @@ int SinglePlayer_data::run( double deltaTime )
             {
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
+                // Draw the background image
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // "Copyright" text
@@ -1155,7 +1320,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
 //--------------------------------------------------------------------------------------------
 struct ChooseModule_data : public mnu_state_data
 {
-    int startIndex;
+    int   startIndex;
     Uint8 keycooldown;
 
     int numValidModules;
@@ -1195,11 +1360,16 @@ struct ChooseModule_data : public mnu_state_data
     int    selectedModule_old;
     bool_t selectedModule_update;
 
-    ChooseModule_data() { begin(); }
+    //---- construction/destruction
+    ChooseModule_data() { init(); }
+    void init();
 
+    //---- the state implementation
     int run( double deltaTime );
-    void begin( int state = MM_Begin );
-    void end();
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 
     static bool_t update_filter_label( ui_Widget * lab_ptr, int which );
     static bool_t update_description( ui_Widget * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule );
@@ -1225,23 +1395,41 @@ const char * ChooseModule_data::sz_labels[ChooseModule_data::lab_sz_count] =
     NULL
 };
 
-void ChooseModule_data::begin( int state )
+void ChooseModule_data::init()
 {
-    mnu_state_data::begin( state );
-
-    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
-    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
-
-    keycooldown = 0;
-
+    // blank out the valid modules
     numValidModules = 0;
+    for ( int i = 0; i < MAX_MODULE; i++ )
+    {
+        memset( validModules + i, 0, sizeof( MOD_REF ) );
+    }
+
+    keycooldown           = 0;
+    selectedModule_old    = selectedModule;
+    selectedModule_update = bfalse;
 
     description_lst_ptr = NULL;
     tip_lst_ptr         = NULL;
     beaten_tx_ptr       = NULL;
+}
 
-    selectedModule_old    = -1;
-    selectedModule_update = bfalse;
+void ChooseModule_data::begin( int state )
+{
+    init();
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    begin_labels( w_labels,  SDL_arraysize( w_labels ) );
+
+    // allocate the list for the discription
+    description_lst_ptr = display_list_ctor( description_lst_ptr, MAX_MENU_DISPLAY );
+
+    // allocate the list for the tip
+    tip_lst_ptr = display_list_ctor( tip_lst_ptr, MAX_MENU_DISPLAY );
+
+    // set the "BEATEN" text
+    beaten_tx_ptr = ui_updateText( beaten_tx_ptr, menuFont, 0, 0, "BEATEN" );
+
+    mnu_state_data::begin( state );
 }
 
 void ChooseModule_data::end()
@@ -1263,147 +1451,115 @@ void ChooseModule_data::end()
     tip_lst_ptr = display_list_dtor( tip_lst_ptr, btrue );
 }
 
-////--------------------------------------------------------------------------------------------
-//static ChooseModule_data *ChooseModuleState_ctor( ChooseModule_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static ChooseModule_data *ChooseModuleState_dtor( ChooseModule_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static ChooseModule_data * doChooseModule_begin( ChooseModule_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = ChooseModuleState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ChooseModule_data * doChooseModule_entering( ChooseModule_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ChooseModule_data * doChooseModule_running( ChooseModule_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ChooseModule_data * doChooseModule_leaving( ChooseModule_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ChooseModule_data * doChooseModule_finish( ChooseModule_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = ChooseModuleState_ctor( ps );
-//
-//    return ps;
-//};
+void ChooseModule_data::format()
+{
+    mnu_state_data::format();
+
+    moduleMenuOffsetX = ( GFX_WIDTH  - 640 ) / 2;
+    moduleMenuOffsetX = MAX( 0, moduleMenuOffsetX );
+
+    moduleMenuOffsetY = ( GFX_HEIGHT - 480 ) / 2;
+    moduleMenuOffsetY = MAX( 0, moduleMenuOffsetY );
+
+    // do formatting
+    float x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
+    float y = GFX_HEIGHT - background.imgH;
+
+    bg_rect.x = x;
+    bg_rect.y = y;
+    bg_rect.w = 0.0f;
+    bg_rect.h = 0.0f;
+
+    // set the widget positions
+    ui_Widget::set_button( w_buttons + but_bck, moduleMenuOffsetX + 20, moduleMenuOffsetY + 74, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_fwd, moduleMenuOffsetX + 590, moduleMenuOffsetY + 74, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_exit, moduleMenuOffsetX + 327, moduleMenuOffsetY + 208, 200, 30 );
+    ui_Widget::set_button( w_buttons + but_select, moduleMenuOffsetX + 327, moduleMenuOffsetY + 173, 200, 30 );
+    ui_Widget::set_button( w_buttons + but_filter_fwd, moduleMenuOffsetX + 532, moduleMenuOffsetY + 390, -1, -1 );
+
+    // set the label positions
+    ui_Widget::set_bound( w_labels + lab_filter, moduleMenuOffsetX + 327, moduleMenuOffsetY + 390, 200, 30 );
+    ui_Widget::set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 250 );
+
+    // set the position of the module description "button"
+    ui_Widget::set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
+
+    // turn this button off if there is no selected module
+    w_buttons[but_select].on = selectedModule > -1;
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule )
 {
     int i;
+    char    buffer[1024]  = EMPTY_CSTR;
+    const char * rank_string, * name_string;
+    char  * carat = buffer, * carat_end = buffer + SDL_arraysize( buffer );
 
     if ( NULL == lab_ptr ) return bfalse;
 
-    if ( selectedModule < 0 || ( size_t )selectedModule >= validModules_size || validModules[selectedModule] <= 0 || selectedModule > validModules[selectedModule] )
+    if ( selectedModule < 0 || ( size_t )selectedModule >= validModules_size )
     {
         ui_Widget::set_text( lab_ptr, ui_just_topleft, menuFont, NULL );
+        return bfalse;
     }
-    else
+
+    MOD_REF smod = validModules[selectedModule];
+    if ( smod > mnu_ModList.count )
     {
-        char    buffer[1024]  = EMPTY_CSTR;
-        const char * rank_string, * name_string;
-        char  * carat = buffer, * carat_end = buffer + SDL_arraysize( buffer );
-        MOD_REF imodule = validModules[selectedModule];
+        ui_Widget::set_text( lab_ptr, ui_just_topleft, menuFont, NULL );
+        return bfalse;
+    }
 
-        mod_file_t * pmod = &( mnu_ModList.lst[imodule].base );
+    // set the module pointer
+    mod_file_t * pmod = &( mnu_ModList.lst[smod].base );
 
-        name_string = "Unnamed";
-        if ( CSTR_END != pmod->longname[0] )
+    name_string = "Unnamed";
+    if ( CSTR_END != pmod->longname[0] )
+    {
+        name_string = pmod->longname;
+    }
+    carat += snprintf( carat, carat_end - carat - 1, "%s\n", name_string );
+
+    rank_string = "Unranked";
+    if ( CSTR_END != pmod->rank[0] )
+    {
+        rank_string = pmod->rank;
+    }
+    carat += snprintf( carat, carat_end - carat - 1, "Difficulty: %s\n", rank_string );
+
+    if ( pmod->maxplayers > 1 )
+    {
+        if ( pmod->minplayers == pmod->maxplayers )
         {
-            name_string = pmod->longname;
-        }
-        carat += snprintf( carat, carat_end - carat - 1, "%s\n", name_string );
-
-        rank_string = "Unranked";
-        if ( CSTR_END != pmod->rank[0] )
-        {
-            rank_string = pmod->rank;
-        }
-        carat += snprintf( carat, carat_end - carat - 1, "Difficulty: %s\n", rank_string );
-
-        if ( pmod->maxplayers > 1 )
-        {
-            if ( pmod->minplayers == pmod->maxplayers )
-            {
-                carat += snprintf( carat, carat_end - carat - 1, "%d Players\n", pmod->minplayers );
-            }
-            else
-            {
-                carat += snprintf( carat, carat_end - carat - 1, "%d - %d Players\n", pmod->minplayers, pmod->maxplayers );
-            }
+            carat += snprintf( carat, carat_end - carat - 1, "%d Players\n", pmod->minplayers );
         }
         else
         {
-            if ( 0 != pmod->importamount )
-            {
-                carat += snprintf( carat, carat_end - carat - 1, "Single Player\n" );
-            }
-            else
-            {
-                carat += snprintf( carat, carat_end - carat - 1, "Starter Module\n" );
-            }
+            carat += snprintf( carat, carat_end - carat - 1, "%d - %d Players\n", pmod->minplayers, pmod->maxplayers );
         }
-        carat += snprintf( carat, carat_end - carat - 1, " \n" );
-
-        for ( i = 0; i < SUMMARYLINES; i++ )
-        {
-            carat += snprintf( carat, carat_end - carat - 1, "%s\n", pmod->summary[i] );
-        }
-
-        // Draw a text box
-        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-        ui_Widget::set_text( lab_ptr, ui_just_topleft, menuFont, buffer );
     }
+    else
+    {
+        if ( 0 != pmod->importamount )
+        {
+            carat += snprintf( carat, carat_end - carat - 1, "Single Player\n" );
+        }
+        else
+        {
+            carat += snprintf( carat, carat_end - carat - 1, "Starter Module\n" );
+        }
+    }
+    carat += snprintf( carat, carat_end - carat - 1, " \n" );
+
+    for ( i = 0; i < SUMMARYLINES; i++ )
+    {
+        carat += snprintf( carat, carat_end - carat - 1, "%s\n", pmod->summary[i] );
+    }
+
+    // Draw a text box
+    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    ui_Widget::set_text( lab_ptr, ui_just_topleft, menuFont, buffer );
 
     return btrue;
 }
@@ -1441,34 +1597,12 @@ int ChooseModule_data::run( double deltaTime )
     {
         case MM_Begin:
             {
-
-                if ( !module_list_valid )
-                {
-                    mnu_load_all_module_info();
-                }
-
-                // allocate the list for the discription
-                display_list_ctor( description_lst_ptr, MAX_MENU_DISPLAY );
-
-                // allocate the list for the tip
-                display_list_ctor( tip_lst_ptr, MAX_MENU_DISPLAY );
-
-                // Reload all modules, something might be unlocked
-                mnu_load_all_module_images_vfs();
-
                 // Reset which module we are selecting
                 startIndex            = 0;
                 selectedModule        = -1;
                 selectedModule_old    = -1;
                 selectedModule_update = bfalse;
                 keycooldown           = 0;
-
-                // blank out the valid modules
-                numValidModules = 0;
-                for ( i = 0; i < MAX_MODULE; i++ )
-                {
-                    memset( validModules + i, 0, sizeof( MOD_REF ) );
-                }
 
                 // initialize the buttons
                 for ( i = 0; i < but_count; i++ )
@@ -1484,37 +1618,69 @@ int ChooseModule_data::run( double deltaTime )
                 }
 
                 // Figure out at what offset we want to draw the module menu.
-                moduleMenuOffsetX = ( GFX_WIDTH  - 640 ) / 2;
-                moduleMenuOffsetX = MAX( 0, moduleMenuOffsetX );
-
-                moduleMenuOffsetY = ( GFX_HEIGHT - 480 ) / 2;
-                moduleMenuOffsetY = MAX( 0, moduleMenuOffsetY );
-
-                // set the widget positions
-                ui_Widget::set_button( w_buttons + but_bck, moduleMenuOffsetX + 20, moduleMenuOffsetY + 74, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_fwd, moduleMenuOffsetX + 590, moduleMenuOffsetY + 74, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_exit, moduleMenuOffsetX + 327, moduleMenuOffsetY + 208, 200, 30 );
-                ui_Widget::set_button( w_buttons + but_select, moduleMenuOffsetX + 327, moduleMenuOffsetY + 173, 200, 30 );
-                ui_Widget::set_button( w_buttons + but_filter_fwd, moduleMenuOffsetX + 532, moduleMenuOffsetY + 390, -1, -1 );
-
-                // set the label positions
-                ui_Widget::set_bound( w_labels + lab_filter, moduleMenuOffsetX + 327, moduleMenuOffsetY + 390, 200, 30 );
-                ui_Widget::set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 250 );
+                format();
 
                 // initialize the module description
                 ChooseModule_data::update_description( w_labels + lab_description, validModules, SDL_arraysize( validModules ), selectedModule );
 
                 // initialize the module filter text
                 ChooseModule_data::update_filter_label( w_labels + lab_filter, mnu_moduleFilter );
+            }
 
-                beaten_tx_ptr = ui_updateText( beaten_tx_ptr, menuFont, 0, 0, "BEATEN" );
+            // set the tip text
+            if ( 0 == numValidModules )
+            {
+                tipText = "Sorry, there are no valid games!\n Please press the \"Back\" button.";
+            }
+            else if ( numValidModules <= 3 )
+            {
+                tipText = "Press an icon to select a game.";
+            }
+            else
+            {
+                tipText = "Press an icon to select a game.\nUse the mouse wheel or the \"<-\" and \"->\" buttons to scroll.";
+            }
+
+            // do this here because there is so much processing in the MM_Entering
+            if ( mnu_draw_background )
+            {
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+
+                // do formatting
+                format();
+
+                // Draw the background
+                ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
             }
 
             // let this fall through into MM_Entering
             menuState = MM_Entering;
+            break;
 
         case MM_Entering:
+
+            // since we have to do a lot with loading/reloading the module data
+            // we can't do any animation here
             {
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+
+                // do formatting
+                format();
+
+                // Draw the background
+                if ( mnu_draw_background )
+                {
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
+                }
+
+                // Reload all modules info, something might be unlocked
+                if ( !module_list_valid )
+                {
+                    mnu_load_all_module_info();
+                }
+
+                mnu_load_all_module_images_vfs();
+
                 if ( !module_list_valid )
                 {
                     mnu_load_all_module_info();
@@ -1577,23 +1743,8 @@ int ChooseModule_data::run( double deltaTime )
                     }
                 }
 
-                // set the tip text
-                if ( 0 == numValidModules )
-                {
-                    tipText_set_position( menuFont, "Sorry, there are no valid games!\n Please press the \"Back\" button.", 20 );
-                }
-                else if ( numValidModules <= 3 )
-                {
-                    tipText_set_position( menuFont, "Press an icon to select a game.", 20 );
-                }
-                else
-                {
-                    tipText_set_position( menuFont, "Press an icon to select a game.\nUse the mouse wheel or the \"<-\" and \"->\" buttons to scroll.", 20 );
-                }
-
-                // set the position of the module description "button"
-                ui_Widget::set_button( w_labels + lab_description, moduleMenuOffsetX + 21, moduleMenuOffsetY + 173, 291, 230 );
             }
+
             menuState = MM_Running;
             // fall through for now...
 
@@ -1602,6 +1753,11 @@ int ChooseModule_data::run( double deltaTime )
                 GLXvector4f beat_tint = { 0.5f, 0.25f, 0.25f, 1.0f };
                 GLXvector4f normal_tint = { 1.0f, 1.0f, 1.0f, 1.0f };
 
+                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+
+                // do formatting
+                format();
+
                 if ( !module_list_valid )
                 {
                     mnu_load_all_module_info();
@@ -1609,13 +1765,9 @@ int ChooseModule_data::run( double deltaTime )
                 }
 
                 // Draw the background
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-                x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
-                y = GFX_HEIGHT - background.imgH;
-
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, x, y, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // use the mouse wheel to scan the modules
@@ -1716,14 +1868,11 @@ int ChooseModule_data::run( double deltaTime )
                 ui_Widget::Run( w_labels + lab_description );
 
                 // And draw the next & back buttons
-                if ( selectedModule > -1 )
+                if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_select ) )
                 {
-                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_select ) )
-                    {
-                        // go to the next menu with this module selected
-                        selectedModule = ( validModules[selectedModule] ).get_value();
-                        menuState = MM_Leaving;
-                    }
+                    // go to the next menu with this module selected
+                    selectedModule = ( validModules[selectedModule] ).get_value();
+                    menuState = MM_Leaving;
                 }
 
                 if ( SDLKEYDOWN( SDLK_ESCAPE ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_exit ) )
@@ -1770,6 +1919,14 @@ int ChooseModule_data::run( double deltaTime )
             break;
 
         case MM_Leaving:
+            // do formatting
+            format();
+
+            // Draw the background
+            if ( mnu_draw_background )
+            {
+                ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
+            }
 
             menuState = MM_Finish;
             // fall through for now
@@ -1835,12 +1992,12 @@ struct Player_stats_info
         item_ptr    = NULL;
     }
 
-    static Player_stats_info * ctor( Player_stats_info * ptr );
-    static Player_stats_info * dtor( Player_stats_info * ptr, bool_t owner );
+    static Player_stats_info * ctor_this( Player_stats_info * ptr );
+    static Player_stats_info * dtor_this( Player_stats_info * ptr, bool_t owner );
 };
 
 //--------------------------------------------------------------------------------------------
-Player_stats_info * Player_stats_info::ctor( Player_stats_info * ptr )
+Player_stats_info * Player_stats_info::ctor_this( Player_stats_info * ptr )
 {
     if ( NULL == ptr )
     {
@@ -1858,7 +2015,7 @@ Player_stats_info * Player_stats_info::ctor( Player_stats_info * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-Player_stats_info * Player_stats_info::dtor( Player_stats_info * ptr, bool_t owner )
+Player_stats_info * Player_stats_info::dtor_this( Player_stats_info * ptr, bool_t owner )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -1866,7 +2023,7 @@ Player_stats_info * Player_stats_info::dtor( Player_stats_info * ptr, bool_t own
 
     if ( !owner )
     {
-        ptr = Player_stats_info::ctor( ptr );
+        ptr = Player_stats_info::ctor_this( ptr );
     }
     else
     {
@@ -1880,14 +2037,18 @@ Player_stats_info * Player_stats_info::dtor( Player_stats_info * ptr, bool_t own
 //--------------------------------------------------------------------------------------------
 struct ChoosePlayer_data : public mnu_state_data
 {
-    int    startIndex_old, startIndex;
-    int    last_player_old;
     int    last_player;
     bool_t new_player;
+
+    int    startIndex_old, startIndex;
+    int    last_player_old;
+    int    mnu_selectedPlayerCount_old;
 
     int numVertical, numHorizontal;
     Uint32 BitsInput[4];
     bool_t device_on[4];
+
+    Player_stats_info stats_info;
 
     static const int x0 = 20, y0 = 20, icon_size = 42, text_width = 175, button_repeat = 47;
 
@@ -1902,15 +2063,16 @@ struct ChoosePlayer_data : public mnu_state_data
     // button widgets
     MENU_BUTTONS( but_count );
 
-    int mnu_selectedPlayerCount_old;
+    //---- construction/destruction
+    ChoosePlayer_data() { init(); }
+    void init();
 
-    Player_stats_info stats_info;
-
-    ChoosePlayer_data() { begin(); }
-
+    //---- the state implementation
     int run( double deltaTime );
-    void begin( int state = MM_Begin );
-    void end();
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 
     static Player_stats_info * load_stats( Player_stats_info * ptr, int player, int mode );
     static Player_stats_info * render_stats( Player_stats_info * ptr, int x, int y, int width, int height );
@@ -1928,21 +2090,18 @@ const char * ChoosePlayer_data::sz_buttons[ChoosePlayer_data::but_sz_count] =
     ""
 };
 
-void ChoosePlayer_data::begin( int state )
+void ChoosePlayer_data::init()
 {
-    mnu_state_data::begin( state );
-
-    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    /* add something here */
 
     startIndex_old  = 0;
     startIndex      = 0;
-    last_player_old = -1;
     last_player     = -1;
     new_player      = bfalse;
 
+    // force an update
+    last_player_old = -1;
     mnu_selectedPlayerCount_old = -1;
-
-    Player_stats_info::ctor( &stats_info );
 
     BitsInput[0] = INPUT_BITS_KEYBOARD;
     device_on[0] = keyb.on;
@@ -1955,6 +2114,18 @@ void ChoosePlayer_data::begin( int state )
 
     BitsInput[3] = INPUT_BITS_JOYB;
     device_on[3] = joy[1].on;
+
+}
+
+void ChoosePlayer_data::begin( int state )
+{
+    init();
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    Player_stats_info::ctor_this( &stats_info );
+
+    mnu_state_data::begin( state );
 };
 
 void ChoosePlayer_data::end()
@@ -1966,82 +2137,57 @@ void ChoosePlayer_data::end()
     // unload the player(s)
     ChoosePlayer_data::load_stats( &stats_info, -1, 1 );
 
-    Player_stats_info::dtor( &stats_info, bfalse );
+    Player_stats_info::dtor_this( &stats_info, bfalse );
 }
 
-////--------------------------------------------------------------------------------------------
-//static ChoosePlayer_data *ChoosePlayerState_ctor( ChoosePlayer_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static ChoosePlayer_data *ChoosePlayerState_dtor( ChoosePlayer_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static ChoosePlayer_data * ChoosePlayer_data::begin( ChoosePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = ChoosePlayerState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ChoosePlayer_data * ChoosePlayer_data::entering( ChoosePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ChoosePlayer_data * ChoosePlayer_data::running( ChoosePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ChoosePlayer_data * ChoosePlayer_data::leaving( ChoosePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ChoosePlayer_data * ChoosePlayer_data::finish( ChoosePlayer_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = ChoosePlayerState_ctor( ps );
-//
-//    return ps;
-//};
+void ChoosePlayer_data::format()
+{
+    int i, j;
+    int x, y;
+
+    mnu_state_data::format();
+
+    // how many players can we pack into the available screen area?
+    numVertical   = ( buttonTop - y0 ) / button_repeat - 1;
+    numHorizontal = 1;
+
+    x = x0;
+    y = y0;
+    for ( i = 0; i < numVertical; i++ )
+    {
+        int m = i * 5;
+        int player = i + startIndex;
+
+        if ( player >= loadplayer_count ) continue;
+
+        ui_Widget::set_button( mnu_widgetList + m, x, y, text_width, icon_size );
+        ui_Widget::LatchMask_Add( mnu_widgetList + m, UI_LATCH_CLICKED );
+
+        for ( j = 0, m++; j < 4; j++, m++ )
+        {
+            int k = ICON_KEYB + j;
+            oglx_texture_t * img = TxTexture_get_ptr(( TX_REF )k );
+
+            ui_Widget::set_button( mnu_widgetList + m, x + text_width + j*icon_size, y, icon_size, icon_size );
+            ui_Widget::set_img( mnu_widgetList + m, ui_just_centered, img );
+            ui_Widget::LatchMask_Add( mnu_widgetList + m, UI_LATCH_CLICKED );
+        };
+
+        y += button_repeat;
+    };
+
+    x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
+    y = GFX_HEIGHT - background.imgH;
+
+    bg_rect.x = x;
+    bg_rect.y = y;
+    bg_rect.w = 0;
+    bg_rect.h = 0;
+
+    // turn the button off if there are no players
+    w_buttons[but_select].on = mnu_selectedPlayerCount > 0;
+
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -2049,7 +2195,7 @@ Player_stats_info * ChoosePlayer_data::load_stats( Player_stats_info * ptr, int 
 {
     if ( NULL == ptr )
     {
-        ptr = Player_stats_info::ctor( ptr );
+        ptr = Player_stats_info::ctor_this( ptr );
     }
 
     if ( NULL == ptr ) return ptr;
@@ -2095,7 +2241,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
 
     if ( NULL == ptr )
     {
-        ptr = Player_stats_info::ctor( ptr );
+        ptr = Player_stats_info::ctor_this( ptr );
     }
 
     if ( NULL == ptr ) return ptr;
@@ -2374,12 +2520,12 @@ int ChoosePlayer_data::run( double deltaTime )
     {
         case MM_Begin:
             {
+                // force an update
                 last_player_old = -1;
                 last_player     = -1;
 
                 for ( cnt = 0; cnt < WIDGET_MAX; cnt++ )
                 {
-                    memset( mnu_widgetList + cnt, 0, sizeof( ui_Widget ) );
                     ui_Widget::set_id( mnu_widgetList + cnt, 1000 + cnt );
                 }
 
@@ -2390,11 +2536,13 @@ int ChoosePlayer_data::run( double deltaTime )
 
                 TxTexture_free_one(( TX_REF )TX_BARS );
 
-                startIndex_old              = 0;
+                startIndex_old              = -1;
                 startIndex                  = 0;
-                mnu_selectedPlayerCount_old = 0;
+                mnu_selectedPlayerCount_old = -1;
                 mnu_selectedPlayerCount     = 0;
                 mnu_selectedPlayer[0]       = 0;
+
+                ego_texture_load_vfs( &background, "mp_data/menu/menu_sleepy", TRANSCOLOR );
 
                 TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY );
 
@@ -2406,8 +2554,6 @@ int ChoosePlayer_data::run( double deltaTime )
 
                 TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY );
 
-                ego_texture_load_vfs( &background, "mp_data/menu/menu_sleepy", TRANSCOLOR );
-
                 TxTexture_load_one_vfs( "mp_data/bars", ( TX_REF )TX_BARS, INVALID_KEY );
 
                 // load information for all the players that could be imported
@@ -2418,44 +2564,18 @@ int ChoosePlayer_data::run( double deltaTime )
                 sz_buttons[but_select] = "N/A";
                 mnu_SlidyButtons::init( &but_state, 0.0f, but_select, sz_buttons, w_buttons );
 
-                // how many players can we pack into the available screen area?
-                numVertical   = ( buttonTop - y0 ) / button_repeat - 1;
-                numHorizontal = 1;
-
-                x = x0;
-                y = y0;
-                for ( i = 0; i < numVertical; i++ )
-                {
-                    int m = i * 5;
-                    int player = i + startIndex;
-
-                    if ( player >= loadplayer_count ) continue;
-
-                    ui_Widget::set_button( mnu_widgetList + m, x, y, text_width, icon_size );
-                    ui_Widget::LatchMask_Add( mnu_widgetList + m, UI_LATCH_CLICKED );
-
-                    for ( j = 0, m++; j < 4; j++, m++ )
-                    {
-                        int k = ICON_KEYB + j;
-                        oglx_texture_t * img = TxTexture_get_ptr(( TX_REF )k );
-
-                        ui_Widget::set_button( mnu_widgetList + m, x + text_width + j*icon_size, y, icon_size, icon_size );
-                        ui_Widget::set_img( mnu_widgetList + m, ui_just_centered, img );
-                        ui_Widget::LatchMask_Add( mnu_widgetList + m, UI_LATCH_CLICKED );
-                    };
-
-                    y += button_repeat;
-                };
+                // redo the auto-format for update_players
+                format();
 
                 ChoosePlayer_data::update_players( numVertical, startIndex, mnu_widgetList, SDL_arraysize( mnu_widgetList ) );
 
                 if ( loadplayer_count < 10 )
                 {
-                    tipText_set_position( menuFont, "Choose an input device to select your player(s)", 20 );
+                    tipText = "Choose an input device to select your player(s)";
                 }
                 else
                 {
-                    tipText_set_position( menuFont, "Choose an input device to select your player(s)\nUse the mouse wheel to scroll.", 20 );
+                    tipText = "Choose an input device to select your player(s)\nUse the mouse wheel to scroll.";
                 }
             }
 
@@ -2464,15 +2584,14 @@ int ChoosePlayer_data::run( double deltaTime )
 
         case MM_Entering:
             {
-                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
+                // auto-format the menu
+                format();
 
-                // Draw the background
-                x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
-                y = GFX_HEIGHT - background.imgH;
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, x, y, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 mnu_SlidyButtons::draw_all( &but_state );
@@ -2488,13 +2607,15 @@ int ChoosePlayer_data::run( double deltaTime )
 
         case MM_Running:
             {
-                // Draw the background
-                x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
-                y = GFX_HEIGHT - background.imgH;
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
+                // auto-format the menu
+                format();
+
+                // Draw the background
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, x, y, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // Update the select button, if necessary
@@ -2559,15 +2680,6 @@ int ChoosePlayer_data::run( double deltaTime )
 
                     if ( BUTTON_DOWN == ui_Widget::Run( mnu_widgetList + m ) )
                     {
-                        //if ( HAS_SOME_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) && !mnu_Selected_check_loadplayer( player ) )
-                        //{
-                        //    // button has become clicked
-                        //    last_player_old = last_player;
-                        //    last_player = player;
-                        //    new_player  = btrue;
-                        //}
-                        //else
-
                         // remove a selected player by clicking on its button
                         if ( HAS_NO_BITS( mnu_widgetList[m].latch_state, UI_LATCH_CLICKED ) && mnu_Selected_check_loadplayer( player ) )
                         {
@@ -2667,13 +2779,13 @@ int ChoosePlayer_data::run( double deltaTime )
                 // Buttons for going ahead
 
                 // Continue
-                if ( mnu_selectedPlayerCount != 0 )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_select ) )
                 {
-                    if ( SDLKEYDOWN( SDLK_RETURN ) || BUTTON_UP == ui_Widget::Run( w_buttons + but_select ) )
-                    {
-                        menuState = MM_Leaving;
-                        mnu_SlidyButtons::init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
-                    }
+                    menuState = MM_Leaving;
+                }
+                else if ( SDLKEYDOWN( SDLK_RETURN ) && mnu_selectedPlayerCount > 0 )
+                {
+                    menuState = MM_Leaving;
                 }
 
                 // Back
@@ -2681,7 +2793,6 @@ int ChoosePlayer_data::run( double deltaTime )
                 {
                     mnu_selectedPlayerCount = 0;
                     menuState = MM_Leaving;
-                    mnu_SlidyButtons::init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
                 }
 
                 // has the player been updated?
@@ -2706,7 +2817,6 @@ int ChoosePlayer_data::run( double deltaTime )
 
                         ChoosePlayer_data::render_stats( &stats_info, GFX_WIDTH - 400, 10, 350, GFX_HEIGHT - 60 );
                     }
-
                 }
 
                 //// show the stats
@@ -2730,13 +2840,15 @@ int ChoosePlayer_data::run( double deltaTime )
                 //}
 
                 // draw the stats
-                if ( NULL != stats_info.item_ptr )
-                {
-                    display_item_draw( stats_info.item_ptr );
-                }
+                display_item_draw( stats_info.item_ptr );
 
                 // tool-tip text
                 display_list_draw( tipText_tx );
+
+                if ( MM_Leaving == menuState )
+                {
+                    mnu_SlidyButtons::init( &but_state, 0.0f, but_back, sz_buttons, w_buttons );
+                }
             }
             break;
 
@@ -2744,15 +2856,14 @@ int ChoosePlayer_data::run( double deltaTime )
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
+                // auto-format the menu
+                format();
 
-                // Draw the background
-                x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
-                y = GFX_HEIGHT - background.imgH;
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, x, y, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // Buttons
@@ -2848,11 +2959,16 @@ struct Options_data : public mnu_state_data
     // button widgets
     MENU_BUTTONS( but_count );
 
-    Options_data() { begin(); }
+    //---- construction/destruction
+    Options_data() { init(); }
+    void init();
 
+    //---- the state implementation
     int  run( double deltaTime );
-    void begin( int state = MM_Begin );
-    void end();
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 };
 
 const char *Options_data::sz_buttons[Options_data::but_sz_count] =
@@ -2865,11 +2981,18 @@ const char *Options_data::sz_buttons[Options_data::but_sz_count] =
     ""
 };
 
+void Options_data::init()
+{
+    /* add something here */
+}
+
 void Options_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
 
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    mnu_state_data::begin( state );
 }
 
 void Options_data::end()
@@ -2879,79 +3002,15 @@ void Options_data::end()
     end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
 }
 
-////--------------------------------------------------------------------------------------------
-//static Options_data *OptionsState_ctor( Options_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static Options_data *OptionsState_dtor( Options_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static Options_data * doOptions_begin( Options_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = OptionsState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static Options_data * doOptions_entering( Options_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static Options_data * doOptions_running( Options_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static Options_data * doOptions_leaving( Options_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static Options_data * doOptions_finish( Options_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = OptionsState_ctor( ps );
-//
-//    return ps;
-//};
+void Options_data::format()
+{
+    mnu_state_data::format();
+
+    bg_rect.x = GFX_WIDTH  - background.imgW;
+    bg_rect.y = 0;
+    bg_rect.w = 0;
+    bg_rect.h = 0;
+}
 
 //--------------------------------------------------------------------------------------------
 int Options_data::run( double deltaTime )
@@ -2967,7 +3026,7 @@ int Options_data::run( double deltaTime )
                 // set up menu variables
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_gnome", TRANSCOLOR );
 
-                tipText_set_position( menuFont, "Change your audio, input and video\nsettings here.", 20 );
+                tipText = "Change your audio, input and video\nsettings here.";
 
                 mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
             }
@@ -2981,10 +3040,12 @@ int Options_data::run( double deltaTime )
             {
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
                 // Draw the background
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 mnu_SlidyButtons::draw_all( &but_state );
@@ -3003,9 +3064,11 @@ int Options_data::run( double deltaTime )
             // Background
             GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
+            format();
+
             if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
             }
 
             // "Options" text
@@ -3056,9 +3119,11 @@ int Options_data::run( double deltaTime )
             {
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // Buttons
@@ -3146,9 +3211,16 @@ struct OptionsInput_data : public mnu_state_data
 
     MENU_LABELS( lab_count );
 
-    void begin( int state = MM_Begin );
-    void end();
+    //---- construction/destruction
+    OptionsInput_data() { init(); }
+    void init();
+
+    //---- the state implementation
     int run( double deltaTime );
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 
     static bool_t update_one_button( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which );
     static bool_t update_all_buttons( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput );
@@ -3200,15 +3272,20 @@ const char * OptionsInput_data::sz_labels[OptionsInput_data::lab_sz_count] =
     ""
 };
 
-void OptionsInput_data::begin( int state )
+void OptionsInput_data::init()
 {
-    mnu_state_data::begin( state );
-
-    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
-    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
-
     waitingforinput = -1;
     player = 0;
+}
+
+void OptionsInput_data::begin( int state )
+{
+    init();
+
+    begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+    begin_labels( w_labels,  SDL_arraysize( w_labels ) );
+
+    mnu_state_data::begin( state );
 }
 
 void OptionsInput_data::end()
@@ -3219,79 +3296,63 @@ void OptionsInput_data::end()
     end_widgets( w_labels,  SDL_arraysize( w_labels ) );
 }
 
-////--------------------------------------------------------------------------------------------
-//static OptionsInput_data *OptionsInputState_ctor( OptionsInput_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsInput_data *OptionsInputState_dtor( OptionsInput_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsInput_data * OptionsInput_data::begin( OptionsInput_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = OptionsInputState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsInput_data * OptionsInput_data::entering( OptionsInput_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsInput_data * OptionsInput_data::running( OptionsInput_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsInput_data * OptionsInput_data::leaving( OptionsInput_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsInput_data * OptionsInput_data::finish( OptionsInput_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = OptionsInputState_ctor( ps );
-//
-//    return ps;
-//};
+void OptionsInput_data::format()
+{
+    mnu_state_data::format();
+
+    // set the positions for the active buttons
+    ui_Widget::set_bound( w_labels  + lab_luse,   buttonLeft + 000, GFX_HEIGHT - 490, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_luse,   buttonLeft + 150, GFX_HEIGHT - 490, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_lget,   buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_lget,   buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_lpack,  buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_lpack,  buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_ruse,   buttonLeft + 300, GFX_HEIGHT - 490, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_ruse,   buttonLeft + 450, GFX_HEIGHT - 490, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_rget,   buttonLeft + 300, GFX_HEIGHT - 455, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_rget,   buttonLeft + 450, GFX_HEIGHT - 455, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_rpack,  buttonLeft + 300, GFX_HEIGHT - 420, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_rpack,  buttonLeft + 450, GFX_HEIGHT - 420, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_jump,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_jump,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_up,     buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_up,     buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_down,   buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_down,   buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_left,   buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_left,   buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_right,  buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_right,  buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_cam,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_cam,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_cin,    buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_cin,    buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_cout,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_cout,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_cleft,  buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_cleft,  buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_cright, buttonLeft + 300, GFX_HEIGHT - 175, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_cright, buttonLeft + 450, GFX_HEIGHT - 175, 140, 30 );
+
+    // set the player button position
+    ui_Widget::set_button( w_buttons + but_player, buttonLeft + 300, GFX_HEIGHT -  90, 140, 50 );
+
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t OptionsInput_data::update_one_button( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
@@ -3546,7 +3607,7 @@ int OptionsInput_data::run( double deltaTime )
                 // set up the "slidy button"
                 mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
-                tipText_set_position( menuFont, "Change input settings here.", 20 );
+                tipText = "Change input settings here.";
 
                 // Load the global icons (keyboard, mouse, etc.)
                 load_all_global_icons();
@@ -3559,58 +3620,6 @@ int OptionsInput_data::run( double deltaTime )
             // do buttons sliding in animation, and background fading in
             // background
             {
-                // set the positions for the active buttons
-                ui_Widget::set_bound( w_labels  + lab_luse,   buttonLeft + 000, GFX_HEIGHT - 490, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_luse,   buttonLeft + 150, GFX_HEIGHT - 490, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_lget,   buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_lget,   buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_lpack,  buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_lpack,  buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_ruse,   buttonLeft + 300, GFX_HEIGHT - 490, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_ruse,   buttonLeft + 450, GFX_HEIGHT - 490, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_rget,   buttonLeft + 300, GFX_HEIGHT - 455, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_rget,   buttonLeft + 450, GFX_HEIGHT - 455, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_rpack,  buttonLeft + 300, GFX_HEIGHT - 420, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_rpack,  buttonLeft + 450, GFX_HEIGHT - 420, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_jump,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_jump,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_up,     buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_up,     buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_down,   buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_down,   buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_left,   buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_left,   buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_right,  buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_right,  buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_cam,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_cam,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_cin,    buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_cin,    buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_cout,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_cout,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_cleft,  buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_cleft,  buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_cright, buttonLeft + 300, GFX_HEIGHT - 175, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_cright, buttonLeft + 450, GFX_HEIGHT - 175, 140, 30 );
-
-                // set the player button position
-                ui_Widget::set_button( w_buttons + but_player, buttonLeft + 300, GFX_HEIGHT -  90, 140, 50 );
-
                 // set images for widgets
                 OptionsInput_data::update_player( w_buttons + but_player, player );
 
@@ -3988,9 +3997,16 @@ struct OptionsGame_data : public mnu_state_data
 
     MENU_LABELS( lab_count );
 
-    void begin( int state = MM_Begin );
-    void end();
+    //---- construction/destruction
+    OptionsGame_data() { init(); }
+    void init();
+
+    //---- the state implementation
     int run( double deltaTime );
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 
     static bool_t update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty );
     static bool_t update_message_count( ui_Widget * lab_ptr, int message_count );
@@ -4024,14 +4040,20 @@ const char *OptionsGame_data::sz_labels[OptionsGame_data::lab_sz_count] =
     ""
 };
 
+void OptionsGame_data::init()
+{
+    // force an update
+    difficulty_old = -1;
+}
+
 void OptionsGame_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
 
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
-    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
+    begin_labels( w_labels,  SDL_arraysize( w_labels ) );
 
-    difficulty_old = 0;
+    mnu_state_data::begin( state );
 }
 
 void OptionsGame_data::end()
@@ -4042,79 +4064,32 @@ void OptionsGame_data::end()
     end_widgets( w_labels,  SDL_arraysize( w_labels ) );
 }
 
-////--------------------------------------------------------------------------------------------
-//static OptionsGame_data *OptionsGameState_ctor( OptionsGame_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsGame_data *OptionsGameState_dtor( OptionsGame_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsGame_data * OptionsGame_data::begin( OptionsGame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = OptionsGameState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsGame_data * OptionsGame_data::entering( OptionsGame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsGame_data * OptionsGame_data::running( OptionsGame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsGame_data * OptionsGame_data::leaving( OptionsGame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsGame_data * OptionsGame_data::finish( OptionsGame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = OptionsGameState_ctor( ps );
-//
-//    return ps;
-//};
+void OptionsGame_data::format()
+{
+    mnu_state_data::format();
+
+    bg_rect.x = ( GFX_WIDTH  / 2 ) + ( background.imgW / 2 );
+    bg_rect.y = GFX_HEIGHT - background.imgH;
+    bg_rect.w = 0;
+    bg_rect.h = 0;
+
+    // auto-format the buttons and labels
+    for ( int i = but_difficulty; i <= but_feedback; i++ )
+    {
+        int j = GFX_HEIGHT - ( but_feedback - but_difficulty + 5 ) * 35 + i * 35;
+
+        ui_Widget::set_button( w_buttons + i, buttonLeft + 515, j, 100, 30 );
+        ui_Widget::set_bound( w_labels  + i, buttonLeft + 350, j, -1, -1 );
+    }
+
+    // custom format buttons and labels
+    ui_Widget::set_bound( w_labels + lab_diff_desc,  buttonLeft + 150, 50, -1, -1 );
+    ui_Widget::set_bound( w_labels + lab_difficulty, buttonLeft,       50, -1, -1 );
+
+    // turn these buttons off if we are in a module
+    w_buttons[but_difficulty].on = !PMod->active;
+    w_labels[lab_difficulty].on  = !PMod->active;
+};
 
 //--------------------------------------------------------------------------------------------
 bool_t OptionsGame_data::update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty )
@@ -4271,7 +4246,6 @@ int OptionsGame_data::run( double deltaTime )
 
     int cnt;
     int  result = 0;
-    int i;
 
     switch ( menuState )
     {
@@ -4295,27 +4269,15 @@ int OptionsGame_data::run( double deltaTime )
 
                 difficulty_old = cfg.difficulty;
 
-                // auto-format the tip text
-                tipText_set_position( menuFont, "Change game settings here.", 20 );
-
                 // auto-format the slidy buttons
                 mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
 
                 // set some special text
                 OptionsGame_data::update_difficulty( w_buttons + but_difficulty, w_labels + lab_diff_desc, cfg.difficulty );
 
-                // auto-format the buttons and labels
-                for ( i = but_difficulty; i <= but_feedback; i++ )
-                {
-                    int j = GFX_HEIGHT - ( but_feedback - but_difficulty + 5 ) * 35 + i * 35;
+                // auto-format the tip text
+                tipText = "Change game settings here.";
 
-                    ui_Widget::set_button( w_buttons + i, buttonLeft + 515, j, 100, 30 );
-                    ui_Widget::set_bound( w_labels  + i, buttonLeft + 350, j, -1, -1 );
-                }
-
-                // custom format buttons and labels
-                ui_Widget::set_bound( w_labels + lab_diff_desc,  buttonLeft + 150, 50, -1, -1 );
-                ui_Widget::set_bound( w_labels + lab_difficulty, buttonLeft,       50, -1, -1 );
             }
 
             // let this fall through into MM_Entering
@@ -4327,10 +4289,12 @@ int OptionsGame_data::run( double deltaTime )
             {
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
                 // Draw the background
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, ( GFX_WIDTH  / 2 ) + ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 OptionsGame_data::update_message_count( w_buttons + but_msg_count, cfg.message_count_req );
@@ -4350,16 +4314,18 @@ int OptionsGame_data::run( double deltaTime )
                 // Background
                 GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
+                format();
+
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, ( GFX_WIDTH / 2 ) - ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // Module difficulty
                 ui_Widget::Run( w_labels + lab_difficulty );
                 ui_Widget::Run( w_labels + lab_diff_desc );
                 ui_Widget::Run( w_labels  + lab_difficulty );
-                if ( !PMod->active && BUTTON_UP == ui_Widget::Run( w_buttons + but_difficulty ) )
+                if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_difficulty ) )
                 {
                     cfg.difficulty = CLIP( cfg.difficulty, 0, GAME_HARD );
 
@@ -4482,9 +4448,11 @@ int OptionsGame_data::run( double deltaTime )
             {
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, ( GFX_WIDTH  / 2 ) + ( background.imgW / 2 ), GFX_HEIGHT - background.imgH, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
             }
 
@@ -4550,9 +4518,16 @@ struct OptionsAudio_data : public mnu_state_data
 
     MENU_LABELS( lab_count );
 
-    void begin( int state = MM_Begin );
-    void end();
+    //---- construction/destruction
+    OptionsAudio_data() { init(); }
+    void init();
+
+    //---- the state implementation
     int run( double deltaTime );
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 
     static bool_t update_sound_on( ui_Widget * but_ptr, bool_t val );
     static bool_t update_sound_volume( ui_Widget * but_ptr, Uint8 val );
@@ -4593,12 +4568,19 @@ const char *OptionsAudio_data::sz_labels[OptionsAudio_data::lab_sz_count] =
     ""
 };
 
+void OptionsAudio_data::init()
+{
+    /* add something here */
+}
+
 void OptionsAudio_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
 
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
-    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
+    begin_labels( w_labels,  SDL_arraysize( w_labels ) );
+
+    mnu_state_data::begin( state );
 }
 
 void OptionsAudio_data::end()
@@ -4609,79 +4591,39 @@ void OptionsAudio_data::end()
     end_widgets( w_labels,  SDL_arraysize( w_labels ) );
 }
 
-////--------------------------------------------------------------------------------------------
-//static OptionsAudio_data *OptionsAudioState_ctor( OptionsAudio_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsAudio_data *OptionsAudioState_dtor( OptionsAudio_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsAudio_data * OptionsAudio_data::begin( OptionsAudio_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = OptionsAudioState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsAudio_data * OptionsAudio_data::entering( OptionsAudio_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsAudio_data * OptionsAudio_data::running( OptionsAudio_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsAudio_data * OptionsAudio_data::leaving( OptionsAudio_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsAudio_data * OptionsAudio_data::finish( OptionsAudio_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = OptionsAudioState_ctor( ps );
-//
-//    return ps;
-//};
+void OptionsAudio_data::format()
+{
+    bg_rect.x = GFX_WIDTH  - background.imgW;
+    bg_rect.y = 0;
+    bg_rect.w = 0;
+    bg_rect.h = 0;
+
+    // Format the buttons
+    ui_Widget::set_bound( w_labels  + lab_on,        buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_on,        buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_vol,       buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_vol,       buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_mus_on,    buttonLeft + 000, GFX_HEIGHT - 350, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_mus_on,    buttonLeft + 150, GFX_HEIGHT - 350, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_mus_vol,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_mus_vol,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_footsteps, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_footsteps, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_channels,  buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_channels,  buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_buffer,    buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_buffer,    buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_quality,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_quality,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
+
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t OptionsAudio_data::update_sound_on( ui_Widget * but_ptr, bool_t val )
@@ -4810,34 +4752,9 @@ int OptionsAudio_data::run( double deltaTime )
                 // set up menu variables
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_sound", TRANSCOLOR );
 
-                tipText_set_position( menuFont, "Change audio settings here.", 20 );
+                tipText = "Change audio settings here.";
 
                 mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
-
-                // Format the buttons
-                ui_Widget::set_bound( w_labels  + lab_on,        buttonLeft + 000, GFX_HEIGHT - 455, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_on,        buttonLeft + 150, GFX_HEIGHT - 455, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_vol,       buttonLeft + 000, GFX_HEIGHT - 420, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_vol,       buttonLeft + 150, GFX_HEIGHT - 420, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_mus_on,    buttonLeft + 000, GFX_HEIGHT - 350, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_mus_on,    buttonLeft + 150, GFX_HEIGHT - 350, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_mus_vol,   buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_mus_vol,   buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_footsteps, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_footsteps, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_channels,  buttonLeft + 000, GFX_HEIGHT - 210, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_channels,  buttonLeft + 150, GFX_HEIGHT - 210, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_buffer,    buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_buffer,    buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_quality,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_quality,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
             }
 
             // let this fall through into MM_Entering
@@ -4877,10 +4794,12 @@ int OptionsAudio_data::run( double deltaTime )
                 // Background
                 GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
+                format();
+
                 // Draw the background
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, GFX_WIDTH  - background.imgW, 0, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // Buttons
@@ -5022,11 +4941,13 @@ int OptionsAudio_data::run( double deltaTime )
             // Do buttons sliding out and background fading
             // Do the same stuff as in MM_Entering, but backwards
             {
-                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
+
+                format();
 
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
             }
 
@@ -5106,9 +5027,16 @@ struct OptionsVideo_data : public mnu_state_data
     // button widgets
     MENU_LABELS( lab_count );
 
-    void begin( int state = MM_Begin );
-    void end();
+    //---- construction/destruction
+    OptionsVideo_data() { init(); }
+    void init();
+
+    //---- the state implementation
     int run( double deltaTime );
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
+    virtual void format();
 
     bool_t coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio );
     int    fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size );
@@ -5149,14 +5077,19 @@ const char *OptionsVideo_data::sz_labels[OptionsVideo_data::lab_sz_count] =
     ""
 };
 
+void OptionsVideo_data::init()
+{
+    sz_screen_size[0] = CSTR_END;
+}
+
 void OptionsVideo_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
 
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
-    begin_widgets( w_labels,  SDL_arraysize( w_labels ) );
+    begin_labels( w_labels,  SDL_arraysize( w_labels ) );
 
-    sz_screen_size[0] = CSTR_END;
+    mnu_state_data::begin( state );
 }
 
 void OptionsVideo_data::end()
@@ -5167,79 +5100,54 @@ void OptionsVideo_data::end()
     end_widgets( w_labels,  SDL_arraysize( w_labels ) );
 }
 
-////--------------------------------------------------------------------------------------------
-//static OptionsVideo_data *OptionsVideoState_ctor( OptionsVideo_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsVideo_data *OptionsVideoState_dtor( OptionsVideo_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsVideo_data * OptionsVideo_data::begin( OptionsVideo_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = OptionsVideoState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsVideo_data * OptionsVideo_data::entering( OptionsVideo_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsVideo_data * OptionsVideo_data::running( OptionsVideo_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsVideo_data * OptionsVideo_data::leaving( OptionsVideo_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static OptionsVideo_data * OptionsVideo_data::finish( OptionsVideo_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = OptionsVideoState_ctor( ps );
-//
-//    return ps;
-//};
+void OptionsVideo_data::format()
+{
+    mnu_state_data::format();
+
+    bg_rect.x = GFX_WIDTH  - background.imgW;
+    bg_rect.y = 0;
+    bg_rect.w = 0;
+    bg_rect.h = 0;
+
+    ui_Widget::set_bound( w_labels  + lab_antialiasing, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_antialiasing, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_dither,       buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_dither,       buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_fullscreen,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_fullscreen,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_reflections,  buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_reflections,  buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_filtering,    buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_filtering,    buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_shadow,       buttonLeft + 000, GFX_HEIGHT - 385, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_shadow,       buttonLeft + 150, GFX_HEIGHT - 385, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_zbuffer,      buttonLeft + 300, GFX_HEIGHT - 350, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_zbuffer,      buttonLeft + 450, GFX_HEIGHT - 350, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_maxlights,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_maxlights,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_3dfx,         buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_3dfx,         buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_multiwater,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_multiwater,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_maxparticles, buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_maxparticles, buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_widescreen,   buttonLeft + 300, GFX_HEIGHT - 105, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_widescreen,   buttonLeft + 450, GFX_HEIGHT - 105, 30, 30 );
+
+    ui_Widget::set_bound( w_labels  + lab_screensize,   buttonLeft + 300, GFX_HEIGHT - 140, -1, 30 );
+    ui_Widget::set_button( w_buttons + but_screensize,   buttonLeft + 450, GFX_HEIGHT - 140, 140, 30 );
+}
 
 //--------------------------------------------------------------------------------------------
 bool_t OptionsVideo_data::coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio )
@@ -5471,7 +5379,7 @@ bool_t OptionsVideo_data::update_fullscreen( ui_Widget * but_ptr, bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
-    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "True" : "False" );;
+    return ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, val ? "True" : "False" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5655,46 +5563,7 @@ int OptionsVideo_data::run( double deltaTime )
                 // set up menu variables
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_video", TRANSCOLOR );
 
-                tipText_set_position( menuFont, "Change video settings here.", 20 );
-
-                ui_Widget::set_bound( w_labels  + lab_antialiasing, buttonLeft + 000, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_antialiasing, buttonLeft + 150, GFX_HEIGHT - 245, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_dither,       buttonLeft + 000, GFX_HEIGHT - 175, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_dither,       buttonLeft + 150, GFX_HEIGHT - 175, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_fullscreen,   buttonLeft + 000, GFX_HEIGHT - 140, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_fullscreen,   buttonLeft + 150, GFX_HEIGHT - 140, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_reflections,  buttonLeft + 000, GFX_HEIGHT - 280, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_reflections,  buttonLeft + 150, GFX_HEIGHT - 280, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_filtering,    buttonLeft + 000, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_filtering,    buttonLeft + 150, GFX_HEIGHT - 315, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_shadow,       buttonLeft + 000, GFX_HEIGHT - 385, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_shadow,       buttonLeft + 150, GFX_HEIGHT - 385, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_zbuffer,      buttonLeft + 300, GFX_HEIGHT - 350, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_zbuffer,      buttonLeft + 450, GFX_HEIGHT - 350, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_maxlights,    buttonLeft + 300, GFX_HEIGHT - 315, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_maxlights,    buttonLeft + 450, GFX_HEIGHT - 315, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_3dfx,         buttonLeft + 300, GFX_HEIGHT - 280, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_3dfx,         buttonLeft + 450, GFX_HEIGHT - 280, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_multiwater,   buttonLeft + 300, GFX_HEIGHT - 245, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_multiwater,   buttonLeft + 450, GFX_HEIGHT - 245, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_maxparticles, buttonLeft + 300, GFX_HEIGHT - 210, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_maxparticles, buttonLeft + 450, GFX_HEIGHT - 210, 140, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_widescreen,   buttonLeft + 300, GFX_HEIGHT - 105, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_widescreen,   buttonLeft + 450, GFX_HEIGHT - 105, 30, 30 );
-
-                ui_Widget::set_bound( w_labels  + lab_screensize,   buttonLeft + 300, GFX_HEIGHT - 140, -1, 30 );
-                ui_Widget::set_button( w_buttons + but_screensize,   buttonLeft + 450, GFX_HEIGHT - 140, 140, 30 );
+                tipText = "Change video settings here. (Requires restart)";
 
                 mnu_SlidyButtons::init( &but_state, 0.0f, but_save, sz_buttons, w_buttons );
             }
@@ -5708,10 +5577,12 @@ int OptionsVideo_data::run( double deltaTime )
             {
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
                 // Draw the background
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
 
                 // make the but_maxparticles inactive if the module is running
@@ -5784,9 +5655,11 @@ int OptionsVideo_data::run( double deltaTime )
             // Background
             GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
+            format();
+
             if ( mnu_draw_background )
             {
-                ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
             }
 
             // Antialiasing Button
@@ -6087,9 +5960,11 @@ int OptionsVideo_data::run( double deltaTime )
                 // Do the same stuff as in MM_Entering, but backwards
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - but_state.lerp );
 
+                format();
+
                 if ( mnu_draw_background )
                 {
-                    ui_drawImage( 0, &background, ( GFX_WIDTH  - background.imgW ), 0, 0, 0, NULL );
+                    ui_drawImage( 0, &background, bg_rect.x, bg_rect.y, bg_rect.w, bg_rect.h, NULL );
                 }
             }
 
@@ -6119,104 +5994,39 @@ int OptionsVideo_data::run( double deltaTime )
 //--------------------------------------------------------------------------------------------
 struct ShowResults_data : public mnu_state_data
 {
-    TTF_Font * ttf_ptr;
     int        count;
     char     * game_hint;
     char       buffer[1024];
 
-    void begin( int state = MM_Begin );
-    void end();
+    //---- construction/destruction
+    ShowResults_data() { init(); }
+    void init();
+
+    //---- the state implementation
     int run( double deltaTime );
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
 };
 
-void ShowResults_data::begin( int state )
+void ShowResults_data::init()
 {
-    mnu_state_data::begin( state );
-
-    ttf_ptr   = NULL;
     game_hint = "wink ;)";
 
     buffer[0] = CSTR_END;
+}
+
+void ShowResults_data::begin( int state )
+{
+    init();
+
+    mnu_state_data::begin( state );
 }
 
 void ShowResults_data::end()
 {
     mnu_state_data::end();
 }
-
-////--------------------------------------------------------------------------------------------
-//static ShowResults_data *ShowResultsState_ctor( ShowResults_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static ShowResults_data *ShowResultsState_dtor( ShowResults_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static ShowResults_data * ShowResults_data::begin( ShowResults_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = ShowResultsState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ShowResults_data * ShowResults_data::entering( ShowResults_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ShowResults_data * ShowResults_data::running( ShowResults_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ShowResults_data * ShowResults_data::leaving( ShowResults_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ShowResults_data * ShowResults_data::finish( ShowResults_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = ShowResultsState_ctor( ps );
-//
-//    return ps;
-//};
 
 //--------------------------------------------------------------------------------------------
 int ShowResults_data::run( double deltaTime )
@@ -6230,7 +6040,6 @@ int ShowResults_data::run( double deltaTime )
                 Uint8 i;
                 char * carat = buffer, * carat_end = buffer + SDL_arraysize( buffer );
 
-                ttf_ptr = ui_getFont();
                 count = 0;
 
                 // Prepeare the summary text
@@ -6275,28 +6084,19 @@ int ShowResults_data::run( double deltaTime )
                 ui_drawTextBox( menuTextureList_ptr, 50, 120, 291, 230 );
 
                 // Loading game... please wait
-                fnt_getTextSize( ttf_ptr, &text_w, &text_h, "Loading module..." );
-                ui_drawTextBoxImmediate( ttf_ptr, ( GFX_WIDTH / 2 ) - text_w / 2, GFX_HEIGHT - 200, 20, "Loading module..." );
+                fnt_getTextBoxSize( ui_getFont(), 20, &text_w, &text_h, "Loading module..." );
+                ui_drawTextBoxImmediate( ui_getFont(), ( GFX_WIDTH / 2 ) - text_w / 2, GFX_HEIGHT - 200, 20, "Loading module..." );
 
                 // Draw the game tip
                 if ( VALID_CSTR( game_hint ) )
                 {
-                    fnt_getTextSize( menuFont, &text_w, &text_h, "GAME TIP" );
+                    fnt_getTextBoxSize( menuFont, 20, &text_w, &text_h, "GAME TIP" );
                     ui_drawTextBoxImmediate( menuFont, ( GFX_WIDTH / 2 )  - text_w / 2, GFX_HEIGHT - 150, 20, "GAME TIP" );
 
-                    fnt_getTextSize( menuFont, &text_w, &text_h, game_hint );       /// @todo ZF@> : this doesn't work as I intended, ui_get_TextSize() does not take line breaks into account
+                    fnt_getTextBoxSize( menuFont, 20, &text_w, &text_h, game_hint );       /// @todo ZF@> : this doesn't work as I intended, ui_get_TextSize() does not take line breaks into account
                     ui_drawTextBoxImmediate( menuFont, GFX_WIDTH / 2 - text_w / 2, GFX_HEIGHT - 110, 20, game_hint );
                 }
 
-                //ZF> Disabling this counter will speed up load times quite a bit...
-                // keep track of the iterations through this section for a timer
-                /*
-                count++;
-                if ( count > UPDATE_SKIP )
-                {
-                menuState  = MM_Leaving;
-                }
-                */
                 menuState  = MM_Leaving;
             }
             break;
@@ -6331,17 +6131,31 @@ struct NotImplemented_data : public mnu_state_data
 
     static const char * notImplementedMessage;
 
+    //---- construction/destruction
+    NotImplemented_data() { init(); }
+    void init();
+
+    //---- the state implementation
     int run( double deltaTime );
-    void begin( int state = MM_Begin );
-    void end();
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
 };
 
 const char * NotImplemented_data::notImplementedMessage = "Not implemented yet!  Check back soon!";
 
+void NotImplemented_data::init()
+{
+    /* add something here */
+}
+
 void NotImplemented_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
+
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    mnu_state_data::begin( state );
 }
 
 void NotImplemented_data::end()
@@ -6349,80 +6163,6 @@ void NotImplemented_data::end()
     mnu_state_data::end();
     end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
 }
-
-////--------------------------------------------------------------------------------------------
-//static NotImplemented_data *NotImplementedState_ctor( NotImplemented_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static NotImplemented_data *NotImplementedState_dtor( NotImplemented_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static NotImplemented_data * doNotImplemented_begin( NotImplemented_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = NotImplementedState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static NotImplemented_data * doNotImplemented_entering( NotImplemented_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static NotImplemented_data * doNotImplemented_running( NotImplemented_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static NotImplemented_data * doNotImplemented_leaving( NotImplemented_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static NotImplemented_data * doNotImplemented_finish( NotImplemented_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = NotImplementedState_ctor( ps );
-//
-//    return ps;
-//};
 
 //--------------------------------------------------------------------------------------------
 int NotImplemented_data::run( double deltaTime )
@@ -6465,9 +6205,15 @@ struct GamePaused_data : public mnu_state_data
 
     MENU_BUTTONS( but_count );
 
-    void begin( int state = MM_Begin );
-    void end();
+    //---- construction/destruction
+    GamePaused_data() { init(); }
+    void init();
+
+    //---- the state implementation
     int run( double deltaTime );
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
 };
 
 const char * GamePaused_data::sz_buttons[GamePaused_data::but_sz_count] =
@@ -6479,11 +6225,18 @@ const char * GamePaused_data::sz_buttons[GamePaused_data::but_sz_count] =
     ""
 };
 
+void GamePaused_data::init()
+{
+    /* add something here */
+}
+
 void GamePaused_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
 
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    mnu_state_data::begin( state );
 }
 
 void GamePaused_data::end()
@@ -6492,80 +6245,6 @@ void GamePaused_data::end()
 
     end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
 }
-
-////--------------------------------------------------------------------------------------------
-//static GamePaused_data *GamePausedState_ctor( GamePaused_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static GamePaused_data *GamePausedState_dtor( GamePaused_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static GamePaused_data * GamePaused_data::begin( GamePaused_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = GamePausedState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static GamePaused_data * GamePaused_data::entering( GamePaused_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static GamePaused_data * GamePaused_data::running( GamePaused_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static GamePaused_data * GamePaused_data::leaving( GamePaused_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static GamePaused_data * GamePaused_data::finish( GamePaused_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = GamePausedState_ctor( ps );
-//
-//    return ps;
-//};
 
 //--------------------------------------------------------------------------------------------
 int GamePaused_data::run( double deltaTime )
@@ -6677,11 +6356,15 @@ struct ShowEndgame_data : public mnu_state_data
     // button widgets
     MENU_BUTTONS( but_count );
 
-    ShowEndgame_data() { begin(); }
+    //---- construction/destruction
+    ShowEndgame_data() { init(); }
+    void init();
 
+    //---- the state implementation
     int run( double deltaTime );
-    void begin( int state = MM_Begin );
-    void end();
+
+    virtual void begin( int state = MM_Begin );
+    virtual void end();
 };
 
 const char * ShowEndgame_data::sz_buttons[ShowEndgame_data::but_sz_count] =
@@ -6690,11 +6373,18 @@ const char * ShowEndgame_data::sz_buttons[ShowEndgame_data::but_sz_count] =
     ""
 };
 
+void ShowEndgame_data::init()
+{
+    /* add something here */
+}
+
 void ShowEndgame_data::begin( int state )
 {
-    mnu_state_data::begin( state );
+    init();
 
     begin_widgets( w_buttons, SDL_arraysize( w_buttons ) );
+
+    mnu_state_data::begin( state );
 }
 
 void ShowEndgame_data::end()
@@ -6703,80 +6393,6 @@ void ShowEndgame_data::end()
 
     end_widgets( w_buttons, SDL_arraysize( w_buttons ) );
 }
-
-////--------------------------------------------------------------------------------------------
-//static ShowEndgame_data *ShowEndgameState_ctor( ShowEndgame_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static ShowEndgame_data *ShowEndgameState_dtor( ShowEndgame_data * ps )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//static ShowEndgame_data * doShowEndgame_begin( ShowEndgame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    ps = ShowEndgameState_ctor( ps );
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ShowEndgame_data * doShowEndgame_entering( ShowEndgame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ShowEndgame_data * doShowEndgame_running( ShowEndgame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ShowEndgame_data * doShowEndgame_leaving( ShowEndgame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    return ps;
-//};
-//
-////--------------------------------------------------------------------------------------------
-//static ShowEndgame_data * doShowEndgame_finish( ShowEndgame_data * ps, float deltaTime )
-//{
-//    if ( NULL == ps ) return ps;
-//
-//    /* BLAH */
-//
-//    ps = ShowEndgameState_ctor( ps );
-//
-//    return ps;
-//};
 
 //--------------------------------------------------------------------------------------------
 int ShowEndgame_data::run( double deltaTime )
@@ -6814,6 +6430,7 @@ int ShowEndgame_data::run( double deltaTime )
 
                 menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, x, y, 20, endtext );
                 ui_drawTextBox( menuTextureList_ptr, x, y, w, h );
+
                 mnu_SlidyButtons::draw_all( &but_state );
 
                 mnu_SlidyButtons::update_all( &but_state, -deltaTime );
@@ -6935,81 +6552,23 @@ int ShowEndgame_data::run( double deltaTime )
 //--------------------------------------------------------------------------------------------
 struct MultiPlayer_data : public mnu_state_data
 {
-    MultiPlayer_data() { begin(); }
-
-    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
-    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
-    void end()                         { return mnu_state_data::end(); }
 };
 
 struct NewPlayer_data : public mnu_state_data
 {
-    NewPlayer_data() { begin(); }
-
-    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
-    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
-    void end()                         { return mnu_state_data::end(); }
 };
 
 struct HostGame_data : public mnu_state_data
 {
-    HostGame_data() { begin(); }
-
-    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
-    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
-    void end()                         { return mnu_state_data::end(); }
 };
 
 struct JoinGame_data : public mnu_state_data
 {
-    JoinGame_data() { begin(); }
-
-    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
-    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
-    void end()                         { return mnu_state_data::end(); }
 };
 
 struct LoadPlayer_data : public mnu_state_data
 {
-    LoadPlayer_data() { begin(); }
-
-    int run( double deltaTime )        { return mnu_state_data::run( deltaTime ); };
-    void begin( int state = MM_Begin ) { return mnu_state_data::begin( state ); }
-    void end()                         { return mnu_state_data::end(); }
 };
-
-//struct XX_data
-//{
-//    XX_data() { begin(); }
-//
-//    int run( double deltaTime );
-//    void begin( int state = MM_Begin );
-//    void end();
-//};
-//
-//static XX_data XXState;
-//
-//struct XX_data
-//{
-//    XX_data() { begin(); }
-//
-//    int run( double deltaTime );
-//    void begin( int state = MM_Begin );
-//    void end();
-//};
-//
-//static XX_data XXState;
-//
-//struct XX_data
-//{
-//    XX_data() { begin(); }
-//
-//    int run( double deltaTime );
-//    void begin( int state = MM_Begin );
-//    void end();
-//};
-//
-//static XX_data XXState;
 
 //--------------------------------------------------------------------------------------------
 // Declare all menu states
@@ -7880,10 +7439,17 @@ mnu_SlidyButtons * mnu_SlidyButtons::init( mnu_SlidyButtons * pstate, float lerp
 
     if ( NULL == pstate ) return pstate;
 
+    // do the auto formatting
+    autoformat_init_slidy_buttons();
+
     // clear the state
     mnu_SlidyButtons::clear( pstate );
 
-    autoformat_init_slidy_buttons();
+    // set the safe parameters
+    pstate->lerp      = lerp;
+    pstate->but_text  = ( const char ** )( NULL == button_text ? NULL : button_text + id_start );
+    pstate->but       = ( NULL == button_widget ) ? NULL : button_widget + id_start;
+    pstate->but_count = 0;
 
     // return if there is no valid text
     if ( NULL == button_text || NULL == button_text[0] || '\0' == button_text[0][0] ) return pstate;
@@ -7895,31 +7461,22 @@ mnu_SlidyButtons * mnu_SlidyButtons::init( mnu_SlidyButtons * pstate, float lerp
     }
 
     // if there are no buttons, return
-    if ( 0 == count ) return pstate;
-
-    // set the correct parameters
-    pstate->lerp      = lerp;
-    pstate->but_text  = ( const char ** )( NULL == button_text ? NULL : button_text + id_start );
-    pstate->but       = ( NULL == button_widget ) ? NULL : button_widget + id_start;
+    if ( 0 == count || NULL == button_widget ) return pstate;
     pstate->but_count = count;
 
-    // if there are widgets
-    if ( NULL != button_widget )
+    // automatically configure the widgets
+    for ( i = 0; i < count; i++ )
     {
-        // automatically configure the widgets
-        for ( i = 0; i < count; i++ )
-        {
-            size_t       j   = i + id_start;
-            ui_Widget  * pw  = button_widget + j;
-            const char * txt = ( NULL == button_text ) ? NULL : button_text[j];
+        size_t       j   = i + id_start;
+        ui_Widget  * pw  = button_widget + j;
+        const char * txt = button_text[j];
 
-            float x = buttonLeft - ( 360 - i * 35 )  * pstate->lerp;
-            float y = buttonTop + i * 35;
+        float x = buttonLeft - ( 360 - i * 35 )  * pstate->lerp;
+        float y = buttonTop + i * 35;
 
-            ui_Widget::set_id( pw, j );
-            ui_Widget::set_button( pw, x, y, 200, 30 );
-            ui_Widget::set_text( pw, ui_just_centered, NULL, txt );
-        }
+        ui_Widget::set_id( pw, j );
+        ui_Widget::set_button( pw, x, y, 200, 30 );
+        ui_Widget::set_text( pw, ui_just_centered, NULL, txt );
     }
 
     return pstate;

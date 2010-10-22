@@ -111,12 +111,12 @@ void fnt_freeFont( TTF_Font *font )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-display_list_t * fnt_vappend_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, va_list args )
+display_list_t * fnt_vappend_text( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, const char *format, va_list args )
 {
     display_item_t * pitem = NULL;
 
     // trap cases that will generate an error
-    if ( NULL == ttf_ptr || NULL == format ) return tx_lst;
+    if ( NULL == ttf_ptr || NULL == format ) return dlst_ptr;
 
     // convert the text to a display item
     pitem = fnt_vconvertText( pitem, ttf_ptr, format, args );
@@ -126,36 +126,39 @@ display_list_t * fnt_vappend_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, 
     }
 
     // try to append the item
-    pitem = display_list_append( tx_lst, pitem );
+    pitem = display_list_append( dlst_ptr, pitem );
     if ( NULL != pitem )
     {
         // the append failed. we must delete the local pitem pointer
         pitem = display_item_free( pitem, btrue );
     }
 
-    return tx_lst;
+    return dlst_ptr;
 }
 
 //--------------------------------------------------------------------------------------------
-display_list_t * fnt_append_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, ... )
+display_list_t * fnt_append_text( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, const char *format, ... )
 {
     va_list args;
     display_list_t * ret;
 
     va_start( args, format );
-    ret = fnt_vappend_text( tx_lst, ttf_ptr, x, y, format, args );
+    ret = fnt_vappend_text( dlst_ptr, ttf_ptr, x, y, format, args );
     va_end( args );
 
     return ret;
 }
 
 //--------------------------------------------------------------------------------------------
-display_list_t * fnt_append_append_text_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *text )
+display_list_t * fnt_append_append_text_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, const char *text )
 {
     display_item_t * pitem = NULL;
 
     // trap cases that will generate an error
-    if ( NULL == ttf_ptr || NULL == text ) return tx_lst;
+    if ( NULL == ttf_ptr || NULL == text || '\0' == text[0] )
+    {
+        return display_list_dtor( dlst_ptr, bfalse );
+    }
 
     // convert the text to a display item
     pitem = fnt_convertText_literal( pitem, ttf_ptr, text );
@@ -165,19 +168,19 @@ display_list_t * fnt_append_append_text_literal( display_list_t * tx_lst, TTF_Fo
     }
 
     // try to append the item
-    pitem = display_list_append( tx_lst, pitem );
+    pitem = display_list_append( dlst_ptr, pitem );
     if ( NULL != pitem )
     {
         // the append failed. we must delete the local pitem pointer
         pitem = display_item_free( pitem, btrue );
     }
 
-    return tx_lst;
+    return dlst_ptr;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_print_raw( display_item_t * display_src, TTF_Font * ttf_ptr, SDL_Color color, const char * szText )
+display_item_t * fnt_print_raw( display_item_t * pitem, TTF_Font * ttf_ptr, SDL_Color color, const char * szText )
 {
     bool_t print_error       = bfalse;
     bool_t display_ptr_local = bfalse;
@@ -185,16 +188,16 @@ display_item_t * fnt_print_raw( display_item_t * display_src, TTF_Font * ttf_ptr
     SDL_Surface * tmp_surface = NULL;
 
     // no font = nothing
-    if ( NULL == ttf_ptr )
+    if ( NULL == ttf_ptr || NULL == szText || '\0' == szText[0] )
     {
         print_error = btrue;
         goto fnt_print_raw_finish;
     }
 
     // make sure there is a display
-    if ( NULL == display_src )
+    if ( NULL == pitem )
     {
-        display_src       = display_item_new();
+        pitem             = display_item_new();
         display_ptr_local = btrue;
     }
 
@@ -208,9 +211,9 @@ display_item_t * fnt_print_raw( display_item_t * display_src, TTF_Font * ttf_ptr
     else
     {
         // upload the texture
-        display_src = display_item_validate_texture( display_src );
+        pitem = display_item_validate_texture( pitem );
 
-        if ( !SDL_GL_uploadSurface( tmp_surface, display_item_texture_name( display_src ), display_item_texCoords( display_src ) ) )
+        if ( !SDL_GL_uploadSurface( tmp_surface, display_item_texture_name( pitem ), display_item_texCoords( pitem ) ) )
         {
             print_error = btrue;
             goto fnt_print_raw_finish;
@@ -220,9 +223,9 @@ display_item_t * fnt_print_raw( display_item_t * display_src, TTF_Font * ttf_ptr
 fnt_print_raw_finish:
 
     // copy over some display info
-    if ( NULL != display_src && NULL != tmp_surface )
+    if ( NULL != pitem && NULL != tmp_surface )
     {
-        frect_t * prect = display_item_prect( display_src );
+        frect_t * prect = display_item_prect( pitem );
         if ( NULL != prect )
         {
             prect->w = tmp_surface->w;
@@ -237,17 +240,17 @@ fnt_print_raw_finish:
         tmp_surface = NULL;
     }
 
-    // "delete" the display_src on an error
+    // "delete" the pitem on an error
     if ( print_error )
     {
-        display_src = display_item_free( display_src, !display_ptr_local );
+        pitem = display_item_free( pitem, !display_ptr_local );
     }
 
-    return display_src;
+    return pitem;
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_vprintf( display_item_t * tx_ptr, TTF_Font * ttf_ptr, SDL_Color color, const char *format, va_list args )
+display_item_t * fnt_vprintf( display_item_t * pitem, TTF_Font * ttf_ptr, SDL_Color color, const char *format, va_list args )
 {
     int rv;
     STRING szText = EMPTY_CSTR;
@@ -257,25 +260,25 @@ display_item_t * fnt_vprintf( display_item_t * tx_ptr, TTF_Font * ttf_ptr, SDL_C
 
     if ( rv < 0 )
     {
-        tx_ptr = display_item_free( tx_ptr, btrue );
+        pitem = display_item_free( pitem, btrue );
     }
     else
     {
-        tx_ptr = fnt_print_raw( tx_ptr, ttf_ptr, color, szText );
+        pitem = fnt_print_raw( pitem, ttf_ptr, color, szText );
     }
 
-    return tx_ptr;
+    return pitem;
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_drawText_raw( display_item_t *tx_ptr, TTF_Font * font_ptr, int x, int y, const char *text )
+display_item_t * fnt_drawText_raw( display_item_t *pitem, TTF_Font * font_ptr, int x, int y, const char *text )
 {
     SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
 
-    tx_ptr = fnt_print_raw( tx_ptr, font_ptr, color, text );
-    if ( NULL != tx_ptr )
+    pitem = fnt_print_raw( pitem, font_ptr, color, text );
+    if ( NULL != pitem )
     {
-        frect_t * prect = display_item_prect( tx_ptr );
+        frect_t * prect = display_item_prect( pitem );
         if ( NULL != prect )
         {
             // set the position of the display
@@ -284,38 +287,50 @@ display_item_t * fnt_drawText_raw( display_item_t *tx_ptr, TTF_Font * font_ptr, 
         }
 
         // And draw the darn thing
-        display_item_draw( tx_ptr );
+        display_item_draw( pitem );
     }
 
-    return tx_ptr;
+    return pitem;
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_vconvertText( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *format, va_list args )
+display_item_t * fnt_vconvertText( display_item_t *pitem, TTF_Font * ttf_ptr, const char *format, va_list args )
 {
     SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
 
-    return fnt_vprintf( tx_ptr, ttf_ptr, color, format, args );
+    return fnt_vprintf( pitem, ttf_ptr, color, format, args );
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_convertText_literal( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *text )
+display_item_t * fnt_convertText_literal( display_item_t *pitem, TTF_Font * ttf_ptr, const char *text )
 {
+    bool_t null_tx_ptr;
+
     SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
 
-    return fnt_print_raw( tx_ptr, ttf_ptr, color, text );
+    // trap cases that will generate an error
+    if ( NULL == ttf_ptr || NULL == text || '\0' == text[0] )
+    {
+        pitem = display_item_free( pitem, bfalse );
+    }
+    else
+    {
+        pitem = fnt_print_raw( pitem, ttf_ptr, color, text );
+    }
+
+    return pitem;
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_convertText( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *format, ... )
+display_item_t * fnt_convertText( display_item_t *pitem, TTF_Font * ttf_ptr, const char *format, ... )
 {
     va_list args;
 
     va_start( args, format );
-    tx_ptr = fnt_vconvertText( tx_ptr, ttf_ptr, format, args );
+    pitem = fnt_vconvertText( pitem, ttf_ptr, format, args );
     va_end( args );
 
-    return tx_ptr;
+    return pitem;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -373,7 +388,7 @@ const char * fnt_getTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, con
  * @var spacing - Amount of space to move down between lines. (usually close to your font size)
  */
 
-int fnt_vconvertTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, va_list args )
+int fnt_vconvertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, va_list args )
 {
     int retval;
     int vsnprintf_rv;
@@ -385,19 +400,19 @@ int fnt_vconvertTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int
     // some problem printing the text?
     if ( vsnprintf_rv < 0 )
     {
-        tx_lst = display_list_dtor( tx_lst, bfalse );
+        dlst_ptr = display_list_dtor( dlst_ptr, bfalse );
         retval = 0;
     }
     else
     {
-        retval = fnt_convertTextBox_literal( tx_lst, ttf_ptr, x, y, spacing, text );
+        retval = fnt_convertTextBox_literal( dlst_ptr, ttf_ptr, x, y, spacing, text );
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *text )
+int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *text )
 {
     size_t cnt = 0;
     size_t len;
@@ -406,20 +421,32 @@ int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int
     size_t texture_lst_size;
     bool_t local_tex_lst;
 
-    // assume that we are passed a valid tx_lst
+    // free all resources that are about to be replaced
+    dlst_ptr = display_list_dtor( dlst_ptr, bfalse );
+
+    // abort on bad text
+    if ( NULL == ttf_ptr || NULL == text || '\0' == text[0] )
+    {
+        return 0;
+    }
+
+    // assume that we are passed a valid dlst_ptr
     local_tex_lst = bfalse;
 
     // count the size of the display list
-    texture_lst_size = display_list_size( tx_lst );
+    texture_lst_size = display_list_size( dlst_ptr );
 
-    // abort on an error
-    if ( NULL == text || '\0' == text[0] ) goto fnt_convertTextBox_literal_finish;
-
-    // create a valid tx_lst, if needed
-    if ( NULL == tx_lst )
+    // create a valid dlst_ptr, if needed
+    if ( NULL == dlst_ptr )
     {
-        tx_lst = display_list_ctor( tx_lst, DEFAULT_DISPLAY_TEXT );
+        dlst_ptr      = display_list_ctor( dlst_ptr, DEFAULT_DISPLAY_TEXT );
         local_tex_lst = btrue;
+    }
+    else if ( 0 == texture_lst_size )
+    {
+        dlst_ptr         = display_list_ctor( dlst_ptr, DEFAULT_DISPLAY_TEXT );
+        texture_lst_size = display_list_size( dlst_ptr );
+        local_tex_lst     = bfalse;
     }
 
     // Split the passed in text into separate lines
@@ -435,7 +462,7 @@ int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int
     cnt = 0;
     while ( NULL != line && '\0' != line[0] && cnt < texture_lst_size )
     {
-        fnt_append_append_text_literal( tx_lst, ttf_ptr, x, y, line );
+        fnt_append_append_text_literal( dlst_ptr, ttf_ptr, x, y, line );
         y += spacing;
 
         line = strtok( NULL, "\n" );
@@ -446,7 +473,8 @@ int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int
     while ( NULL != line && '\0' != line[0] )
     {
         loc_display_ptr = fnt_convertText_literal( loc_display_ptr, ttf_ptr, line );
-        display_item_set_pos( loc_display_ptr, x, y );
+        //display_item_set_pos( loc_display_ptr, x, y );
+        loc_display_ptr = display_item_free( loc_display_ptr, GL_TRUE );
 
         y += spacing;
         line = strtok( NULL, "\n" );
@@ -457,29 +485,20 @@ int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int
 
 fnt_convertTextBox_literal_finish:
 
-    // was there an "error"?
-    if ( NULL != tx_lst && cnt > texture_lst_size )
-    {
-        // deconstruct the tx_lst
-        tx_lst = display_list_dtor( tx_lst, local_tex_lst );
-    }
-    else
-    {
-        // determine the bound of the list
-        display_list_pbound( tx_lst, NULL );
-    }
+    // determine the bound of the list
+    display_list_pbound( dlst_ptr, NULL );
 
     return cnt;
 }
 
 //--------------------------------------------------------------------------------------------
-int fnt_convertTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, ... )
+int fnt_convertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, ... )
 {
     va_list args;
     int cnt;
 
     va_start( args, format );
-    cnt = fnt_vconvertTextBox( tx_lst, ttf_ptr, x, y, spacing, format, args );
+    cnt = fnt_vconvertTextBox( dlst_ptr, ttf_ptr, x, y, spacing, format, args );
     va_end( args );
 
     return cnt;

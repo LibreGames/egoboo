@@ -78,7 +78,7 @@ EncObjList_t EncObjList;
 //        memset( penc, 0, sizeof( *penc ) );
 //
 //        // enchant "initializer"
-//        ego_obj::ctor( POBJ_GET_PBASE( penc ), ienc );
+//        ego_obj::ctor_this( POBJ_GET_PBASE( penc ), ienc );
 //
 //        EncList_add_free( ienc );
 //    }
@@ -253,7 +253,7 @@ EncObjList_t EncObjList;
 //        }
 //
 //        // enchant "destructor"
-//        penc = ego_enc::dtor( penc );
+//        penc = ego_enc::dtor_this( penc );
 //        if ( NULL == penc ) return bfalse;
 //    }
 //

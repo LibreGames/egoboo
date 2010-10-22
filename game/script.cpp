@@ -1911,7 +1911,7 @@ ego_ai_state * ego_ai_state::reconstruct( ego_ai_state * pself )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_ai_state * ego_ai_state::ctor( ego_ai_state * pself )
+ego_ai_state * ego_ai_state::ctor_this( ego_ai_state * pself )
 {
     if ( NULL == ego_ai_state::reconstruct( pself ) ) return NULL;
 
@@ -1921,7 +1921,7 @@ ego_ai_state * ego_ai_state::ctor( ego_ai_state * pself )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_ai_state * ego_ai_state::dtor( ego_ai_state * pself )
+ego_ai_state * ego_ai_state::dtor_this( ego_ai_state * pself )
 {
     if ( NULL == pself ) return pself;
 
@@ -1933,7 +1933,7 @@ ego_ai_state * ego_ai_state::dtor( ego_ai_state * pself )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_ai_bundle * ego_ai_bundle::ctor( ego_ai_bundle * pbundle )
+ego_ai_bundle * ego_ai_bundle::ctor_this( ego_ai_bundle * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
@@ -1994,7 +1994,7 @@ ego_ai_bundle * ego_ai_bundle::validate( ego_ai_bundle * pbundle )
 
 ego_ai_bundle__validate_fail:
 
-    return ego_ai_bundle::ctor( pbundle );
+    return ego_ai_bundle::ctor_this( pbundle );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2003,7 +2003,7 @@ ego_ai_bundle * ego_ai_bundle::set( ego_ai_bundle * pbundle, ego_chr * pchr )
     if ( NULL == pbundle ) return NULL;
 
     // blank out old data
-    pbundle = ego_ai_bundle::ctor( pbundle );
+    pbundle = ego_ai_bundle::ctor_this( pbundle );
 
     if ( NULL == pbundle || NULL == pchr ) return pbundle;
 

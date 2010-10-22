@@ -45,7 +45,7 @@ struct ego_menu_process_data
 
     ego_menu_process_data() { clear( this ); }
 
-    static ego_menu_process_data * ctor( ego_menu_process_data * ptr ) { return clear( ptr ); }
+    static ego_menu_process_data * ctor_this( ego_menu_process_data * ptr ) { return clear( ptr ); }
 
 private:
 
@@ -62,14 +62,14 @@ private:
 /// a process that controls the menu system
 struct ego_menu_process : public ego_menu_process_data, public ego_process
 {
-    ego_menu_process() { ctor( this ); }
+    ego_menu_process() { ctor_this( this ); }
 
-    static ego_menu_process * ctor( ego_menu_process * ptr ) { return ptr; }
+    static ego_menu_process * ctor_this( ego_menu_process * ptr ) { return ptr; }
 
-    static ego_menu_process * do_ctor( ego_menu_process * ptr )
+    static ego_menu_process * ctor_all( ego_menu_process * ptr )
     {
-        ego_process::ctor( ptr );
-        ego_menu_process_data::ctor( ptr );
+        ego_process::ctor_this( ptr );
+        ego_menu_process_data::ctor_this( ptr );
 
         return ptr;
     }

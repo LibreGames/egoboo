@@ -35,6 +35,7 @@
 #   include <stack>
 #   include <queue>
 #   include <exception>
+#   include <functional>
 #endif
 
 #include "egoboo_mem.h"
@@ -400,11 +401,11 @@ extern "C"
 // forward declaration of standard dynamic array types
 #if defined(__cplusplus)
 
-    DECLARE_DYNAMIC_ARY( char_ary,   char )
-    DECLARE_DYNAMIC_ARY( short_ary,  short )
-    DECLARE_DYNAMIC_ARY( int_ary,    int )
-    DECLARE_DYNAMIC_ARY( float_ary,  float )
-    DECLARE_DYNAMIC_ARY( double_ary, double )
+    typedef t_dary<  char >  char_ary;
+    typedef t_dary< short >  short_ary;
+    typedef t_dary<   int >  int_ary;
+    typedef t_dary< float >  float_ary;
+    typedef t_dary<double >  double_ary;
 
 #endif
 

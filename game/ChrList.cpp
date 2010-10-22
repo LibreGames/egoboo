@@ -78,14 +78,14 @@ ChrObjList_t ChrObjList;
 //        memset( pchr, 0, sizeof( *pchr ) );
 //
 //        // character "initializer"
-//        ego_obj::ctor( POBJ_GET_PBASE( pchr ), (ichr).get_value() );
+//        ego_obj::ctor_this( POBJ_GET_PBASE( pchr ), (ichr).get_value() );
 //
 //        ChrObjList.add_free( ichr );
 //    }
 //}
 //
 ////--------------------------------------------------------------------------------------------
-//void ChrObjList.dtor()
+//void ChrObjList.dtor_this()
 //{
 //    CHR_REF ichr;
 //    size_t  cnt;
@@ -248,7 +248,7 @@ ChrObjList_t ChrObjList;
 //        }
 //
 //        // character "destructor"
-//        pchr = ego_chr::dtor( pchr );
+//        pchr = ego_chr::dtor_this( pchr );
 //        if ( NULL == pchr ) return rv_error;
 //    }
 //

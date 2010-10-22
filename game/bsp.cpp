@@ -29,13 +29,6 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-IMPLEMENT_DYNAMIC_ARY( ego_BSP_leaf_ary, ego_BSP_leaf );
-IMPLEMENT_DYNAMIC_ARY( ego_BSP_leaf_pary, ego_BSP_leaf * );
-
-IMPLEMENT_DYNAMIC_ARY( ego_BSP_branch_ary, ego_BSP_branch );
-IMPLEMENT_DYNAMIC_ARY( ego_BSP_branch_pary, ego_BSP_branch * );
-
-//--------------------------------------------------------------------------------------------
 // private functions
 
 static bool_t ego_BSP_leaf_list_insert( ego_BSP_leaf ** lst, size_t * pcount, ego_BSP_leaf * n );
@@ -44,36 +37,29 @@ static bool_t ego_BSP_leaf_list_collide( ego_BSP_leaf * leaf_lst, size_t leaf_co
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_BSP_aabb * ego_BSP_aabb::ctor( ego_BSP_aabb * pbb, size_t dim )
+ego_BSP_aabb * ego_BSP_aabb::ctor_this( ego_BSP_aabb * pbb, size_t dim )
 {
     if ( NULL == pbb ) return NULL;
 
-    // initialize the memory
-    float_ary::ctor( &( pbb->mins ), dim );
-    float_ary::ctor( &( pbb->mids ), dim );
-    float_ary::ctor( &( pbb->maxs ), dim );
+    ego_BSP_aabb::alloc( pbb, dim );
 
-    if ( 0 == pbb->mins.size || 0 == pbb->mids.size || 0 == pbb->maxs.size )
+    if ( pbb->dim != pbb->mins.size() || pbb->dim != pbb->mids.size() || pbb->dim != pbb->maxs.size() )
     {
-        ego_BSP_aabb::dtor( pbb );
-    }
-    else
-    {
-        pbb->dim = dim;
+        ego_BSP_aabb::dealloc( pbb );
     }
 
     return pbb;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_aabb * ego_BSP_aabb::dtor( ego_BSP_aabb * pbb )
+ego_BSP_aabb * ego_BSP_aabb::dtor_this( ego_BSP_aabb * pbb )
 {
     if ( NULL == pbb ) return NULL;
 
     // deallocate everything
-    float_ary::dtor( &( pbb->mins ) );
-    float_ary::dtor( &( pbb->mids ) );
-    float_ary::dtor( &( pbb->maxs ) );
+    float_ary::dealloc( &( pbb->mins ) );
+    float_ary::dealloc( &( pbb->mids ) );
+    float_ary::dealloc( &( pbb->maxs ) );
 
     // wipe it
     return clear( pbb );
@@ -88,11 +74,41 @@ bool_t ego_BSP_aabb::empty( ego_BSP_aabb * psrc )
 
     for ( cnt = 0; cnt < psrc->dim; cnt++ )
     {
-        if ( psrc->maxs.ary[cnt] <= psrc->mins.ary[cnt] )
+        if ( psrc->maxs[cnt] <= psrc->mins[cnt] )
             return btrue;
     }
 
     return bfalse;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_BSP_aabb * ego_BSP_aabb::alloc( ego_BSP_aabb * pbb, size_t dim )
+{
+    if ( NULL == pbb ) return pbb;
+
+    ego_BSP_aabb::dealloc( pbb );
+
+    float_ary::alloc( &( pbb->mins ), dim );
+    float_ary::alloc( &( pbb->mids ), dim );
+    float_ary::alloc( &( pbb->maxs ), dim );
+
+    pbb->dim = dim;
+
+    return pbb;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_BSP_aabb * ego_BSP_aabb::dealloc( ego_BSP_aabb * pbb )
+{
+    if ( NULL == pbb ) return pbb;
+
+    float_ary::dealloc( &( pbb->mins ) );
+    float_ary::dealloc( &( pbb->mids ) );
+    float_ary::dealloc( &( pbb->maxs ) );
+
+    pbb->dim = 0;
+
+    return pbb;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -103,11 +119,11 @@ bool_t ego_BSP_aabb::reset( ego_BSP_aabb * psrc )
     size_t cnt;
 
     if ( NULL == psrc ) return bfalse;
-    if ( NULL == psrc->mins.ary || NULL == psrc->mids.ary || NULL == psrc->maxs.ary ) return bfalse;
+    if ( 0 == psrc->mins.size() || 0 == psrc->mids.size() || 0 == psrc->maxs.size() ) return bfalse;
 
     for ( cnt = 0; cnt < psrc->dim; cnt++ )
     {
-        psrc->mins.ary[cnt] = psrc->mids.ary[cnt] = psrc->maxs.ary[cnt] = 0.0f;
+        psrc->mins[cnt] = psrc->mids[cnt] = psrc->maxs[cnt] = 0.0f;
     }
 
     return btrue;
@@ -129,17 +145,17 @@ bool_t ego_BSP_aabb::lhs_contains_rhs( ego_BSP_aabb * psrc1, ego_BSP_aabb * psrc
     for ( cnt = 0; cnt < min_dim; cnt++ )
     {
         // inverted aabb?
-        if ( psrc1->maxs.ary[cnt] < psrc1->mins.ary[cnt] )
+        if ( psrc1->maxs[cnt] < psrc1->mins[cnt] )
             return bfalse;
 
         // inverted aabb?
-        if ( psrc2->maxs.ary[cnt] < psrc2->mins.ary[cnt] )
+        if ( psrc2->maxs[cnt] < psrc2->mins[cnt] )
             return bfalse;
 
-        if ( psrc2->maxs.ary[cnt] > psrc1->maxs.ary[cnt] )
+        if ( psrc2->maxs[cnt] > psrc1->maxs[cnt] )
             return bfalse;
 
-        if ( psrc2->mins.ary[cnt] < psrc1->mins.ary[cnt] )
+        if ( psrc2->mins[cnt] < psrc1->mins[cnt] )
             return bfalse;
     }
 
@@ -165,15 +181,15 @@ bool_t ego_BSP_aabb::do_overlap( ego_BSP_aabb * psrc1, ego_BSP_aabb * psrc2 )
         float minval, maxval;
 
         // inverted aabb?
-        if ( psrc1->maxs.ary[cnt] < psrc1->mins.ary[cnt] )
+        if ( psrc1->maxs[cnt] < psrc1->mins[cnt] )
             return bfalse;
 
         // inverted aabb?
-        if ( psrc2->maxs.ary[cnt] < psrc2->mins.ary[cnt] )
+        if ( psrc2->maxs[cnt] < psrc2->mins[cnt] )
             return bfalse;
 
-        minval = MAX( psrc1->mins.ary[cnt], psrc2->mins.ary[cnt] );
-        maxval = MIN( psrc1->maxs.ary[cnt], psrc2->maxs.ary[cnt] );
+        minval = MAX( psrc1->mins[cnt], psrc2->mins[cnt] );
+        maxval = MIN( psrc1->maxs[cnt], psrc2->maxs[cnt] );
 
         if ( maxval < minval ) return bfalse;
     }
@@ -196,39 +212,39 @@ bool_t ego_BSP_aabb::from_oct_bb( ego_BSP_aabb * pdst, ego_oct_bb   * psrc )
     // order to the OCT_* indices is optimized for a different test.
     if ( 1 == pdst->dim )
     {
-        pdst->mins.ary[0] = psrc->mins[OCT_X];
+        pdst->mins[0] = psrc->mins[OCT_X];
 
-        pdst->maxs.ary[0] = psrc->maxs[OCT_X];
+        pdst->maxs[0] = psrc->maxs[OCT_X];
     }
     else if ( 2 == pdst->dim )
     {
-        pdst->mins.ary[0] = psrc->mins[OCT_X];
-        pdst->mins.ary[1] = psrc->mins[OCT_Y];
+        pdst->mins[0] = psrc->mins[OCT_X];
+        pdst->mins[1] = psrc->mins[OCT_Y];
 
-        pdst->maxs.ary[0] = psrc->maxs[OCT_X];
-        pdst->maxs.ary[1] = psrc->maxs[OCT_Y];
+        pdst->maxs[0] = psrc->maxs[OCT_X];
+        pdst->maxs[1] = psrc->maxs[OCT_Y];
     }
     else if ( pdst->dim >= 3 )
     {
-        pdst->mins.ary[0] = psrc->mins[OCT_X];
-        pdst->mins.ary[1] = psrc->mins[OCT_Y];
-        pdst->mins.ary[2] = psrc->mins[OCT_Z];
+        pdst->mins[0] = psrc->mins[OCT_X];
+        pdst->mins[1] = psrc->mins[OCT_Y];
+        pdst->mins[2] = psrc->mins[OCT_Z];
 
-        pdst->maxs.ary[0] = psrc->maxs[OCT_X];
-        pdst->maxs.ary[1] = psrc->maxs[OCT_Y];
-        pdst->maxs.ary[2] = psrc->maxs[OCT_Z];
+        pdst->maxs[0] = psrc->maxs[OCT_X];
+        pdst->maxs[1] = psrc->maxs[OCT_Y];
+        pdst->maxs[2] = psrc->maxs[OCT_Z];
 
         // blank any extended dimensions
         for ( cnt = 3; cnt < pdst->dim; cnt++ )
         {
-            pdst->mins.ary[cnt] = pdst->maxs.ary[cnt] = 0.0f;
+            pdst->mins[cnt] = pdst->maxs[cnt] = 0.0f;
         }
     }
 
     // find the mid values
     for ( cnt = 0; cnt < pdst->dim; cnt++ )
     {
-        pdst->mids.ary[cnt] = 0.5f * ( pdst->mins.ary[cnt] + pdst->maxs.ary[cnt] );
+        pdst->mids[cnt] = 0.5f * ( pdst->mins[cnt] + pdst->maxs[cnt] );
     }
 
     return btrue;
@@ -240,10 +256,10 @@ ego_BSP_leaf * ego_BSP_leaf::create( int dim, void * data, int type )
 {
     ego_BSP_leaf * rv;
 
-    rv = EGOBOO_NEW( ego_BSP_leaf );
+    rv = new ego_BSP_leaf( dim, data, type );
     if ( NULL == rv ) return rv;
 
-    return ego_BSP_leaf::ctor( rv, dim, data, type );
+    return rv;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -251,7 +267,7 @@ bool_t ego_BSP_leaf::destroy( ego_BSP_leaf ** ppleaf )
 {
     if ( NULL == ppleaf || NULL == *ppleaf ) return bfalse;
 
-    ego_BSP_leaf::dtor( *ppleaf );
+    ego_BSP_leaf::dealloc( *ppleaf );
 
     EGOBOO_DELETE( *ppleaf );
 
@@ -259,26 +275,50 @@ bool_t ego_BSP_leaf::destroy( ego_BSP_leaf ** ppleaf )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_leaf * ego_BSP_leaf::ctor( ego_BSP_leaf * L, int dim, void * data, int type )
+ego_BSP_leaf * ego_BSP_leaf::alloc( ego_BSP_leaf * L, int dim )
 {
     if ( NULL == L ) return L;
 
-    ego_BSP_aabb::ctor( &( L->bbox ), dim );
+    L = dealloc( L );
+    if ( NULL == L ) return L;
 
-    if ( NULL == data ) return L;
-
-    L->data_type = type;
-    L->data      = data;
+    if ( dim > 0 )
+    {
+        ego_BSP_aabb::alloc( &( L->bbox ), dim );
+    }
 
     return L;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_leaf * ego_BSP_leaf::dtor( ego_BSP_leaf * L )
+ego_BSP_leaf * ego_BSP_leaf::ctor_this( ego_BSP_leaf * L, int dim, void * data, int type )
+{
+    if ( NULL == L ) return L;
+
+    L->data_type = type;
+    L->data      = data;
+
+    alloc( L, dim );
+
+    return L;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_BSP_leaf * ego_BSP_leaf::dealloc( ego_BSP_leaf * L )
 {
     if ( NULL == L ) return bfalse;
 
-    /* add something here */
+    ego_BSP_aabb::dealloc( &( L->bbox ) );
+
+    return L;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_BSP_leaf * ego_BSP_leaf::dtor_this( ego_BSP_leaf * L )
+{
+    if ( NULL == L ) return bfalse;
+
+    L = ego_BSP_leaf::dealloc( L );
 
     return clear( L );
 }
@@ -290,10 +330,12 @@ ego_BSP_branch * ego_BSP_branch::create( size_t dim )
 {
     ego_BSP_branch * rv;
 
-    rv = EGOBOO_NEW( ego_BSP_branch );
+    rv = new ego_BSP_branch( dim );
     if ( NULL == rv ) return rv;
 
-    return ego_BSP_branch::ctor( rv, dim );
+    /* add something here */
+
+    return rv;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -301,7 +343,7 @@ bool_t ego_BSP_branch::destroy( ego_BSP_branch ** ppbranch )
 {
     if ( NULL == ppbranch || NULL == *ppbranch ) return bfalse;
 
-    ego_BSP_branch::dtor( *ppbranch );
+    ego_BSP_branch::dealloc( *ppbranch );
 
     EGOBOO_DELETE( *ppbranch );
 
@@ -319,7 +361,7 @@ ego_BSP_branch * ego_BSP_branch::create_ary( size_t ary_size, size_t dim )
 
     for ( cnt = 0; cnt < ary_size; cnt++ )
     {
-        ego_BSP_branch::ctor( lst + cnt, dim );
+        ego_BSP_branch::alloc( lst + cnt, dim );
     }
 
     return lst;
@@ -334,7 +376,7 @@ bool_t ego_BSP_branch::destroy_ary( size_t ary_size, ego_BSP_branch ** lst )
 
     for ( cnt = 0; cnt < ary_size; cnt++ )
     {
-        ego_BSP_branch::dtor(( *lst ) + cnt );
+        ego_BSP_branch::dealloc(( *lst ) + cnt );
     }
 
     EGOBOO_DELETE_ARY( *lst );
@@ -343,12 +385,14 @@ bool_t ego_BSP_branch::destroy_ary( size_t ary_size, ego_BSP_branch ** lst )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_branch * ego_BSP_branch::ctor( ego_BSP_branch * B, size_t dim )
+ego_BSP_branch * ego_BSP_branch::alloc( ego_BSP_branch * B, size_t dim )
 {
+
+    ego_BSP_branch::dealloc( B );
+
+    if ( 0 == dim ) return B;
+
     int child_count;
-
-    if ( NULL == B ) return B;
-
     // determine the number of children from the number of dimensions
     child_count = 2 << ( dim - 1 );
 
@@ -362,18 +406,48 @@ ego_BSP_branch * ego_BSP_branch::ctor( ego_BSP_branch * B, size_t dim )
     }
 
     // allocate the branch's bounding box
-    ego_BSP_aabb::ctor( &( B->bbox ), dim );
+    ego_BSP_aabb::alloc( &( B->bbox ), dim );
 
     return B;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_branch * ego_BSP_branch::dtor( ego_BSP_branch * B )
+ego_BSP_branch * ego_BSP_branch::ctor_this( ego_BSP_branch * B, size_t dim )
+{
+    if ( NULL == B ) return B;
+
+    B = ego_BSP_branch::alloc( B, dim );
+
+    /* add something here */
+
+    return B;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_BSP_branch * ego_BSP_branch::dealloc( ego_BSP_branch * B )
 {
     if ( NULL == B ) return B;
 
     EGOBOO_DELETE_ARY( B->child_lst );
     B->child_count = 0;
+
+    ego_BSP_aabb::dealloc( &( B->bbox ) );
+
+    EGOBOO_DELETE_ARY( B->child_lst );
+    B->child_count = 0;
+
+    dealloc_nodes( B, btrue );
+
+    return B;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_BSP_branch * ego_BSP_branch::dtor_this( ego_BSP_branch * B )
+{
+    if ( NULL == B ) return B;
+
+    B = ego_BSP_branch::dealloc( B );
+    if ( NULL == B ) return B;
 
     return clear( B );
 }
@@ -602,7 +676,7 @@ bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, 
     ego_BSP_aabb * pbranch_bb;
 
     // if the collision list doesn't exist, stop
-    if ( NULL == colst || 0 == colst->size || colst->top >= colst->size ) return bfalse;
+    if ( NULL == colst || 0 == colst->size() || colst->top >= colst->size() ) return bfalse;
 
     // if the branch doesn't exist, stop
     if ( NULL == pbranch ) return bfalse;
@@ -655,10 +729,10 @@ bool_t ego_BSP_tree::init_0( ego_BSP_tree   * t )
     // initialize the leaves.
     t->branch_free.top = 0;
     t->branch_used.top = 0;
-    for ( i = 0; i < t->branch_all.size; i++ )
+    for ( i = 0; i < t->branch_all.size(); i++ )
     {
         // grab a branch off of the static list
-        pbranch = t->branch_all.ary + i;
+        pbranch = t->branch_all + i;
 
         if ( NULL == pbranch ) continue;
 
@@ -673,35 +747,36 @@ bool_t ego_BSP_tree::init_0( ego_BSP_tree   * t )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_tree   * ego_BSP_tree::ctor( ego_BSP_tree   * t, Sint32 dim, Sint32 depth )
+ego_BSP_tree   * ego_BSP_tree::ctor_this( ego_BSP_tree   * t, Sint32 dim, Sint32 depth )
 {
-    int    node_count;
     size_t cnt;
 
     if ( NULL == t ) return t;
 
-    ego_BSP_tree::dtor( t );
+    // reset the depth in case of an error
+    t->depth = -1;
+    t->branch_free.top = 0;
+    t->branch_used.top = 0;
 
-    node_count = ego_BSP_tree::count_nodes( dim, depth );
-    if ( node_count < 0 ) return t;
+    //---- allocate everything
+    if ( !ego_BSP_tree::alloc( t, dim, depth ) ) return t;
 
-    if ( !ego_BSP_tree::alloc( t, node_count, dim ) ) return t;
-
+    //---- initialize everything
     t->depth = depth;
 
     // initialize the free list
     t->branch_free.top = 0;
     t->branch_used.top = 0;
-    for ( cnt = 0; cnt < t->branch_all.size; cnt++ )
+    for ( cnt = 0; cnt < t->branch_all.size(); cnt++ )
     {
-        ego_BSP_branch_pary::push_back( &( t->branch_free ), t->branch_all.ary + cnt );
+        ego_BSP_branch_pary::push_back( &( t->branch_free ), t->branch_all + cnt );
     }
 
     return t;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_tree * ego_BSP_tree::dtor( ego_BSP_tree   * t )
+ego_BSP_tree * ego_BSP_tree::dtor_this( ego_BSP_tree   * t )
 {
     if ( NULL == t ) return NULL;
 
@@ -711,33 +786,39 @@ ego_BSP_tree * ego_BSP_tree::dtor( ego_BSP_tree   * t )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_tree::alloc( ego_BSP_tree   * t, size_t count, size_t dim )
+bool_t ego_BSP_tree::alloc( ego_BSP_tree * t, Sint32 dim, Sint32 depth )
 {
     size_t cnt;
+    int    node_count;
 
     if ( NULL == t ) return bfalse;
 
-    if ( NULL != t->branch_all.ary || t->branch_all.size > 0 ) return bfalse;
+    ego_BSP_tree::dealloc( t );
+
+    node_count = ego_BSP_tree::count_nodes( dim, depth );
+    if ( node_count < 0 ) return bfalse;
+
+    if ( t->branch_all.size() > 0 ) return bfalse;
 
     // re-initialize the variables
     t->dimensions = 0;
 
     // allocate the branches
-    ego_BSP_branch_ary::ctor( &( t->branch_all ), count );
-    if ( NULL == t->branch_all.ary || 0 == t->branch_all.size ) return bfalse;
+    ego_BSP_branch_ary::alloc( &( t->branch_all ), node_count );
+    if ( 0 == t->branch_all.size() ) return bfalse;
 
     // initialize the array branches
-    for ( cnt = 0; cnt < count; cnt++ )
+    for ( cnt = 0; cnt < node_count; cnt++ )
     {
-        ego_BSP_branch::ctor( t->branch_all.ary + cnt, dim );
+        ego_BSP_branch::alloc( t->branch_all + cnt, dim );
     }
 
     // allocate the aux arrays
-    ego_BSP_branch_pary::ctor( &( t->branch_used ), count );
-    ego_BSP_branch_pary::ctor( &( t->branch_free ), count );
+    ego_BSP_branch_pary::alloc( &( t->branch_used ), node_count );
+    ego_BSP_branch_pary::alloc( &( t->branch_free ), node_count );
 
     // initialize the root bounding box
-    ego_BSP_aabb::ctor( &( t->bbox ), dim );
+    ego_BSP_aabb::alloc( &( t->bbox ), dim );
 
     // set the variables
     t->dimensions = dim;
@@ -752,23 +833,23 @@ bool_t ego_BSP_tree::dealloc( ego_BSP_tree   * t )
 
     if ( NULL == t ) return bfalse;
 
-    if ( NULL == t->branch_all.ary || 0 == t->branch_all.size ) return btrue;
+    if ( 0 == t->branch_all.size() ) return btrue;
 
     // destruct the branches
-    for ( i = 0; i < t->branch_all.size; i++ )
+    for ( i = 0; i < t->branch_all.size(); i++ )
     {
-        ego_BSP_branch::dtor( t->branch_all.ary + i );
+        ego_BSP_branch::dealloc( t->branch_all + i );
     }
 
     // deallocate the branches
-    ego_BSP_branch_ary::dtor( &( t->branch_all ) );
+    ego_BSP_branch_ary::dealloc( &( t->branch_all ) );
 
     // deallocate the aux arrays
-    ego_BSP_branch_pary::dtor( &( t->branch_used ) );
-    ego_BSP_branch_pary::dtor( &( t->branch_free ) );
+    ego_BSP_branch_pary::dealloc( &( t->branch_used ) );
+    ego_BSP_branch_pary::dealloc( &( t->branch_free ) );
 
     // deallocate the root bounding box
-    ego_BSP_aabb::dtor( &( t->bbox ) );
+    ego_BSP_aabb::dealloc( &( t->bbox ) );
 
     return btrue;
 }
@@ -802,7 +883,7 @@ bool_t ego_BSP_tree::remove_used( ego_BSP_tree   * t, ego_BSP_branch * B )
     // scan the used list for the branch
     for ( cnt = 0; cnt < t->branch_used.top; cnt++ )
     {
-        if ( B == t->branch_used.ary[cnt] ) break;
+        if ( B == t->branch_used[cnt] ) break;
     }
 
     // did we find the branch in the used list?
@@ -812,7 +893,7 @@ bool_t ego_BSP_tree::remove_used( ego_BSP_tree   * t, ego_BSP_branch * B )
     t->branch_used.top--;
 
     // move the branch that we found to the top of the list
-    SWAP( ego_BSP_branch *, t->branch_used.ary[cnt], t->branch_used.ary[t->branch_used.top] );
+    SWAP( ego_BSP_branch *, t->branch_used[cnt], t->branch_used[t->branch_used.top] );
 
     return btrue;
 }
@@ -941,7 +1022,7 @@ bool_t ego_BSP_tree::dealloc_branches( ego_BSP_tree   * t )
     for ( cnt = 0; cnt < t->branch_used.top; cnt++ )
     {
         // grab a used branch
-        ego_BSP_branch * pbranch = t->branch_used.ary[cnt];
+        ego_BSP_branch * pbranch = t->branch_used[cnt];
         if ( NULL == pbranch ) continue;
 
         // completely unlink the branch
@@ -998,9 +1079,9 @@ ego_BSP_branch * ego_BSP_tree::ensure_root( ego_BSP_tree   * t )
     // copy the tree bounding box to the root node
     for ( cnt = 0; cnt < t->dimensions; cnt++ )
     {
-        proot->bbox.mins.ary[cnt] = t->bbox.mins.ary[cnt];
-        proot->bbox.mids.ary[cnt] = t->bbox.mids.ary[cnt];
-        proot->bbox.maxs.ary[cnt] = t->bbox.maxs.ary[cnt];
+        proot->bbox.mins[cnt] = t->bbox.mins[cnt];
+        proot->bbox.mids[cnt] = t->bbox.mids[cnt];
+        proot->bbox.maxs[cnt] = t->bbox.maxs[cnt];
     }
 
     // fix the depth
@@ -1144,17 +1225,17 @@ bool_t ego_BSP_tree::insert_leaf_rec( ego_BSP_tree   * ptree, ego_BSP_branch * p
     index = 0;
     for ( cnt = 0; cnt < ptree->dimensions; cnt++ )
     {
-        if ( pleaf->bbox.mins.ary[cnt] >= pbranch->bbox.mins.ary[cnt] && pleaf->bbox.maxs.ary[cnt] <= pbranch->bbox.mids.ary[cnt] )
+        if ( pleaf->bbox.mins[cnt] >= pbranch->bbox.mins[cnt] && pleaf->bbox.maxs[cnt] <= pbranch->bbox.mids[cnt] )
         {
             index <<= 1;
             index |= 0;
         }
-        else if ( pleaf->bbox.mins.ary[cnt] >= pbranch->bbox.mids.ary[cnt] && pleaf->bbox.maxs.ary[cnt] <= pbranch->bbox.maxs.ary[cnt] )
+        else if ( pleaf->bbox.mins[cnt] >= pbranch->bbox.mids[cnt] && pleaf->bbox.maxs[cnt] <= pbranch->bbox.maxs[cnt] )
         {
             index <<= 1;
             index |= 1;
         }
-        else if ( pleaf->bbox.mins.ary[cnt] >= pbranch->bbox.mins.ary[cnt] && pleaf->bbox.maxs.ary[cnt] <= pbranch->bbox.maxs.ary[cnt] )
+        else if ( pleaf->bbox.mins[cnt] >= pbranch->bbox.mins[cnt] && pleaf->bbox.maxs[cnt] <= pbranch->bbox.maxs[cnt] )
         {
             // this leaf belongs at this node
             break;
@@ -1224,7 +1305,7 @@ bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, size_t cnt )
 
     if ( NULL == t || cnt < 0 || cnt >= t->branch_used.top ) return bfalse;
 
-    B = t->branch_used.ary[ cnt ];
+    B = t->branch_used[ cnt ];
     if ( NULL == B ) return bfalse;
 
     // do not remove the root node
@@ -1276,7 +1357,7 @@ bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, size_t cnt )
         ego_BSP_aabb::reset( &( B->bbox ) );
 
         // move the branch that we found to the top of the list
-        SWAP( ego_BSP_branch *, t->branch_used.ary[cnt], t->branch_used.ary[t->branch_used.top] );
+        SWAP( ego_BSP_branch *, t->branch_used[cnt], t->branch_used[t->branch_used.top] );
 
         // add the branch to the free list
         ego_BSP_branch_pary::push_back( &( t->branch_free ), B );
@@ -1295,7 +1376,7 @@ int ego_BSP_tree::collide( ego_BSP_tree   * tree, ego_BSP_aabb * paabb, ego_BSP_
 
     if ( NULL == colst ) return 0;
     colst->top = 0;
-    if ( 0 == colst->size ) return 0;
+    if ( 0 == colst->size() ) return 0;
 
     // collide with any "infinite" nodes
     ego_BSP_leaf_list_collide( tree->infinite, tree->infinite_count, paabb, colst );
@@ -1472,8 +1553,7 @@ bool_t ego_BSP_tree::generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BS
     // make sure that the destination type matches the source type
     if ( pdst->dim != psrc->dim )
     {
-        ego_BSP_aabb::dtor( pdst );
-        ego_BSP_aabb::ctor( pdst, psrc->dim );
+        ego_BSP_aabb::alloc( pdst, psrc->dim );
     }
 
     // determine the bounds
@@ -1485,18 +1565,18 @@ bool_t ego_BSP_tree::generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BS
 
         if ( 0 == ( index & ( 1 << tnc ) ) )
         {
-            minval = psrc->mins.ary[cnt];
-            maxval = psrc->mids.ary[cnt];
+            minval = psrc->mins[cnt];
+            maxval = psrc->mids[cnt];
         }
         else
         {
-            minval = psrc->mids.ary[cnt];
-            maxval = psrc->maxs.ary[cnt];
+            minval = psrc->mids[cnt];
+            maxval = psrc->maxs[cnt];
         }
 
-        pdst->mins.ary[cnt] = minval;
-        pdst->maxs.ary[cnt] = maxval;
-        pdst->mids.ary[cnt] = 0.5f * ( minval + maxval );
+        pdst->mins[cnt] = minval;
+        pdst->maxs[cnt] = maxval;
+        pdst->mids[cnt] = 0.5f * ( minval + maxval );
     }
 
     return btrue;

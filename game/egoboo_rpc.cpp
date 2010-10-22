@@ -59,7 +59,7 @@ ego_rpc * ego_rpc::clear( ego_rpc * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_rpc * ego_rpc::ctor( ego_rpc * prpc, int data_type, void * data )
+ego_rpc * ego_rpc::ctor_this( ego_rpc * prpc, int data_type, void * data )
 {
     /// @details BB@> construct the sample rpc data element
 
@@ -80,7 +80,7 @@ ego_rpc * ego_rpc::ctor( ego_rpc * prpc, int data_type, void * data )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_rpc * ego_rpc::dtor( ego_rpc * prpc )
+ego_rpc * ego_rpc::dtor_this( ego_rpc * prpc )
 {
     /// @details BB@> deconstruct the sample rpc data element
 
@@ -106,11 +106,11 @@ ego_tx_request * ego_tx_request::clear( ego_tx_request * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tx_request * ego_tx_request::ctor( ego_tx_request * preq, int type )
+ego_tx_request * ego_tx_request::ctor_this( ego_tx_request * preq, int type )
 {
     if ( NULL == preq ) return NULL;
 
-    if ( NULL == ego_rpc::ctor( ego_tx_request::get_rpc( preq ), type, preq ) ) return NULL;
+    if ( NULL == ego_rpc::ctor_this( ego_tx_request::get_rpc( preq ), type, preq ) ) return NULL;
 
     preq->filename[0] = '\0';
     preq->ret_index   = ( TX_REF )INVALID_TX_TEXTURE;
@@ -120,13 +120,13 @@ ego_tx_request * ego_tx_request::ctor( ego_tx_request * preq, int type )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tx_request * ego_tx_request::dtor( ego_tx_request * preq )
+ego_tx_request * ego_tx_request::dtor_this( ego_tx_request * preq )
 {
     ego_rpc save_base;
 
     if ( NULL == preq ) return NULL;
 
-    if ( NULL == ego_rpc::dtor( ego_tx_request::get_rpc( preq ) ) ) return NULL;
+    if ( NULL == ego_rpc::dtor_this( ego_tx_request::get_rpc( preq ) ) ) return NULL;
 
     // store the deconstructed base
     memcpy( &save_base, ego_tx_request::get_rpc( preq ), sizeof( save_base ) );
@@ -204,10 +204,10 @@ void TxReqList_ctor()
         ego_tx_request * preq = TxReqList.lst + ireq;
 
         // blank out all the data, including the obj_base data
-        ego_tx_request::dtor( preq );
+        ego_tx_request::dtor_this( preq );
 
         // tx_request "constructor" (type -1 == type unknown)
-        ego_tx_request::ctor( preq, -1 );
+        ego_tx_request::ctor_this( preq, -1 );
 
         // set the index
         preq->index = ( ireq ).get_value();
@@ -229,7 +229,7 @@ void TxReqList_dtor()
     for ( ireq = 0; ireq < MAX_TX_TEXTURE_REQ; ireq++ )
     {
         // character "constructor"
-        ego_tx_request::dtor( TxReqList.lst + ireq );
+        ego_tx_request::dtor_this( TxReqList.lst + ireq );
     }
 
     TxReqList._free_count = 0;
@@ -258,7 +258,7 @@ size_t TxReqList_get_free( int type )
 
     if ( retval >= 0 && retval < MAX_TX_TEXTURE_REQ )
     {
-        ego_tx_request::ctor( TxReqList.lst + ( TREQ_REF )retval, type );
+        ego_tx_request::ctor_this( TxReqList.lst + ( TREQ_REF )retval, type );
     }
 
     return retval;
@@ -276,7 +276,7 @@ bool_t TxReqList_free_one( int ireq )
     preq = TxReqList.lst + ( TREQ_REF )ireq;
 
     // destruct the request
-    ego_tx_request::dtor( preq );
+    ego_tx_request::dtor_this( preq );
 
 #if EGO_DEBUG
     {

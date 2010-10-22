@@ -35,8 +35,8 @@ struct ego_hash_node
 
     static ego_hash_node * create( void * data );
     static bool_t          destroy( ego_hash_node ** );
-    static ego_hash_node * ctor( ego_hash_node * n, void * data );
-    static bool_t          dtor( ego_hash_node * n );
+    static ego_hash_node * ctor_this( ego_hash_node * n, void * data );
+    static bool_t          dtor_this( ego_hash_node * n );
     static ego_hash_node * insert_after( ego_hash_node lst[], ego_hash_node * n );
     static ego_hash_node * insert_before( ego_hash_node lst[], ego_hash_node * n );
     static ego_hash_node * remove_after( ego_hash_node lst[] );
@@ -51,12 +51,12 @@ struct ego_hash_list
     ego_hash_node ** sublist;
 
     ego_hash_list() { clear( this ); }
-    ~ego_hash_list() { dtor( this ); }
+    ~ego_hash_list() { dtor_this( this ); }
 
     static ego_hash_list * create( int size );
     static bool_t          destroy( ego_hash_list ** );
-    static ego_hash_list * ctor( ego_hash_list * lst, int size );
-    static ego_hash_list * dtor( ego_hash_list * lst );
+    static ego_hash_list * ctor_this( ego_hash_list * lst, int size );
+    static ego_hash_list * dtor_this( ego_hash_list * lst );
     static bool_t          dealloc( ego_hash_list * lst );
     static bool_t          alloc( ego_hash_list * lst, int size );
     static bool_t          renew( ego_hash_list * lst );
@@ -92,7 +92,7 @@ struct ego_hash_list_iterator
     int           hash;
     ego_hash_node * pnode;
 
-    static ego_hash_list_iterator * ctor( ego_hash_list_iterator * it );
+    static ego_hash_list_iterator * ctor_this( ego_hash_list_iterator * it );
     static void                   * ptr( ego_hash_list_iterator * it );
     static bool_t                   set_begin( ego_hash_list_iterator * it, ego_hash_list * hlst );
     static bool_t                   done( ego_hash_list_iterator * it, ego_hash_list * hlst );

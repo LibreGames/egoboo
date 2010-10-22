@@ -34,6 +34,8 @@
 #include "mesh.inl"
 
 #include "collision.h"
+#include "object_BSP.h"
+#include "mesh_BSP.h"
 
 #include "log.h"
 #include "script.h"

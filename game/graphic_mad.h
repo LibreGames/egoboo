@@ -213,7 +213,7 @@ struct ego_chr_instance
     // Uint8          lightlevel_dir;  ///< 0-255, terrain light
 
     ego_chr_instance() { clear( this ); }
-    ~ego_chr_instance() { dtor( this ); }
+    ~ego_chr_instance() { dtor_this( this ); }
 
     static egoboo_rv update_bbox( ego_chr_instance * pinst );
     static egoboo_rv needs_update( ego_chr_instance * pinst, int vmin, int vmax, bool_t *verts_match, bool_t *frames_match );
@@ -234,8 +234,8 @@ struct ego_chr_instance
     static void      clear_cache( ego_chr_instance * pinst );
 
 protected:
-    static ego_chr_instance * ctor( ego_chr_instance * pinst );
-    static ego_chr_instance * dtor( ego_chr_instance * pinst );
+    static ego_chr_instance * ctor_this( ego_chr_instance * pinst );
+    static ego_chr_instance * dtor_this( ego_chr_instance * pinst );
     static bool_t             alloc( ego_chr_instance * pinst, size_t vlst_size );
     static bool_t             dealloc( ego_chr_instance * pinst );
     static bool_t             spawn( ego_chr_instance * pinst, const PRO_REF & profile, Uint8 skin );

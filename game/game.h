@@ -91,7 +91,7 @@ struct ego_game_process_data
 
     ego_game_process_data() { clear( this ); }
 
-    static ego_game_process_data * ctor( ego_game_process_data * ptr ) { return clear( ptr ); }
+    static ego_game_process_data * ctor_this( ego_game_process_data * ptr ) { return clear( ptr ); }
 
 private:
 
@@ -112,7 +112,7 @@ private:
 struct ego_game_process : public ego_game_process_data, public ego_process
 {
 
-    static ego_game_process * ctor( ego_game_process * ptr );
+    static ego_game_process * ctor_this( ego_game_process * ptr );
 
     // "process" management
     static int Run( ego_game_process * gproc, double frameDuration );

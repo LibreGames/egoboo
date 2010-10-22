@@ -115,14 +115,14 @@ ego_prt_data * ego_prt_data::dealloc( ego_prt_data * pdata )
 //    if ( TERMINATED_PPRT( pprt ) ) return pprt;
 //
 //    // deallocate any dynamic data
-//    ego_BSP_leaf::dtor( &( pprt->bsp_leaf ) );
+//    ego_BSP_leaf::dtor_this( &( pprt->bsp_leaf ) );
 //
 //    return pprt;
 //}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_prt_data * ego_prt_data::ctor( ego_prt_data * pdata )
+ego_prt_data * ego_prt_data::ctor_this( ego_prt_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
@@ -138,7 +138,7 @@ ego_prt_data * ego_prt_data::ctor( ego_prt_data * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt_data * ego_prt_data::dtor( ego_prt_data * pdata )
+ego_prt_data * ego_prt_data::dtor_this( ego_prt_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
@@ -183,7 +183,7 @@ ego_prt_data * ego_prt_data::init( ego_prt_data * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::ctor( ego_prt * pprt )
+ego_prt * ego_prt::ctor_this( ego_prt * pprt )
 {
     /// BB@> Set all particle parameters to safe values.
     ///      @details The c equivalent of the particle prt::new() function.
@@ -200,7 +200,7 @@ ego_prt * ego_prt::ctor( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::dtor( ego_prt * pprt )
+ego_prt * ego_prt::dtor_this( ego_prt * pprt )
 {
     if ( NULL == pprt ) return pprt;
 
@@ -217,7 +217,7 @@ ego_prt * ego_prt::alloc( ego_prt * pprt )
     if ( NULL == pprt ) return pprt;
 
     // initialize the bsp node for this particle
-    ego_BSP_leaf::ctor( &( pprt->bsp_leaf ), 3, pprt, LEAF_PRT );
+    ego_BSP_leaf::ctor_this( &( pprt->bsp_leaf ), 3, pprt, LEAF_PRT );
 
     return pprt;
 }
@@ -228,42 +228,7 @@ ego_prt * ego_prt::dealloc( ego_prt * pprt )
     if ( NULL == pprt ) return pprt;
 
     // initialize the bsp node for this particle
-    ego_BSP_leaf::dtor( &( pprt->bsp_leaf ) );
-
-    return pprt;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::do_ctor( ego_prt * pprt )
-{
-    // construct this struct and all sub-struct
-
-    if ( NULL == pprt ) return pprt;
-
-    // call the main ctor
-    if ( NULL == ego_prt::ctor( pprt ) ) return NULL;
-
-    // call the data ctor
-    if ( NULL == ego_prt_data::do_ctor( pprt ) ) return NULL;
-
-    return pprt;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::do_dtor( ego_prt * pprt )
-{
-    // destruct this struct and all sub-struct
-
-    if ( NULL == pprt ) return pprt;
-
-    // dealloc anything in the data
-    if ( NULL == ego_prt_data::do_dtor( pprt ) ) return NULL;
-
-    // call the spawn_data directly
-    pprt->spawn_data.~spawn_data();
-
-    // destruct/free any dynamic data
-    if ( NULL == ego_prt::dtor( pprt ) ) return NULL;
+    ego_BSP_leaf::dtor_this( &( pprt->bsp_leaf ) );
 
     return pprt;
 }
@@ -893,7 +858,7 @@ ego_obj_prt * ego_obj_prt::do_constructing( ego_obj_prt * pobj )
     if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
 
     // run the constructor
-    ego_prt * pprt = ego_prt::do_ctor( pobj->get_pdata() );
+    ego_prt * pprt = ego_prt::ctor_all( pobj->get_pdata(), pobj );
     if ( NULL == pprt ) return NULL;
 
     // move on to the next action
@@ -1024,7 +989,7 @@ ego_obj_prt * ego_obj_prt::do_destructing( ego_obj_prt * pobj )
     POBJ_END_SPAWN( pobj );
 
     // run the destructor
-    ego_prt * pprt = ego_prt::do_dtor( pobj->get_pdata() );
+    ego_prt * pprt = ego_prt::dtor_all( pobj->get_pdata() );
     if ( NULL == pprt ) return pobj;
 
     // move on to the next action (dead)
@@ -1851,7 +1816,7 @@ void particle_system_end()
 {
     release_all_pip();
 
-    PrtObjList.dtor();
+    PrtObjList.dtor_this();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2886,7 +2851,7 @@ ego_prt_bundle * prt_update( ego_prt_bundle * pbdl_prt )
 
     // do the next step in the particle configuration
     ego_obj_prt * tmp_pobj = ego_obj_prt::run( PDATA_GET_POBJ( pbdl_prt->prt_ptr ) );
-    if ( NULL == tmp_pobj ) { ego_prt_bundle::ctor( pbdl_prt ); return NULL; }
+    if ( NULL == tmp_pobj ) { ego_prt_bundle::ctor_this( pbdl_prt ); return NULL; }
 
     if ( tmp_pobj->get_pdata() != pbdl_prt->prt_ptr )
     {
@@ -3054,7 +3019,7 @@ ego_obj_prt * ego_obj_prt::set_limbo( ego_obj_prt * pobj, bool_t val )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_prt_bundle * ego_prt_bundle::ctor( ego_prt_bundle * pbundle )
+ego_prt_bundle * ego_prt_bundle::ctor_this( ego_prt_bundle * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
@@ -3110,7 +3075,7 @@ ego_prt_bundle * ego_prt_bundle::set( ego_prt_bundle * pbundle, ego_prt * pprt )
     if ( NULL == pbundle ) return NULL;
 
     // blank out old data
-    pbundle = ego_prt_bundle::ctor( pbundle );
+    pbundle = ego_prt_bundle::ctor_this( pbundle );
 
     if ( NULL == pbundle || NULL == pprt ) return pbundle;
 
@@ -3781,7 +3746,7 @@ void particle_physics_finalize_all( float dt )
 //--------------------------------------------------------------------------------------------
 // struct ego_obj_prt - memory management
 //--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::ctor( ego_obj_prt * pobj )
+ego_obj_prt * ego_obj_prt::ctor_this( ego_obj_prt * pobj )
 {
     // construct this struct, ONLY
 
@@ -3793,44 +3758,13 @@ ego_obj_prt * ego_obj_prt::ctor( ego_obj_prt * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::dtor( ego_obj_prt * pobj )
+ego_obj_prt * ego_obj_prt::dtor_this( ego_obj_prt * pobj )
 {
     // destruct this struct, ONLY
 
     if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_KILLED_PBASE( pobj ) ) return pobj;
 
     pobj = ego_obj_prt::dealloc( pobj );
-
-    // Sets the state to ego_obj_terminated automatically.
-    POBJ_TERMINATE( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::do_ctor( ego_obj_prt * pobj )
-{
-    // construct this struct, and ALL dependent structs
-
-    pobj = ego_obj_prt::ctor( pobj );
-    if ( NULL == pobj ) return pobj;
-
-    ego_prt::do_ctor( pobj->get_pdata() );
-
-    ego_obj::end_constructing( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::do_dtor( ego_obj_prt * pobj )
-{
-    // destruct this struct, and ALL dependent structs
-
-    ego_prt::do_dtor( pobj->get_pdata() );
-
-    pobj = ego_obj_prt::dtor( pobj );
-    if ( NULL == pobj ) return pobj;
 
     // Sets the state to ego_obj_terminated automatically.
     POBJ_TERMINATE( pobj );

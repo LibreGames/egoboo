@@ -81,17 +81,17 @@ struct ego_enc_data
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_enc_data()  { ego_enc_data::ctor( this ); };
+    explicit ego_enc_data()  { ego_enc_data::ctor_this( this ); };
 
     /// default destructor
-    ~ego_enc_data() { ego_enc_data::dtor( this ); };
+    ~ego_enc_data() { ego_enc_data::dtor_this( this ); };
 
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_enc_data * ctor( ego_enc_data * );
+    static ego_enc_data * ctor_this( ego_enc_data * );
     /// destruct this struct, ONLY
-    static ego_enc_data * dtor( ego_enc_data * );
+    static ego_enc_data * dtor_this( ego_enc_data * );
     /// do some initialization
     static ego_enc_data * init( ego_enc_data * );
 
@@ -126,10 +126,10 @@ protected:
 
     //---- construction and destruction
 
-    /// construct this struct, and ALL dependent structs
-    static ego_enc_data * do_ctor( ego_enc_data * ptr ) { return ego_enc_data::ctor( ptr ); };
-    /// denstruct this struct, and ALL dependent structs
-    static ego_enc_data * do_dtor( ego_enc_data * ptr ) { return ego_enc_data::dtor( ptr ); };
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_enc_data * ctor_all( ego_enc_data * ptr ) { if ( NULL != ptr ) new( ptr ) ego_enc_data(); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_enc_data * dtor_all( ego_enc_data * ptr )  { if ( NULL != ptr ) ptr->~ego_enc_data(); return ptr; }
 
     //---- memory management
 
@@ -158,10 +158,10 @@ public:
     //---- constructors and destructors
 
     /// non-default constructor. We MUST know who our marent is
-    explicit ego_enc( ego_obj_enc * _pparent ) : _parent_obj_ptr( _pparent ) { ego_enc::ctor( this ); };
+    explicit ego_enc( ego_obj_enc * _pparent ) : _parent_obj_ptr( _pparent ) { ego_enc::ctor_this( this ); };
 
     /// default destructor
-    ~ego_enc() { ego_enc::dtor( this ); };
+    ~ego_enc() { ego_enc::dtor_this( this ); };
 
     //---- implementation of required accessors
 
@@ -175,9 +175,9 @@ public:
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_enc * ctor( ego_enc * penc );
+    static ego_enc * ctor_this( ego_enc * penc );
     /// destruct this struct, ONLY
-    static ego_enc * dtor( ego_enc * penc );
+    static ego_enc * dtor_this( ego_enc * penc );
     /// do some initialization
     static ego_enc * init( ego_enc * penc ) { return penc; };
 
@@ -203,6 +203,13 @@ public:
 
 protected:
 
+    //---- construction and destruction
+
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_enc * ctor_all( ego_enc * ptr, ego_obj_enc * pparent ) { if ( NULL != ptr ) new( ptr ) ego_enc( pparent ); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_enc * dtor_all( ego_enc * ptr )  { if ( NULL != ptr ) ptr->~ego_enc(); return ptr; }
+
     //---- memory management
 
     /// allocate data for this struct, ONLY
@@ -217,11 +224,11 @@ protected:
 
     //---- private implementations of the configuration functions
 
-    static ego_enc * do_ctor( ego_enc * penc );
+    static ego_enc * do_construct( ego_enc * penc );
     static ego_enc * do_init( ego_enc * penc );
     static ego_enc * do_process( ego_enc * penc );
     static ego_enc * do_deinit( ego_enc * penc );
-    static ego_enc * do_dtor( ego_enc * penc );
+    static ego_enc * do_destruct( ego_enc * penc );
 
 private:
 
@@ -247,10 +254,10 @@ struct ego_obj_enc : public ego_obj
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_obj_enc() : _enc_data( this ) { ctor( this ); }
+    explicit ego_obj_enc() : _enc_data( this ) { ctor_this( this ); }
 
     /// default destructor
-    ~ego_obj_enc() { dtor( this ); }
+    ~ego_obj_enc() { dtor_this( this ); }
 
     //---- implementation of required accessors
 
@@ -267,14 +274,14 @@ struct ego_obj_enc : public ego_obj
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_obj_enc * ctor( ego_obj_enc * pobj );
+    static ego_obj_enc * ctor_this( ego_obj_enc * pobj );
     /// destruct this struct, ONLY
-    static ego_obj_enc * dtor( ego_obj_enc * pobj );
+    static ego_obj_enc * dtor_this( ego_obj_enc * pobj );
 
-    /// construct this struct, and ALL dependent structs
-    static ego_obj_enc * do_ctor( ego_obj_enc * pobj );
-    /// destruct this struct, and ALL dependent structs
-    static ego_obj_enc * do_dtor( ego_obj_enc * pobj );
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_obj_enc * ctor_all( ego_obj_enc * ptr ) { if ( NULL != ptr ) new( ptr ) ego_obj_enc(); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_obj_enc * dtor_all( ego_obj_enc * ptr )  { if ( NULL != ptr ) ptr->~ego_obj_enc(); return ptr; }
 
     //---- global configuration functions
 

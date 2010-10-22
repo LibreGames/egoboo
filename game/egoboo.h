@@ -195,7 +195,7 @@ struct ego_main_process_data
 
     ego_main_process_data() { clear( this ); }
 
-    static ego_main_process_data * ctor( ego_main_process_data * ptr ) { return clear( ptr ); }
+    static ego_main_process_data * ctor_this( ego_main_process_data * ptr ) { return clear( ptr ); }
 
 private:
 
@@ -213,11 +213,11 @@ private:
 
 struct ego_main_process : public ego_main_process_data, public ego_process
 {
-    ego_main_process() { ctor( this ); }
+    ego_main_process() { ctor_this( this ); }
 
     static ego_main_process * init( ego_main_process * eproc, int argc, char **argv );
 
-    static ego_main_process * ctor( ego_main_process * ptr )
+    static ego_main_process * ctor_this( ego_main_process * ptr )
     {
         if ( NULL == ptr ) return ptr;
 
@@ -226,10 +226,10 @@ struct ego_main_process : public ego_main_process_data, public ego_process
         return ptr;
     }
 
-    static ego_main_process * do_ctor( ego_main_process * ptr )
+    static ego_main_process * ctor_all( ego_main_process * ptr )
     {
-        ego_process::ctor( ptr );
-        ego_main_process_data::ctor( ptr );
+        ego_process::ctor_this( ptr );
+        ego_main_process_data::ctor_this( ptr );
 
         return ptr;
     }

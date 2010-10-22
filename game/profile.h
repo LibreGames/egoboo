@@ -150,37 +150,6 @@ bool_t  ProList_free_one( const PRO_REF & object_ref );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// the BSP structure housing the object
-struct ego_obj_BSP
-{
-    // the BSP of characters for character-character and character-particle interactions
-    ego_BSP_tree     tree;
-
-    static ego_obj_BSP root;
-    static int         chr_count;      ///< the number of characters in the ego_obj_BSP::root structure
-    static int         prt_count;      ///< the number of particles  in the ego_obj_BSP::root structure
-
-    ego_obj_BSP() {};
-    ~ego_obj_BSP() { dtor( this ); };
-
-    static bool_t ctor( ego_obj_BSP * pbsp, struct mpd_BSP   * pmesh_bsp );
-    static bool_t dtor( ego_obj_BSP * pbsp );
-
-    static bool_t alloc( ego_obj_BSP * pbsp, int depth );
-    static bool_t dealloc( ego_obj_BSP * pbsp );
-
-    static bool_t fill( ego_obj_BSP * pbsp );
-    static bool_t empty( ego_obj_BSP * pbsp );
-
-    //bool_t insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pnode, int depth, int address_x[], int address_y[], int address_z[] );
-    static bool_t insert_chr( ego_obj_BSP * pbsp, struct ego_chr * pchr );
-    static bool_t insert_prt( ego_obj_BSP * pbsp, struct ego_prt_bundle * pbdl_prt );
-
-    static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst );
-};
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 extern size_t  bookicon_count;
 extern TX_REF  bookicon_ref[MAX_SKIN];                      ///< The first book icon
 

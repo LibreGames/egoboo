@@ -83,7 +83,7 @@ struct ego_GLvertex
 
     ego_GLvertex() { clear( this ); }
 
-    ego_GLvertex * ctor( ego_GLvertex * ptr ) { return clear( ptr ); }
+    ego_GLvertex * ctor_this( ego_GLvertex * ptr ) { return clear( ptr ); }
 
 private:
 

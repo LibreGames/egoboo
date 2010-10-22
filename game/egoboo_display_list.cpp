@@ -469,18 +469,22 @@ display_list_t * display_list_ctor( display_list_t * list_ptr, GLsizei count )
     display_list_t * ret = list_ptr;
 
     // if there is no list_ptr, create one
+    ret = display_list_dtor( ret, bfalse );
+
     if ( NULL == ret )
     {
         ret = EGOBOO_NEW( display_list_t );
     }
 
-    // clear the data
-    memset( ret, 0, sizeof( display_list_t ) );
-
     // if there is no count, return the empty struct
     if ( 0 == count ) return ret;
 
     // allocate the ary
+    if ( NULL != ret->ary )
+    {
+        EGOBOO_DELETE_ARY( ret->ary )
+    }
+
     ret->ary = EGOBOO_NEW_ARY( display_item_t * , count );
 
     // initialize the elements of the array
@@ -667,8 +671,14 @@ display_item_t * display_list_append( display_list_t * list_ptr, display_item_t 
 
     if ( list_ptr->used < list_ptr->size )
     {
-        // copy the data into the array
+        // get rid of the old value in this slot, if any
+        display_item_t * pold = list_ptr->ary[ list_ptr->used ];
+        pold = display_item_free( pold, GL_TRUE );
+
+        // insert the new element into the array
         list_ptr->ary[ list_ptr->used ] = pitem;
+
+        // bump the index
         list_ptr->used++;
 
         // make the pointer null to indicate that the array owns the data now

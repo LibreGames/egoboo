@@ -26,6 +26,8 @@
 #include "log.h"
 #include "graphic.h"
 
+#include "mesh_BSP.h"
+
 #include "egoboo_math.inl"
 #include "egoboo_typedef.h"
 #include "egoboo_fileutil.h"
@@ -46,15 +48,13 @@ static float grid_get_mix( float u0, float u, float v0, float v );
 //--------------------------------------------------------------------------------------------
 ego_mpd     mesh;
 
-mpd_BSP mpd_BSP::root;
-
 int ego_mpd::mpdfx_tests = 0;
 int ego_mpd::bound_tests = 0;
 int ego_mpd::pressure_tests = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mpd_info * ego_mpd_info::ctor( ego_mpd_info * pinfo )
+ego_mpd_info * ego_mpd_info::ctor_this( ego_mpd_info * pinfo )
 {
     if ( NULL == pinfo ) return pinfo;
 
@@ -84,7 +84,7 @@ ego_mpd_info * ego_mpd_info::init( ego_mpd_info * pinfo, int numvert, size_t til
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd_info * ego_mpd_info::dtor( ego_mpd_info * pinfo )
+ego_mpd_info * ego_mpd_info::dtor_this( ego_mpd_info * pinfo )
 {
     if ( NULL == pinfo ) return NULL;
 
@@ -96,7 +96,7 @@ ego_mpd_info * ego_mpd_info::dtor( ego_mpd_info * pinfo )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-ego_tile_mem * ego_tile_mem::ctor( ego_tile_mem * pmem )
+ego_tile_mem * ego_tile_mem::ctor_this( ego_tile_mem * pmem )
 {
     if ( NULL == pmem ) return pmem;
 
@@ -106,7 +106,7 @@ ego_tile_mem * ego_tile_mem::ctor( ego_tile_mem * pmem )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tile_mem * ego_tile_mem::dtor( ego_tile_mem * pmem )
+ego_tile_mem * ego_tile_mem::dtor_this( ego_tile_mem * pmem )
 {
     if ( NULL == pmem ) return NULL;
 
@@ -117,7 +117,7 @@ ego_tile_mem * ego_tile_mem::dtor( ego_tile_mem * pmem )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mpd   * ego_mpd::ctor( ego_mpd * pmesh )
+ego_mpd   * ego_mpd::ctor_this( ego_mpd * pmesh )
 {
     /// @details BB@> initialize the ego_mpd   structure
 
@@ -125,9 +125,9 @@ ego_mpd   * ego_mpd::ctor( ego_mpd * pmesh )
     {
         ego_mpd::init_tile_offset( pmesh );
 
-        ego_tile_mem::ctor( &( pmesh->tmem ) );
-        ego_grid_mem::ctor( &( pmesh->gmem ) );
-        ego_mpd_info::ctor( &( pmesh->info ) );
+        ego_tile_mem::ctor_this( &( pmesh->tmem ) );
+        ego_grid_mem::ctor_this( &( pmesh->gmem ) );
+        ego_mpd_info::ctor_this( &( pmesh->info ) );
     }
 
     // global initialization
@@ -137,16 +137,16 @@ ego_mpd   * ego_mpd::ctor( ego_mpd * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * ego_mpd::dtor( ego_mpd   * pmesh )
+ego_mpd   * ego_mpd::dtor_this( ego_mpd   * pmesh )
 {
     if ( NULL == pmesh ) return NULL;
 
-    if ( NULL == ego_tile_mem::dtor( &( pmesh->tmem ) ) ) return NULL;
-    if ( NULL == ego_grid_mem::dtor( &( pmesh->gmem ) ) ) return NULL;
-    if ( NULL == ego_mpd_info::dtor( &( pmesh->info ) ) ) return NULL;
+    if ( NULL == ego_tile_mem::dtor_this( &( pmesh->tmem ) ) ) return NULL;
+    if ( NULL == ego_grid_mem::dtor_this( &( pmesh->gmem ) ) ) return NULL;
+    if ( NULL == ego_mpd_info::dtor_this( &( pmesh->info ) ) ) return NULL;
 
     // delete the mesh BSP data
-    mpd_BSP::dtor( &mpd_BSP::root );
+    mpd_BSP::dtor_this( &mpd_BSP::root );
 
     return clear( pmesh );
 }
@@ -154,9 +154,9 @@ ego_mpd   * ego_mpd::dtor( ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 ego_mpd   * ego_mpd::renew( ego_mpd   * pmesh )
 {
-    pmesh = ego_mpd::dtor( pmesh );
+    pmesh = ego_mpd::dtor_this( pmesh );
 
-    return ego_mpd::ctor( pmesh );
+    return ego_mpd::ctor_this( pmesh );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -181,7 +181,7 @@ ego_mpd   * ego_mpd::create( ego_mpd   * pmesh, int tiles_x, int tiles_y )
     if ( NULL == pmesh )
     {
         pmesh = EGOBOO_NEW( ego_mpd );
-        pmesh = ego_mpd::ctor( pmesh );
+        pmesh = ego_mpd::ctor_this( pmesh );
     }
 
     return ego_mpd::ctor_1( pmesh, tiles_x, tiles_y );
@@ -192,7 +192,7 @@ bool_t ego_mpd::destroy( ego_mpd   ** ppmesh )
 {
     if ( NULL == ppmesh || NULL == *ppmesh ) return bfalse;
 
-    ego_mpd::dtor( *ppmesh );
+    ego_mpd::dtor_this( *ppmesh );
 
     *ppmesh = NULL;
 
@@ -349,7 +349,7 @@ ego_mpd   * ego_mpd::finalize( ego_mpd   * pmesh )
     ego_mpd::make_texture( pmesh );
 
     // initialize the mesh's BSP structure with the mesh tiles
-    mpd_BSP::ctor( &mpd_BSP::root, pmesh );
+    mpd_BSP::ctor_this( &mpd_BSP::root, pmesh );
 
     return pmesh;
 }
@@ -441,11 +441,11 @@ ego_mpd * mesh_load( const char *modname, ego_mpd   * pmesh )
         // create a new mesh if we are passed a NULL pointer
         if ( NULL == pmesh )
         {
-            pmesh = ego_mpd::ctor( pmesh );
+            pmesh = ego_mpd::ctor_this( pmesh );
         }
         else
         {
-            mpd_BSP::dtor( &mpd_BSP::root );
+            mpd_BSP::dtor_this( &mpd_BSP::root );
         }
         if ( NULL == pmesh ) return pmesh;
 
@@ -480,7 +480,7 @@ ego_mpd * mesh_load( const char *modname, ego_mpd   * pmesh )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_grid_mem * ego_grid_mem::ctor( ego_grid_mem * pmem )
+ego_grid_mem * ego_grid_mem::ctor_this( ego_grid_mem * pmem )
 {
     if ( NULL == pmem ) return NULL;
 
@@ -490,7 +490,7 @@ ego_grid_mem * ego_grid_mem::ctor( ego_grid_mem * pmem )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_grid_mem * ego_grid_mem::dtor( ego_grid_mem * pmem )
+ego_grid_mem * ego_grid_mem::dtor_this( ego_grid_mem * pmem )
 {
     if ( NULL == pmem ) return NULL;
 
@@ -1937,183 +1937,3 @@ ego_tile_info * ego_tile_info_alloc_ary( size_t count )
 
     return ego_tile_info_init_ary( retval, count );
 }
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-mpd_BSP * mpd_BSP::ctor( mpd_BSP * pbsp, ego_mpd   * pmesh )
-{
-    /// @details BB@> Create a new BSP tree for the mesh.
-    //     These parameters duplicate the max resolution of the old system.
-
-    int size_x, size_y;
-    int depth;
-
-    if ( NULL == pbsp ) return NULL;
-
-    memset( pbsp, 0, sizeof( *pbsp ) );
-
-    if ( NULL == pmesh ) return pbsp;
-    size_x = pmesh->gmem.grids_x;
-    size_y = pmesh->gmem.grids_y;
-
-    // determine the number of bifurcations necessary to get cells the size of the "blocks"
-    depth = ceil( log( 0.5f * MAX( size_x, size_y ) ) / log( 2.0f ) );
-
-    // make a 2D BSP tree with "max depth" depth
-    ego_BSP_tree::ctor( &( pbsp->tree ), 2, depth );
-
-    mpd_BSP::alloc( pbsp, pmesh );
-
-    return pbsp;
-}
-
-//--------------------------------------------------------------------------------------------
-mpd_BSP * mpd_BSP::dtor( mpd_BSP * pbsp )
-{
-    if ( NULL == pbsp ) return NULL;
-
-    // free all allocated memory
-    mpd_BSP::dealloc( pbsp );
-
-    // set the volume to zero
-    pbsp->volume.mins[OCT_X] = pbsp->volume.maxs[OCT_X] = 0.0f;
-
-    return pbsp;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t mpd_BSP::alloc( mpd_BSP * pbsp, ego_mpd   * pmesh )
-{
-    Uint32 i;
-
-    if ( NULL == pbsp || NULL == pmesh ) return bfalse;
-
-    if ( 0 == pmesh->gmem.grid_count ) return bfalse;
-
-    // allocate the ego_BSP_leaf   list, the containers for the actual tiles
-    ego_BSP_leaf_ary::ctor( &( pbsp->nodes ), pmesh->gmem.grid_count );
-    if ( NULL == pbsp->nodes.ary ) return bfalse;
-
-    // set up the initial bounding volume size
-    pbsp->volume = pmesh->tmem.tile_list[0].oct;
-
-    // construct the ego_BSP_leaf   list
-    for ( i = 0; i < pmesh->gmem.grid_count; i++ )
-    {
-        ego_BSP_leaf        * pleaf = pbsp->nodes.ary + i;
-        ego_tile_info * ptile = pmesh->tmem.tile_list + i;
-
-        // add the bounding volume for this tile to the bounding volume for the mesh
-        ego_oct_bb::do_union( pbsp->volume, ptile->oct, &( pbsp->volume ) );
-
-        // let data type 1 stand for a tile, -1 is uninitialized
-        ego_BSP_leaf::ctor( pleaf, 2, pmesh->tmem.tile_list + i, 1 );
-        pleaf->index = i;
-    }
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t mpd_BSP::dealloc( mpd_BSP * pbsp )
-{
-    if ( NULL == pbsp ) return bfalse;
-
-    // deallocate the tree
-    ego_BSP_tree::dealloc( &( pbsp->tree ) );
-
-    // deallocate the nodes
-    ego_BSP_leaf_ary::dtor( &( pbsp->nodes ) );
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t mpd_BSP::fill( mpd_BSP * pbsp )
-{
-    size_t tile;
-
-    for ( tile = 0; tile < pbsp->nodes.top; tile++ )
-    {
-        ego_tile_info * pdata;
-        ego_BSP_leaf        * pleaf = pbsp->nodes.ary + tile;
-
-        // do not deal with uninitialized nodes
-        if ( pleaf->data_type <= LEAF_UNKNOWN ) continue;
-
-        // grab the leaf data, assume that it points to the correct data structure
-        pdata = ( ego_tile_info* ) pleaf->data;
-        if ( NULL == pdata ) continue;
-
-        // calculate the leaf's ego_BSP_aabb
-        ego_BSP_aabb::from_oct_bb( &( pleaf->bbox ), &( pdata->oct ) );
-
-        // insert the leaf
-        ego_BSP_tree::insert_leaf( &( pbsp->tree ), pleaf );
-    }
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst )
-{
-    /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
-    //      Return the number of collisions found.
-
-    if ( NULL == pbsp || NULL == paabb ) return 0;
-
-    if ( NULL == colst ) return 0;
-
-    colst->top = 0;
-
-    if ( 0 == colst->size ) return 0;
-
-    return ego_BSP_tree::collide( &( pbsp->tree ), paabb, colst );
-}
-
-////--------------------------------------------------------------------------------------------
-//bool_t mpd_BSP::insert_node( mpd_BSP * pbsp, ego_BSP_leaf * pnode, int depth, int address_x[], int address_y[] )
-//{
-//    int i;
-//    bool_t retval;
-//    Uint32 index;
-//    ego_BSP_branch * pbranch, * pbranch_new;
-//    ego_BSP_tree   * ptree = &( pbsp->tree );
-//
-//    retval = bfalse;
-//    if ( depth < 0 )
-//    {
-//        // this can only happen if the node does not intersect the BSP bounding box
-//        pnode->next = ptree->infinite;
-//        ptree->infinite = pnode;
-//        retval = btrue;
-//    }
-//    else if ( 0 == depth )
-//    {
-//        // this can only happen if the tile should be in the root node list
-//        pnode->next = ptree->root->nodes;
-//        ptree->root->nodes = pnode;
-//        retval = btrue;
-//    }
-//    else
-//    {
-//        // insert the node into the tree at this point
-//        pbranch = ptree->root;
-//        for ( i = 0; i < depth; i++ )
-//        {
-//            index = (( Uint32 )address_x[i] ) + ((( Uint32 )address_y[i] ) << 1 );
-//
-//            pbranch_new = ego_BSP_tree::ensure_branch( ptree, pbranch, index );
-//            if ( NULL == pbranch_new ) break;
-//
-//            pbranch = pbranch_new;
-//        };
-//
-//        // insert the node in this branch
-//        retval = ego_BSP_tree::insert( ptree, pbranch, pnode, -1 );
-//    };
-//
-//    return retval;
-//}
-//

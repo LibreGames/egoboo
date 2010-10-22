@@ -23,11 +23,10 @@
 
 #include "game.h"
 
-#include "char.inl"
-#include "particle.inl"
+#include "object_BSP.h"
+#include "mesh_BSP.h"
+
 #include "mad.h"
-#include "enchant.inl"
-#include "profile.inl"
 
 #include "controls_file.h"
 #include "scancode_file.h"
@@ -75,6 +74,11 @@
 #if defined(USE_LUA_CONSOLE)
 #include "lua_console.h"
 #endif
+
+#include "char.inl"
+#include "particle.inl"
+#include "enchant.inl"
+#include "profile.inl"
 
 #include <SDL_image.h>
 
@@ -1075,12 +1079,12 @@ int game_do_menu( ego_menu_process * mproc )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_game_process * ego_game_process::ctor( ego_game_process * gproc )
+ego_game_process * ego_game_process::ctor_this( ego_game_process * gproc )
 {
     if ( NULL == gproc ) return NULL;
 
-    ego_process::ctor( gproc );
-    ego_game_process_data::ctor( gproc );
+    ego_process::ctor_this( gproc );
+    ego_game_process_data::ctor_this( gproc );
 
     // initialize all the profile variables
     PROFILE_INIT( game_update_loop );
@@ -1134,7 +1138,7 @@ egoboo_rv ego_game_process::do_beginning()
     // do some graphics initialization
     // make_lightdirectionlookup();
     make_enviro();
-    ego_camera::ctor( PCamera );
+    ego_camera::ctor_this( PCamera );
 
     // try to start a new module
     if ( !game_begin_module( pickedmodule_path, ( Uint32 )~0 ) )
@@ -1181,7 +1185,7 @@ egoboo_rv ego_game_process::do_beginning()
     est_update_game_time  = 1.0f / TARGET_UPS;
     est_max_game_ups      = TARGET_UPS;
 
-    ego_obj_BSP::ctor( &ego_obj_BSP::root, &mpd_BSP::root );
+    ego_obj_BSP::ctor_this( &ego_obj_BSP::root, &mpd_BSP::root );
 
     // go to the next state
     result = 0;

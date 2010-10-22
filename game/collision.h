@@ -62,13 +62,22 @@ ego_CoNode * CoNode_ctor( ego_CoNode * );
 Uint8      CoNode_generate_hash( ego_CoNode * coll );
 int        CoNode_cmp( const void * pleft, const void * pright );
 
+// a struct needed to allow the STL std::sort function to sort a list of ego_CoNode data
+struct CoNode_greater : public std::binary_function <ego_CoNode, ego_CoNode, bool>
+{
+    bool operator()(
+        const ego_CoNode& _Left,
+        const ego_CoNode& _Right
+    ) const;
+};
+
 //--------------------------------------------------------------------------------------------
-// a template-like definition of a dynamically allocated array of ego_CoNode elements
-DECLARE_DYNAMIC_ARY( CoNode_ary, ego_CoNode );
+
+typedef t_dary<ego_CoNode > CoNode_ary;
 
 //--------------------------------------------------------------------------------------------
 // a template-like definition of a dynamically allocated array of ego_hash_node elements
-DECLARE_DYNAMIC_ARY( HashNode_ary, ego_hash_node );
+typedef t_dary<ego_hash_node >  HashNode_ary;
 
 //--------------------------------------------------------------------------------------------
 

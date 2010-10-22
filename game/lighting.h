@@ -56,7 +56,7 @@ struct ego_lighting_cache_base
 
     ego_lighting_cache_base() { clear( this ); }
 
-    ego_lighting_cache_base * ctor( ego_lighting_cache_base * ptr ) { return clear( ptr ); }
+    ego_lighting_cache_base * ctor_this( ego_lighting_cache_base * ptr ) { return clear( ptr ); }
 
 private:
 

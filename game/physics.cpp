@@ -249,11 +249,11 @@ bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1
     if ( NULL == tmax ) tmax = &local_tmax;
 
     // convert the position and velocity vectors to octagonal format
-    ego_oct_vec::ctor( &ovel1, vel1 );
-    ego_oct_vec::ctor( &opos1, pos1 );
+    ego_oct_vec::ctor_this( &ovel1, vel1 );
+    ego_oct_vec::ctor_this( &opos1, pos1 );
 
-    ego_oct_vec::ctor( &ovel2, vel2 );
-    ego_oct_vec::ctor( &opos2, pos2 );
+    ego_oct_vec::ctor_this( &ovel2, vel2 );
+    ego_oct_vec::ctor_this( &opos2, pos2 );
 
     // cycle through the coordinates to see when the two volumes might coincide
     found = bfalse;
@@ -1087,11 +1087,11 @@ bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, 
 //    }
 //
 //    // convert the position and velocity vectors to octagonal format
-//    ego_oct_vec::ctor( ovel1, vel1 );
-//    ego_oct_vec::ctor( opos1, pos1 );
+//    ego_oct_vec::ctor_this( ovel1, vel1 );
+//    ego_oct_vec::ctor_this( opos1, pos1 );
 //
-//    ego_oct_vec::ctor( ovel2, vel2 );
-//    ego_oct_vec::ctor( opos2, pos2 );
+//    ego_oct_vec::ctor_this( ovel2, vel2 );
+//    ego_oct_vec::ctor_this( opos2, pos2 );
 //
 //    // cycle through the coordinates to see when the two volumes might coincide
 //    found = bfalse;

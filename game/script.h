@@ -180,8 +180,8 @@ struct ego_ai_state
     waypoint_t      wp;                  ///< current waypoint
     ego_waypoint_list wp_lst;              ///< Stored waypoints
 
-    static ego_ai_state * ctor( ego_ai_state * pself );
-    static ego_ai_state * dtor( ego_ai_state * pself );
+    static ego_ai_state * ctor_this( ego_ai_state * pself );
+    static ego_ai_state * dtor_this( ego_ai_state * pself );
     static bool_t         dealloc( ego_ai_state * pself );
     static ego_ai_state * reconstruct( ego_ai_state * pself );
 
@@ -227,7 +227,7 @@ struct ego_ai_bundle
     REF_T            ai_state_ref;
     ego_ai_state   * ai_state_ptr;
 
-    static ego_ai_bundle * ctor( ego_ai_bundle * pbundle );
+    static ego_ai_bundle * ctor_this( ego_ai_bundle * pbundle );
     static ego_ai_bundle * validate( ego_ai_bundle * pbundle );
     static ego_ai_bundle * set( ego_ai_bundle * pbundle, struct ego_chr * pchr );
 };

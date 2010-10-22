@@ -23,7 +23,6 @@
 #include "extensions/ogl_include.h"
 
 #include "lighting.h"
-#include "bsp.h"
 
 //--------------------------------------------------------------------------------------------
 struct ego_mpd;
@@ -60,31 +59,6 @@ struct ego_mpd_info;
 //--------------------------------------------------------------------------------------------
 typedef GLXvector3f normal_cache_t[4];
 typedef float       light_cache_t[4];
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-// the BSP structure housing the mesh
-struct mpd_BSP
-{
-    ego_oct_bb       volume;
-    ego_BSP_leaf_ary nodes;
-    ego_BSP_tree     tree;
-
-    mpd_BSP()                    { /* nothing */ }
-    mpd_BSP( ego_mpd   * pmesh ) { ctor( this, pmesh ); }
-    ~mpd_BSP()                   { dtor( this ); }
-
-    static mpd_BSP root;
-
-    static mpd_BSP * ctor( mpd_BSP * pbsp, ego_mpd * pmesh );
-    static mpd_BSP * dtor( mpd_BSP * );
-    static bool_t    alloc( mpd_BSP * pbsp, ego_mpd * pmesh );
-    static bool_t    dealloc( mpd_BSP * pbsp );
-
-    static bool_t    fill( mpd_BSP * pbsp );
-
-    static int       collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst );
-};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -152,11 +126,11 @@ struct ego_grid_mem
     // the per-grid info
     ego_grid_info* grid_list;                        ///< tile command info
 
-    ego_grid_mem() { clear( this ); ctor( this ); }
-    ~ego_grid_mem() { dtor( this ); }
+    ego_grid_mem() { clear( this ); ctor_this( this ); }
+    ~ego_grid_mem() { dtor_this( this ); }
 
-    static ego_grid_mem * ctor( ego_grid_mem * pmem );
-    static ego_grid_mem * dtor( ego_grid_mem * pmem );
+    static ego_grid_mem * ctor_this( ego_grid_mem * pmem );
+    static ego_grid_mem * dtor_this( ego_grid_mem * pmem );
 
 protected:
 
@@ -195,11 +169,11 @@ struct ego_tile_mem
     GLXvector3f   * clst;                              ///< the color list (for lighting the mesh)
     GLXvector3f   * nlst;                              ///< the normal list
 
-    ego_tile_mem() { clear( this ); ctor( this ); };
-    ~ego_tile_mem() { dtor( this ); };
+    ego_tile_mem() { clear( this ); ctor_this( this ); };
+    ~ego_tile_mem() { dtor_this( this ); };
 
-    static ego_tile_mem *  ctor( ego_tile_mem * pmem );
-    static ego_tile_mem *  dtor( ego_tile_mem * pmem );
+    static ego_tile_mem *  ctor_this( ego_tile_mem * pmem );
+    static ego_tile_mem *  dtor_this( ego_tile_mem * pmem );
     static bool_t          dealloc( ego_tile_mem * pmem );
     static bool_t          alloc( ego_tile_mem * pmem, ego_mpd_info * pinfo );
 
@@ -234,11 +208,11 @@ struct ego_mpd_info
     int             tiles_y;
     Uint32          tiles_count;                      ///< Number of tiles
 
-    ego_mpd_info() { clear( this ); ctor( this ); }
-    ~ego_mpd_info() { dtor( this ); }
+    ego_mpd_info() { clear( this ); ctor_this( this ); }
+    ~ego_mpd_info() { dtor_this( this ); }
 
-    static ego_mpd_info * ctor( ego_mpd_info * pinfo );
-    static ego_mpd_info * dtor( ego_mpd_info * pinfo );
+    static ego_mpd_info * ctor_this( ego_mpd_info * pinfo );
+    static ego_mpd_info * dtor_this( ego_mpd_info * pinfo );
 
     static ego_mpd_info * init( ego_mpd_info * pinfo, int numvert, size_t tiles_x, size_t tiles_y );
 
@@ -269,14 +243,14 @@ struct ego_mpd
     static int bound_tests;
     static int pressure_tests;
 
-    ego_mpd()  { clear( this ); ctor( this ); };
-    ~ego_mpd() { dtor( this ); }
+    ego_mpd()  { clear( this ); ctor_this( this ); };
+    ~ego_mpd() { dtor_this( this ); }
 
     static ego_mpd   * create( ego_mpd   * pmesh, int tiles_x, int tiles_y );
     static bool_t      destroy( ego_mpd   ** pmesh );
 
-    static ego_mpd   * ctor( ego_mpd   * pmesh );
-    static ego_mpd   * dtor( ego_mpd   * pmesh );
+    static ego_mpd   * ctor_this( ego_mpd   * pmesh );
+    static ego_mpd   * dtor_this( ego_mpd   * pmesh );
     static ego_mpd   * renew( ego_mpd   * pmesh );
 
     //---- loading functions

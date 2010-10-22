@@ -37,12 +37,12 @@ struct t_ego_obj_lst
     int              loop_depth;
 
     t_ego_obj_lst()  { loop_depth = 0; }
-    ~t_ego_obj_lst() { dtor(); }
+    ~t_ego_obj_lst() { dtor_this(); }
 
     INLINE bool_t validate_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
 
     void             init();
-    void             dtor();
+    void             dtor_this();
 
     void             update_used();
 

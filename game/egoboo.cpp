@@ -143,7 +143,7 @@ egoboo_rv ego_main_process::do_beginning()
     // make sure that a bunch of stuff gets initialized properly
     object_systems_begin();
     game_module_init( PMod );
-    ego_mpd::ctor( PMesh );
+    ego_mpd::ctor_this( PMesh );
     init_all_graphics();
     profile_system_begin();
 
@@ -160,10 +160,10 @@ egoboo_rv ego_main_process::do_beginning()
     atexit( memory_cleanUp );
 
     // initialize the game process, but do not activate it
-    GProc = ego_game_process::ctor( GProc );
+    GProc = ego_game_process::ctor_this( GProc );
 
     // initialize the menu process, and...
-    MProc = ego_menu_process::do_ctor( MProc );
+    MProc = ego_menu_process::ctor_all( MProc );
     // activate the it
     MProc->start();
 
@@ -757,7 +757,7 @@ ego_main_process * ego_main_process::init( ego_main_process * eproc, int argc, c
 {
     if ( NULL == eproc ) return NULL;
 
-    eproc = ego_main_process::do_ctor( eproc );
+    eproc = ego_main_process::ctor_all( eproc );
 
     eproc->argv0 = ( argc > 0 ) ? argv[0] : NULL;
 

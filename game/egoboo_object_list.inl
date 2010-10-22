@@ -84,10 +84,10 @@ void t_ego_obj_lst< _ty, _sz >::init()
         _ty * pobj = ary + tnc;
 
         // destroy all dynamic data
-        ego_obj::do_dtor( POBJ_GET_PBASE( pobj ) );
+        ego_obj::dtor_all( POBJ_GET_PBASE( pobj ) );
 
         // re-create all objects
-        ego_obj::do_ctor( POBJ_GET_PBASE( pobj ), cnt );
+        ego_obj::ctor_all( POBJ_GET_PBASE( pobj ), cnt );
 
         free_queue.push( reference( cnt ) );
     }
@@ -95,7 +95,7 @@ void t_ego_obj_lst< _ty, _sz >::init()
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
-void t_ego_obj_lst< _ty, _sz >::dtor()
+void t_ego_obj_lst< _ty, _sz >::dtor_this()
 {
     reference ref;
     size_t           cnt;
@@ -224,7 +224,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::free_one( const t_reference<_ty> & ref )
         cpp_list_state::set_free( pobj->get_plist(), btrue );
 
         // object "destructor"
-        if ( NULL == _ty::dtor( pobj ) ) return rv_error;
+        if ( NULL == _ty::dtor_this( pobj ) ) return rv_error;
     }
 
     return retval;

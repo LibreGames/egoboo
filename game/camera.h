@@ -113,9 +113,9 @@ struct ego_camera
     fvec3_t   vup;                 ///< the camera up vector
     fvec3_t   vrt;                 ///< the camera right vector
 
-    ego_camera() { clear( this ); ctor( this ); }
+    ego_camera() { clear( this ); ctor_this( this ); }
 
-    static ego_camera * ctor( ego_camera * pcam );
+    static ego_camera * ctor_this( ego_camera * pcam );
 
     static void         reset( ego_camera * pcam, struct ego_mpd * pmesh );
     static void         adjust_angle( ego_camera * pcam, float height );

@@ -232,7 +232,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 //        memset( pprt, 0, sizeof( *pprt ) );
 //
 //        // particle "initializer"
-//        ego_obj::ctor( PDATA_GET_PBASE( pprt ), iprt );
+//        ego_obj::ctor_this( PDATA_GET_PBASE( pprt ), iprt );
 //
 //        PrtList_add_free( iprt );
 //    }

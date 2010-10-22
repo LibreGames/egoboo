@@ -66,13 +66,13 @@ struct ego_oct_vec
 
     ego_oct_vec( oct_vec_base_t & vals ) { clear( this ); memmove( &v, &vals, sizeof( v ) ); }
 
-    ego_oct_vec( fvec3_t & vec ) { clear( this ); ctor( this, vec ); }
+    ego_oct_vec( fvec3_t & vec ) { clear( this ); ctor_this( this, vec ); }
 
     float & operator []( size_t index ) { return v[index]; }
 
     const float & operator []( size_t index ) const  { return v[index]; }
 
-    static ego_oct_vec * ctor( ego_oct_vec * ovec, fvec3_t pos );
+    static ego_oct_vec * ctor_this( ego_oct_vec * ovec, fvec3_t pos );
 
 private:
 
@@ -99,7 +99,7 @@ struct ego_oct_bb
 
     ego_oct_bb() {}
 
-    static ego_oct_bb * ctor( ego_oct_bb * pobb );
+    static ego_oct_bb * ctor_this( ego_oct_bb * pobb );
     static bool_t       do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst );
     static bool_t       do_intersection( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst );
     static bool_t       empty( ego_oct_bb & src1 );
@@ -134,10 +134,10 @@ struct ego_aabb_lst
     ego_lod_aabb * list;
 
     ego_aabb_lst() { clear( this ); }
-    ~ego_aabb_lst() { dtor( this ); }
+    ~ego_aabb_lst() { dtor_this( this ); }
 
-    static const ego_aabb_lst   * ctor( ego_aabb_lst   * lst );
-    static const ego_aabb_lst   * dtor( ego_aabb_lst   * lst );
+    static const ego_aabb_lst   * ctor_this( ego_aabb_lst   * lst );
+    static const ego_aabb_lst   * dtor_this( ego_aabb_lst   * lst );
     static const ego_aabb_lst   * renew( ego_aabb_lst   * lst );
     static const ego_aabb_lst   * alloc( ego_aabb_lst   * lst, int count );
 
@@ -160,10 +160,10 @@ struct ego_aabb_ary
     ego_aabb_lst   * list;
 
     ego_aabb_ary() { clear( this ); }
-    ~ego_aabb_ary() { dtor( this ); }
+    ~ego_aabb_ary() { dtor_this( this ); }
 
-    static ego_aabb_ary * ctor( ego_aabb_ary * ary ) { ary = dtor( ary ); ary = clear( ary ); return ary; }
-    static ego_aabb_ary * dtor( ego_aabb_ary * ary );
+    static ego_aabb_ary * ctor_this( ego_aabb_ary * ary ) { ary = dtor_this( ary ); ary = clear( ary ); return ary; }
+    static ego_aabb_ary * dtor_this( ego_aabb_ary * ary );
     static ego_aabb_ary * renew( ego_aabb_ary * ary );
     static ego_aabb_ary * alloc( ego_aabb_ary * ary, int count );
 
@@ -226,7 +226,7 @@ struct ego_CVolume
     ego_OVolume    ov;
     ego_OTree    * tree;
 
-    static bool_t ctor( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume * pvb );
+    static bool_t ctor_this( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume * pvb );
     static bool_t refine( ego_CVolume * pcv );
 };
 

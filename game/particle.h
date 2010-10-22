@@ -109,17 +109,17 @@ struct ego_prt_data
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_prt_data()  { ego_prt_data::ctor( this ); };
+    explicit ego_prt_data()  { ego_prt_data::ctor_this( this ); };
 
     /// default destructor
-    ~ego_prt_data() { ego_prt_data::dtor( this ); };
+    ~ego_prt_data() { ego_prt_data::dtor_this( this ); };
 
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_prt_data * ctor( ego_prt_data * );
+    static ego_prt_data * ctor_this( ego_prt_data * );
     /// destruct this struct, ONLY
-    static ego_prt_data * dtor( ego_prt_data * );
+    static ego_prt_data * dtor_this( ego_prt_data * );
     /// set critical values to safe values
     static ego_prt_data * init( ego_prt_data * );
 
@@ -215,10 +215,10 @@ protected:
 
     //---- construction and destruction
 
-    /// construct this struct, and ALL dependent structs
-    static ego_prt_data * do_ctor( ego_prt_data * pdata ) { return ego_prt_data::ctor( pdata ); };
-    /// denstruct this struct, and ALL dependent structs
-    static ego_prt_data * do_dtor( ego_prt_data * pdata ) { return ego_prt_data::dtor( pdata ); };
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_prt_data * ctor_all( ego_prt_data * ptr ) { if ( NULL != ptr ) new( ptr ) ego_prt_data(); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_prt_data * dtor_all( ego_prt_data * ptr )  { if ( NULL != ptr ) ptr->~ego_prt_data(); return ptr; }
 
     //---- memory management
 
@@ -247,10 +247,10 @@ struct ego_prt : public ego_prt_data
     //---- constructors and destructors
 
     /// non-default constructor. We MUST know who our marent is
-    explicit ego_prt( ego_obj_prt * _pparent ) : _parent_obj_ptr( _pparent ) { ego_prt::ctor( this ); };
+    explicit ego_prt( ego_obj_prt * _pparent ) : _parent_obj_ptr( _pparent ) { ego_prt::ctor_this( this ); };
 
     /// default destructor
-    ~ego_prt() { ego_prt::dtor( this ); };
+    ~ego_prt() { ego_prt::dtor_this( this ); };
 
     //---- implementation of required accessors
 
@@ -264,9 +264,9 @@ struct ego_prt : public ego_prt_data
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_prt * ctor( ego_prt * pprt );
+    static ego_prt * ctor_this( ego_prt * pprt );
     /// construct this struct, ONLY
-    static ego_prt * dtor( ego_prt * pprt );
+    static ego_prt * dtor_this( ego_prt * pprt );
 
     /// do some initialization
     static ego_prt * init( ego_prt * pprt );
@@ -287,6 +287,13 @@ struct ego_prt : public ego_prt_data
 
 protected:
 
+    //---- construction and destruction
+
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_prt * ctor_all( ego_prt * ptr, ego_obj_prt * pparent ) { if ( NULL != ptr ) new( ptr ) ego_prt( pparent ); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_prt * dtor_all( ego_prt * ptr )  { if ( NULL != ptr ) ptr->~ego_prt(); return ptr; }
+
     //---- memory management
 
     /// allocate data for this struct, ONLY
@@ -301,11 +308,11 @@ protected:
 
     //---- private implementations of the configuration functions
 
-    static ego_prt * do_ctor( ego_prt * pprt );
+    static ego_prt * do_construct( ego_prt * pprt );
     static ego_prt * do_init( ego_prt * pprt );
     static ego_prt * do_process( ego_prt * pprt );
     static ego_prt * do_deinit( ego_prt * pprt );
-    static ego_prt * do_dtor( ego_prt * pprt );
+    static ego_prt * do_destruct( ego_prt * pprt );
 
 private:
 
@@ -336,10 +343,10 @@ struct ego_obj_prt : public ego_obj
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_obj_prt() : _prt_data( this ) { ctor( this ); }
+    explicit ego_obj_prt() : _prt_data( this ) { ctor_this( this ); }
 
     /// default destructor
-    ~ego_obj_prt() { dtor( this ); }
+    ~ego_obj_prt() { dtor_this( this ); }
 
     //---- implementation of required accessors
 
@@ -356,14 +363,14 @@ struct ego_obj_prt : public ego_obj
     //---- construction and destruction
 
     /// construct this struct, ONLY
-    static ego_obj_prt * ctor( ego_obj_prt * pobj );
+    static ego_obj_prt * ctor_this( ego_obj_prt * pobj );
     /// destruct this struct, ONLY
-    static ego_obj_prt * dtor( ego_obj_prt * pobj );
+    static ego_obj_prt * dtor_this( ego_obj_prt * pobj );
 
-    /// construct this struct, and ALL dependent structs
-    static ego_obj_prt * do_ctor( ego_obj_prt * pobj );
-    /// destruct this struct, and ALL dependent structs
-    static ego_obj_prt * do_dtor( ego_obj_prt * pobj );
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_obj_prt * ctor_all( ego_obj_prt * ptr ) { if ( NULL != ptr ) new( ptr ) ego_obj_prt(); return ptr; }
+    /// denstruct this struct, and ALL dependent structs. call the destructor
+    static ego_obj_prt * dtor_all( ego_obj_prt * ptr )  { if ( NULL != ptr ) ptr->~ego_obj_prt(); return ptr; }
 
     //---- accessors
 
@@ -428,9 +435,9 @@ struct ego_prt_bundle
     PIP_REF   pip_ref;
     ego_pip   * pip_ptr;
 
-    ego_prt_bundle( ego_prt * pprt = NULL ) { ctor( this ); if ( NULL != pprt ) set( this, pprt ); }
+    ego_prt_bundle( ego_prt * pprt = NULL ) { ctor_this( this ); if ( NULL != pprt ) set( this, pprt ); }
 
-    static ego_prt_bundle * ctor( ego_prt_bundle * pbundle );
+    static ego_prt_bundle * ctor_this( ego_prt_bundle * pbundle );
     static ego_prt_bundle * validate( ego_prt_bundle * pbundle );
     static ego_prt_bundle * set( ego_prt_bundle * pbundle, ego_prt * pprt );
 };

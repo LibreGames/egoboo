@@ -370,7 +370,13 @@
 				RelativePath=".\mesh.cpp">
 			</File>
 			<File
+				RelativePath=".\mesh_BSP.cpp">
+			</File>
+			<File
 				RelativePath=".\network.cpp">
+			</File>
+			<File
+				RelativePath=".\object_BSP.cpp">
 			</File>
 			<File
 				RelativePath=".\particle.cpp">
@@ -486,7 +492,13 @@
 				RelativePath=".\mesh.h">
 			</File>
 			<File
+				RelativePath=".\mesh_BSP.h">
+			</File>
+			<File
 				RelativePath=".\network.h">
+			</File>
+			<File
+				RelativePath=".\object_BSP.h">
 			</File>
 			<File
 				RelativePath=".\particle.h">
