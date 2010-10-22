@@ -1,5 +1,9 @@
 2010-10-10 <bitnapper>
-- Additional code for visibility check in frustum
+- Adjusted drawing code for 3D-Display. Draw bottom before walls 
+- Known bugs: Setting walls in 'simple mode' still doesn't work correct
+
+2010-10-10 <bitnapper>
+- Added code for visibility check in frustum
 
 2010-10-09 <bitnapper>
 - Prepared support for lights and calculation of lighting
