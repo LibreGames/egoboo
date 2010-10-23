@@ -392,33 +392,33 @@ Mix_Music * sound_load_music( const char * szFileName )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t sound_load( snd_mix_ptr * pptr, const char * szFileName, snd_mix_type type )
+bool_t sound_load( snd_mix_ptr * ptr, const char * szFileName, snd_mix_type type )
 {
 
     if ( !mixeron ) return bfalse;
-    if ( NULL == pptr ) return bfalse;
+    if (( NULL == ptr ) ) return bfalse;
 
     // clear out the data
-    pptr->ptr.unk = NULL;
-    pptr->type    = MIX_UNKNOWN;
+    ptr->ptr.unk = NULL;
+    ptr->type    = MIX_UNKNOWN;
 
     if ( INVALID_CSTR( szFileName ) ) return bfalse;
 
     switch ( type )
     {
         case MIX_MUS:
-            pptr->ptr.mus = sound_load_music( szFileName );
-            if ( NULL != pptr->ptr.mus )
+            ptr->ptr.mus = sound_load_music( szFileName );
+            if ( NULL != ptr->ptr.mus )
             {
-                pptr->type = MIX_MUS;
+                ptr->type = MIX_MUS;
             }
             break;
 
         case MIX_SND:
-            pptr->ptr.snd = sound_load_chunk_vfs( szFileName );
-            if ( NULL != pptr->ptr.snd )
+            ptr->ptr.snd = sound_load_chunk_vfs( szFileName );
+            if ( NULL != ptr->ptr.snd )
             {
-                pptr->type = MIX_SND;
+                ptr->type = MIX_SND;
             }
             break;
 
@@ -432,29 +432,29 @@ bool_t sound_load( snd_mix_ptr * pptr, const char * szFileName, snd_mix_type typ
             break;
     };
 
-    return MIX_UNKNOWN != pptr->type;
+    return MIX_UNKNOWN != ptr->type;
 }
 
 //--------------------------------------------------------------------------------------------
-int sound_play_mix( fvec3_t   pos, snd_mix_ptr * pptr )
+int sound_play_mix( fvec3_t   pos, snd_mix_ptr * ptr )
 {
     int retval = INVALID_SOUND_CHANNEL;
     if ( !snd.soundvalid || !mixeron )
     {
         return INVALID_SOUND_CHANNEL;
     }
-    if ( NULL == pptr || MIX_UNKNOWN == pptr->type || NULL == pptr->ptr.unk )
+    if (( NULL == ptr ) || MIX_UNKNOWN == ptr->type || ( NULL == ptr->ptr.unk ) )
     {
         log_debug( "Unable to load sound. (%s)\n", Mix_GetError() );
         return INVALID_SOUND_CHANNEL;
     }
 
     retval = INVALID_SOUND_CHANNEL;
-    if ( MIX_SND == pptr->type )
+    if ( MIX_SND == ptr->type )
     {
-        retval = sound_play_chunk( pos, pptr->ptr.snd );
+        retval = sound_play_chunk( pos, ptr->ptr.snd );
     }
-    else if ( MIX_MUS == pptr->type )
+    else if ( MIX_MUS == ptr->type )
     {
         // !!!!this will override the music!!!!
 
@@ -462,13 +462,13 @@ int sound_play_mix( fvec3_t   pos, snd_mix_ptr * pptr )
         music_stack_push( musictracksloaded[songplaying], songplaying );
 
         // push on a new stream, play only once
-        retval = Mix_PlayMusic( pptr->ptr.mus, 1 );
+        retval = Mix_PlayMusic( ptr->ptr.mus, 1 );
 
         // invalidate the song
         songplaying = INVALID_SOUND;
 
         // since music_stack_finished_callback() is registered using Mix_HookMusicFinished(),
-        // it will resume when pptr->ptr.mus is finished playing
+        // it will resume when ptr->ptr.mus is finished playing
     }
 
     return retval;

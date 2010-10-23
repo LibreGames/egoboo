@@ -1082,7 +1082,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
     pprt->spawn_data.oldtarget  = oldtarget;
 
     // actually force the character to spawn
-    ego_obj_prt::run_activate( PDATA_GET_POBJ( pprt ), 100 );
+    ego_obj_prt::run_activate( PDATA_GET_POBJ( ego_prt, pprt ), 100 );
 
     // count out all the requests for this particle type
     if ( NULL != pprt )
@@ -2309,10 +2309,10 @@ bool_t prt_request_free_ref( const PRT_REF & iprt )
     if ( NULL == pprt || TERMINATED_PPRT( pprt ) ) return bfalse;
 
     // wait for PrtObjList.cleanup() to work its magic
-    ego_obj::begin_waiting( PDATA_GET_PBASE( pprt ) );
+    ego_obj::begin_waiting( PDATA_GET_PBASE( ego_prt, pprt ) );
 
     // tell
-    ego_obj_prt::set_limbo( PDATA_GET_POBJ( pprt ), btrue );
+    ego_obj_prt::set_limbo( PDATA_GET_POBJ( ego_prt, pprt ), btrue );
 
     return btrue;
 }
@@ -2372,7 +2372,7 @@ void cleanup_all_particles()
         ego_prt * pprt = pobj->get_pdata();
         if ( NULL == pprt ) continue;
 
-        ego_obj * pbase = PDATA_GET_PBASE( pprt );
+        ego_obj * pbase = PDATA_GET_PBASE( ego_prt, pprt );
         if ( NULL == pbase ) continue;
 
         if ( FLAG_KILLED_PBASE( pbase ) )
@@ -2721,7 +2721,7 @@ ego_prt_bundle * prt_update_ingame( ego_prt_bundle * pbdl_prt )
     loc_pprt = pbdl_prt->prt_ptr;
     loc_ppip = pbdl_prt->pip_ptr;
 
-    pbase = PDATA_GET_PBASE( loc_pprt );
+    pbase = PDATA_GET_PBASE( ego_prt, loc_pprt );
 
     // if the object is not "on", it is no longer "in game" but still needs to be displayed
     if ( !INGAME_PPRT( loc_pprt ) )
@@ -2782,7 +2782,7 @@ ego_prt_bundle * prt_update_ingame( ego_prt_bundle * pbdl_prt )
     // If the particle is done updating, send it to limbo
     if ( !loc_pprt->is_eternal && ( pbase->update_count > 0 && 0 == loc_pprt->lifetime_remaining ) )
     {
-        ego_obj_prt::set_limbo( PDATA_GET_POBJ( loc_pprt ), btrue );
+        ego_obj_prt::set_limbo( PDATA_GET_POBJ( ego_prt, loc_pprt ), btrue );
     }
 
     return pbdl_prt;
@@ -2805,7 +2805,7 @@ ego_prt_bundle * prt_update_limbo( ego_prt_bundle * pbdl_prt )
     loc_pprt = pbdl_prt->prt_ptr;
     loc_ppip = pbdl_prt->pip_ptr;
 
-    pbase = PDATA_GET_PBASE( pbdl_prt->prt_ptr );
+    pbase = PDATA_GET_PBASE( ego_prt, pbdl_prt->prt_ptr );
     if ( !VALID_PBASE( pbase ) ) return pbdl_prt;
 
     request_terminate = pbase->get_req().kill_me;
@@ -2868,7 +2868,7 @@ ego_prt_bundle * prt_update( ego_prt_bundle * pbdl_prt )
     penviro  = &( loc_pprt->enviro );
 
     // do the next step in the particle configuration
-    ego_obj_prt * tmp_pobj = ego_obj_prt::run( PDATA_GET_POBJ( pbdl_prt->prt_ptr ) );
+    ego_obj_prt * tmp_pobj = ego_obj_prt::run( PDATA_GET_POBJ( ego_prt, pbdl_prt->prt_ptr ) );
     if ( NULL == tmp_pobj ) { ego_prt_bundle::ctor_this( pbdl_prt ); return NULL; }
 
     if ( tmp_pobj->get_pdata() != pbdl_prt->prt_ptr )

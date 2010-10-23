@@ -31,32 +31,28 @@
 // MACROS
 //--------------------------------------------------------------------------------------------
 
-#define VALID_ENC_IDX( INDX )      ( ((INDX) >= 0) && ((INDX) < MAX_ENC) )
-#define VALID_ENC_REF( IENC )      EncObjList.validate_ref(IENC)
-#define ALLOCATED_ENC( IENC )      ( VALID_ENC_REF( IENC ) && ALLOCATED_PBASE ( POBJ_CGET_PBASE(EncObjList.get_ptr(IENC)) ) )
-#define VALID_ENC( IENC )          ( VALID_ENC_REF( IENC ) && VALID_PBASE     ( POBJ_CGET_PBASE(EncObjList.get_ptr(IENC)) ) )
-#define DEFINED_ENC( IENC )        ( VALID_ENC_REF( IENC ) && VALID_PBASE     ( POBJ_CGET_PBASE(EncObjList.get_ptr(IENC)) ) && !TERMINATED_PBASE ( POBJ_CGET_PBASE(EncObjList.get_ptr(IENC)) ) )
-#define ACTIVE_ENC( IENC )         ( VALID_ENC_REF( IENC ) && ACTIVE_PBASE    ( POBJ_CGET_PBASE(EncObjList.get_ptr(IENC)) ) )
-#define WAITING_ENC( IENC )        ( VALID_ENC_REF( IENC ) && WAITING_PBASE   ( POBJ_CGET_PBASE(EncObjList.get_ptr(IENC)) ) )
-#define TERMINATED_ENC( IENC )     ( VALID_ENC_REF( IENC ) && TERMINATED_PBASE( POBJ_CGET_PBASE(EncObjList.get_ptr(IENC)) ) )
+#define VALID_ENC_IDX( INDX )   ( ((INDX) >= 0) && ((INDX) < MAX_ENC) )
+#define VALID_ENC_REF( IENC )     EncObjList.validate_ref(IENC)
+#define ALLOCATED_ENC( IENC )   ( ALLOCATED_PBASE(EncObjList.get_valid_ptr(IENC)) )
+#define VALID_ENC( IENC )       ( VALID_PBASE(EncObjList.get_valid_ptr(IENC)) )
+#define DEFINED_ENC( IENC )     ( VALID_PBASE(EncObjList.get_valid_ptr(IENC) ) && !FLAG_KILLED_PBASE(EncObjList.get_valid_ptr(IENC)) )
+#define ACTIVE_ENC( IENC )      ( ACTIVE_PBASE(EncObjList.get_valid_ptr(IENC)) )
+#define WAITING_ENC( IENC )     ( WAITING_PBASE(EncObjList.get_valid_ptr(IENC)) )
+#define TERMINATED_ENC( IENC )  ( TERMINATED_PBASE(EncObjList.get_valid_ptr(IENC)) )
 
-#define GET_IDX_PENC( PENC )        ((size_t)GET_IDX_POBJ( PDATA_CGET_POBJ(PENC), MAX_ENC ))
-#define GET_REF_PENC( PENC )        ((ENC_REF)GET_REF_POBJ( PDATA_CGET_POBJ(PENC), MAX_ENC ))
-#define VALID_ENC_PTR( PENC )       ( (NULL != (PENC)) && VALID_ENC_REF( GET_REF_PENC( PENC ) ) )
-#define ALLOCATED_PENC( PENC )      ( VALID_ENC_PTR( PENC ) && ALLOCATED_PBASE( PDATA_CGET_PBASE(PENC) ) )
-#define VALID_PENC( PENC )          ( VALID_ENC_PTR( PENC ) && VALID_PBASE( PDATA_CGET_PBASE(PENC) ) )
-#define DEFINED_PENC( PENC )        ( VALID_ENC_PTR( PENC ) && VALID_PBASE ( PDATA_CGET_PBASE(PENC) ) && !TERMINATED_PBASE ( PDATA_CGET_PBASE(PENC) ) )
-#define ACTIVE_PENC( PENC )         ( VALID_ENC_PTR( PENC ) && ACTIVE_PBASE( PDATA_CGET_PBASE(PENC) ) )
-#define TERMINATED_PENC( PENC )     ( VALID_ENC_PTR( PENC ) && TERMINATED_PBASE( PDATA_CGET_PBASE(PENC) ) )
+#define GET_IDX_PENC( PENC )    ((size_t)GET_IDX_POBJ( PDATA_CGET_PBASE( ego_enc, PENC), MAX_ENC ))
+#define GET_REF_PENC( PENC )    ((ENC_REF)GET_REF_POBJ( PDATA_CGET_PBASE( ego_enc, PENC), MAX_ENC ))
 
-#define GET_IDX_PENC_OBJ( PENC_OBJ )        ((size_t)GET_IDX_POBJ( PENC_OBJ, MAX_ENC ))
-#define GET_REF_PENC_OBJ( PENC_OBJ )        ((ENC_REF)GET_REF_POBJ( PENC_OBJ, MAX_ENC ))
-#define VALID_ENC_OBJ_PTR( PENC_OBJ )       ( (NULL != (PENC_OBJ)) && VALID_ENC_OBJ_REF( GET_REF_PENC_OBJ( PENC_OBJ ) ) )
-#define ALLOCATED_PENC_OBJ( PENC_OBJ )      ( VALID_ENC_OBJ_PTR( PENC_OBJ ) && ALLOCATED_PBASE( POBJ_CGET_PBASE(PENC_OBJ) ) )
-#define VALID_PENC_OBJ( PENC_OBJ )          ( VALID_ENC_OBJ_PTR( PENC_OBJ ) && VALID_PBASE( POBJ_CGET_PBASE(PENC_OBJ) ) )
-#define DEFINED_PENC_OBJ( PENC_OBJ )        ( VALID_ENC_OBJ_PTR( PENC_OBJ ) && VALID_PBASE ( POBJ_CGET_PBASE(PENC_OBJ) ) && !TERMINATED_PBASE ( POBJ_CGET_PBASE(PENC_OBJ) ) )
-#define ACTIVE_PENC_OBJ( PENC_OBJ )         ( VALID_ENC_OBJ_PTR( PENC_OBJ ) && ACTIVE_PBASE( POBJ_CGET_PBASE(PENC_OBJ) ) )
-#define TERMINATED_PENC_OBJ( PENC_OBJ )     ( VALID_ENC_OBJ_PTR( PENC_OBJ ) && TERMINATED_PBASE( POBJ_CGET_PBASE(PENC_OBJ) ) )
+#define VALID_ENC_PTR( PENC )   ( (NULL != (PENC)) && VALID_ENC_REF( GET_REF_PENC( PENC ) ) )
+
+#define ALLOCATED_PENC( PENC )   ( ALLOCATED_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
+#define VALID_PENC( PENC )       ( VALID_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
+#define DEFINED_PENC( PENC )     ( VALID_PBASE(PDATA_CGET_PBASE( ego_enc, PENC ) ) && !FLAG_KILLED_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
+#define ACTIVE_PENC( PENC )      ( ACTIVE_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
+#define WAITING_PENC( PENC )     ( WAITING_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
+#define TERMINATED_PENC( PENC )  ( TERMINATED_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
+
+#define GET_REF_PENC_OBJ( POBJ )    ((ENC_REF)GET_REF_POBJ( POBJ, MAX_ENC ))
 
 //--------------------------------------------------------------------------------------------
 // Macros to automate looping through a EncObjList. Based on generic code for

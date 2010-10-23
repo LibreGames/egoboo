@@ -258,8 +258,11 @@ struct ego_prt : public ego_prt_data
     // These have to have generic names to that all objects that are contained in
     // an ego_object can be interfaced with in the same way
 
+    ego_obj_prt *  get_pparent()       { return ( ego_obj_prt * )_parent_obj_ptr; }
     const ego_obj_prt * cget_pparent() const { return _parent_obj_ptr; }
-    ego_obj_prt       * get_pparent()  const { return ( ego_obj_prt * )_parent_obj_ptr; }
+
+    static       ego_obj_prt *  get_pparent( ego_prt * ptr ) { return ( NULL == ptr ) ? NULL : ( ego_obj_prt * )ptr->_parent_obj_ptr; }
+    static const ego_obj_prt * cget_pparent( const ego_prt * ptr ) { return ( NULL == ptr ) ? NULL : ptr->_parent_obj_ptr; }
 
     //---- construction and destruction
 

@@ -6915,7 +6915,6 @@ void move_all_characters( void )
 void cleanup_all_characters()
 {
 
-
     // Do poofing
     for ( int cnt = 0; cnt < MAX_CHR; cnt++ )
     {
@@ -6929,7 +6928,7 @@ void cleanup_all_characters()
         if ( NULL == pchr ) continue;
 
         time_out = ( pchr->ai.poof_time >= 0 ) && ( pchr->ai.poof_time <= ( Sint32 )update_wld );
-        if ( !WAITING_PBASE( PDATA_GET_PBASE( pchr ) ) && !time_out ) continue;
+        if ( !WAITING_PBASE( PDATA_GET_PBASE( ego_chr, pchr ) ) && !time_out ) continue;
 
         // detach the character from the game
         cleanup_one_character( pchr );

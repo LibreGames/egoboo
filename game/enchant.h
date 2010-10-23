@@ -169,8 +169,11 @@ public:
     // These have to have generic names to that all objects that are contained in
     // an ego_object can be interfaced with in the same way
 
+    ego_obj_enc *  get_pparent()       { return ( ego_obj_enc * )_parent_obj_ptr; }
     const ego_obj_enc * cget_pparent() const { return _parent_obj_ptr; }
-    ego_obj_enc       * get_pparent()  const { return ( ego_obj_enc * )_parent_obj_ptr; }
+
+    static       ego_obj_enc *  get_pparent( ego_enc * ptr ) { return ( NULL == ptr ) ? NULL : ( ego_obj_enc * )ptr->_parent_obj_ptr; }
+    static const ego_obj_enc * cget_pparent( const ego_enc * ptr ) { return ( NULL == ptr ) ? NULL : ptr->_parent_obj_ptr; }
 
     //---- construction and destruction
 

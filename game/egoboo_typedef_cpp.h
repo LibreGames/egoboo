@@ -52,6 +52,11 @@ struct cpp_list_state
     static cpp_list_state * set_used( cpp_list_state *, bool_t val );
     static cpp_list_state * set_free( cpp_list_state *, bool_t val );
 
+    static const bool_t get_allocated( const cpp_list_state * ptr ) { return ( NULL == ptr ) ? bfalse     : ptr->allocated; }
+    static const size_t get_index( const cpp_list_state * ptr ) { return ( NULL == ptr ) ? size_t( -1 ) : ptr->index; }
+    static const bool_t in_free( const cpp_list_state * ptr ) { return ( NULL == ptr ) ? bfalse     : ptr->in_free_list; }
+    static const bool_t in_used( const cpp_list_state * ptr ) { return ( NULL == ptr ) ? bfalse     : ptr->in_used_list; }
+
 private:
 
     static cpp_list_state * clear( cpp_list_state *, size_t index = ( size_t )( ~0L ) );
@@ -273,6 +278,14 @@ struct cpp_list_client
     cpp_list_state * get_plist() { return &_cpp_list_state_data; }
     cpp_list_state & get_list()  { return _cpp_list_state_data;  }
 
+    static       cpp_list_state *  get_plist( cpp_list_client * ptr ) { return NULL == ptr ? NULL : &( ptr->_cpp_list_state_data ); }
+    static const cpp_list_state * cget_plist( const cpp_list_client * ptr ) { return NULL == ptr ? NULL : &( ptr->_cpp_list_state_data ); }
+
+    static const bool_t get_allocated( const cpp_list_client * ptr ) { const cpp_list_state * plst = cpp_list_client::cget_plist( ptr ); return cpp_list_state::get_allocated( plst ); }
+    static const size_t get_index( const cpp_list_client * ptr ) { const cpp_list_state * plst = cpp_list_client::cget_plist( ptr ); return cpp_list_state::get_index( plst );     }
+    static const bool_t in_free_list( const cpp_list_client * ptr ) { const cpp_list_state * plst = cpp_list_client::cget_plist( ptr ); return cpp_list_state::in_free( plst );  }
+    static const bool_t in_used_list( const cpp_list_client * ptr ) { const cpp_list_state * plst = cpp_list_client::cget_plist( ptr ); return cpp_list_state::in_used( plst );  }
+
     const bool_t get_allocated() const { return _cpp_list_state_data.allocated; }
     const size_t get_index()     const { return _cpp_list_state_data.index;     }
 
@@ -413,5 +426,4 @@ struct t_dary : public std::vector< _ty >
 //--------------------------------------------------------------------------------------------
 
 #include "egoboo_typedef_cpp.inl"
-
 

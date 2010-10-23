@@ -82,6 +82,20 @@ struct ego_obj_proc
 
     static ego_obj_proc * begin_waiting( ego_obj_proc * );
 
+    // basic flags for where the object is in the creation/desctuction process
+    static const bool_t get_valid( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->valid;       }
+    static const bool_t get_constructed( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->constructed; }
+    static const bool_t get_initialized( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->initialized; }
+    static const bool_t get_active( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->active;      }
+    static const bool_t get_killed( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->killed;      }
+
+    // other state flags
+    static const bool_t get_spawning( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->spawning; }
+    static const bool_t get_on( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->on;       }
+    static const bool_t get_paused( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->paused;   }
+
+    static const ego_obj_actions_t get_action( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? ego_obj_nothing : ptr->action; }
+
 private:
 
     static ego_obj_proc * clear( ego_obj_proc * ptr );
@@ -104,6 +118,12 @@ struct ego_obj_req
     static ego_obj_req * ctor_this( ego_obj_req * ptr );
     static ego_obj_req * dtor_this( ego_obj_req * ptr );
 
+    static const bool_t  get_pause_off( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->unpause_me;  };
+    static const bool_t  get_pause_on( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->pause_me;    };
+    static const bool_t  get_turn_on( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_on;  };
+    static const bool_t  get_turn_off( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_off; };
+    static const bool_t  get_kill( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->kill_me;     };
+
 private:
 
     static ego_obj_req * clear( ego_obj_req* ptr );
@@ -118,16 +138,16 @@ struct ego_obj_proc_data
 {
     ego_obj_proc_data * get_process_client() { return this; }
 
-    ego_obj_proc * get_pproc() { return &_proc_data; }
+    ego_obj_proc    * get_pproc() { return &_proc_data; }
     ego_obj_req     * get_preq()  { return &_req_data;   }
 
-    ego_obj_proc & get_proc() { return _proc_data; }
+    ego_obj_proc    & get_proc() { return _proc_data; }
     ego_obj_req     & get_req()  { return _req_data;  }
 
-    const ego_obj_proc * cget_pproc() const { return &_proc_data; }
+    const ego_obj_proc    * cget_pproc() const { return &_proc_data; }
     const ego_obj_req     * cget_preq()  const { return &_req_data;   }
 
-    const ego_obj_proc & cget_proc() const { return _proc_data; }
+    const ego_obj_proc    & cget_proc() const { return _proc_data; }
     const ego_obj_req     & cget_req()  const { return _req_data;  }
 
     egoboo_rv proc_validate( bool_t valid = btrue );
@@ -144,6 +164,29 @@ struct ego_obj_proc_data
     egoboo_rv proc_req_pause( bool_t val );
 
     egoboo_rv proc_do_on();
+
+    static const ego_obj_proc    * cget_pproc( const ego_obj_proc_data * pdata ) { return NULL == pdata ? NULL : &( pdata->_proc_data ); }
+    static const ego_obj_req     * cget_preq( const ego_obj_proc_data * pdata )  { return NULL == pdata ? NULL : &( pdata->_req_data ); }
+
+    // basic flags for where the object is in the creation/desctuction process
+    static const bool_t get_valid( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_valid( ptr ); }
+    static const bool_t get_constructed( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_constructed( ptr ); }
+    static const bool_t get_initialized( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_initialized( ptr ); }
+    static const bool_t get_active( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_active( ptr ); }
+    static const bool_t get_killed( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_killed( ptr ); }
+
+    // other state flags
+    static const bool_t get_spawning( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_spawning( ptr ); }
+    static const bool_t get_on( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_on( ptr ); }
+    static const bool_t get_paused( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_paused( ptr ); }
+
+    static const ego_obj_actions_t get_action( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_action( ptr ); }
+
+    static const bool_t  get_pause_off( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_pause_off( ptr );  }
+    static const bool_t  get_pause_on( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_pause_on( ptr );  }
+    static const bool_t  get_turn_on( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_turn_on( ptr );  }
+    static const bool_t  get_turn_off( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_turn_off( ptr );  }
+    static const bool_t  get_kill( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_kill( ptr );  }
 
 private:
     // "process" control control
@@ -186,6 +229,9 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 
     const ego_obj & cget_ego_obj() const { return *this; }
     const ego_obj * cget_pego_obj() const { return this; }
+
+    static       ego_obj * get_pego_obj( ego_obj * ptr ) { return ptr; }
+    static const ego_obj * cget_pego_obj( const ego_obj * ptr ) { return ptr; }
 
     explicit ego_obj( size_t index = size_t( -1 ) ) : cpp_list_client( index ) { ctor_this( this ); }
     ~ego_obj() { dtor_this( this ); }
@@ -233,126 +279,126 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 // pointer conversions
 
 // Grab a pointer to the ego_obj of an object that "inherits" this data
-#define POBJ_GET_PBASE( POBJ )    ( (NULL == (POBJ)) ? NULL : (POBJ)->get_pego_obj() )
-#define POBJ_CGET_PBASE( POBJ )   ( (NULL == (POBJ)) ? NULL : (POBJ)->cget_pego_obj() )
+#define POBJ_GET_PBASE( POBJ )    ego_obj::get_pego_obj(POBJ)
+#define POBJ_CGET_PBASE( POBJ )   ego_obj::cget_pego_obj(POBJ)
 
 // Grab a pointer to the parent container object for a data item like ego_chr, ego_enc, or ego_prt
-#define PDATA_GET_POBJ( PDATA )    ( (NULL == (PDATA)) ? NULL : (PDATA)->get_pparent() )
-#define PDATA_CGET_POBJ( PDATA )   ( (NULL == (PDATA)) ? NULL : (PDATA)->cget_pparent() )
+#define PDATA_GET_POBJ( TYPE, PDATA )    ( TYPE::get_pparent(PDATA) )
+#define PDATA_CGET_POBJ( TYPE, PDATA )   ( TYPE::cget_pparent(PDATA) )
 
 // Grab a pointer to data item like ego_chr, ego_enc, or ego_prt from the parent container
-#define POBJ_GET_PDATA( PDATA )    ( (NULL == (PDATA)) ? NULL : (PDATA)->get_pdata() )
-#define POBJ_CGET_PDATA( PDATA )   ( (NULL == (PDATA)) ? NULL : (PDATA)->cget_pdata() )
+#define POBJ_GET_PDATA( TYPE, PDATA )    ( TYPE::get_pdata(PDATA) )
+#define POBJ_CGET_PDATA( TYPE, PDATA )   ( TYPE::cget_pdata(PDATA) )
 
 // Grab a pointer to the ego_obj for a data item like ego_chr, ego_enc, or ego_prt
-#define PDATA_GET_PBASE( PDATA )    POBJ_GET_PBASE( PDATA_GET_POBJ( PDATA ) )
-#define PDATA_CGET_PBASE( PDATA )   POBJ_CGET_PBASE( PDATA_CGET_POBJ( PDATA ) )
+#define PDATA_GET_PBASE( TYPE, PDATA )    PDATA_GET_POBJ( TYPE, PDATA )
+#define PDATA_CGET_PBASE( TYPE, PDATA )   PDATA_CGET_POBJ( TYPE, PDATA )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// Mark a ego_obj object as being allocated
-#define POBJ_ALLOCATE( POBJ, INDEX ) ( (NULL == (POBJ)) ? NULL : ego_obj::allocate( POBJ_GET_PBASE(POBJ), INDEX ) )
-#define PDATA_ALLOCATE( PDATA, INDEX ) POBJ_ALLOCATE( PDATA_GET_POBJ(PDATA, INDEX) )
+#define POBJ_ALLOCATE( POBJ, INDEX )   ego_obj::allocate( POBJ, INDEX )
+#define PDATA_ALLOCATE( TYPE, PDATA, INDEX ) POBJ_ALLOCATE( PDATA_GET_POBJ(TYPE, PDATA, INDEX) )
 
 /// Mark a ego_obj object as being deallocated
-#define POBJ_INVALIDATE( POBJ ) ( (NULL == (POBJ)) ? NULL : ego_obj::invalidate( POBJ_GET_PBASE(POBJ) ) )
-#define PDATA_INVALIDATE( PDATA ) POBJ_INVALIDATE( PDATA_GET_POBJ(PDATA) )
+#define POBJ_INVALIDATE( POBJ )   ego_obj::invalidate( POBJ )
+#define PDATA_INVALIDATE( TYPE, PDATA ) POBJ_INVALIDATE( PDATA_GET_POBJ(TYPE, PDATA) )
 
 /// Turn on an ego_obj object
-#define POBJ_ACTIVATE( POBJ, NAME ) ( (NULL == (POBJ)) ? NULL : ego_obj::begin_processing( POBJ_GET_PBASE(POBJ), NAME ) )
-#define PDATA_ACTIVATE( PDATA, NAME ) POBJ_ACTIVATE( PDATA_GET_POBJ(PDATA), NAME )
+#define POBJ_ACTIVATE( POBJ, NAME )   ego_obj::begin_processing( POBJ, NAME )
+#define PDATA_ACTIVATE( TYPE, PDATA, NAME ) POBJ_ACTIVATE( PDATA_GET_POBJ(TYPE, PDATA), NAME )
 
 /// Begin turning off an ego_obj object
-#define POBJ_REQUEST_TERMINATE( POBJ ) ( (NULL == (POBJ)) ? NULL : ego_obj::req_terminate( POBJ_GET_PBASE(POBJ) ) )
-#define PDATA_REQUEST_TERMINATE( PDATA ) POBJ_REQUEST_TERMINATE( PDATA_GET_POBJ(PDATA) )
+#define POBJ_REQUEST_TERMINATE( POBJ )   ego_obj::req_terminate( POBJ )
+#define PDATA_REQUEST_TERMINATE( TYPE, PDATA ) POBJ_REQUEST_TERMINATE( PDATA_GET_POBJ(TYPE, PDATA) )
 
 /// Completely turn off an ego_obj object and mark it as no longer allocated
-#define POBJ_TERMINATE( POBJ ) ( (NULL == (POBJ)) ? NULL : ego_obj::grant_terminate( POBJ_GET_PBASE(POBJ) ) )
-#define PDATA_TERMINATE( PDATA ) POBJ_TERMINATE( PDATA_GET_POBJ(PDATA) )
+#define POBJ_TERMINATE( POBJ )   ego_obj::grant_terminate( POBJ )
+#define PDATA_TERMINATE( TYPE, PDATA ) POBJ_TERMINATE( PDATA_GET_POBJ(TYPE, PDATA) )
 
 #define POBJ_BEGIN_SPAWN( POBJ ) \
-    if( (NULL != (POBJ)) && FLAG_VALID_PBASE(POBJ_CGET_PBASE(POBJ))  ) \
+    if( (NULL != (POBJ)) && FLAG_VALID_PBASE(POBJ)  ) \
     {\
-        if( !(POBJ)->cget_ego_obj().cget_proc().spawning )\
+        if( !ego_obj::get_spawning(POBJ) )\
         {\
-            ego_obj::set_spawning( POBJ_GET_PBASE(POBJ), btrue );\
+            ego_obj::set_spawning( POBJ, btrue );\
             ego_obj::spawn_depth++;\
         }\
     }\
      
 #define POBJ_END_SPAWN( POBJ ) \
-    if( (NULL != (POBJ)) && FLAG_VALID_PBASE(POBJ_CGET_PBASE(POBJ)) ) \
+    if( (NULL != (POBJ)) && FLAG_VALID_PBASE(POBJ) ) \
     {\
-        if( (POBJ)->cget_ego_obj().cget_proc().spawning )\
+        if( ego_obj::get_spawning(POBJ) )\
         {\
-            ego_obj::set_spawning( POBJ_GET_PBASE(POBJ), bfalse );\
+            ego_obj::set_spawning( POBJ, bfalse );\
             ego_obj::spawn_depth--;\
         }\
     }\
      
 /// Is the object flagged as allocated?
-#define FLAG_ALLOCATED_PBASE( PBASE ) ( (PBASE)->get_allocated() )
+#define FLAG_ALLOCATED_PBASE( PBASE ) ( ego_obj::get_allocated(PBASE) )
 /// Is the object allocated?
 #define ALLOCATED_PBASE( PBASE )       ( (NULL != (PBASE)) && FLAG_ALLOCATED_PBASE(PBASE) )
 
 /// Is the object flagged as valid?
-#define FLAG_VALID_PBASE( PBASE ) ( (PBASE)->cget_proc().valid )
+#define FLAG_VALID_PBASE( PBASE ) ( ego_obj::get_valid(PBASE) )
 /// Is the object valid?
 #define VALID_PBASE( PBASE )       ( (NULL != (PBASE))  && FLAG_ALLOCATED_PBASE( PBASE ) && FLAG_VALID_PBASE(PBASE) )
 
 /// Is the object flagged as constructed?
-#define FLAG_CONSTRUCTED_PBASE( PBASE ) ( (PBASE)->cget_proc().constructed )
+#define FLAG_CONSTRUCTED_PBASE( PBASE ) ( ego_obj::get_constructed(PBASE) )
 /// Is the object constructed?
 #define CONSTRUCTED_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && FLAG_CONSTRUCTED_PBASE(PBASE) )
 
 /// Is the object flagged as initialized?
-#define FLAG_INITIALIZED_PBASE( PBASE ) ( (PBASE)->cget_proc().initialized )
+#define FLAG_INITIALIZED_PBASE( PBASE ) ( ego_obj::get_initialized(PBASE) )
 /// Is the object initialized?
 #define INITIALIZED_PBASE( PBASE )      ( CONSTRUCTED_PBASE( PBASE ) && FLAG_INITIALIZED_PBASE(PBASE) )
 
 /// Is the object flagged as killed?
-#define FLAG_KILLED_PBASE( PBASE ) ( (PBASE)->cget_proc().killed )
+#define FLAG_KILLED_PBASE( PBASE ) ( ego_obj::get_killed(PBASE) )
 /// Is the object killed?
 #define KILLED_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && FLAG_KILLED_PBASE(PBASE) )
 
 /// Is the object flagged as requesting termination?
-#define FLAG_ON_PBASE( PBASE )  ( (PBASE)->cget_proc().on )
+#define FLAG_ON_PBASE( PBASE )  ( ego_obj::get_on(PBASE) )
 /// Is the object on?
 #define ON_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && FLAG_ON_PBASE(PBASE) && !FLAG_KILLED_PBASE( PBASE ) )
 
 /// Is the object flagged as kill_me?
-#define FLAG_REQ_TERMINATION_PBASE( PBASE ) ( (PBASE)->get_req().kill_me )
+#define FLAG_REQ_TERMINATION_PBASE( PBASE ) ( ego_obj::get_kill(PBASE)  )
 /// Is the object kill_me?
 #define REQ_TERMINATION_PBASE( PBASE )      ( VALID_PBASE( PBASE ) && FLAG_REQ_TERMINATION_PBASE(PBASE) )
 
 /// Has the object been created yet?
-#define STATE_CONSTRUCTING_PBASE( PBASE ) ( (ego_obj_constructing == (PBASE)->cget_proc().action) )
+#define STATE_CONSTRUCTING_PBASE( PBASE ) ( (ego_obj_constructing == ego_obj::get_action(PBASE)) )
 /// Has the object been created yet?
 #define CONSTRUCTING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_CONSTRUCTING_PBASE(PBASE) )
 
 /// Is the object in the initializing state?
-#define STATE_INITIALIZING_PBASE( PBASE ) ( (ego_obj_initializing == (PBASE)->cget_proc().action) )
+#define STATE_INITIALIZING_PBASE( PBASE ) ( (ego_obj_initializing == ego_obj::get_action(PBASE)) )
 /// Is the object being initialized right now?
 #define INITIALIZING_PBASE( PBASE )       ( CONSTRUCTED_PBASE( PBASE ) && STATE_INITIALIZING_PBASE(PBASE) )
 
 /// Is the object in the active state?
-#define STATE_PROCESSING_PBASE( PBASE ) ( ego_obj_processing == (PBASE)->cget_proc().action )
+#define STATE_PROCESSING_PBASE( PBASE ) ( ego_obj_processing == ego_obj::get_action(PBASE) )
 /// Is the object active?
 #define ACTIVE_PBASE( PBASE )           ( INITIALIZED_PBASE( PBASE ) && STATE_PROCESSING_PBASE(PBASE) && FLAG_ON_PBASE(PBASE) && !FLAG_KILLED_PBASE( PBASE ) )
 
 /// Is the object in the deinitializing state?
-#define STATE_DEINITIALIZING_PBASE( PBASE ) ( (ego_obj_deinitializing == (PBASE)->cget_proc().action) )
+#define STATE_DEINITIALIZING_PBASE( PBASE ) ( (ego_obj_deinitializing == ego_obj::get_action(PBASE)) )
 /// Is the object being deinitialized right now?
 #define DEINITIALIZING_PBASE( PBASE )       ( CONSTRUCTED_PBASE( PBASE ) && STATE_DEINITIALIZING_PBASE(PBASE) )
 
 /// Is the object in the destructing state?
-#define STATE_DESTRUCTING_PBASE( PBASE ) ( (ego_obj_destructing == (PBASE)->cget_proc().action) )
+#define STATE_DESTRUCTING_PBASE( PBASE ) ( (ego_obj_destructing == ego_obj::get_action(PBASE)) )
 /// Is the object being deinitialized right now?
 #define DESTRUCTING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_DESTRUCTING_PBASE(PBASE) )
 
 /// Is the object "waiting to die" state?
-#define STATE_WAITING_PBASE( PBASE ) ( ego_obj_waiting == (PBASE)->cget_proc().action )
+#define STATE_WAITING_PBASE( PBASE ) ( ego_obj_waiting == ego_obj::get_action(PBASE) )
 /// Is the object "waiting to die"?
 #define WAITING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_WAITING_PBASE(PBASE) )
 
@@ -361,7 +407,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 #define TERMINATED_PBASE( PBASE )       KILLED_PBASE( PBASE )
 
 // Grab the index value of ego_obj pointer
-#define GET_IDX_PBASE( PBASE, FAIL_VALUE ) ( (NULL == (PBASE) || !VALID_PBASE( PBASE ) ) ? FAIL_VALUE : (PBASE)->get_index() )
+#define GET_IDX_PBASE( PBASE, FAIL_VALUE ) ( (NULL == (PBASE) || !VALID_PBASE( PBASE ) ) ? FAIL_VALUE : ego_obj::get_index(PBASE) )
 #define GET_REF_PBASE( PBASE, FAIL_VALUE ) ((REF_T)GET_IDX_PBASE( PBASE, FAIL_VALUE ))
 
 // Grab the index value of object that "inherits" from ego_obj
@@ -369,7 +415,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 #define GET_REF_POBJ( POBJ, FAIL_VALUE )  ((REF_T)GET_IDX_POBJ( POBJ, FAIL_VALUE ))
 
 /// Grab the state of object that "inherits" from ego_obj
-#define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_CGET_PBASE( POBJ ) ) ) ? ego_obj_nothing : (POBJ)->get_ego_obj().get_index() )
+#define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_CGET_PBASE( POBJ ) ) ) ? ego_obj_nothing : ego_obj::get_state(POBJ) )
 
 /// Is the object active?
 #define DEFINED_PBASE( PBASE )  ( FLAG_ON_PBASE(PBASE) && !FLAG_KILLED_PBASE( PBASE ) )
