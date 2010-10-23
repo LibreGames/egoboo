@@ -72,7 +72,6 @@ extern "C"
     IDSZ   fget_next_idsz( vfs_FILE * fileread );
     bool_t fget_next_bool( vfs_FILE * fileread );
 
-    Sint32 fget_int( vfs_FILE* fileread );
     char   fget_first_letter( vfs_FILE* fileread );
     IDSZ   fget_idsz( vfs_FILE* fileread );
     int    fget_int( vfs_FILE * fileread );
@@ -107,7 +106,7 @@ extern "C"
     int read_skin_vfs( const char *filename );
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _egoboo_fileutil_h

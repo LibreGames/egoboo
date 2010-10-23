@@ -40,7 +40,7 @@
 #include "game.h"
 #include "log.h"
 
-#include "spawn_file.h"
+#include "file_formats/spawn_file.h"
 #include "quest.h"
 
 #include "egoboo_strutil.h"
@@ -6906,7 +6906,7 @@ Uint8 scr_Backstabbed( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
             if ( ego_chr::get_skill( pattacker, MAKE_IDSZ( 'S', 'T', 'A', 'B' ) ) )
             {
                 // Finally we require it to be physical damage!
-                Uint16 sTmp = sTmp = pself->damagetypelast;
+                Uint16 sTmp = pself->damagetypelast;
                 if ( sTmp == DAMAGE_CRUSH || sTmp == DAMAGE_POKE || sTmp == DAMAGE_SLASH ) returncode = btrue;
             }
         }

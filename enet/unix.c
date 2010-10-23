@@ -72,10 +72,10 @@ enet_address_set_host (ENetAddress * address, const char * name)
     int errnum;
 
 #ifdef linux
-    gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
-#else
-    hostEntry = gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & errnum);
-#endif
+        gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
+#   else
+        hostEntry = gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & errnum);
+#   endif
 #else
     hostEntry = gethostbyname (name);
 #endif

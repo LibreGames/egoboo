@@ -32,14 +32,14 @@ struct t_ego_obj_lst
 {
     /// use this typedef to make iterating through the t_cpp_map<> easier
     typedef typename t_cpp_map<_ty, _sz>::iterator iterator;
-    typedef typename t_reference<_ty>             reference;
+    typedef          t_reference<_ty>              reference;
 
     int              loop_depth;
 
     t_ego_obj_lst()  { loop_depth = 0; }
     ~t_ego_obj_lst() { dtor_this(); }
 
-    INLINE bool_t validate_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _sz; };
+    static INLINE bool_t validate_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _sz; };
 
     void             init();
     void             dtor_this();

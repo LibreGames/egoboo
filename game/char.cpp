@@ -125,7 +125,7 @@ static ego_chr_bundle * move_one_character_do_floor( ego_chr_bundle * pbdl );
 static bool_t pack_validate( ego_pack * ppack );
 
 static fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure );
-static float   get_mesh_pressure( ego_chr * pchr, float test_pos[] );
+//static float   get_mesh_pressure( ego_chr * pchr, float test_pos[] );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -424,12 +424,12 @@ void free_one_character_in_game( const CHR_REF & character )
     }
 
     // Make sure everyone knows it died
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_ACTIVE( ichr_listener, pchr_listener )
     {
         ego_ai_state * pai;
 
-        if ( !INGAME_CHR( cnt ) || cnt == character ) continue;
-        pai = ego_chr::get_pai( cnt );
+        if ( !INGAME_CHR( ichr_listener ) || ichr_listener == character ) continue;
+        pai = ego_chr::get_pai( ichr_listener );
 
         if ( pai->target == character )
         {
@@ -437,7 +437,7 @@ void free_one_character_in_game( const CHR_REF & character )
             pai->target = MAX_CHR;
         }
 
-        if ( ego_chr::get_pteam( cnt )->leader == character )
+        if ( ego_chr::get_pteam( ichr_listener )->leader == character )
         {
             ADD_BITS( pai->alert, ALERTIF_LEADERKILLED );
         }
@@ -1451,26 +1451,26 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
     }
 
     // Go through all characters to find the best match
-    CHR_BEGIN_LOOP_ACTIVE( ichr_b, pchr_b )
+    CHR_BEGIN_LOOP_ACTIVE( ichr_grab, pchr_grab )
     {
         fvec3_t   pos_b;
         float     dx, dy, dz, dxy;
         bool_t    can_grab = btrue;
 
         // do nothing to yourself
-        if ( ichr_a == ichr_b ) continue;
+        if ( ichr_a == ichr_grab ) continue;
 
         // Don't do hidden objects
-        if ( pchr_b->is_hidden ) continue;
+        if ( pchr_grab->is_hidden ) continue;
 
-        if ( pchr_b->pack.is_packed ) continue;        // pickpocket not allowed yet
-        if ( INGAME_CHR( pchr_b->attachedto ) ) continue; // disarm not allowed yet
+        if ( pchr_grab->pack.is_packed ) continue;        // pickpocket not allowed yet
+        if ( INGAME_CHR( pchr_grab->attachedto ) ) continue; // disarm not allowed yet
 
         // do not pick up your mount
-        if ( pchr_b->holdingwhich[SLOT_LEFT] == ichr_a ||
-             pchr_b->holdingwhich[SLOT_RIGHT] == ichr_a ) continue;
+        if ( pchr_grab->holdingwhich[SLOT_LEFT] == ichr_a ||
+             pchr_grab->holdingwhich[SLOT_RIGHT] == ichr_a ) continue;
 
-        pos_b = pchr_b->pos;
+        pos_b = pchr_grab->pos;
 
         // First check absolute value diamond
         dx = ABS( nupoint[0].x - pos_b.x );
@@ -1478,30 +1478,30 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
         dz = ABS( nupoint[0].z - pos_b.z );
         dxy = dx + dy;
 
-        if ( dxy > GRID_SIZE * 2 || dz > MAX( pchr_b->bump.height, GRABSIZE ) ) continue;
+        if ( dxy > GRID_SIZE * 2 || dz > MAX( pchr_grab->bump.height, GRABSIZE ) ) continue;
 
         // reasonable carrying capacity
-        if ( pchr_b->phys.weight > pchr_a->phys.weight + pchr_a->strength * INV_FF )
+        if ( pchr_grab->phys.weight > pchr_a->phys.weight + pchr_a->strength * INV_FF )
         {
             can_grab = bfalse;
         }
 
         // grab_people == btrue allows you to pick up living non-items
         // grab_people == false allows you to pick up living (functioning) items
-        if ( pchr_b->alive && ( grab_people == pchr_b->isitem ) )
+        if ( pchr_grab->alive && ( grab_people == pchr_grab->isitem ) )
         {
             can_grab = bfalse;
         }
 
         if ( can_grab )
         {
-            grab_list[grab_count].ichr = ichr_b;
+            grab_list[grab_count].ichr = ichr_grab;
             grab_list[grab_count].dist = dxy;
             grab_count++;
         }
         else
         {
-            ungrab_list[grab_count].ichr = ichr_b;
+            ungrab_list[grab_count].ichr = ichr_grab;
             ungrab_list[grab_count].dist = dxy;
             ungrab_count++;
         }
@@ -7155,7 +7155,7 @@ bool_t ego_chr_instance::set_mad( ego_chr_instance * pinst, const MAD_REF & imad
 
     if ( NULL == pmad || pmad->md2_ptr == NULL )
     {
-        log_error( "Invalid pmad instance spawn. (Slot number %i)\n", imad );
+        log_error( "Invalid pmad instance spawn. (Slot number %i)\n", imad.get_value() );
         return bfalse;
     }
 
@@ -9889,13 +9889,13 @@ bool_t chr_bump_grid( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel,
     // try to get a normal from the ego_mpd::get_diff() function
     if ( !found_nrm )
     {
-        fvec2_t diff;
+        fvec2_t tmp_diff;
 
-        diff = chr_get_diff( loc_pchr, test_pos.v, pressure );
+        tmp_diff = chr_get_diff( loc_pchr, test_pos.v, pressure );
         diff_function_called = btrue;
 
-        nrm.x = diff.x;
-        nrm.y = diff.y;
+        nrm.x = tmp_diff.x;
+        nrm.y = tmp_diff.y;
 
         if ( fvec2_length_abs( nrm.v ) > 0.0f )
         {

@@ -69,7 +69,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //*nix definitions
-#if defined(__unix__) || defined(__unix) || defined(_unix) || defined(unix)
+#if defined(linux) || defined(__unix__) || defined(__unix) || defined(_unix) || defined(unix)
 
 /// map all of these to __unix__
 #    if !defined(__unix__)
@@ -124,8 +124,10 @@
 #if defined(_MSC_VER)
 /// In MS visual C, the "inline" keyword seems to be depricated. Must to be promoted to "_inline" or "__inline"
 #    define INLINE __inline
+#    define SINLINE static __inline
 #else
-#    define INLINE static inline
+#    define INLINE  inline
+#    define SINLINE static inline
 #endif
 
 //------------

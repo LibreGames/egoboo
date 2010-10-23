@@ -26,11 +26,11 @@
 #include <shellapi.h>
 #include <shlwapi.h>
 
-#include "..\file_common.h"
-#include "..\log.h"
+#include "../file_common.h"
+#include "../log.h"
 
-#include "..\egoboo_strutil.h"
-#include "..\egoboo_mem.h"
+#include "../egoboo_strutil.h"
+#include "../egoboo_mem.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

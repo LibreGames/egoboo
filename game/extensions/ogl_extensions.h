@@ -132,5 +132,5 @@ extern "C"
     FILE * oglx_set_stdout( FILE * pfile );
 
 #if defined(__cplusplus)
-};
+}
 #endif

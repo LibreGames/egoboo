@@ -44,7 +44,8 @@ INLINE bool_t ego_mpd::grid_is_valid( ego_mpd   * pmpd, Uint32 id )
     if ( INVALID_TILE == id ) return bfalse;
 
     return id < pmpd->info.tiles_count;
-};
+}
+
 //--------------------------------------------------------------------------------------------
 INLINE float ego_mpd::get_level( ego_mpd   * pmesh, float x, float y )
 {

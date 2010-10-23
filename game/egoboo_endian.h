@@ -44,7 +44,7 @@ extern "C"
 #define ENDIAN_INT64(X) SDL_SwapLE64(X)
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _egoboo_endian_h

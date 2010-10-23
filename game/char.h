@@ -835,9 +835,6 @@ struct ego_chr_bundle
 //--------------------------------------------------------------------------------------------
 // helper functions
 
-void character_system_begin();
-void character_system_end();
-
 void   init_all_cap();
 void   release_all_cap();
 bool_t release_one_cap( const CAP_REF & icap );

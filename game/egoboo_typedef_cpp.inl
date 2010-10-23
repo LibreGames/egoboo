@@ -39,7 +39,7 @@ _ty * t_cpp_list< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
     if ( !validate_ref( ref ) ) return NULL;
 
     return lst + ref;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -49,38 +49,38 @@ size_t t_cpp_list< _ty, _sz >::get_free()
 
     size_t retval = _sz;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
-    while ( .free_count() > 0 )
+    while ( free_count > 0 )
     {
-        .free_count()--;
+        free_count--;
 
-        size_t tmp_val = free_ref.free_count()];
+        size_t tmp_val = free_ref[free_count];
 
         // completely remove it from the free list
-        free_ref.free_count()] = _sz;
+        free_ref[free_count] = _sz;
 
         if ( tmp_val < _sz )
-    {
-        retval = tmp_val;
-        update_guid++;
-        break;
+        {
+            retval = tmp_val;
+            update_guid++;
+            break;
+        }
     }
+
+    return retval;
 }
 
-return retval;
-       };
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-       template < typename _ty, size_t _sz >
-       egoboo_rv t_cpp_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
+template < typename _ty, size_t _sz >
+egoboo_rv t_cpp_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
 {
     if ( !validate_ref( ref ) ) return rv_error;
     _ty * ptr   = lst + ref;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
     //assume that the data is not corrupt, at the moment
@@ -110,22 +110,22 @@ return retval;
         return rv_error;
     }
 
-    free_ref.free_count()] = ref.get_value();
+    free_ref[free_count] = ref.get_value();
 
-                             .free_count()++;
-                             update_guid++;
+    free_count++;
+    update_guid++;
 
-                             cpp_list_state * plst = ptr->get_plist();
+    cpp_list_state * plst = ptr->get_plist();
 
-                                                     cpp_list_state::set_free( plst, btrue );
-                                                     cpp_list_state::set_used( plst, bfalse );
+    cpp_list_state::set_free( plst, btrue );
+    cpp_list_state::set_used( plst, bfalse );
 
-                                                     return rv_success;
-                                                        };
+    return rv_success;
+}
 
 //--------------------------------------------------------------------------------------------
-                                                        template < typename _ty, size_t _sz >
-                                                        int t_cpp_list< _ty, _sz >::get_free_list_index( const t_reference<_ty> & ref )
+template < typename _ty, size_t _sz >
+int t_cpp_list< _ty, _sz >::get_free_list_index( const t_reference<_ty> & ref )
 {
     int    retval = -1;
     size_t cnt;
@@ -137,7 +137,7 @@ return retval;
     // shorten the list to remove any bad values on the top
     shrink_free();
 
-    for ( cnt = 0; cnt < .free_count(); cnt++ )
+    for ( cnt = 0; cnt < free_count; cnt++ )
     {
         if ( ref == free_ref[cnt] )
         {
@@ -147,31 +147,31 @@ return retval;
     }
 
     return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-bool_t t_cpp_list< _ty, _sz >::remove_free_index( int index )
+bool_t t_cpp_list< _ty, _sz >::remove_free_index( int idx )
 {
     t_reference<_ty> ref;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
     // was it found?
-    if ( index < 0 || ( size_t )index >= .free_count() ) return bfalse;
+    if ( idx < 0 || ( size_t )idx >= free_count ) return bfalse;
 
     // make sure that there is a valid value on the top of the list
     shrink_free();
 
     // if the list is empty, there's nothing to do
-    if ( 0 == .free_count() ) return bfalse;
+    if ( 0 == free_count ) return bfalse;
 
     // grab the reference value to the element
-    ref = free_ref[index];
+    ref = free_ref[idx];
 
-    // blank out the index in the list
-    free_ref[index] = _sz;
+    // blank out the idx in the list
+    free_ref[idx] = _sz;
 
     // let the object know it is not in the list anymore
     if ( validate_ref( ref ) )
@@ -180,27 +180,27 @@ bool_t t_cpp_list< _ty, _sz >::remove_free_index( int index )
     }
 
     // shorten the list
-    .free_count()--;
+    free_count--;
 
     // swap the blank element with the highest
-    if (( size_t )index < .free_count() )
+    if (( size_t )idx < free_count )
     {
         // swap the last element for the deleted element
-        SWAP( size_t, free_ref[index], free_ref.free_count()] );
+        //SWAP( size_t, free_ref[idx], free_ref[free_count] );
     }
 
     return btrue;
-       };
+}
 
 //--------------------------------------------------------------------------------------------
-       template < typename _ty, size_t _sz >
-       bool_t    t_cpp_list< _ty, _sz >::remove_free( const t_reference<_ty> & ref )
+template < typename _ty, size_t _sz >
+bool_t    t_cpp_list< _ty, _sz >::remove_free( const t_reference<_ty> & ref )
 {
     // find the object in the free list
     int index = get_free_list_index( ref );
 
     return remove_free_index( index );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ egoboo_rv t_cpp_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
     if ( !validate_ref( ref ) ) return rv_error;
     ptr  = lst + ref;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
     //assume that the data is not corrupt, at the moment
@@ -256,7 +256,7 @@ egoboo_rv t_cpp_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
     cpp_list_state::set_used( plst, btrue );
 
     return rv_success;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
@@ -282,7 +282,7 @@ int t_cpp_list< _ty, _sz >::get_used_list_index( const t_reference<_ty> & ref )
     }
 
     return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
@@ -290,7 +290,7 @@ bool_t t_cpp_list< _ty, _sz >::remove_used_index( int index )
 {
     t_reference<_ty> ref;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
     // was it found?
@@ -321,11 +321,11 @@ bool_t t_cpp_list< _ty, _sz >::remove_used_index( int index )
     if (( size_t )index < used_count )
     {
         // swap the last element for the deleted element
-        SWAP( size_t, used_ref[index], used_ref[used_count] );
+        //SWAP( size_t, used_ref[index], used_ref[used_count] );
     }
 
     return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
@@ -335,7 +335,7 @@ bool_t    t_cpp_list< _ty, _sz >::remove_used( const t_reference<_ty> & ref )
     int index = get_used_list_index( ref );
 
     return remove_used_index( index );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -363,7 +363,7 @@ egoboo_rv t_cpp_list< _ty, _sz >::free_one( const t_reference<_ty> & ref )
     }
 
     return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -372,7 +372,7 @@ void t_cpp_list< _ty, _sz >::shrink_used()
 {
     t_reference<_ty> ref;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
     while ( used_count > 0 )
@@ -385,7 +385,7 @@ void t_cpp_list< _ty, _sz >::shrink_used()
 
         used_count = index;
     }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -393,12 +393,12 @@ void t_cpp_list< _ty, _sz >::shrink_free()
 {
     t_reference<_ty> ref;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
-    while ( .free_count() > 0 )
+    while ( free_count > 0 )
     {
-        size_t index = .free_count() - 1;
+        size_t index = free_count - 1;
 
         if ( free_ref[index] < _sz ) break;
 
@@ -406,7 +406,7 @@ void t_cpp_list< _ty, _sz >::shrink_free()
 
         free_count = index;
     }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -416,7 +416,7 @@ void t_cpp_list< _ty, _sz >::compact_used()
     t_reference<_ty> ref;
     size_t           src, dst;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
     for ( src = 0, dst = 0; dst < used_count; src++ )
@@ -432,7 +432,7 @@ void t_cpp_list< _ty, _sz >::compact_used()
     }
 
     used_count = dst;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -441,10 +441,10 @@ void t_cpp_list< _ty, _sz >::compact_free()
     t_reference<_ty> ref;
     size_t           src, dst;
 
-    if ( .free_count() > _sz ).free_count() = _sz;
+    if ( free_count > _sz ) free_count = _sz;
     if ( used_count > _sz ) used_count = _sz;
 
-    for ( src = 0, dst = 0; dst < .free_count(); src++ )
+    for ( src = 0, dst = 0; dst < free_count; src++ )
     {
         ref = free_ref[src];
         free_ref[src] = _sz;
@@ -456,8 +456,8 @@ void t_cpp_list< _ty, _sz >::compact_free()
         }
     }
 
-    .free_count() = dst;
-};
+    free_count = dst;
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -466,11 +466,11 @@ _ty * t_cpp_map<_ty, _sz>::get_ptr( const t_reference<_ty> & ref )
 {
     if ( !ref_validate( ref ) ) return NULL;
 
-    std::map::iterator it = _map.find( ref.get_value() );
+    t_cpp_map<_ty, _sz>::map_iterator it = _map.find( ref.get_value() );
     if ( it == _map.end() ) return NULL;
 
     return it->second;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
@@ -479,7 +479,7 @@ bool_t t_cpp_map<_ty, _sz>::has_ref( const t_reference<_ty> & ref )
     if ( !ref_validate( ref ) ) return bfalse;
 
     return _map.end() != _map.find( ref.get_value() );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
@@ -492,14 +492,14 @@ bool_t t_cpp_map<_ty, _sz>::add( const t_reference<_ty> & ref, const _ty * val )
     if ( !ref_validate( ref ) ) return bfalse;
 
     // is the slot already occupied?
-    if ( has_ref( ref ) ) bfalse;
+    if ( has_ref( ref ) ) return bfalse;
 
     // add the value
     _map[ ref.get_value()] = val;
     _id++;
 
     return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
@@ -517,7 +517,7 @@ bool_t t_cpp_map<_ty, _sz>::remove( const t_reference<_ty> & ref )
     }
 
     return rv;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -536,7 +536,7 @@ bool_t   t_dary<_ty>::alloc( t_dary<_ty> * pary, size_t sz )
     }
 
     return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
@@ -548,14 +548,14 @@ bool_t t_dary<_ty>::dealloc( t_dary<_ty> * pary )
     pary->top = 0;
 
     return btrue;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
 void     t_dary<_ty>::clear( t_dary<_ty> * pary )
 {
     if ( NULL != pary ) pary->top = 0;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
@@ -566,14 +566,14 @@ size_t   t_dary<_ty>::get_top( t_dary<_ty> * pary )
     pary->top = std::min( pary->top, pary->size() );
 
     return pary->top;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
 size_t   t_dary<_ty>::get_size( t_dary<_ty> * pary )
 {
     return ( NULL == pary ) ? 0 : pary->size();
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
@@ -582,7 +582,7 @@ _ty *    t_dary<_ty>::pop_back( t_dary<_ty> * pary )
     if ( NULL == pary || 0 == pary->top ) return NULL;
     --pary->top;
     return &( pary->operator []( pary->top ) );
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
@@ -600,4 +600,4 @@ bool_t   t_dary<_ty>::push_back( t_dary<_ty> * pary, _ty val )
     }
 
     return retval;
-};
+}

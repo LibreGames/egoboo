@@ -140,7 +140,7 @@ protected:
     static ego_grid_mem * make_fanstart( ego_grid_mem * pgmem, ego_mpd_info * pinfo );
 
 private:
-    static ego_grid_mem * ego_grid_mem::clear( ego_grid_mem * pmem )
+    static ego_grid_mem * clear( ego_grid_mem * pmem )
     {
         if ( NULL == pmem ) return pmem;
 

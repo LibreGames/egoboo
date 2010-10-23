@@ -33,7 +33,7 @@ struct ego_BSP_aabb
     float_ary mids;
     float_ary maxs;
 
-    ego_BSP_aabb( size_t dim = 0 ) : mins( dim ), maxs( dim ), mids( dim ) { clear( this ); ctor_this( this, dim ); };
+    ego_BSP_aabb( size_t _dim = 0 ) : mins( _dim ), maxs( _dim ), mids( _dim ) { clear( this ); ctor_this( this, _dim ); };
     ~ego_BSP_aabb()                { dtor_this( this ); };
 
     static ego_BSP_aabb * ctor_this( ego_BSP_aabb * pbb, size_t dim );
@@ -73,7 +73,7 @@ struct ego_BSP_leaf
 
     ego_BSP_aabb   bbox;
 
-    ego_BSP_leaf( int dim = 0, void * data = NULL, int type = -1 ) { clear( this ); ctor_this( this, dim, data, type ); } ;
+    ego_BSP_leaf( int _dim = 0, void * _data = NULL, int _type = -1 ) { clear( this ); ctor_this( this, _dim, _data, _type ); } ;
     ~ego_BSP_leaf() { dtor_this( this ); };
 
     static ego_BSP_leaf * create( int dim, void * data, int type );
@@ -190,7 +190,7 @@ struct ego_BSP_tree
 
     ego_BSP_tree()                           { clear( this ); };
 
-    ego_BSP_tree( Sint32 dim, Sint32 depth ) { clear( this ); ctor_this( this, dim, depth ); }
+    ego_BSP_tree( Sint32 _dim, Sint32 _depth ) { clear( this ); ctor_this( this, _dim, _depth ); }
     ~ego_BSP_tree()                          { dtor_this( this ); }
 
     static ego_BSP_tree   * create( size_t count );

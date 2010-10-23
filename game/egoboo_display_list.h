@@ -26,7 +26,7 @@
 #include <SDL_ttf.h>
 
 #include "egoboo_typedef.h"
-#include "ogl_include.h"
+#include "extensions/ogl_include.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -89,7 +89,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _egoboo_display_list_h

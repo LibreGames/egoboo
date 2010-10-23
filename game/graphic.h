@@ -146,7 +146,7 @@ struct ego_msg
 
 DECLARE_STATIC_ARY_TYPE( DisplayMsgAry, ego_msg, MAX_MESSAGE );
 
-DECLARE_EXTERN_STATIC_ARY( DisplayMsgAry, DisplayMsg );
+DECLARE_EXTERN_STATIC_ARY( DisplayMsgAry, DisplayMsg )
 
 //--------------------------------------------------------------------------------------------
 // camera optimization

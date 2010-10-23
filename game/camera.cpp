@@ -28,12 +28,12 @@
 #include "input.h"
 #include "graphic.h"
 #include "network.h"
-#include "controls_file.h"
+#include "file_formats/controls_file.h"
 
 #include "egoboo_setup.h"
 #include "egoboo.h"
 
-#include "SDL_extensions.h"
+#include "extensions/SDL_extensions.h"
 
 #include "char.inl"
 #include "mesh.inl"

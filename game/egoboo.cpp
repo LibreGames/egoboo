@@ -42,7 +42,9 @@
 #include "collision.h"
 
 #include "file_formats/scancode_file.h"
-#include "SDL_extensions.h"
+#include "file_formats/controls_file.h"
+
+#include "extensions/SDL_extensions.h"
 
 #include "egoboo_fileutil.h"
 #include "egoboo_setup.h"

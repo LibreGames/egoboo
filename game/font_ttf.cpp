@@ -304,7 +304,7 @@ display_item_t * fnt_vconvertText( display_item_t *pitem, TTF_Font * ttf_ptr, co
 //--------------------------------------------------------------------------------------------
 display_item_t * fnt_convertText_literal( display_item_t *pitem, TTF_Font * ttf_ptr, const char *text )
 {
-    bool_t null_tx_ptr;
+    //bool_t null_tx_ptr;
 
     SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
 
@@ -483,7 +483,7 @@ int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, i
 
     EGOBOO_DELETE_ARY( buffer );
 
-fnt_convertTextBox_literal_finish:
+//fnt_convertTextBox_literal_finish:
 
     // determine the bound of the list
     display_list_pbound( dlst_ptr, NULL );

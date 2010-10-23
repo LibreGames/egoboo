@@ -177,12 +177,12 @@ void vfs_init()
     }
     else
     {
-        char tmp_path[1024] = EMPTY_CSTR;
+        char dir_path[1024] = EMPTY_CSTR;
 
-        snprintf( tmp_path, SDL_arraysize( tmp_path ), "%s/debug", fs_getUserDirectory() );
+        snprintf( dir_path, SDL_arraysize( dir_path ), "%s/debug", fs_getUserDirectory() );
 
-        str_convert_slash_sys( tmp_path, SDL_arraysize( tmp_path ) );
-        fs_createDirectory( tmp_path );
+        str_convert_slash_sys( dir_path, SDL_arraysize( dir_path ) );
+        fs_createDirectory( dir_path );
     }
 
     // set the write directory to the root user directory

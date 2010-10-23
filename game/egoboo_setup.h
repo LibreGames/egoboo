@@ -156,11 +156,9 @@ extern "C"
     bool_t setup_upload( ego_config_data_t * pcfg );
     bool_t setup_synch( ego_config_data_t * pcfg );
 
-    bool_t input_settings_save_vfs( const char* whichfile );
-    bool_t input_settings_load_vfs( const char *szFilename );
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _egoboo_setup_h

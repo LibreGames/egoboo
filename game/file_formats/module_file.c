@@ -23,16 +23,16 @@
 
 #include "module_file.h"
 
-#include "..\character_defs.h"
-#include "..\sound_defs.h"
-#include "..\graphic_defs.h"
-#include "..\input_defs.h"
+#include "../character_defs.h"
+#include "../sound_defs.h"
+#include "../graphic_defs.h"
+#include "../input_defs.h"
 
-#include "..\log.h"
-#include "..\egoboo_vfs.h"
-#include "..\egoboo_strutil.h"
-#include "..\egoboo_setup.h"
-#include "..\egoboo_fileutil.h"
+#include "../log.h"
+#include "../egoboo_vfs.h"
+#include "../egoboo_strutil.h"
+#include "../egoboo_setup.h"
+#include "../egoboo_fileutil.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

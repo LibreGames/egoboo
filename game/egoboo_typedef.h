@@ -40,7 +40,9 @@
 #   include <stack>
 #   include <queue>
 #   include <exception>
+#   include <algorithm>
 #   include <functional>
+
 #endif
 
 #include "egoboo_mem.h"
@@ -309,9 +311,9 @@ extern "C"
 // place this include here so that the REF_T is defined for egoboo_typedef_cpp.h
 
 #if defined(__cplusplus)
-};
+}
 
-#    include "egoboo_typedef_cpp.h"
+#include "egoboo_typedef_cpp.h"
 
 extern "C"
 {
@@ -399,7 +401,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _egoboo_typedef_h

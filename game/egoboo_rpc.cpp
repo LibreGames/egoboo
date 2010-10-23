@@ -256,7 +256,7 @@ size_t TxReqList_get_free( int type )
         retval = TxReqList.free_ref[TxReqList._free_count];
     }
 
-    if ( retval >= 0 && retval < MAX_TX_TEXTURE_REQ )
+    if ( /* retval >= 0 && */ retval < MAX_TX_TEXTURE_REQ )
     {
         ego_tx_request::ctor_this( TxReqList.lst + ( TREQ_REF )retval, type );
     }

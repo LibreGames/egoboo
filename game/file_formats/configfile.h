@@ -36,12 +36,12 @@ extern "C"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-    typedef enum ConfigFile_retval_enum ConfigFile_retval;
     enum ConfigFile_retval_enum
     {
         ConfigFile_fail     = 0,
         ConfigFile_succeed  = 1
     };
+    typedef enum ConfigFile_retval_enum ConfigFile_retval;
 
     enum
     {
@@ -89,7 +89,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _configfile_h

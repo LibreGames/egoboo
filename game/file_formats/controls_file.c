@@ -24,11 +24,11 @@
 #include "controls_file.h"
 #include "scancode_file.h"
 
-#include "..\log.h"
+#include "../log.h"
 
-#include "..\egoboo_fileutil.h"
-#include "..\egoboo_strutil.h"
-#include "..\egoboo_vfs.h"
+#include "../egoboo_fileutil.h"
+#include "../egoboo_strutil.h"
+#include "../egoboo_vfs.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -40,10 +40,10 @@ device_controls_t controls[INPUT_DEVICE_END + MAXJOYSTICK];
 //--------------------------------------------------------------------------------------------
 static void export_control( vfs_FILE * filewrite, const char * text, Sint32 device, control_t * pcontrol )
 {
-    STRING write;
+    STRING buffer;
 
-    snprintf( write, SDL_arraysize( write ), "%s : %s\n", text, scantag_get_string( device, pcontrol->tag, pcontrol->is_key ) );
-    vfs_puts( write, filewrite );
+    snprintf( buffer, SDL_arraysize( buffer ), "%s : %s\n", text, scantag_get_string( device, pcontrol->tag, pcontrol->is_key ) );
+    vfs_puts( buffer, filewrite );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ bool_t input_settings_save_vfs( const char* szFilename )
 
     device_controls_t * pdevice;
     vfs_FILE* filewrite;
-    STRING write;
+    STRING buffer;
     Uint32 i;
 
     filewrite = vfs_openWrite( szFilename );
@@ -180,8 +180,8 @@ bool_t input_settings_save_vfs( const char* szFilename )
     {
         pdevice = controls + i;
 
-        snprintf( write, SDL_arraysize( write ), "\n\nJoystick %d\n", i - INPUT_DEVICE_JOY );
-        vfs_puts( write, filewrite );
+        snprintf( buffer, SDL_arraysize( buffer ), "\n\nJoystick %d\n", i - INPUT_DEVICE_JOY );
+        vfs_puts( buffer, filewrite );
         vfs_puts( "========\n", filewrite );
         export_control( filewrite, "Jump                ", pdevice->device, pdevice->control + CONTROL_JUMP );
         export_control( filewrite, "Left Hand Use        ", pdevice->device, pdevice->control + CONTROL_LEFT_USE );

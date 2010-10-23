@@ -3,7 +3,7 @@
 /// @file file_formats/id_md2.h
 /// @details Md2 model file loading structures & constants.
 
-#include "ogl_include.h"
+#include "../extensions/ogl_include.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -173,7 +173,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _id_md2_h

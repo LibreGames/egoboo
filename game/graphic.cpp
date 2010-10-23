@@ -40,7 +40,7 @@
 #include "log.h"
 #include "script.h"
 #include "camera.h"
-#include "id_md2.h"
+#include "file_formats/id_md2.h"
 #include "input.h"
 #include "network.h"
 #include "passage.h"
@@ -53,8 +53,8 @@
 #include "font_bmp.h"
 #include "lighting.h"
 
-#include "SDL_extensions.h"
-#include "SDL_GL_extensions.h"
+#include "extensions/SDL_extensions.h"
+#include "extensions/SDL_GL_extensions.h"
 
 #include "egoboo_vfs.h"
 #include "egoboo_setup.h"
@@ -185,7 +185,7 @@ oglx_video_parameters_t ogl_vparam;
 size_t                dolist_count = 0;
 ego_obj_registry_entity dolist[DOLIST_SIZE];
 
-ego_renderlist     renderlist = {0, 0, 0, 0, 0, 0};         // zero all the counters at startup
+ego_renderlist     renderlist = {0, 0, 0, 0, 0, 0, 0};         // zero all the counters at startup
 
 float            indextoenvirox[EGO_NORMAL_COUNT];
 float            lighttoenviroy[256];
@@ -509,7 +509,7 @@ void gfx_init_SDL_graphics()
     {
         // Setup the cute windows manager icon, don't do this on Mac
         SDL_Surface *theSurface;
-        char * fname = "icon.bmp";
+        const char * fname = "icon.bmp";
         STRING fileload;
 
         snprintf( fileload, SDL_arraysize( fileload ), "mp_data/%s", fname );
@@ -776,7 +776,7 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
 {
     /// @details ZZ@> This function draws an icon
 
-    int     position, blip_x, blip_y;
+    int     position, blip_pos_x, blip_pos_y;
     float   width, height;
     ego_frect_t txrect;
 
@@ -809,21 +809,21 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
         position = update_wld & 0x1F;
         position = ( SPARKLESIZE * position >> 5 );
 
-        blip_x = x + SPARKLEADD + position;
-        blip_y = y + SPARKLEADD;
-        draw_blip( 0.5f, sparkle, blip_x, blip_y, bfalse );
+        blip_pos_x = x + SPARKLEADD + position;
+        blip_pos_y = y + SPARKLEADD;
+        draw_blip( 0.5f, sparkle, blip_pos_x, blip_pos_y, bfalse );
 
-        blip_x = x + SPARKLEADD + SPARKLESIZE;
-        blip_y = y + SPARKLEADD + position;
-        draw_blip( 0.5f, sparkle, blip_x, blip_y, bfalse );
+        blip_pos_x = x + SPARKLEADD + SPARKLESIZE;
+        blip_pos_y = y + SPARKLEADD + position;
+        draw_blip( 0.5f, sparkle, blip_pos_x, blip_pos_y, bfalse );
 
-        blip_x = blip_x - position;
-        blip_y = y + SPARKLEADD + SPARKLESIZE;
-        draw_blip( 0.5f, sparkle, blip_x, blip_y, bfalse );
+        blip_pos_x = blip_pos_x - position;
+        blip_pos_y = y + SPARKLEADD + SPARKLESIZE;
+        draw_blip( 0.5f, sparkle, blip_pos_x, blip_pos_y, bfalse );
 
-        blip_x = x + SPARKLEADD;
-        blip_y = blip_y - position;
-        draw_blip( 0.5f, sparkle, blip_x, blip_y, bfalse );
+        blip_pos_x = x + SPARKLEADD;
+        blip_pos_y = blip_pos_y - position;
+        draw_blip( 0.5f, sparkle, blip_pos_x, blip_pos_y, bfalse );
     }
 }
 

@@ -31,14 +31,14 @@
 #include "game.h"
 #include "quest.h"
 
-#include "controls_file.h"
-#include "scancode_file.h"
+#include "file_formats/controls_file.h"
+#include "file_formats/scancode_file.h"
 #include "ui.h"
 #include "log.h"
 #include "link.h"
 #include "game.h"
 #include "texture.h"
-#include "module_file.h"
+#include "file_formats/module_file.h"
 
 // To allow changing settings
 #include "sound.h"
@@ -57,7 +57,7 @@
 
 #include "egoboo_math.inl"
 
-#include "SDL_extensions.h"
+#include "extensions/SDL_extensions.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1827,14 +1827,14 @@ int ChooseModule_data::run( double deltaTime )
                 for ( i = startIndex; i < MIN( startIndex + 3, numValidModules ); i++ )
                 {
                     // fix the menu images in case one or more of them are undefined
-                    MOD_REF          imod       = validModules[i];
-                    TX_REF           tex_offset = mnu_ModList.lst[imod].tex_index;
+                    MOD_REF          smod       = validModules[i];
+                    TX_REF           tex_offset = mnu_ModList.lst[smod].tex_index;
                     oglx_texture_t * ptex       = TxTitleImage_get_ptr( tex_offset );
 
                     GLfloat * img_tint = normal_tint;
 
                     // was the module beaten?
-                    if ( mnu_ModList.lst[imod].base.beaten )
+                    if ( mnu_ModList.lst[smod].base.beaten )
                     {
                         img_tint = beat_tint;
                     }
@@ -1848,7 +1848,7 @@ int ChooseModule_data::run( double deltaTime )
                     }
 
                     // Draw a text over the image explaining what it means
-                    if ( mnu_ModList.lst[imod].base.beaten )
+                    if ( mnu_ModList.lst[smod].base.beaten )
                     {
                         ui_drawText( beaten_tx_ptr, moduleMenuOffsetX + x + 32, moduleMenuOffsetY + y + 64 );
                     }
@@ -2076,7 +2076,7 @@ struct ChoosePlayer_data : public mnu_state_data
 
     static Player_stats_info * load_stats( Player_stats_info * ptr, int player, int mode );
     static Player_stats_info * render_stats( Player_stats_info * ptr, int x, int y, int width, int height );
-    static bool_t ChoosePlayer_data::load_profiles( int player, ego_ChoosePlayer_profiles * pro_list );
+    static bool_t              load_profiles( int player, ego_ChoosePlayer_profiles * pro_list );
 
     static void   update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size );
     static bool_t update_select_button( ui_Widget * but_ptr, int count );
@@ -2345,10 +2345,10 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
                             const int icon_indent = 8;
                             TX_REF  icon_ref;
                             STRING itemname;
-                            ego_cap * pcap = CapStack.lst + icap;
+                            ego_cap * tmp_pcap = CapStack.lst + icap;
 
-                            if ( pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
-                            else                   strncpy( itemname, pcap->classname,   SDL_arraysize( itemname ) );
+                            if ( tmp_pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
+                            else                   strncpy( itemname, tmp_pcap->classname,   SDL_arraysize( itemname ) );
 
                             icon_ref = mnu_get_icon_ref( icap, pdata->tx_ref );
                             draw_one_icon( icon_ref, x1 + icon_indent, y1, NOSPARKLE );
@@ -5198,8 +5198,6 @@ int OptionsVideo_data::fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX
     float      min_diff = 0.0f;
     SDL_Rect * found_rect = NULL, ** pprect = NULL;
 
-    float       aspect_ratio;
-
     OptionsVideo_data::coerce_aspect_ratio( pcfg->scrx_req, pcfg->scry_req, &aspect_ratio, &sz_aspect_ratio );
 
     found_rect = NULL;
@@ -5994,9 +5992,9 @@ int OptionsVideo_data::run( double deltaTime )
 //--------------------------------------------------------------------------------------------
 struct ShowResults_data : public mnu_state_data
 {
-    int        count;
-    char     * game_hint;
-    char       buffer[1024];
+    int          count;
+    const char * game_hint;
+    char         buffer[1024];
 
     //---- construction/destruction
     ShowResults_data() { init(); }

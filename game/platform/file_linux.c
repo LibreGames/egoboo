@@ -25,7 +25,6 @@
 #include "log.h"
 
 #include "egoboo_strutil.h"
-#include "egoboo.h"
 
 #include <unistd.h>
 #include <pwd.h>

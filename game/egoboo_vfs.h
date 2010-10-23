@@ -122,10 +122,6 @@ extern "C"
     int          vfs_scanf( vfs_FILE * pfile, const char *format, ... );
     int          vfs_printf( vfs_FILE * pfile, const char *format, ... );
 
-    int          vfs_putc( int c, vfs_FILE * pfile );
-    int          vfs_getc( vfs_FILE * pfile );
-    int          vfs_ungetc( int c, vfs_FILE * pfile );
-
     void         vfs_empty_import_directory();
 
     int          vfs_copyFile( const char *source, const char *dest );
@@ -153,7 +149,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _egoboo_vfs_h

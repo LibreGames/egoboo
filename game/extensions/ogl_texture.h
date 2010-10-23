@@ -117,5 +117,5 @@ extern "C"
     GLuint    ErrorImage_get_binding();
 
 #if defined(__cplusplus)
-};
+}
 #endif

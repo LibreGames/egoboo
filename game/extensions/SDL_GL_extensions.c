@@ -299,7 +299,7 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
     bool_t            use_alpha;
     GLenum            target;
 
-    SDLX_screen_info_t sdl_scr;
+    SDLX_screen_info_t tmp_sdl_scr;
 
     // Bind the error texture instead of the old texture
     ErrorImage_bind( GL_TEXTURE_2D, binding );
@@ -312,7 +312,7 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
     if ( wrap_t < 0 ) wrap_t = GL_REPEAT;
 
     // grab the screen information
-    SDLX_Get_Screen_Info( &sdl_scr, SDL_FALSE );
+    SDLX_Get_Screen_Info( &tmp_sdl_scr, SDL_FALSE );
 
     /* Set the original local_surface's size (in case it's not an exact square of a power of two) */
     srf_h = local_surface->h;

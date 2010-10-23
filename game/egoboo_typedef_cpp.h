@@ -35,9 +35,9 @@ struct cpp_list_state
     bool_t in_free_list; ///< the object is currently in the free list
     bool_t in_used_list; ///< the object is currently in the used list
 
-    cpp_list_state( size_t index = ( size_t )( ~0L ) )
+    cpp_list_state( size_t idx = ( size_t )( ~0L ) )
     {
-        cpp_list_state::ctor_this( this, index );
+        cpp_list_state::ctor_this( this, idx );
     }
 
     ~cpp_list_state()
@@ -79,7 +79,8 @@ class egoboo_exception : public std::exception
 //--------------------------------------------------------------------------------------------
 // definition of the reference template
 
-template <typename _ty> struct t_reference
+template <typename _ty>
+struct t_reference
 {
 protected:
     REF_T    ref;          ///< the reference
@@ -149,6 +150,9 @@ struct t_cpp_map
 {
 private:
 
+    typedef typename std::map< const REF_T, const _ty * > map_type;
+    typedef typename std::map< const REF_T, const _ty * >::iterator map_iterator;
+
     unsigned                             _id;
     std::map< const REF_T, const _ty * > _map;
 
@@ -215,7 +219,7 @@ private:
     bool_t iterator_end( iterator & it )
     {
         // if the iterator is not valid, we ARE at the end
-        if ( !iterator_validate( it ) ) btrue;
+        if ( !iterator_validate( it ) ) return btrue;
 
         return it._i == _map.end();
     }
@@ -316,10 +320,10 @@ struct t_cpp_list
 
     _ty * get_ptr( const t_reference<_ty> & ref );
 
-    size_t free_full() { return.free_count() >= _sz; }
+    size_t free_full() { return free_count() >= _sz; }
     size_t used_full() { return used_count >= _sz; }
 
-    size_t count_free() { return.free_count(); }
+    size_t count_free() { return free_count(); }
     size_t count_used() { return used_count; }
 
     bool_t validate_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
@@ -369,12 +373,14 @@ struct t_cpp_stack
 template<typename _ty>
 struct t_dary : public std::vector< _ty >
 {
+    using std::vector< _ty >::size;
+
     size_t top;
 
-    t_dary( size_t size = 0 )
+    t_dary( size_t sz = 0 )
     {
         top = 0;
-        if ( 0 != size ) std::vector< _ty >::resize( size );
+        if ( 0 != sz ) std::vector< _ty >::resize( sz );
     }
 
     static bool_t   alloc( t_dary * pary, size_t sz );

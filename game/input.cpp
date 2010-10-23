@@ -22,9 +22,9 @@
 /// @details
 
 #include "input.h"
-#include "controls_file.h"
+#include "file_formats/controls_file.h"
 
-#include "extensions\SDL_extensions.h"
+#include "extensions/SDL_extensions.h"
 
 #if defined(USE_LUA_CONSOLE)
 #    include "lua_console.h"
@@ -46,7 +46,7 @@
 
 #include "egoboo_math.inl"
 
-#include "SDL_extensions.h"
+#include "extensions/SDL_extensions.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ ego_mouse           mous;
 ego_keyboard        keyb;
 ego_device_joystick joy[MAXJOYSTICK];
 
-ego_cursor cursor = {0, 0, bfalse, bfalse, bfalse, bfalse};
+ego_cursor cursor = {0, 0, bfalse, bfalse, bfalse, bfalse, 0};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

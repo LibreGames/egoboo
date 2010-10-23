@@ -51,7 +51,7 @@ struct ego_script_storage_info
 };
 
 DECLARE_STATIC_ARY_TYPE( AisStorageAry, ego_script_storage_info, MAX_AI );
-DECLARE_EXTERN_STATIC_ARY( AisStorageAry, AisStorage );
+DECLARE_EXTERN_STATIC_ARY( AisStorageAry, AisStorage )
 
 #define AI_LOADED(IAI) ( ((IAI) >= 0) && ((IAI) < MAX_AI) && ((IAI) >= AisStorage.count) && (AisStorage.ary[IAI].iStartPosition != AisStorage.ary[IAI].iEndPosition) )
 
@@ -72,7 +72,7 @@ struct scr_opcode_data
 };
 
 DECLARE_STATIC_ARY_TYPE( OpListAry, scr_opcode_data, MAX_OPCODE );
-DECLARE_EXTERN_STATIC_ARY( OpListAry, OpList );
+DECLARE_EXTERN_STATIC_ARY( OpListAry, OpList )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

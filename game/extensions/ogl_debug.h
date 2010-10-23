@@ -580,5 +580,5 @@ extern "C"
     FILE * set_ogl_debug_stderr( FILE * pfile );
 
 #if defined(__cplusplus)
-};
+}
 #endif

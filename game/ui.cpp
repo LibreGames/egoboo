@@ -28,8 +28,8 @@
 #include "texture.h"
 #include "log.h"
 
-#include "ogl_debug.h"
-#include "SDL_extensions.h"
+#include "extensions/ogl_debug.h"
+#include "extensions/SDL_extensions.h"
 
 #include "egoboo_display_list.h"
 

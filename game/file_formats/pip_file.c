@@ -23,10 +23,10 @@
 
 #include "pip_file.h"
 
-#include "..\sound_defs.h"
+#include "../sound_defs.h"
 
-#include "..\egoboo_vfs.h"
-#include "..\egoboo_fileutil.h"
+#include "../egoboo_vfs.h"
+#include "../egoboo_fileutil.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -244,8 +244,8 @@ pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
         else if ( MAKE_IDSZ( 'W', 'D', 'A', 'M' ) == idsz )  ppip->wisdamagebonus = ( 0 != fget_int( fileread ) );
         else if ( MAKE_IDSZ( 'O', 'R', 'N', 'T' ) == idsz )
         {
-            char cTmp = fget_first_letter( fileread );
-            switch ( toupper( cTmp ) )
+            char ornt_val = fget_first_letter( fileread );
+            switch ( toupper( ornt_val ) )
             {
                 case 'X': ppip->orientation = ORIENTATION_X; break;  // put particle up along the world or body-fixed x-axis
                 case 'Y': ppip->orientation = ORIENTATION_Y; break;  // put particle up along the world or body-fixed y-axis

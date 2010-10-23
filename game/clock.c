@@ -213,11 +213,11 @@ void clk_setFrameHistoryWindow( ClockState_t * cs, int size )
 //--------------------------------------------------------------------------------------------
 double clk_guessFrameDuration( ClockState_t * cs )
 {
-    double time = 0;
+    double tm = 0;
 
     if ( cs->frameHistorySize == 1 )
     {
-        time = cs->frameHistory[0];
+        tm = cs->frameHistory[0];
     }
     else
     {
@@ -229,10 +229,10 @@ double clk_guessFrameDuration( ClockState_t * cs )
             totalTime += cs->frameHistory[c];
         }
 
-        time = totalTime / cs->frameHistorySize;
+        tm = totalTime / cs->frameHistorySize;
     };
 
-    return time;
+    return tm;
 }
 
 //--------------------------------------------------------------------------------------------

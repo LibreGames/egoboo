@@ -22,8 +22,12 @@
 /// @file egoboo_mem.h
 /// @details Macros to control allocation and deallocation of memory
 
-#if defined(__cplusplus)
-#    include "mmgr.h"
+// apparently gcc has some problems with the memory manager
+#if defined(__cplusplus) && defined(__GNUC__)
+#    include <memory>
+#    include <cstring>
+#elif defined(__cplusplus)
+#    include "Fluid_Studios_Memory_Manager/mmgr.h"
 #else
 #    include <memory.h>
 #    include <string.h>

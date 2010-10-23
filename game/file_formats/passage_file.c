@@ -25,7 +25,7 @@
 
 #include "mpd_file.h"
 
-#include "..\egoboo_fileutil.h"
+#include "../egoboo_fileutil.h"
 
 //--------------------------------------------------------------------------------------------
 passage_data_t * passage_data_init( passage_data_t * ppass )

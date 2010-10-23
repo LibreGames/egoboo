@@ -29,10 +29,10 @@
 
 #include "SDL_GL_extensions.h"
 
-#include "..\graphic_defs.h"
+#include "../graphic_defs.h"
 
-#include "..\egoboo_setup.h"
-#include "..\egoboo_strutil.h"
+#include "../egoboo_setup.h"
+#include "../egoboo_strutil.h"
 
 #include <SDL_image.h>
 

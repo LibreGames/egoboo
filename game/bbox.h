@@ -97,7 +97,7 @@ struct ego_oct_bb
 {
     ego_oct_vec mins,  maxs;
 
-    ego_oct_bb() {}
+    ego_oct_bb() : mins(), maxs() {}
 
     static ego_oct_bb * ctor_this( ego_oct_bb * pobb );
     static bool_t       do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst );

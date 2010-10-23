@@ -29,7 +29,7 @@
 #include "log.h"
 #include "hash.h"
 #include "game.h"
-#include "SDL_extensions.h"
+#include "extensions/SDL_extensions.h"
 #include "network.h"
 
 #include "char.inl"
@@ -152,13 +152,13 @@ bool_t collision_system_begin()
 {
     if ( !_collision_system_initialized )
     {
-        if ( NULL == CoNode_ary::alloc( &_co_ary, CHR_MAX_COLLISIONS ) ) goto collision_system_begin_fail;
+        if ( !CoNode_ary::alloc( &_co_ary, CHR_MAX_COLLISIONS ) ) goto collision_system_begin_fail;
 
-        if ( NULL == HashNode_ary::alloc( &_hn_ary, COLLISION_HASH_NODES ) ) goto collision_system_begin_fail;
+        if ( !HashNode_ary::alloc( &_hn_ary, COLLISION_HASH_NODES ) ) goto collision_system_begin_fail;
 
-        if ( NULL == ego_BSP_leaf_pary::alloc( &_coll_leaf_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
+        if ( !ego_BSP_leaf_pary::alloc( &_coll_leaf_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
 
-        if ( NULL == CoNode_ary::alloc( &_coll_node_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
+        if ( !CoNode_ary::alloc( &_coll_node_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
 
         // delete the object BSP data
         ego_obj_BSP::dtor_this( &ego_obj_BSP::root );
@@ -382,7 +382,7 @@ bool_t CHashList_insert_unique( CHashList_t * pchlst, ego_CoNode * pdata, CoNode
     if ( !found )
     {
         size_t old_count;
-        ego_hash_node * old_head, * new_head, * hn;
+        ego_hash_node * old_head, * new_head, * tmp_hn;
 
         // pick a free collision data
         d = CoNode_ary::pop_back( free_cdata );
@@ -391,14 +391,14 @@ bool_t CHashList_insert_unique( CHashList_t * pchlst, ego_CoNode * pdata, CoNode
         *d = *pdata;
 
         // generate a new hash node
-        hn = HashNode_ary::pop_back( free_hnodes );
+        tmp_hn = HashNode_ary::pop_back( free_hnodes );
 
         // link the hash node to the free CoNode
-        hn->data = d;
+        tmp_hn->data = d;
 
         // insert the node at the front of the collision list for this hash
         old_head = ego_hash_list::get_node( pchlst, hashval );
-        new_head = ego_hash_node::insert_before( old_head, hn );
+        new_head = ego_hash_node::insert_before( old_head, tmp_hn );
         ego_hash_list::set_node( pchlst, hashval, new_head );
 
         // add 1 to the count at this hash

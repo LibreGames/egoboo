@@ -95,7 +95,7 @@ extern "C"
         prt_r = 0x2000,    ///< particle is diagonal (rotated 45 degrees to the right = 8192)
         prt_h = 0x4000,    ///< particle is horizontal (rotated 90 degrees = 16384)
         prt_l = 0xE000,    ///< particle is diagonal (rotated 45 degrees to the right = 8192)
-        prt_u = 0xFFFF,    ///< particle is of unknown orientation
+        prt_u = 0xFFFF     ///< particle is of unknown orientation
     };
     typedef enum e_particle_direction particle_direction_t;
 
@@ -230,7 +230,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _pip_file_h

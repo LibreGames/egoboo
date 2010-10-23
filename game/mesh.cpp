@@ -950,9 +950,9 @@ bool_t ego_mpd::make_normals( ego_mpd   * pmesh )
                 for ( j = 0; j < 4; j++ )
                 {
                     float vdot;
-                    int k = ( j + 1 ) % 4;
+                    int q = ( j + 1 ) % 4;
 
-                    vdot = fvec3_dot_product( nrm_lst[j].v, nrm_lst[k].v );
+                    vdot = fvec3_dot_product( nrm_lst[j].v, nrm_lst[q].v );
 
                     edge_is_crease[j] = ( vdot < INV_SQRT_TWO );
 

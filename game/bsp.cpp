@@ -26,6 +26,7 @@
 
 #include "egoboo.h"
 #include "egoboo_mem.h"
+#include "egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1303,7 +1304,7 @@ bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, size_t cnt )
 
     ego_BSP_branch * B;
 
-    if ( NULL == t || cnt < 0 || cnt >= t->branch_used.top ) return bfalse;
+    if ( NULL == t || cnt >= t->branch_used.top ) return bfalse;
 
     B = t->branch_used[ cnt ];
     if ( NULL == B ) return bfalse;

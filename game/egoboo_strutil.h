@@ -59,7 +59,7 @@ extern "C"
     void   str_add_linebreaks( char * text, size_t text_len, size_t line_len );
 
 #if defined(__cplusplus)
-};
+}
 #endif
 
 #define _egoboo_strutil_h

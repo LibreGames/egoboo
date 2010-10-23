@@ -21,7 +21,7 @@
 
 #include "egoboo_object.h"
 
-#include "pip_file.h"
+#include "file_formats/pip_file.h"
 #include "graphic_prt.h"
 #include "physics.h"
 #include "bsp.h"

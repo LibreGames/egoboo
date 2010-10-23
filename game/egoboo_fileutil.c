@@ -120,11 +120,11 @@ bool_t goto_delimiter( char * buffer, vfs_FILE* fileread, char delim, bool_t opt
     /// @details ZZ@> This function moves a file read pointer to the next delimiter char cTmp;
     /// BB@> buffer points to a 256 character buffer that will get the data between the newline and the delim
 
-    int cTmp, write;
+    int cTmp, write_pos;
 
     if ( vfs_eof( fileread )  || vfs_error( fileread ) ) return bfalse;
 
-    write = 0;
+    write_pos = 0;
     if ( NULL != buffer ) buffer[0] = CSTR_END;
     cTmp = vfs_getc( fileread );
     while ( !vfs_eof( fileread ) && !vfs_error( fileread ) )
@@ -133,16 +133,16 @@ bool_t goto_delimiter( char * buffer, vfs_FILE* fileread, char delim, bool_t opt
 
         if ( 0x0A == cTmp || 0x0D == cTmp || CSTR_END == cTmp )
         {
-            write = 0;
+            write_pos = 0;
         }
         else
         {
-            if ( NULL != buffer ) buffer[write++] = cTmp;
+            if ( NULL != buffer ) buffer[write_pos++] = cTmp;
         }
 
         cTmp = vfs_getc( fileread );
     }
-    if ( NULL != buffer ) buffer[write] = CSTR_END;
+    if ( NULL != buffer ) buffer[write_pos] = CSTR_END;
 
     if ( !optional && delim != cTmp )
     {
@@ -162,7 +162,7 @@ char goto_delimiter_list( char * buffer, vfs_FILE* fileread, const char * delim_
     ///    returns the delimiter that was found, or CSTR_END if no delimiter found
 
     char   retval = CSTR_END;
-    int    cTmp, write;
+    int    cTmp, write_pos;
     bool_t is_delim;
 
     if ( INVALID_CSTR( delim_list ) ) return bfalse;
@@ -179,7 +179,7 @@ char goto_delimiter_list( char * buffer, vfs_FILE* fileread, const char * delim_
     if ( NULL != buffer ) buffer[0] = CSTR_END;
 
     is_delim = bfalse;
-    write    = 0;
+    write_pos    = 0;
     cTmp = vfs_getc( fileread );
     while ( !vfs_eof( fileread ) && !vfs_error( fileread ) )
     {
@@ -193,16 +193,16 @@ char goto_delimiter_list( char * buffer, vfs_FILE* fileread, const char * delim_
 
         if ( 0x0A == cTmp || 0x0D == cTmp || CSTR_END == cTmp )
         {
-            write = 0;
+            write_pos = 0;
         }
         else
         {
-            if ( NULL != buffer ) buffer[write++] = cTmp;
+            if ( NULL != buffer ) buffer[write_pos++] = cTmp;
         }
 
         cTmp = vfs_getc( fileread );
     }
-    if ( NULL != buffer ) buffer[write] = CSTR_END;
+    if ( NULL != buffer ) buffer[write_pos] = CSTR_END;
 
     if ( !optional && !is_delim )
     {
@@ -229,11 +229,11 @@ char * goto_colon_mem( char * buffer, char * pmem, char * pmem_end, bool_t optio
     ///    Also, the two functions goto_colon and goto_colon_yesno have been combined
 
     char cTmp;
-    int    write;
+    int    write_pos;
 
     if ( NULL == pmem || pmem >= pmem_end ) return pmem;
 
-    write = 0;
+    write_pos = 0;
     if ( NULL != buffer ) buffer[0] = CSTR_END;
     cTmp = *( pmem++ );
     while ( pmem < pmem_end )
@@ -242,16 +242,16 @@ char * goto_colon_mem( char * buffer, char * pmem, char * pmem_end, bool_t optio
 
         if ( 0x0A == cTmp || 0x0D == cTmp )
         {
-            write = 0;
+            write_pos = 0;
         }
         else
         {
-            if ( NULL != buffer ) buffer[write++] = cTmp;
+            if ( NULL != buffer ) buffer[write_pos++] = cTmp;
         }
 
         cTmp = *( pmem++ );
     }
-    if ( NULL != buffer ) buffer[write] = CSTR_END;
+    if ( NULL != buffer ) buffer[write_pos] = CSTR_END;
 
     if ( !optional && ':' != cTmp )
     {
@@ -709,14 +709,14 @@ char * copy_mem_to_delimiter( char * pmem, char * pmem_end, vfs_FILE * filewrite
     /// @details BB@> copy data from one file to another until the delimiter delim has been found
     ///    could be used to merge a template file with data
 
-    int write;
+    int write_pos;
     char cTmp, temp_buffer[1024] = EMPTY_CSTR;
 
     if ( NULL == pmem || NULL == filewrite ) return pmem;
 
     if ( vfs_error( filewrite ) ) return pmem;
 
-    write = 0;
+    write_pos = 0;
     temp_buffer[0] = CSTR_END;
     cTmp = *( pmem++ );
     while ( pmem < pmem_end )
@@ -726,28 +726,28 @@ char * copy_mem_to_delimiter( char * pmem, char * pmem_end, vfs_FILE * filewrite
         if ( 0x0A == cTmp || 0x0D == cTmp )
         {
             // output the temp_buffer
-            temp_buffer[write] = CSTR_END;
+            temp_buffer[write_pos] = CSTR_END;
             vfs_puts( temp_buffer, filewrite );
             vfs_putc( cTmp, filewrite );
 
             // reset the temp_buffer pointer
-            write = 0;
+            write_pos = 0;
             temp_buffer[0] = CSTR_END;
         }
         else
         {
-            if ( write > SDL_arraysize( temp_buffer ) - 2 )
+            if ( write_pos > SDL_arraysize( temp_buffer ) - 2 )
             {
                 log_error( "copy_mem_to_delimiter() - temp_buffer overflow.\n" );
             }
 
-            temp_buffer[write++] = cTmp;
+            temp_buffer[write_pos++] = cTmp;
         }
 
         // only copy if it is not the
         cTmp = *( pmem++ );
     }
-    temp_buffer[write] = CSTR_END;
+    temp_buffer[write_pos] = CSTR_END;
 
     if ( NULL != user_buffer )
     {

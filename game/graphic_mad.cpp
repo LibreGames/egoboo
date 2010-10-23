@@ -23,7 +23,7 @@
 
 #include "graphic_mad.h"
 #include "mad.h"
-#include "id_md2.h"
+#include "file_formats/id_md2.h"
 
 #include "log.h"
 #include "camera.h"
@@ -1376,7 +1376,7 @@ egoboo_rv ego_chr_instance::set_frame( ego_chr_instance * pinst, int frame )
     if ( NULL == pinst ) return rv_error;
 
     // is the action in the valid range?
-    if ( pinst->action_which < 0 || pinst->action_which > ACTION_COUNT ) return rv_error;
+    if ( /* pinst->action_which < 0 || */ pinst->action_which > ACTION_COUNT ) return rv_error;
 
     // do we have a valid model?
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;

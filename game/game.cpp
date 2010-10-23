@@ -28,8 +28,8 @@
 
 #include "mad.h"
 
-#include "controls_file.h"
-#include "scancode_file.h"
+#include "file_formats/controls_file.h"
+#include "file_formats/scancode_file.h"
 
 #include "physics.inl"
 #include "clock.h"
@@ -48,11 +48,11 @@
 #include "network.h"
 #include "mesh.inl"
 #include "texture.h"
-#include "wawalite_file.h"
+#include "file_formats/wawalite_file.h"
 #include "clock.h"
-#include "spawn_file.h"
+#include "file_formats/spawn_file.h"
 #include "camera.h"
-#include "id_md2.h"
+#include "file_formats/id_md2.h"
 #include "collision.h"
 #include "graphic_fan.h"
 #include "quest.h"
@@ -68,7 +68,7 @@
 #include "egoboo_vfs.h"
 #include "egoboo.h"
 
-#include "SDL_extensions.h"
+#include "extensions/SDL_extensions.h"
 
 #include "egoboo_console.h"
 #if defined(USE_LUA_CONSOLE)
@@ -1643,9 +1643,9 @@ CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD ta
     }
     else
     {
-        CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+        CHR_BEGIN_LOOP_ACTIVE( tnc, pchr )
         {
-            search_list[search_list_size] = cnt;
+            search_list[search_list_size] = tnc;
             search_list_size++;
         }
         CHR_END_LOOP();
@@ -1707,10 +1707,8 @@ void do_damage_tiles()
     CHR_BEGIN_LOOP_ACTIVE( character, pchr )
     {
         ego_cap * pcap;
-        ego_chr * pchr;
 
         if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrObjList.get_pdata( character );
 
         pcap = pro_get_pcap( pchr->profile_ref );
         if ( NULL == pcap ) continue;

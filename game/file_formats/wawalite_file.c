@@ -24,11 +24,11 @@
 #include "wawalite_file.h"
 #include "pip_file.h"
 
-#include "..\character_defs.h"
-#include "..\sound_defs.h"
-#include "..\log.h"
-#include "..\egoboo_fileutil.h"
-#include "..\egoboo_math.inl"
+#include "../character_defs.h"
+#include "../sound_defs.h"
+#include "../log.h"
+#include "../egoboo_fileutil.h"
+#include "../egoboo_math.inl"
 
 #include <SDL_stdinc.h>
 

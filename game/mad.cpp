@@ -25,7 +25,7 @@
 
 #include "md2.inl"
 
-#include "cap_file.h"
+#include "file_formats/cap_file.h"
 #include "particle.inl"
 
 #include "log.h"

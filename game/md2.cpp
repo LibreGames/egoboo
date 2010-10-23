@@ -35,7 +35,7 @@
 //--------------------------------------------------------------------------------------------
 float ego_MD2_Model::kNormals[EGO_NORMAL_COUNT][3] =
 {
-#include "id_normals.inl"
+#include "file_formats/id_normals.inl"
     , {0, 0, 0}                     // the "equal light" normal
 };
 
@@ -299,7 +299,7 @@ void ego_MD2_Model::scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, f
         bfound = bfalse;
         for ( tnc = 0; tnc  < num_verts; tnc++ )
         {
-            int       cnt;
+            int       ijk;
             ego_oct_vec opos;
 
             pframe->vertex_lst[tnc].pos.x *= scale_x;
@@ -317,19 +317,19 @@ void ego_MD2_Model::scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, f
             // Re-calculate the bounding box for this frame
             if ( !bfound )
             {
-                for ( cnt = 0; cnt < OCT_COUNT; cnt ++ )
+                for ( ijk = 0; ijk < OCT_COUNT; ijk ++ )
                 {
-                    pframe->bb.mins[cnt] = pframe->bb.maxs[cnt] = opos[cnt];
+                    pframe->bb.mins[ijk] = pframe->bb.maxs[ijk] = opos[ijk];
                 }
 
                 bfound = btrue;
             }
             else
             {
-                for ( cnt = 0; cnt < OCT_COUNT; cnt ++ )
+                for ( ijk = 0; ijk < OCT_COUNT; ijk ++ )
                 {
-                    pframe->bb.mins[cnt] = MIN( pframe->bb.mins[cnt], opos[cnt] );
-                    pframe->bb.maxs[cnt] = MAX( pframe->bb.maxs[cnt], opos[cnt] );
+                    pframe->bb.mins[ijk] = MIN( pframe->bb.mins[ijk], opos[ijk] );
+                    pframe->bb.maxs[ijk] = MAX( pframe->bb.maxs[ijk], opos[ijk] );
                 }
             }
         }

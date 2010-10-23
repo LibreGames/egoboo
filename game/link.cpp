@@ -29,7 +29,7 @@
 #include "menu.h"
 #include "log.h"
 #include "graphic.h"
-#include "module_file.h"
+#include "file_formats/module_file.h"
 #include "game.h"
 
 #include "egoboo_fileutil.h"

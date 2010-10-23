@@ -111,8 +111,13 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-Winit-self" />
+					<Add option="-Wredundant-decls" />
+					<Add option="-Winline" />
+					<Add option="-Wmissing-include-dirs" />
 					<Add option="-Wmain" />
-					<Add option="-Wfatal-errors" />
+					<Add option="-std=c++98" />
+					<Add option="-Wextra" />
 					<Add option="-Wall" />
 					<Add option="-g" />
 					<Add option="-D_DEBUG" />
@@ -329,14 +334,8 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add directory=".." />
-			<Add directory="./extensions" />
-			<Add directory="./file_formats" />
-			<Add directory="./platform" />
-			<Add directory="../enet" />
-			<Add directory="../enet/include" />
-			<Add directory="../game" />
 			<Add directory="." />
+			<Add directory="../enet/include" />
 		</Compiler>
 		<Unit filename="../egoboo1.ico">
 			<Option target="nix-gcc-debug" />
@@ -350,59 +349,35 @@
 			<Option target="nix-gcc-debug" />
 			<Option target="nix-gcc-release" />
 		</Unit>
-		<Unit filename="ChrList.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ChrList.cpp" />
 		<Unit filename="ChrList.h" />
-		<Unit filename="EncList.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="EncList.cpp" />
 		<Unit filename="EncList.h" />
-		<Unit filename="IDSZ_map.cpp">
+		<Unit filename="IDSZ_map.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="IDSZ_map.h" />
-		<Unit filename="PrtList.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="PrtList.cpp" />
 		<Unit filename="PrtList.h" />
-		<Unit filename="bbox.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="bbox.cpp" />
 		<Unit filename="bbox.h" />
-		<Unit filename="bsp.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="bsp.cpp" />
 		<Unit filename="bsp.h" />
-		<Unit filename="camera.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="camera.cpp" />
 		<Unit filename="camera.h" />
-		<Unit filename="char.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="char.cpp" />
 		<Unit filename="char.h" />
 		<Unit filename="char.inl" />
-		<Unit filename="client.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="character_defs.h" />
+		<Unit filename="client.cpp" />
 		<Unit filename="client.h" />
-		<Unit filename="clock.cpp">
+		<Unit filename="clock.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="clock.h" />
-		<Unit filename="collision.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="collision.cpp" />
 		<Unit filename="collision.h" />
-		<Unit filename="ego_wrap.cpp">
-			<Option compilerVar="CC" />
-			<Option compile="0" />
-			<Option link="0" />
-		</Unit>
-		<Unit filename="egoboo.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="egoboo.cpp" />
 		<Unit filename="egoboo.h" />
 		<Unit filename="egoboo_config.h" />
 		<Unit filename="egoboo_console.c">
@@ -410,54 +385,51 @@
 		</Unit>
 		<Unit filename="egoboo_console.h" />
 		<Unit filename="egoboo_console.inl" />
-		<Unit filename="egoboo_display_list.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="egoboo_display_list.cpp" />
 		<Unit filename="egoboo_display_list.h" />
 		<Unit filename="egoboo_doxygen.h" />
-		<Unit filename="egoboo_endian.cpp">
+		<Unit filename="egoboo_endian.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="egoboo_endian.h" />
-		<Unit filename="egoboo_fileutil.cpp">
+		<Unit filename="egoboo_fileutil.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="egoboo_fileutil.h" />
-		<Unit filename="egoboo_math.cpp">
+		<Unit filename="egoboo_math.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="egoboo_math.h" />
 		<Unit filename="egoboo_math.inl" />
 		<Unit filename="egoboo_mem.h" />
-		<Unit filename="egoboo_object.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="egoboo_object.cpp" />
 		<Unit filename="egoboo_object.h" />
+		<Unit filename="egoboo_object_list.cpp" />
+		<Unit filename="egoboo_object_list.h" />
+		<Unit filename="egoboo_object_list.inl" />
 		<Unit filename="egoboo_platform.h" />
-		<Unit filename="egoboo_process.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="egoboo_process.cpp" />
 		<Unit filename="egoboo_process.h" />
-		<Unit filename="egoboo_setup.cpp">
+		<Unit filename="egoboo_rpc.cpp" />
+		<Unit filename="egoboo_rpc.h" />
+		<Unit filename="egoboo_setup.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="egoboo_setup.h" />
-		<Unit filename="egoboo_strutil.cpp">
+		<Unit filename="egoboo_state_machine.h" />
+		<Unit filename="egoboo_strutil.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="egoboo_strutil.h" />
-		<Unit filename="egoboo_typedef.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="egoboo_typedef.cpp" />
 		<Unit filename="egoboo_typedef.h" />
 		<Unit filename="egoboo_typedef_cpp.h" />
-		<Unit filename="egoboo_vfs.cpp">
+		<Unit filename="egoboo_typedef_cpp.inl" />
+		<Unit filename="egoboo_vfs.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="egoboo_vfs.h" />
-		<Unit filename="enchant.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="enchant.cpp" />
 		<Unit filename="enchant.h" />
 		<Unit filename="enchant.inl" />
 		<Unit filename="extensions/SDL_GL_extensions.c">
@@ -484,7 +456,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="extensions/ogl_texture.h" />
-		<Unit filename="file_common.cpp">
+		<Unit filename="file_common.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="file_common.h" />
@@ -545,52 +517,32 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="file_formats/wawalite_file.h" />
-		<Unit filename="font_bmp.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="font_bmp.cpp" />
 		<Unit filename="font_bmp.h" />
-		<Unit filename="font_ttf.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="font_ttf.cpp" />
 		<Unit filename="font_ttf.h" />
-		<Unit filename="game.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="game.cbp" />
+		<Unit filename="game.cpp" />
 		<Unit filename="game.h" />
-		<Unit filename="graphic.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="graphic.cpp" />
 		<Unit filename="graphic.h" />
-		<Unit filename="graphic_fan.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="graphic_defs.h" />
+		<Unit filename="graphic_fan.cpp" />
 		<Unit filename="graphic_fan.h" />
-		<Unit filename="graphic_mad.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="graphic_mad.cpp" />
 		<Unit filename="graphic_mad.h" />
-		<Unit filename="graphic_prt.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="graphic_prt.cpp" />
 		<Unit filename="graphic_prt.h" />
-		<Unit filename="hash.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="hash.cpp" />
 		<Unit filename="hash.h" />
-		<Unit filename="input.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="input.cpp" />
 		<Unit filename="input.h" />
-		<Unit filename="lighting.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="input_defs.h" />
+		<Unit filename="lighting.cpp" />
 		<Unit filename="lighting.h" />
-		<Unit filename="link.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="link.cpp" />
 		<Unit filename="link.h" />
-		<Unit filename="log.cpp">
+		<Unit filename="log.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="log.h" />
@@ -600,40 +552,29 @@
 			<Option link="0" />
 		</Unit>
 		<Unit filename="lua_console.h" />
-		<Unit filename="mad.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="mad.cpp" />
 		<Unit filename="mad.h" />
-		<Unit filename="md2.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="mad_defs.h" />
+		<Unit filename="md2.cpp" />
 		<Unit filename="md2.h" />
 		<Unit filename="md2.inl" />
-		<Unit filename="menu.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="menu.cpp" />
 		<Unit filename="menu.h" />
-		<Unit filename="mesh.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="mesh.cpp" />
 		<Unit filename="mesh.h" />
 		<Unit filename="mesh.inl" />
-		<Unit filename="network.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="mesh_BSP.cpp" />
+		<Unit filename="mesh_BSP.h" />
+		<Unit filename="network.cpp" />
 		<Unit filename="network.h" />
-		<Unit filename="particle.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="object_BSP.cpp" />
+		<Unit filename="object_BSP.h" />
+		<Unit filename="particle.cpp" />
 		<Unit filename="particle.h" />
 		<Unit filename="particle.inl" />
-		<Unit filename="passage.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="passage.cpp" />
 		<Unit filename="passage.h" />
-		<Unit filename="physics.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="physics.cpp" />
 		<Unit filename="physics.h" />
 		<Unit filename="physics.inl" />
 		<Unit filename="platform/file_linux.c">
@@ -665,47 +606,27 @@
 			<Option target="win32-msvc-debug" />
 			<Option target="win32-msvc-release" />
 		</Unit>
-		<Unit filename="profile.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="profile.cpp" />
 		<Unit filename="profile.h" />
 		<Unit filename="profile.inl" />
-		<Unit filename="quest.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="quest.cpp" />
 		<Unit filename="quest.h" />
-		<Unit filename="rpc.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="rpc.h" />
-		<Unit filename="script.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="script.cpp" />
 		<Unit filename="script.h" />
-		<Unit filename="script_compile.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="script_compile.cpp" />
 		<Unit filename="script_compile.h" />
-		<Unit filename="script_functions.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="script_functions.cpp" />
 		<Unit filename="script_functions.h" />
-		<Unit filename="server.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="server.cpp" />
 		<Unit filename="server.h" />
-		<Unit filename="sound.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="sound.cpp" />
 		<Unit filename="sound.h" />
+		<Unit filename="sound_defs.h" />
 		<Unit filename="system.h" />
-		<Unit filename="texture.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="texture.cpp" />
 		<Unit filename="texture.h" />
-		<Unit filename="ui.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ui.cpp" />
 		<Unit filename="ui.h" />
 		<Extensions>
 			<envvars />

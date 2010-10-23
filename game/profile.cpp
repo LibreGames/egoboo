@@ -783,7 +783,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     // without permission
     if ( LOADED_PRO( iobj ) )
     {
-        ego_pro * pobj = ProList.lst + iobj;
+        ego_pro * tmp_pobj = ProList.lst + iobj;
 
         // Make sure global objects don't load over existing models
         if ( required && SPELLBOOK == iobj )
@@ -792,7 +792,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
         }
         else if ( required && overrideslots )
         {
-            log_error( "load_one_profile_vfs() - object slot %i used twice (%s, %s)\n", ( iobj ).get_value(), pobj->name, tmploadname );
+            log_error( "load_one_profile_vfs() - object slot %i used twice (%s, %s)\n", iobj.get_value(), tmp_pobj->name, tmploadname );
         }
         else
         {

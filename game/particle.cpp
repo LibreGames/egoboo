@@ -1630,7 +1630,7 @@ ego_prt_bundle * move_one_particle_do_floor( ego_prt_bundle * pbdl_prt )
     ///       but they do not have friction with the mesh, but that case is still treated in the code below.
 
     float temp_friction_xy;
-    fvec3_t   vup, floor_acc, fric, fric_floor;
+    fvec3_t vup, floor_acc, fric, fric_floor;
 
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
@@ -1705,19 +1705,19 @@ ego_prt_bundle * move_one_particle_do_floor( ego_prt_bundle * pbdl_prt )
         else
         {
             float ftmp;
-            fvec3_t   vup = map_twist_nrm[loc_penviro->grid_twist];
+            fvec3_t   mesh_up = map_twist_nrm[loc_penviro->grid_twist];
 
-            ftmp = fvec3_dot_product( floor_acc.v, vup.v );
+            ftmp = fvec3_dot_product( floor_acc.v, mesh_up.v );
 
-            floor_acc.x -= ftmp * vup.x;
-            floor_acc.y -= ftmp * vup.y;
-            floor_acc.z -= ftmp * vup.z;
+            floor_acc.x -= ftmp * mesh_up.x;
+            floor_acc.y -= ftmp * mesh_up.y;
+            floor_acc.z -= ftmp * mesh_up.z;
 
-            ftmp = fvec3_dot_product( fric.v, vup.v );
+            ftmp = fvec3_dot_product( fric.v, mesh_up.v );
 
-            fric.x -= ftmp * vup.x;
-            fric.y -= ftmp * vup.y;
-            fric.z -= ftmp * vup.z;
+            fric.x -= ftmp * mesh_up.x;
+            fric.y -= ftmp * mesh_up.y;
+            fric.z -= ftmp * mesh_up.z;
         }
 
         // test to see if the player has any more friction left?

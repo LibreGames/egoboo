@@ -40,7 +40,7 @@ INLINE _ty & t_ego_obj_lst< _ty, _sz >::get_obj( const t_reference<_ty> & ref )
     }
 
     return ary[ref.get_value()];
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
@@ -49,7 +49,7 @@ INLINE _ty * t_ego_obj_lst< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
     if ( !validate_ref( ref ) ) return NULL;
 
     return ary + ref.get_value();
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
@@ -59,7 +59,7 @@ INLINE _ty * t_ego_obj_lst< _ty, _sz >::get_valid_ptr( const t_reference<_ty> & 
     if ( NULL == pobj ) return NULL;
 
     return !VALID_PBASE( pobj->get_pego_obj() ) ? NULL : pobj;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ void t_ego_obj_lst< _ty, _sz >::init()
 
         free_queue.push( cnt );
     }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -106,7 +106,7 @@ void t_ego_obj_lst< _ty, _sz >::dtor_this()
     {
         _ty::run_deconstruct( ary + cnt, 100 );
     }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ template <typename _ty, size_t _sz>
 void t_ego_obj_lst< _ty, _sz >::update_used()
 {
     reference ref;
-    std::stack< const REF_T > tmp_stack;
+    std::stack< REF_T > tmp_stack;
 
     // iterate through the used_map do determine if any of them need to be removed
     // DO NOT delete an element from the list while you're looping through it
@@ -143,21 +143,21 @@ void t_ego_obj_lst< _ty, _sz >::update_used()
         tmp_stack.pop();
 
         // convert this back into a reference
-        reference ref( idx );
+        reference tmp_ref( idx );
 
         // grab some pointers
-        _ty * ptr = get_ptr( ref );
+        _ty * ptr = get_ptr( tmp_ref );
         if ( NULL == ptr ) continue;
 
         ego_obj * pbase = ptr->get_pego_obj();
         if ( NULL == pbase ) continue;
 
         // move the element from the used_map...
-        used_map.remove( ref );
+        used_map.remove( tmp_ref );
         cpp_list_state::set_used( pbase->get_plist(), bfalse );
 
         // ...to the free_queue
-        free_queue.push( ref.get_value() );
+        free_queue.push( tmp_ref.get_value() );
         cpp_list_state::set_free( pbase->get_plist(), btrue );
     }
 
@@ -179,7 +179,7 @@ void t_ego_obj_lst< _ty, _sz >::update_used()
             cpp_list_state::set_free( pbase->get_plist(), bfalse );
         }
     }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -230,7 +230,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::free_one( const t_reference<_ty> & ref )
     }
 
     return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -252,7 +252,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::get_free()
     }
 
     return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -264,7 +264,7 @@ void t_ego_obj_lst< _ty, _sz >::free_all()
     {
         t_ego_obj_lst< _ty, _sz >::free_one( cnt );
     }
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -287,7 +287,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::activate_object( const t_reference<_
     _ty::run_construct( pobj, 100 );
 
     return ref;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -327,7 +327,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::allocate( const t_reference<_ty> & o
     }
 
     return ref;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -358,7 +358,7 @@ void t_ego_obj_lst< _ty, _sz >::cleanup()
         free_one( ref );
     }
 
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -379,7 +379,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::add_activation( const t_reference<_ty> & re
     }
 
     return rv_success;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -399,7 +399,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::add_termination( const t_reference<_ty> & r
     }
 
     return retval;
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -412,7 +412,7 @@ typename _ty::data_type &  t_ego_obj_lst< _ty, _sz >::get_data( const t_referenc
     EGOBOO_ASSERT( NULL != ptr );
 
     return ptr->get_data();
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -423,7 +423,7 @@ typename _ty::data_type *  t_ego_obj_lst< _ty, _sz >::get_pdata( const t_referen
     if ( NULL == ptr ) return NULL;
 
     return ( NULL == ptr ) ? NULL : ptr->get_pdata();
-};
+}
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -433,4 +433,4 @@ typename _ty::data_type *  t_ego_obj_lst< _ty, _sz >::get_valid_pdata( const t_r
     if ( NULL == ptr ) return NULL;
 
     return ( NULL == ptr ) ? NULL : ptr->get_pdata();
-};
+}

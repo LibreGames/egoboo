@@ -28,7 +28,7 @@
 #include "log.h"
 #include "input.h"
 #include "char.inl"
-#include "module_file.h"
+#include "file_formats/module_file.h"
 #include "game.h"
 #include "menu.h"
 
@@ -653,7 +653,7 @@ void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
     ///    that can be sent is 2 Megs ( TOTALSIZE ).
 
     vfs_FILE* fileread;
-    int packetsize, packetstart;
+    int size, start;
     int filesize;
     int fileisdir;
     char cTmp;
@@ -678,17 +678,17 @@ void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
                 vfs_seek( fileread, 0 );
                 if ( filesize > 0 && filesize < TOTALSIZE )
                 {
-                    packetsize = 0;
-                    packetstart = 0;
+                    size = 0;
+                    start = 0;
                     numfilesent++;
 
                     net_startNewPacket();
                     packet_addUnsignedShort( TO_REMOTE_FILE );
                     packet_addString( dest );
                     packet_addUnsignedInt( filesize );
-                    packet_addUnsignedInt( packetstart );
+                    packet_addUnsignedInt( start );
 
-                    while ( packetstart < filesize )
+                    while ( start < filesize )
                     {
                         // This will probably work...
                         // vfs_read((packetbuffer + packethead), COPYSIZE, 1, fileread);
@@ -697,21 +697,21 @@ void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
                         vfs_scanf( fileread, "%c", &cTmp );
 
                         packet_addUnsignedByte( cTmp );
-                        packetsize++;
-                        packetstart++;
-                        if ( packetsize >= COPYSIZE )
+                        size++;
+                        start++;
+                        if ( size >= COPYSIZE )
                         {
                             // Send off the packet
                             net_sendPacketToAllPlayersGuaranteed();
                             enet_host_flush( net_myHost );
 
                             // Start on the next 4K
-                            packetsize = 0;
+                            size = 0;
                             net_startNewPacket();
                             packet_addUnsignedShort( TO_REMOTE_FILE );
                             packet_addString( dest );
                             packet_addUnsignedInt( filesize );
-                            packet_addUnsignedInt( packetstart );
+                            packet_addUnsignedInt( start );
                         }
                     }
 
@@ -780,7 +780,7 @@ void net_copyFileToHostOld_vfs( const char *source, const char *dest )
     ///    that can be sent is 2 Megs ( TOTALSIZE ).
 
     vfs_FILE* fileread;
-    int packetsize, packetstart;
+    int size, start;
     int filesize;
     int fileisdir;
     char cTmp;
@@ -823,33 +823,33 @@ void net_copyFileToHostOld_vfs( const char *source, const char *dest )
                 if ( filesize > 0 && filesize < TOTALSIZE )
                 {
                     numfilesent++;
-                    packetsize = 0;
-                    packetstart = 0;
+                    size = 0;
+                    start = 0;
                     net_startNewPacket();
                     packet_addUnsignedShort( TO_HOST_FILE );
                     packet_addString( dest );
                     packet_addUnsignedInt( filesize );
-                    packet_addUnsignedInt( packetstart );
+                    packet_addUnsignedInt( start );
 
-                    while ( packetstart < filesize )
+                    while ( start < filesize )
                     {
                         vfs_scanf( fileread, "%c", &cTmp );
                         packet_addUnsignedByte( cTmp );
-                        packetsize++;
-                        packetstart++;
-                        if ( packetsize >= COPYSIZE )
+                        size++;
+                        start++;
+                        if ( size >= COPYSIZE )
                         {
                             // Send off the packet
                             net_sendPacketToHostGuaranteed();
                             enet_host_flush( net_myHost );
 
                             // Start on the next 4K
-                            packetsize = 0;
+                            size = 0;
                             net_startNewPacket();
                             packet_addUnsignedShort( TO_HOST_FILE );
                             packet_addString( dest );
                             packet_addUnsignedInt( filesize );
-                            packet_addUnsignedInt( packetstart );
+                            packet_addUnsignedInt( start );
                         }
                     }
 

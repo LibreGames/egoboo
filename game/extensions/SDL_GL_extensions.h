@@ -63,5 +63,5 @@ extern "C"
     FILE * SDL_GL_set_stderr( FILE * pfile );
 
 #if defined(__cplusplus)
-};
+}
 #endif

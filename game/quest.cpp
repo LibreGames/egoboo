@@ -67,23 +67,23 @@ egoboo_rv quest_file_export( ConfigFilePtr_t pfile )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export )
+egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export_file )
 {
-    egoboo_rv export_rv = rv_success;
+    egoboo_rv export_file_rv = rv_success;
 
     if ( NULL == ppfile || NULL == *ppfile ) return rv_error;
 
-    if ( export )
+    if ( export_file )
     {
-        export_rv = quest_file_export( *ppfile );
+        export_file_rv = quest_file_export( *ppfile );
 
-        if ( rv_error == export_rv )
+        if ( rv_error == export_file_rv )
         {
             log_warning( "quest_file_close() - error writing quest.txt\n" );
         }
-        else if ( rv_fail == export_rv )
+        else if ( rv_fail == export_file_rv )
         {
-            log_warning( "quest_file_close() - could not export quest.txt\n" );
+            log_warning( "quest_file_close() - could not export_file quest.txt\n" );
         }
     }
 
@@ -92,7 +92,7 @@ egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export )
         log_warning( "quest_file_close() - could not successfully close quest.txt\n" );
     }
 
-    return ( NULL == *ppfile ) && ( rv_success == export_rv ) ? rv_success : rv_fail;
+    return ( NULL == *ppfile ) && ( rv_success == export_file_rv ) ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------

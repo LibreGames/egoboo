@@ -26,14 +26,14 @@
 /// caution, and bring one of those canaries with you to make sure you
 /// don't run out of oxygen.
 
-/* Typedefs for various platforms */
-#include "egoboo_typedef.h"
-#include "egoboo_math.h"  /* vector and matrix math */
-#include "egoboo_config.h"
+#include "egoboo_config.h"       /* configure for this platform */
+#include "egoboo_typedef.h"      /* Typedefs for various platforms */
+#include "egoboo_math.h"         /* vector and matrix math */
+
+#include "file_common.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
-#include "file_common.h"
 #include <string.h>
 #include <fcntl.h>
 #include <ctype.h>

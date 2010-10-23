@@ -23,10 +23,10 @@
 
 #include "template.h"
 
-#include "..\character_defs.h"
-#include "..\mad_defs.h"
-#include "..\egoboo_strutil.h"
-#include "..\egoboo_fileutil.h"
+#include "../character_defs.h"
+#include "../mad_defs.h"
+#include "../egoboo_strutil.h"
+#include "../egoboo_fileutil.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

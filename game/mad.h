@@ -77,7 +77,6 @@ void    release_all_mad();
 bool_t  release_one_mad( const MAD_REF & imad );
 MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF & object );
 
-int    action_which( char cTmp );
 void   load_action_names_vfs( const char* loadname );
 
 void   mad_make_equally_lit( const MAD_REF & imad );

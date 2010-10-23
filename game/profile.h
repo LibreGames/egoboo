@@ -157,7 +157,7 @@ extern ego_pro_import import_data;
 extern ego_chop_data chop_mem;
 
 DECLARE_STATIC_ARY_TYPE( MessageOffsetAry, int, MAXTOTALMESSAGE );
-DECLARE_EXTERN_STATIC_ARY( MessageOffsetAry, MessageOffset );
+DECLARE_EXTERN_STATIC_ARY( MessageOffsetAry, MessageOffset )
 
 extern Uint32          message_buffer_carat;                                  ///< Where to put letter
 extern char            message_buffer[MESSAGEBUFFERSIZE];                     ///< The text buffer

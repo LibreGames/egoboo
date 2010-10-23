@@ -27,7 +27,7 @@
 #include "game.h"
 #include "char.inl"
 
-#include "pip_file.h"
+#include "file_formats/pip_file.h"
 
 #include "egoboo_vfs.h"
 #include "egoboo_setup.h"
@@ -1094,9 +1094,9 @@ void looped_update_all_sound()
         if ( !INGAME_CHR( plooped->object ) )
         {
             // not a valid object
-            fvec3_t   diff = VECT3( 0, 0, 0 );
+            fvec3_t   tmp_diff = VECT3( 0, 0, 0 );
 
-            _update_stereo_channel( plooped->channel, diff );
+            _update_stereo_channel( plooped->channel, tmp_diff );
         }
         else
         {
