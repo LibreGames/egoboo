@@ -57,10 +57,10 @@ struct ego_obj_proc
     bool_t               valid;       ///< The object is a valid object
     bool_t               constructed; ///< The object has been initialized
     bool_t               initialized; ///< The object has been initialized
-    bool_t               active;      ///< The object is fully ready to go
     bool_t               killed;      ///< The object is fully "deleted"
 
     // other state flags
+    bool_t               active;      ///< The object is fully ready to go
     bool_t               spawning;    ///< The object is being created
     bool_t               on;          ///< The object is being used
     bool_t               paused;      ///< The object's action will be overridden to be ego_obj_nothing
@@ -77,7 +77,7 @@ struct ego_obj_proc
     static ego_obj_proc * end_processing( ego_obj_proc * );
     static ego_obj_proc * end_deinitializing( ego_obj_proc * );
     static ego_obj_proc * end_destructing( ego_obj_proc * );
-    static ego_obj_proc * end_killing( ego_obj_proc * );
+    static ego_obj_proc * end_invalidating( ego_obj_proc * );
     static ego_obj_proc * invalidate( ego_obj_proc * );
 
     static ego_obj_proc * begin_waiting( ego_obj_proc * );
@@ -261,7 +261,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
     static ego_obj * end_processing( ego_obj * );
     static ego_obj * end_deinitializing( ego_obj * );
     static ego_obj * end_destructing( ego_obj * );
-    static ego_obj * end_killing( ego_obj * );
+    static ego_obj * end_invalidating( ego_obj * );
     static ego_obj * begin_processing( ego_obj *, const char * name );
     static ego_obj * begin_waiting( ego_obj * );
 

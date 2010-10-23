@@ -69,10 +69,13 @@ ego_obj_proc * ego_obj_proc::end_constructing( ego_obj_proc * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
-    ptr->valid       = btrue;
+    //ptr->valid       = btrue;
     ptr->constructed = btrue;
+    //ptr->initialized = btrue;
+    //ptr->killed      = bfalse;
 
-    ptr->action = ego_obj_initializing;
+    //ptr->active      = bfalse;
+    ptr->action        = ego_obj_initializing;
 
     return ptr;
 }
@@ -82,10 +85,13 @@ ego_obj_proc * ego_obj_proc::end_initialization( ego_obj_proc * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
-    ptr->constructed = btrue;
+    //ptr->valid       = btrue;
+    //ptr->constructed = btrue;
     ptr->initialized = btrue;
+    //ptr->killed      = bfalse;
 
-    ptr->action = ego_obj_processing;
+    //ptr->active      = btrue;
+    ptr->action        = ego_obj_processing;
 
     return ptr;
 }
@@ -95,11 +101,13 @@ ego_obj_proc * ego_obj_proc::end_processing( ego_obj_proc * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
-    ptr->constructed = btrue;
-    ptr->initialized = btrue;
-    ptr->active      = bfalse;
+    //ptr->valid       = btrue;
+    //ptr->constructed = btrue;
+    //ptr->initialized = btrue;
+    //ptr->killed      = bfalse;
 
-    ptr->action = ego_obj_deinitializing;
+    ptr->active      = bfalse;
+    ptr->action      = ego_obj_deinitializing;
 
     return ptr;
 }
@@ -109,11 +117,13 @@ ego_obj_proc * ego_obj_proc::end_deinitializing( ego_obj_proc * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
-    ptr->constructed = btrue;
+    //ptr->valid       = btrue;
+    //ptr->constructed = btrue;
     ptr->initialized = bfalse;
-    ptr->active      = bfalse;
+    //ptr->killed      = bfalse;
 
-    ptr->action = ego_obj_destructing;
+    ptr->active      = bfalse;
+    ptr->action      = ego_obj_destructing;
 
     return ptr;
 }
@@ -123,27 +133,31 @@ ego_obj_proc * ego_obj_proc::end_destructing( ego_obj_proc * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
+    //ptr->valid       = btrue;
     ptr->constructed = bfalse;
     ptr->initialized = bfalse;
-    ptr->active      = bfalse;
+    ptr->killed      = btrue;
 
-    ptr->action = ego_obj_destructing;
+    ptr->active      = bfalse;
+    ptr->action      = ego_obj_destructing;
 
     return ptr;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::end_killing( ego_obj_proc * ptr )
+ego_obj_proc * ego_obj_proc::end_invalidating( ego_obj_proc * ptr )
 {
     if ( NULL == ptr || !ptr->valid ) return ptr;
 
     ptr = ego_obj_proc::clear( ptr );
     if ( NULL == ptr ) return ptr;
 
-    ptr->valid  = btrue;
-    ptr->killed = btrue;
+    ptr->valid       = bfalse;
+    ptr->constructed = bfalse;
+    ptr->initialized = bfalse;
+    ptr->killed      = btrue;         // keep the killed flag on
 
-    ptr->action = ego_obj_nothing;
+    ptr->action      = ego_obj_nothing;
 
     return ptr;
 }
@@ -157,6 +171,7 @@ ego_obj_proc * ego_obj_proc::invalidate( ego_obj_proc * ptr )
 
     return ptr;
 }
+
 //--------------------------------------------------------------------------------------------
 ego_obj_proc * ego_obj_proc::set_valid( ego_obj_proc * ptr, bool_t val )
 {
@@ -490,11 +505,11 @@ ego_obj * ego_obj::end_destructing( ego_obj * pbase )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::end_killing( ego_obj * pbase )
+ego_obj * ego_obj::end_invalidating( ego_obj * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
-    ego_obj_proc::end_killing( pbase->get_pproc() );
+    ego_obj_proc::end_invalidating( pbase->get_pproc() );
 
     return pbase;
 }
@@ -558,29 +573,37 @@ ego_obj * ego_obj::grant_terminate( ego_obj * pbase )
 {
     /// Completely turn off an ego_obj object and mark it as no longer allocated
 
-    if ( NULL == pbase ) return pbase;
+    // if this object os not allocated, get out of here
+    if ( !ego_obj::get_allocated( pbase ) ) return pbase;
 
-    ego_obj_proc * obj_prc_ptr = pbase->get_pproc();
+    // no reason to be in here unless someone is aksking to die
+    if ( !ego_obj::get_kill( pbase ) ) return pbase;
 
-    if ( !obj_prc_ptr->valid || obj_prc_ptr->killed ) return pbase;
+    // poke it to make sure that it is at least a little bit alive
+    if ( !ego_obj::get_valid( pbase ) || ego_obj::get_killed( pbase ) ) return pbase;
 
     // figure out the next step in killing the object
-    if ( obj_prc_ptr->initialized )
+    if ( ego_obj::get_initialized( pbase ) )
     {
-        // jump to deinitializing
+        // ready to be killed. jump to deinitializing
         ego_obj::end_processing( pbase );
     }
-    else if ( obj_prc_ptr->constructed )
+    else if ( ego_obj::get_constructed( pbase ) )
     {
-        // jump to deconstructing
+        // already deinitialized. jump to deconstructing
         ego_obj::end_deinitializing( pbase );
     }
-    else if ( obj_prc_ptr->killed )
+    else if ( ego_obj::get_valid( pbase ) )
     {
-        ego_obj::end_killing( pbase );
+        // already deconstructed. jump past deconstructing.
+        ego_obj::end_destructing( pbase );
+
+        /// @note BB@> The ego_obj::end_invalidating() function is called in the
+        ///            t_ego_obj_lst<>::free_one() function when the object is finally
+        ///            deallocated. Do not call it here.
     }
 
-    // turn it off
+    // turn it off, no matter what state it is in
     pbase->proc_set_on( bfalse );
 
     return pbase;

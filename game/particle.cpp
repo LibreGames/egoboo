@@ -2366,7 +2366,7 @@ void cleanup_all_particles()
     {
         bool_t time_out;
 
-        ego_obj_prt * pobj = PrtObjList.get_valid_ptr( PRT_REF( cnt ) );
+        ego_obj_prt * pobj = PrtObjList.get_ptr( PRT_REF( cnt ) );
         if ( NULL == pobj ) continue;
 
         ego_prt * pprt = pobj->get_pdata();
@@ -2375,10 +2375,13 @@ void cleanup_all_particles()
         ego_obj * pbase = PDATA_GET_PBASE( ego_prt, pprt );
         if ( NULL == pbase ) continue;
 
+        // don't bother with particles that are not allocated
+        if ( !FLAG_ALLOCATED_PBASE( pbase ) || !FLAG_VALID_PBASE( pbase ) ) continue;
+
         if ( FLAG_KILLED_PBASE( pbase ) )
         {
-            // now that the object is in the "killed" state,
-            // actually put it back into the free store
+            // the memory area is marked as invalid,
+            // but it has not been "killed" yet
             PrtObjList.free_one( GET_REF_PPRT( pprt ) );
         }
         else if ( STATE_WAITING_PBASE( pbase ) )

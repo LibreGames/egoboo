@@ -296,32 +296,13 @@ extern "C"
 // References
 
 /// base reference type
-    typedef Uint16 REF_T;
-
-//--------------------------------------------------------------------------------------------
-// definition of the c-type reference
-
-//#define C_DECLARE_REF( NAME ) typedef REF_T NAME
-
-//--------------------------------------------------------------------------------------------
-// reference conversions
-
-// define the c implementation always
-#define C_REF_TO_INT(X) ((REF_T)(X))
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-// a simple array
-
-#define C_DECLARE_T_ARY(TYPE, NAME, COUNT)  TYPE   NAME[COUNT]
+    typedef unsigned REF_T;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // a simple list structure that tracks free elements
 
-#define ACCESS_TYPE_NONE
-
-#define INVALID_UPDATE_GUID ((unsigned)(~((unsigned)0)))
+#define INVALID_UPDATE_GUID unsigned(~unsigned(0))
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

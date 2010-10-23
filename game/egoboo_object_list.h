@@ -88,13 +88,13 @@ private:
     t_cpp_map<_ty, _sz> used_map;
 
     /// the map of free objects
-    std::queue< reference > free_queue;
+    std::queue< REF_T > free_queue;
 
     /// a list of objects that need to be terminated outside all loops
-    std::stack< reference > termination_stack;
+    std::stack< REF_T > termination_stack;
 
     /// a list of objects that need to be activated outside all loops
-    std::stack< reference > activation_stack;
+    std::stack< REF_T > activation_stack;
 };
 
 //--------------------------------------------------------------------------------------------

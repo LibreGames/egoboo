@@ -88,7 +88,7 @@ void t_ego_obj_lst< _ty, _sz >::init()
         // re-create all objects
         ego_obj::ctor_all( POBJ_GET_PBASE( pobj ), cnt );
 
-        free_queue.push( reference( cnt ) );
+        free_queue.push( cnt );
     }
 };
 
@@ -157,7 +157,7 @@ void t_ego_obj_lst< _ty, _sz >::update_used()
         cpp_list_state::set_used( pbase->get_plist(), bfalse );
 
         // ...to the free_queue
-        free_queue.push( ref );
+        free_queue.push( ref.get_value() );
         cpp_list_state::set_free( pbase->get_plist(), btrue );
     }
 
@@ -211,19 +211,22 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::free_one( const t_reference<_ty> & ref )
     else
     {
         // deallocate any dynamically allocated memory
-        pobj = _ty::run_deinitialize( pobj, 100 );
+        pobj = _ty::run_deconstruct( pobj, 100 );
         if ( NULL == pobj ) return rv_error;
+
+        // we are now done killing the object
+        ego_obj::end_invalidating( pbase );
 
         // remove it from the used map
         used_map.remove( ref );
         cpp_list_state::set_used( pobj->get_plist(), bfalse );
 
         // add it to the free stack
-        free_queue.push( ref );
+        free_queue.push( ref.get_value() );
         cpp_list_state::set_free( pobj->get_plist(), btrue );
 
-        // object "destructor"
-        if ( NULL == _ty::dtor_this( pobj ) ) return rv_error;
+        // no longer allocated
+        cpp_list_state::set_allocated( pobj->get_plist(), bfalse );
     }
 
     return retval;
@@ -335,7 +338,7 @@ void t_ego_obj_lst< _ty, _sz >::cleanup()
     // were created while the list was iterating
     while ( !activation_stack.empty() )
     {
-        reference ref = activation_stack.top();
+        reference ref( activation_stack.top() );
         activation_stack.pop();
 
         _ty * pobj = get_valid_ptr( ref );
@@ -349,7 +352,7 @@ void t_ego_obj_lst< _ty, _sz >::cleanup()
     // supposed to be deleted while the list was iterating
     while ( !termination_stack.empty() )
     {
-        reference ref = termination_stack.top();
+        reference ref( termination_stack.top() );
         termination_stack.pop();
 
         free_one( ref );
@@ -366,7 +369,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::add_activation( const t_reference<_ty> & re
 
     if ( !validate_ref( ref ) ) return rv_error;
 
-    activation_stack.push( ref );
+    activation_stack.push( ref.get_value() );
 
     _ty     * pobj  = ary + ref.get_value();
     ego_obj * pbase = pobj->get_pego_obj();
@@ -386,7 +389,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::add_termination( const t_reference<_ty> & r
 
     if ( !validate_ref( ref ) ) return rv_fail;
 
-    termination_stack.push( ref );
+    termination_stack.push( ref.get_value() );
 
     ego_obj * pobj = ary + ref.get_value();
     if ( NULL != pobj )
