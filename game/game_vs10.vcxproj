@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -17,26 +17,22 @@
     <ClCompile Include="char.cpp" />
     <ClCompile Include="ChrList.cpp" />
     <ClCompile Include="client.cpp" />
-    <ClCompile Include="clock.cpp" />
+    <ClCompile Include="clock.c" />
     <ClCompile Include="collision.cpp" />
     <ClCompile Include="egoboo.cpp" />
     <ClCompile Include="egoboo_console.c" />
     <ClCompile Include="egoboo_display_list.cpp" />
-    <ClCompile Include="egoboo_endian.cpp" />
-    <ClCompile Include="egoboo_fileutil.cpp" />
-    <ClCompile Include="egoboo_math.cpp" />
+    <ClCompile Include="egoboo_endian.c" />
+    <ClCompile Include="egoboo_fileutil.c" />
+    <ClCompile Include="egoboo_math.c" />
     <ClCompile Include="egoboo_object.cpp" />
+    <ClCompile Include="egoboo_object_list.cpp" />
     <ClCompile Include="egoboo_process.cpp" />
-    <ClCompile Include="egoboo_setup.cpp" />
-    <ClCompile Include="egoboo_strutil.cpp" />
+    <ClCompile Include="egoboo_rpc.cpp" />
+    <ClCompile Include="egoboo_setup.c" />
+    <ClCompile Include="egoboo_strutil.c" />
     <ClCompile Include="egoboo_typedef.cpp" />
-    <ClCompile Include="egoboo_vfs.cpp">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="ego_wrap.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="egoboo_vfs.c" />
     <ClCompile Include="enchant.cpp" />
     <ClCompile Include="EncList.cpp" />
     <ClCompile Include="extensions\ogl_debug.c" />
@@ -45,7 +41,7 @@
     <ClCompile Include="extensions\ogl_texture.c" />
     <ClCompile Include="extensions\SDL_extensions.c" />
     <ClCompile Include="extensions\SDL_GL_extensions.c" />
-    <ClCompile Include="file_common.cpp" />
+    <ClCompile Include="file_common.c" />
     <ClCompile Include="file_formats\cap_file.c" />
     <ClCompile Include="file_formats\configfile.c" />
     <ClCompile Include="file_formats\controls_file.c" />
@@ -68,11 +64,11 @@
     <ClCompile Include="graphic_mad.cpp" />
     <ClCompile Include="graphic_prt.cpp" />
     <ClCompile Include="hash.cpp" />
-    <ClCompile Include="IDSZ_map.cpp" />
+    <ClCompile Include="IDSZ_map.c" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="lighting.cpp" />
     <ClCompile Include="link.cpp" />
-    <ClCompile Include="log.cpp" />
+    <ClCompile Include="log.c" />
     <ClCompile Include="lua_console.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -81,10 +77,16 @@
     <ClCompile Include="md2.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="mesh_BSP.cpp" />
     <ClCompile Include="network.cpp" />
+    <ClCompile Include="object_BSP.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="passage.cpp" />
     <ClCompile Include="physics.cpp" />
+    <ClCompile Include="platform\file_amiga.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="platform\file_linux.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -102,7 +104,6 @@
     <ClCompile Include="profile.cpp" />
     <ClCompile Include="PrtList.cpp" />
     <ClCompile Include="quest.cpp" />
-    <ClCompile Include="rpc.cpp" />
     <ClCompile Include="script.cpp" />
     <ClCompile Include="script_compile.cpp" />
     <ClCompile Include="script_functions.cpp" />
@@ -117,6 +118,7 @@
     <ClInclude Include="bsp.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="char.h" />
+    <ClInclude Include="character_defs.h" />
     <ClInclude Include="ChrList.h" />
     <ClInclude Include="client.h" />
     <ClInclude Include="clock.h" />
@@ -131,8 +133,10 @@
     <ClInclude Include="egoboo_math.h" />
     <ClInclude Include="egoboo_mem.h" />
     <ClInclude Include="egoboo_object.h" />
+    <ClInclude Include="egoboo_object_list.h" />
     <ClInclude Include="egoboo_platform.h" />
     <ClInclude Include="egoboo_process.h" />
+    <ClInclude Include="egoboo_rpc.h" />
     <ClInclude Include="egoboo_setup.h" />
     <ClInclude Include="egoboo_state_machine.h" />
     <ClInclude Include="egoboo_strutil.h" />
@@ -166,33 +170,38 @@
     <ClInclude Include="font_ttf.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="graphic.h" />
+    <ClInclude Include="graphic_defs.h" />
     <ClInclude Include="graphic_fan.h" />
     <ClInclude Include="graphic_mad.h" />
     <ClInclude Include="graphic_prt.h" />
     <ClInclude Include="hash.h" />
     <ClInclude Include="IDSZ_map.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="input_defs.h" />
     <ClInclude Include="lighting.h" />
     <ClInclude Include="link.h" />
     <ClInclude Include="log.h" />
     <ClInclude Include="lua_console.h" />
     <ClInclude Include="mad.h" />
+    <ClInclude Include="mad_defs.h" />
     <ClInclude Include="md2.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="mesh.h" />
+    <ClInclude Include="mesh_BSP.h" />
     <ClInclude Include="network.h" />
+    <ClInclude Include="object_BSP.h" />
     <ClInclude Include="particle.h" />
     <ClInclude Include="passage.h" />
     <ClInclude Include="physics.h" />
     <ClInclude Include="profile.h" />
     <ClInclude Include="PrtList.h" />
     <ClInclude Include="quest.h" />
-    <ClInclude Include="rpc.h" />
     <ClInclude Include="script.h" />
     <ClInclude Include="script_compile.h" />
     <ClInclude Include="script_functions.h" />
     <ClInclude Include="server.h" />
     <ClInclude Include="sound.h" />
+    <ClInclude Include="sound_defs.h" />
     <ClInclude Include="system.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="ui.h" />
@@ -206,6 +215,8 @@
     <None Include="char.inl" />
     <None Include="egoboo_console.inl" />
     <None Include="egoboo_math.inl" />
+    <None Include="egoboo_object_list.inl" />
+    <None Include="egoboo_typedef_cpp.inl" />
     <None Include="enchant.inl" />
     <None Include="file_formats\id_normals.inl" />
     <None Include="md2.inl" />
@@ -231,6 +242,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -264,7 +276,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <CompileAs>CompileAsC</CompileAs>
+      <CompileAs>Default</CompileAs>
       <AdditionalIncludeDirectories>$(SolutionDir)enet\include;$(SolutionDir)game;$(SolutionDir)game\file_formats;$(SolutionDir)game\platform;$(SolutionDir)game\extensions;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
@@ -282,9 +294,10 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>enetd.lib; shlwapi.lib; SHFolder.lib; Shell32.lib; SDLd.lib; SDLmaind.lib; opengl32.lib; glu32.lib; ws2_32.lib; SDL_ttf.lib; SDL_mixerd.lib; SDL_imaged.lib; lua5.1.lib; physfs.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <Version>2.8.1</Version>
+      <Version>2.9.0</Version>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -293,7 +306,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <CompileAs>CompileAsC</CompileAs>
+      <CompileAs>Default</CompileAs>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <UndefinePreprocessorDefinitions>__cplusplus;</UndefinePreprocessorDefinitions>

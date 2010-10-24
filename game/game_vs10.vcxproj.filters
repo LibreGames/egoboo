@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -48,49 +48,19 @@
     <ClCompile Include="client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="clock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="collision.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ego_wrap.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="egoboo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_console.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="egoboo_endian.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="egoboo_fileutil.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="egoboo_math.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="egoboo_process.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="egoboo_setup.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="egoboo_strutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="egoboo_typedef.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="egoboo_vfs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="enchant.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="file_common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="font_bmp.cpp">
@@ -126,9 +96,6 @@
     <ClCompile Include="link.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="log.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="lua_console.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -160,9 +127,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="quest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="script.cpp">
@@ -273,11 +237,56 @@
     <ClCompile Include="EncList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IDSZ_map.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="egoboo_display_list.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_console.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="clock.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_endian.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_fileutil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_math.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_setup.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_strutil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_vfs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="file_common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IDSZ_map.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="log.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_object_list.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="egoboo_rpc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh_BSP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="object_BSP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\file_amiga.c">
+      <Filter>Platform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -425,9 +434,6 @@
     <ClInclude Include="quest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rpc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="script.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -533,6 +539,33 @@
     <ClInclude Include="egoboo_display_list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="character_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="egoboo_object_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="egoboo_rpc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="graphic_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mad_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh_BSP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="object_BSP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sound_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="char.inl">
@@ -582,6 +615,12 @@
     </None>
     <None Include="file_formats\id_normals.inl">
       <Filter>File System\Headers</Filter>
+    </None>
+    <None Include="egoboo_object_list.inl">
+      <Filter>Inline Files</Filter>
+    </None>
+    <None Include="egoboo_typedef_cpp.inl">
+      <Filter>Inline Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
