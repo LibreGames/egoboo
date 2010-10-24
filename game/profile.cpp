@@ -172,13 +172,13 @@ bool_t pro_init( ego_pro * pobj )
     //---- reset everything to safe values
     memset( pobj, 0, sizeof( *pobj ) );
 
-    pobj->icap = ( CAP_REF ) MAX_CAP;
-    pobj->imad = ( MAD_REF ) MAX_MAD;
-    pobj->ieve = ( EVE_REF ) MAX_EVE;
+    pobj->icap = CAP_REF( MAX_CAP );
+    pobj->imad = MAD_REF( MAX_MAD );
+    pobj->ieve = EVE_REF( MAX_EVE );
 
     for ( cnt = 0; cnt < MAX_PIP_PER_PROFILE; cnt++ )
     {
-        pobj->prtpip[cnt] = ( PIP_REF ) MAX_PIP;
+        pobj->prtpip[cnt] = PIP_REF( MAX_PIP );
     }
 
     chop_definition_init( &( pobj->chop ) );
@@ -500,7 +500,7 @@ int load_profile_skins_vfs( const char * tmploadname, const PRO_REF & object )
     {
         snprintf( newloadname, SDL_arraysize( newloadname ), "%s/tris%d", tmploadname, cnt );
 
-        pobj->tex_ref[cnt] = TxTexture_load_one_vfs( newloadname, ( TX_REF )INVALID_TX_TEXTURE, TRANSCOLOR );
+        pobj->tex_ref[cnt] = TxTexture_load_one_vfs( newloadname, TX_REF( INVALID_TX_TEXTURE ), TRANSCOLOR );
         if ( INVALID_TX_TEXTURE != pobj->tex_ref[cnt] )
         {
             max_skin = cnt;
@@ -511,7 +511,7 @@ int load_profile_skins_vfs( const char * tmploadname, const PRO_REF & object )
         }
 
         snprintf( newloadname, SDL_arraysize( newloadname ), "%s/icon%d", tmploadname, cnt );
-        pobj->ico_ref[cnt] = TxTexture_load_one_vfs( newloadname, ( TX_REF )INVALID_TX_TEXTURE, INVALID_KEY );
+        pobj->ico_ref[cnt] = TxTexture_load_one_vfs( newloadname, TX_REF( INVALID_TX_TEXTURE ), INVALID_KEY );
 
         if ( INVALID_TX_TEXTURE != pobj->ico_ref[cnt] )
         {
@@ -644,7 +644,7 @@ bool_t release_one_local_pips( const PRO_REF & iobj )
     for ( cnt = 0; cnt < MAX_PIP_PER_PROFILE; cnt++ )
     {
         release_one_pip( pobj->prtpip[cnt] );
-        pobj->prtpip[cnt] = ( PIP_REF ) MAX_PIP;
+        pobj->prtpip[cnt] = PIP_REF( MAX_PIP );
     }
 
     return btrue;
@@ -668,7 +668,7 @@ void release_all_local_pips()
         for ( cnt = 0; cnt < MAX_PIP_PER_PROFILE; cnt++ )
         {
             release_one_pip( pobj->prtpip[cnt] );
-            pobj->prtpip[cnt] = ( PIP_REF ) MAX_PIP;
+            pobj->prtpip[cnt] = PIP_REF( MAX_PIP );
         }
     }
 }
@@ -817,11 +817,11 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     islot = ( pobj->icap ).get_value();
 
     // Load the model for this iobj
-    pobj->imad = load_one_model_profile_vfs( tmploadname, ( MAD_REF )islot );
+    pobj->imad = load_one_model_profile_vfs( tmploadname, MAD_REF( islot ) );
 
     // Load the enchantment for this iobj
     make_newloadname( tmploadname, "/enchant.txt", newloadname );
-    pobj->ieve = load_one_enchant_profile_vfs( newloadname, ( EVE_REF )islot );
+    pobj->ieve = load_one_enchant_profile_vfs( newloadname, EVE_REF( islot ) );
 
     // Load the AI script for this iobj
     make_newloadname( tmploadname, "/script.txt", newloadname );
@@ -837,7 +837,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
         snprintf( newloadname, SDL_arraysize( newloadname ), "%s/part%d.txt", tmploadname, cnt );
 
         // Make sure it's referenced properly
-        pobj->prtpip[cnt] = load_one_particle_profile_vfs( newloadname, ( PIP_REF )MAX_PIP );
+        pobj->prtpip[cnt] = load_one_particle_profile_vfs( newloadname, PIP_REF( MAX_PIP ) );
     }
 
     pobj->skins = load_profile_skins_vfs( tmploadname, iobj );

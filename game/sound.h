@@ -73,7 +73,7 @@ bool_t      sound_load( snd_mix_ptr * pptr, const char * szFileName, snd_mix_typ
 
 int     sound_play_mix( fvec3_t pos, struct snd_mix_ptr * pptr );
 int     sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const CHR_REF & object );
-#define sound_play_chunk( pos, pchunk ) sound_play_chunk_looped( pos, pchunk, 0, (CHR_REF)MAX_CHR )
+#define sound_play_chunk( pos, pchunk ) sound_play_chunk_looped( pos, pchunk, 0, CHR_REF(MAX_CHR) )
 void    sound_play_song( int songnumber, Uint16 fadetime, int loops );
 void    sound_finish_song( Uint16 fadetime );
 int     sound_play_chunk_full( Mix_Chunk * pchunk );

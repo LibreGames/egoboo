@@ -157,19 +157,30 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
     ///    and force is set, it grabs the first unimportant one.  The iprt
     ///    index is the return value
 
+    signed fake_free_count;
+    size_t real_free_count = 0;
+
     // Return MAX_PRT if we can't find one
     PRT_REF iprt( MAX_PRT );
 
+    // we might need to tread carefully here, since the "allocated" size of the PrtObjList could
+    // change "dynamically" and wind up negative
+    fake_free_count = PrtObjList.free_count();
+    real_free_count = fake_free_count <= 0 ? 0 : fake_free_count;
+
     // do we need to override the base function?
-    bool_t needs_search = ( force && 0 == PrtObjList.free_count() );
+    bool_t needs_search = ( force && 0 == real_free_count );
 
     if ( needs_search )
     {
+        // search for a particle that needs to die and recycle it
+        printf( "!!!!TEH SUXXORZ!!!!\n" );
         iprt = allocate_find();
         iprt = allocate_activate( iprt );
     }
-    else if ( force || PrtObjList.free_count() > signed( maxparticles / 4 ) )
+    else if ( force || ( real_free_count > get_size() / 4 ) )
     {
+        // just use the allocate function from the parent class
         iprt = t_ego_obj_lst<ego_obj_prt, MAX_PRT>::allocate( override );
     }
 

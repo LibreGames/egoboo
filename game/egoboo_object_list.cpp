@@ -58,7 +58,7 @@ void flah()
     t_reference<blah> ref( 5 );
 
     test.init();
-    test.dtor_this();
+    test.deinit();
 
     test.update_used();
 
@@ -84,3 +84,27 @@ void flah()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+#include "char.h"
+template <>
+t_ego_obj_lst<ego_obj_chr, MAX_CHR>::iterator   t_ego_obj_lst<ego_obj_chr, MAX_CHR>::used_begin()                    { return used_map.iterator_begin(); }
+template <>
+bool_t     t_ego_obj_lst<ego_obj_chr, MAX_CHR>::used_end( t_ego_obj_lst<ego_obj_chr, MAX_CHR>::iterator & it )       { return used_map.iterator_end( it ); }
+template <>
+t_ego_obj_lst<ego_obj_chr, MAX_CHR>::iterator & t_ego_obj_lst<ego_obj_chr, MAX_CHR>::used_increment( t_ego_obj_lst<ego_obj_chr, MAX_CHR>::iterator & it ) { return used_map.iterator_increment( it ); }
+
+#include "enchant.h"
+template <>
+t_ego_obj_lst<ego_obj_enc, MAX_ENC>::iterator   t_ego_obj_lst<ego_obj_enc, MAX_ENC>::used_begin()                    { return used_map.iterator_begin(); }
+template <>
+bool_t     t_ego_obj_lst<ego_obj_enc, MAX_ENC>::used_end( t_ego_obj_lst<ego_obj_enc, MAX_ENC>::iterator & it )       { return used_map.iterator_end( it ); }
+template <>
+t_ego_obj_lst<ego_obj_enc, MAX_ENC>::iterator & t_ego_obj_lst<ego_obj_enc, MAX_ENC>::used_increment( t_ego_obj_lst<ego_obj_enc, MAX_ENC>::iterator & it ) { return used_map.iterator_increment( it ); }
+
+#include "particle.h"
+template <>
+t_ego_obj_lst<ego_obj_prt, MAX_PRT>::iterator   t_ego_obj_lst<ego_obj_prt, MAX_PRT>::used_begin()                    { return used_map.iterator_begin(); }
+template <>
+bool_t     t_ego_obj_lst<ego_obj_prt, MAX_PRT>::used_end( t_ego_obj_lst<ego_obj_prt, MAX_PRT>::iterator & it )       { return  used_map.iterator_end( it ); }
+template <>
+t_ego_obj_lst<ego_obj_prt, MAX_PRT>::iterator & t_ego_obj_lst<ego_obj_prt, MAX_PRT>::used_increment( t_ego_obj_lst<ego_obj_prt, MAX_PRT>::iterator & it ) { return used_map.iterator_increment( it ); }

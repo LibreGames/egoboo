@@ -1197,7 +1197,7 @@ Uint8 scr_OpenPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = PassageStack_open(( PASS_REF )pstate->argument );
+    returncode = PassageStack_open( PASS_REF( pstate->argument ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -1212,7 +1212,7 @@ Uint8 scr_ClosePassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = PassageStack_close_one(( PASS_REF )pstate->argument );
+    returncode = PassageStack_close_one( PASS_REF( pstate->argument ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -1229,7 +1229,7 @@ Uint8 scr_PassageOpen( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     returncode = bfalse;
     if ( pstate->argument >= 0 && pstate->argument < MAX_PASS )
     {
-        PASS_REF ipass = ( PASS_REF )pstate->argument;
+        PASS_REF ipass = PASS_REF( pstate->argument );
 
         returncode = PassageStack.lst[ipass].open;
     }
@@ -2332,7 +2332,7 @@ Uint8 scr_BecomeSpell( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     iskin = pchr->skin;
 
     // change the spellbook to a spell effect
-    ego_chr::change_profile( pself->index, ( PRO_REF )pself->content, 0, ENC_LEAVE_NONE );
+    ego_chr::change_profile( pself->index, PRO_REF( pself->content ), 0, ENC_LEAVE_NONE );
 
     // set the spell effect parameters
     pself->content = 0;
@@ -2371,7 +2371,7 @@ Uint8 scr_BecomeSpellbook( ego_script_state * pstate, ego_ai_bundle * pbdl_self 
 
     // convert the spell effect to a spellbook
     old_profile = pchr->profile_ref;
-    ego_chr::change_profile( pself->index, ( PRO_REF )SPELLBOOK, iskin, ENC_LEAVE_NONE );
+    ego_chr::change_profile( pself->index, PRO_REF( SPELLBOOK ), iskin, ENC_LEAVE_NONE );
 
     // Reset the spellbook state so it doesn't burn up
     pself->state   = 0;
@@ -2734,7 +2734,7 @@ Uint8 scr_EnchantTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    iTmp = spawn_one_enchant( pself->owner, pself->target, pself->index, ( ENC_REF )MAX_ENC, ( PRO_REF )MAX_PROFILE );
+    iTmp = spawn_one_enchant( pself->owner, pself->target, pself->index, ENC_REF( MAX_ENC ), PRO_REF( MAX_PROFILE ) );
     returncode = INGAME_ENC( iTmp );
 
     SCRIPT_FUNCTION_END();
@@ -2752,7 +2752,7 @@ Uint8 scr_EnchantChild( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    iTmp = spawn_one_enchant( pself->owner, pself->child, pself->index, ( ENC_REF )MAX_ENC, ( PRO_REF )MAX_PROFILE );
+    iTmp = spawn_one_enchant( pself->owner, pself->child, pself->index, ENC_REF( MAX_ENC ), PRO_REF( MAX_PROFILE ) );
     returncode = INGAME_ENC( iTmp );
 
     SCRIPT_FUNCTION_END();
@@ -4209,7 +4209,7 @@ Uint8 scr_BreakPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = _break_passage( pstate->y, pstate->x, pstate->distance, pstate->turn, ( PASS_REF )pstate->argument, &( pstate->x ), &( pstate->y ) );
+    returncode = _break_passage( pstate->y, pstate->x, pstate->distance, pstate->turn, PASS_REF( pstate->argument ), &( pstate->x ), &( pstate->y ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5186,7 +5186,7 @@ Uint8 scr_set_TargetToWhoeverIsInPassage( ego_script_state * pstate, ego_ai_bund
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ichr = PassageStack_who_is_blocking(( PASS_REF )pstate->argument, pself->index, IDSZ_NONE, TARGET_SELF | TARGET_FRIENDS | TARGET_ENEMIES, IDSZ_NONE );
+    ichr = PassageStack_who_is_blocking( PASS_REF( pstate->argument ), pself->index, IDSZ_NONE, TARGET_SELF | TARGET_FRIENDS | TARGET_ENEMIES, IDSZ_NONE );
 
     if ( INGAME_CHR( ichr ) )
     {
@@ -5314,7 +5314,7 @@ Uint8 scr_SpawnExactCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbd
     pos.y = pstate->y;
     pos.z = pstate->distance;
 
-    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF( MAX_CHR ) );
+    ichr = spawn_one_character( pos, PRO_REF( pstate->argument ), pchr->team, 0, CLIP_TO_16BITS( pstate->turn ), NULL, CHR_REF( MAX_CHR ) );
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
@@ -5364,7 +5364,7 @@ Uint8 scr_ChangeTargetClass( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
     SCRIPT_FUNCTION_BEGIN();
 
-    change_character_full( pself->target, ( PRO_REF )pstate->argument, 0, ENC_LEAVE_ALL );
+    change_character_full( pself->target, PRO_REF( pstate->argument ), 0, ENC_LEAVE_ALL );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5698,7 +5698,7 @@ Uint8 scr_FlashPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    PassageStack_flash(( PASS_REF )pstate->argument, pstate->distance );
+    PassageStack_flash( PASS_REF( pstate->argument ), pstate->distance );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5716,7 +5716,7 @@ Uint8 scr_FindTileInPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = _find_grid_in_passage( pstate->x, pstate->y, pstate->distance, ( PASS_REF )pstate->argument, &( pstate->x ), &( pstate->y ) );
+    returncode = _find_grid_in_passage( pstate->x, pstate->y, pstate->distance, PASS_REF( pstate->argument ), &( pstate->x ), &( pstate->y ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5965,7 +5965,7 @@ Uint8 scr_JoinTeam( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    switch_team( pself->index, ( TEAM_REF )pstate->argument );
+    switch_team( pself->index, TEAM_REF( pstate->argument ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5978,7 +5978,7 @@ Uint8 scr_TargetJoinTeam( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    switch_team( pself->target, ( TEAM_REF )pstate->argument );
+    switch_team( pself->target, TEAM_REF( pstate->argument ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5994,7 +5994,7 @@ Uint8 scr_ClearMusicPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     returncode = bfalse;
     if ( pstate->argument >= 0 && pstate->argument < MAX_PASS )
     {
-        PASS_REF ipass = ( PASS_REF )pstate->argument;
+        PASS_REF ipass = PASS_REF( pstate->argument );
 
         PassageStack.lst[ipass].music = NO_MUSIC;
     }
@@ -6058,7 +6058,7 @@ Uint8 scr_set_MusicPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self
     returncode = bfalse;
     if ( pstate->argument >= 0 && pstate->argument < MAX_PASS )
     {
-        PASS_REF ipass = ( PASS_REF )pstate->argument;
+        PASS_REF ipass = PASS_REF( pstate->argument );
 
         PassageStack.lst[ipass].music = pstate->distance;
     }
@@ -6361,7 +6361,7 @@ Uint8 scr_AddShopPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ShopStack_add_one( pself->index, ( PASS_REF )pstate->argument );
+    ShopStack_add_one( pself->index, PASS_REF( pstate->argument ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6423,7 +6423,7 @@ Uint8 scr_JoinEvilTeam( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    switch_team( pself->index, ( TEAM_REF )TEAM_EVIL );
+    switch_team( pself->index, TEAM_REF( TEAM_EVIL ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6436,7 +6436,7 @@ Uint8 scr_JoinNullTeam( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    switch_team( pself->index, ( TEAM_REF )TEAM_NULL );
+    switch_team( pself->index, TEAM_REF( TEAM_NULL ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6449,7 +6449,7 @@ Uint8 scr_JoinGoodTeam( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    switch_team( pself->index, ( TEAM_REF )TEAM_GOOD );
+    switch_team( pself->index, TEAM_REF( TEAM_GOOD ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -6479,7 +6479,7 @@ Uint8 scr_set_TargetToPassageID( ego_script_state * pstate, ego_ai_bundle * pbdl
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ichr = PassageStack_who_is_blocking(( PASS_REF )pstate->argument, pself->index, IDSZ_NONE, TARGET_SELF | TARGET_FRIENDS | TARGET_ENEMIES, pstate->distance );
+    ichr = PassageStack_who_is_blocking( PASS_REF( pstate->argument ), pself->index, IDSZ_NONE, TARGET_SELF | TARGET_FRIENDS | TARGET_ENEMIES, pstate->distance );
 
     if ( INGAME_CHR( ichr ) )
     {
@@ -6599,7 +6599,7 @@ Uint8 scr_GiveExperienceToGoodTeam( ego_script_state * pstate, ego_ai_bundle * p
 
     SCRIPT_FUNCTION_BEGIN();
 
-    give_team_experience(( TEAM_REF )TEAM_GOOD, pstate->argument, ( xp_type )pstate->distance );
+    give_team_experience( TEAM_REF( TEAM_GOOD ), pstate->argument, ( xp_type )pstate->distance );
 
     SCRIPT_FUNCTION_END();
 }
@@ -7100,7 +7100,7 @@ Uint8 scr_AddBlipAllEnemies( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     }
     else
     {
-        local_stats.sense_enemy_team = ( TEAM_REF )TEAM_MAX;
+        local_stats.sense_enemy_team = TEAM_REF( TEAM_MAX );
         local_stats.sense_enemy_ID   = IDSZ_NONE;
     }
 
@@ -7170,7 +7170,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
     pos.y = pstate->y;
     pos.z = pstate->distance;
 
-    ichr = spawn_one_character( pos, ( PRO_REF )pstate->argument, pchr->team, 0, FACE_NORTH, NULL, CHR_REF( MAX_CHR ) );
+    ichr = spawn_one_character( pos, PRO_REF( pstate->argument ), pchr->team, 0, FACE_NORTH, NULL, CHR_REF( MAX_CHR ) );
     if ( !INGAME_CHR( ichr ) )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
@@ -7769,7 +7769,7 @@ Uint8 scr_set_TargetToBlahInPassage( ego_script_state * pstate, ego_ai_bundle * 
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ichr = PassageStack_who_is_blocking(( PASS_REF )pstate->argument, pself->index, pstate->turn, TARGET_SELF | pstate->distance, IDSZ_NONE );
+    ichr = PassageStack_who_is_blocking( PASS_REF( pstate->argument ), pself->index, pstate->turn, TARGET_SELF | pstate->distance, IDSZ_NONE );
 
     if ( INGAME_CHR( ichr ) )
     {
@@ -7877,7 +7877,7 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
 
             if ( img >= starttile && img < endtile )
             {
-                if ( PassageStack_object_is_inside(( PASS_REF )passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+                if ( PassageStack_object_is_inside( PASS_REF( passage ), pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
                 {
                     // Remember where the hit occured.
                     *ptilex = pchr->pos.x;

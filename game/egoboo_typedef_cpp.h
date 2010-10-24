@@ -213,7 +213,14 @@ private:
 
     iterator iterator_begin()
     {
-        return iterator( _map.begin(), _id );
+        iterator rv;
+
+        if ( !_map.empty() )
+        {
+            rv = iterator( _map.begin(), _id );
+        }
+
+        return rv;
     }
 
     bool_t iterator_end( iterator & it )

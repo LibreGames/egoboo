@@ -471,7 +471,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
                             const CHR_REF & chr_attach, Uint16 vrt_offset, const TEAM_REF & team,
                             const CHR_REF & chr_origin, const PRT_REF & prt_origin, int multispawn, const CHR_REF & oldtarget );
 
-#define spawn_one_particle_global( pos, facing, ipip, multispawn ) spawn_one_particle( pos, facing, (PRO_REF)MAX_PROFILE, ipip, (CHR_REF)MAX_CHR, GRIP_LAST, (TEAM_REF)TEAM_NULL, (CHR_REF)MAX_CHR, (PRT_REF)MAX_PRT, multispawn, (CHR_REF)MAX_CHR );
+#define spawn_one_particle_global( pos, facing, ipip, multispawn ) spawn_one_particle( pos, facing, PRO_REF(MAX_PROFILE), ipip, CHR_REF(MAX_CHR), GRIP_LAST, TEAM_REF(TEAM_NULL), CHR_REF(MAX_CHR), PRT_REF(MAX_PRT), multispawn, CHR_REF(MAX_CHR) );
 
 BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * pressure );
 bool_t    prt_test_wall( ego_prt * pprt, float test_pos[] );

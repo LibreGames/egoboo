@@ -116,6 +116,10 @@ extern "C"
     /// If not set, it will default to stderr.
     FILE * set_ogl_include_stderr( FILE * pfile );
 
+    /// A flag to keep track of the use of glNewList() ... glEndList() pairs.
+    /// Any changes to the ClientState inside this block can cause crashes and God knows what else!
+    extern GLboolean oglx_NewList_active;
+
 #if defined(__cplusplus)
 }
 #endif

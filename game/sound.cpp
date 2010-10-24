@@ -828,7 +828,7 @@ bool_t snd_config_init( snd_config_data_t * psnd )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t snd_config_synch( snd_config_data_t * psnd, ego_config_data_t * pcfg )
+bool_t snd_config_synch( snd_config_data_t * psnd, config_data_t * pcfg )
 {
     if ( NULL == psnd && NULL == pcfg ) return bfalse;
 
@@ -948,7 +948,7 @@ bool_t LoopedList_free_one( size_t index )
     LoopedList.update_guid++;
 
     // clear out the data
-    ref = ( LOOP_REF )index;
+    ref = LOOP_REF( index );
     LoopedList.lst[ref].channel = INVALID_SOUND_CHANNEL;
     LoopedList.lst[ref].chunk   = NULL;
     LoopedList.lst[ref].object  = CHR_REF( MAX_CHR );
@@ -1016,7 +1016,7 @@ size_t LoopedList_add( Mix_Chunk * sound, int channel, const CHR_REF &  ichr )
     if ( index != LOOPED_COUNT )
     {
         // set up the LoopedList entry at the empty index
-        LOOP_REF ref = ( LOOP_REF )index;
+        LOOP_REF ref = LOOP_REF( index );
 
         LoopedList.lst[ref].chunk   = sound;
         LoopedList.lst[ref].channel = channel;
@@ -1045,7 +1045,7 @@ bool_t LoopedList_remove( int channel )
 
         if ( index != LOOPED_COUNT )
         {
-            LOOP_REF ref = ( LOOP_REF ) index;
+            LOOP_REF ref = LOOP_REF( index );
 
             if ( channel == LoopedList.lst[ref].channel )
             {
@@ -1086,7 +1086,7 @@ void looped_update_all_sound()
         index = LoopedList.used_ref[cnt];
         if ( index < 0 || index >= LOOPED_COUNT ) continue;
 
-        ref = ( LOOP_REF )index;
+        ref = LOOP_REF( index );
 
         if ( INVALID_SOUND_CHANNEL == LoopedList.lst[ref].channel ) continue;
         plooped = LoopedList.lst + ref;
@@ -1134,7 +1134,7 @@ bool_t looped_stop_object_sounds( const CHR_REF &  ichr )
             size_t index = LoopedList.used_ref[cnt];
             if ( index < 0 || index >= LOOPED_COUNT ) continue;
 
-            ref = ( LOOP_REF )index;
+            ref = LOOP_REF( index );
 
             if ( LoopedList.lst[ref].object == ichr )
             {

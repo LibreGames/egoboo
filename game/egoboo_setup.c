@@ -96,13 +96,13 @@ static STRING _config_filename = EMPTY_CSTR;
 //--------------------------------------------------------------------------------------------
 
 static ConfigFilePtr_t lConfigSetup = NULL;
-static ego_config_data_t cfg_default;
+static config_data_t cfg_default;
 
-ego_config_data_t cfg;
+config_data_t cfg;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void egoboo_config_init( ego_config_data_t * pcfg )
+void egoboo_config_init( config_data_t * pcfg )
 {
     memset( &cfg_default, 0, sizeof( cfg_default ) );
 
@@ -114,6 +114,7 @@ void egoboo_config_init( ego_config_data_t * pcfg )
     pcfg->scry_req              = 480;               // Screen Y size
     pcfg->use_perspective       = bfalse;      // Perspective correct textures?
     pcfg->use_dither            = bfalse;           // Dithering?
+    pcfg->mipmap_quality        = bfalse;           // fast mipmap rendering
     pcfg->reflect_fade          = btrue;            // 255 = Don't fade reflections
     pcfg->reflect_allowed       = bfalse;            // Reflections?
     pcfg->reflect_prt           = bfalse;         // Reflect particles?
@@ -225,14 +226,14 @@ bool_t setup_write()
 
     if ( INVALID_CSTR( _config_filename ) ) return bfalse;
 
-    success = ConfigFile_succeed == SaveConfigFileAs( lConfigSetup, _config_filename );
+    success = ( ConfigFile_succeed == SaveConfigFileAs( lConfigSetup, _config_filename ) );
     if ( !success ) log_warning( "Failed to save setup.txt!\n" );
 
     return success;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t setup_download( ego_config_data_t * pcfg )
+bool_t setup_download( config_data_t * pcfg )
 {
     /// @details BB@> download the ConfigFile_t keys into game variables
     ///     use default values to fill in any missing keys
@@ -271,6 +272,10 @@ bool_t setup_download( ego_config_data_t * pcfg )
 
     // Enable dithering?
     GetKey_bool( "DITHERING", pcfg->use_dither, cfg_default.use_dither );
+
+    // Mipmap Quality?
+    GetKey_bool( "MIPMAP_HIGH_QUALITY", lTempBool, cfg_default.mipmap_quality );
+    pcfg->mipmap_quality = lTempBool;
 
     // Reflection fadeout
     GetKey_bool( "FLOOR_REFLECTION_FADEOUT", lTempBool, 0 != cfg_default.reflect_fade );
@@ -313,15 +318,9 @@ bool_t setup_download( ego_config_data_t * pcfg )
     pcfg->multisamples = CLIP( pcfg->multisamples, 0, EGO_MAX_MULTISAMPLES );
 
     // Do we do texture filtering?
-    GetKey_string( "TEXTURE_FILTERING", lTempStr, 24, "LINEAR" );
-    pcfg->texturefilter_req =  cfg_default.texturefilter_req;
-    if ( 'U' == toupper( lTempStr[0] ) )  pcfg->texturefilter_req = TX_UNFILTERED;
-    if ( 'L' == toupper( lTempStr[0] ) )  pcfg->texturefilter_req = TX_LINEAR;
-    if ( 'M' == toupper( lTempStr[0] ) )  pcfg->texturefilter_req = TX_MIPMAP;
-    if ( 'B' == toupper( lTempStr[0] ) )  pcfg->texturefilter_req = TX_BILINEAR;
-    if ( 'T' == toupper( lTempStr[0] ) )  pcfg->texturefilter_req = TX_TRILINEAR_1;
-    if ( '2' == toupper( lTempStr[0] ) )  pcfg->texturefilter_req = TX_TRILINEAR_2;
-    if ( 'A' == toupper( lTempStr[0] ) )  pcfg->texturefilter_req = TX_ANISOTROPIC;
+    GetKey_string( "TEXTURE_FILTERING", lTempStr, 24, "0_UNFILTERED" );
+    // MUCH simpler
+    pcfg->texturefilter_req = strtol( lTempStr, NULL, 10 );
 
     // Max number of lights
     GetKey_int( "MAX_DYNAMIC_LIGHTS", pcfg->dyna_count_req, cfg_default.dyna_count_req );
@@ -431,7 +430,7 @@ bool_t setup_download( ego_config_data_t * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t setup_synch( ego_config_data_t * pcfg )
+bool_t setup_synch( config_data_t * pcfg )
 {
     if ( NULL == pcfg ) return bfalse;
 
@@ -460,9 +459,12 @@ bool_t setup_synch( ego_config_data_t * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t setup_upload( ego_config_data_t * pcfg )
+bool_t setup_upload( config_data_t * pcfg )
 {
     /// @details BB@> upload game variables into the ConfigFile_t keys
+
+    STRING buffer;
+    const char * sz_literal = NULL;
 
     const char  *lCurSectionName;
     if ( NULL == lConfigSetup || NULL == pcfg ) return bfalse;
@@ -491,6 +493,9 @@ bool_t setup_upload( ego_config_data_t * pcfg )
 
     // Enable dithering?
     SetKey_bool( "DITHERING", pcfg->use_dither );
+
+    // Are mipmaps high quality?
+    SetKey_bool( "MIPMAP_HIGH_QUALITY", pcfg->mipmap_quality );
 
     // Reflection fadeout
     SetKey_bool( "FLOOR_REFLECTION_FADEOUT", 0 != pcfg->reflect_fade );
@@ -529,18 +534,26 @@ bool_t setup_upload( ego_config_data_t * pcfg )
     SetKey_int( "ANTIALIASING", pcfg->multisamples );
 
     // Do we do texture filtering?
-    switch ( pcfg->texturefilter_req )
+    sz_literal = "UNKNOWN";
+    if ( pcfg->texturefilter_req >= TX_ANISOTROPIC )
     {
-        case TX_UNFILTERED:  SetKey_string( "TEXTURE_FILTERING", "UNFILTERED" ); break;
-        case TX_MIPMAP:      SetKey_string( "TEXTURE_FILTERING", "MIPMAP" ); break;
-        case TX_BILINEAR:    SetKey_string( "TEXTURE_FILTERING", "BILINEAR" ); break;
-        case TX_TRILINEAR_1: SetKey_string( "TEXTURE_FILTERING", "TRILINEAR" ); break;
-        case TX_TRILINEAR_2: SetKey_string( "TEXTURE_FILTERING", "2_TRILINEAR" ); break;
-        case TX_ANISOTROPIC: SetKey_string( "TEXTURE_FILTERING", "ANISOTROPIC" ); break;
-
-        default:
-        case TX_LINEAR:      SetKey_string( "TEXTURE_FILTERING", "LINEAR" ); break;
+        sz_literal = "ANISOTROPIC";
     }
+    else
+    {
+        switch ( pcfg->texturefilter_req )
+        {
+            case TX_UNFILTERED:  sz_literal = "UNFILTERED";  break;
+            case TX_MIPMAP:      sz_literal = "MIPMAP";      break;
+            case TX_BILINEAR:    sz_literal = "BILINEAR";    break;
+            case TX_TRILINEAR_1: sz_literal = "TRILINEAR";   break;
+            case TX_TRILINEAR_2: sz_literal = "2_TRILINEAR"; break;
+            case TX_LINEAR:      sz_literal = "LINEAR";      break;
+        }
+    }
+    snprintf( buffer, SDL_arraysize( buffer ), "%d_%s", pcfg->texturefilter_req, sz_literal );
+
+    SetKey_string( "TEXTURE_FILTERING", buffer );
 
     // Max number of lights
     SetKey_int( "MAX_DYNAMIC_LIGHTS", pcfg->dyna_count_req );

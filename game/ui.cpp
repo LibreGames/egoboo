@@ -344,7 +344,7 @@ void ui_draw_cursor_ogl()
 void ui_draw_cursor()
 {
     // see if the icon cursor is available
-    TX_REF           ico_ref = ( TX_REF )TX_CURSOR;
+    TX_REF           ico_ref = TX_REF( TX_CURSOR );
     oglx_texture_t * ptex    = TxTexture_get_ptr( ico_ref );
 
     if ( NULL == ptex || INVALID_GL_ID == ptex->base.binding )

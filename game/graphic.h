@@ -38,7 +38,7 @@
 //--------------------------------------------------------------------------------------------
 struct ego_chr;
 struct ego_camera;
-struct ego_config_data;
+struct config_data;
 struct s_chr_instance;
 struct s_oglx_texture_parameters;
 struct s_display_item;

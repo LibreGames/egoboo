@@ -523,7 +523,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
                 if ( LEAF_CHR == ( *it )->data_type )
                 {
                     // collided with a character
-                    CHR_REF ichr_b = ( CHR_REF )coll_ref;
+                    CHR_REF ichr_b = CHR_REF( coll_ref );
 
                     // do some logic on this to determine whether the collision is valid
                     if ( detect_chr_chr_interaction_valid( ichr_a, ichr_b ) )
@@ -570,7 +570,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
                 else if ( LEAF_PRT == ( *it )->data_type )
                 {
                     // collided with a particle
-                    PRT_REF iprt_b = ( PRT_REF )coll_ref;
+                    PRT_REF iprt_b = PRT_REF( coll_ref );
 
                     // do some logic on this to determine whether the collision is valid
                     if ( detect_chr_prt_interaction_valid( ichr_a, iprt_b ) )
@@ -1131,7 +1131,7 @@ bool_t attach_chr_to_platform( ego_chr * pchr, ego_chr * pplat )
     if ( pchr->onwhichplatform_ref != GET_REF_PCHR( pplat ) )
     {
         // formally detach the character from the old platform
-        if (( CHR_REF ) MAX_CHR != pchr->onwhichplatform_ref )
+        if ( CHR_REF( MAX_CHR ) != pchr->onwhichplatform_ref )
         {
             detach_character_from_platform( pchr );
         }
@@ -1165,7 +1165,7 @@ bool_t detach_character_from_platform( ego_chr * pchr )
     if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
 
     pchr->onwhichplatform_update   = 0;
-    pchr->targetplatform_ref       = ( CHR_REF ) MAX_CHR;
+    pchr->targetplatform_ref       = CHR_REF( MAX_CHR );
     pchr->targetplatform_overlap   = 0.0f;
 
     // grab a pointer to the old platform
@@ -1176,7 +1176,7 @@ bool_t detach_character_from_platform( ego_chr * pchr )
     }
 
     // undo the attachment
-    pchr->onwhichplatform_ref     = ( CHR_REF ) MAX_CHR;
+    pchr->onwhichplatform_ref     = CHR_REF( MAX_CHR );
 
     // do some platform adjustments
     if ( NULL != pplat )
@@ -1249,9 +1249,9 @@ bool_t detach_particle_from_platform( ego_prt * pprt )
     if ( INGAME_CHR( pprt->onwhichplatform_ref ) ) return bfalse;
 
     // undo the attachment
-    pprt->onwhichplatform_ref    = ( CHR_REF ) MAX_CHR;
+    pprt->onwhichplatform_ref    = CHR_REF( MAX_CHR );
     pprt->onwhichplatform_update = 0;
-    pprt->targetplatform_ref     = ( CHR_REF ) MAX_CHR;
+    pprt->targetplatform_ref     = CHR_REF( MAX_CHR );
     pprt->targetplatform_overlap   = 0.0f;
 
     // get the correct particle environment

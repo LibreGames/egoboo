@@ -27,6 +27,7 @@
 
 #include "egoboo_typedef.h"
 #include "egoboo_setup.h"
+#include "egoboo.h"
 
 //--------------------------------------------------------------------------------------------
 // Network stuff
@@ -200,7 +201,7 @@ bool_t                 network_get_host_active();
 bool_t                 network_set_host_active( bool_t state );
 bool_t                 network_waiting_for_players();
 
-void network_system_begin( ego_config_data_t * pcfg );
+void network_system_begin( ego_config_data * pcfg );
 void network_system_end( void );
 
 void listen_for_packets();

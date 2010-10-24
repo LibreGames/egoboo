@@ -69,7 +69,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 /// The internal representation of the data in "settings.txt"
-    struct s_ego_config_data
+    struct s_config_data
     {
         // {GRAPHIC}
         bool_t                  fullscreen_req;            ///< Start in fullscreen?
@@ -77,8 +77,9 @@ extern "C"
         int                     scrz_req;                  ///< Screen z-buffer depth ( 8 unsupported )
         int                     scrx_req;                  ///< Screen X size
         int                     scry_req;                  ///< Screen Y size
-        bool_t                  use_perspective;               ///< Perspective correct textures?
-        bool_t                  use_dither;                    ///< Dithering?
+        bool_t                  use_perspective;           ///< Perspective correct textures?
+        bool_t                  use_dither;                ///< Dithering?
+        bool_t                  mipmap_quality;            ///< Good mipmap quality?
         bool_t                  reflect_allowed;           ///< Reflections?
         Uint8                   reflect_fade;              ///< 255 = Don't fade reflections
         bool_t                  reflect_prt;               ///< Reflect particles?
@@ -129,9 +130,9 @@ extern "C"
         bool_t                  sdl_image_allowed;       ///< Allow advanced SDL_Image functions?
 
     };
-    typedef struct s_ego_config_data ego_config_data_t;
+    typedef struct s_config_data config_data_t;
 
-    extern ego_config_data_t cfg;
+    extern config_data_t cfg;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -152,9 +153,9 @@ extern "C"
     bool_t setup_write();
     bool_t setup_quit();
 
-    bool_t setup_download( ego_config_data_t * pcfg );
-    bool_t setup_upload( ego_config_data_t * pcfg );
-    bool_t setup_synch( ego_config_data_t * pcfg );
+    bool_t setup_download( config_data_t * pcfg );
+    bool_t setup_upload( config_data_t * pcfg );
+    bool_t setup_synch( config_data_t * pcfg );
 
 #if defined(__cplusplus)
 }

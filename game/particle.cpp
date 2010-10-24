@@ -1839,7 +1839,7 @@ void particle_system_end()
 {
     release_all_pip();
 
-    PrtObjList.dtor_this();
+    PrtObjList.deinit();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1891,7 +1891,7 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
         // Spawn new enchantments
         if ( ppip->spawnenchant )
         {
-            spawn_one_enchant( pprt->owner_ref, character, CHR_REF( MAX_CHR ), ( ENC_REF )MAX_ENC, pprt->profile_ref );
+            spawn_one_enchant( pprt->owner_ref, character, CHR_REF( MAX_CHR ), ENC_REF( MAX_ENC ), pprt->profile_ref );
         }
 
         // Spawn particles - this has been modded to maximize the visual effect
@@ -2048,7 +2048,7 @@ bool_t prt_is_over_water( const PRT_REF & iprt )
 //--------------------------------------------------------------------------------------------
 PIP_REF PipStack_get_free()
 {
-    PIP_REF retval = ( PIP_REF )MAX_PIP;
+    PIP_REF retval = PIP_REF( MAX_PIP );
 
     if ( PipStack.count < MAX_PIP )
     {
@@ -2068,7 +2068,7 @@ PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & p
     PIP_REF ipip;
     ego_pip * ppip;
 
-    ipip = ( PIP_REF ) MAX_PIP;
+    ipip = PIP_REF( MAX_PIP );
     if ( VALID_PIP_RANGE( pip_override ) )
     {
         release_one_pip( pip_override );
@@ -2081,13 +2081,13 @@ PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & p
 
     if ( !VALID_PIP_RANGE( ipip ) )
     {
-        return ( PIP_REF )MAX_PIP;
+        return PIP_REF( MAX_PIP );
     }
     ppip = PipStack.lst + ipip;
 
     if ( NULL == load_one_pip_file_vfs( szLoadName, ppip ) )
     {
-        return ( PIP_REF )MAX_PIP;
+        return PIP_REF( MAX_PIP );
     }
 
     ppip->end_sound = CLIP( ppip->end_sound, INVALID_SOUND, MAX_WAVE );
@@ -2108,57 +2108,57 @@ void reset_particles( /* const char* modname */ )
 
     // Load in the standard global particles ( the coins for example )
     loadpath = "mp_data/1money.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_COIN1 ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_COIN1 ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
 
     loadpath = "mp_data/5money.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_COIN5 ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_COIN5 ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
 
     loadpath = "mp_data/25money.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_COIN25 ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_COIN25 ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
 
     loadpath = "mp_data/100money.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_COIN100 ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_COIN100 ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
 
     // Load module specific information
     loadpath = "mp_data/weather4.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_WEATHER4 ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_WEATHER4 ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
 
     loadpath = "mp_data/weather5.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_WEATHER5 ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_WEATHER5 ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
 
     loadpath = "mp_data/splash.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_SPLASH ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_SPLASH ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
 
     loadpath = "mp_data/ripple.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_RIPPLE ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_RIPPLE ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
 
     // This is also global...
     loadpath = "mp_data/defend.txt";
-    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, ( PIP_REF )PIP_DEFEND ) )
+    if ( MAX_PIP == load_one_particle_profile_vfs( loadpath, PIP_REF( PIP_DEFEND ) ) )
     {
         log_error( "Data file was not found! (\"%s\")\n", loadpath );
     }
@@ -2323,36 +2323,38 @@ int prt_do_end_spawn( const PRT_REF & iprt )
     int end_spawn_count = 0;
 
     ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
-    if ( NULL == pprt ) return end_spawn_count;
+    if ( NULL == pprt || pprt->end_spawn_pip < 0 ) return end_spawn_count;
+
+    if ( pprt->end_spawn_pip < 0 ) return end_spawn_count;
+    PIP_REF ipip = PIP_REF( pprt->end_spawn_pip );
+
+    if ( pprt->end_spawn_amount <= 0 || !LOADED_PIP( ipip ) ) return end_spawn_count;
 
     // Spawn new particles if time for old one is up
-    if ( pprt->end_spawn_amount > 0 && pprt->end_spawn_pip > 0 && LOADED_PIP( PIP_REF( pprt->end_spawn_pip ) ) )
+    FACING_T facing;
+    int      tnc;
+
+    facing = pprt->facing;
+    for ( tnc = 0; tnc < pprt->end_spawn_amount; tnc++ )
     {
-        FACING_T facing;
-        int      tnc;
+        // we have been given the absolute pip reference when the particle was spawned
+        // so, set the profile reference to PRO_REF(MAX_PROFILE), so that the
+        // value of ipip will be used directly
+        PRT_REF spawned_prt = spawn_one_particle( pprt->pos_old, facing, PRO_REF( MAX_PROFILE ), pprt->end_spawn_pip,
+                              CHR_REF( MAX_CHR ), GRIP_LAST, pprt->team, ego_prt::get_iowner( iprt, 0 ), iprt, tnc, pprt->target_ref );
 
-        facing = pprt->facing;
-        for ( tnc = 0; tnc < pprt->end_spawn_amount; tnc++ )
+        if ( VALID_PRT( spawned_prt ) )
         {
-            // we have been given the absolute pip reference when the particle was spawned
-            // so, set the profile reference to (PRO_REF)MAX_PROFILE, so that the
-            // value of pprt->end_spawn_pip will be used directly
-            PRT_REF spawned_prt = spawn_one_particle( pprt->pos_old, facing, ( PRO_REF )MAX_PROFILE, pprt->end_spawn_pip,
-                                  CHR_REF( MAX_CHR ), GRIP_LAST, pprt->team, ego_prt::get_iowner( iprt, 0 ), iprt, tnc, pprt->target_ref );
-
-            if ( VALID_PRT( spawned_prt ) )
-            {
-                end_spawn_count++;
-            }
-
-            facing += pprt->end_spawn_facingadd;
+            end_spawn_count++;
         }
 
-        // we have already spawned these particles, so set this amount to
-        // zero in case we are not actually calling free_one_particle_in_game()
-        // this time around.
-        pprt->end_spawn_amount = 0;
+        facing += pprt->end_spawn_facingadd;
     }
+
+    // we have already spawned these particles, so set this amount to
+    // zero in case we are not actually calling free_one_particle_in_game()
+    // this time around.
+    pprt->end_spawn_amount = 0;
 
     return end_spawn_count;
 }
@@ -2378,7 +2380,7 @@ void cleanup_all_particles()
         // don't bother with particles that are not allocated
         if ( !FLAG_ALLOCATED_PBASE( pbase ) || !FLAG_VALID_PBASE( pbase ) ) continue;
 
-        if ( FLAG_KILLED_PBASE( pbase ) )
+        if ( FLAG_TERMINATED_PBASE( pbase ) )
         {
             // the memory area is marked as invalid,
             // but it has not been "killed" yet
@@ -3031,7 +3033,7 @@ ego_obj_prt * ego_obj_prt::set_limbo( ego_obj_prt * pobj, bool_t val )
     ego_obj * pbase = POBJ_GET_PBASE( pobj );
     if ( NULL == pbase ) return pobj;
 
-    if ( !FLAG_VALID_PBASE( pbase ) || FLAG_KILLED_PBASE( pbase ) ) return pobj;
+    if ( !FLAG_VALID_PBASE( pbase ) || FLAG_TERMINATED_PBASE( pbase ) ) return pobj;
 
     pobj->obj_base_display = val;
 
@@ -3044,10 +3046,10 @@ ego_prt_bundle * ego_prt_bundle::ctor_this( ego_prt_bundle * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
-    pbundle->prt_ref = ( PRT_REF ) MAX_PRT;
+    pbundle->prt_ref = PRT_REF( MAX_PRT );
     pbundle->prt_ptr = NULL;
 
-    pbundle->pip_ref = ( PIP_REF ) MAX_PIP;
+    pbundle->pip_ref = PIP_REF( MAX_PIP );
     pbundle->pip_ptr = NULL;
 
     return pbundle;
@@ -3083,7 +3085,7 @@ ego_prt_bundle * ego_prt_bundle::validate( ego_prt_bundle * pbundle )
     }
     else
     {
-        pbundle->pip_ref = ( PIP_REF ) MAX_PIP;
+        pbundle->pip_ref = PIP_REF( MAX_PIP );
         pbundle->pip_ptr = NULL;
     }
 
@@ -3783,7 +3785,7 @@ ego_obj_prt * ego_obj_prt::dtor_this( ego_obj_prt * pobj )
 {
     // destruct this struct, ONLY
 
-    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_KILLED_PBASE( pobj ) ) return pobj;
+    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
 
     pobj = ego_obj_prt::dealloc( pobj );
 

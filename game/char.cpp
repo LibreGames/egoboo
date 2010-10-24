@@ -139,7 +139,7 @@ void character_system_begin()
 void character_system_end()
 {
     release_all_cap();
-    ChrObjList.dtor_this();
+    ChrObjList.deinit();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2443,13 +2443,13 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
     /// the icap slot that the profile was stuck into.  It may cause the program
     /// to abort if bad things happen.
 
-    CAP_REF  icap = ( CAP_REF )MAX_CAP;
+    CAP_REF  icap = CAP_REF( MAX_CAP );
     ego_cap * pcap;
     STRING  szLoadName;
 
     if ( VALID_PRO_RANGE( slot_override ) )
     {
-        icap = ( CAP_REF )slot_override;
+        icap = CAP_REF( slot_override );
     }
     else
     {
@@ -2468,7 +2468,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
             log_warning( "load_one_character_profile_vfs() - Not able to open file \"%s\"\n", szLoadName );
         }
 
-        return ( CAP_REF )MAX_CAP;
+        return CAP_REF( MAX_CAP );
     }
 
     pcap = CapStack.lst + icap;
@@ -2488,7 +2488,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
         else
         {
             // Stop, we don't want to override it
-            return ( CAP_REF )MAX_CAP;
+            return CAP_REF( MAX_CAP );
         }
 
         // If loading over an existing model is allowed (?how?) then make sure to release the old one
@@ -2497,7 +2497,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
 
     if ( NULL == load_one_cap_data_file_vfs( tmploadname, pcap ) )
     {
-        return ( CAP_REF )MAX_CAP;
+        return CAP_REF( MAX_CAP );
     }
 
     // do the rest of the levels not listed in data.txt
@@ -2674,8 +2674,8 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
     experience = pcap->experience_worth + ( pchr->experience * pcap->experience_exchange );
 
     // Set target
-    pchr->ai.target = INGAME_CHR( killer ) ? killer : ( CHR_REF )MAX_CHR;
-    if ( killer_team == TEAM_DAMAGE ) pchr->ai.target = ( CHR_REF )MAX_CHR;
+    pchr->ai.target = INGAME_CHR( killer ) ? killer : CHR_REF( MAX_CHR );
+    if ( killer_team == TEAM_DAMAGE ) pchr->ai.target = CHR_REF( MAX_CHR );
     if ( killer_team == TEAM_NULL ) pchr->ai.target   = ichr;
 
     // distribute experience to the attacker
@@ -3215,7 +3215,7 @@ ego_chr * ego_chr::do_init( ego_chr * pchr )
     loc_team = pchr->spawn_data.team;
     iteam = ( loc_team ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
-    loc_team = ( TEAM_REF )iteam;
+    loc_team = TEAM_REF( iteam );
 
     // IMPORTANT!!!
     pchr->missilehandler = ichr;
@@ -3758,7 +3758,7 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
     }
     else
     {
-        TX_REF txref = ( TX_REF )TX_WATER_TOP;
+        TX_REF txref = TX_REF( TX_WATER_TOP );
 
         // do the best we can to change the skin
         if ( NULL == ppro || 0 == ppro->skins )
@@ -7351,7 +7351,7 @@ BBOARD_REF chr_add_billboard( const CHR_REF & ichr, Uint32 lifetime_secs )
 
     ego_chr * pchr;
 
-    if ( !INGAME_CHR( ichr ) ) return ( BBOARD_REF )INVALID_BILLBOARD;
+    if ( !INGAME_CHR( ichr ) ) return BBOARD_REF( INVALID_BILLBOARD );
     pchr = ChrObjList.get_pdata( ichr );
 
     if ( INVALID_BILLBOARD != pchr->ibillboard )
@@ -7380,7 +7380,7 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
     ego_billboard_data * pbb;
     int                rv;
 
-    BBOARD_REF ibb = ( BBOARD_REF )INVALID_BILLBOARD;
+    BBOARD_REF ibb = BBOARD_REF( INVALID_BILLBOARD );
 
     if ( !INGAME_CHR( ichr ) ) return NULL;
     pchr = ChrObjList.get_pdata( ichr );
@@ -7893,7 +7893,7 @@ TX_REF ego_chr::get_icon_ref( const CHR_REF & item )
     ///               If none can be found, return the index to the texture of the null icon.
 
     size_t iskin;
-    TX_REF icon_ref = ( TX_REF )ICON_NULL;
+    TX_REF icon_ref = TX_REF( ICON_NULL );
     bool_t is_spell_fx, is_book, draw_book;
 
     ego_cap * pitem_cap;
@@ -8018,7 +8018,7 @@ void reset_teams()
     for ( teama = 0; teama < TEAM_MAX; teama++ )
     {
         TeamStack.lst[teama].hatesteam[TEAM_NULL] = bfalse;
-        TeamStack.lst[( TEAM_REF )TEAM_NULL].hatesteam[( teama ).get_value()] = bfalse;
+        TeamStack.lst[TEAM_REF( TEAM_NULL )].hatesteam[( teama ).get_value()] = bfalse;
     }
 }
 
@@ -9487,7 +9487,7 @@ MAD_REF ego_chr::get_imad( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
-    if ( !DEFINED_CHR( ichr ) ) return ( MAD_REF )MAX_MAD;
+    if ( !DEFINED_CHR( ichr ) ) return MAD_REF( MAX_MAD );
     pchr = ChrObjList.get_pdata( ichr );
 
     // try to repair a bad model if it exists
@@ -9501,7 +9501,7 @@ MAD_REF ego_chr::get_imad( const CHR_REF & ichr )
                 ego_chr::update_collision_size( pchr, btrue );
             }
         }
-        if ( !LOADED_MAD( pchr->inst.imad ) ) return ( MAD_REF )MAX_MAD;
+        if ( !LOADED_MAD( pchr->inst.imad ) ) return MAD_REF( MAX_MAD );
     }
 
     return pchr->inst.imad;
@@ -9608,13 +9608,13 @@ ego_chr_bundle * ego_chr_bundle::ctor_this( ego_chr_bundle * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
-    pbundle->chr_ref = ( CHR_REF ) MAX_CHR;
+    pbundle->chr_ref = CHR_REF( MAX_CHR );
     pbundle->chr_ptr = NULL;
 
-    pbundle->cap_ref = ( CAP_REF ) MAX_CAP;
+    pbundle->cap_ref = CAP_REF( MAX_CAP );
     pbundle->cap_ptr = NULL;
 
-    pbundle->pro_ref = ( PRO_REF ) MAX_PROFILE;
+    pbundle->pro_ref = PRO_REF( MAX_PROFILE );
     pbundle->pro_ptr = NULL;
 
     return pbundle;
@@ -10804,7 +10804,7 @@ CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool
     ego_pack * chr_pack_ptr, * item_pack_ptr, *parent_pack_ptr;
 
     // does the chr_ref exist?
-    if ( !DEFINED_CHR( chr_ref ) ) return ( CHR_REF )MAX_CHR;
+    if ( !DEFINED_CHR( chr_ref ) ) return CHR_REF( MAX_CHR );
     pchr         = ChrObjList.get_pdata( chr_ref );
     chr_pack_ptr = &( pchr->pack );
 
@@ -10828,7 +10828,7 @@ CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool
     PACK_END_LOOP( tmp_ref );
 
     // did we find anything?
-    if ( chr_ref == item_ref || MAX_CHR == item_ref ) return ( CHR_REF )MAX_CHR;
+    if ( chr_ref == item_ref || MAX_CHR == item_ref ) return CHR_REF( MAX_CHR );
 
     // convert the item_ref it to a pointer
     item_ptr      = NULL;
@@ -10844,7 +10844,7 @@ CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool
     {
         chr_pack_remove_item( chr_ref, parent_ref, item_ref );
 
-        return ( CHR_REF )MAX_CHR;
+        return CHR_REF( MAX_CHR );
     }
 
     // convert the parent_ptr it to a pointer
@@ -11059,8 +11059,8 @@ ego_chr_data * ego_chr_data::init( ego_chr_data * pdata )
     pdata->carefultime = CAREFULTIME;
 
     // Enchant stuff
-    pdata->firstenchant = ( ENC_REF ) MAX_ENC;
-    pdata->undoenchant = ( ENC_REF ) MAX_ENC;
+    pdata->firstenchant = ENC_REF( MAX_ENC );
+    pdata->undoenchant = ENC_REF( MAX_ENC );
     pdata->missiletreatment = MISSILE_NORMAL;
 
     // Character stuff
@@ -11096,8 +11096,8 @@ ego_chr_data * ego_chr_data::init( ego_chr_data * pdata )
     pdata->dismount_object = CHR_REF( MAX_CHR );
 
     // set all of the integer references to invalid values
-    pdata->firstenchant = ( ENC_REF ) MAX_ENC;
-    pdata->undoenchant  = ( ENC_REF ) MAX_ENC;
+    pdata->firstenchant = ENC_REF( MAX_ENC );
+    pdata->undoenchant  = ENC_REF( MAX_ENC );
     for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
     {
         pdata->holdingwhich[cnt] = CHR_REF( MAX_CHR );
@@ -11234,7 +11234,7 @@ ego_obj_chr * ego_obj_chr::dtor_this( ego_obj_chr * pobj )
 {
     // destruct this struct, ONLY
 
-    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_KILLED_PBASE( pobj ) ) return pobj;
+    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
 
     pobj = ego_obj_chr::dealloc( pobj );
 

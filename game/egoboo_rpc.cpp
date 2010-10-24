@@ -113,7 +113,7 @@ ego_tx_request * ego_tx_request::ctor_this( ego_tx_request * preq, int type )
     if ( NULL == ego_rpc::ctor_this( ego_tx_request::get_rpc( preq ), type, preq ) ) return NULL;
 
     preq->filename[0] = '\0';
-    preq->ret_index   = ( TX_REF )INVALID_TX_TEXTURE;
+    preq->ret_index   = TX_REF( INVALID_TX_TEXTURE );
     preq->key         = ( Uint32 )( ~0 );
 
     return preq;
@@ -258,7 +258,7 @@ size_t TxReqList_get_free( int type )
 
     if ( /* retval >= 0 && */ retval < MAX_TX_TEXTURE_REQ )
     {
-        ego_tx_request::ctor_this( TxReqList.lst + ( TREQ_REF )retval, type );
+        ego_tx_request::ctor_this( TxReqList.lst + TREQ_REF( retval ), type );
     }
 
     return retval;
@@ -273,7 +273,7 @@ bool_t TxReqList_free_one( int ireq )
     ego_tx_request * preq;
 
     if ( ireq < 0 || ireq >= MAX_TX_TEXTURE_REQ ) return bfalse;
-    preq = TxReqList.lst + ( TREQ_REF )ireq;
+    preq = TxReqList.lst + TREQ_REF( ireq );
 
     // destruct the request
     ego_tx_request::dtor_this( preq );
@@ -285,7 +285,7 @@ bool_t TxReqList_free_one( int ireq )
         // that is an error
         for ( cnt = 0; cnt < TxReqList._free_count; cnt++ )
         {
-            if (( TREQ_REF )ireq == TxReqList.free_ref[cnt] ) return bfalse;
+            if ( TREQ_REF( ireq ) == TxReqList.free_ref[cnt] ) return bfalse;
         }
     }
 #endif
@@ -319,7 +319,7 @@ bool_t TxReqList_timestep()
     // grab the index the 1st ting
     index = TxReqList._used_count - 1;
     if ( index < 0 ) return bfalse;
-    preq = TxReqList.lst + ( TREQ_REF )index;
+    preq = TxReqList.lst + TREQ_REF( index );
 
     // ??lock the list??
 
@@ -368,7 +368,7 @@ ego_tx_request * ego_tx_request::load_TxTexture( const char *filename, int itex_
     // find a free request for TxTexture (type 1)
     index = TxReqList_get_free( 1 );
     if ( index == MAX_TX_TEXTURE_REQ ) return NULL;
-    preq = TxReqList.lst + ( TREQ_REF )index;
+    preq = TxReqList.lst + TREQ_REF( index );
 
     // fill in the data
     strncpy( preq->filename, filename, SDL_arraysize( preq->filename ) );
@@ -389,7 +389,7 @@ ego_tx_request * ego_tx_request::load_TxTitleImage( const char *filename )
     // find a free request for TxTitleImage (type 2)
     index = TxReqList_get_free( 2 );
     if ( index == MAX_TX_TEXTURE_REQ ) return NULL;
-    preq = TxReqList.lst + ( TREQ_REF )index;
+    preq = TxReqList.lst + TREQ_REF( index );
 
     // fill in the data
     strncpy( preq->filename, filename, SDL_arraysize( preq->filename ) );

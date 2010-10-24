@@ -29,7 +29,7 @@ extern "C"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-    struct s_ego_config_data;
+    struct s_config_data;
     struct s_oglx_texture_parameters;
 
 //--------------------------------------------------------------------------------------------
@@ -87,6 +87,7 @@ extern "C"
         bool_t antialiasing;
         bool_t dither;
         bool_t perspective;
+        bool_t mipmap;
         bool_t phongon;
         bool_t shaon;
         bool_t shasprite;
@@ -115,8 +116,8 @@ extern "C"
 /// handle access to the gfx singleton for c modules
     gfx_config_data_t * gfx_get_config();
 
-    bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pcfg );
-    bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_ego_config_data * pcfg );
+    bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_config_data * pcfg );
+    bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_config_data * pcfg );
     bool_t gfx_set_virtual_screen( gfx_config_data_t * pgfx );
 
 //--------------------------------------------------------------------------------------------

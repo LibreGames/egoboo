@@ -60,10 +60,10 @@ EVE_REF ego_enc::get_ieve( const ENC_REF & ienc )
 {
     ego_enc * penc;
 
-    if ( !DEFINED_ENC( ienc ) ) return ( EVE_REF )MAX_EVE;
+    if ( !DEFINED_ENC( ienc ) ) return EVE_REF( MAX_EVE );
     penc = EncObjList.get_pdata( ienc );
 
-    if ( !LOADED_EVE( penc->eve_ref ) ) return ( EVE_REF )MAX_EVE;
+    if ( !LOADED_EVE( penc->eve_ref ) ) return EVE_REF( MAX_EVE );
 
     return penc->eve_ref;
 }
@@ -86,10 +86,10 @@ PRO_REF  ego_enc::get_ipro( const ENC_REF & ienc )
 {
     ego_enc * penc;
 
-    if ( !DEFINED_ENC( ienc ) ) return ( PRO_REF )MAX_PROFILE;
+    if ( !DEFINED_ENC( ienc ) ) return PRO_REF( MAX_PROFILE );
     penc = EncObjList.get_pdata( ienc );
 
-    if ( !LOADED_PRO( penc->profile_ref ) ) return ( PRO_REF )MAX_PROFILE;
+    if ( !LOADED_PRO( penc->profile_ref ) ) return PRO_REF( MAX_PROFILE );
 
     return penc->profile_ref;
 }

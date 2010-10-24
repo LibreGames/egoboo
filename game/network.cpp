@@ -58,7 +58,7 @@ static void PlaStack_init();
 static void PlaStack_reinit();
 static void PlaStack_dtor();
 
-static void net_initialize( ego_config_data_t * pcfg );
+static void net_initialize( ego_config_data * pcfg );
 static void net_shutDown();
 //static void net_logf( const char *format, ... );
 
@@ -167,7 +167,7 @@ static bool_t _network_system_init = bfalse;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void network_system_begin( ego_config_data_t * pcfg )
+void network_system_begin( ego_config_data * pcfg )
 {
     if ( !_network_system_init )
     {
@@ -203,7 +203,7 @@ const ego_net_instance * network_get_instance()
     // if it is not initialized, give it one more try
     if ( !_gnet.initialized )
     {
-        net_initialize( &cfg );
+        net_initialize( &ego_cfg );
     }
 
     if ( _gnet.initialized )
@@ -1900,7 +1900,7 @@ void unbuffer_all_player_latches()
 }
 
 //--------------------------------------------------------------------------------------------
-void net_initialize( ego_config_data_t * pcfg )
+void net_initialize( ego_config_data * pcfg )
 {
     /// @details ZZ@> This starts up the network and logs whatever goes on
 
@@ -1919,7 +1919,7 @@ void net_initialize( ego_config_data_t * pcfg )
 
     sv_last_frame = ( Uint32 )~0;
 
-    if ( NULL != pcfg && pcfg->network_allowed )
+    if ( NULL != pcfg && pcfg->cfg_ptr()->network_allowed )
     {
         // initialize enet
         log_info( "net_initialize: Initializing enet... " );

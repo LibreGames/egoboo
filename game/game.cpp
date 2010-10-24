@@ -1761,7 +1761,7 @@ void do_damage_tiles()
         if ( 0 == pchr->damagetime )
         {
             int actual_damage;
-            actual_damage = damage_character( character, ATK_BEHIND, damagetile.amount, damagetile.type, ( TEAM_REF )TEAM_DAMAGE, CHR_REF( MAX_CHR ), DAMFX_NBLOC | DAMFX_ARMO, bfalse );
+            actual_damage = damage_character( character, ATK_BEHIND, damagetile.amount, damagetile.type, TEAM_REF( TEAM_DAMAGE ), CHR_REF( MAX_CHR ), DAMFX_NBLOC | DAMFX_ARMO, bfalse );
             pchr->damagetime = DAMAGETILETIME;
 
             if (( actual_damage > 0 ) && ( -1 != damagetile.parttype ) && 0 == ( update_wld & damagetile.partand ) )
@@ -1850,7 +1850,7 @@ void update_pits()
                         }
 
                         // Do some damage (same as damage tile)
-                        damage_character( ichr, ATK_BEHIND, damagetile.amount, damagetile.type, ( TEAM_REF )TEAM_DAMAGE, ego_chr::get_pai( ichr )->bumplast, DAMFX_NBLOC | DAMFX_ARMO, bfalse );
+                        damage_character( ichr, ATK_BEHIND, damagetile.amount, damagetile.type, TEAM_REF( TEAM_DAMAGE ), ego_chr::get_pai( ichr )->bumplast, DAMFX_NBLOC | DAMFX_ARMO, bfalse );
                     }
                 }
             }
@@ -1898,7 +1898,7 @@ void do_weather_spawn_particles()
             ego_player * tmp_ppla = NULL;
             ego_chr    * tmp_pchr = NULL;
 
-            weather_ipla = ( PLA_REF )((( weather_ipla ).get_value() + 1 ) % MAX_PLAYER );
+            weather_ipla = PLA_REF((( weather_ipla ).get_value() + 1 ) % MAX_PLAYER );
 
             tmp_ppla = PlaStack.lst + weather_ipla;
             if ( !tmp_ppla->valid ) continue;
@@ -2285,7 +2285,7 @@ void check_stats()
     // XP CHEAT
     if ( cfg.dev_mode && SDLKEYDOWN( SDLK_x ) )
     {
-        PLA_REF docheat = ( PLA_REF )MAX_PLAYER;
+        PLA_REF docheat = PLA_REF( MAX_PLAYER );
         if ( SDLKEYDOWN( SDLK_1 ) )  docheat = 0;
         else if ( SDLKEYDOWN( SDLK_2 ) )  docheat = 1;
         else if ( SDLKEYDOWN( SDLK_3 ) )  docheat = 2;
@@ -2312,7 +2312,7 @@ void check_stats()
     // LIFE CHEAT
     if ( cfg.dev_mode && SDLKEYDOWN( SDLK_z ) )
     {
-        PLA_REF docheat = ( PLA_REF )MAX_PLAYER;
+        PLA_REF docheat = PLA_REF( MAX_PLAYER );
 
         if ( SDLKEYDOWN( SDLK_1 ) )  docheat = 0;
         else if ( SDLKEYDOWN( SDLK_2 ) )  docheat = 1;
@@ -2907,7 +2907,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
 
     if ( NULL == psp_info || !psp_info->do_spawn || psp_info->slot < 0 ) return bfalse;
 
-    iprofile = ( PRO_REF )psp_info->slot;
+    iprofile = PRO_REF( psp_info->slot );
 
     // Spawn the character
     new_object = spawn_one_character( psp_info->pos, iprofile, TEAM_REF( psp_info->team ), psp_info->skin, psp_info->facing, psp_info->pname, CHR_REF( MAX_CHR ) );
@@ -2939,7 +2939,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             if ( 0 == local_numlpla )
             {
                 // the first player gets everything
-                player_added = add_player( new_object, ( PLA_REF )PlaStack.count, ( Uint32 )( ~0 ) );
+                player_added = add_player( new_object, PLA_REF( PlaStack.count ), ( Uint32 )( ~0 ) );
             }
             else
             {
@@ -2953,7 +2953,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
                     REMOVE_BITS( PlaStack.lst[ipla].device.bits, bits );
                 }
 
-                player_added = add_player( new_object, ( PLA_REF )PlaStack.count, bits );
+                player_added = add_player( new_object, PLA_REF( PlaStack.count ), bits );
             }
 
             if ( start_new_player && player_added )
@@ -2987,12 +2987,12 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             if ( -1 != local_index )
             {
                 // It's a local PlaStack.count
-                player_added = add_player( new_object, ( PLA_REF )PlaStack.count, local_import_control[local_index] );
+                player_added = add_player( new_object, PLA_REF( PlaStack.count ), local_import_control[local_index] );
             }
             else
             {
                 // It's a remote PlaStack.count
-                player_added = add_player( new_object, ( PLA_REF )PlaStack.count, INPUT_BITS_NONE );
+                player_added = add_player( new_object, PLA_REF( PlaStack.count ), INPUT_BITS_NONE );
             }
 
             // if for SOME REASON your player is not identified, give him
@@ -3049,13 +3049,13 @@ void activate_spawn_file_vfs()
             }
 
             // If nothing is in that slot, try to load it
-            if ( sp_info.slot >= 0 && !LOADED_PRO(( PRO_REF )sp_info.slot ) )
+            if ( sp_info.slot >= 0 && !LOADED_PRO( PRO_REF( sp_info.slot ) ) )
             {
                 activate_spawn_file_load_object( &sp_info );
             }
 
             // do we have a valid profile, yet?
-            if ( sp_info.slot >= 0 && !LOADED_PRO(( PRO_REF )sp_info.slot ) )
+            if ( sp_info.slot >= 0 && !LOADED_PRO( PRO_REF( sp_info.slot ) ) )
             {
                 // no, give a warning if it is useful
                 if ( save_slot > PMod->importamount * MAXIMPORTPERPLAYER )
@@ -3471,7 +3471,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
     game_setup_module( modname );
 
     // make sure the per-module configuration settings are correct
-    setup_synch( &cfg );
+    ego_config_data::synch( &ego_cfg );
 
     // initialize the game objects
     initialize_all_objects();
@@ -3485,7 +3485,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
     if ( cfg.dev_mode ) log_madused_vfs( "/debug/slotused.txt" );
 
     // initialize the network
-    network_system_begin( &cfg );
+    network_system_begin( &ego_cfg );
     net_sayHello();
 
     // start the module
@@ -4410,7 +4410,7 @@ void game_reset_players()
 
     // Reset the local data stuff
     game_reset_local_shared_stats();
-    local_stats.sense_enemy_team = ( TEAM_REF ) TEAM_MAX;
+    local_stats.sense_enemy_team = TEAM_REF( TEAM_MAX );
     local_stats.sense_enemy_ID   = IDSZ_NONE;
 
     net_reset_players();

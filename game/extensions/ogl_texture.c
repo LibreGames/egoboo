@@ -98,16 +98,23 @@ void ErrorImage_bind( GLenum target, GLuint id )
     // make sure the error texture exists
     if ( !ErrorImage_defined ) ErrorImage_create();
 
-    GL_DEBUG( glPushClientAttrib )( GL_CLIENT_PIXEL_STORE_BIT ) ;
+    // only do these commands if they will not cause an error
+    if ( !oglx_NewList_active )
     {
+        // force ogl to use a 1 byte alignment for the pixels
+        GL_DEBUG( glPushClientAttrib )( GL_CLIENT_PIXEL_STORE_BIT ) ;
         GL_DEBUG( glPixelStorei )( GL_UNPACK_ALIGNMENT, 1 );
-
-        GL_DEBUG( glBindTexture )( target, id );
 
         GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_WRAP_S, GL_REPEAT );
         GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_WRAP_T, GL_REPEAT );
         GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
         GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+    }
+
+    // do the normal thing
+    {
+        GL_DEBUG( glBindTexture )( target, id );
+
         if ( target == GL_TEXTURE_1D )
         {
             GL_DEBUG( glTexImage1D )( GL_TEXTURE_1D, 0, GL_RGBA, ErrorImage_width, 0, GL_RGBA, GL_UNSIGNED_BYTE, ErrorImage );
@@ -117,7 +124,12 @@ void ErrorImage_bind( GLenum target, GLuint id )
             GL_DEBUG( glTexImage2D )( GL_TEXTURE_2D, 0, GL_RGBA, ErrorImage_width, ErrorImage_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ErrorImage );
         }
     }
-    GL_DEBUG( glPopClientAttrib )();
+
+    if ( !oglx_NewList_active )
+    {
+        // restore the state
+        GL_DEBUG( glPopClientAttrib )();
+    }
 }
 
 //--------------------------------------------------------------------------------------------

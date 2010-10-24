@@ -29,6 +29,7 @@
 #include "egoboo_config.h"       /* configure for this platform */
 #include "egoboo_typedef.h"      /* Typedefs for various platforms */
 #include "egoboo_math.h"         /* vector and matrix math */
+#include "egoboo_setup.h"
 
 #include "file_common.h"
 
@@ -211,6 +212,8 @@ private:
     }
 };
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 struct ego_main_process : public ego_main_process_data, public ego_process
 {
     ego_main_process() { ctor_this( this ); }
@@ -242,7 +245,30 @@ struct ego_main_process : public ego_main_process_data, public ego_process
     virtual egoboo_rv do_finishing();
 };
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct ego_config_data
+{
+    ego_config_data( config_data_t * src ) : _src( src ) {};
+
+    config_data_t * cfg_ptr() { return _src; }
+
+    static bool_t synch( ego_config_data * pcfg );
+    static int    upload( ego_config_data * pcfg );
+
+private:
+    config_data_t * _src;
+};
+
+extern ego_config_data ego_cfg;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 extern ego_main_process * EProc;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
 void ego_init_SDL_base( void );
 

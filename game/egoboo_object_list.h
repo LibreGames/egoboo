@@ -36,15 +36,15 @@ struct t_ego_obj_lst
 
     int              loop_depth;
 
-    t_ego_obj_lst()  { loop_depth = 0; }
-    ~t_ego_obj_lst() { dtor_this(); }
+    t_ego_obj_lst( size_t len = _sz ) : _max_len( len ), loop_depth( 0 ) { init(); }
+    ~t_ego_obj_lst() { deinit(); }
 
-    static INLINE bool_t validate_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _sz; };
-
-    void             init();
-    void             dtor_this();
+    INLINE bool_t validate_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _max_len; };
 
     void             update_used();
+
+    void             deinit();
+    void             init();
 
     egoboo_rv        free_one( const reference & ref );
     void             free_all();
@@ -63,22 +63,49 @@ struct t_ego_obj_lst
     typename _ty::data_type *  get_pdata( const reference & ref );
     typename _ty::data_type *  get_valid_pdata( const reference & ref );
 
-    iterator   used_begin()                    { return used_map.iterator_begin(); }
-    bool_t     used_end( iterator & it )       { return used_map.iterator_end( it ); }
-    iterator & used_increment( iterator & it ) { return used_map.iterator_increment( it ); }
+    iterator   used_begin()                    ; // { return used_map.iterator_begin(); }
+    bool_t     used_end( iterator & it )       ; // { return used_map.iterator_end( it ); }
+    iterator & used_increment( iterator & it ) ; // { return used_map.iterator_increment( it ); }
 
-    signed free_count() { return signed( _sz ) - used_map.size(); }
-    signed used_count() { return used_map.size();               }
+    size_t get_size()   { return _max_len; }
+    signed free_count() { return signed( _max_len ) - used_map.size(); }
+    size_t used_count() { return used_map.size();                      }
 
     unsigned update_guid() { return used_map.get_id(); };
 
+    bool_t set_length( size_t len )
+    {
+        // technically, we might have to reinitialize the structure after this is changed?
+
+        size_t old_len = _max_len;
+        bool_t changed = bfalse;
+        bool_t shrunk  = bfalse;
+
+        _max_len = std::min( _sz, len );
+
+        changed = old_len != _max_len;
+        shrunk  = _max_len < old_len;
+
+        if ( changed )
+        {
+            reinit();
+        }
+
+        return changed;
+
+    }
+
 protected:
+
+    void             reinit();
+
     reference get_free();
 
     void      clear_free_list();
 
 private:
 
+    bool_t    free_raw( const reference & ref );
     reference activate_object( const reference & ref );
 
     /// the actual list of objects
@@ -95,6 +122,9 @@ private:
 
     /// a list of objects that need to be activated outside all loops
     std::stack< REF_T > activation_stack;
+
+    /// the current maximum size of the list
+    size_t _max_len;
 };
 
 //--------------------------------------------------------------------------------------------

@@ -224,7 +224,7 @@ bool_t render_one_prt_solid( const PRT_REF & iprt )
         GL_DEBUG( glEnable )( GL_ALPHA_TEST );        // GL_ENABLE_BIT
         GL_DEBUG( glAlphaFunc )( GL_EQUAL, 1 );       // GL_COLOR_BUFFER_BIT
 
-        oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_PARTICLE_TRANS ) ); // GL_CURRENT_BIT
+        oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_PARTICLE_TRANS ) ) ); // GL_CURRENT_BIT
 
         GL_DEBUG( glColor4f )( pinst->fintens, pinst->fintens, pinst->fintens, 1.0f );
 
@@ -374,7 +374,7 @@ void render_all_prt_trans( ego_camera * pcam, ego_prt_registry_entity reg[], siz
         for ( rcnt = (( signed )numparticle ) - 1; rcnt >= 0; rcnt-- )
         {
             // Get the index from the color slot
-            render_one_prt_trans(( PRT_REF )reg[rcnt].index );
+            render_one_prt_trans( PRT_REF( reg[rcnt].index ) );
         }
     }
     gfx_end_3d();
@@ -557,7 +557,7 @@ void render_all_prt_ref( ego_camera * pcam, ego_prt_registry_entity reg[], size_
             // Get the index from the color slot
             prt = reg[cnt].index;
 
-            render_one_prt_ref(( PRT_REF )reg[cnt].index );
+            render_one_prt_ref( PRT_REF( reg[cnt].index ) );
         }
     }
     gfx_end_3d();

@@ -557,8 +557,10 @@ void gfx_init_SDL_graphics()
     ogl_vparam.dither         = cfg.use_dither ? GL_TRUE : GL_FALSE;
     ogl_vparam.antialiasing   = GL_TRUE;
     ogl_vparam.perspective    = cfg.use_perspective ? GL_NICEST : GL_FASTEST;
+    ogl_vparam.mip_hint       = cfg.mipmap_quality ? GL_NICEST : GL_FASTEST;
     ogl_vparam.shading        = GL_SMOOTH;
-    ogl_vparam.userAnisotropy = 16.0f * MAX( 0, cfg.texturefilter_req - TX_TRILINEAR_2 );
+    ogl_vparam.userAnisotropy = MAX( 0.0f, cfg.texturefilter_req - TX_ANISOTROPIC ) + 1.0f;
+    ogl_vparam.userAnisotropy = CLIP( ogl_vparam.userAnisotropy, 1.0f, 16.0f );
 
     log_info( "Opening SDL Video Mode...\n" );
 
@@ -615,7 +617,7 @@ bool_t gfx_set_virtual_screen( gfx_config_data_t * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pcfg )
+bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_config_data * pcfg )
 {
     // call ego_gfx_config::init(), even if the config data is invalid
     if ( !gfx_config_data_init( pgfx ) ) return bfalse;
@@ -635,6 +637,7 @@ bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_ego_config_data * pc
     pgfx->dither       = pcfg->use_dither;
     pgfx->perspective  = pcfg->use_perspective;
     pgfx->phongon      = pcfg->use_phong;
+    pgfx->mipmap       = pcfg->mipmap_quality;
 
     pgfx->draw_background = pcfg->background_allowed && water.background_req;
     pgfx->draw_overlay    = pcfg->overlay_allowed && water.overlay_req;
@@ -685,21 +688,22 @@ bool_t ego_gfx_config::init( ego_gfx_config * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_ego_config_data * pcfg )
+bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_config_data * pcfg )
 {
     //// @details BB@> synch the texture parameters with the video mode
 
     if ( NULL == ptex || NULL == pcfg ) return GL_FALSE;
 
-    if ( ogl_caps.maxAnisotropy == 0.0f )
+    if ( !ogl_caps.anisotropic_supported || ogl_caps.maxAnisotropy < 1.0f )
     {
-        ptex->userAnisotropy = 0.0f;
+        ptex->userAnisotropy = 1.0f;
         ptex->texturefilter  = ( TX_FILTERS )MIN( pcfg->texturefilter_req, TX_TRILINEAR_2 );
     }
     else
     {
-        ptex->texturefilter  = ( TX_FILTERS )MIN( pcfg->texturefilter_req, TX_FILTER_COUNT );
-        ptex->userAnisotropy = ogl_caps.maxAnisotropy * MAX( 0, ( int )ptex->texturefilter - ( int )TX_TRILINEAR_2 );
+        ptex->userAnisotropy = MAX( 0.0f, pcfg->texturefilter_req - TX_ANISOTROPIC ) + 1.0f;
+        ptex->userAnisotropy = CLIP( ptex->userAnisotropy, 1.0f, ogl_caps.maxAnisotropy );
+        ptex->texturefilter  = ( TX_FILTERS )MIN( pcfg->texturefilter_req, TX_TRILINEAR_2 );
     }
 
     return GL_TRUE;
@@ -741,7 +745,7 @@ void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map
     // Now draw it
     if ( mx > 0 && my > 0 )
     {
-        oglx_texture_t * ptex = TxTexture_get_ptr(( TX_REF )TX_BLIP );
+        oglx_texture_t * ptex = TxTexture_get_ptr( TX_REF( TX_BLIP ) );
 
         gfx_enable_texturing();
         GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -865,7 +869,7 @@ void draw_map_texture( float x, float y )
     /// @details ZZ@> This function draws the map
     gfx_enable_texturing();
 
-    oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_MAP ) );
+    oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_MAP ) ) );
 
     GL_DEBUG( glBegin )( GL_QUADS );
     {
@@ -892,7 +896,7 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
     GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
     // Draw the tab (always colored)
-    oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_XP_BAR ) );
+    oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_XP_BAR ) ) );
 
     txrect.xmin   = 0.0f;
     txrect.xmax  = 32 / 128.0f;
@@ -923,7 +927,7 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
 
     for ( cnt = 0; cnt < ticks; cnt++ )
     {
-        oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_XP_BAR ) );
+        oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_XP_BAR ) ) );
         GL_DEBUG( glBegin )( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x,         y + height );
@@ -945,7 +949,7 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
 
     for ( /*nothing*/; cnt < NUMTICK; cnt++ )
     {
-        oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_XP_BAR ) );
+        oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_XP_BAR ) ) );
         GL_DEBUG( glBegin )( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x,         y + height );
@@ -974,7 +978,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
     // Draw the tab
-    oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_BARS ) );
+    oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
 
     txrect.xmin = tabrect[bartype].xmin / 128.0f;
     txrect.xmax = tabrect[bartype].xmax / 128.0f;
@@ -998,7 +1002,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     if ( ticks > maxticks ) ticks = maxticks;
 
     // use the bars texture
-    oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_BARS ) );
+    oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
 
     // Draw the full rows of ticks
     x += TABX;
@@ -1057,7 +1061,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         if ( noticks > ( NUMTICK - ticks ) ) noticks = ( NUMTICK - ticks );
 
         barrect[0].xmax = ( noticks << 3 ) + TABX;
-        oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_BARS ) );
+        oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
 
         txrect.xmin = barrect[0].xmin / 128.0f;
         txrect.xmax = barrect[0].xmax / 128.0f;
@@ -1110,7 +1114,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     if ( maxticks > 0 )
     {
         barrect[0].xmax = ( maxticks << 3 ) + TABX;
-        oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_BARS ) );
+        oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
 
         txrect.xmin   = barrect[0].xmin   / 128.0f;
         txrect.xmax  = barrect[0].xmax  / 128.0f;
@@ -1642,7 +1646,7 @@ int draw_debug( int y )
     if ( !cfg.dev_mode ) return y;
 
     // draw the character's speed
-    ipla = ( PLA_REF )0;
+    ipla = PLA_REF( 0 );
     if ( VALID_PLA( ipla ) )
     {
         ego_player * ppla = PlaStack.lst + ipla;
@@ -1657,9 +1661,9 @@ int draw_debug( int y )
     if ( SDLKEYDOWN( SDLK_F5 ) )
     {
         y = _draw_string_raw( 0, y, "!!!DEBUG MODE-5!!!" );
-        y = draw_debug_player(( PLA_REF )0, y );
-        y = draw_debug_player(( PLA_REF )1, y );
-        y = draw_debug_player(( PLA_REF )2, y );
+        y = draw_debug_player( PLA_REF( 0 ), y );
+        y = draw_debug_player( PLA_REF( 1 ), y );
+        y = draw_debug_player( PLA_REF( 2 ), y );
     }
 
     if ( SDLKEYDOWN( SDLK_F6 ) )
@@ -2984,7 +2988,7 @@ void render_world( ego_camera * pcam )
         if ( gfx.draw_background )
         {
             // Render the background
-            render_world_background(( TX_REF )TX_WATER_LOW ); // TX_WATER_LOW for waterlow.bmp
+            render_world_background( TX_REF( TX_WATER_LOW ) ); // TX_WATER_LOW for waterlow.bmp
         }
 
         render_scene( PMesh, pcam );
@@ -2992,7 +2996,7 @@ void render_world( ego_camera * pcam )
         if ( gfx.draw_overlay )
         {
             // Foreground overlay
-            render_world_overlay(( TX_REF )TX_WATER_TOP ); // TX_WATER_TOP is watertop.bmp
+            render_world_overlay( TX_REF( TX_WATER_TOP ) ); // TX_WATER_TOP is watertop.bmp
         }
 
         if ( pcam->motion_blur > 0 )
@@ -3058,6 +3062,8 @@ bool_t dump_screenshot()
         SDL_SaveBMP( sdl_scr.pscreen, szResolvedFilename );
         return bfalse;
     }
+
+    EGOBOO_ASSERT( !oglx_NewList_active );
 
     // we ARE using OpenGL
     GL_DEBUG( glPushClientAttrib )( GL_CLIENT_PIXEL_STORE_BIT ) ;
@@ -3575,7 +3581,7 @@ void BillboardList_free_all()
 //--------------------------------------------------------------------------------------------
 size_t BillboardList_get_free( Uint32 lifetime_secs )
 {
-    TX_REF             itex = ( TX_REF )INVALID_TX_TEXTURE;
+    TX_REF             itex = TX_REF( INVALID_TX_TEXTURE );
     size_t             ibb  = INVALID_BILLBOARD;
     ego_billboard_data * pbb  = NULL;
 
@@ -3583,7 +3589,7 @@ size_t BillboardList_get_free( Uint32 lifetime_secs )
 
     if ( 0 == lifetime_secs ) return INVALID_BILLBOARD;
 
-    itex = TxTexture_get_free(( TX_REF )INVALID_TX_TEXTURE );
+    itex = TxTexture_get_free( TX_REF( INVALID_TX_TEXTURE ) );
     if ( INVALID_TX_TEXTURE == itex ) return INVALID_BILLBOARD;
 
     // grab the top index
@@ -3594,7 +3600,7 @@ size_t BillboardList_get_free( Uint32 lifetime_secs )
 
     if ( VALID_BILLBOARD_RANGE( ibb ) )
     {
-        pbb = BillboardList.lst + ( BBOARD_REF )ibb;
+        pbb = BillboardList.lst + BBOARD_REF( ibb );
 
         ego_billboard_data::init( pbb );
 
@@ -3620,7 +3626,7 @@ bool_t BillboardList_free_one( size_t ibb )
     ego_billboard_data * pbb;
 
     if ( !VALID_BILLBOARD_RANGE( ibb ) ) return bfalse;
-    pbb = BillboardList.lst + ( BBOARD_REF )ibb;
+    pbb = BillboardList.lst + BBOARD_REF( ibb );
 
     ego_billboard_data::dealloc( pbb );
 
@@ -4682,35 +4688,35 @@ bool_t load_all_global_icons()
 
     // Now load every icon
     fname = "mp_data/nullicon";
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_NULL, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, TX_REF( ICON_NULL ), INVALID_KEY ) )
     {
         log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 
     fname = "mp_data/keybicon";
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_KEYB, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, TX_REF( ICON_KEYB ), INVALID_KEY ) )
     {
         log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 
     fname = "mp_data/mousicon";
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_MOUS, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, TX_REF( ICON_MOUS ), INVALID_KEY ) )
     {
         log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 
     fname = "mp_data/joyaicon";
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_JOYA, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, TX_REF( ICON_JOYA ), INVALID_KEY ) )
     {
         log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
     }
 
     fname = "mp_data/joybicon";
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, ( TX_REF )ICON_JOYB, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( fname, TX_REF( ICON_JOYB ), INVALID_KEY ) )
     {
         log_warning( "Could not load icon file \"%s\"", fname );
         result = bfalse;
@@ -4731,24 +4737,24 @@ void load_basic_textures( /* const char *modname */ )
     /// @details ZZ@> This function loads the standard textures for a module
 
     // Particle sprites
-    TxTexture_load_one_vfs( "mp_data/particle_trans", ( TX_REF )TX_PARTICLE_TRANS, TRANSCOLOR );
-    set_prt_texture_params(( TX_REF )TX_PARTICLE_TRANS );
+    TxTexture_load_one_vfs( "mp_data/particle_trans", TX_REF( TX_PARTICLE_TRANS ), TRANSCOLOR );
+    set_prt_texture_params( TX_REF( TX_PARTICLE_TRANS ) );
 
-    TxTexture_load_one_vfs( "mp_data/particle_light", ( TX_REF )TX_PARTICLE_LIGHT, INVALID_KEY );
-    set_prt_texture_params(( TX_REF )TX_PARTICLE_LIGHT );
+    TxTexture_load_one_vfs( "mp_data/particle_light", TX_REF( TX_PARTICLE_LIGHT ), INVALID_KEY );
+    set_prt_texture_params( TX_REF( TX_PARTICLE_LIGHT ) );
 
     // Module background tiles
-    TxTexture_load_one_vfs( "mp_data/tile0", ( TX_REF )TX_TILE_0, TRANSCOLOR );
-    TxTexture_load_one_vfs( "mp_data/tile1", ( TX_REF )TX_TILE_1, TRANSCOLOR );
-    TxTexture_load_one_vfs( "mp_data/tile2", ( TX_REF )TX_TILE_2, TRANSCOLOR );
-    TxTexture_load_one_vfs( "mp_data/tile3", ( TX_REF )TX_TILE_3, TRANSCOLOR );
+    TxTexture_load_one_vfs( "mp_data/tile0", TX_REF( TX_TILE_0 ), TRANSCOLOR );
+    TxTexture_load_one_vfs( "mp_data/tile1", TX_REF( TX_TILE_1 ), TRANSCOLOR );
+    TxTexture_load_one_vfs( "mp_data/tile2", TX_REF( TX_TILE_2 ), TRANSCOLOR );
+    TxTexture_load_one_vfs( "mp_data/tile3", TX_REF( TX_TILE_3 ), TRANSCOLOR );
 
     // Water textures
-    TxTexture_load_one_vfs( "mp_data/watertop", ( TX_REF )TX_WATER_TOP, TRANSCOLOR );
-    TxTexture_load_one_vfs( "mp_data/waterlow", ( TX_REF )TX_WATER_LOW, TRANSCOLOR );
+    TxTexture_load_one_vfs( "mp_data/watertop", TX_REF( TX_WATER_TOP ), TRANSCOLOR );
+    TxTexture_load_one_vfs( "mp_data/waterlow", TX_REF( TX_WATER_LOW ), TRANSCOLOR );
 
     // Texture 7 is the Phong map
-    TxTexture_load_one_vfs( "mp_data/Phong", ( TX_REF )TX_PHONG, TRANSCOLOR );
+    TxTexture_load_one_vfs( "mp_data/Phong", TX_REF( TX_PHONG ), TRANSCOLOR );
 
     PROFILE_RESET( render_scene_init );
     PROFILE_RESET( render_scene_mesh );
@@ -4783,13 +4789,13 @@ void load_bars()
     const char * pname;
 
     pname = "mp_data/bars";
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( pname, ( TX_REF )TX_BARS, TRANSCOLOR ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( pname, TX_REF( TX_BARS ), TRANSCOLOR ) )
     {
         log_warning( "load_bars() - Cannot load file! (\"%s\")\n", pname );
     }
 
     pname = "mp_data/xpbar";
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( pname, ( TX_REF )TX_XP_BAR, TRANSCOLOR ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( pname, TX_REF( TX_XP_BAR ), TRANSCOLOR ) )
     {
         log_warning( "load_bars() - Cannot load file! (\"%s\")\n", pname );
     }
@@ -4810,7 +4816,7 @@ void load_map()
 
     // Load the images
     szMap = "mp_data/plan";
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( szMap, ( TX_REF )TX_MAP, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( szMap, TX_REF( TX_MAP ), INVALID_KEY ) )
     {
         log_debug( "load_map() - Cannot load file! (\"%s\")\n", szMap );
     }
@@ -4827,7 +4833,7 @@ bool_t load_cursor()
 
     bool_t retval = btrue;
 
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/cursor", ( TX_REF )TX_CURSOR, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/cursor", TX_REF( TX_CURSOR ), INVALID_KEY ) )
     {
         log_warning( "Blip bitmap not loaded! (\"mp_data/cursor\")\n" );
         retval = bfalse;
@@ -4840,7 +4846,7 @@ bool_t load_cursor()
 bool_t load_blips()
 {
     /// ZZ@> This function loads the blip bitmaps
-    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/blip", ( TX_REF )TX_BLIP, INVALID_KEY ) )
+    if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/blip", TX_REF( TX_BLIP ), INVALID_KEY ) )
     {
         log_warning( "Blip bitmap not loaded! (\"mp_data/blip\")\n" );
         return bfalse;
@@ -4870,19 +4876,20 @@ void load_graphics()
     // Enable prespective correction?
     if ( gfx.perspective ) quality = GL_NICEST;
     else quality = GL_FASTEST;
-    GL_DEBUG( glHint )( GL_PERSPECTIVE_CORRECTION_HINT, quality );
+    GL_DEBUG( glHint )( GL_PERSPECTIVE_CORRECTION_HINT, gfx.perspective ? GL_NICEST : GL_FASTEST );
 
     // Enable dithering?
     if ( gfx.dither )
     {
-        GL_DEBUG( glHint )( GL_GENERATE_MIPMAP_HINT, GL_NICEST );
         GL_DEBUG( glEnable )( GL_DITHER );
     }
     else
     {
-        GL_DEBUG( glHint )( GL_GENERATE_MIPMAP_HINT, GL_FASTEST );
         GL_DEBUG( glDisable )( GL_DITHER );
     }
+
+    // mipmap quality
+    GL_DEBUG( glHint )( GL_GENERATE_MIPMAP_HINT, gfx.mipmap ? GL_NICEST : GL_FASTEST );
 
     // Enable Gouraud shading? (Important!)
     GL_DEBUG( glShadeModel )( gfx.shading );
@@ -4964,7 +4971,7 @@ void gfx_begin_text()
 {
     gfx_enable_texturing();    // Enable texture mapping
 
-    oglx_texture_Bind( TxTexture_get_ptr(( TX_REF )TX_FONT ) );
+    oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_FONT ) ) );
 
     GL_DEBUG( glEnable )( GL_ALPHA_TEST );
     GL_DEBUG( glAlphaFunc )( GL_GREATER, 0 );

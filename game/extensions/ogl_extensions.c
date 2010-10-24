@@ -240,6 +240,7 @@ GLboolean oglx_video_parameters_default( oglx_video_parameters_t * pvid )
     pvid->perspective     = GL_FASTEST;          ///< current correction hint
     pvid->dither          = GL_FALSE;            ///< current dithering flag
     pvid->shading         = GL_SMOOTH;           ///< current shading type
+    pvid->mip_hint        = GL_FASTEST;
     pvid->userAnisotropy  = 0.0f;
 
     return GL_TRUE;

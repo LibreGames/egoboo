@@ -79,6 +79,8 @@ static bool_t _sdl_initialized_base     = bfalse;
 
 static void * _top_con = NULL;
 
+ego_config_data ego_cfg( &cfg );
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 ego_main_process     * EProc   = &_eproc;
@@ -114,13 +116,13 @@ egoboo_rv ego_main_process::do_beginning()
     setup_read_vfs();
 
     // download the "setup.txt" values into the cfg struct
-    setup_download( &cfg );
+    setup_download( ego_cfg.cfg_ptr() );
 
     // do basic system initialization
     ego_init_SDL();
     gfx_system_begin();
     console_begin();
-    network_system_begin( &cfg );
+    network_system_begin( &ego_cfg );
 
     log_info( "Initializing SDL_Image version %d.%d.%d... ", SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION, SDL_IMAGE_PATCHLEVEL );
     GLSetup_SupportedFormats();
@@ -136,7 +138,7 @@ egoboo_rv ego_main_process::do_beginning()
     // synchronize the config values with the various game subsystems
     // do this after the ego_init_SDL() and ogl_init() in case the config values are clamped
     // to valid values
-    setup_synch( &cfg );
+    ego_config_data::synch( &ego_cfg );
 
     // initialize the sound system
     sound_initialize();
@@ -350,7 +352,7 @@ egoboo_rv ego_main_process::do_running()
 
                         if ( team_hates_team( pchr->baseteam, ptarget->team ) )
                         {
-                            kill_character( itarget, ( CHR_REF )511, bfalse );
+                            kill_character( itarget, CHR_REF( MAX_CHR ), bfalse );
                             break;
                         }
                     }
@@ -582,10 +584,10 @@ void memory_cleanUp( void )
     _quit_game( EProc );
 
     // synchronize the config values with the various game subsystems
-    setup_synch( &cfg );
+    ego_config_data::synch( &ego_cfg );
 
     // quit the setup system, making sure that the setup file is written
-    setup_upload( &cfg );
+    ego_config_data::upload( &ego_cfg );
     setup_write();
     setup_quit();
 
@@ -827,3 +829,27 @@ Uint32 egoboo_get_ticks( void )
     return ticks;
 }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t ego_config_data::synch( ego_config_data * pcfg )
+{
+    bool_t rv;
+
+    if ( NULL == pcfg ) return bfalse;
+
+    // do the normal thing
+    rv = setup_synch( pcfg->_src );
+
+    // do some things possibly required by the c++ side of the program
+    PrtObjList.set_length( maxparticles );
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
+int ego_config_data::upload( ego_config_data * pcfg )
+{
+    config_data_t * psrc = ( NULL == pcfg ) ? NULL : pcfg->_src;
+
+    return setup_upload( psrc );
+}

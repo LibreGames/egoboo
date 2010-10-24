@@ -36,7 +36,7 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t           meshnotexture   = bfalse;
-TX_REF           meshlasttexture = ( TX_REF )INVALID_TX_TEXTURE;
+TX_REF           meshlasttexture = TX_REF( INVALID_TX_TEXTURE );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -139,6 +139,8 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
     type     = ptile->type;                         // Fan type ( index to points in itile )
     vertices = tile_dict[type].numvertices;      // Number of vertices
     commands = tile_dict[type].command_count;    // Number of commands
+
+    EGOBOO_ASSERT( !oglx_NewList_active );
 
     GL_DEBUG( glPushClientAttrib )( GL_CLIENT_VERTEX_ARRAY_BIT );
     {

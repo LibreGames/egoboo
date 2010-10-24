@@ -534,9 +534,9 @@ extern "C"
 
     /// a wrapper function for automatically debugging OpenGL function calls
     /// Usage: GL_DEBUG( gl* )( param1, param2, ... )
-    /// @warning Wrapping glEnd() in this manner will generat a multitude of odd errors.
+    /// @warning Wrapping glEnd() in this manner will generate a multitude of odd errors.
 #    define GL_DEBUG(XX) \
-    (handle_gl_error(), \
+    (glFlush(),handle_gl_error(), \
      next_cmd = #XX, \
      next_line = __LINE__, \
      next_file = __FILE__, \
@@ -546,19 +546,18 @@ extern "C"
     /// this avoids the errors mentioned with the definition of GL_DEBUG()
 #    define GL_DEBUG_END() \
     handle_gl_error(); \
-    next_cmd = "UNKNOWN"; \
-    next_line = -1; \
-    next_file = "UNKNOWN"; \
-    glEnd(); \
+    next_cmd = "glEnd"; \
+    next_line = __LINE__; \
+    next_file = __FILE__; \
+    glEnd(); glFlush(); \
     glGetError();
 
 #    define GL_DEBUG_END_LIST() \
     handle_gl_error(); \
-    next_cmd = "UNKNOWN"; \
-    next_line = -1; \
-    next_file = "UNKNOWN"; \
-    glEndList(); \
-    glGetError();
+    next_cmd = "glEndList"; \
+    next_line = __LINE__; \
+    next_file = __FILE__; \
+    glEndList(); glFlush();
 
 #else
 

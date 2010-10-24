@@ -338,7 +338,7 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
         int text_w, text_h, height;
 
         // make the texture a "null" texture
-        GL_DEBUG( glBindTexture )( GL_TEXTURE_2D, ( GLuint )( ~0 ) );
+        GL_DEBUG( glBindTexture )( GL_TEXTURE_2D, INVALID_GL_ID );
 
         // clip the viewport
         GL_DEBUG( glEnable )( GL_SCISSOR_TEST );

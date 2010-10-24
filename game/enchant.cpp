@@ -55,7 +55,7 @@ void enchant_system_begin()
 void enchant_system_end()
 {
     release_all_eve();
-    EncObjList.dtor_this();
+    EncObjList.deinit();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -97,16 +97,16 @@ ego_enc_data * ego_enc_data::init( ego_enc_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
-    pdata->profile_ref      = ( PRO_REF )MAX_PROFILE;
-    pdata->eve_ref          = ( EVE_REF )MAX_EVE;
+    pdata->profile_ref      = PRO_REF( MAX_PROFILE );
+    pdata->eve_ref          = EVE_REF( MAX_EVE );
 
     pdata->target_ref       = CHR_REF( MAX_CHR );
     pdata->owner_ref        = CHR_REF( MAX_CHR );
     pdata->spawner_ref      = CHR_REF( MAX_CHR );
-    pdata->spawnermodel_ref = ( PRO_REF )MAX_PROFILE;
+    pdata->spawnermodel_ref = PRO_REF( MAX_PROFILE );
     pdata->overlay_ref      = CHR_REF( MAX_CHR );
 
-    pdata->nextenchant_ref  = ( ENC_REF )MAX_ENC;
+    pdata->nextenchant_ref  = ENC_REF( MAX_ENC );
 
     return pdata;
 }
@@ -203,7 +203,7 @@ bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     {
         if ( ienc == pspawner->undoenchant )
         {
-            pspawner->undoenchant = ( ENC_REF ) MAX_ENC;
+            pspawner->undoenchant = ENC_REF( MAX_ENC );
         }
     }
 
@@ -315,7 +315,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         // Make the spawner unable to undo the enchantment
         if ( pspawner->undoenchant == ienc )
         {
-            pspawner->undoenchant = ( ENC_REF ) MAX_ENC;
+            pspawner->undoenchant = ENC_REF( MAX_ENC );
         }
     }
 
@@ -435,12 +435,12 @@ ENC_REF ego_enc::value_filled( const ENC_REF &  ienc, int value_idx )
     ENC_REF currenchant;
     ego_chr * pchr;
 
-    if ( value_idx < 0 || value_idx >= MAX_ENCHANT_SET ) return ( ENC_REF )MAX_ENC;
+    if ( value_idx < 0 || value_idx >= MAX_ENCHANT_SET ) return ENC_REF( MAX_ENC );
 
-    if ( !INGAME_ENC( ienc ) ) return ( ENC_REF )MAX_ENC;
+    if ( !INGAME_ENC( ienc ) ) return ENC_REF( MAX_ENC );
 
     character = EncObjList.get_data( ienc ).target_ref;
-    if ( !INGAME_CHR( character ) ) return ( ENC_REF )MAX_ENC;
+    if ( !INGAME_CHR( character ) ) return ENC_REF( MAX_ENC );
     pchr = ChrObjList.get_pdata( character );
 
     // cleanup the enchant list
@@ -889,7 +889,7 @@ ego_enc * ego_enc::do_init( ego_enc * penc )
     if ( !DEFINED_CHR( pdata->spawner_ref ) )
     {
         penc->spawner_ref      = CHR_REF( MAX_CHR );
-        penc->spawnermodel_ref = ( PRO_REF )MAX_PROFILE;
+        penc->spawnermodel_ref = PRO_REF( MAX_PROFILE );
     }
     else
     {
@@ -1494,12 +1494,12 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     if ( !INGAME_CHR( loc_target ) )
     {
         log_warning( "spawn_one_enchant() - failed because the target does not exist.\n" );
-        return ( ENC_REF )MAX_ENC;
+        return ENC_REF( MAX_ENC );
     }
     ptarget = ChrObjList.get_pdata( loc_target );
 
     // you should be able to enchant dead stuff to raise the dead...
-    // if( !ptarget->alive ) return (ENC_REF)MAX_ENC;
+    // if( !ptarget->alive ) return ENC_REF(MAX_ENC);
 
     if ( LOADED_PRO( modeloptional ) )
     {
@@ -1514,7 +1514,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
         if ( !LOADED_PRO( loc_profile ) )
         {
             log_warning( "spawn_one_enchant() - no valid profile for the spawning character \"%s\"(%d).\n", ChrObjList.get_obj( spawner ).base_name, ( spawner ).get_value() );
-            return ( ENC_REF )MAX_ENC;
+            return ENC_REF( MAX_ENC );
         }
     }
 
@@ -1523,7 +1523,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     {
         log_warning( "spawn_one_enchant() - the object \"%s\"(%d) does not have an enchant profile.\n", ProList.lst[loc_profile].name, ( loc_profile ).get_value() );
 
-        return ( ENC_REF )MAX_ENC;
+        return ENC_REF( MAX_ENC );
     }
     peve = EveStack.lst + eve_ref;
 
@@ -1534,7 +1534,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     if ( !peve->stayifnoowner && ( !INGAME_CHR( owner ) || !ChrObjList.get_data( owner ).alive ) )
     {
         log_warning( "spawn_one_enchant() - failed because the required enchant owner cannot be found.\n" );
-        return ( ENC_REF )MAX_ENC;
+        return ENC_REF( MAX_ENC );
     }
 
     // do retargeting, if necessary
@@ -1563,7 +1563,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     if ( !INGAME_CHR( loc_target ) || !ptarget->alive )
     {
         log_warning( "spawn_one_enchant() - failed because the target is not alive.\n" );
-        return ( ENC_REF )MAX_ENC;
+        return ENC_REF( MAX_ENC );
     }
     ptarget = ChrObjList.get_pdata( loc_target );
 
@@ -1574,7 +1574,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
              HAS_SOME_BITS( ptarget->damagemodifier[peve->dontdamagetype], DAMAGECHARGE ) )
         {
             log_warning( "spawn_one_enchant() - failed because the target is immune to the enchant.\n" );
-            return ( ENC_REF )MAX_ENC;
+            return ENC_REF( MAX_ENC );
         }
     }
 
@@ -1584,7 +1584,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
         if ( ptarget->damagetargettype != peve->onlydamagetype )
         {
             log_warning( "spawn_one_enchant() - failed because the target not have the right damagetargettype.\n" );
-            return ( ENC_REF )MAX_ENC;
+            return ENC_REF( MAX_ENC );
         }
     }
 
@@ -1594,7 +1594,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     if ( !VALID_ENC( ego_enc_ref ) )
     {
         log_warning( "spawn_one_enchant() - could not allocate an enchant.\n" );
-        return ( ENC_REF )MAX_ENC;
+        return ENC_REF( MAX_ENC );
     }
     pobj = EncObjList.get_ptr( ego_enc_ref );
     penc = EncObjList.get_pdata( ego_enc_ref );
@@ -1622,7 +1622,7 @@ EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF & ie
 {
     /// @details ZZ@> This function loads an enchantment profile into the EveStack
 
-    EVE_REF retval = ( EVE_REF )MAX_EVE;
+    EVE_REF retval = EVE_REF( MAX_EVE );
 
     if ( VALID_EVE_RANGE( ieve ) )
     {
@@ -1942,13 +1942,13 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     ENC_REF first_valid_enchant;
     ENC_REF ego_enc_now, ego_enc_next;
 
-    if ( !VALID_ENC_REF( ienc ) ) return ( ENC_REF )MAX_ENC;
+    if ( !VALID_ENC_REF( ienc ) ) return ENC_REF( MAX_ENC );
 
     // clear the list
     memset( ego_enc_used, 0, sizeof( ego_enc_used ) );
 
     // scan the list of enchants
-    ego_enc_next            = ( ENC_REF ) MAX_ENC;
+    ego_enc_next            = ENC_REF( MAX_ENC );
     first_valid_enchant = ego_enc_now = ienc;
     for ( cnt = 0; ego_enc_now < MAX_ENC && ego_enc_next != ego_enc_now && cnt < MAX_ENC; cnt++ )
     {
@@ -1994,7 +1994,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     if ( ego_enc_now == ego_enc_next || cnt >= MAX_ENC )
     {
         // break the loop. this will only happen if the list is messed up.
-        EncObjList.get_data( ego_enc_now ).nextenchant_ref = ( ENC_REF ) MAX_ENC;
+        EncObjList.get_data( ego_enc_now ).nextenchant_ref = ENC_REF( MAX_ENC );
 
         log_warning( "cleanup_enchant_list() - The enchantment list is corrupt!\n" );
     }
@@ -2126,7 +2126,7 @@ ego_obj_enc * ego_obj_enc::dtor_this( ego_obj_enc * pobj )
 {
     // destruct this struct, ONLY
 
-    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_KILLED_PBASE( pobj ) ) return pobj;
+    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
 
     pobj = ego_obj_enc::dealloc( pobj );
 

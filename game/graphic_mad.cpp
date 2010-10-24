@@ -85,7 +85,7 @@ bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint3
     ptex = NULL;
     if ( 0 != ( bits & CHR_PHONG ) )
     {
-        ptex = TxTexture_get_ptr(( TX_REF )TX_PHONG );
+        ptex = TxTexture_get_ptr( TX_REF( TX_PHONG ) );
     }
 
     if ( NULL == ptex )

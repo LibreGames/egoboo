@@ -115,12 +115,13 @@ extern "C"
 //--------------------------------------------------------------------------------------------
     struct s_oglx_video_parameters
     {
+        GLboolean dither;                  ///< a low color res helper
         GLboolean antialiasing;            ///< current antialiasing value
         GLboolean multisample;             ///< whether multisampling is being supported through GL_MULTISAMPLE
         GLboolean multisample_arb;         ///< whether multisampling is being supported through GL_MULTISAMPLE_ARB
-        GLenum    perspective;             ///< current correction hint
-        GLboolean dither;                  ///< current dithering flag
-        GLenum    shading;                 ///< current shading type
+        GLenum    perspective;             ///< the value for the GL_PERSPECTIVE_CORRECTION_HINT
+        GLenum    mip_hint;                ///< the value for the GL_GENERATE_MIPMAP_HINT
+        GLenum    shading;                 ///< current shading type (GL_SMOOTH, or GL_FLAT)
         GLfloat   userAnisotropy;          ///< current value of the anisotropic filtering
     };
     typedef struct s_oglx_video_parameters oglx_video_parameters_t;

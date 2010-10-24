@@ -35,19 +35,19 @@
 #define VALID_ENC_REF( IENC )     EncObjList.validate_ref(IENC)
 #define ALLOCATED_ENC( IENC )   ( ALLOCATED_PBASE(EncObjList.get_valid_ptr(IENC)) )
 #define VALID_ENC( IENC )       ( VALID_PBASE(EncObjList.get_valid_ptr(IENC)) )
-#define DEFINED_ENC( IENC )     ( VALID_PBASE(EncObjList.get_valid_ptr(IENC) ) && !FLAG_KILLED_PBASE(EncObjList.get_valid_ptr(IENC)) )
+#define DEFINED_ENC( IENC )     ( VALID_PBASE(EncObjList.get_valid_ptr(IENC) ) && !FLAG_TERMINATED_PBASE(EncObjList.get_valid_ptr(IENC)) )
 #define ACTIVE_ENC( IENC )      ( ACTIVE_PBASE(EncObjList.get_valid_ptr(IENC)) )
 #define WAITING_ENC( IENC )     ( WAITING_PBASE(EncObjList.get_valid_ptr(IENC)) )
 #define TERMINATED_ENC( IENC )  ( TERMINATED_PBASE(EncObjList.get_valid_ptr(IENC)) )
 
-#define GET_IDX_PENC( PENC )    ((size_t)GET_IDX_POBJ( PDATA_CGET_PBASE( ego_enc, PENC), MAX_ENC ))
-#define GET_REF_PENC( PENC )    ((ENC_REF)GET_REF_POBJ( PDATA_CGET_PBASE( ego_enc, PENC), MAX_ENC ))
+#define GET_IDX_PENC( PENC )    size_t(GET_IDX_POBJ( PDATA_CGET_PBASE( ego_enc, PENC), MAX_ENC ))
+#define GET_REF_PENC( PENC )    ENC_REF(GET_REF_POBJ( PDATA_CGET_PBASE( ego_enc, PENC), MAX_ENC ))
 
 #define VALID_ENC_PTR( PENC )   ( (NULL != (PENC)) && VALID_ENC_REF( GET_REF_PENC( PENC ) ) )
 
 #define ALLOCATED_PENC( PENC )   ( ALLOCATED_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
 #define VALID_PENC( PENC )       ( VALID_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
-#define DEFINED_PENC( PENC )     ( VALID_PBASE(PDATA_CGET_PBASE( ego_enc, PENC ) ) && !FLAG_KILLED_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
+#define DEFINED_PENC( PENC )     ( VALID_PBASE(PDATA_CGET_PBASE( ego_enc, PENC ) ) && !FLAG_TERMINATED_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
 #define ACTIVE_PENC( PENC )      ( ACTIVE_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
 #define WAITING_PENC( PENC )     ( WAITING_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
 #define TERMINATED_PENC( PENC )  ( TERMINATED_PBASE(PDATA_CGET_PBASE( ego_enc, PENC )) )
@@ -63,18 +63,18 @@
 
 /// loops through EncObjList for all "defined" enchants, creating a reference, and a pointer
 #define ENC_BEGIN_LOOP_DEFINED(IT, PENC) \
-    OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_enc, EncObjList, IT, internal__##PENC##_pobj) \
+    /*printf( "++++ DEFINED EncObjList.loop_depth == %d, %s\n", EncObjList.loop_depth, __FUNCTION__ );*/ OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_enc, EncObjList, IT, internal__##PENC##_pobj) \
     ego_enc * PENC = (ego_enc *)internal__##PENC##_pobj->cget_pdata(); if( NULL == PENC ) continue; \
     ENC_REF IT(internal__##IT->first);
 
 /// loops through EncObjList for all "active" enchants, creating a reference, and a pointer
 #define ENC_BEGIN_LOOP_ACTIVE(IT, PENC) \
-    OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_enc, EncObjList, IT, internal__##PENC##_pobj) \
+    /*printf( "++++ ACTIVE EncObjList.loop_depth == %d, %s\n", EncObjList.loop_depth, __FUNCTION__ );*/ OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_enc, EncObjList, IT, internal__##PENC##_pobj) \
     ego_enc * PENC = (ego_enc *)internal__##PENC##_pobj->cget_pdata(); if( NULL == PENC ) continue; \
     ENC_REF IT(internal__##IT->first);
 
 /// the termination for each EncObjList loop
-#define ENC_END_LOOP()                   OBJ_LIST_END_LOOP(EncObjList)
+#define ENC_END_LOOP()                   OBJ_LIST_END_LOOP(EncObjList) /*printf( "---- EncObjList.loop_depth == %d\n", EncObjList.loop_depth );*/
 
 //--------------------------------------------------------------------------------------------
 // Macros to determine whether the enchant is in the game or not.

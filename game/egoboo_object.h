@@ -345,7 +345,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 /// Is the object flagged as valid?
 #define FLAG_VALID_PBASE( PBASE ) ( ego_obj::get_valid(PBASE) )
 /// Is the object valid?
-#define VALID_PBASE( PBASE )       ( (NULL != (PBASE))  && FLAG_ALLOCATED_PBASE( PBASE ) && FLAG_VALID_PBASE(PBASE) )
+#define VALID_PBASE( PBASE )       ( (NULL != (PBASE)) && FLAG_VALID_PBASE(PBASE) && FLAG_ALLOCATED_PBASE( PBASE ) )
 
 /// Is the object flagged as constructed?
 #define FLAG_CONSTRUCTED_PBASE( PBASE ) ( ego_obj::get_constructed(PBASE) )
@@ -357,15 +357,15 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 /// Is the object initialized?
 #define INITIALIZED_PBASE( PBASE )      ( CONSTRUCTED_PBASE( PBASE ) && FLAG_INITIALIZED_PBASE(PBASE) )
 
-/// Is the object flagged as killed?
-#define FLAG_KILLED_PBASE( PBASE ) ( ego_obj::get_killed(PBASE) )
+/// Has the object been marked as terminated? (alias for TERMINATED_PBASE)
+#define FLAG_TERMINATED_PBASE( PBASE ) ( ego_obj::get_killed(PBASE) )
 /// Is the object killed?
-#define KILLED_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && FLAG_KILLED_PBASE(PBASE) )
+#define TERMINATED_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && FLAG_TERMINATED_PBASE(PBASE) )
 
 /// Is the object flagged as requesting termination?
 #define FLAG_ON_PBASE( PBASE )  ( ego_obj::get_on(PBASE) )
 /// Is the object on?
-#define ON_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && FLAG_ON_PBASE(PBASE) && !FLAG_KILLED_PBASE( PBASE ) )
+#define ON_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && FLAG_ON_PBASE(PBASE) && !FLAG_TERMINATED_PBASE( PBASE ) )
 
 /// Is the object flagged as kill_me?
 #define FLAG_REQ_TERMINATION_PBASE( PBASE ) ( ego_obj::get_kill(PBASE)  )
@@ -385,15 +385,15 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 /// Is the object in the active state?
 #define STATE_PROCESSING_PBASE( PBASE ) ( ego_obj_processing == ego_obj::get_action(PBASE) )
 /// Is the object active?
-#define ACTIVE_PBASE( PBASE )           ( INITIALIZED_PBASE( PBASE ) && STATE_PROCESSING_PBASE(PBASE) && FLAG_ON_PBASE(PBASE) && !FLAG_KILLED_PBASE( PBASE ) )
+#define ACTIVE_PBASE( PBASE )           ( INITIALIZED_PBASE( PBASE ) && STATE_PROCESSING_PBASE(PBASE) && FLAG_ON_PBASE(PBASE) && !FLAG_TERMINATED_PBASE( PBASE ) )
 
 /// Is the object in the deinitializing state?
-#define STATE_DEINITIALIZING_PBASE( PBASE ) ( (ego_obj_deinitializing == ego_obj::get_action(PBASE)) )
+#define STATE_DEINITIALIZING_PBASE( PBASE ) (ego_obj_deinitializing == ego_obj::get_action(PBASE))
 /// Is the object being deinitialized right now?
 #define DEINITIALIZING_PBASE( PBASE )       ( CONSTRUCTED_PBASE( PBASE ) && STATE_DEINITIALIZING_PBASE(PBASE) )
 
 /// Is the object in the destructing state?
-#define STATE_DESTRUCTING_PBASE( PBASE ) ( (ego_obj_destructing == ego_obj::get_action(PBASE)) )
+#define STATE_DESTRUCTING_PBASE( PBASE )  (ego_obj_destructing == ego_obj::get_action(PBASE))
 /// Is the object being deinitialized right now?
 #define DESTRUCTING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_DESTRUCTING_PBASE(PBASE) )
 
@@ -401,10 +401,6 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 #define STATE_WAITING_PBASE( PBASE ) ( ego_obj_waiting == ego_obj::get_action(PBASE) )
 /// Is the object "waiting to die"?
 #define WAITING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_WAITING_PBASE(PBASE) )
-
-/// Has the object been marked as terminated? (alias for KILLED_PBASE)
-#define STATE_TERMINATED_PBASE( PBASE ) FLAG_KILLED_PBASE(PBASE)
-#define TERMINATED_PBASE( PBASE )       KILLED_PBASE( PBASE )
 
 // Grab the index value of ego_obj pointer
 #define GET_IDX_PBASE( PBASE, FAIL_VALUE ) ( (NULL == (PBASE) || !VALID_PBASE( PBASE ) ) ? FAIL_VALUE : ego_obj::get_index(PBASE) )
@@ -418,7 +414,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 #define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_CGET_PBASE( POBJ ) ) ) ? ego_obj_nothing : ego_obj::get_state(POBJ) )
 
 /// Is the object active?
-#define DEFINED_PBASE( PBASE )  ( FLAG_ON_PBASE(PBASE) && !FLAG_KILLED_PBASE( PBASE ) )
+#define DEFINED_PBASE( PBASE )  ( FLAG_ON_PBASE(PBASE) && !FLAG_TERMINATED_PBASE( PBASE ) )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

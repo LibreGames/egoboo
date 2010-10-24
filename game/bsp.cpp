@@ -585,7 +585,7 @@ bool_t ego_BSP_tree::prune_one_branch( ego_BSP_tree   * t, ego_BSP_branch * B, b
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_branch::add_all_nodes( ego_BSP_branch * pbranch, leaf_child_list_t & colst )
 {
-    size_t cnt, colst_size;
+    size_t cnt;
 
     if ( NULL == pbranch ) return bfalse;
 
@@ -996,6 +996,8 @@ bool_t   ego_BSP_tree::prune( ego_BSP_tree   * t )
 
     if ( NULL == t || NULL == t->root ) return bfalse;
 
+    if ( t->branch_used.empty() ) return btrue;
+
     // search through all allocated branches. This will not catch all of the
     // empty branches every time, but it should catch quite a few
 
@@ -1013,9 +1015,12 @@ bool_t   ego_BSP_tree::prune( ego_BSP_tree   * t )
         }
     }
 
+
+    // actually do the deletions
     while ( !deferred.empty() )
     {
         ego_BSP_tree::dealloc_branch( t, deferred.top() );
+        deferred.pop();
     }
 
     return btrue;
@@ -1389,9 +1394,7 @@ bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb * p
     /// @details BB@> check for collisions with the given node list
 
     bool_t       retval;
-    size_t       colst_size;
 
-    if ( leaf_lst.empty() ) return bfalse;
     if ( NULL == paabb ) return bfalse;
 
     leaf_child_list_t::iterator it;

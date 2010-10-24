@@ -59,6 +59,85 @@
 
 #include "extensions/SDL_extensions.h"
 
+#include <windows.h>
+#include <excpt.h>
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+int win32_filter( unsigned int code, struct _EXCEPTION_POINTERS *ep )
+{
+    puts( "in filter." );
+
+    int rv = EXCEPTION_EXECUTE_HANDLER;
+    switch ( code )
+    {
+        case EXCEPTION_ACCESS_VIOLATION:
+            puts( "EXCEPTION_ACCESS_VIOLATION" );
+            break;
+        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+            puts( "EXCEPTION_ARRAY_BOUNDS_EXCEEDED" );
+            break;
+        case EXCEPTION_BREAKPOINT:
+            puts( "EXCEPTION_BREAKPOINT" );
+            break;
+        case EXCEPTION_DATATYPE_MISALIGNMENT:
+            puts( "EXCEPTION_DATATYPE_MISALIGNMENT" );
+            break;
+        case EXCEPTION_FLT_DENORMAL_OPERAND:
+            puts( "EXCEPTION_FLT_DENORMAL_OPERAND" );
+            break;
+        case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+            puts( "EXCEPTION_FLT_DIVIDE_BY_ZERO" );
+            break;
+        case EXCEPTION_FLT_INEXACT_RESULT:
+            puts( "EXCEPTION_FLT_INEXACT_RESULT" );
+            break;
+        case EXCEPTION_FLT_INVALID_OPERATION:
+            puts( "EXCEPTION_FLT_INVALID_OPERATION" );
+            break;
+        case EXCEPTION_FLT_OVERFLOW:
+            puts( "EXCEPTION_FLT_OVERFLOW" );
+            break;
+        case EXCEPTION_FLT_STACK_CHECK:
+            puts( "EXCEPTION_FLT_STACK_CHECK" );
+            break;
+        case EXCEPTION_FLT_UNDERFLOW:
+            puts( "EXCEPTION_FLT_UNDERFLOW" );
+            break;
+        case EXCEPTION_ILLEGAL_INSTRUCTION:
+            puts( "EXCEPTION_ILLEGAL_INSTRUCTION" );
+            break;
+        case EXCEPTION_IN_PAGE_ERROR:
+            puts( "EXCEPTION_IN_PAGE_ERROR" );
+            break;
+        case EXCEPTION_INT_DIVIDE_BY_ZERO:
+            puts( "EXCEPTION_INT_DIVIDE_BY_ZERO" );
+            break;
+        case EXCEPTION_INT_OVERFLOW:
+            puts( "EXCEPTION_INT_OVERFLOW" );
+            break;
+        case EXCEPTION_INVALID_DISPOSITION:
+            puts( "EXCEPTION_INVALID_DISPOSITION" );
+            break;
+        case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+            puts( "EXCEPTION_NONCONTINUABLE_EXCEPTION" );
+            break;
+        case EXCEPTION_PRIV_INSTRUCTION:
+            puts( "EXCEPTION_PRIV_INSTRUCTION" );
+            break;
+        case EXCEPTION_SINGLE_STEP:
+            puts( "EXCEPTION_SINGLE_STEP" );
+            break;
+        case EXCEPTION_STACK_OVERFLOW:
+            puts( "EXCEPTION_STACK_OVERFLOW" );
+            break;
+        default:
+            rv = EXCEPTION_CONTINUE_SEARCH;
+    }
+
+    return rv;
+}
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -2166,7 +2245,7 @@ void ChoosePlayer_data::format()
         for ( j = 0, m++; j < 4; j++, m++ )
         {
             int k = ICON_KEYB + j;
-            oglx_texture_t * img = TxTexture_get_ptr(( TX_REF )k );
+            oglx_texture_t * img = TxTexture_get_ptr( TX_REF( k ) );
 
             ui_Widget::set_button( mnu_widgetList + m, x + text_width + j*icon_size, y, icon_size, icon_size );
             ui_Widget::set_img( mnu_widgetList + m, ui_just_centered, img );
@@ -2237,7 +2316,10 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
 {
     int i, x1, y1;
 
-    GLuint list_index = INVALID_GL_ID;
+    GLuint  list_index = INVALID_GL_ID;
+    CAP_REF icap( MAX_CAP );
+    STRING  classname = EMPTY_CSTR;
+    bool_t  local_item = bfalse;
 
     if ( NULL == ptr )
     {
@@ -2246,10 +2328,25 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
 
     if ( NULL == ptr ) return ptr;
 
+    // anything to display?
+    if ( ptr->player < 0 || 0 == ptr->objects.count )
+    {
+        goto ChoosePlayer_data__render_stats_fail;
+    }
+
+    icap = ptr->objects.pro_data[0].cap_ref;
+    if ( !LOADED_CAP( icap ) )
+    {
+        goto ChoosePlayer_data__render_stats_fail;
+    }
+    ego_cap * pcap = CapStack.lst + icap;
+
     // make sure we have a valid display_item
+    local_item = bfalse;
     if ( NULL == ptr->item_ptr )
     {
         ptr->item_ptr = display_item_new();
+        local_item = btrue;
     }
 
     // make sure that the ptr->item_ptr is primed for a display list
@@ -2263,124 +2360,143 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         ptr->item_ptr = display_item_free( ptr->item_ptr, btrue );
     }
 
-    // start capturing the ogl commands
-    if ( INVALID_GL_ID != list_index )
+    glFlush();
+    glGetError();
+    SDL_ClearError();
+    __try
     {
-        glNewList( list_index, GL_COMPILE );
-    }
-
-    {
-        // do the actual display
-        x1 = x + 25;
-        y1 = y + 25;
-        if ( ptr->player >= 0 && ptr->objects.count > 0 )
+        // start capturing the ogl commands
+        if ( INVALID_GL_ID != list_index )
         {
-            CAP_REF icap = ptr->objects.pro_data[0].cap_ref;
+            oglx_NewList_active = GL_TRUE;
+            GL_DEBUG( glNewList )( list_index, GL_COMPILE );
+        }
 
-            if ( LOADED_CAP( icap ) )
+
+        {
+            // do the actual display
+            x1 = x + 25;
+            y1 = y + 25;
+
+            Uint8 skin = ( Uint8 )MAX( 0, pcap->skin_override );
+
+            ui_drawButton( UI_Nothing, x, y, width, height, NULL );
+
+            // Character level and class
+            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+
+            // fix class name capitalization
+            strncpy( classname, pcap->classname, SDL_arraysize( classname ) );
+            classname[0] = toupper( classname[0] );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "A level %d %s", pcap->level_override + 1, classname );
+
+            // Armor
+            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 40, "Wearing %s %s", pcap->skinname[skin], HAS_SOME_BITS( pcap->skindressy, 1 << skin ) ? "(Light)" : "(Heavy)" );
+
+            // Life and mana (can be less than maximum if not in easy mode)
+            if ( cfg.difficulty >= GAME_NORMAL )
             {
-                ego_cap * pcap = CapStack.lst + icap;
-                Uint8 skin = ( Uint8 )MAX( 0, pcap->skin_override );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
+                y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
 
-                ui_drawButton( UI_Nothing, x, y, width, height, NULL );
-
-                // Character level and class
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-
-                // fix class name capitalization
-                pcap->classname[0] = toupper( pcap->classname[0] );
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "A level %d %s", pcap->level_override + 1, pcap->classname );
-
-                // Armor
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 40, "Wearing %s %s", pcap->skinname[skin], HAS_SOME_BITS( pcap->skindressy, 1 << skin ) ? "(Light)" : "(Heavy)" );
-
-                // Life and mana (can be less than maximum if not in easy mode)
-                if ( cfg.difficulty >= GAME_NORMAL )
+                if ( pcap->mana_stat.val.from > 0 )
                 {
-                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
-                    y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
-
-                    if ( pcap->mana_stat.val.from > 0 )
-                    {
-                        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
-                        y1 = draw_one_bar( pcap->manacolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
-                    }
+                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
+                    y1 = draw_one_bar( pcap->manacolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
                 }
-                else
-                {
-                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d", ( int )pcap->life_stat.val.from );
-                    y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
+            }
+            else
+            {
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d", ( int )pcap->life_stat.val.from );
+                y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
 
-                    if ( pcap->mana_stat.val.from > 0 )
-                    {
-                        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d", ( int )pcap->mana_stat.val.from );
-                        y1 = draw_one_bar( pcap->manacolor, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
-                    }
+                if ( pcap->mana_stat.val.from > 0 )
+                {
+                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d", ( int )pcap->mana_stat.val.from );
+                    y1 = draw_one_bar( pcap->manacolor, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
                 }
-                y1 += 20;
+            }
+            y1 += 20;
 
-                // SWID
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Stats" );
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from );
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from );
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Int: %s (%d)", describe_value( pcap->intelligence_stat.val.from, 60, NULL ), ( int )pcap->intelligence_stat.val.from );
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Dex: %s (%d)", describe_value( pcap->dexterity_stat.val.from,    60, NULL ), ( int )pcap->dexterity_stat.val.from );
+            // SWID
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Stats" );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Int: %s (%d)", describe_value( pcap->intelligence_stat.val.from, 60, NULL ), ( int )pcap->intelligence_stat.val.from );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Dex: %s (%d)", describe_value( pcap->dexterity_stat.val.from,    60, NULL ), ( int )pcap->dexterity_stat.val.from );
 
-                y1 += 20;
+            y1 += 20;
 
-                if ( ptr->objects.count > 1 )
+            if ( ptr->objects.count > 1 )
+            {
+                ego_ChoosePlayer_element * pdata;
+
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Inventory" );
+
+                for ( i = 1; i < ptr->objects.count; i++ )
                 {
-                    ego_ChoosePlayer_element * pdata;
+                    pdata = ptr->objects.pro_data + i;
 
-                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Inventory" );
-
-                    for ( i = 1; i < ptr->objects.count; i++ )
+                    icap = pdata->cap_ref;
+                    if ( LOADED_CAP( icap ) )
                     {
-                        pdata = ptr->objects.pro_data + i;
+                        const int icon_indent = 8;
+                        TX_REF  icon_ref;
+                        STRING itemname;
+                        ego_cap * tmp_pcap = CapStack.lst + icap;
 
-                        icap = pdata->cap_ref;
-                        if ( LOADED_CAP( icap ) )
+                        if ( tmp_pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
+                        else                   strncpy( itemname, tmp_pcap->classname,   SDL_arraysize( itemname ) );
+
+                        icon_ref = mnu_get_icon_ref( icap, pdata->tx_ref );
+                        draw_one_icon( icon_ref, x1 + icon_indent, y1, NOSPARKLE );
+
+                        if ( icap == SLOT_LEFT + 1 )
                         {
-                            const int icon_indent = 8;
-                            TX_REF  icon_ref;
-                            STRING itemname;
-                            ego_cap * tmp_pcap = CapStack.lst + icap;
-
-                            if ( tmp_pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
-                            else                   strncpy( itemname, tmp_pcap->classname,   SDL_arraysize( itemname ) );
-
-                            icon_ref = mnu_get_icon_ref( icap, pdata->tx_ref );
-                            draw_one_icon( icon_ref, x1 + icon_indent, y1, NOSPARKLE );
-
-                            if ( icap == SLOT_LEFT + 1 )
-                            {
-                                ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Left: %s", itemname );
-                                y1 += ICON_SIZE;
-                            }
-                            else if ( icap == SLOT_RIGHT + 1 )
-                            {
-                                ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Right: %s", itemname );
-                                y1 += ICON_SIZE;
-                            }
-                            else
-                            {
-                                ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Item: %s", itemname );
-                                y1 += ICON_SIZE;
-                            }
+                            ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Left: %s", itemname );
+                            y1 += ICON_SIZE;
+                        }
+                        else if ( icap == SLOT_RIGHT + 1 )
+                        {
+                            ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Right: %s", itemname );
+                            y1 += ICON_SIZE;
+                        }
+                        else
+                        {
+                            ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Item: %s", itemname );
+                            y1 += ICON_SIZE;
                         }
                     }
                 }
             }
         }
-    }
 
-    if ( INVALID_GL_ID != list_index )
+        if ( INVALID_GL_ID != list_index )
+        {
+            GL_DEBUG_END_LIST();
+            oglx_NewList_active = GL_FALSE;
+        }
+    }
+    __except( win32_filter( GetExceptionCode(), GetExceptionInformation() ) )
     {
-        GL_DEBUG_END_LIST();
+        printf( "SUXXORZ an opengl exception was generated!\n" );
+        puts( SDL_GetError() );
+        handle_gl_error();
+        goto ChoosePlayer_data__render_stats_fail;
     }
 
     return ptr;
+
+ChoosePlayer_data__render_stats_fail:
+
+    if ( NULL != ptr )
+    {
+        ptr->item_ptr = display_item_free( ptr->item_ptr, local_item );
+    }
+
+    return ptr;
+
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2496,7 +2612,7 @@ bool_t ChoosePlayer_data::load_profiles( int player, ego_ChoosePlayer_profiles *
 
             // load the icon
             snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/icon%d", loadplayer[player].dir, i, MAX( 0, pcap->skin_override ) );
-            pdata->tx_ref = TxTexture_load_one_vfs( szFilename, ( TX_REF )INVALID_TX_TEXTURE, INVALID_KEY );
+            pdata->tx_ref = TxTexture_load_one_vfs( szFilename, TX_REF( INVALID_TX_TEXTURE ), INVALID_KEY );
 
             // load the naming
             snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/naming.txt", loadplayer[player].dir, i );
@@ -2534,7 +2650,7 @@ int ChoosePlayer_data::run( double deltaTime )
                     ui_Widget::set_text( w_buttons + cnt, ui_just_centerleft, NULL, sz_buttons[cnt] );
                 }
 
-                TxTexture_free_one(( TX_REF )TX_BARS );
+                TxTexture_free_one( TX_REF( TX_BARS ) );
 
                 startIndex_old              = -1;
                 startIndex                  = 0;
@@ -2544,17 +2660,17 @@ int ChoosePlayer_data::run( double deltaTime )
 
                 ego_texture_load_vfs( &background, "mp_data/menu/menu_sleepy", TRANSCOLOR );
 
-                TxTexture_load_one_vfs( "mp_data/nullicon", ( TX_REF )ICON_NULL, INVALID_KEY );
+                TxTexture_load_one_vfs( "mp_data/nullicon", TX_REF( ICON_NULL ), INVALID_KEY );
 
-                TxTexture_load_one_vfs( "mp_data/keybicon", ( TX_REF )ICON_KEYB, INVALID_KEY );
+                TxTexture_load_one_vfs( "mp_data/keybicon", TX_REF( ICON_KEYB ), INVALID_KEY );
 
-                TxTexture_load_one_vfs( "mp_data/mousicon", ( TX_REF )ICON_MOUS, INVALID_KEY );
+                TxTexture_load_one_vfs( "mp_data/mousicon", TX_REF( ICON_MOUS ), INVALID_KEY );
 
-                TxTexture_load_one_vfs( "mp_data/joyaicon", ( TX_REF )ICON_JOYA, INVALID_KEY );
+                TxTexture_load_one_vfs( "mp_data/joyaicon", TX_REF( ICON_JOYA ), INVALID_KEY );
 
-                TxTexture_load_one_vfs( "mp_data/joybicon", ( TX_REF )ICON_JOYB, INVALID_KEY );
+                TxTexture_load_one_vfs( "mp_data/joybicon", TX_REF( ICON_JOYB ), INVALID_KEY );
 
-                TxTexture_load_one_vfs( "mp_data/bars", ( TX_REF )TX_BARS, INVALID_KEY );
+                TxTexture_load_one_vfs( "mp_data/bars", TX_REF( TX_BARS ), INVALID_KEY );
 
                 // load information for all the players that could be imported
                 mnu_player_check_import( "mp_players", btrue );
@@ -2711,7 +2827,7 @@ int ChoosePlayer_data::run( double deltaTime )
                         // replace any not on device with a null icon
                         if ( !device_on[j] )
                         {
-                            mnu_widgetList[m].img = TxTexture_get_ptr(( TX_REF )ICON_NULL );
+                            mnu_widgetList[m].img = TxTexture_get_ptr( TX_REF( ICON_NULL ) );
 
                             // draw the widget, even though it will not do anything
                             // the menu would looks funny if odd columns missing
@@ -2879,7 +2995,7 @@ int ChoosePlayer_data::run( double deltaTime )
         case MM_Finish:
             {
 
-                TxTexture_free_one(( TX_REF )TX_BARS );
+                TxTexture_free_one( TX_REF( TX_BARS ) );
 
                 if ( 0 == mnu_selectedPlayerCount )
                 {
@@ -3542,11 +3658,11 @@ bool_t OptionsInput_data::update_player( ui_Widget * but_ptr, int player )
     // The select button image
     if ( iicon < 0 )
     {
-        img = TxTexture_get_ptr(( TX_REF )ICON_NULL );
+        img = TxTexture_get_ptr( TX_REF( ICON_NULL ) );
     }
     else
     {
-        img = TxTexture_get_ptr(( TX_REF )( ICON_KEYB + iicon ) );
+        img = TxTexture_get_ptr( TX_REF( ICON_KEYB + iicon ) );
     }
     ui_Widget::set_img( but_ptr, ui_just_centered, img );
 
@@ -4428,10 +4544,10 @@ int OptionsGame_data::run( double deltaTime )
                 if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
                 {
                     // synchronize the config values with the various game subsystems
-                    setup_synch( &cfg );
+                    ego_config_data::synch( &ego_cfg );
 
                     // save the setup file
-                    setup_upload( &cfg );
+                    ego_config_data::upload( &ego_cfg );
                     setup_write();
 
                     menuState = MM_Leaving;
@@ -4537,7 +4653,7 @@ struct OptionsAudio_data : public mnu_state_data
     static bool_t update_buffer_size( ui_Widget * but_ptr, Uint16 val );
     static bool_t update_quality( ui_Widget * but_ptr, bool_t val );
     static bool_t update_footfall( ui_Widget * but_ptr, bool_t val );
-    static bool_t update_settings( ego_config_data_t * pcfg );
+    static bool_t update_settings( ego_config_data * pcfg );
 
 };
 
@@ -4690,22 +4806,22 @@ bool_t OptionsAudio_data::update_footfall( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_settings( ego_config_data_t * pcfg )
+bool_t OptionsAudio_data::update_settings( ego_config_data * pcfg )
 {
     if ( NULL == pcfg ) return bfalse;
 
     // synchronize the config values with the various game subsystems
-    setup_synch( pcfg );
+    ego_config_data::synch( pcfg );
 
     // save the setup file
-    setup_upload( pcfg );
+    ego_config_data::upload( pcfg );
     setup_write();
 
     // Reload the sound system
     sound_restart();
 
     // Do we restart the music?
-    if ( pcfg->music_allowed )
+    if ( pcfg->cfg_ptr()->music_allowed )
     {
         load_all_music_sounds_vfs();
         fade_in_music( musictracksloaded[songplaying] );
@@ -4928,7 +5044,7 @@ int OptionsAudio_data::run( double deltaTime )
                 // Save settings
                 if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
                 {
-                    OptionsAudio_data::update_settings( &cfg );
+                    OptionsAudio_data::update_settings( &ego_cfg );
                     menuState = MM_Leaving;
                 }
 
@@ -5039,7 +5155,7 @@ struct OptionsVideo_data : public mnu_state_data
     virtual void format();
 
     bool_t coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio );
-    int    fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size );
+    int    fix_fullscreen_resolution( config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size );
     bool_t update_antialiasing( ui_Widget * but_ptr, Uint8 val );
     bool_t update_texture_filter( ui_Widget * but_ptr, Uint8 val );
     bool_t update_dither( ui_Widget * but_ptr, bool_t val );
@@ -5048,12 +5164,12 @@ struct OptionsVideo_data : public mnu_state_data
     bool_t update_shadows( ui_Widget * but_ptr, bool_t allowed, bool_t sprite );
     bool_t update_z_buffer( ui_Widget * but_ptr, int val );
     bool_t update_max_lights( ui_Widget * but_ptr, int val );
-    bool_t update_3d_effects( ui_Widget * but_ptr, bool_t use_phong, bool_t use_perspective, bool_t overlay_allowed, bool_t background_allowed );
+    bool_t update_3d_effects( ui_Widget * but_ptr, int val );
     bool_t update_water_quality( ui_Widget * but_ptr, bool_t val );
     bool_t update_max_particles( ui_Widget * but_ptr, Uint16 val );
     bool_t update_widescreen( ui_Widget * but_ptr, bool_t val );
     bool_t update_resolution( ui_Widget * but_ptr, int x, int y );
-    bool_t update_settings( ego_config_data_t * pcfg );
+    bool_t update_settings( ego_config_data * pcfg );
 
 };
 
@@ -5191,7 +5307,7 @@ bool_t OptionsVideo_data::coerce_aspect_ratio( int width, int height, float * pr
 }
 
 //--------------------------------------------------------------------------------------------
-int OptionsVideo_data::fix_fullscreen_resolution( ego_config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
+int OptionsVideo_data::fix_fullscreen_resolution( config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
 {
     STRING     sz_aspect_ratio = "unknown";
     float      req_screen_area  = ( float )pcfg->scrx_req * ( float )pcfg->scry_req;
@@ -5326,11 +5442,20 @@ bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val 
 
     retval = bfalse;
 
-    if ( val >= TX_ANISOTROPIC )
+    bool_t use_aniso = ogl_caps.anisotropic_supported && ogl_caps.maxAnisotropy > 1.0f;
+
+
+    if ( use_aniso && val >= TX_ANISOTROPIC )
     {
-        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Ansiotropic %i", val - TX_ANISOTROPIC );
+        float aniso = val - TX_ANISOTROPIC;
+        aniso = MAX( 0.0f, aniso ) + 1.0f;
+        aniso = MIN( aniso, ogl_caps.maxAnisotropy );
+
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Anisotropic %i", ( int )aniso );
     }
-    else switch ( val )
+    else
+    {
+        switch ( val )
         {
             case TX_UNFILTERED:
                 retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Unfiltered" );
@@ -5357,9 +5482,10 @@ bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val 
                 break;
 
             default:
-                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Unknown" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Not Supported" );
                 break;
         }
+    }
 
     return retval;
 }
@@ -5447,28 +5573,24 @@ bool_t OptionsVideo_data::update_max_lights( ui_Widget * but_ptr, int val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_3d_effects( ui_Widget * but_ptr, bool_t use_phong, bool_t use_perspective, bool_t overlay_allowed, bool_t background_allowed )
+bool_t OptionsVideo_data::update_3d_effects( ui_Widget * but_ptr, int val )
 {
     bool_t retval = bfalse;
+    const char * sz_literal = "UNKNOWN";
 
     if ( NULL == but_ptr ) return bfalse;
 
-    if ( use_phong && use_perspective && overlay_allowed && background_allowed )
+    switch ( val )
     {
-        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Off" );
+        case 0: sz_literal = "Off"; break;
+        case 1: sz_literal = "Okay"; break;
+        case 2: sz_literal = "Good"; break;
+        case 3: sz_literal = "Better"; break;
+        case 4: sz_literal = "Great"; break;
+        case 5: sz_literal = "Excellent"; break;
     }
-    else if ( !use_phong )
-    {
-        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Okay" );
-    }
-    else if ( !use_perspective && overlay_allowed && background_allowed )
-    {
-        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Superb" );
-    }
-    else
-    {
-        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Good" );
-    }
+
+    retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, sz_literal );
 
     return retval;
 }
@@ -5506,21 +5628,101 @@ bool_t OptionsVideo_data::update_resolution( ui_Widget * but_ptr, int x, int y )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_settings( ego_config_data_t * pcfg )
+bool_t OptionsVideo_data::update_settings( ego_config_data * pcfg )
 {
     if ( NULL == pcfg ) return bfalse;
 
     // synchronize the config values with the various game subsystems
-    setup_synch( pcfg );
+    ego_config_data::synch( pcfg );
 
     // save the setup file
-    setup_upload( pcfg );
+    ego_config_data::upload( pcfg );
     setup_write();
 
     // Reload some of the graphics
     load_graphics();
 
     return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+int coerce_3dfx( int src )
+{
+    int val = src;
+
+    if ( val < 0 )
+    {
+        // get current setting
+        val = 0;
+        if ( cfg.overlay_allowed || cfg.background_allowed ) val++;
+        if ( cfg.gourard_req ) val++;
+        if ( cfg.use_phong ) val++;
+        if ( cfg.use_perspective ) val++;
+        if ( cfg.mipmap_quality ) val++;
+    }
+
+    if ( val > 5 ) val = 0;
+
+    switch ( val )
+    {
+        default: val = 0; /* fall through */
+
+        case 0:
+            cfg.overlay_allowed    = bfalse;
+            cfg.background_allowed = bfalse;
+            cfg.gourard_req        = bfalse;
+            cfg.use_phong          = bfalse;
+            cfg.use_perspective    = bfalse;
+            cfg.mipmap_quality     = bfalse;
+            break;
+
+        case 1:
+            cfg.overlay_allowed    = btrue;
+            cfg.background_allowed = btrue;
+            cfg.gourard_req        = bfalse;
+            cfg.use_phong          = bfalse;
+            cfg.use_perspective    = bfalse;
+            cfg.mipmap_quality     = bfalse;
+            break;
+
+        case 2:
+            cfg.overlay_allowed    = btrue;
+            cfg.background_allowed = btrue;
+            cfg.gourard_req        = btrue;
+            cfg.use_phong          = bfalse;
+            cfg.use_perspective    = bfalse;
+            cfg.mipmap_quality     = bfalse;
+            break;
+
+        case 3:
+            cfg.overlay_allowed    = btrue;
+            cfg.background_allowed = btrue;
+            cfg.gourard_req        = btrue;
+            cfg.use_phong          = btrue;
+            cfg.use_perspective    = bfalse;
+            cfg.mipmap_quality     = bfalse;
+            break;
+
+        case 4:
+            cfg.overlay_allowed    = btrue;
+            cfg.background_allowed = btrue;
+            cfg.gourard_req        = btrue;
+            cfg.use_phong          = btrue;
+            cfg.use_perspective    = btrue;
+            cfg.mipmap_quality     = bfalse;
+            break;
+
+        case 5:
+            cfg.overlay_allowed    = btrue;
+            cfg.background_allowed = btrue;
+            cfg.gourard_req        = btrue;
+            cfg.use_phong          = btrue;
+            cfg.use_perspective    = btrue;
+            cfg.mipmap_quality     = btrue;
+            break;
+    }
+
+    return val;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5605,7 +5807,7 @@ int OptionsVideo_data::run( double deltaTime )
 
                 if ( cfg.fullscreen_req && NULL != sdl_scr.video_mode_list )
                 {
-                    OptionsVideo_data::fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
+                    OptionsVideo_data::fix_fullscreen_resolution( ego_cfg.cfg_ptr(), &sdl_scr, &sz_screen_size );
 
                     aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
                     widescreen = ( aspect_ratio > ( 4.0f / 3.0f ) );
@@ -5634,7 +5836,7 @@ int OptionsVideo_data::run( double deltaTime )
 
                 OptionsVideo_data::update_max_lights( w_buttons + but_maxlights, cfg.dyna_count_req );
 
-                OptionsVideo_data::update_3d_effects( w_buttons + but_3dfx, cfg.use_phong, cfg.use_perspective, cfg.overlay_allowed, cfg.background_allowed );
+                OptionsVideo_data::update_3d_effects( w_buttons + but_3dfx, coerce_3dfx( -1 ) );
 
                 OptionsVideo_data::update_water_quality( w_buttons + but_multiwater, cfg.twolayerwater_allowed );
 
@@ -5737,11 +5939,23 @@ int OptionsVideo_data::run( double deltaTime )
             ui_Widget::Run( w_labels + lab_filtering );
             if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_filtering ) )
             {
-                cfg.texturefilter_req = CLIP( cfg.texturefilter_req, TX_UNFILTERED, TX_ANISOTROPIC + max_anisotropic );
+                bool_t use_aniso = ogl_caps.anisotropic_supported && ogl_caps.maxAnisotropy > 1.0f;
+                int max_tx_filter;
+
+                if ( use_aniso )
+                {
+                    max_tx_filter = TX_ANISOTROPIC + ogl_caps.maxAnisotropy - 1;
+                }
+                else
+                {
+                    max_tx_filter = TX_ANISOTROPIC - 1;
+                }
+
+                cfg.texturefilter_req = CLIP( cfg.texturefilter_req, TX_UNFILTERED, max_tx_filter );
 
                 cfg.texturefilter_req++;
 
-                if ( cfg.texturefilter_req > TX_ANISOTROPIC + max_anisotropic )
+                if ( cfg.texturefilter_req > max_tx_filter )
                 {
                     cfg.texturefilter_req = TX_UNFILTERED;
                 }
@@ -5813,28 +6027,16 @@ int OptionsVideo_data::run( double deltaTime )
             ui_Widget::Run( w_labels + lab_3dfx );
             if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_3dfx ) )
             {
-                if ( cfg.use_phong && cfg.use_perspective && cfg.overlay_allowed && cfg.background_allowed )
-                {
-                    cfg.use_phong          = bfalse;
-                    cfg.use_perspective    = bfalse;
-                    cfg.overlay_allowed    = bfalse;
-                    cfg.background_allowed = bfalse;
-                }
-                else if ( !cfg.use_phong )
-                {
-                    cfg.use_phong = btrue;
-                }
-                else if ( !cfg.use_perspective && cfg.overlay_allowed && cfg.background_allowed )
-                {
-                    cfg.use_perspective = btrue;
-                }
-                else
-                {
-                    cfg.overlay_allowed = btrue;
-                    cfg.background_allowed = btrue;
-                }
+                // get the current setting
+                int val = coerce_3dfx( -1 );
 
-                OptionsVideo_data::update_3d_effects( w_buttons + but_3dfx, cfg.use_phong, cfg.use_perspective, cfg.overlay_allowed, cfg.background_allowed );
+                // increase the value because of the button
+                val++;
+
+                // fix the settings based on the new value
+                val = coerce_3dfx( val );
+
+                OptionsVideo_data::update_3d_effects( w_buttons + but_3dfx, val );
             }
 
             // Water Quality
@@ -5921,7 +6123,7 @@ int OptionsVideo_data::run( double deltaTime )
                 if ( cfg.fullscreen_req && NULL != sdl_scr.video_mode_list )
                 {
                     // coerce the screen size to a valid fullscreen mode
-                    OptionsVideo_data::fix_fullscreen_resolution( &cfg, &sdl_scr, &sz_screen_size );
+                    OptionsVideo_data::fix_fullscreen_resolution( ego_cfg.cfg_ptr(), &sdl_scr, &sz_screen_size );
                 }
 
                 aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
@@ -5936,7 +6138,7 @@ int OptionsVideo_data::run( double deltaTime )
             // Save settings button
             if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_save ) )
             {
-                OptionsVideo_data::update_settings( &cfg );
+                OptionsVideo_data::update_settings( &ego_cfg );
 
                 menuChoice = 1;
             }
@@ -6043,7 +6245,7 @@ int ShowResults_data::run( double deltaTime )
                 // Prepeare the summary text
                 for ( i = 0; i < SUMMARYLINES; i++ )
                 {
-                    carat += snprintf( carat, carat_end - carat - 1, "%s\n", mnu_ModList.lst[( MOD_REF )selectedModule].base.summary[i] );
+                    carat += snprintf( carat, carat_end - carat - 1, "%s\n", mnu_ModList.lst[MOD_REF( selectedModule )].base.summary[i] );
                 }
 
                 // Randomize the next game hint, but only if not in hard mode
@@ -6074,7 +6276,7 @@ int ShowResults_data::run( double deltaTime )
                 GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
                 // the module name
-                menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, 50, 80, 20, mnu_ModList.lst[( MOD_REF )selectedModule].base.longname );
+                menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, 50, 80, 20, mnu_ModList.lst[MOD_REF( selectedModule )].base.longname );
                 ui_drawTextBox( menuTextureList_ptr, 50, 80, 291, 230 );
 
                 // Draw a text box
@@ -6960,7 +7162,7 @@ TX_REF mnu_get_icon_ref( const CAP_REF & icap, const TX_REF & default_ref )
     //     and one icon. Sometimes, though the item is actually a spell effect which means
     //     that we need to display the book icon.
 
-    TX_REF icon_ref = ( TX_REF )ICON_NULL;
+    TX_REF icon_ref = TX_REF( ICON_NULL );
     bool_t is_spell_fx, is_book, draw_book;
 
     ego_cap * pitem_cap;
@@ -7079,7 +7281,7 @@ bool_t mnu_test_by_name( const char *szModName )
     retval = bfalse;
     if ( modnumber >= 0 )
     {
-        retval = mnu_test_by_index(( MOD_REF )modnumber, 0, NULL );
+        retval = mnu_test_by_index( MOD_REF( modnumber ), 0, NULL );
     }
 
     return retval;
@@ -7113,7 +7315,7 @@ void mnu_load_all_module_info()
 
     while ( NULL != ctxt && VALID_CSTR( vfs_ModPath ) && mnu_ModList.count < MAX_MODULE )
     {
-        mnu_module * pmod = mnu_ModList.lst + ( MOD_REF )mnu_ModList.count;
+        mnu_module * pmod = mnu_ModList.lst + MOD_REF( mnu_ModList.count );
 
         // clear the module
         mnu_module_init( pmod );
@@ -7166,7 +7368,7 @@ mod_file_t * mnu_ModList_get_base( int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
-    return &( mnu_ModList.lst[( MOD_REF )imod].base );
+    return &( mnu_ModList.lst[MOD_REF( imod )].base );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7174,7 +7376,7 @@ const char * mnu_ModList_get_vfs_path( int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
-    return mnu_ModList.lst[( MOD_REF )imod].vfs_path;
+    return mnu_ModList.lst[MOD_REF( imod )].vfs_path;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7182,7 +7384,7 @@ const char * mnu_ModList_get_dest_path( int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
-    return mnu_ModList.lst[( MOD_REF )imod].dest_path;
+    return mnu_ModList.lst[MOD_REF( imod )].dest_path;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7190,7 +7392,7 @@ const char * mnu_ModList_get_name( int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
-    return mnu_ModList.lst[( MOD_REF )imod].name;
+    return mnu_ModList.lst[MOD_REF( imod )].name;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7302,18 +7504,18 @@ TX_REF TxTitleImage_load_one_vfs( const char *szLoadName )
 
     TX_REF itex;
 
-    if ( INVALID_CSTR( szLoadName ) ) return ( TX_REF )INVALID_TITLE_TEXTURE;
+    if ( INVALID_CSTR( szLoadName ) ) return TX_REF( INVALID_TITLE_TEXTURE );
 
-    if ( TxTitleImage.count >= TITLE_TEXTURE_COUNT ) return ( TX_REF )INVALID_TITLE_TEXTURE;
+    if ( TxTitleImage.count >= TITLE_TEXTURE_COUNT ) return TX_REF( INVALID_TITLE_TEXTURE );
 
-    itex  = ( TX_REF )TxTitleImage.count;
+    itex  = TX_REF( TxTitleImage.count );
     if ( INVALID_GL_ID != ego_texture_load_vfs( TxTitleImage.lst + itex, szLoadName, INVALID_KEY ) )
     {
         TxTitleImage.count++;
     }
     else
     {
-        itex = ( TX_REF )INVALID_TITLE_TEXTURE;
+        itex = TX_REF( INVALID_TITLE_TEXTURE );
     }
 
     return itex;
@@ -7740,7 +7942,7 @@ bool_t loadplayer_import_one( const char * foundfile )
     //md2_load_one( vfs_resolveReadFilename(filename), &(MadStack.lst[loadplayer_count].md2_data) );
 
     snprintf( filename, SDL_arraysize( filename ), "%s/icon%d", foundfile, skin );
-    pinfo->tx_ref = TxTexture_load_one_vfs( filename, ( TX_REF )INVALID_TX_TEXTURE, INVALID_KEY );
+    pinfo->tx_ref = TxTexture_load_one_vfs( filename, TX_REF( INVALID_TX_TEXTURE ), INVALID_KEY );
 
     // quest info
     snprintf( pinfo->dir, SDL_arraysize( pinfo->dir ), "%s", str_convert_slash_net(( char* )foundfile, strlen( foundfile ) ) );
@@ -7996,3 +8198,5 @@ void mnu_restart()
     mnu_stack.push( emnu_Main );
     mnu_state_data::begin_menu( emnu_Main );
 }
+
+

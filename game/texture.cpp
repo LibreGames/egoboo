@@ -114,7 +114,7 @@ void TxTexture_reload_all()
 //--------------------------------------------------------------------------------------------
 TX_REF TxTexture_get_free( const TX_REF & itex )
 {
-    TX_REF retval = ( TX_REF )INVALID_TX_TEXTURE;
+    TX_REF retval = TX_REF( INVALID_TX_TEXTURE );
 
     if ( itex >= 0 && itex < TX_LAST )
     {
@@ -132,7 +132,7 @@ TX_REF TxTexture_get_free( const TX_REF & itex )
         }
         else
         {
-            retval = ( TX_REF )INVALID_TX_TEXTURE;
+            retval = TX_REF( INVALID_TX_TEXTURE );
         }
     }
     else
@@ -140,7 +140,7 @@ TX_REF TxTexture_get_free( const TX_REF & itex )
         size_t i;
 
         // grab the specified index
-        oglx_texture_Release( TxTexture.lst + ( TX_REF )itex );
+        oglx_texture_Release( TxTexture.lst + TX_REF( itex ) );
 
         // if this index is on the free stack, remove it
         for ( i = 0; i < TxTexture._free_count; i++ )

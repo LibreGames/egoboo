@@ -277,7 +277,7 @@ CHR_REF ShopStack_find_owner( int ix, int iy )
     /// ZZ@> This function returns the owner of a item in a shop
 
     SHOP_REF cnt;
-    CHR_REF  owner = ( CHR_REF )SHOP_NOOWNER;
+    CHR_REF  owner = CHR_REF( SHOP_NOOWNER );
 
     for ( cnt = 0; cnt < ShopStack.count; cnt++ )
     {

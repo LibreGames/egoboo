@@ -138,10 +138,10 @@ INLINE PRO_REF ego_chr::get_ipro( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
-    if ( !DEFINED_CHR( ichr ) ) return ( PRO_REF )MAX_PROFILE;
+    if ( !DEFINED_CHR( ichr ) ) return PRO_REF( MAX_PROFILE );
     pchr = ChrObjList.get_pdata( ichr );
 
-    if ( !LOADED_PRO( pchr->profile_ref ) ) return ( PRO_REF )MAX_PROFILE;
+    if ( !LOADED_PRO( pchr->profile_ref ) ) return PRO_REF( MAX_PROFILE );
 
     return pchr->profile_ref;
 }
@@ -151,7 +151,7 @@ INLINE CAP_REF ego_chr::get_icap( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
-    if ( !DEFINED_CHR( ichr ) ) return ( CAP_REF )MAX_CAP;
+    if ( !DEFINED_CHR( ichr ) ) return CAP_REF( MAX_CAP );
     pchr = ChrObjList.get_pdata( ichr );
 
     return pro_get_icap( pchr->profile_ref );
@@ -162,7 +162,7 @@ INLINE EVE_REF ego_chr::get_ieve( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
-    if ( !DEFINED_CHR( ichr ) ) return ( EVE_REF )MAX_EVE;
+    if ( !DEFINED_CHR( ichr ) ) return EVE_REF( MAX_EVE );
     pchr = ChrObjList.get_pdata( ichr );
 
     return pro_get_ieve( pchr->profile_ref );
@@ -173,7 +173,7 @@ INLINE PIP_REF ego_chr::get_ipip( const CHR_REF & ichr, int ipip )
 {
     ego_chr * pchr;
 
-    if ( !DEFINED_CHR( ichr ) ) return ( PIP_REF )MAX_PIP;
+    if ( !DEFINED_CHR( ichr ) ) return PIP_REF( MAX_PIP );
     pchr = ChrObjList.get_pdata( ichr );
 
     return pro_get_ipip( pchr->profile_ref, ipip );
@@ -185,13 +185,13 @@ INLINE TEAM_REF ego_chr::get_iteam( const CHR_REF & ichr )
     ego_chr * pchr;
     int iteam;
 
-    if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_DAMAGE;
+    if ( !DEFINED_CHR( ichr ) ) return TEAM_REF( TEAM_DAMAGE );
     pchr = ChrObjList.get_pdata( ichr );
 
     iteam = ( pchr->team ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
 
-    return ( TEAM_REF )iteam;
+    return TEAM_REF( iteam );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -200,13 +200,13 @@ INLINE TEAM_REF ego_chr::get_iteam_base( const CHR_REF & ichr )
     ego_chr * pchr;
     int iteam;
 
-    if ( !DEFINED_CHR( ichr ) ) return ( TEAM_REF )TEAM_MAX;
+    if ( !DEFINED_CHR( ichr ) ) return TEAM_REF( TEAM_MAX );
     pchr = ChrObjList.get_pdata( ichr );
 
     iteam = ( pchr->baseteam ).get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
 
-    return ( TEAM_REF )iteam;
+    return TEAM_REF( iteam );
 }
 
 //--------------------------------------------------------------------------------------------

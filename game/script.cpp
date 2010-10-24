@@ -47,7 +47,7 @@
 //--------------------------------------------------------------------------------------------
 
 static const char *  script_error_classname = "UNKNOWN";
-static PRO_REF       script_error_model     = ( PRO_REF )MAX_PROFILE;
+static PRO_REF       script_error_model     = PRO_REF( MAX_PROFILE );
 static const char *  script_error_name      = "UNKNOWN";
 static REF_T         script_error_index     = ( Uint16 )( ~0 );
 
@@ -1940,13 +1940,13 @@ ego_ai_bundle * ego_ai_bundle::ctor_this( ego_ai_bundle * pbundle )
     pbundle->ai_state_ref = ( REF_T ) MAX_AI;
     pbundle->ai_state_ptr = NULL;
 
-    pbundle->chr_ref = ( CHR_REF ) MAX_CHR;
+    pbundle->chr_ref = CHR_REF( MAX_CHR );
     pbundle->chr_ptr = NULL;
 
-    pbundle->cap_ref = ( CAP_REF ) MAX_CAP;
+    pbundle->cap_ref = CAP_REF( MAX_CAP );
     pbundle->cap_ptr = NULL;
 
-    pbundle->pro_ref = ( PRO_REF ) MAX_PROFILE;
+    pbundle->pro_ref = PRO_REF( MAX_PROFILE );
     pbundle->pro_ptr = NULL;
 
     return pbundle;

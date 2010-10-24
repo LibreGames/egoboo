@@ -35,19 +35,19 @@
 #define VALID_PRT_REF( IPRT )     PrtObjList.validate_ref(IPRT)
 #define ALLOCATED_PRT( IPRT )   ( ALLOCATED_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
 #define VALID_PRT( IPRT )       ( VALID_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
-#define DEFINED_PRT( IPRT )     ( VALID_PBASE(PrtObjList.get_valid_ptr(IPRT) ) && !FLAG_KILLED_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
+#define DEFINED_PRT( IPRT )     ( VALID_PBASE(PrtObjList.get_valid_ptr(IPRT) ) && !FLAG_TERMINATED_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
 #define ACTIVE_PRT( IPRT )      ( ACTIVE_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
 #define WAITING_PRT( IPRT )     ( WAITING_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
 #define TERMINATED_PRT( IPRT )  ( TERMINATED_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
 
-#define GET_IDX_PPRT( PPRT )    ((size_t)GET_IDX_POBJ( PDATA_CGET_PBASE( ego_prt, PPRT), MAX_PRT ))
-#define GET_REF_PPRT( PPRT )    ((PRT_REF)GET_REF_POBJ( PDATA_CGET_PBASE( ego_prt, PPRT), MAX_PRT ))
+#define GET_IDX_PPRT( PPRT )    size_t(GET_IDX_POBJ( PDATA_CGET_PBASE( ego_prt, PPRT), MAX_PRT ))
+#define GET_REF_PPRT( PPRT )    PRT_REF(GET_REF_POBJ( PDATA_CGET_PBASE( ego_prt, PPRT), MAX_PRT ))
 
 #define VALID_PRT_PTR( PPRT )   ( (NULL != (PPRT)) && VALID_PRT_REF( GET_REF_PPRT( PPRT ) ) )
 
 #define ALLOCATED_PPRT( PPRT )   ( ALLOCATED_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT )) )
 #define VALID_PPRT( PPRT )       ( VALID_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT )) )
-#define DEFINED_PPRT( PPRT )     ( VALID_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT ) ) && !FLAG_KILLED_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT )) )
+#define DEFINED_PPRT( PPRT )     ( VALID_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT ) ) && !FLAG_TERMINATED_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT )) )
 #define ACTIVE_PPRT( PPRT )      ( ACTIVE_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT )) )
 #define WAITING_PPRT( PPRT )     ( WAITING_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT )) )
 #define TERMINATED_PPRT( PPRT )  ( TERMINATED_PBASE(PDATA_CGET_PBASE( ego_prt, PPRT )) )
@@ -84,20 +84,20 @@
 
 /// loops through PrtObjList for all "active" particles, creating a reference, and a bundle
 #define PRT_BEGIN_LOOP_ACTIVE(IT, PRT_BDL) \
-    OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
+    /*printf( "++++ ACTIVE PrtObjList.loop_depth == %d, %s\n", PrtObjList.loop_depth, __FUNCTION__ );*/ OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
     ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)internal__##PRT_BDL##_pobj->cget_pdata(); \
     if( NULL == internal__##PRT_BDL_pprt ) continue; \
     PRT_REF IT(internal__##IT->first); \
     ego_prt_bundle PRT_BDL( internal__##PRT_BDL_pprt );
 
 /// loops through PrtObjList for all "active" particles that are registered in the BSP
-#define PRT_BEGIN_LOOP_BSP(IT, PRT_BDL)     PRT_BEGIN_LOOP_ACTIVE(IT, PPRT) if( !PPRT->bsp_leaf.inserted ) continue;
+#define PRT_BEGIN_LOOP_BSP(IT, PRT_BDL)     /*printf( "++++ BSP PrtObjList.loop_depth == %d, %s\n", PrtObjList.loop_depth, __FUNCTION__ );*/  PRT_BEGIN_LOOP_ACTIVE(IT, PPRT) if( !PPRT->bsp_leaf.inserted ) continue;
 
 /// loops through PrtObjList for all "defined" particles that are flagged as being in limbo
-#define PRT_BEGIN_LOOP_LIMBO(IT, PRT_BDL)   PRT_BEGIN_LOOP_DEFINED(IT, PPRT) if( !LIMBO_PPRT(PPRT) ) continue;
+#define PRT_BEGIN_LOOP_LIMBO(IT, PRT_BDL)   /*printf( "++++ LIMBO PrtObjList.loop_depth == %d, %s\n", PrtObjList.loop_depth, __FUNCTION__ ); */ PRT_BEGIN_LOOP_DEFINED(IT, PPRT) if( !LIMBO_PPRT(PPRT) ) continue;
 
 /// the termination for each PrtObjList loop
-#define PRT_END_LOOP()                   OBJ_LIST_END_LOOP(PrtObjList)
+#define PRT_END_LOOP()                   OBJ_LIST_END_LOOP(PrtObjList) /*printf( "---- PrtObjList.loop_depth == %d\n", PrtObjList.loop_depth );*/
 
 //--------------------------------------------------------------------------------------------
 // Macros to determine whether the particle is in the game or not.
@@ -120,6 +120,8 @@ struct ego_particle_list : public t_ego_obj_lst<ego_obj_prt, MAX_PRT>
 {
 
     PRT_REF allocate( bool_t force, const PRT_REF & override = PRT_REF( MAX_PRT ) );
+
+    ego_particle_list( size_t len = 512 ) : t_ego_obj_lst<ego_obj_prt, MAX_PRT>( len ) {}
 
 protected:
     PRT_REF allocate_find();

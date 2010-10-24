@@ -30,10 +30,10 @@ INLINE PIP_REF ego_prt::get_ipip( const PRT_REF & iprt )
 {
     ego_prt * pprt;
 
-    if ( !DEFINED_PRT( iprt ) ) return ( PIP_REF )MAX_PIP;
+    if ( !DEFINED_PRT( iprt ) ) return PIP_REF( MAX_PIP );
     pprt = PrtObjList.get_pdata( iprt );
 
-    if ( !LOADED_PIP( pprt->pip_ref ) ) return ( PIP_REF )MAX_PIP;
+    if ( !LOADED_PIP( pprt->pip_ref ) ) return PIP_REF( MAX_PIP );
 
     return pprt->pip_ref;
 }

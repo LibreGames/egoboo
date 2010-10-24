@@ -157,7 +157,7 @@ display_list_t * fnt_append_append_text_literal( display_list_t * dlst_ptr, TTF_
     // trap cases that will generate an error
     if ( NULL == ttf_ptr || NULL == text || '\0' == text[0] )
     {
-        return display_list_dtor( dlst_ptr, bfalse );
+        return display_list_dealloc( dlst_ptr );
     }
 
     // convert the text to a display item
@@ -400,7 +400,7 @@ int fnt_vconvertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, i
     // some problem printing the text?
     if ( vsnprintf_rv < 0 )
     {
-        dlst_ptr = display_list_dtor( dlst_ptr, bfalse );
+        dlst_ptr = display_list_dealloc( dlst_ptr );
         retval = 0;
     }
     else
@@ -422,7 +422,7 @@ int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, i
     bool_t local_tex_lst;
 
     // free all resources that are about to be replaced
-    dlst_ptr = display_list_dtor( dlst_ptr, bfalse );
+    dlst_ptr = display_list_dealloc( dlst_ptr );
 
     // abort on bad text
     if ( NULL == ttf_ptr || NULL == text || '\0' == text[0] )

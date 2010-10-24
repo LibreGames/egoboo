@@ -48,10 +48,10 @@ INLINE CAP_REF pro_get_icap( const PRO_REF & iobj )
 {
     ego_pro * pobj;
 
-    if ( !LOADED_PRO( iobj ) ) return ( CAP_REF )MAX_CAP;
+    if ( !LOADED_PRO( iobj ) ) return CAP_REF( MAX_CAP );
     pobj = ProList.lst + iobj;
 
-    return LOADED_CAP( pobj->icap ) ? pobj->icap : ( CAP_REF )MAX_CAP;
+    return LOADED_CAP( pobj->icap ) ? pobj->icap : CAP_REF( MAX_CAP );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -59,10 +59,10 @@ INLINE MAD_REF pro_get_imad( const PRO_REF & iobj )
 {
     ego_pro * pobj;
 
-    if ( !LOADED_PRO( iobj ) ) return ( MAD_REF )MAX_MAD;
+    if ( !LOADED_PRO( iobj ) ) return MAD_REF( MAX_MAD );
     pobj = ProList.lst + iobj;
 
-    return LOADED_MAD( pobj->imad ) ? pobj->imad : ( MAD_REF )MAX_MAD;
+    return LOADED_MAD( pobj->imad ) ? pobj->imad : MAD_REF( MAX_MAD );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -70,10 +70,10 @@ INLINE EVE_REF pro_get_ieve( const PRO_REF & iobj )
 {
     ego_pro * pobj;
 
-    if ( !LOADED_PRO( iobj ) ) return ( EVE_REF )MAX_EVE;
+    if ( !LOADED_PRO( iobj ) ) return EVE_REF( MAX_EVE );
     pobj = ProList.lst + iobj;
 
-    return LOADED_EVE( pobj->ieve ) ? pobj->ieve : ( EVE_REF )MAX_EVE;
+    return LOADED_EVE( pobj->ieve ) ? pobj->ieve : EVE_REF( MAX_EVE );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -82,7 +82,10 @@ INLINE PIP_REF pro_get_ipip( const PRO_REF & iobj, int pip_index )
     ego_pro * pobj;
     PIP_REF found_pip, global_pip;
 
-    found_pip = ( PIP_REF )MAX_PIP;
+    // reject the values meaning "pip not specified"
+    if ( pip_index < 0 ) return PIP_REF( MAX_PIP );
+
+    found_pip = PIP_REF( MAX_PIP );
 
     if ( !LOADED_PRO( iobj ) )
     {
@@ -184,7 +187,7 @@ INLINE ego_pip * pro_get_ppip( const PRO_REF & iobj, int pip_index )
     pobj = ProList.lst + iobj;
 
     // find the local pip if it exists
-    local_pip = ( PIP_REF )MAX_PIP;
+    local_pip = PIP_REF( MAX_PIP );
     if ( pip_index < MAX_PIP_PER_PROFILE )
     {
         local_pip = pobj->prtpip[pip_index];

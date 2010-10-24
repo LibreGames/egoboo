@@ -68,17 +68,34 @@ void t_ego_obj_lst< _ty, _sz >::clear_free_list()
 {
     while ( !free_queue.empty() ) free_queue.pop();
 }
+//--------------------------------------------------------------------------------------------
+template <typename _ty, size_t _sz>
+void t_ego_obj_lst< _ty, _sz >::reinit()
+{
+    // reinitialize the free list so that no more objects beyond _max_len
+    // will be allocated
+
+    // clear the free list, but do nothing to the used list
+    clear_free_list();
+
+    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
+    {
+        if ( !ary[cnt].get_allocated() )
+        {
+            free_queue.push( cnt );
+        }
+    }
+}
+
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
 void t_ego_obj_lst< _ty, _sz >::init()
 {
-    int cnt;
-
     clear_free_list();
     used_map.clear();
 
-    for ( cnt = 0; cnt < _sz; cnt++ )
+    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
     {
         _ty * pobj = ary + cnt;
 
@@ -94,7 +111,7 @@ void t_ego_obj_lst< _ty, _sz >::init()
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
-void t_ego_obj_lst< _ty, _sz >::dtor_this()
+void t_ego_obj_lst< _ty, _sz >::deinit()
 {
     reference ref;
     size_t           cnt;
@@ -106,6 +123,32 @@ void t_ego_obj_lst< _ty, _sz >::dtor_this()
     {
         _ty::run_deconstruct( ary + cnt, 100 );
     }
+}
+
+//--------------------------------------------------------------------------------------------
+template <typename _ty, size_t _sz>
+bool_t t_ego_obj_lst< _ty, _sz >::free_raw( const t_reference<_ty> & ref )
+{
+    // grab some pointers
+    _ty * ptr = get_ptr( ref );
+    if ( NULL == ptr ) return bfalse;
+
+    ego_obj * pbase = ptr->get_pego_obj();
+    if ( NULL == pbase ) return bfalse;
+
+    // move the element from the used_map...
+    used_map.remove( ref );
+    cpp_list_state::set_used( pbase->get_plist(), bfalse );
+
+    // ...to the free_queue
+    if ( ref.get_value() < _max_len )
+    {
+        // but only if the index is less than out current limit
+        free_queue.push( ref.get_value() );
+    }
+    cpp_list_state::set_free( pbase->get_plist(), btrue );
+
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -138,32 +181,13 @@ void t_ego_obj_lst< _ty, _sz >::update_used()
     // now iterate through our stack and remove the elements
     while ( !tmp_stack.empty() )
     {
-        // grab the top element
-        const REF_T idx = tmp_stack.top();
+        free_raw( reference( tmp_stack.top() ) );
         tmp_stack.pop();
-
-        // convert this back into a reference
-        reference tmp_ref( idx );
-
-        // grab some pointers
-        _ty * ptr = get_ptr( tmp_ref );
-        if ( NULL == ptr ) continue;
-
-        ego_obj * pbase = ptr->get_pego_obj();
-        if ( NULL == pbase ) continue;
-
-        // move the element from the used_map...
-        used_map.remove( tmp_ref );
-        cpp_list_state::set_used( pbase->get_plist(), bfalse );
-
-        // ...to the free_queue
-        free_queue.push( tmp_ref.get_value() );
-        cpp_list_state::set_free( pbase->get_plist(), btrue );
     }
 
     // go through the object array and see if (God forbid) there is an
     // object that is marked as allocated, but is not in the used map
-    for ( size_t cnt = 0; cnt < _sz; cnt++ )
+    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
     {
         _ty     * ptr = ary + cnt;
 
@@ -204,9 +228,9 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::free_one( const t_reference<_ty> & ref )
 
     // if we are inside a t_ego_obj_lst<> loop, do not actually change the length of the
     // list. This will cause some problems later.
-    if ( t_ego_obj_lst< _ty, _sz >::loop_depth > 0 )
+    if ( loop_depth > 0 )
     {
-        retval = t_ego_obj_lst< _ty, _sz >::add_termination( ref );
+        retval = add_termination( ref );
     }
     else
     {
@@ -217,13 +241,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::free_one( const t_reference<_ty> & ref )
         // we are now done killing the object
         ego_obj::end_invalidating( pbase );
 
-        // remove it from the used map
-        used_map.remove( ref );
-        cpp_list_state::set_used( pobj->get_plist(), bfalse );
-
-        // add it to the free stack
-        free_queue.push( ref.get_value() );
-        cpp_list_state::set_free( pobj->get_plist(), btrue );
+        free_raw( ref );
 
         // no longer allocated
         cpp_list_state::set_allocated( pobj->get_plist(), bfalse );
@@ -262,7 +280,7 @@ void t_ego_obj_lst< _ty, _sz >::free_all()
 
     for ( cnt = 0; cnt < _sz; cnt++ )
     {
-        t_ego_obj_lst< _ty, _sz >::free_one( cnt );
+        free_one( cnt );
     }
 }
 
@@ -278,7 +296,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::activate_object( const t_reference<_
     // if the object is already being used, make sure to destroy the old one
     if ( FLAG_ALLOCATED_PBASE( pbase ) && FLAG_VALID_PBASE( pbase ) )
     {
-        t_ego_obj_lst< _ty, _sz >::free_one( ref );
+        free_one( ref );
     }
 
     // allocate the new one
@@ -314,7 +332,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::allocate( const t_reference<_ty> & o
     else
     {
         // the reference is valid, so activate the object
-        ref = t_ego_obj_lst< _ty, _sz >::activate_object( ref );
+        ref = activate_object( ref );
 
         _ty * pobj = ary + ref.get_value();
 
