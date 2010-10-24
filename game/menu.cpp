@@ -616,7 +616,7 @@ void mnu_state_data::format()
 //--------------------------------------------------------------------------------------------
 void mnu_state_data::begin_widgets( ui_Widget lst[], size_t count )
 {
-    for ( int cnt = 0; cnt < count; cnt ++ )
+    for ( size_t cnt = 0; cnt < count; cnt ++ )
     {
         ui_Widget::reset( lst + cnt, cnt );
     }
@@ -625,7 +625,7 @@ void mnu_state_data::begin_widgets( ui_Widget lst[], size_t count )
 //--------------------------------------------------------------------------------------------
 void mnu_state_data::end_widgets( ui_Widget lst[], size_t count )
 {
-    for ( int cnt = 0; cnt < count; cnt ++ )
+    for ( size_t cnt = 0; cnt < count; cnt ++ )
     {
         ui_Widget::dtor_this( lst + cnt );
     }
@@ -634,7 +634,7 @@ void mnu_state_data::end_widgets( ui_Widget lst[], size_t count )
 //--------------------------------------------------------------------------------------------
 void mnu_state_data::begin_labels( ui_Widget lst[], size_t count )
 {
-    for ( int cnt = 0; cnt < count; cnt ++ )
+    for ( size_t cnt = 0; cnt < count; cnt ++ )
     {
         ui_Widget::reset( lst + cnt, UI_Nothing );
     }
@@ -724,7 +724,7 @@ int mnu_state_data::run( double deltaTime )
             }
             else
             {
-                for ( int cnt = 0; cnt < but_state.but_count; cnt++ )
+                for ( size_t cnt = 0; cnt < but_state.but_count; cnt++ )
                 {
                     if ( BUTTON_UP == ui_Widget::Run( exit_button_ptr ) )
                     {

@@ -83,7 +83,7 @@ bool_t mpd_BSP::alloc( mpd_BSP * pbsp, ego_mpd * pmesh )
     if ( 0 == pmesh->gmem.grid_count ) return bfalse;
 
     // allocate the ego_BSP_leaf   list, the containers for the actual tiles
-    ego_BSP_leaf_ary::alloc( &( pbsp->nodes ), pmesh->gmem.grid_count );
+    pbsp->nodes.resize( pmesh->gmem.grid_count );
     if ( 0 == pbsp->nodes.size() ) return bfalse;
 
     // set up the initial bounding volume size
@@ -92,7 +92,7 @@ bool_t mpd_BSP::alloc( mpd_BSP * pbsp, ego_mpd * pmesh )
     // construct the ego_BSP_leaf   list
     for ( i = 0; i < pmesh->gmem.grid_count; i++ )
     {
-        ego_BSP_leaf        * pleaf = pbsp->nodes + i;
+        ego_BSP_leaf  * pleaf = &( pbsp->nodes[i] );
         ego_tile_info * ptile = pmesh->tmem.tile_list + i;
 
         // add the bounding volume for this tile to the bounding volume for the mesh
@@ -115,7 +115,7 @@ bool_t mpd_BSP::dealloc( mpd_BSP * pbsp )
     ego_BSP_tree::dealloc( &( pbsp->tree ) );
 
     // deallocate the nodes
-    ego_BSP_leaf_ary::dealloc( &( pbsp->nodes ) );
+    pbsp->nodes.resize( 0 );
 
     return btrue;
 }
@@ -125,10 +125,10 @@ bool_t mpd_BSP::fill( mpd_BSP * pbsp )
 {
     size_t tile;
 
-    for ( tile = 0; tile < pbsp->nodes.top; tile++ )
+    for ( tile = 0; tile < pbsp->nodes.size(); tile++ )
     {
         ego_tile_info * pdata;
-        ego_BSP_leaf        * pleaf = pbsp->nodes + tile;
+        ego_BSP_leaf  * pleaf = &( pbsp->nodes[tile] );
 
         // do not deal with uninitialized nodes
         if ( pleaf->data_type <= LEAF_UNKNOWN ) continue;
@@ -148,18 +148,12 @@ bool_t mpd_BSP::fill( mpd_BSP * pbsp )
 }
 
 //--------------------------------------------------------------------------------------------
-int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst )
+int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
     /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
     if ( NULL == pbsp || NULL == paabb ) return 0;
-
-    if ( NULL == colst ) return 0;
-
-    colst->top = 0;
-
-    if ( 0 == colst->size() ) return 0;
 
     return ego_BSP_tree::collide( &( pbsp->tree ), paabb, colst );
 }

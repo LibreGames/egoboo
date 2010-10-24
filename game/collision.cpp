@@ -138,7 +138,7 @@ static ego_prt_bundle * update_prt_platform_attachment( ego_prt_bundle * pbdl );
 static CHashList_t   * _CHashList_ptr = NULL;
 static HashNode_ary  _hn_ary;                 ///< the available ego_hash_node collision nodes for the CHashList_t
 static CoNode_ary    _co_ary;                 ///< the available ego_CoNode    data pointed to by the ego_hash_node nodes
-static ego_BSP_leaf_pary _coll_leaf_lst;
+static leaf_child_list_t _coll_leaf_lst;
 static CoNode_ary    _coll_node_lst;
 
 static bool_t _collision_hash_initialized = bfalse;
@@ -156,8 +156,6 @@ bool_t collision_system_begin()
 
         if ( !HashNode_ary::alloc( &_hn_ary, COLLISION_HASH_NODES ) ) goto collision_system_begin_fail;
 
-        if ( !ego_BSP_leaf_pary::alloc( &_coll_leaf_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
-
         if ( !CoNode_ary::alloc( &_coll_node_lst, COLLISION_LIST_SIZE ) ) goto collision_system_begin_fail;
 
         // delete the object BSP data
@@ -172,8 +170,9 @@ collision_system_begin_fail:
 
     CoNode_ary::dealloc( &_co_ary );
     HashNode_ary::dealloc( &_hn_ary );
-    ego_BSP_leaf_pary::dealloc( &_coll_leaf_lst );
     CoNode_ary::dealloc( &_coll_node_lst );
+
+    if ( !_coll_leaf_lst.empty() ) _coll_leaf_lst.clear();
 
     _collision_system_initialized = bfalse;
 
@@ -202,8 +201,9 @@ void collision_system_end()
     {
         CoNode_ary::dealloc( &_co_ary );
         HashNode_ary::dealloc( &_hn_ary );
-        ego_BSP_leaf_pary::dealloc( &_coll_leaf_lst );
         CoNode_ary::dealloc( &_coll_node_lst );
+
+        if ( !_coll_leaf_lst.empty() ) _coll_leaf_lst.clear();
 
         _collision_system_initialized = bfalse;
     }
@@ -499,31 +499,28 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
         ego_BSP_aabb::from_oct_bb( &tmp_aabb, &tmp_oct );
 
         // find all collisions with other characters and particles
-        _coll_leaf_lst.top = 0;
-        ego_obj_BSP::collide( &( ego_obj_BSP::root ), &tmp_aabb, &_coll_leaf_lst );
+        if ( !_coll_leaf_lst.empty() ) _coll_leaf_lst.clear();
+        ego_obj_BSP::collide( &( ego_obj_BSP::root ), &tmp_aabb, _coll_leaf_lst );
 
         // transfer valid _coll_leaf_lst entries to pchlst entries
         // and sort them by their initial times
-        if ( _coll_leaf_lst.top > 0 )
+        if ( _coll_leaf_lst.size() > 0 )
         {
-            size_t j;
-
-            for ( j = 0; j < _coll_leaf_lst.top; j++ )
+            leaf_child_list_t::iterator it;
+            for ( it = _coll_leaf_lst.begin(); it != _coll_leaf_lst.end(); it++ )
             {
-                ego_BSP_leaf * pleaf;
                 size_t      coll_ref;
                 ego_CoNode    tmp_codata;
                 bool_t      do_insert;
                 BIT_FIELD   test_platform;
 
-                pleaf = _coll_leaf_lst[j];
-                if ( NULL == pleaf ) continue;
+                if ( NULL == ( *it ) ) continue;
 
                 // assume the worst
                 do_insert = bfalse;
 
-                coll_ref = pleaf->index;
-                if ( LEAF_CHR == pleaf->data_type )
+                coll_ref = ( *it )->index;
+                if ( LEAF_CHR == ( *it )->data_type )
                 {
                     // collided with a character
                     CHR_REF ichr_b = ( CHR_REF )coll_ref;
@@ -570,7 +567,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
                         }
                     }
                 }
-                else if ( LEAF_PRT == pleaf->data_type )
+                else if ( LEAF_PRT == ( *it )->data_type )
                 {
                     // collided with a particle
                     PRT_REF iprt_b = ( PRT_REF )coll_ref;

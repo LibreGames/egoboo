@@ -32,9 +32,9 @@
 //--------------------------------------------------------------------------------------------
 // private functions
 
-static bool_t ego_BSP_leaf_list_insert( ego_BSP_leaf ** lst, size_t * pcount, ego_BSP_leaf * n );
-static bool_t ego_BSP_leaf_list_clear( ego_BSP_leaf ** lst, size_t * pcount );
-static bool_t ego_BSP_leaf_list_collide( ego_BSP_leaf * leaf_lst, size_t leaf_count, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst );
+static bool_t ego_BSP_leaf_list_insert( leaf_child_list_t & lst, ego_BSP_leaf * n );
+static bool_t ego_BSP_leaf_list_clear( leaf_child_list_t & lst );
+static bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -120,7 +120,8 @@ bool_t ego_BSP_aabb::reset( ego_BSP_aabb * psrc )
     size_t cnt;
 
     if ( NULL == psrc ) return bfalse;
-    if ( 0 == psrc->mins.size() || 0 == psrc->mids.size() || 0 == psrc->maxs.size() ) return bfalse;
+
+    if ( psrc->mins.empty() || psrc->mids.empty() || psrc->maxs.empty() ) return bfalse;
 
     for ( cnt = 0; cnt < psrc->dim; cnt++ )
     {
@@ -352,40 +353,6 @@ bool_t ego_BSP_branch::destroy( ego_BSP_branch ** ppbranch )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_branch * ego_BSP_branch::create_ary( size_t ary_size, size_t dim )
-{
-    size_t         cnt;
-    ego_BSP_branch * lst;
-
-    lst = EGOBOO_NEW_ARY( ego_BSP_branch  , ary_size );
-    if ( NULL == lst ) return lst;
-
-    for ( cnt = 0; cnt < ary_size; cnt++ )
-    {
-        ego_BSP_branch::alloc( lst + cnt, dim );
-    }
-
-    return lst;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_BSP_branch::destroy_ary( size_t ary_size, ego_BSP_branch ** lst )
-{
-    size_t cnt;
-
-    if ( NULL == lst || NULL == *lst || 0 == ary_size ) return bfalse;
-
-    for ( cnt = 0; cnt < ary_size; cnt++ )
-    {
-        ego_BSP_branch::dealloc(( *lst ) + cnt );
-    }
-
-    EGOBOO_DELETE_ARY( *lst );
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
 ego_BSP_branch * ego_BSP_branch::alloc( ego_BSP_branch * B, size_t dim )
 {
 
@@ -394,16 +361,18 @@ ego_BSP_branch * ego_BSP_branch::alloc( ego_BSP_branch * B, size_t dim )
     if ( 0 == dim ) return B;
 
     int child_count;
+
     // determine the number of children from the number of dimensions
-    child_count = 2 << ( dim - 1 );
+    child_count = ( 0 == dim ) ? 0 : 2 << ( dim - 1 );
 
     // allocate the child list
-    B->child_lst = EGOBOO_NEW_ARY( ego_BSP_branch  *, child_count );
-    if ( NULL != B->child_lst )
+    B->child_lst.resize( child_count );
+    EGOBOO_ASSERT( child_count == B->child_lst.size() )
+
+    // initialize the elements
+    for ( int cnt = 0; cnt < child_count; cnt++ )
     {
-        int cnt;
-        for ( cnt = 0; cnt < child_count; cnt++ ) B->child_lst[cnt] = NULL;
-        B->child_count = child_count;
+        B->child_lst[cnt] = NULL;
     }
 
     // allocate the branch's bounding box
@@ -429,13 +398,11 @@ ego_BSP_branch * ego_BSP_branch::dealloc( ego_BSP_branch * B )
 {
     if ( NULL == B ) return B;
 
-    EGOBOO_DELETE_ARY( B->child_lst );
-    B->child_count = 0;
+    B->child_lst.resize( 0 );
 
     ego_BSP_aabb::dealloc( &( B->bbox ) );
 
-    EGOBOO_DELETE_ARY( B->child_lst );
-    B->child_count = 0;
+    B->child_lst.resize( 0 );
 
     dealloc_nodes( B, btrue );
 
@@ -468,8 +435,7 @@ bool_t ego_BSP_branch::unlink( ego_BSP_branch * B )
 
     // completely unlink the branch
     B->parent   = NULL;
-    B->node_lst = NULL;
-    for ( i = 0; i < B->child_count; i++ )
+    for ( i = 0; i < B->child_lst.size(); i++ )
     {
         if ( NULL != B->child_lst[i] )
         {
@@ -478,19 +444,26 @@ bool_t ego_BSP_branch::unlink( ego_BSP_branch * B )
         B->child_lst[i] = NULL;
     }
 
+    if ( !B->node_set.empty() )
+    {
+        B->node_set.clear();
+    }
+
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_branch::insert_leaf( ego_BSP_branch * B, ego_BSP_leaf * n )
 {
-    return ego_BSP_leaf_list_insert( &( B->node_lst ), &( B->node_count ), n );
+    std::pair <leaf_child_list_t::iterator, bool> rv = B->node_set.insert( n );
+
+    return rv.second;
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t  ego_BSP_branch::insert_branch( ego_BSP_branch * B, int index, ego_BSP_branch * B2 )
 {
-    if ( NULL == B || index < 0 || ( size_t )index >= B->child_count ) return bfalse;
+    if ( NULL == B || index < 0 || ( size_t )index >= B->child_lst.size() ) return bfalse;
 
     if ( NULL == B2 ) return bfalse;
 
@@ -517,7 +490,7 @@ bool_t ego_BSP_branch::clear_nodes( ego_BSP_branch * B, bool_t recursive )
     if ( recursive )
     {
         // recursively clear out any nodes in the child_lst
-        for ( cnt = 0; cnt < B->child_count; cnt++ )
+        for ( cnt = 0; cnt < B->child_lst.size(); cnt++ )
         {
             if ( NULL == B->child_lst[cnt] ) continue;
 
@@ -526,8 +499,10 @@ bool_t ego_BSP_branch::clear_nodes( ego_BSP_branch * B, bool_t recursive )
     }
 
     // clear the node list
-    B->node_count = 0;
-    B->node_lst   = NULL;
+    if ( !B->node_set.empty() )
+    {
+        B->node_set.clear();
+    }
 
     return btrue;
 }
@@ -542,7 +517,7 @@ bool_t ego_BSP_branch::dealloc_nodes( ego_BSP_branch * B, bool_t recursive )
     if ( recursive )
     {
         // recursively clear out any nodes in the child_lst
-        for ( cnt = 0; cnt < B->child_count; cnt++ )
+        for ( cnt = 0; cnt < B->child_lst.size(); cnt++ )
         {
             if ( NULL == B->child_lst[cnt] ) continue;
 
@@ -551,7 +526,7 @@ bool_t ego_BSP_branch::dealloc_nodes( ego_BSP_branch * B, bool_t recursive )
     }
 
     // free all nodes of this branch
-    ego_BSP_leaf_list_clear( &( B->node_lst ), &( B->node_count ) );
+    ego_BSP_leaf_list_clear( B->node_set );
 
     return btrue;
 }
@@ -570,7 +545,7 @@ bool_t ego_BSP_tree::prune_one_branch( ego_BSP_tree   * t, ego_BSP_branch * B, b
     if ( recursive )
     {
         // prune all the children
-        for ( i = 0; i < B->child_count; i++ )
+        for ( i = 0; i < B->child_lst.size(); i++ )
         {
             ego_BSP_tree::prune_one_branch( t, B->child_lst[i], btrue );
         }
@@ -587,7 +562,7 @@ bool_t ego_BSP_tree::prune_one_branch( ego_BSP_tree   * t, ego_BSP_branch * B, b
             bool_t found = bfalse;
 
             // unlink the parent and return the node to the free list
-            for ( i = 0; i < B->parent->child_count; i++ )
+            for ( i = 0; i < B->parent->child_lst.size(); i++ )
             {
                 if ( B->parent->child_lst[i] == B )
                 {
@@ -599,44 +574,40 @@ bool_t ego_BSP_tree::prune_one_branch( ego_BSP_tree   * t, ego_BSP_branch * B, b
             EGOBOO_ASSERT( found );
         }
 
-        retval = ego_BSP_branch_pary::push_back( &( t->branch_free ), B );
+        t->branch_free.push( B );
+
+        retval = btrue;
     }
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_branch::add_all_nodes( ego_BSP_branch * pbranch, ego_BSP_leaf_pary * colst )
+bool_t ego_BSP_branch::add_all_nodes( ego_BSP_branch * pbranch, leaf_child_list_t & colst )
 {
-    size_t       cnt, colst_size;
-    ego_BSP_leaf * ptmp;
+    size_t cnt, colst_size;
 
-    if ( NULL == pbranch || NULL == colst ) return bfalse;
+    if ( NULL == pbranch ) return bfalse;
 
-    colst_size = ego_BSP_leaf_pary::get_size( colst );
-    if ( 0 == colst_size || ego_BSP_leaf_pary::get_top( colst ) >= colst_size ) return bfalse;
-
-    // add any nodes in the node_lst
-    for ( cnt = 0, ptmp = pbranch->node_lst; NULL != ptmp && cnt < pbranch->node_count; ptmp = ptmp->next, cnt++ )
+    // add any nodes in the node_set
+    leaf_child_list_t::iterator it;
+    for ( it = pbranch->node_set.begin(); it != pbranch->node_set.end(); it++ )
     {
-        if ( !ego_BSP_leaf_pary::push_back( colst, ptmp ) ) break;
+        if ( NULL == *it ) continue;
+
+        colst.insert( *it );
     }
 
-    // if there is no more room. stop
-    if ( ego_BSP_leaf_pary::get_top( colst ) >= colst_size ) return bfalse;
-
     // add all nodes from all children
-    for ( cnt = 0; cnt < pbranch->child_count; cnt++ )
+    for ( cnt = 0; cnt < pbranch->child_lst.size(); cnt++ )
     {
         ego_BSP_branch * pchild = pbranch->child_lst[cnt];
         if ( NULL == pchild ) continue;
 
         ego_BSP_branch::add_all_nodes( pchild, colst );
-
-        if ( ego_BSP_leaf_pary::get_top( colst ) >= colst_size ) break;
     }
 
-    return ( ego_BSP_leaf_pary::get_top( colst ) < colst_size );
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -649,7 +620,7 @@ bool_t ego_BSP_branch::empty( ego_BSP_branch * pbranch )
 
     // look to see if all children are free
     empty = btrue;
-    for ( cnt = 0; cnt < pbranch->child_count; cnt++ )
+    for ( cnt = 0; cnt < pbranch->child_lst.size(); cnt++ )
     {
         if ( NULL != pbranch->child_lst[cnt] )
         {
@@ -658,26 +629,19 @@ bool_t ego_BSP_branch::empty( ego_BSP_branch * pbranch )
         }
     }
 
-    // check to see if there are any nodes in this branch's node_lst
-    if ( NULL != pbranch->node_lst )
-    {
-        empty = bfalse;
-    }
+    // check to see if there are any nodes in this branch's node_set
 
-    return empty;
+    return pbranch->node_set.empty();
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst )
+bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
     /// @details BB@> Recursively search the BSP tree for collisions with the paabb
     //      Return bfalse if we need to break out of the recursive search for any reason.
 
     size_t       cnt;
     ego_BSP_aabb * pbranch_bb;
-
-    // if the collision list doesn't exist, stop
-    if ( NULL == colst || 0 == colst->size() || colst->top >= colst->size() ) return bfalse;
 
     // if the branch doesn't exist, stop
     if ( NULL == pbranch ) return bfalse;
@@ -698,11 +662,11 @@ bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, 
         return bfalse;
     }
 
-    // check the node_lst
-    ego_BSP_leaf_list_collide( pbranch->node_lst, pbranch->node_count, paabb, colst );
+    // check the node_set
+    ego_BSP_leaf_list_collide( pbranch->node_set, paabb, colst );
 
     // check for collisions with all child_lst branches
-    for ( cnt = 0; cnt < pbranch->child_count; cnt++ )
+    for ( cnt = 0; cnt < pbranch->child_lst.size(); cnt++ )
     {
         ego_BSP_branch * pchild = pbranch->child_lst[cnt];
 
@@ -717,9 +681,30 @@ bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, 
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+bool_t ego_BSP_tree::free_allocation_lists( ego_BSP_tree   * t )
+{
+    if ( NULL == t ) return bfalse;
+
+    // stop tracking all free elements
+    while ( !t->branch_free.empty() )
+    {
+        t->branch_free.pop();
+    }
+
+    // stop tracking all used elements
+    if ( !t->branch_used.empty() )
+    {
+        t->branch_used.clear();
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::init_0( ego_BSP_tree   * t )
 {
-    /// @details BB@> reset the tree to the "empty" state. Assume we do not own the node_lst or child_lst.
+    /// @details BB@> reset the tree to the "empty" state. Assume we do not own the node_set or child_lst.
 
     size_t i;
     ego_BSP_branch * pbranch;
@@ -728,12 +713,12 @@ bool_t ego_BSP_tree::init_0( ego_BSP_tree   * t )
     ego_BSP_tree::dealloc_nodes( t, bfalse );
 
     // initialize the leaves.
-    t->branch_free.top = 0;
-    t->branch_used.top = 0;
+    free_allocation_lists( t );
+
     for ( i = 0; i < t->branch_all.size(); i++ )
     {
         // grab a branch off of the static list
-        pbranch = t->branch_all + i;
+        pbranch = &( t->branch_all[i] );
 
         if ( NULL == pbranch ) continue;
 
@@ -741,7 +726,7 @@ bool_t ego_BSP_tree::init_0( ego_BSP_tree   * t )
         ego_BSP_branch::unlink( pbranch );
 
         // push it onto the "stack"
-        ego_BSP_branch_pary::push_back( &( t->branch_free ), pbranch );
+        t->branch_free.push( pbranch );
     };
 
     return btrue;
@@ -756,8 +741,7 @@ ego_BSP_tree   * ego_BSP_tree::ctor_this( ego_BSP_tree   * t, Sint32 dim, Sint32
 
     // reset the depth in case of an error
     t->depth = -1;
-    t->branch_free.top = 0;
-    t->branch_used.top = 0;
+    free_allocation_lists( t );
 
     //---- allocate everything
     if ( !ego_BSP_tree::alloc( t, dim, depth ) ) return t;
@@ -766,11 +750,10 @@ ego_BSP_tree   * ego_BSP_tree::ctor_this( ego_BSP_tree   * t, Sint32 dim, Sint32
     t->depth = depth;
 
     // initialize the free list
-    t->branch_free.top = 0;
-    t->branch_used.top = 0;
+    free_allocation_lists( t );
     for ( cnt = 0; cnt < t->branch_all.size(); cnt++ )
     {
-        ego_BSP_branch_pary::push_back( &( t->branch_free ), t->branch_all + cnt );
+        t->branch_free.push( &( t->branch_all[cnt] ) );
     }
 
     return t;
@@ -789,7 +772,6 @@ ego_BSP_tree * ego_BSP_tree::dtor_this( ego_BSP_tree   * t )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::alloc( ego_BSP_tree * t, Sint32 dim, Sint32 depth )
 {
-    size_t cnt;
     int    node_count;
 
     if ( NULL == t ) return bfalse;
@@ -799,24 +781,18 @@ bool_t ego_BSP_tree::alloc( ego_BSP_tree * t, Sint32 dim, Sint32 depth )
     node_count = ego_BSP_tree::count_nodes( dim, depth );
     if ( node_count < 0 ) return bfalse;
 
-    if ( t->branch_all.size() > 0 ) return bfalse;
-
     // re-initialize the variables
     t->dimensions = 0;
 
     // allocate the branches
-    ego_BSP_branch_ary::alloc( &( t->branch_all ), node_count );
-    if ( 0 == t->branch_all.size() ) return bfalse;
+    t->branch_all.resize( node_count );
+    if ( node_count != t->branch_all.size() ) return bfalse;
 
     // initialize the array branches
-    for ( cnt = 0; cnt < node_count; cnt++ )
+    for ( int cnt = 0; cnt < node_count; cnt++ )
     {
-        ego_BSP_branch::alloc( t->branch_all + cnt, dim );
+        ego_BSP_branch::alloc( &( t->branch_all[cnt] ), dim );
     }
-
-    // allocate the aux arrays
-    ego_BSP_branch_pary::alloc( &( t->branch_used ), node_count );
-    ego_BSP_branch_pary::alloc( &( t->branch_free ), node_count );
 
     // initialize the root bounding box
     ego_BSP_aabb::alloc( &( t->bbox ), dim );
@@ -834,20 +810,19 @@ bool_t ego_BSP_tree::dealloc( ego_BSP_tree   * t )
 
     if ( NULL == t ) return bfalse;
 
-    if ( 0 == t->branch_all.size() ) return btrue;
+    if ( t->branch_all.empty() ) return btrue;
 
     // destruct the branches
     for ( i = 0; i < t->branch_all.size(); i++ )
     {
-        ego_BSP_branch::dealloc( t->branch_all + i );
+        ego_BSP_branch::dealloc( &( t->branch_all[i] ) );
     }
 
     // deallocate the branches
-    ego_BSP_branch_ary::dealloc( &( t->branch_all ) );
+    t->branch_all.resize( 0 );
 
     // deallocate the aux arrays
-    ego_BSP_branch_pary::dealloc( &( t->branch_used ) );
-    ego_BSP_branch_pary::dealloc( &( t->branch_free ) );
+    free_allocation_lists( t );
 
     // deallocate the root bounding box
     ego_BSP_aabb::dealloc( &( t->bbox ) );
@@ -875,81 +850,50 @@ Sint32 ego_BSP_tree::count_nodes( Sint32 dim, Sint32 depth )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::remove_used( ego_BSP_tree   * t, ego_BSP_branch * B )
 {
-    size_t cnt;
+    if ( NULL == t || NULL == B ) return bfalse;
 
-    if ( NULL == t || 0 == t->branch_used.top ) return bfalse;
-
-    if ( NULL == B ) return bfalse;
-
-    // scan the used list for the branch
-    for ( cnt = 0; cnt < t->branch_used.top; cnt++ )
-    {
-        if ( B == t->branch_used[cnt] ) break;
-    }
-
-    // did we find the branch in the used list?
-    if ( cnt == t->branch_used.top ) return bfalse;
-
-    // reduce the size of the list
-    t->branch_used.top--;
-
-    // move the branch that we found to the top of the list
-    SWAP( ego_BSP_branch *, t->branch_used[cnt], t->branch_used[t->branch_used.top] );
+    t->branch_used.erase( B );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_BSP_branch * ego_BSP_tree::alloc_branch( ego_BSP_tree   * t )
-{
-    ego_BSP_branch ** pB = NULL, * B = NULL;
-
-    if ( NULL == t ) return NULL;
-
-    // grab the top branch
-    pB = ego_BSP_branch_pary::pop_back( &( t->branch_free ) );
-    if ( NULL == pB ) return NULL;
-
-    B = *pB;
-    if ( NULL == B ) return NULL;
-
-    // add it to the used list
-    ego_BSP_branch_pary::push_back( &( t->branch_used ), B );
-
-    return B;
-}
-
-//--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::dealloc_branch( ego_BSP_tree   * t, ego_BSP_branch * B )
 {
-    bool_t retval;
-
     if ( NULL == t || NULL == B ) return bfalse;
 
-    retval = bfalse;
-    if ( ego_BSP_tree::remove_used( t, B ) )
-    {
-        // add it to the used list
-        retval =  ego_BSP_branch_pary::push_back( &( t->branch_free ), B );
-    }
+    t->branch_used.erase( B );
+    t->branch_free.push( B );
 
-    return retval;
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
 ego_BSP_branch * ego_BSP_tree::get_free( ego_BSP_tree   * t )
 {
-    ego_BSP_branch *  B;
+    ego_BSP_branch *  B, * tmp;
 
-    // try to get a branch from our pre-allocated list. do all necessary book-keeping
-    B = ego_BSP_tree::alloc_branch( t );
-    if ( NULL == B ) return NULL;
+    if ( NULL == t ) return NULL;
+
+    // grab a valid value
+    B = tmp = NULL;
+    while ( !t->branch_free.empty() )
+    {
+        tmp = t->branch_free.top();
+        t->branch_free.pop();
+
+        if ( t->branch_used.empty() || t->branch_used.end() == t->branch_used.find( tmp ) )
+        {
+            B = tmp;
+            break;
+        }
+    }
 
     if ( NULL != B )
     {
         // make sure that this branch does not have data left over
         // from its last use
-        EGOBOO_ASSERT( NULL == B->node_lst );
+        EGOBOO_ASSERT( B->node_set.empty() );
 
         // make sure that the data is cleared out
         ego_BSP_branch::unlink( B );
@@ -990,8 +934,10 @@ bool_t ego_BSP_tree::clear_nodes( ego_BSP_tree   * t, bool_t recursive )
     }
 
     // free the infinite nodes of the tree
-    t->infinite_count = 0;
-    t->infinite = NULL;
+    if ( !t->infinite.empty() )
+    {
+        t->infinite.clear();
+    }
 
     return btrue;
 }
@@ -1007,7 +953,7 @@ bool_t ego_BSP_tree::dealloc_nodes( ego_BSP_tree   * t, bool_t recursive )
     }
 
     // free the infinite nodes of the tree
-    ego_BSP_leaf_list_clear( &( t->infinite ), &( t->infinite_count ) );
+    ego_BSP_leaf_list_clear( t->infinite );
 
     return btrue;
 }
@@ -1015,26 +961,27 @@ bool_t ego_BSP_tree::dealloc_nodes( ego_BSP_tree   * t, bool_t recursive )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::dealloc_branches( ego_BSP_tree   * t )
 {
-    size_t cnt;
-
     if ( NULL == t ) return bfalse;
 
     // transfer all the "used" branches back to the "free" branches
-    for ( cnt = 0; cnt < t->branch_used.top; cnt++ )
+    branch_set_t::iterator it;
+    for ( it = t->branch_used.begin(); it != t->branch_used.end(); it++ )
     {
         // grab a used branch
-        ego_BSP_branch * pbranch = t->branch_used[cnt];
-        if ( NULL == pbranch ) continue;
+        if ( NULL == *it ) continue;
 
         // completely unlink the branch
-        ego_BSP_branch::unlink( pbranch );
+        ego_BSP_branch::unlink( *it );
 
         // return the branch to the free list
-        ego_BSP_branch_pary::push_back( &( t->branch_free ), pbranch );
+        t->branch_free.push( *it );
     }
 
     // reset the used list
-    t->branch_used.top = 0;
+    if ( !t->branch_used.empty() )
+    {
+        t->branch_used.clear();
+    }
 
     // remove the tree root
     t->root = NULL;
@@ -1045,17 +992,30 @@ bool_t ego_BSP_tree::dealloc_branches( ego_BSP_tree   * t )
 //--------------------------------------------------------------------------------------------
 bool_t   ego_BSP_tree::prune( ego_BSP_tree   * t )
 {
-    /// @details BB@> remove all leaves with no child_lst or node_lst.
-
-    size_t cnt;
+    /// @details BB@> remove all leaves with no child_lst or node_set.
 
     if ( NULL == t || NULL == t->root ) return bfalse;
 
     // search through all allocated branches. This will not catch all of the
     // empty branches every time, but it should catch quite a few
-    for ( cnt = 0; cnt < t->branch_used.top; cnt++ )
+
+    // defer all deletions until we are finished with scanning t->branch_used
+    std::stack< ego_BSP_branch * > deferred;
+
+    ego_BSP_tree::branch_set_t::iterator it;
+    for ( it = t->branch_used.begin(); it != t->branch_used.end(); it++ )
     {
-        ego_BSP_tree::prune_branch( t, cnt );
+        if ( NULL == *it ) continue;
+
+        if ( ego_BSP_tree::prune_branch( t, *it ) )
+        {
+            deferred.push( *it );
+        }
+    }
+
+    while ( !deferred.empty() )
+    {
+        ego_BSP_tree::dealloc_branch( t, deferred.top() );
     }
 
     return btrue;
@@ -1100,7 +1060,7 @@ ego_BSP_branch * ego_BSP_tree::ensure_branch( ego_BSP_tree   * t, ego_BSP_branch
     ego_BSP_branch * pbranch;
 
     if (( NULL == t ) || ( NULL == B ) ) return NULL;
-    if ( index < 0 || ( signed )index > ( signed )B->child_count ) return NULL;
+    if ( index < 0 || ( signed )index > ( signed )B->child_lst.size() ) return NULL;
 
     // grab any existing value
     pbranch = B->child_lst[index];
@@ -1134,7 +1094,7 @@ bool_t ego_BSP_tree::insert( ego_BSP_tree   * t, ego_BSP_branch * B, ego_BSP_lea
     bool_t retval;
 
     if (( NULL == t ) || ( NULL == B ) || ( NULL == n ) ) return bfalse;
-    if (( signed )index > ( signed )B->child_count ) return bfalse;
+    if (( signed )index > ( signed )B->child_lst.size() ) return bfalse;
 
     if ( index >= 0 && NULL != B->child_lst[index] )
     {
@@ -1142,7 +1102,7 @@ bool_t ego_BSP_tree::insert( ego_BSP_tree   * t, ego_BSP_branch * B, ego_BSP_lea
         return ego_BSP_branch::insert_leaf( B->child_lst[index], n );
     }
 
-    if ( index < 0 || 0 == t->branch_free.top )
+    if ( index < 0 || t->branch_free.empty() )
     {
         // inserting a node into this branch node
         // this can either occur because someone requested it (index < 0)
@@ -1167,7 +1127,7 @@ bool_t ego_BSP_tree::insert( ego_BSP_tree   * t, ego_BSP_branch * B, ego_BSP_lea
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::insert_infinite( ego_BSP_tree   * ptree, ego_BSP_leaf * pleaf )
 {
-    return ego_BSP_leaf_list_insert( &( ptree->infinite ), &( ptree->infinite_count ), pleaf );
+    return ego_BSP_leaf_list_insert( ptree->infinite, pleaf );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1262,7 +1222,7 @@ bool_t ego_BSP_tree::insert_leaf_rec( ego_BSP_tree   * ptree, ego_BSP_branch * p
         // place this node at this index
         retval = ego_BSP_branch::insert_leaf( pbranch, pleaf );
     }
-    else if ( index < pbranch->child_count )
+    else if ( index < pbranch->child_lst.size() )
     {
         bool_t created;
 
@@ -1292,7 +1252,7 @@ bool_t ego_BSP_tree::insert_leaf_rec( ego_BSP_tree   * ptree, ego_BSP_branch * p
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, size_t cnt )
+bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, ego_BSP_branch * B )
 {
     /// @details BB@> an optimized version of iterating through the t->branch_used list
     //                and then calling ego_BSP_tree::prune_branch() on the empty branch. In the old method,
@@ -1302,11 +1262,6 @@ bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, size_t cnt )
     size_t i;
     bool_t remove;
 
-    ego_BSP_branch * B;
-
-    if ( NULL == t || cnt >= t->branch_used.top ) return bfalse;
-
-    B = t->branch_used[ cnt ];
     if ( NULL == B ) return bfalse;
 
     // do not remove the root node
@@ -1320,7 +1275,7 @@ bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, size_t cnt )
             bool_t found = bfalse;
 
             // unlink this node from its parent
-            for ( i = 0; i < B->parent->child_count; i++ )
+            for ( i = 0; i < B->parent->child_lst.size(); i++ )
             {
                 if ( B->parent->child_lst[i] == B )
                 {
@@ -1346,61 +1301,55 @@ bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, size_t cnt )
 
     if ( remove )
     {
-        // reduce the size of the list
-        t->branch_used.top--;
-
         // set B's data to "safe" values
         B->parent = NULL;
-        for ( i = 0; i < B->child_count; i++ ) B->child_lst[i] = NULL;
-        B->node_count = 0;
-        B->node_lst = NULL;
+
+        // clear the child list
+        for ( i = 0; i < B->child_lst.size(); i++ )
+        {
+            B->child_lst[i] = NULL;
+        }
+
+        // reset the node set
+        if ( !B->node_set.empty() )
+        {
+            B->node_set.clear();
+        }
+
         B->depth = -1;
+
         ego_BSP_aabb::reset( &( B->bbox ) );
-
-        // move the branch that we found to the top of the list
-        SWAP( ego_BSP_branch *, t->branch_used[cnt], t->branch_used[t->branch_used.top] );
-
-        // add the branch to the free list
-        ego_BSP_branch_pary::push_back( &( t->branch_free ), B );
     }
 
     return remove;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_BSP_tree::collide( ego_BSP_tree   * tree, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst )
+int ego_BSP_tree::collide( ego_BSP_tree * tree, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
     /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
     if ( NULL == tree || NULL == paabb ) return 0;
 
-    if ( NULL == colst ) return 0;
-    colst->top = 0;
-    if ( 0 == colst->size() ) return 0;
-
     // collide with any "infinite" nodes
-    ego_BSP_leaf_list_collide( tree->infinite, tree->infinite_count, paabb, colst );
+    ego_BSP_leaf_list_collide( tree->infinite, paabb, colst );
 
     // collide with the rest of the tree
     ego_BSP_branch::collide( tree->root, paabb, colst );
 
-    return colst->top;
+    return colst.size();
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_leaf_list_insert( ego_BSP_leaf ** lst, size_t * pcount, ego_BSP_leaf * n )
+bool_t ego_BSP_leaf_list_insert( leaf_child_list_t & lst, ego_BSP_leaf * n )
 {
     /// @details BB@> Insert a leaf in the list, making sure there are no duplicates.
     ///               Duplicates will cause loops in the list and make it impossible to
     ///               traverse properly.
 
-    bool_t       retval;
-    size_t       cnt;
-    ego_BSP_leaf * ptmp;
-
-    if ( NULL == lst || NULL == pcount || NULL == n ) return bfalse;
+    if ( NULL == n ) return bfalse;
 
     if ( n->inserted )
     {
@@ -1408,115 +1357,53 @@ bool_t ego_BSP_leaf_list_insert( ego_BSP_leaf ** lst, size_t * pcount, ego_BSP_l
         log_warning( "ego_BSP_leaf_list_insert() - trying to insert a ego_BSP_leaf that is claiming to be part of a list already\n" );
     }
 
-    retval = bfalse;
+    std::pair <leaf_child_list_t::iterator, bool> rv = lst.insert( n );
 
-    if ( NULL == *lst )
-    {
-        // prepare the node
-        n->next = NULL;
-
-        // insert the node
-        *lst        = n;
-        *pcount     = 1;
-        n->inserted = btrue;
-
-        retval = btrue;
-    }
-    else
-    {
-        bool_t found = bfalse;
-
-        for ( cnt = 0, ptmp = *lst;
-              NULL != ptmp->next && cnt < *pcount && !found;
-              cnt++, ptmp = ptmp->next )
-        {
-            // do not insert duplicates, or we have a big problem
-            if ( n == ptmp )
-            {
-                found = btrue;
-                break;
-            }
-        }
-
-        if ( !found )
-        {
-            EGOBOO_ASSERT( NULL == ptmp->next );
-
-            // prepare the node
-            n->next = NULL;
-
-            // insert the node at the end of the list
-            ptmp->next  = n;
-            *pcount     = ( *pcount ) + 1;
-            n->inserted = btrue;
-
-            retval = btrue;
-        }
-    }
-
-    return retval;
+    return rv.second;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_leaf_list_clear( ego_BSP_leaf ** lst, size_t * pcount )
+bool_t ego_BSP_leaf_list_clear( leaf_child_list_t & lst )
 {
     /// @details BB@> Clear out the leaf list.
 
-    size_t       cnt;
-    ego_BSP_leaf * ptmp;
+    if ( lst.empty() ) return btrue;
 
-    if ( NULL == lst || NULL == pcount ) return bfalse;
-
-    if ( 0 == *pcount )
+    leaf_child_list_t::iterator it;
+    for ( it = lst.begin();  it != lst.end(); it++ )
     {
-        EGOBOO_ASSERT( NULL == *lst );
-        return btrue;
-    }
-
-    for ( cnt = 0;  NULL != *lst && cnt < *pcount; cnt++ )
-    {
-        // pop a node off the stack
-        ptmp = *lst;
-        *lst = ptmp->next;
+        if ( NULL == *it ) continue;
 
         // clean up the node
-        ptmp->inserted = bfalse;
-        ptmp->next     = NULL;
+        ( *it )->inserted = bfalse;
     };
 
-    EGOBOO_ASSERT( NULL == *lst );
-
-    *pcount = 0;
+    lst.clear();
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_leaf_list_collide( ego_BSP_leaf * leaf_lst, size_t leaf_count, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst )
+bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
     /// @details BB@> check for collisions with the given node list
 
-    size_t       cnt;
-    ego_BSP_leaf * pleaf;
     bool_t       retval;
     size_t       colst_size;
 
-    if ( NULL == leaf_lst || 0 == leaf_count ) return bfalse;
+    if ( leaf_lst.empty() ) return bfalse;
     if ( NULL == paabb ) return bfalse;
 
-    colst_size = ego_BSP_leaf_pary::get_size( colst );
-    if ( 0 == colst_size || ego_BSP_leaf_pary::get_top( colst ) >= colst_size )
-        return bfalse;
-
-    for ( cnt = 0, pleaf = leaf_lst;
-          cnt < leaf_count && NULL != pleaf;
-          cnt++, pleaf = pleaf->next )
+    leaf_child_list_t::iterator it;
+    for ( it = leaf_lst.begin(); it != leaf_lst.end(); it++ )
     {
-        ego_BSP_aabb * pleaf_bb = &( pleaf->bbox );
+        if ( NULL == *it ) continue;
 
-        EGOBOO_ASSERT( pleaf->data_type > -1 );
+        ego_BSP_aabb * pleaf_bb = &(( *it )->bbox );
 
-        if ( !pleaf->inserted )
+        EGOBOO_ASSERT(( *it )->data_type > -1 );
+
+        if ( !( *it )->inserted )
         {
             // hmmm.... what to do?
             log_warning( "ego_BSP_leaf_list_collide() - a node in a leaf list is claiming to not be inserted\n" );
@@ -1525,11 +1412,12 @@ bool_t ego_BSP_leaf_list_collide( ego_BSP_leaf * leaf_lst, size_t leaf_count, eg
         if ( ego_BSP_aabb::do_overlap( paabb, pleaf_bb ) )
         {
             // we have a possible intersection
-            if ( !ego_BSP_leaf_pary::push_back( colst, pleaf ) ) break;
+            std::pair <leaf_child_list_t::iterator, bool> rv = colst.insert(( *it ) );
+            if ( rv.second ) break;
         }
     }
 
-    retval = ( ego_BSP_leaf_pary::get_top( colst ) < colst_size );
+    retval = btrue;
 
     return retval;
 }
@@ -1539,7 +1427,8 @@ bool_t ego_BSP_leaf_list_collide( ego_BSP_leaf * leaf_lst, size_t leaf_count, eg
 bool_t ego_BSP_tree::generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BSP_aabb * pdst )
 {
     size_t cnt;
-    int    tnc, child_lst;
+    int    tnc;
+    size_t child_lst_count;
 
     // valid source?
     if ( NULL == psrc || psrc->dim <= 0 ) return bfalse;
@@ -1548,8 +1437,8 @@ bool_t ego_BSP_tree::generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BS
     if ( NULL == pdst ) return bfalse;
 
     // valid index?
-    child_lst = 2 << ( psrc->dim - 1 );
-    if ( index < 0 || index >= child_lst ) return bfalse;
+    child_lst_count = ( 0 == psrc->dim ) ? 0 : 2 << ( psrc->dim - 1 );
+    if ( index < 0 || size_t( index ) >= child_lst_count ) return bfalse;
 
     // make sure that the destination type matches the source type
     if ( pdst->dim != psrc->dim )

@@ -168,7 +168,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
         iprt = allocate_find();
         iprt = allocate_activate( iprt );
     }
-    else if ( force || PrtObjList.free_count() > size_t( maxparticles / 4 ) )
+    else if ( force || PrtObjList.free_count() > signed( maxparticles / 4 ) )
     {
         iprt = t_ego_obj_lst<ego_obj_prt, MAX_PRT>::allocate( override );
     }

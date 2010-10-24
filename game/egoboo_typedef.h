@@ -42,6 +42,8 @@
 #   include <exception>
 #   include <algorithm>
 #   include <functional>
+#   include <vector>
+#   include <set>
 
 #endif
 

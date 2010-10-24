@@ -55,6 +55,6 @@ struct ego_obj_BSP
     static bool_t insert_chr( ego_obj_BSP * pbsp, struct ego_chr * pchr );
     static bool_t insert_prt( ego_obj_BSP * pbsp, struct ego_prt_bundle * pbdl_prt );
 
-    static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst );
+    static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
 };
 

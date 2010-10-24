@@ -263,7 +263,6 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
         ego_chr * pchr = ChrObjList.get_pdata( ichr );
         if ( NULL == pchr ) continue;
 
-        pchr->bsp_leaf.next     = NULL;
         pchr->bsp_leaf.inserted = bfalse;
     }
 
@@ -274,7 +273,6 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
         ego_prt * pprt = PrtObjList.get_pdata( iprt );
         if ( NULL == pprt ) continue;
 
-        pprt->bsp_leaf.next     = NULL;
         pprt->bsp_leaf.inserted = bfalse;
     }
 
@@ -325,18 +323,12 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, ego_BSP_leaf_pary * colst )
+int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
     /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
     if ( NULL == pbsp || NULL == paabb ) return 0;
-
-    if ( NULL == colst ) return 0;
-
-    colst->top = 0;
-
-    if ( 0 == colst->size() ) return 0;
 
     return ego_BSP_tree::collide( &( pbsp->tree ), paabb, colst );
 }

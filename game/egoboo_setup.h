@@ -156,7 +156,6 @@ extern "C"
     bool_t setup_upload( ego_config_data_t * pcfg );
     bool_t setup_synch( ego_config_data_t * pcfg );
 
-
 #if defined(__cplusplus)
 }
 #endif
