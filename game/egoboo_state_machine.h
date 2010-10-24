@@ -33,4 +33,5 @@ enum e_ego_actions
     ego_action_leaving,      ///< The deinitialization of the machine. Run as many times as needed.
     ego_action_finishing     ///< The final destruction of the machine. Should be run once.
 };
+
 typedef enum e_ego_actions ego_actions_t;

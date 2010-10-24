@@ -1979,3 +1979,4 @@ bool_t ui_joy_set( SDL_JoyAxisEvent * evt_ptr )
 
     return ( NULL != pctrl ) && ( pctrl->timer > 0 );
 }
+

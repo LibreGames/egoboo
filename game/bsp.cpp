@@ -1015,7 +1015,6 @@ bool_t   ego_BSP_tree::prune( ego_BSP_tree   * t )
         }
     }
 
-
     // actually do the deletions
     while ( !deferred.empty() )
     {
@@ -1474,4 +1473,3 @@ bool_t ego_BSP_tree::generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BS
 
     return btrue;
 }
-

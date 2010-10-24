@@ -107,6 +107,7 @@ enum e_which_menu
     emnu_ShowEndgame,
     emnu_NotImplemented
 };
+
 typedef enum e_which_menu which_menu_t;
 
 enum e_menu_retvals

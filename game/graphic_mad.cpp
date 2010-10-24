@@ -1615,4 +1615,3 @@ ego_chr_reflection_cache * ego_chr_reflection_cache::init( ego_chr_reflection_ca
 
     return pcache;
 }
-

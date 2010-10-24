@@ -70,4 +70,3 @@ void sys_popup( const char * popup_title, const char * warning, const char * for
 
     MessageBox( NULL, message, popup_title, MB_ICONSTOP | MB_SETFOREGROUND );
 }
-

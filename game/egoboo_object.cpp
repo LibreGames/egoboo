@@ -568,6 +568,7 @@ ego_obj * ego_obj::req_terminate( ego_obj * pbase )
 
     return pbase;
 }
+
 //--------------------------------------------------------------------------------------------
 ego_obj * ego_obj::grant_terminate( ego_obj * pbase )
 {

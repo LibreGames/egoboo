@@ -158,4 +158,3 @@ const char* scantag_get_string( Sint32 device, int tag, bool_t is_key )
     // No matches
     return "N/A";
 }
-

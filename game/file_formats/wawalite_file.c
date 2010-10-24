@@ -617,4 +617,3 @@ bool_t wawalite_damagetile_init( wawalite_damagetile_t * pdata )
 
     return btrue;
 }
-

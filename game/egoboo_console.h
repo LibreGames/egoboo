@@ -68,4 +68,3 @@ extern "C"
 
 #define _egoboo_console_h
 
-

@@ -396,4 +396,3 @@ ego_tx_request * ego_tx_request::load_TxTitleImage( const char *filename )
 
     return preq;
 }
-

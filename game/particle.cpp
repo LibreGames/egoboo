@@ -3239,6 +3239,7 @@ ego_prt_bundle * prt_bump_grid_attached( ego_prt_bundle * pbdl, fvec3_t test_pos
 
     return pbdl;
 }
+
 //--------------------------------------------------------------------------------------------
 ego_prt_bundle *  prt_bump_mesh( ego_prt_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt, bool_t * pbumped_mesh )
 {

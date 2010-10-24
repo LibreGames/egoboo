@@ -43,4 +43,5 @@ enum e_input_device
     INPUT_DEVICE_JOY_A = INPUT_DEVICE_JOY + 0,
     INPUT_DEVICE_JOY_B = INPUT_DEVICE_JOY + 1
 };
+
 typedef enum  e_input_device INPUT_DEVICE;

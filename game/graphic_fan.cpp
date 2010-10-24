@@ -477,4 +477,3 @@ void animate_tiles()
         animtile[1].frame_add = ( animtile[1].frame_add + 1 ) & animtile[1].frame_and;
     }
 }
-

@@ -267,4 +267,3 @@ int lua_console_print( lua_State * L )
 
     return SDL_TRUE;
 }
-

@@ -42,6 +42,7 @@ enum e_ego_obj_actions
     // the states that are specific to objects
     ego_obj_waiting                                  ///< The object has been fully destructed and is awaiting final "deletion"
 };
+
 typedef enum e_ego_obj_actions ego_obj_actions_t;
 
 //--------------------------------------------------------------------------------------------

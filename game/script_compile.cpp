@@ -1251,7 +1251,6 @@ void print_token()
     printf( "\tToken.cType  == \'%c\'\n", Token.cType );
     printf( "\tToken.cWord  == \"%s\"\n", Token.cWord );
 }
-
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -1280,7 +1279,6 @@ void print_line()
 
     printf( "\", length == %d\n", iLineSize );
 }
-
 #endif
 
 /** Preparation for eliminating aicodes.txt except for introducing aliases

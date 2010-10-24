@@ -52,4 +52,3 @@ void sys_popup( const char * popup_title, const char * warning, const char * for
 {
     /// the system popup is not supported on osx at this time.
 }
-

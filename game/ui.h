@@ -41,6 +41,7 @@ enum e_ui_button_values
     BUTTON_DOWN,
     BUTTON_UP
 };
+
 typedef enum e_ui_button_values ui_buttonValues;
 
 /// Possible UI button behaviors

@@ -178,6 +178,7 @@ struct s_win32_find_context
     WIN32_FIND_DATA wfdData;
     HANDLE          hFind;
 };
+
 typedef struct s_win32_find_context win32_find_context_t;
 
 //--------------------------------------------------------------------------------------------
@@ -270,4 +271,3 @@ int DirGetAttrib( const char *fromdir )
 {
     return( GetFileAttributes( fromdir ) );
 }
-

@@ -1223,6 +1223,7 @@ int randomize_action( int action, int slot )
     // The vertex is not used
     return 0;
 }
+
 */
 
 ////--------------------------------------------------------------------------------------------

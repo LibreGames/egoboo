@@ -154,4 +154,3 @@ void id_md2_free( id_md2_model_t * mdl )
         mdl->frames = NULL;
     }
 }
-

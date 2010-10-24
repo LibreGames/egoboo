@@ -150,11 +150,11 @@ struct t_cpp_map
 {
 private:
 
-    typedef typename std::map< const REF_T, const _ty * > map_type;
-    typedef typename std::map< const REF_T, const _ty * >::iterator map_iterator;
+    typedef typename EGOBOO_MAP< const REF_T, const _ty * > map_type;
+    typedef typename EGOBOO_MAP< const REF_T, const _ty * >::iterator map_iterator;
 
     unsigned                             _id;
-    std::map< const REF_T, const _ty * > _map;
+    EGOBOO_MAP< const REF_T, const _ty * > _map;
 
 public:
 
@@ -166,8 +166,8 @@ public:
 
         explicit iterator() { _id = unsigned( -1 ); _valid = bfalse; }
 
-        typedef typename std::map< const REF_T, const _ty * >           _map_t;
-        typedef typename std::map< const REF_T, const _ty * >::iterator _it_t;
+        typedef typename EGOBOO_MAP< const REF_T, const _ty * >           _map_t;
+        typedef typename EGOBOO_MAP< const REF_T, const _ty * >::iterator _it_t;
         typedef typename std::pair< const REF_T, const _ty * >          _it_val_t;
 
         /// overload this operator to pass it on to the base iterator
@@ -226,9 +226,9 @@ private:
     bool_t iterator_end( iterator & it )
     {
         // if the iterator is not valid, we ARE at the end
-        if ( !iterator_validate( it ) ) return btrue;
-
-        return it._i == _map.end();
+        // this function already tests for the
+        // it._i == _map.end() condition, so no need to repeat ourselves
+        return !iterator_validate( it );
     }
 
     iterator & iterator_increment( iterator & it )
@@ -266,6 +266,12 @@ protected:
             return bfalse;
         }
 
+        if ( _map.empty() )
+        {
+            iterator_invalidate( it );
+            return bfalse;
+        }
+
         if ( _map.end() == it._i )
         {
             iterator_invalidate( it );
@@ -274,7 +280,6 @@ protected:
 
         return btrue;
     }
-
 };
 
 //--------------------------------------------------------------------------------------------

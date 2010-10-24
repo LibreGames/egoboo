@@ -52,6 +52,7 @@ struct s_linux_find_context
     glob_t last_find;
     size_t find_index;
 };
+
 typedef struct s_linux_find_context linux_find_context_t;
 
 //--------------------------------------------------------------------------------------------

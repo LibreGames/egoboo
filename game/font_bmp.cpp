@@ -173,4 +173,3 @@ int font_bmp_length_of_word( const char *szText )
 
     return x;
 }
-

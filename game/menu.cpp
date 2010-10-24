@@ -2372,7 +2372,6 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
             GL_DEBUG( glNewList )( list_index, GL_COMPILE );
         }
 
-
         {
             // do the actual display
             x1 = x + 25;
@@ -5444,7 +5443,6 @@ bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val 
 
     bool_t use_aniso = ogl_caps.anisotropic_supported && ogl_caps.maxAnisotropy > 1.0f;
 
-
     if ( use_aniso && val >= TX_ANISOTROPIC )
     {
         float aniso = val - TX_ANISOTROPIC;
@@ -8198,5 +8196,4 @@ void mnu_restart()
     mnu_stack.push( emnu_Main );
     mnu_state_data::begin_menu( emnu_Main );
 }
-
 

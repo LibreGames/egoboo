@@ -1316,7 +1316,6 @@ bool_t ego_tile_mem::interpolate_vertex( ego_tile_mem * pmem, int fan, float pos
 
     return btrue;
 }
-
 #define BLAH_MIX_1(DU,UU) (4.0f/9.0f*((UU)-(-1+(DU)))*((2+(DU))-(UU)))
 #define BLAH_MIX_2(DU,UU,DV,VV) (BLAH_MIX_1(DU,UU)*BLAH_MIX_1(DV,VV))
 

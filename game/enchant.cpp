@@ -2185,4 +2185,3 @@ ego_obj_enc * ego_obj_enc::do_alloc( ego_obj_enc * pobj )
 
     return pobj;
 }
-

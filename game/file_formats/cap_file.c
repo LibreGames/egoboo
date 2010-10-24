@@ -791,4 +791,3 @@ bool_t save_one_cap_data_file_vfs( const char * szSaveName, const char * szTempl
 
     return btrue;
 }
-

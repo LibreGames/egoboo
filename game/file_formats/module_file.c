@@ -244,4 +244,3 @@ bool_t module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len,
 
     return written;
 }
-

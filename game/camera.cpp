@@ -655,4 +655,3 @@ bool_t ego_camera::reset_target( ego_camera * pcam, ego_mpd   * pmesh )
 
     return btrue;
 }
-

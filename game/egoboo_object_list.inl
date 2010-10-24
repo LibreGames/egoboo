@@ -68,6 +68,7 @@ void t_ego_obj_lst< _ty, _sz >::clear_free_list()
 {
     while ( !free_queue.empty() ) free_queue.pop();
 }
+
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
 void t_ego_obj_lst< _ty, _sz >::reinit()
@@ -86,7 +87,6 @@ void t_ego_obj_lst< _ty, _sz >::reinit()
         }
     }
 }
-
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
@@ -375,7 +375,6 @@ void t_ego_obj_lst< _ty, _sz >::cleanup()
 
         free_one( ref );
     }
-
 }
 
 //--------------------------------------------------------------------------------------------

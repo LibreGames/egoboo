@@ -46,6 +46,7 @@ enum e_process_states
     proc_leaving     = ego_action_leaving,
     proc_finishing   = ego_action_finishing
 };
+
 typedef enum e_process_states process_state_t;
 
 //--------------------------------------------------------------------------------------------

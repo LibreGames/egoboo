@@ -44,6 +44,7 @@ extern "C"
 
 #if defined(__cplusplus)
 };
+
 #endif
 
 #define _lua_console_h

@@ -35,15 +35,25 @@
 #error If mmgr.h is included before this point, the remapping of new and delete will cause problems
 #endif
 
+#   if defined(USE_HASH)
+#       include <hash_map>
+#       define EGOBOO_MAP stdext::hash_map
+#       include <hash_set>
+#       define EGOBOO_SET stdext::hash_set
+#   else
+#       include <map>
+#       define EGOBOO_MAP std::map
+#       include <set>
+#       define EGOBOO_SET std::set
+#   endif
+
 #   include <deque>
-#   include <map>
 #   include <stack>
 #   include <queue>
 #   include <exception>
 #   include <algorithm>
 #   include <functional>
 #   include <vector>
-#   include <set>
 
 #endif
 
@@ -314,7 +324,6 @@ extern "C"
 
 #if defined(__cplusplus)
 }
-
 #include "egoboo_typedef_cpp.h"
 
 extern "C"

@@ -98,3 +98,4 @@ struct ego_hash_list_iterator
     static bool_t                   done( ego_hash_list_iterator * it, ego_hash_list * hlst );
     static bool_t                   next( ego_hash_list_iterator * it, ego_hash_list * hlst );
 };
+

@@ -261,4 +261,3 @@ pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
 
     return ppip;
 }
-

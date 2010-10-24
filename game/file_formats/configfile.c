@@ -1226,4 +1226,3 @@ ConfigFile_retval SaveConfigFileAs( ConfigFilePtr_t pConfigFile, const char *szF
 
     return retval;
 }
-

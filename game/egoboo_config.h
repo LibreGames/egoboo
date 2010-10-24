@@ -102,6 +102,8 @@
 #define DEBUG_CHR_BBOX        ///< display the all character bounding boxes
 #undef  DEBUG_PRT_BBOX        ///< display the all particle bounding boxes
 
+#define USE_HASH              ///< use stdext::hash_map and stdext::hash_set instead of std::map and std::set
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // do the includes last so that the compile switches are always set

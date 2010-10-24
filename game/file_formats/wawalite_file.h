@@ -202,5 +202,3 @@ extern "C"
 #endif
 
 #define _wawalite_file_h
-
-

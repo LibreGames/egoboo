@@ -57,8 +57,7 @@ extern "C"
 
 #if defined(__cplusplus)
 };
+
 #endif
 
 #define _template_file_h
-
-

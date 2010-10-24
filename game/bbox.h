@@ -244,4 +244,3 @@ void   points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count );
 //--------------------------------------------------------------------------------------------
 
 #define _egoboo_bbox_h
-

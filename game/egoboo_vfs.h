@@ -154,4 +154,3 @@ extern "C"
 
 #define _egoboo_vfs_h
 
-

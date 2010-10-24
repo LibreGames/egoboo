@@ -485,18 +485,26 @@ bool_t t_cpp_map<_ty, _sz>::has_ref( const t_reference<_ty> & ref )
 template < typename _ty, size_t _sz >
 bool_t t_cpp_map<_ty, _sz>::add( const t_reference<_ty> & ref, const _ty * val )
 {
-    // is it a valid pointer?
-    if ( NULL == val ) return bfalse;
-
     // is it in the valid range?
     if ( !ref_validate( ref ) ) return bfalse;
 
-    // is the slot already occupied?
-    if ( has_ref( ref ) ) return bfalse;
+    // is it a valid pointer?
+    if ( NULL == val )
+    {
+        remove( ref );
+        return bfalse;
+    }
+    else
+    {
+#if defined DEBUG_CPP_MAP
+        // is the slot already occupied?
+        if ( has_ref( ref ) ) return bfalse;
+#endif
 
-    // add the value
-    _map[ ref.get_value()] = val;
-    _id++;
+        // add the value
+        _map[ ref.get_value()] = val;
+        _id++;
+    }
 
     return btrue;
 }

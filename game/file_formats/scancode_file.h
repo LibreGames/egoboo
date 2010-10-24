@@ -68,5 +68,3 @@ extern "C"
 #endif
 
 #define _scancode_file_h
-
-

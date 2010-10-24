@@ -75,6 +75,7 @@ enum e_vfs_mode
     vfs_cfile,
     vfs_physfs
 };
+
 typedef enum e_vfs_mode vfs_mode_t;
 
 /// An anonymized pointer type
@@ -84,6 +85,7 @@ union u_vfs_fileptr
     FILE        * c;
     PHYSFS_File * p;
 };
+
 typedef union u_vfs_fileptr vfs_fileptr_t;
 
 /// A container holding either a FILE * or a PHYSFS_File *, and translated error states
@@ -115,6 +117,7 @@ struct s_vfs_path_data
     VFS_PATH root_path;
     VFS_PATH relative_path;
 };
+
 typedef struct s_vfs_path_data vfs_path_data_t;
 
 //--------------------------------------------------------------------------------------------

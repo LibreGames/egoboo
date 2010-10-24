@@ -460,4 +460,3 @@ bool_t twist_to_normal( Uint8 twist, float v[], float slide )
 
     return btrue;
 }
-

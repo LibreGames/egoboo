@@ -32,4 +32,3 @@ ego_ClientState ClientState;
 void cl_frameStep()
 {
 }
-

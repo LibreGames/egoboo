@@ -43,5 +43,4 @@ float ENDIAN_FLOAT( float X )
 
     return utmp.f;
 }
-
 #endif

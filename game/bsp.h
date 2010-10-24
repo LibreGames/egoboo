@@ -34,8 +34,8 @@ typedef std::vector< ego_BSP_branch * > branch_child_list_t;
 
 typedef std::vector< ego_BSP_leaf > leaf_list_t;
 
-/// use a std::set to ensure only version of each node pointer gets inserted
-typedef std::set< ego_BSP_leaf * > leaf_child_list_t;
+/// use a EGOBOO_SET to ensure only version of each node pointer gets inserted
+typedef EGOBOO_SET< ego_BSP_leaf * > leaf_child_list_t;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -172,7 +172,7 @@ private:
 //--------------------------------------------------------------------------------------------
 struct ego_BSP_tree
 {
-    typedef std::set< ego_BSP_branch * >   branch_set_t;
+    typedef EGOBOO_SET< ego_BSP_branch * >   branch_set_t;
     typedef std::stack< ego_BSP_branch * > branch_stack_t;
 
     size_t dimensions;

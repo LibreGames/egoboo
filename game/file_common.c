@@ -383,4 +383,3 @@ bool_t fs_ensureUserFile( const char * relative_filename, bool_t required )
 
     return found;
 }
-

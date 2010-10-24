@@ -140,6 +140,7 @@ bool_t PassageStack_object_is_inside( const PASS_REF & passage, float xpos, floa
 
     return ego_passage::object_is_in( PassageStack.lst + passage, xpos, ypos, radius );
 }
+
 //--------------------------------------------------------------------------------------------
 CHR_REF PassageStack_who_is_blocking( const PASS_REF & passage, const CHR_REF & isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item )
 {

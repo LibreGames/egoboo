@@ -81,5 +81,3 @@ extern "C"
 #endif
 
 #define _spawn_file_h
-
-

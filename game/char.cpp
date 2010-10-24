@@ -9689,6 +9689,7 @@ void character_physics_initialize()
     }
     CHR_END_LOOP();
 }
+
 //--------------------------------------------------------------------------------------------
 bool_t chr_bump_mesh_attached( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
@@ -10793,6 +10794,7 @@ bool_t chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem )
 
     return removed;
 }
+
 //--------------------------------------------------------------------------------------------
 CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool_t ignorekurse )
 {
@@ -11696,4 +11698,3 @@ egoboo_rv ego_chr::update_instance( ego_chr * pchr )
 
     return retval;
 }
-

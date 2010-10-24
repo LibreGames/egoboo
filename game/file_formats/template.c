@@ -364,4 +364,3 @@ void template_put_damage_modifier( vfs_FILE* filetemp, vfs_FILE* filewrite, Uint
     // now put the damage shift
     template_put_int( filetemp, filewrite, GET_DAMAGE_RESIST( mod ) );
 }
-
