@@ -376,7 +376,7 @@ void export_all_players( bool_t require_local )
     // Check each player
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
         if ( !ppla->valid ) continue;
 
         is_local = ( 0 != ppla->device.bits );
@@ -441,7 +441,7 @@ void log_madused_vfs( const char *savename )
                 CAP_REF icap = pro_get_icap( cnt );
                 MAD_REF imad = pro_get_imad( cnt );
 
-                vfs_printf( hFileWrite, "%3d %32s %s\n", ( cnt ).get_value(), CapStack.lst[icap].classname, MadStack.lst[imad].name );
+                vfs_printf( hFileWrite, "%3d %32s %s\n", ( cnt ).get_value(), CapStack[icap].classname, MadStack[imad].name );
             }
             else if ( cnt <= 36 )    vfs_printf( hFileWrite, "%3d  %32s.\n", ( cnt ).get_value(), "Slot reserved for import players" );
             else                    vfs_printf( hFileWrite, "%3d  %32s.\n", ( cnt ).get_value(), "Slot Unused" );
@@ -513,7 +513,7 @@ void statlist_sort()
 
     for ( ipla = 0; ipla < PlaStack.count; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
         if ( !ppla->valid ) continue;
 
         if ( INPUT_BITS_NONE != ppla->device.bits )
@@ -590,7 +590,7 @@ void activate_alliance_file_vfs( /*const char *modname*/ )
 
             fget_string( fileread, szTemp, SDL_arraysize( szTemp ) );
             teamb = ( szTemp[0] - 'A' ) % TEAM_MAX;
-            TeamStack.lst[teama].hatesteam[( teamb ).get_value()] = bfalse;
+            TeamStack[teama].hatesteam[( teamb ).get_value()] = bfalse;
         }
 
         vfs_close( fileread );
@@ -713,7 +713,7 @@ int update_game()
             ego_player * ppla;
 
             // ignore ivalid players
-            ppla = PlaStack.lst + ipla;
+            ppla = PlaStack + ipla;
             if ( !ppla->valid ) continue;
 
             // fix bad players
@@ -762,7 +762,7 @@ int update_game()
                     local_stats.daze_level += pchr->dazetime;
                 }
 
-                local_stats.listen_level = MAX( local_stats.listen_level, ego_chr::get_skill( pchr, MAKE_IDSZ( 'L', 'I', 'S', 'T' ) ) );
+                local_stats.listen_level = MAX( local_stats.listen_level, ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'L', 'I', 'S', 'T' ) ) );
             }
             else
             {
@@ -789,7 +789,7 @@ int update_game()
             CHR_REF ichr;
             ego_chr * pchr;
 
-            ego_player * ppla = PlaStack.lst + ipla;
+            ego_player * ppla = PlaStack + ipla;
             if ( !ppla->valid ) continue;
 
             if ( !INGAME_CHR( ppla->index ) ) continue;
@@ -1458,7 +1458,7 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
     float  longdist2 = max_dist2;
 
     if ( !LOADED_PIP( particletype ) ) return CHR_REF( MAX_CHR );
-    ppip = PipStack.lst + particletype;
+    ppip = PipStack + particletype;
 
     CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
@@ -1547,13 +1547,13 @@ bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_F
     if ( !chr_can_see_object( GET_REF_PCHR( psrc ), ichr_test ) ) return bfalse;
 
     // Need specific skill? ([NONE] always passes)
-    if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != ego_chr::get_skill( ptst, idsz ) ) return bfalse;
+    if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != ego_chr_data::get_skill( ptst, idsz ) ) return bfalse;
 
     // Require player to have specific quest?
     if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && VALID_PLA( ptst->is_which_player ) )
     {
         int quest_level = QUEST_NONE;
-        ego_player * ppla = PlaStack.lst + ptst->is_which_player;
+        ego_player * ppla = PlaStack + ptst->is_which_player;
 
         quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), idsz );
 
@@ -1631,7 +1631,7 @@ CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD ta
         PLA_REF ipla;
         for ( ipla = 0; ipla < MAX_PLAYER; ipla ++ )
         {
-            ego_player * ppla = PlaStack.lst + ipla;
+            ego_player * ppla = PlaStack + ipla;
 
             if ( !ppla->valid ) continue;
 
@@ -1900,7 +1900,7 @@ void do_weather_spawn_particles()
 
             weather_ipla = PLA_REF((( weather_ipla ).get_value() + 1 ) % MAX_PLAYER );
 
-            tmp_ppla = PlaStack.lst + weather_ipla;
+            tmp_ppla = PlaStack + weather_ipla;
             if ( !tmp_ppla->valid ) continue;
 
             if ( !INGAME_CHR( tmp_ppla->index ) ) continue;
@@ -1979,7 +1979,7 @@ void set_one_player_latch( const PLA_REF & player )
     ego_input_device * pdevice;
 
     if ( INVALID_PLA( player ) ) return;
-    ppla = PlaStack.lst + player;
+    ppla = PlaStack + player;
 
     pdevice = &( ppla->device );
 
@@ -2294,7 +2294,7 @@ void check_stats()
         // Apply the cheat if valid
         if ( VALID_PLA( docheat ) )
         {
-            ego_player * ppla = PlaStack.lst + docheat;
+            ego_player * ppla = PlaStack + docheat;
             if ( INGAME_CHR( ppla->index ) )
             {
                 Uint32  xpgain;
@@ -2302,7 +2302,7 @@ void check_stats()
                 ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
                 // Give 10% of XP needed for next level
-                xpgain = 0.1f * ( pcap->experience_forlevel[MIN( pchr->experiencelevel+1, MAXLEVEL )] - pcap->experience_forlevel[pchr->experiencelevel] );
+                xpgain = 0.1f * ( pcap->experience_forlevel[MIN( pchr->experience_level+1, MAXLEVEL )] - pcap->experience_forlevel[pchr->experience_level] );
                 give_experience( pchr->ai.index, xpgain, XP_DIRECT, btrue );
                 stat_check_delay = 1;
             }
@@ -2322,7 +2322,7 @@ void check_stats()
         // Apply the cheat if valid
         if ( VALID_PLA( docheat ) )
         {
-            ego_player * ppla = PlaStack.lst + docheat;
+            ego_player * ppla = PlaStack + docheat;
 
             if ( INGAME_CHR( ppla->index ) )
             {
@@ -2418,7 +2418,7 @@ void show_stat( int statindex )
 
                 gender_str = ego_chr::get_gender_name( character, NULL, 0 );
 
-                level = 1 + pchr->experiencelevel;
+                level = 1 + pchr->experience_level;
                 itmp = level % 10;
                 if ( 1 == itmp )
                 {
@@ -2520,7 +2520,7 @@ bool_t get_chr_regeneration( ego_chr * pchr, int * pliferegen, int * pmanaregen 
     if ( NULL == pmanaregen ) pmanaregen = &local_manaregen;
 
     // set the base values
-    ( *pmanaregen ) = pchr->manareturn / MANARETURNSHIFT;
+    ( *pmanaregen ) = pchr->mana_return / MANARETURNSHIFT;
     ( *pliferegen ) = pchr->life_return;
 
     // Don't forget to add gains and costs from enchants
@@ -2807,7 +2807,7 @@ bool_t chr_setup_apply( const CHR_REF & ichr, spawn_file_info_t *pinfo )
     // Set the starting pinfo->level
     if ( pinfo->level > 0 )
     {
-        while ( pchr->experiencelevel < pinfo->level && pchr->experience < MAXXP )
+        while ( pchr->experience_level < pinfo->level && pchr->experience < MAX_XP )
         {
             give_experience( ichr, 25, XP_DIRECT, btrue );
             do_level_up( ichr );
@@ -2949,7 +2949,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
                 bits = 1 << local_numlpla;
                 for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
                 {
-                    REMOVE_BITS( PlaStack.lst[ipla].device.bits, bits );
+                    REMOVE_BITS( PlaStack[ipla].device.bits, bits );
                 }
 
                 player_added = add_player( new_object, PLA_REF( PlaStack.count ), bits );
@@ -3522,7 +3522,7 @@ egoboo_rv game_update_imports()
     for ( player = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         size_t     player_idx = MAX_PLAYER;
-        ego_player * ppla       = PlaStack.lst + ipla;
+        ego_player * ppla       = PlaStack + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -3655,8 +3655,8 @@ bool_t add_player( const CHR_REF & character, const PLA_REF & player, BIT_FIELD 
     ego_player * ppla = NULL;
     ego_chr    * pchr = NULL;
 
-    if ( !VALID_PLA_RANGE( player ) ) return bfalse;
-    ppla = PlaStack.lst + player;
+    if ( !PlaStack.valid_ref( player ) ) return bfalse;
+    ppla = PlaStack + player;
 
     // does the player already exist?
     if ( ppla->valid ) return bfalse;

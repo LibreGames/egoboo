@@ -1004,7 +1004,7 @@ void cl_talkToHost()
     {
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
-            ego_player * ppla = PlaStack.lst + player;
+            ego_player * ppla = PlaStack + player;
             if ( !ppla->valid ) continue;
 
             if ( INPUT_BITS_NONE != ppla->device.bits )
@@ -1022,7 +1022,7 @@ void cl_talkToHost()
 
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
-            ego_player * ppla = PlaStack.lst + player;
+            ego_player * ppla = PlaStack + player;
             if ( !ppla->valid ) continue;
 
             // Find the local players
@@ -1072,7 +1072,7 @@ void sv_talkToRemotes()
             // Send all player latches...
             for ( player = 0; player < MAX_PLAYER; player++ )
             {
-                ego_player * ppla = PlaStack.lst + player;
+                ego_player * ppla = PlaStack + player;
 
                 if ( !ppla->valid ) continue;
 
@@ -1102,7 +1102,7 @@ void sv_talkToRemotes()
         {
             int index;
             Uint32 cnt;
-            ego_player * ppla = PlaStack.lst + player;
+            ego_player * ppla = PlaStack + player;
 
             if ( !ppla->valid ) continue;
 
@@ -1146,7 +1146,7 @@ void pla_add_tlatch( const PLA_REF & iplayer, Uint32 time, latch_input_t net_lat
     ego_player * ppla;
 
     if ( !VALID_PLA( iplayer ) ) return;
-    ppla = PlaStack.lst + iplayer;
+    ppla = PlaStack + iplayer;
 
     if ( ppla->tlatch_count >= MAXLAG ) return;
 
@@ -1607,7 +1607,7 @@ void net_handlePacket( ENetEvent *event )
                         player = packet_readUnsignedByte();
                         if ( VALID_PLA( player ) )
                         {
-                            ego_player * ppla = PlaStack.lst + player;
+                            ego_player * ppla = PlaStack + player;
 
                             ppla->tlatch[time].raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
                             ppla->tlatch[time].raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
@@ -1849,7 +1849,7 @@ void unbuffer_one_player_latch_do_respawn( ego_player * ppla )
         if ( !pchr->alive && 0 == revivetimer )
         {
             ego_chr::respawn( ppla->index );
-            TeamStack.lst[pchr->team].leader = ppla->index;
+            TeamStack[pchr->team].leader = ppla->index;
             ADD_BITS( pchr->ai.alert, ALERTIF_CLEANEDUP );
 
             // cost some experience for doing this...  never lose a level
@@ -1874,7 +1874,7 @@ void unbuffer_all_player_latches()
     numplatimes = 0;
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
         if ( !ppla->valid ) continue;
 
         unbuffer_one_player_latch_do_network( ppla );
@@ -1883,7 +1883,7 @@ void unbuffer_all_player_latches()
     // set the player latch
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
         if ( !ppla->valid ) continue;
 
         unbuffer_one_player_latch_download( ppla );
@@ -1892,7 +1892,7 @@ void unbuffer_all_player_latches()
     // Let players respawn
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
         if ( !ppla->valid ) continue;
 
         unbuffer_one_player_latch_do_respawn( ppla );
@@ -2256,7 +2256,7 @@ CHR_REF pla_get_ichr( const PLA_REF & iplayer )
     ego_player * pplayer;
 
     if ( !VALID_PLA( iplayer ) ) return CHR_REF( MAX_CHR );
-    pplayer = PlaStack.lst + iplayer;
+    pplayer = PlaStack + iplayer;
 
     if ( !INGAME_CHR( pplayer->index ) ) return CHR_REF( MAX_CHR );
 
@@ -2273,7 +2273,7 @@ ego_player* net_get_ppla( const CHR_REF & ichr )
 
     if ( !VALID_PLA( iplayer ) ) return NULL;
 
-    return PlaStack.lst + iplayer;
+    return PlaStack + iplayer;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2282,7 +2282,7 @@ ego_chr  * pla_get_pchr( const PLA_REF & iplayer )
     ego_player * pplayer;
 
     if ( !VALID_PLA( iplayer ) ) return NULL;
-    pplayer = PlaStack.lst + iplayer;
+    pplayer = PlaStack + iplayer;
 
     if ( !INGAME_CHR( pplayer->index ) ) return NULL;
 
@@ -2296,7 +2296,7 @@ latch_2d_t pla_convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src
     ego_player * ppla;
 
     if ( !VALID_PLA( iplayer ) ) return dst;
-    ppla = PlaStack.lst + iplayer;
+    ppla = PlaStack + iplayer;
 
     // is there a valid character?
     if ( !DEFINED_CHR( ppla->index ) ) return dst;
@@ -2432,7 +2432,7 @@ void PlaStack_init()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        pla_ctor( PlaStack.lst + ipla );
+        pla_ctor( PlaStack + ipla );
     }
     PlaStack.count = 0;
 }
@@ -2446,7 +2446,7 @@ void PlaStack_dtor()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        pla_dtor( PlaStack.lst + ipla );
+        pla_dtor( PlaStack + ipla );
     }
     PlaStack.count = 0;
 }
@@ -2460,7 +2460,7 @@ void PlaStack_reinit()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        pla_reinit( PlaStack.lst + ipla );
+        pla_reinit( PlaStack + ipla );
     }
     PlaStack.count = 0;
 }
@@ -2472,7 +2472,7 @@ void PlaStack_toggle_all_explore()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -2487,7 +2487,7 @@ void PlaStack_toggle_all_wizard()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -2503,7 +2503,7 @@ bool_t PlaStack_has_explore()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -2525,7 +2525,7 @@ bool_t PlaStack_has_wizard()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         if ( !ppla->valid ) continue;
 

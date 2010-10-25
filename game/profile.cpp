@@ -51,7 +51,7 @@ size_t bookicon_count   = 0;
 TX_REF bookicon_ref[MAX_SKIN];                      // The first book icon
 
 t_cpp_list< ego_pro, MAX_PROFILE  > ProList;
-INSTANTIATE_STATIC_ARY( MessageOffsetAry, MessageOffset );
+MessageOffsetAry_t  MessageOffset;
 
 Uint32  message_buffer_carat = 0;                           // Where to put letter
 char    message_buffer[MESSAGEBUFFERSIZE] = EMPTY_CSTR;     // The text buffer
@@ -755,7 +755,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     PRO_REF iobj;
     ego_pro * pobj;
 
-    required = !VALID_CAP_RANGE( slot_override );
+    required = !CapStack.valid_idx( slot_override );
 
     // get a slot value
     islot = pro_get_slot_vfs( tmploadname, slot_override );
@@ -768,7 +768,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
         {
             log_warning( "load_one_profile_vfs() - \"%s\" was not found. Overriding a global object?\n", tmploadname );
         }
-        else if ( VALID_CAP_RANGE( slot_override ) && slot_override > PMod->importamount * MAXIMPORTPERPLAYER )
+        else if ( CapStack.valid_idx( slot_override ) && slot_override > PMod->importamount * MAXIMPORTPERPLAYER )
         {
             log_warning( "load_one_profile_vfs() - Not able to open file \"%s\"\n", tmploadname );
         }
@@ -857,7 +857,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     pro_load_chop_vfs( iobj, newloadname );
 
     // Fix lighting if need be
-    if ( CapStack.lst[pobj->icap].uniformlit )
+    if ( CapStack[pobj->icap].uniformlit )
     {
         mad_make_equally_lit( pobj->imad );
     }
@@ -913,7 +913,7 @@ const char * pro_create_chop( const PRO_REF & iprofile )
     ppro = ProList.lst + iprofile;
 
     if ( !LOADED_CAP( ppro->icap ) ) return buffer;
-    pcap = CapStack.lst + ppro->icap;
+    pcap = CapStack + ppro->icap;
 
     if ( 0 == ppro->chop.section[0].size )
     {

@@ -65,7 +65,7 @@ PRT_REF ego_particle_list::allocate_find()
         }
 
         // do not bump another
-        was_forced = ( PipStack.lst[pprt->pip_ref].force );
+        was_forced = ( PipStack[pprt->pip_ref].force );
 
         if ( WAITING_PRT( iprt ) )
         {
@@ -144,7 +144,7 @@ PRT_REF ego_particle_list::allocate_activate( const PRT_REF & iprt )
     if ( ALLOCATED_PRT( iprt ) )
     {
         // construct the new structure
-        ego_obj_prt::run_construct( PrtObjList.get_ptr( iprt ), 100 );
+        ego_object_engine::run_construct( PrtObjList.get_ptr( iprt ), 100 );
     }
 
     return iprt;

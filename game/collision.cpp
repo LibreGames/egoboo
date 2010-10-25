@@ -2397,7 +2397,7 @@ bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, ego_chr_prt
     if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return bfalse;
-    ppip = PipStack.lst + pprt->pip_ref;
+    ppip = PipStack + pprt->pip_ref;
 
     /// @note ZF@> Simply ignore characters with invictus for now, it causes some strange effects
     if ( IS_INVICTUS_PCHR_RAW( pchr ) ) return btrue;
@@ -2505,8 +2505,8 @@ bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, ego_chr_prt
                     int total_block_rating;
 
                     // use the character block skill plus the base block rating of the shield and adjust for strength
-                    total_block_rating = ego_chr::get_skill( pchr, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
-                    total_block_rating += ego_chr::get_skill( pshield, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
+                    total_block_rating = ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
+                    total_block_rating += ego_chr_data::get_skill( pshield, MAKE_IDSZ( 'B', 'L', 'O', 'C' ) );
                     total_block_rating -= SFP8_TO_SINT( pattacker->strength ) * 4;            //-4% per attacker strength
                     total_block_rating += SFP8_TO_SINT( pchr->strength )      * 2;            //+2% per defender strength
 
@@ -2619,9 +2619,9 @@ bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
         }
 
         // modify it by the the severity of the damage
-        // reduces the damage below pdata->actual_damage == pchr->lifemax
+        // reduces the damage below pdata->actual_damage == pchr->life_max
         // and it doubles it if pdata->actual_damage is really huge
-        //factor *= 2.0f * ( float )pdata->actual_damage / ( float )( ABS( pdata->actual_damage ) + pchr->lifemax );
+        //factor *= 2.0f * ( float )pdata->actual_damage / ( float )( ABS( pdata->actual_damage ) + pchr->life_max );
 
         factor = CLIP( factor, 0.0f, 3.0f );
 
@@ -2785,7 +2785,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
                     drain = pchr->life;
                     pchr->life = CLIP( pchr->life, 1, pchr->life - pprt->lifedrain );
                     drain -= pchr->life;
-                    powner->life = MIN( powner->life + drain, powner->lifemax );
+                    powner->life = MIN( powner->life + drain, powner->life_max );
                 }
 
                 // Steal some mana
@@ -2794,7 +2794,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
                     drain = pchr->mana;
                     pchr->mana = CLIP( pchr->mana, 0, pchr->mana - pprt->manadrain );
                     drain -= pchr->mana;
-                    powner->mana = MIN( powner->mana + drain, powner->manamax );
+                    powner->mana = MIN( powner->mana + drain, powner->mana_max );
                 }
 
                 // Notify the attacker of a scored hit
@@ -2907,8 +2907,8 @@ bool_t do_chr_prt_collision_bump( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_co
     prt_hates_chr = team_hates_team( pprt->team, pchr->team );
 
     // Only bump into hated characters?
-    prt_hateonly = PipStack.lst[pprt->pip_ref].hateonly;
-    valid_onlydamagehate = prt_hates_chr && PipStack.lst[pprt->pip_ref].hateonly;
+    prt_hateonly = PipStack[pprt->pip_ref].hateonly;
+    valid_onlydamagehate = prt_hates_chr && PipStack[pprt->pip_ref].hateonly;
 
     // allow neutral particles to attack anything
     prt_attacks_chr = prt_hates_chr || (( TEAM_NULL != pchr->team ) && ( TEAM_NULL == pprt->team ) );
@@ -2996,7 +2996,7 @@ bool_t do_chr_prt_collision_init( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_co
     if ( NULL == pdata->pcap ) return bfalse;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return bfalse;
-    pdata->ppip = PipStack.lst + pprt->pip_ref;
+    pdata->ppip = PipStack + pprt->pip_ref;
 
     // measure the collision depth
     full_collision = get_depth_1( pchr->chr_min_cv, pchr->pos, pprt->bump_padded, ego_prt::get_pos( pprt ), btrue, pdata->odepth );

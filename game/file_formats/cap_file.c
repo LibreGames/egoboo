@@ -128,7 +128,7 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
     pcap->uniformlit = fget_next_bool( fileread );
 
     // Ammo
-    pcap->ammomax = fget_next_int( fileread );
+    pcap->ammo_max = fget_next_int( fileread );
     pcap->ammo = fget_next_int( fileread );
 
     // Gender
@@ -139,8 +139,8 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
     else                              pcap->gender = GENDER_OTHER;
 
     // Read in the icap stats
-    pcap->lifecolor = fget_next_int( fileread );
-    pcap->manacolor = fget_next_int( fileread );
+    pcap->life_color = fget_next_int( fileread );
+    pcap->mana_color = fget_next_int( fileread );
 
     fget_next_range( fileread, &( pcap->life_stat.val ) );
     fget_next_range( fileread, &( pcap->life_stat.perlevel ) );
@@ -148,11 +148,11 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
     fget_next_range( fileread, &( pcap->mana_stat.val ) );
     fget_next_range( fileread, &( pcap->mana_stat.perlevel ) );
 
-    fget_next_range( fileread, &( pcap->manareturn_stat.val ) );
-    fget_next_range( fileread, &( pcap->manareturn_stat.perlevel ) );
+    fget_next_range( fileread, &( pcap->mana_return_stat.val ) );
+    fget_next_range( fileread, &( pcap->mana_return_stat.perlevel ) );
 
-    fget_next_range( fileread, &( pcap->manaflow_stat.val ) );
-    fget_next_range( fileread, &( pcap->manaflow_stat.perlevel ) );
+    fget_next_range( fileread, &( pcap->mana_flow_stat.val ) );
+    fget_next_range( fileread, &( pcap->mana_flow_stat.perlevel ) );
 
     fget_next_range( fileread, &( pcap->strength_stat.val ) );
     fget_next_range( fileread, &( pcap->strength_stat.perlevel ) );
@@ -484,21 +484,21 @@ bool_t save_one_cap_data_file_vfs( const char * szSaveName, const char * szTempl
     template_put_int( filetemp, filewrite, -1 );     // -1 signals a flexible load thing
     template_put_string_under( filetemp, filewrite, pcap->classname );
     template_put_bool( filetemp, filewrite, pcap->uniformlit );
-    template_put_int( filetemp, filewrite, pcap->ammomax );
+    template_put_int( filetemp, filewrite, pcap->ammo_max );
     template_put_int( filetemp, filewrite, pcap->ammo );
     template_put_gender( filetemp, filewrite, pcap->gender );
 
     // Object stats
-    template_put_int( filetemp, filewrite, pcap->lifecolor );
-    template_put_int( filetemp, filewrite, pcap->manacolor );
+    template_put_int( filetemp, filewrite, pcap->life_color );
+    template_put_int( filetemp, filewrite, pcap->mana_color );
     template_put_range( filetemp, filewrite, pcap->life_stat.val );
     template_put_range( filetemp, filewrite, pcap->life_stat.perlevel );
     template_put_range( filetemp, filewrite, pcap->mana_stat.val );
     template_put_range( filetemp, filewrite, pcap->mana_stat.perlevel );
-    template_put_range( filetemp, filewrite, pcap->manareturn_stat.val );
-    template_put_range( filetemp, filewrite, pcap->manareturn_stat.perlevel );
-    template_put_range( filetemp, filewrite, pcap->manaflow_stat.val );
-    template_put_range( filetemp, filewrite, pcap->manaflow_stat.perlevel );
+    template_put_range( filetemp, filewrite, pcap->mana_return_stat.val );
+    template_put_range( filetemp, filewrite, pcap->mana_return_stat.perlevel );
+    template_put_range( filetemp, filewrite, pcap->mana_flow_stat.val );
+    template_put_range( filetemp, filewrite, pcap->mana_flow_stat.perlevel );
     template_put_range( filetemp, filewrite, pcap->strength_stat.val );
     template_put_range( filetemp, filewrite, pcap->strength_stat.perlevel );
     template_put_range( filetemp, filewrite, pcap->wisdom_stat.val );

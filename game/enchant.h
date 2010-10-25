@@ -57,10 +57,9 @@ struct ego_eve : public ego_eve_data
 };
 
 /// Enchantment template
-extern t_cpp_stack< ego_eve, MAX_EVE  > EveStack;
+extern t_cpp_stack< ego_eve, MAX_EVE > EveStack;
 
-#define VALID_EVE_RANGE( IEVE ) ( ((IEVE) >= 0) && ((IEVE) < MAX_EVE) )
-#define LOADED_EVE( IEVE )      ( VALID_EVE_RANGE( IEVE ) && EveStack.lst[IEVE].loaded )
+#define LOADED_EVE( IEVE )      ( EveStack.valid_ref( IEVE ) && EveStack[IEVE].loaded )
 
 //--------------------------------------------------------------------------------------------
 struct ego_enc_spawn_data
@@ -127,9 +126,9 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_enc_data * ctor_all( ego_enc_data * ptr ) { if ( NULL != ptr ) new( ptr ) ego_enc_data(); return ptr; }
+    static ego_enc_data * ctor_all( ego_enc_data * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_enc_data(); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_enc_data * dtor_all( ego_enc_data * ptr )  { if ( NULL != ptr ) ptr->~ego_enc_data(); return ptr; }
+    static ego_enc_data * dtor_all( ego_enc_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_enc_data(); puts( "\t" __FUNCTION__ ); } return ptr; }
 
     //---- memory management
 
@@ -209,9 +208,9 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_enc * ctor_all( ego_enc * ptr, ego_obj_enc * pparent ) { if ( NULL != ptr ) new( ptr ) ego_enc( pparent ); return ptr; }
+    static ego_enc * ctor_all( ego_enc * ptr, ego_obj_enc * pparent ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_enc( pparent ); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_enc * dtor_all( ego_enc * ptr )  { if ( NULL != ptr ) ptr->~ego_enc(); return ptr; }
+    static ego_enc * dtor_all( ego_enc * ptr )  { if ( NULL != ptr ) { ptr->~ego_enc(); puts( "\t" __FUNCTION__ ); } return ptr; }
 
     //---- memory management
 
@@ -227,11 +226,11 @@ protected:
 
     //---- private implementations of the configuration functions
 
-    static ego_enc * do_construct( ego_enc * penc );
-    static ego_enc * do_init( ego_enc * penc );
-    static ego_enc * do_process( ego_enc * penc );
-    static ego_enc * do_deinit( ego_enc * penc );
-    static ego_enc * do_destruct( ego_enc * penc );
+    static ego_enc * do_constructing( ego_enc * penc );
+    static ego_enc * do_initializing( ego_enc * penc );
+    static ego_enc * do_processing( ego_enc * penc );
+    static ego_enc * do_deinitializing( ego_enc * penc );
+    static ego_enc * do_destructing( ego_enc * penc );
 
 private:
 
@@ -257,10 +256,10 @@ struct ego_obj_enc : public ego_obj
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_obj_enc() : _enc_data( this ) { ctor_this( this ); }
+    explicit ego_obj_enc() : _enc_data( this ) { puts( __FUNCTION__ ); ctor_this( this ); }
 
     /// default destructor
-    ~ego_obj_enc() { dtor_this( this ); }
+    ~ego_obj_enc() { dtor_this( this ); puts( __FUNCTION__ ); }
 
     //---- implementation of required accessors
 
@@ -282,24 +281,9 @@ struct ego_obj_enc : public ego_obj
     static ego_obj_enc * dtor_this( ego_obj_enc * pobj );
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_obj_enc * ctor_all( ego_obj_enc * ptr ) { if ( NULL != ptr ) new( ptr ) ego_obj_enc(); return ptr; }
+    static ego_obj_enc * ctor_all( ego_obj_enc * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_obj_enc(); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_obj_enc * dtor_all( ego_obj_enc * ptr )  { if ( NULL != ptr ) ptr->~ego_obj_enc(); return ptr; }
-
-    //---- global configuration functions
-
-    /// External handle for iterating the "egoboo object process" state machine
-    static ego_obj_enc * run( ego_obj_enc * penc );
-    /// External handle for getting an "egoboo object process" into the constructed state
-    static ego_obj_enc * run_construct( ego_obj_enc * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the initialized state
-    static ego_obj_enc * run_initialize( ego_obj_enc * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the active state
-    static ego_obj_enc * run_activate( ego_obj_enc * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the deinitialized state
-    static ego_obj_enc * run_deinitialize( ego_obj_enc * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the deconstructed state
-    static ego_obj_enc * run_deconstruct( ego_obj_enc * pprt, int max_iterations );
+    static ego_obj_enc * dtor_all( ego_obj_enc * ptr )  { if ( NULL != ptr ) { ptr->~ego_obj_enc(); puts( "\t" __FUNCTION__ ); } return ptr; }
 
     /// Ask the "egoboo object process" to terminate itself
     static bool_t        request_terminate( const ENC_REF & ienc );
@@ -318,18 +302,13 @@ protected:
     /// deallocate data for this struct, and ALL dependent structs
     static ego_obj_enc * do_dealloc( ego_obj_enc * pobj );
 
-    //---- private implementations of the configuration functions
+    //---- implementation of the ego_object_process virtual methods
 
-    /// private implementation of egoboo "egoboo object process's" constructing method
-    static ego_obj_enc * do_constructing( ego_obj_enc * penc );
-    /// private implementation of egoboo "egoboo object process's" initializing method
-    static ego_obj_enc * do_initializing( ego_obj_enc * penc );
-    /// private implementation of egoboo "egoboo object process's" deinitializing method
-    static ego_obj_enc * do_deinitializing( ego_obj_enc * penc );
-    /// private implementation of egoboo "egoboo object process's" processing method
-    static ego_obj_enc * do_processing( ego_obj_enc * penc );
-    /// private implementation of egoboo "egoboo object process's" destructing method
-    static ego_obj_enc * do_destructing( ego_obj_enc * penc );
+    virtual int do_constructing()   { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_constructing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_initializing()   { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_initializing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_processing()     { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_processing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_deinitializing() { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_deinitializing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_destructing()    { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_destructing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
 
 private:
     ego_enc _enc_data;

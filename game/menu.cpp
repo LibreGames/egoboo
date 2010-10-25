@@ -237,8 +237,8 @@ struct mnu_module
 };
 
 #define VALID_MOD_RANGE( IMOD ) ( ((IMOD) >= 0) && ((IMOD) < MAX_MODULE) )
-#define VALID_MOD( IMOD )       ( VALID_MOD_RANGE( IMOD ) && IMOD < mnu_ModList.count && mnu_ModList.lst[IMOD].loaded )
-#define INVALID_MOD( IMOD )     ( !VALID_MOD_RANGE( IMOD ) || IMOD >= mnu_ModList.count || !mnu_ModList.lst[IMOD].loaded )
+#define VALID_MOD( IMOD )       ( VALID_MOD_RANGE( IMOD ) && IMOD < mnu_ModList.count && mnu_ModList[IMOD].loaded )
+#define INVALID_MOD( IMOD )     ( !VALID_MOD_RANGE( IMOD ) || IMOD >= mnu_ModList.count || !mnu_ModList[IMOD].loaded )
 
 static t_cpp_stack< mnu_module, MAX_MODULE  > mnu_ModList;
 
@@ -1378,18 +1378,18 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
     }
 
     // if they are beaten, float them to the end of the list
-    retval = ( int )mnu_ModList.lst[*pref1].base.beaten - ( int )mnu_ModList.lst[*pref2].base.beaten;
+    retval = ( int )mnu_ModList[*pref1].base.beaten - ( int )mnu_ModList[*pref2].base.beaten;
 
     if ( 0 == retval )
     {
         // I want to uot the "newest" == "hardest" modules at the front, but this should be opposite for
         // beginner modules
-        retval = cmp_mod_ref_mult * strncmp( mnu_ModList.lst[*pref1].base.rank, mnu_ModList.lst[*pref2].base.rank, RANKSIZE );
+        retval = cmp_mod_ref_mult * strncmp( mnu_ModList[*pref1].base.rank, mnu_ModList[*pref2].base.rank, RANKSIZE );
     }
 
     if ( 0 == retval )
     {
-        retval = strncmp( mnu_ModList.lst[*pref1].base.longname, mnu_ModList.lst[*pref2].base.longname, sizeof( STRING ) );
+        retval = strncmp( mnu_ModList[*pref1].base.longname, mnu_ModList[*pref2].base.longname, sizeof( STRING ) );
     }
 
     return retval;
@@ -1591,7 +1591,7 @@ bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, MOD_REF valid
     }
 
     // set the module pointer
-    mod_file_t * pmod = &( mnu_ModList.lst[smod].base );
+    mod_file_t * pmod = &( mnu_ModList[smod].base );
 
     name_string = "Unnamed";
     if ( CSTR_END != pmod->longname[0] )
@@ -1776,9 +1776,9 @@ int ChooseModule_data::run( double deltaTime )
                     // selected players, skip it
                     if ( !mnu_test_by_index( imod, 0, NULL ) ) continue;
 
-                    if ( start_new_player && 0 == mnu_ModList.lst[imod].base.importamount )
+                    if ( start_new_player && 0 == mnu_ModList[imod].base.importamount )
                     {
-                        if ( FILTER_HIDDEN == mnu_ModList.lst[imod].base.moduletype )  continue;
+                        if ( FILTER_HIDDEN == mnu_ModList[imod].base.moduletype )  continue;
 
                         // starter module
                         validModules[numValidModules] = ( imod ).get_value();
@@ -1786,11 +1786,11 @@ int ChooseModule_data::run( double deltaTime )
                     }
                     else
                     {
-                        if ( FILTER_HIDDEN == mnu_ModList.lst[imod].base.moduletype )  continue;
-                        if ( FILTER_OFF != mnu_moduleFilter && mnu_ModList.lst[imod].base.moduletype != mnu_moduleFilter ) continue;
-                        if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.importamount ) continue;
-                        if ( mnu_selectedPlayerCount < mnu_ModList.lst[imod].base.minplayers ) continue;
-                        if ( mnu_selectedPlayerCount > mnu_ModList.lst[imod].base.maxplayers ) continue;
+                        if ( FILTER_HIDDEN == mnu_ModList[imod].base.moduletype )  continue;
+                        if ( FILTER_OFF != mnu_moduleFilter && mnu_ModList[imod].base.moduletype != mnu_moduleFilter ) continue;
+                        if ( mnu_selectedPlayerCount > mnu_ModList[imod].base.importamount ) continue;
+                        if ( mnu_selectedPlayerCount < mnu_ModList[imod].base.minplayers ) continue;
+                        if ( mnu_selectedPlayerCount > mnu_ModList[imod].base.maxplayers ) continue;
 
                         // regular module
                         validModules[numValidModules] = ( imod ).get_value();
@@ -1907,13 +1907,13 @@ int ChooseModule_data::run( double deltaTime )
                 {
                     // fix the menu images in case one or more of them are undefined
                     MOD_REF          smod       = validModules[i];
-                    TX_REF           tex_offset = mnu_ModList.lst[smod].tex_index;
+                    TX_REF           tex_offset = mnu_ModList[smod].tex_index;
                     oglx_texture_t * ptex       = TxTitleImage_get_ptr( tex_offset );
 
                     GLfloat * img_tint = normal_tint;
 
                     // was the module beaten?
-                    if ( mnu_ModList.lst[smod].base.beaten )
+                    if ( mnu_ModList[smod].base.beaten )
                     {
                         img_tint = beat_tint;
                     }
@@ -1927,7 +1927,7 @@ int ChooseModule_data::run( double deltaTime )
                     }
 
                     // Draw a text over the image explaining what it means
-                    if ( mnu_ModList.lst[smod].base.beaten )
+                    if ( mnu_ModList[smod].base.beaten )
                     {
                         ui_drawText( beaten_tx_ptr, moduleMenuOffsetX + x + 32, moduleMenuOffsetY + y + 64 );
                     }
@@ -2339,7 +2339,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
     {
         goto ChoosePlayer_data__render_stats_fail;
     }
-    ego_cap * pcap = CapStack.lst + icap;
+    ego_cap * pcap = CapStack + icap;
 
     // make sure we have a valid display_item
     local_item = bfalse;
@@ -2397,23 +2397,23 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
             if ( cfg.difficulty >= GAME_NORMAL )
             {
                 y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
-                y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
+                y1 = draw_one_bar( pcap->life_color, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
 
                 if ( pcap->mana_stat.val.from > 0 )
                 {
                     y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
-                    y1 = draw_one_bar( pcap->manacolor, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
+                    y1 = draw_one_bar( pcap->mana_color, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
                 }
             }
             else
             {
                 y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d", ( int )pcap->life_stat.val.from );
-                y1 = draw_one_bar( pcap->lifecolor, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
+                y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
 
                 if ( pcap->mana_stat.val.from > 0 )
                 {
                     y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d", ( int )pcap->mana_stat.val.from );
-                    y1 = draw_one_bar( pcap->manacolor, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
+                    y1 = draw_one_bar( pcap->mana_color, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
                 }
             }
             y1 += 20;
@@ -2443,7 +2443,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
                         const int icon_indent = 8;
                         TX_REF  icon_ref;
                         STRING itemname;
-                        ego_cap * tmp_pcap = CapStack.lst + icap;
+                        ego_cap * tmp_pcap = CapStack + icap;
 
                         if ( tmp_pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
                         else                   strncpy( itemname, tmp_pcap->classname,   SDL_arraysize( itemname ) );
@@ -2601,7 +2601,7 @@ bool_t ChoosePlayer_data::load_profiles( int player, ego_ChoosePlayer_profiles *
         ref_temp = load_one_character_profile_vfs( szFilename, slot, bfalse );
         if ( LOADED_CAP( ref_temp ) )
         {
-            ego_cap * pcap = CapStack.lst + ref_temp;
+            ego_cap * pcap = CapStack + ref_temp;
 
             // go to the next element in the list
             pdata = pro_list->pro_data + pro_list->count;
@@ -6243,7 +6243,7 @@ int ShowResults_data::run( double deltaTime )
                 // Prepeare the summary text
                 for ( i = 0; i < SUMMARYLINES; i++ )
                 {
-                    carat += snprintf( carat, carat_end - carat - 1, "%s\n", mnu_ModList.lst[MOD_REF( selectedModule )].base.summary[i] );
+                    carat += snprintf( carat, carat_end - carat - 1, "%s\n", mnu_ModList[MOD_REF( selectedModule )].base.summary[i] );
                 }
 
                 // Randomize the next game hint, but only if not in hard mode
@@ -6274,7 +6274,7 @@ int ShowResults_data::run( double deltaTime )
                 GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
 
                 // the module name
-                menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, 50, 80, 20, mnu_ModList.lst[MOD_REF( selectedModule )].base.longname );
+                menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, 50, 80, 20, mnu_ModList[MOD_REF( selectedModule )].base.longname );
                 ui_drawTextBox( menuTextureList_ptr, 50, 80, 291, 230 );
 
                 // Draw a text box
@@ -6697,7 +6697,7 @@ int ShowEndgame_data::run( double deltaTime )
                 // try to go to the world map
                 // if( !reloaded )
                 // {
-                //    reloaded = link_load_parent( mnu_ModList.lst[pickedmodule_index].base.parent_modname, mnu_ModList.lst[pickedmodule_index].base.parent_pos );
+                //    reloaded = link_load_parent( mnu_ModList[pickedmodule_index].base.parent_modname, mnu_ModList[pickedmodule_index].base.parent_pos );
                 // }
 
                 // fix the menu that is returned when you break out of the game
@@ -6937,7 +6937,7 @@ int doMenu( float deltaTime )
                     // try to go to the world map
                     // if( !reloaded )
                     // {
-                    //    reloaded = link_load_parent( mnu_ModList.lst[pickedmodule_index].base.parent_modname, mnu_ModList.lst[pickedmodule_index].base.parent_pos );
+                    //    reloaded = link_load_parent( mnu_ModList[pickedmodule_index].base.parent_modname, mnu_ModList[pickedmodule_index].base.parent_pos );
                     // }
 
                     if ( !reloaded )
@@ -7125,22 +7125,22 @@ void mnu_load_all_module_images_vfs()
     // load all the title images for modules that we are going to display
     for ( imod = 0; imod < mnu_ModList.count; imod++ )
     {
-        if ( !mnu_ModList.lst[imod].loaded )
+        if ( !mnu_ModList[imod].loaded )
         {
-            vfs_printf( filesave, "**.  %s\n", mnu_ModList.lst[imod].vfs_path );
+            vfs_printf( filesave, "**.  %s\n", mnu_ModList[imod].vfs_path );
         }
         else if ( mnu_test_by_index( imod, 0, NULL ) )
         {
             // @note just because we can't load the title image DOES NOT mean that we ignore the module
-            snprintf( loadname, SDL_arraysize( loadname ), "%s/gamedat/title", mnu_ModList.lst[imod].vfs_path );
+            snprintf( loadname, SDL_arraysize( loadname ), "%s/gamedat/title", mnu_ModList[imod].vfs_path );
 
-            mnu_ModList.lst[imod].tex_index = TxTitleImage_load_one_vfs( loadname );
+            mnu_ModList[imod].tex_index = TxTitleImage_load_one_vfs( loadname );
 
-            vfs_printf( filesave, "%02d.  %s\n", ( imod ).get_value(), mnu_ModList.lst[imod].vfs_path );
+            vfs_printf( filesave, "%02d.  %s\n", ( imod ).get_value(), mnu_ModList[imod].vfs_path );
         }
         else
         {
-            vfs_printf( filesave, "##.  %s\n", mnu_ModList.lst[imod].vfs_path );
+            vfs_printf( filesave, "##.  %s\n", mnu_ModList[imod].vfs_path );
         }
     }
 
@@ -7166,7 +7166,7 @@ TX_REF mnu_get_icon_ref( const CAP_REF & icap, const TX_REF & default_ref )
     ego_cap * pitem_cap;
 
     if ( !LOADED_CAP( icap ) ) return icon_ref;
-    pitem_cap = CapStack.lst + icap;
+    pitem_cap = CapStack + icap;
 
     // what do we need to draw?
     is_spell_fx = ( NO_SKIN_OVERRIDE != pitem_cap->spelleffect_type );
@@ -7211,7 +7211,7 @@ int mnu_get_mod_number( const char *szModName )
 
     for ( modnum = 0; modnum < mnu_ModList.count; modnum++ )
     {
-        if ( 0 == strcmp( mnu_ModList.lst[modnum].vfs_path, szModName ) )
+        if ( 0 == strcmp( mnu_ModList[modnum].vfs_path, szModName ) )
         {
             retval = ( modnum ).get_value();
             break;
@@ -7229,7 +7229,7 @@ bool_t mnu_test_by_index( const MOD_REF & modnumber, size_t buffer_len, char * b
     bool_t         allowed;
 
     if ( INVALID_MOD( modnumber ) ) return bfalse;
-    pmod = mnu_ModList.lst + modnumber;
+    pmod = mnu_ModList + modnumber;
 
     // First check if we are in developers mode or that the right module has been beaten before
     allowed = bfalse;
@@ -7313,7 +7313,7 @@ void mnu_load_all_module_info()
 
     while ( NULL != ctxt && VALID_CSTR( vfs_ModPath ) && mnu_ModList.count < MAX_MODULE )
     {
-        mnu_module * pmod = mnu_ModList.lst + MOD_REF( mnu_ModList.count );
+        mnu_module * pmod = mnu_ModList + MOD_REF( mnu_ModList.count );
 
         // clear the module
         mnu_module_init( pmod );
@@ -7353,7 +7353,7 @@ void mnu_release_one_module( const MOD_REF & imod )
     mnu_module * pmod;
 
     if ( !VALID_MOD( imod ) ) return;
-    pmod = mnu_ModList.lst + imod;
+    pmod = mnu_ModList + imod;
 
     TxTitleImage_release_one( pmod->tex_index );
     pmod->tex_index = INVALID_TITLE_TEXTURE;
@@ -7366,7 +7366,7 @@ mod_file_t * mnu_ModList_get_base( int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
-    return &( mnu_ModList.lst[MOD_REF( imod )].base );
+    return &( mnu_ModList[MOD_REF( imod )].base );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7374,7 +7374,7 @@ const char * mnu_ModList_get_vfs_path( int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
-    return mnu_ModList.lst[MOD_REF( imod )].vfs_path;
+    return mnu_ModList[MOD_REF( imod )].vfs_path;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7382,7 +7382,7 @@ const char * mnu_ModList_get_dest_path( int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
-    return mnu_ModList.lst[MOD_REF( imod )].dest_path;
+    return mnu_ModList[MOD_REF( imod )].dest_path;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7390,7 +7390,7 @@ const char * mnu_ModList_get_name( int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
-    return mnu_ModList.lst[MOD_REF( imod )].name;
+    return mnu_ModList[MOD_REF( imod )].name;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7406,7 +7406,7 @@ void mnu_ModList_release_all()
             mnu_release_one_module( cnt );
         }
 
-        memset( mnu_ModList.lst + cnt, 0, sizeof( mnu_module ) );
+        memset( mnu_ModList + cnt, 0, sizeof( mnu_module ) );
     }
 
     mnu_ModList.count = 0;
@@ -7421,11 +7421,11 @@ void mnu_ModList_release_images()
     tnc = -1;
     for ( cnt = 0; cnt < mnu_ModList.count; cnt++ )
     {
-        if ( !mnu_ModList.lst[cnt].loaded ) continue;
+        if ( !mnu_ModList[cnt].loaded ) continue;
         tnc = ( cnt ).get_value();
 
-        TxTitleImage_release_one( mnu_ModList.lst[cnt].tex_index );
-        mnu_ModList.lst[cnt].tex_index = INVALID_TITLE_TEXTURE;
+        TxTitleImage_release_one( mnu_ModList[cnt].tex_index );
+        mnu_ModList[cnt].tex_index = INVALID_TITLE_TEXTURE;
     }
     TxTitleImage.count = 0;
 
@@ -7450,7 +7450,7 @@ void TxTitleImage_ctor()
 
     for ( cnt = 0; cnt < MAX_MODULE; cnt++ )
     {
-        oglx_texture_ctor( TxTitleImage.lst + cnt );
+        oglx_texture_ctor( TxTitleImage + cnt );
     }
 
     TxTitleImage_clear_data();
@@ -7461,7 +7461,7 @@ void TxTitleImage_release_one( const TX_REF & index )
 {
     if ( index < 0 || index >= MAX_MODULE ) return;
 
-    oglx_texture_Release( TxTitleImage.lst + index );
+    oglx_texture_Release( TxTitleImage + index );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7488,7 +7488,7 @@ void TxTitleImage_dtor()
 
     for ( cnt = 0; cnt < MAX_MODULE; cnt++ )
     {
-        oglx_texture_dtor( TxTitleImage.lst + cnt );
+        oglx_texture_dtor( TxTitleImage + cnt );
     }
 
     TxTitleImage_clear_data();
@@ -7507,7 +7507,7 @@ TX_REF TxTitleImage_load_one_vfs( const char *szLoadName )
     if ( TxTitleImage.count >= TITLE_TEXTURE_COUNT ) return TX_REF( INVALID_TITLE_TEXTURE );
 
     itex  = TX_REF( TxTitleImage.count );
-    if ( INVALID_GL_ID != ego_texture_load_vfs( TxTitleImage.lst + itex, szLoadName, INVALID_KEY ) )
+    if ( INVALID_GL_ID != ego_texture_load_vfs( TxTitleImage + itex, szLoadName, INVALID_KEY ) )
     {
         TxTitleImage.count++;
     }
@@ -7524,7 +7524,7 @@ oglx_texture_t * TxTitleImage_get_ptr( const TX_REF & itex )
 {
     if ( itex >= TxTitleImage.count || itex >= MAX_MODULE ) return NULL;
 
-    return TxTitleImage.lst + itex;
+    return TxTitleImage + itex;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7537,7 +7537,7 @@ void TxTitleImage_reload_all()
 
     for ( cnt = 0; cnt < TX_TEXTURE_COUNT; cnt++ )
     {
-        oglx_texture_t * ptex = TxTitleImage.lst + cnt;
+        oglx_texture_t * ptex = TxTitleImage + cnt;
 
         if ( ptex->valid )
         {
@@ -7937,7 +7937,7 @@ bool_t loadplayer_import_one( const char * foundfile )
     skin = read_skin_vfs( filename );
 
     //snprintf( filename, SDL_arraysize(filename), "%s" SLASH_STR "tris.md2", foundfile );
-    //md2_load_one( vfs_resolveReadFilename(filename), &(MadStack.lst[loadplayer_count].md2_data) );
+    //md2_load_one( vfs_resolveReadFilename(filename), &(MadStack[loadplayer_count].md2_data) );
 
     snprintf( filename, SDL_arraysize( filename ), "%s/icon%d", foundfile, skin );
     pinfo->tx_ref = TxTexture_load_one_vfs( filename, TX_REF( INVALID_TX_TEXTURE ), INVALID_KEY );

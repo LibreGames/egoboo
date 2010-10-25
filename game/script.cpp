@@ -1038,7 +1038,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARSELFMORALE:
                 varname = "SELFMORALE";
-                iTmp = TeamStack.lst[pchr->baseteam].morale;
+                iTmp = TeamStack[pchr->baseteam].morale;
                 break;
 
             case VARSELFLIFE:
@@ -1076,7 +1076,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
             case VARLEADERX:
                 varname = "LEADERX";
                 iTmp = pchr->pos.x;
-                if ( TeamStack.lst[pchr->team].leader != NOLEADER )
+                if ( TeamStack[pchr->team].leader != NOLEADER )
                     iTmp = team_get_pleader( pchr->team )->pos.x;
 
                 break;
@@ -1084,7 +1084,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
             case VARLEADERY:
                 varname = "LEADERY";
                 iTmp = pchr->pos.y;
-                if ( TeamStack.lst[pchr->team].leader != NOLEADER )
+                if ( TeamStack[pchr->team].leader != NOLEADER )
                     iTmp = team_get_pleader( pchr->team )->pos.y;
 
                 break;
@@ -1110,7 +1110,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
             case VARLEADERTURN:
                 varname = "LEADERTURN";
                 iTmp = pchr->ori.facing_z;
-                if ( TeamStack.lst[pchr->team].leader != NOLEADER )
+                if ( TeamStack[pchr->team].leader != NOLEADER )
                     iTmp = team_get_pleader( pchr->team )->ori.facing_z;
 
                 break;
@@ -1247,7 +1247,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARTARGETLEVEL:
                 varname = "TARGETLEVEL";
-                iTmp = ( NULL == ptarget ) ? 0 : ptarget->experiencelevel;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->experience_level;
                 break;
 
             case VARTARGETSPEEDX:
@@ -1307,12 +1307,12 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARSELFMANAFLOW:
                 varname = "SELFMANAFLOW";
-                iTmp = pchr->manaflow;
+                iTmp = pchr->mana_flow;
                 break;
 
             case VARTARGETMANAFLOW:
                 varname = "TARGETMANAFLOW";
-                iTmp = ( NULL == ptarget ) ? 0 : ptarget->manaflow;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->mana_flow;
                 break;
 
             case VARSELFATTACHED:
@@ -1441,7 +1441,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARSELFLEVEL:
                 varname = "SELFLEVEL";
-                iTmp = pchr->experiencelevel;
+                iTmp = pchr->experience_level;
                 break;
 
             case VARTARGETRELOADTIME:
@@ -1456,7 +1456,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARTARGETMAXLIFE:
                 varname = "TARGETMAXLIFE";
-                iTmp = ( NULL == ptarget ) ? 0 : ptarget->lifemax;
+                iTmp = ( NULL == ptarget ) ? 0 : ptarget->life_max;
                 break;
 
             case VARTARGETTEAM:
@@ -1984,7 +1984,7 @@ ego_ai_bundle * ego_ai_bundle::validate( ego_ai_bundle * pbundle )
     pbundle->cap_ref = pbundle->pro_ptr->icap;
 
     if ( !LOADED_CAP( pbundle->cap_ref ) ) goto ego_ai_bundle__validate_fail;
-    pbundle->cap_ptr = CapStack.lst + pbundle->cap_ref;
+    pbundle->cap_ptr = CapStack + pbundle->cap_ref;
 
     // get the script info
     pbundle->ai_state_ref = pbundle->chr_ptr->ai.type;

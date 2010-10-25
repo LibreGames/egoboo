@@ -144,9 +144,9 @@ struct ego_msg
     char            textdisplay[MESSAGESIZE];        ///< The displayed text
 };
 
-DECLARE_STATIC_ARY_TYPE( DisplayMsgAry, ego_msg, MAX_MESSAGE );
+typedef t_sary<  ego_msg,  MAX_MESSAGE  >  DisplayMsgAry_t;
 
-DECLARE_EXTERN_STATIC_ARY( DisplayMsgAry, DisplayMsg )
+extern  DisplayMsgAry_t  DisplayMsg ;
 
 //--------------------------------------------------------------------------------------------
 // camera optimization

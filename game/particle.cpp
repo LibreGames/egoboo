@@ -188,13 +188,16 @@ ego_prt * ego_prt::ctor_this( ego_prt * pprt )
     /// BB@> Set all particle parameters to safe values.
     ///      @details The c equivalent of the particle prt::new() function.
 
+    pprt = ego_prt::dealloc( pprt );
     pprt = ego_prt::alloc( pprt );
-    if ( NULL == pprt ) return pprt;
 
-    // set the ego_BSP_leaf data
-    pprt->bsp_leaf.data      = pprt;
-    pprt->bsp_leaf.data_type = LEAF_PRT;
-    pprt->bsp_leaf.index     = GET_IDX_PPRT( pprt );
+    if ( NULL != pprt )
+    {
+        // set the ego_BSP_leaf data
+        pprt->bsp_leaf.data      = pprt;
+        pprt->bsp_leaf.data_type = LEAF_PRT;
+        pprt->bsp_leaf.index     = GET_IDX_PPRT( pprt );
+    }
 
     return pprt;
 }
@@ -287,7 +290,7 @@ void free_one_particle_in_game( const PRT_REF & particle )
 
         if ( LOADED_PIP( pprt->pip_ref ) )
         {
-            play_particle_sound( particle, PipStack.lst[pprt->pip_ref].end_sound );
+            play_particle_sound( particle, PipStack[pprt->pip_ref].end_sound );
         }
     }
 
@@ -296,7 +299,7 @@ void free_one_particle_in_game( const PRT_REF & particle )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::do_construct( ego_prt * pprt )
+ego_prt * ego_prt::do_constructing( ego_prt * pprt )
 {
     // this object has already been constructed as a part of the
     // ego_obj_prt, so its parent is properly defined
@@ -309,7 +312,7 @@ ego_prt * ego_prt::do_construct( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::do_init( ego_prt * pprt )
+ego_prt * ego_prt::do_initializing( ego_prt * pprt )
 {
     PRT_REF            iprt;
     ego_pip            * ppip;
@@ -340,7 +343,7 @@ ego_prt * ego_prt::do_init( ego_prt * pprt )
 
         return NULL;
     }
-    ppip = PipStack.lst + pdata->ipip;
+    ppip = PipStack + pdata->ipip;
 
     // make some local copies of the spawn data
     loc_facing     = pdata->facing;
@@ -639,7 +642,7 @@ ego_prt * ego_prt::do_init( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::do_process( ego_prt * pprt )
+ego_prt * ego_prt::do_processing( ego_prt * pprt )
 {
     // is there ever a reason to change the state?
 
@@ -647,7 +650,7 @@ ego_prt * ego_prt::do_process( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::do_deinit( ego_prt * pprt )
+ego_prt * ego_prt::do_deinitializing( ego_prt * pprt )
 {
     if ( NULL == pprt ) return pprt;
 
@@ -657,368 +660,13 @@ ego_prt * ego_prt::do_deinit( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * ego_prt::do_destruct( ego_prt * pprt )
+ego_prt * ego_prt::do_destructing( ego_prt * pprt )
 {
     ego_prt * rv = ego_prt::dtor_all( pprt );
 
     /* add something here */
 
     return rv;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::run_construct( ego_obj_prt * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the particle is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_constructing + 1 ) )
-    {
-        ego_obj_prt * tmp_prt = ego_obj_prt::run_deconstruct( pobj, max_iterations );
-        if ( tmp_prt == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_constructing && iterations < max_iterations )
-    {
-        ego_obj_prt * ptmp = ego_obj_prt::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::run_initialize( ego_obj_prt * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the particle is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_initializing + 1 ) )
-    {
-        ego_obj_prt * tmp_prt = ego_obj_prt::run_deconstruct( pobj, max_iterations );
-        if ( tmp_prt == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_initializing && iterations < max_iterations )
-    {
-        ego_obj_prt * ptmp = ego_obj_prt::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::run_activate( ego_obj_prt * pobj, int max_iterations )
-{
-    int          iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the particle is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_processing + 1 ) )
-    {
-        ego_obj_prt * tmp_prt = ego_obj_prt::run_deconstruct( pobj, max_iterations );
-        if ( tmp_prt == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action < ego_obj_processing && iterations < max_iterations )
-    {
-        ego_obj_prt * ptmp = ego_obj_prt::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::run_deinitialize( ego_obj_prt * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the particle is already beyond this stage, deinitialize it
-    if ( pbase->get_proc().action > ( int )( ego_obj_deinitializing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pbase->get_proc().action < ego_obj_deinitializing )
-    {
-        ego_obj::end_processing( pbase );
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_deinitializing && iterations < max_iterations )
-    {
-        ego_obj_prt * ptmp = ego_obj_prt::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::run_deconstruct( ego_obj_prt * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the particle is already beyond this stage, deconstruct it
-    if ( pbase->get_proc().action > ( int )( ego_obj_destructing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pbase->get_proc().action < ego_obj_destructing )
-    {
-        // make sure that you deinitialize before destructing
-        ego_obj::end_processing( pbase );
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_destructing && iterations < max_iterations )
-    {
-        ego_obj_prt * ptmp = ego_obj_prt::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::run( ego_obj_prt * pobj )
-{
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // set the object to deinitialize if it is not "dangerous" and if was requested
-    if ( FLAG_REQ_TERMINATION_PBASE( pbase ) )
-    {
-        pbase = ego_obj::grant_terminate( pbase );
-    }
-
-    switch ( pbase->get_proc().action )
-    {
-        default:
-        case ego_obj_nothing:
-            /* no operation */
-            break;
-
-        case ego_obj_constructing:
-            pobj = ego_obj_prt::do_constructing( pobj );
-            break;
-
-        case ego_obj_initializing:
-            pobj = ego_obj_prt::do_initializing( pobj );
-            break;
-
-        case ego_obj_processing:
-            pobj = ego_obj_prt::do_processing( pobj );
-            break;
-
-        case ego_obj_deinitializing:
-            pobj = ego_obj_prt::do_deinitializing( pobj );
-            break;
-
-        case ego_obj_destructing:
-            pobj = ego_obj_prt::do_destructing( pobj );
-            break;
-
-        case ego_obj_waiting:
-            /* do nothing */
-            break;
-    }
-
-    if ( NULL == pobj )
-    {
-        pbase->update_guid = INVALID_UPDATE_GUID;
-    }
-    else if ( ego_obj_processing == pbase->get_proc().action )
-    {
-        pbase->update_guid = PrtObjList.update_guid();
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::do_constructing( ego_obj_prt * pobj )
-{
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
-
-    // run the constructor
-    ego_prt * pprt = ego_prt::do_construct( pobj->get_pdata() );
-    if ( NULL == pprt ) return NULL;
-
-    // move on to the next action
-    ego_obj::end_constructing( pbase );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::do_initializing( ego_obj_prt * pobj )
-{
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_INITIALIZING_PBASE( pbase ) ) return pobj;
-
-    // tell the game that we're spawning something
-    POBJ_BEGIN_SPAWN( pobj );
-
-    // run the initialization routine
-    ego_prt * pprt = ego_prt::do_init( pobj->get_pdata() );
-    if ( NULL == pprt ) return pobj;
-
-    // request that we be turned on
-    pbase->proc_req_on( btrue );
-
-    // do something about being turned on
-    if ( 0 == PrtObjList.loop_depth )
-    {
-        ego_obj::grant_on( pbase );
-    }
-    else
-    {
-        PrtObjList.add_activation( GET_REF_PPRT_OBJ( pobj ) );
-    }
-
-    // move on to the next action
-    ego_obj::end_initializing( pbase );
-
-    if ( !LOADED_PIP( pobj->get_data().pip_ref ) )
-    {
-        POBJ_ACTIVATE( pobj, "*UNKNOWN*" );
-    }
-    else
-    {
-        ego_pip * ppip = PipStack.lst + pobj->get_data().pip_ref ;
-
-        POBJ_ACTIVATE( pobj, ppip->name );
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::do_processing( ego_obj_prt * pobj )
-{
-    // there's nothing to configure if the object is active...
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_PROCESSING_PBASE( pbase ) ) return pobj;
-
-    // do this here (instead of at the end of *_do_object_initializing()) so that
-    // we are sure that the object is actually "on"
-    POBJ_END_SPAWN( pobj );
-
-    // run the main loop
-    ego_prt * pprt = ego_prt::do_process( pobj->get_pdata() );
-    if ( NULL == pprt ) return pobj;
-
-    /* add stuff here */
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::do_deinitializing( ego_obj_prt * pobj )
-{
-    /// @details BB@> deinitialize the character data
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_DEINITIALIZING_PBASE( pbase ) ) return pobj;
-
-    // make sure that the spawn is terminated
-    POBJ_END_SPAWN( pobj );
-
-    // run a deinitialization routine
-    ego_prt * pprt = ego_prt::do_deinit( pobj->get_pdata() );
-    if ( NULL == pprt ) return pobj;
-
-    // move on to the next action
-    ego_obj::end_deinitializing( pbase );
-
-    // make sure the object is off
-    pbase->get_proc().on = bfalse;
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::do_destructing( ego_obj_prt * pobj )
-{
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_DESTRUCTING_PBASE( pbase ) ) return pobj;
-
-    // make sure that the spawn is terminated
-    POBJ_END_SPAWN( pobj );
-
-    // run the destructor
-    ego_prt * pprt = ego_prt::do_destruct( pobj->get_pdata() );
-    if ( NULL == pprt ) return pobj;
-
-    // move on to the next action (dead)
-    ego_obj::end_destructing( pbase );
-
-    return pobj;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1047,7 +695,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
 
         return PRT_REF( MAX_PRT );
     }
-    ppip = PipStack.lst + ipip;
+    ppip = PipStack + ipip;
 
     // count all the requests for this particle type
     ppip->prt_request_count++;
@@ -1058,7 +706,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
 #if EGO_DEBUG && defined(DEBUG_PRT_LIST)
         log_debug( "spawn_one_particle() - cannot allocate a particle owner == %d(\"%s\"), pip == %d(\"%s\"), profile == %d(\"%s\")\n",
                    chr_origin, INGAME_CHR( chr_origin ) ? ChrObjList.get_data( chr_origin ).name : "INVALID",
-                   ipip, LOADED_PIP( ipip ) ? PipStack.lst[ipip].name : "INVALID",
+                   ipip, LOADED_PIP( ipip ) ? PipStack[ipip].name : "INVALID",
                    iprofile, LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
 #endif
 
@@ -1082,10 +730,11 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
     pprt->spawn_data.oldtarget  = oldtarget;
 
     // actually force the character to spawn
-    ego_obj_prt::run_activate( PDATA_GET_POBJ( ego_prt, pprt ), 100 );
+    ego_obj * pobj = pprt->get_pparent();
+    pobj = ego_object_engine::run_activate( pobj, 100 );
 
     // count out all the requests for this particle type
-    if ( NULL != pprt )
+    if ( NULL != pobj )
     {
         ppip->prt_create_count++;
     }
@@ -1103,7 +752,7 @@ float prt_calc_mesh_pressure( ego_prt * pprt, float test_pos[] )
     if ( !DEFINED_PPRT( pprt ) ) return retval;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return retval;
-    ppip = PipStack.lst + pprt->pip_ref;
+    ppip = PipStack + pprt->pip_ref;
 
     stoppedby = MPDFX_IMPASS;
     if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
@@ -1135,7 +784,7 @@ fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
     if ( !DEFINED_PPRT( pprt ) ) return retval;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return retval;
-    ppip = PipStack.lst + pprt->pip_ref;
+    ppip = PipStack + pprt->pip_ref;
 
     stoppedby = MPDFX_IMPASS;
     if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
@@ -1180,7 +829,7 @@ BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * p
     if ( !DEFINED_PPRT( pprt ) ) return 0;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return 0;
-    ppip = PipStack.lst + pprt->pip_ref;
+    ppip = PipStack + pprt->pip_ref;
 
     stoppedby = MPDFX_IMPASS;
     if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
@@ -1214,7 +863,7 @@ bool_t prt_test_wall( ego_prt * pprt, float test_pos[] )
     if ( !ACTIVE_PPRT( pprt ) ) return 0;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return bfalse;
-    ppip = PipStack.lst + pprt->pip_ref;
+    ppip = PipStack + pprt->pip_ref;
 
     stoppedby = MPDFX_IMPASS;
     if ( 0 != ppip->bump_money ) ADD_BITS( stoppedby, MPDFX_WALL );
@@ -1864,7 +1513,7 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
     pprt = PrtObjList.get_pdata( particle );
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return 0;
-    ppip = PipStack.lst + pprt->pip_ref;
+    ppip = PipStack + pprt->pip_ref;
 
     // no point in going on, is there?
     if ( 0 == ppip->bumpspawn_amount && !ppip->spawnenchant ) return 0;
@@ -2069,7 +1718,7 @@ PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & p
     ego_pip * ppip;
 
     ipip = PIP_REF( MAX_PIP );
-    if ( VALID_PIP_RANGE( pip_override ) )
+    if ( PipStack.valid_ref( pip_override ) )
     {
         release_one_pip( pip_override );
         ipip = pip_override;
@@ -2079,11 +1728,11 @@ PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & p
         ipip = PipStack_get_free();
     }
 
-    if ( !VALID_PIP_RANGE( ipip ) )
+    if ( !PipStack.valid_ref( ipip ) )
     {
         return PIP_REF( MAX_PIP );
     }
-    ppip = PipStack.lst + ipip;
+    ppip = PipStack + ipip;
 
     if ( NULL == load_one_pip_file_vfs( szLoadName, ppip ) )
     {
@@ -2174,7 +1823,7 @@ void init_all_pip()
 
     for ( cnt = 0; cnt < MAX_PIP; cnt++ )
     {
-        pip_init( PipStack.lst + cnt );
+        pip_init( PipStack + cnt );
     }
 
     // Reset the pip stack "pointer"
@@ -2193,7 +1842,7 @@ void release_all_pip()
     {
         if ( LOADED_PIP( cnt ) )
         {
-            ego_pip * ppip = PipStack.lst + cnt;
+            ego_pip * ppip = PipStack + cnt;
 
             max_request = MAX( max_request, ppip->prt_request_count );
             tnc++;
@@ -2211,7 +1860,7 @@ void release_all_pip()
             {
                 if ( LOADED_PIP( cnt ) )
                 {
-                    ego_pip * ppip = PipStack.lst + cnt;
+                    ego_pip * ppip = PipStack + cnt;
                     fprintf( ftmp, "index == %d\tname == \"%s\"\tcreate_count == %d\trequest_count == %d\n", ( cnt ).get_value(), ppip->name, ppip->prt_create_count, ppip->prt_request_count );
                 }
             }
@@ -2233,8 +1882,8 @@ bool_t release_one_pip( const PIP_REF & ipip )
 {
     ego_pip * ppip;
 
-    if ( !VALID_PIP_RANGE( ipip ) ) return bfalse;
-    ppip = PipStack.lst + ipip;
+    if ( !PipStack.valid_ref( ipip ) ) return bfalse;
+    ppip = PipStack + ipip;
 
     if ( !ppip->loaded ) return btrue;
 
@@ -2309,7 +1958,7 @@ bool_t prt_request_free_ref( const PRT_REF & iprt )
     if ( NULL == pprt || TERMINATED_PPRT( pprt ) ) return bfalse;
 
     // wait for PrtObjList.cleanup() to work its magic
-    ego_obj::begin_waiting( PDATA_GET_PBASE( ego_prt, pprt ) );
+    pprt->get_pparent()->begin_waiting( );
 
     // tell
     ego_obj_prt::set_limbo( PDATA_GET_POBJ( ego_prt, pprt ), btrue );
@@ -2395,7 +2044,7 @@ void cleanup_all_particles()
             free_one_particle_in_game( PRT_REF( cnt ) );
 
             // tell the particle to finish deallocating itself
-            ego_obj::end_processing( pbase );
+            pbase->end_processing();
         }
     }
 }
@@ -2813,7 +2462,7 @@ ego_prt_bundle * prt_update_limbo( ego_prt_bundle * pbdl_prt )
     pbase = PDATA_GET_PBASE( ego_prt, pbdl_prt->prt_ptr );
     if ( !VALID_PBASE( pbase ) ) return pbdl_prt;
 
-    request_terminate = pbase->get_req().kill_me;
+    request_terminate = FLAG_REQ_TERMINATION_PBASE( pbase );
     if ( !loc_pprt->is_eternal )
     {
         if ( 0 == loc_pprt->frames_remaining ) request_terminate = btrue;
@@ -2821,7 +2470,7 @@ ego_prt_bundle * prt_update_limbo( ego_prt_bundle * pbdl_prt )
     }
 
     // if the object has been around for more than one frame, there is no need to keep it as a "limbo particle"
-    prt_display = !pbase->get_proc().on && ( 0 == pbase->frame_count );
+    prt_display = !ego_obj::get_on( pbase ) && ( 0 == pbase->frame_count );
     if ( request_terminate && !prt_display )
     {
         prt_request_free( pbdl_prt );
@@ -2873,7 +2522,7 @@ ego_prt_bundle * prt_update( ego_prt_bundle * pbdl_prt )
     penviro  = &( loc_pprt->enviro );
 
     // do the next step in the particle configuration
-    ego_obj_prt * tmp_pobj = ego_obj_prt::run( PDATA_GET_POBJ( ego_prt, pbdl_prt->prt_ptr ) );
+    ego_obj_prt * tmp_pobj = ego_object_engine::run( pbdl_prt->prt_ptr->get_pparent() );
     if ( NULL == tmp_pobj ) { ego_prt_bundle::ctor_this( pbdl_prt ); return NULL; }
 
     if ( tmp_pobj->get_pdata() != pbdl_prt->prt_ptr )
@@ -3081,7 +2730,7 @@ ego_prt_bundle * ego_prt_bundle::validate( ego_prt_bundle * pbundle )
 
     if ( LOADED_PIP( pbundle->pip_ref ) )
     {
-        pbundle->pip_ptr = PipStack.lst + pbundle->pip_ref;
+        pbundle->pip_ptr = PipStack + pbundle->pip_ref;
     }
     else
     {
@@ -3776,6 +3425,9 @@ ego_obj_prt * ego_obj_prt::ctor_this( ego_obj_prt * pobj )
 
     if ( NULL == pobj ) return NULL;
 
+    puts( "\t\t" __FUNCTION__ );
+
+    pobj = ego_obj_prt::dealloc( pobj );
     pobj = ego_obj_prt::alloc( pobj );
 
     return pobj;
@@ -3789,6 +3441,8 @@ ego_obj_prt * ego_obj_prt::dtor_this( ego_obj_prt * pobj )
     if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
 
     pobj = ego_obj_prt::dealloc( pobj );
+
+    puts( "\t\t" __FUNCTION__ );
 
     // Sets the state to ego_obj_terminated automatically.
     POBJ_TERMINATE( pobj );
@@ -3867,6 +3521,46 @@ ego_obj_prt * ego_obj_prt::do_alloc( ego_obj_prt * pobj )
     ego_prt::do_alloc( pobj->get_pdata() );
 
     return pobj;
+}
+
+ego_obj_prt * ego_obj_prt::ctor_all( ego_obj_prt * ptr )
+{
+    if ( NULL != ptr )
+    {
+        puts( "\t++++ " __FUNCTION__ );
+        new( ptr ) ego_obj_prt();
+    }
+    return ptr;
+}
+
+ego_obj_prt * ego_obj_prt::dtor_all( ego_obj_prt * ptr )
+{
+    if ( NULL != ptr )
+    {
+        ptr->~ego_obj_prt();
+        puts( "\t---- " __FUNCTION__ );
+    }
+    return ptr;
+}
+
+ego_prt * ego_prt::ctor_all( ego_prt * ptr, ego_obj_prt * pparent )
+{
+    if ( NULL != ptr )
+    {
+        puts( "\t" __FUNCTION__ );
+        new( ptr ) ego_prt( pparent );
+    }
+    return ptr;
+}
+
+ego_prt * ego_prt::dtor_all( ego_prt * ptr )
+{
+    if ( NULL != ptr )
+    {
+        ptr->~ego_prt();
+        puts( "\t" __FUNCTION__ );
+    }
+    return ptr;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4243,3 +3937,4 @@ ego_obj_prt * ego_obj_prt::do_alloc( ego_obj_prt * pobj )
 //
 //    return pbdl_prt;
 //}
+

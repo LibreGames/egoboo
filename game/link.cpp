@@ -225,7 +225,7 @@ bool_t link_push_module()
 
         ego_hero_spawn_data * phero;
 
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         if ( !ppla->valid ) continue;
 

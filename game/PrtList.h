@@ -32,7 +32,7 @@
 //--------------------------------------------------------------------------------------------
 
 #define VALID_PRT_IDX( INDX )   ( ((INDX) >= 0) && ((INDX) < MAX_PRT) )
-#define VALID_PRT_REF( IPRT )     PrtObjList.validate_ref(IPRT)
+#define VALID_PRT_REF( IPRT )     PrtObjList.valid_ref(IPRT)
 #define ALLOCATED_PRT( IPRT )   ( ALLOCATED_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
 #define VALID_PRT( IPRT )       ( VALID_PBASE(PrtObjList.get_valid_ptr(IPRT)) )
 #define DEFINED_PRT( IPRT )     ( VALID_PBASE(PrtObjList.get_valid_ptr(IPRT) ) && !FLAG_TERMINATED_PBASE(PrtObjList.get_valid_ptr(IPRT)) )

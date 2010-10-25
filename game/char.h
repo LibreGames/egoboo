@@ -59,7 +59,7 @@ struct ego_obj_chr;
 #define IS_PACKED_CHR_RAW(ICHR)   ( ChrObjList.get_data(ICHR).pack.is_packed )
 #define IS_ATTACHED_CHR_RAW(ICHR) ( (DEFINED_CHR(ChrObjList.get_data(ICHR).attachedto) || ChrObjList.get_data(ICHR).pack.is_packed) )
 
-#define IS_INVICTUS_PCHR_RAW(PCHR) ( ( VALID_PLA( (PCHR)->is_which_player ) ? PlaStack.lst[(PCHR)->is_which_player].wizard_mode : bfalse ) || (PCHR)->invictus )
+#define IS_INVICTUS_PCHR_RAW(PCHR) ( ( VALID_PLA( (PCHR)->is_which_player ) ? PlaStack[(PCHR)->is_which_player].wizard_mode : bfalse ) || (PCHR)->invictus )
 #define IS_FLYING_PCHR_RAW(PCHR)   ( ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
 #define IS_PACKED_PCHR_RAW(PCHR)   ( (PCHR)->pack.is_packed )
 #define IS_ATTACHED_PCHR_RAW(PCHR) ( (DEFINED_CHR((PCHR)->attachedto) || (PCHR)->pack.is_packed) )
@@ -183,10 +183,127 @@ struct ego_chr_spawn_data
 };
 
 //--------------------------------------------------------------------------------------------
+/// basically the "rendered" version of a cap template
+/// this data should remain mostly constant
+struct ego_chr_cap_data
+{
+    // naming
+    STRING         name;            ///< My name
 
+    // skins
+    float          maxaccel_reset;                ///< The actual maximum acceleration
+
+    // overrides
+    Uint16         skin;                      ///< Character's skin
+    Uint8          experience_level_reset;    ///< Experience Level
+    int            state_stt;                 ///< 0 for normal
+    int            content_stt;               ///< 0 for normal
+
+    // inventory
+    Uint8          ammo_max;          ///< Ammo stuff
+    Uint16         ammo;
+    Sint16         money;            ///< Money
+
+    // character stats
+    Uint8          gender;          ///< Gender
+
+    // life
+    SFP8_T         life_max;            ///< Basic character stats
+    SFP8_T         life_return;     ///< Regeneration/poison - 8.8 fixed point
+    UFP8_T         life_heal;       ///< 8.8 fixed point
+
+    //// mana
+    SFP8_T         mana_max;            ///< Mana stuff
+    SFP8_T         mana_return;      ///< 8.8 fixed point
+    SFP8_T         mana_flow;        ///< 8.8 fixed point
+
+    SFP8_T         strength;        ///< Strength     - 8.8 fixed point
+    SFP8_T         wisdom;          ///< Wisdom       - 8.8 fixed point
+    SFP8_T         intelligence;    ///< Intelligence - 8.8 fixed point
+    SFP8_T         dexterity;       ///< Dexterity    - 8.8 fixed point
+
+    //---- physics
+    Uint8        weight_stt;                        ///< Weight
+    float        dampen_stt;                        ///< Bounciness
+    float        bumpdampen_stt;                    ///< Mass
+
+    float          fat_stt;                       ///< Character's initial size
+    float          shadow_size_stt;               ///< Initial shadow size
+    ego_bumper     bump_stt;
+    Uint8          stoppedby;                     ///< Collision mask
+
+    //---- movement
+    float          jump_power;                    ///< Jump power
+    Uint8          jump_number_reset;             ///< Number of jumps total, 255=Flying
+    float          anim_speed_sneak;              ///< Movement rate of the sneak animation
+    float          anim_speed_walk;               ///< Walking if above this speed
+    float          anim_speed_run;                ///< Running if above this speed
+    float          fly_height_reset;              ///< Height to stabilize at
+    bool_t         waterwalk;                     ///< Always above watersurfacelevel?
+
+    //---- status graphics
+    Uint8          life_color;                     ///< Life bar color
+    Uint8          mana_color;                     ///< Mana bar color
+    bool_t         draw_icon;                      ///< Show the icon?
+
+    //---- graphics
+    Uint8          flashand;                      ///< 1,3,7,15,31 = Flash, 255 = Don't
+    Uint8          alpha_base;                    ///< Transparency
+    Uint8          light_base;                    ///< Light blending
+    bool_t         transferblend;                 ///< Give transparency to weapons?
+    SFP8_T         uoffvel;                       ///< Moving texture speed
+    SFP8_T         voffvel;
+
+    //---- defense
+    Uint8          defense;                       ///< Base defense rating
+    Uint8          damagemodifier[DAMAGE_COUNT];  ///< Resistances and inversion
+
+    //---- xp
+    Uint32         experience_reset;              ///< The experience at the start of the module
+
+    //---- sound
+    Sint8          sound_index[SOUND_COUNT];       ///< a map for soundX.wav to sound types
+
+    //---- flags
+    bool_t         isitem;                        ///< Is it grabbable?
+    bool_t         ismount;                       ///< Can you ride it?
+    bool_t         invictus;                      ///< Totally invincible?
+    bool_t         platform;                      ///< Can it be stood on
+    bool_t         canuseplatforms;               ///< Can use platforms?
+    bool_t         cangrabmoney;                  ///< Picks up coins?
+    bool_t         openstuff;                     ///< Can it open chests/doors?
+    bool_t         nameknown;                     ///< Is the name known?
+    bool_t         usageknown;                     ///< Is its usage known
+    bool_t         ammoknown;                     ///< We know how to reload it
+    Uint8          damagetargettype;              ///< Type of damage for AI DamageTarget
+    bool_t         iskursed;                      ///< Can't be dropped?
+
+    //---- item usage
+    Sint16         manacost;                      ///< Mana cost to use
+
+    //---- special particle effects
+    Uint8        reaffirmdamagetype; ///< Re-attach sticky particles? Relight that torch...
+
+    //---- skill system
+    IDSZ_node_t   skills[MAX_IDSZ_MAP_SIZE];
+    int           see_invisible_level;             ///< Can it see invisible?
+
+    // random stuff
+    bool_t         stickybutt;                    ///< Rests on floor
+
+    //---- some parameters directly derived from the cap
+    bool_t         can_fly_jump;                   ///< The object can fly by jumping (jump_number_reset == JUMP_NUMBER_INFINITE)
+
+    ego_chr_cap_data();
+
+    static bool_t upload_cap( ego_chr_cap_data * pchr, ego_cap * cap );
+    static bool_t download_cap( ego_chr_cap_data * pchr, ego_cap * cap );
+};
+
+//--------------------------------------------------------------------------------------------
 /// The definition of the character data
 /// This has been separated from ego_chr so that it can be initialized easily without upsetting anuthing else
-struct ego_chr_data
+struct ego_chr_data : public ego_chr_cap_data
 {
     //---- constructors and destructors
 
@@ -212,34 +329,14 @@ struct ego_chr_data
     ego_latch_game   latch;           ///< the latch data
 
     // character stats
-    STRING         name;            ///< My name
-    Uint8          gender;          ///< Gender
-
-    Uint8          lifecolor;       ///< Bar color
     SFP8_T         life;            ///< Basic character stats
-    SFP8_T         lifemax;         ///< 8.8 fixed point
-    UFP8_T         life_heal;       ///< 8.8 fixed point
-    SFP8_T         life_return;     ///< Regeneration/poison - 8.8 fixed point
-
-    Uint8          manacolor;       ///< Bar color
     SFP8_T         mana;            ///< Mana stuff
-    SFP8_T         manamax;         ///< 8.8 fixed point
-    SFP8_T         manaflow;        ///< 8.8 fixed point
-    SFP8_T         manareturn;      ///< 8.8 fixed point
-
-    SFP8_T         strength;        ///< Strength     - 8.8 fixed point
-    SFP8_T         wisdom;          ///< Wisdom       - 8.8 fixed point
-    SFP8_T         intelligence;    ///< Intelligence - 8.8 fixed point
-    SFP8_T         dexterity;       ///< Dexterity    - 8.8 fixed point
 
     Uint32         experience;                    ///< Experience
-    Uint8          experiencelevel;               ///< Experience Level
+    Uint32         experience_level;              ///< The Character's current level
 
     ego_pack         pack;             ///< what the character is holding
 
-    Sint16         money;            ///< Money
-    Uint8          ammomax;          ///< Ammo stuff
-    Uint16         ammo;
     CHR_REF        holdingwhich[SLOT_COUNT]; ///< !=MAX_CHR if character is holding something
     CHR_REF        inventory[INVEN_COUNT];   ///< !=MAX_CHR if character is storing something
 
@@ -252,15 +349,12 @@ struct ego_chr_data
     ENC_REF        undoenchant;                   ///< Last enchantment spawned
 
     float          fat;                           ///< Character's size
-    float          fat_stt;                       ///< Character's initial size
     float          fat_goto;                      ///< Character's size goto
     Sint16         fat_goto_time;                 ///< Time left in size change
 
     // jump stuff
-    float          jump_power;                    ///< Jump power
     Uint8          jump_time;                     ///< Delay until next jump
     Uint8          jump_number;                   ///< Number of jumps remaining
-    Uint8          jump_number_reset;             ///< Number of jumps total, 255=Flying
     bool_t         jump_ready;                    ///< For standing on a platform character
 
     // attachments
@@ -268,8 +362,6 @@ struct ego_chr_data
     slot_t         inwhich_slot;                  ///< SLOT_LEFT or SLOT_RIGHT
 
     // platform stuff
-    bool_t         platform;                      ///< Can it be stood on
-    bool_t         canuseplatforms;               ///< Can use platforms?
     float          holdingweight;                 ///< For weighted buttons
     float          targetplatform_overlap;        ///< What is the height of the target platform?
     CHR_REF        targetplatform_ref;            ///< Am I trying to attach to a platform?
@@ -278,15 +370,10 @@ struct ego_chr_data
     float          onwhichplatform_weight;        ///< How much weight did I put on the platform?
 
     // combat stuff
-    Uint8          damagetargettype;              ///< Type of damage for AI DamageTarget
-    Uint8          reaffirmdamagetype;            ///< For relighting torches
-    Uint8          damagemodifier[DAMAGE_COUNT];  ///< Resistances and inversion
-    Uint8          defense;                       ///< Base defense rating
     SFP8_T         damageboost;                   ///< Add to swipe damage
     SFP8_T         damagethreshold;               ///< Damage below this number is ignored
 
     // sound stuff
-    Sint8          sound_index[SOUND_COUNT];       ///< a map for soundX.wav to sound types
     int            loopedsound_channel;           ///< Which sound channel it is looping on, -1 is none.
 
     // missile handling
@@ -300,23 +387,13 @@ struct ego_chr_data
     bool_t         waskilled;                     ///< Fix for network
     PLA_REF        is_which_player;               ///< btrue = player
     bool_t         islocalplayer;                 ///< btrue = local player
-    bool_t         invictus;                      ///< Totally invincible?
-    bool_t         iskursed;                      ///< Can't be dropped?
-    bool_t         nameknown;                     ///< Is the name known?
-    bool_t         ammoknown;                     ///< Is the ammo known?
     bool_t         hitready;                      ///< Was it just dropped?
     bool_t         isequipped;                    ///< For boots and rings and stuff
 
     // "constant" properties
-    bool_t         isitem;                        ///< Is it grabbable?
-    bool_t         cangrabmoney;                  ///< Picks up coins?
-    bool_t         openstuff;                     ///< Can it open chests/doors?
-    bool_t         stickybutt;                    ///< Rests on floor
     bool_t         isshopitem;                    ///< Spawned in a shop?
-    bool_t         ismount;                       ///< Can you ride it?
     bool_t         canbecrushed;                  ///< Crush in a door?
     bool_t         canchannel;                    ///< Can it convert life to mana?
-    Sint16         manacost;                      ///< Mana cost to use
 
     // misc timers
     Sint16         grogtime;                      ///< Grog timer
@@ -327,32 +404,21 @@ struct ego_chr_data
     Uint8          damagetime;                    ///< Invincibility timer
 
     // graphics info
-    Uint8          flashand;        ///< 1,3,7,15,31 = Flash, 255 = Don't
-    bool_t         transferblend;   ///< Give transparency to weapons?
-    bool_t         draw_icon;       ///< Show the icon?
-    Uint8          sparkle;         ///< Sparkle color or 0 for off
+    Uint8          sparkle;         ///< Sparkle the displayed icon? 0 for off
     bool_t         StatusList_on;   ///< Display stats?
-    SFP8_T         uoffvel;         ///< Moving texture speed
-    SFP8_T         voffvel;
     float          shadow_size;      ///< Current size of shadow
     float          shadow_size_save; ///< Without size modifiers
-    float          shadow_size_stt;  ///< Initial shadow size
     BBOARD_REF     ibillboard;       ///< The attached billboard
 
     // model info
-    bool_t         is_overlay;                    ///< Is this an overlay? Track aitarget...
-    Uint16         skin;                          ///< Character's skin
-    PRO_REF        profile_ref;                      ///< Character's profile
-    PRO_REF        basemodel_ref;                     ///< The true form
-    Uint8          alpha_base;
-    Uint8          light_base;
+    bool_t           is_overlay;                    ///< Is this an overlay? Track aitarget...
+    PRO_REF          profile_ref;                      ///< Character's profile
+    PRO_REF          basemodel_ref;                     ///< The true form
     ego_chr_instance inst;                          ///< the render data
 
     // Skills
     int           darkvision_level;
     int           see_kurse_level;
-    int           see_invisible_level;
-    IDSZ_node_t   skills[MAX_IDSZ_MAP_SIZE];
 
     /// collision info
 
@@ -362,7 +428,7 @@ struct ego_chr_data
     ///        The old bumper data that is read from the data.txt file will be kept in
     ///        the struct "bump". A new bumper that actually matches the size of the object will
     ///        be kept in the struct "collision"
-    ego_bumper     bump_stt;
+
     ego_bumper     bump;
     ego_bumper     bump_save;
 
@@ -370,8 +436,6 @@ struct ego_chr_data
     ego_oct_bb   chr_cv;       ///< the collision volume determined by the model's points.
     ego_oct_bb   chr_min_cv;   ///< the smallest collision volume.
     ego_oct_bb   chr_max_cv;   ///< the largest collision volume. For character, particle, and platform collisions.
-
-    Uint8        stoppedby;                     ///< Collision mask
 
     // character location data
     fvec3_t        pos_stt;                       ///< Starting position
@@ -388,18 +452,12 @@ struct ego_chr_data
     CHR_REF        bumplist_next;                 ///< Next character on fanblock
 
     // movement properties
-    bool_t         waterwalk;                     ///< Always above watersurfacelevel?
     TURN_MODE      turnmode;                      ///< Turning mode
 
     BIT_FIELD      movement_bits;                 ///< What movement modes are allowed?
-    float          anim_speed_sneak;              ///< Movement rate of the sneak animation
-    float          anim_speed_walk;               ///< Walking if above this speed
-    float          anim_speed_run;                ///< Running if above this speed
     float          maxaccel;                      ///< The current maxaccel_reset
-    float          maxaccel_reset;                ///< The actual maximum acceleration
 
     bool_t         is_flying_platform;             ///< The object is flying by manipulating the fly_height variable
-    bool_t         can_fly_jump;                   ///< The object can fly by jumping (jump_number_reset == JUMP_NUMBER_INFINITE)
     bool_t         is_flying_jump;                 ///< The object can_fly_jump and has jumped
     float          fly_height;                     ///< Height to stabilize at
 
@@ -419,14 +477,25 @@ struct ego_chr_data
 
     ego_breadcrumb_list crumbs;                     ///< a list of previous valid positions that the object has passed through
 
+    static bool_t upload_cap( ego_chr_data * pchr, ego_cap * pcap );
+    static bool_t download_cap( ego_chr_data * pchr, ego_cap * pcap );
+
+    static int get_skill( ego_chr_data *pchr, IDSZ whichskill );
+
+    INLINE static void init_size( ego_chr_data * pchr, ego_cap * pcap );
+    INLINE static void update_size( ego_chr_data * pchr );
+
+    static void set_fly_height( ego_chr_data * pchr, float height );
+    static void set_jump_number_reset( ego_chr_data * pchr, int number );
+
 protected:
 
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_chr_data * ctor_all( ego_chr_data * ptr ) { if ( NULL != ptr ) new( ptr ) ego_chr_data(); return ptr; }
+    static ego_chr_data * ctor_all( ego_chr_data * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_chr_data(); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_chr_data * dtor_all( ego_chr_data * ptr )  { if ( NULL != ptr ) ptr->~ego_chr_data(); return ptr; }
+    static ego_chr_data * dtor_all( ego_chr_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_chr_data(); puts( "\t" __FUNCTION__ ); } return ptr; }
 
     //---- memory management
 
@@ -483,6 +552,9 @@ public:
     /// do some initialiation
     static ego_chr * init( ego_chr * pchr ) { return pchr; }
 
+    static bool_t upload_cap( ego_chr * pchr, ego_cap * pcap );
+    static bool_t download_cap( ego_chr * pchr, ego_cap * pcap );
+
     //---- generic character functions
 
     // matrix related functions
@@ -510,7 +582,6 @@ public:
     static CHR_REF get_lowest_attachment( const CHR_REF & ichr, bool_t non_item );
     static const char * get_name( const CHR_REF & ichr, Uint32 bits );
     static const char * get_dir_name( const CHR_REF & ichr );
-    static int get_skill( ego_chr *pchr, IDSZ whichskill );
     static const char * get_gender_possessive( const CHR_REF & ichr, char buffer[], size_t buffer_len );
     static const char * get_gender_name( const CHR_REF & ichr, char buffer[], size_t buffer_len );
 
@@ -592,9 +663,9 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_chr * ctor_all( ego_chr * ptr, ego_obj_chr * pparent ) { if ( NULL != ptr ) new( ptr ) ego_chr( pparent ); return ptr; }
+    static ego_chr * ctor_all( ego_chr * ptr, ego_obj_chr * pparent ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_chr( pparent ); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_chr * dtor_all( ego_chr * ptr )  { if ( NULL != ptr ) ptr->~ego_chr(); return ptr; }
+    static ego_chr * dtor_all( ego_chr * ptr )  { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); ptr->~ego_chr(); } return ptr; }
 
     //---- memory management
 
@@ -610,11 +681,11 @@ protected:
 
     //---- private implementations of the configuration functions
 
-    static ego_chr * do_construct( ego_chr * pchr );
-    static ego_chr * do_init( ego_chr * pchr );
-    static ego_chr * do_process( ego_chr * pchr );
-    static ego_chr * do_deinit( ego_chr * pchr );
-    static ego_chr * do_destruct( ego_chr * pchr );
+    static ego_chr * do_constructing( ego_chr * pchr );
+    static ego_chr * do_initializing( ego_chr * pchr );
+    static ego_chr * do_processing( ego_chr * pchr );
+    static ego_chr * do_deinitializing( ego_chr * pchr );
+    static ego_chr * do_destructing( ego_chr * pchr );
 
     static int change_skin( const CHR_REF & character, Uint32 skin );
 
@@ -644,10 +715,10 @@ struct ego_obj_chr : public ego_obj
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_obj_chr() : _chr_data( this ) { ctor_this( this ); }
+    explicit ego_obj_chr() : _chr_data( this ) { puts( __FUNCTION__ ); ctor_this( this ); }
 
     /// default destructor
-    ~ego_obj_chr() { dtor_this( this ); }
+    ~ego_obj_chr() { dtor_this( this ); puts( __FUNCTION__ ); }
 
     //---- implementation of required accessors
 
@@ -669,24 +740,9 @@ struct ego_obj_chr : public ego_obj
     static ego_obj_chr * dtor_this( ego_obj_chr * pobj );
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_obj_chr * ctor_all( ego_obj_chr * ptr ) { if ( NULL != ptr ) new( ptr ) ego_obj_chr(); return ptr; }
+    static ego_obj_chr * ctor_all( ego_obj_chr * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_obj_chr(); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_obj_chr * dtor_all( ego_obj_chr * ptr )  { if ( NULL != ptr ) ptr->~ego_obj_chr(); return ptr; }
-
-    //---- global configuration functions
-
-    /// External handle for iterating the "egoboo object process" state machine
-    static ego_obj_chr * run( ego_obj_chr * pchr );
-    /// External handle for getting an "egoboo object process" into the constructed state
-    static ego_obj_chr * run_construct( ego_obj_chr * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the initialized state
-    static ego_obj_chr * run_initialize( ego_obj_chr * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the active state
-    static ego_obj_chr * run_activate( ego_obj_chr * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the deinitialized state
-    static ego_obj_chr * run_deinitialize( ego_obj_chr * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the deconstructed state
-    static ego_obj_chr * run_deconstruct( ego_obj_chr * pprt, int max_iterations );
+    static ego_obj_chr * dtor_all( ego_obj_chr * ptr )  { if ( NULL != ptr ) { ptr->~ego_obj_chr(); puts( "\t" __FUNCTION__ ); } return ptr; }
 
     /// Ask the "egoboo object process" to terminate itself
     static bool_t        request_terminate( const CHR_REF & ichr );
@@ -705,18 +761,13 @@ protected:
     /// deallocate data for this struct, and ALL dependent structs
     static ego_obj_chr * do_dealloc( ego_obj_chr * pobj );
 
-    //---- private implementations of the configuration functions
+    //---- implementation of the ego_object_process virtual methods
 
-    /// private implementation of egoboo "egoboo object process's" constructing method
-    static ego_obj_chr * do_constructing( ego_obj_chr * pchr );
-    /// private implementation of egoboo "egoboo object process's" initializing method
-    static ego_obj_chr * do_initializing( ego_obj_chr * pchr );
-    /// private implementation of egoboo "egoboo object process's" deinitializing method
-    static ego_obj_chr * do_deinitializing( ego_obj_chr * pchr );
-    /// private implementation of egoboo "egoboo object process's" processing method
-    static ego_obj_chr * do_processing( ego_obj_chr * pchr );
-    /// private implementation of egoboo "egoboo object process's" destructing method
-    static ego_obj_chr * do_destructing( ego_obj_chr * pchr );
+    virtual int do_constructing()   { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_constructing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_initializing()   { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_initializing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_processing()     { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_processing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_deinitializing() { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_deinitializing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_destructing()    { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_destructing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
 
 private:
     ego_chr _chr_data;
@@ -726,14 +777,11 @@ private:
 // list definitions
 //--------------------------------------------------------------------------------------------
 
-extern t_cpp_stack< ego_team, TEAM_MAX  > TeamStack;
+extern t_cpp_stack< ego_team, TEAM_MAX > TeamStack;
 
-#define VALID_TEAM_RANGE( ITEAM ) ( ((ITEAM) >= 0) && ((ITEAM) < TEAM_MAX) )
+extern t_cpp_stack< ego_cap, MAX_CAP > CapStack;
 
-extern t_cpp_stack< ego_cap, MAX_PROFILE  > CapStack;
-
-#define VALID_CAP_RANGE( ICAP ) ( ((ICAP) >= 0) && ((ICAP) < MAX_CAP) )
-#define LOADED_CAP( ICAP )       ( VALID_CAP_RANGE( ICAP ) && CapStack.lst[ICAP].loaded )
+#define LOADED_CAP( ICAP )       ( CapStack.valid_ref( ICAP ) && CapStack[ICAP].loaded )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

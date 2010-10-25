@@ -58,7 +58,7 @@ INLINE bool_t cap_is_type_idsz( const CAP_REF & icap, IDSZ test_idsz )
     ego_cap * pcap;
 
     if ( !LOADED_CAP( icap ) ) return bfalse;
-    pcap = CapStack.lst + icap;
+    pcap = CapStack + icap;
 
     if ( IDSZ_NONE == test_idsz ) return btrue;
     if ( test_idsz == pcap->idsz[IDSZ_TYPE  ] ) return btrue;
@@ -78,7 +78,7 @@ INLINE bool_t cap_has_idsz( const CAP_REF & icap, IDSZ idsz )
     bool_t  retval;
 
     if ( !LOADED_CAP( icap ) ) return bfalse;
-    pcap = CapStack.lst + icap;
+    pcap = CapStack + icap;
 
     if ( IDSZ_NONE == idsz ) return btrue;
 
@@ -103,7 +103,7 @@ INLINE CHR_REF team_get_ileader( const TEAM_REF & iteam )
 
     if ( iteam >= TEAM_MAX ) return CHR_REF( MAX_CHR );
 
-    ichr = TeamStack.lst[iteam].leader;
+    ichr = TeamStack[iteam].leader;
     if ( !DEFINED_CHR( ichr ) ) return CHR_REF( MAX_CHR );
 
     return ichr;
@@ -116,7 +116,7 @@ INLINE ego_chr  * team_get_pleader( const TEAM_REF & iteam )
 
     if ( iteam >= TEAM_MAX ) return NULL;
 
-    ichr = TeamStack.lst[iteam].leader;
+    ichr = TeamStack[iteam].leader;
     if ( !DEFINED_CHR( ichr ) ) return NULL;
 
     return ChrObjList.get_pdata( ichr );
@@ -129,7 +129,7 @@ INLINE bool_t team_hates_team( const TEAM_REF & ipredator_team, const TEAM_REF &
 
     if ( ipredator_team >= TEAM_MAX || iprey_team >= TEAM_MAX ) return bfalse;
 
-    return TeamStack.lst[ipredator_team].hatesteam[( iprey_team ).get_value()];
+    return TeamStack[ipredator_team].hatesteam[( iprey_team ).get_value()];
 }
 
 //--------------------------------------------------------------------------------------------
@@ -284,7 +284,7 @@ INLINE ego_team * ego_chr::get_pteam( const CHR_REF & ichr )
 
     if ( pchr->team < 0 && pchr->team >= TEAM_MAX ) return NULL;
 
-    return TeamStack.lst + pchr->team;
+    return TeamStack + pchr->team;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -297,7 +297,7 @@ INLINE ego_team * ego_chr::get_pteam_base( const CHR_REF & ichr )
 
     if ( pchr->baseteam < 0 || pchr->baseteam >= TEAM_MAX ) return NULL;
 
-    return TeamStack.lst + pchr->baseteam;
+    return TeamStack + pchr->baseteam;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -489,18 +489,50 @@ INLINE bool_t ego_chr::get_MatTranslate( ego_chr *pchr, fvec3_t   *pvec )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
 INLINE void ego_chr::update_size( ego_chr * pchr )
+{
+    if ( !VALID_PCHR( pchr ) ) return;
+
+    ego_chr_data::update_size( pchr );
+
+    ego_chr::update_collision_size( pchr, btrue );
+}
+
+//--------------------------------------------------------------------------------------------
+INLINE void ego_chr_data::update_size( ego_chr_data * pchr )
 {
     /// @details BB@> Convert the base size values to the size values that are used in the game
 
-    if ( !VALID_PCHR( pchr ) ) return;
+    if ( NULL == pchr ) return;
 
     pchr->shadow_size   = pchr->shadow_size_save   * pchr->fat;
     pchr->bump.size     = pchr->bump_save.size     * pchr->fat;
     pchr->bump.size_big = pchr->bump_save.size_big * pchr->fat;
     pchr->bump.height   = pchr->bump_save.height   * pchr->fat;
+}
 
-    ego_chr::update_collision_size( pchr, btrue );
+//--------------------------------------------------------------------------------------------
+INLINE void ego_chr_data::init_size( ego_chr_data * pchr, ego_cap * pcap )
+{
+    /// @details BB@> initialize the character size info
+
+    if ( NULL == pchr ) return;
+    if ( NULL == pcap || !pcap->loaded ) return;
+
+    pchr->fat_stt           = pcap->size;
+    pchr->shadow_size_stt   = pcap->shadow_size;
+    pchr->bump_stt.size     = ( pcap->bump_override_size    ? 1.0f : -1.0f ) * pcap->bump_size;
+    pchr->bump_stt.size_big = ( pcap->bump_override_sizebig ? 1.0f : -1.0f ) * pcap->bump_sizebig;
+    pchr->bump_stt.height   = ( pcap->bump_override_height  ? 1.0f : -1.0f ) * pcap->bump_height;
+
+    pchr->fat                = pchr->fat_stt;
+    pchr->shadow_size_save   = pchr->shadow_size_stt;
+    pchr->bump_save.size     = pchr->bump_stt.size;
+    pchr->bump_save.size_big = pchr->bump_stt.size_big;
+    pchr->bump_save.height   = pchr->bump_stt.height;
+
+    ego_chr_data::update_size( pchr );
 }
 
 //--------------------------------------------------------------------------------------------

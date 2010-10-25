@@ -202,7 +202,7 @@ extern "C"
         IDSZ         idsz[IDSZ_COUNT];                   ///< ID strings
 
         // inventory
-        Uint8        ammomax;                        ///< Ammo stuff
+        Uint8        ammo_max;                        ///< Ammo stuff
         Uint8        ammo;
         Sint16       money;                          ///< Money
 
@@ -217,8 +217,8 @@ extern "C"
 
         // mana
         cap_stat_t   mana_stat;                     ///< Mana statistics
-        cap_stat_t   manareturn_stat;               ///< Mana regeneration statistics
-        cap_stat_t   manaflow_stat;                 ///< Mana channeling
+        cap_stat_t   mana_return_stat;               ///< Mana regeneration statistics
+        cap_stat_t   mana_flow_stat;                 ///< Mana channeling
         UFP8_T       mana_spawn;                    ///< Mana left from last module
 
         cap_stat_t   strength_stat;                 ///< Strength
@@ -252,8 +252,8 @@ extern "C"
         bool_t       waterwalk;                     ///< Walk on water?
 
         // status graphics
-        Uint8        lifecolor;                     ///< Life bar color
-        Uint8        manacolor;                     ///< Mana bar color
+        Uint8        life_color;                     ///< Life bar color
+        Uint8        mana_color;                     ///< Mana bar color
         bool_t       draw_icon;                     ///< Draw icon
 
         // model graphics
@@ -269,7 +269,7 @@ extern "C"
         bool_t       reflect;                        ///< Draw the reflection
         bool_t       alwaysdraw;                     ///< Always render
         bool_t       forceshadow;                    ///< Draw a shadow?
-        bool_t       ripple;                         ///< Spawn ripples?Uint8        manacolor;                     ///< Mana bar color
+        bool_t       ripple;                         ///< Spawn ripples?Uint8        mana_color;                     ///< Mana bar color
 
         // attack blocking info
         Uint16       iframefacing;                  ///< Invincibility frame

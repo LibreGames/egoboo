@@ -239,8 +239,6 @@ extern "C"
 // IDSZ
     typedef Uint32 IDSZ;
 
-#define IDSZ_DEFINED
-
 #if !defined(MAKE_IDSZ)
 #define MAKE_IDSZ(C0,C1,C2,C3)     \
     ((IDSZ)(                       \
@@ -253,6 +251,10 @@ extern "C"
 
 #define IDSZ_NONE            MAKE_IDSZ('N','O','N','E')       ///< [NONE]
 #define IDSZ_BOOK            MAKE_IDSZ('B','O','O','K')       ///< [BOOK]
+
+#define IDSZ_NECK           MAKE_IDSZ( 'N', 'E', 'C', 'K' );
+#define IDSZ_WRIS           MAKE_IDSZ( 'W', 'R', 'I', 'S' );
+#define IDSZ_FOOT           MAKE_IDSZ( 'F', 'O', 'O', 'T' );
 
     const char * undo_idsz( IDSZ idsz );
 

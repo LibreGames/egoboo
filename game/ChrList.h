@@ -32,7 +32,7 @@
 //--------------------------------------------------------------------------------------------
 
 #define VALID_CHR_IDX( INDX )   ( ((INDX) >= 0) && ((INDX) < MAX_CHR) )
-#define VALID_CHR_REF( ICHR )     ChrObjList.validate_ref(ICHR)
+#define VALID_CHR_REF( ICHR )     ChrObjList.valid_ref(ICHR)
 #define ALLOCATED_CHR( ICHR )   ( ALLOCATED_PBASE(ChrObjList.get_valid_ptr(ICHR)) )
 #define VALID_CHR( ICHR )       ( VALID_PBASE(ChrObjList.get_valid_ptr(ICHR)) )
 #define DEFINED_CHR( ICHR )     ( VALID_PBASE(ChrObjList.get_valid_ptr(ICHR) ) && !FLAG_TERMINATED_PBASE(ChrObjList.get_valid_ptr(ICHR)) )

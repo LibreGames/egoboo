@@ -134,7 +134,7 @@ INLINE ego_cap * pro_get_pcap( const PRO_REF & iobj )
 
     if ( !LOADED_CAP( pobj->icap ) ) return NULL;
 
-    return CapStack.lst + pobj->icap;
+    return CapStack + pobj->icap;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ INLINE ego_mad * pro_get_pmad( const PRO_REF & iobj )
 
     if ( !LOADED_MAD( pobj->imad ) ) return NULL;
 
-    return MadStack.lst + pobj->imad;
+    return MadStack + pobj->imad;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ INLINE ego_eve * pro_get_peve( const PRO_REF & iobj )
 
     if ( !LOADED_EVE( pobj->ieve ) ) return NULL;
 
-    return EveStack.lst + pobj->ieve;
+    return EveStack + pobj->ieve;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -175,7 +175,7 @@ INLINE ego_pip * pro_get_ppip( const PRO_REF & iobj, int pip_index )
         global_pip = pip_index;
         if ( LOADED_PIP( global_pip ) )
         {
-            return PipStack.lst + global_pip;
+            return PipStack + global_pip;
         }
         else
         {
@@ -193,7 +193,7 @@ INLINE ego_pip * pro_get_ppip( const PRO_REF & iobj, int pip_index )
         local_pip = pobj->prtpip[pip_index];
     }
 
-    return LOADED_PIP( local_pip ) ? PipStack.lst + local_pip : NULL;
+    return LOADED_PIP( local_pip ) ? PipStack + local_pip : NULL;
 }
 
 //--------------------------------------------------------------------------------------------

@@ -78,7 +78,7 @@ ego_eve * ego_enc::get_peve( const ENC_REF & ienc )
 
     if ( !LOADED_EVE( penc->eve_ref ) ) return NULL;
 
-    return EveStack.lst + penc->eve_ref;
+    return EveStack + penc->eve_ref;
 }
 
 //--------------------------------------------------------------------------------------------

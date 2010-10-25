@@ -61,10 +61,9 @@ private:
     static ego_mad * clear( ego_mad * pmad );
 };
 
-extern t_cpp_stack< ego_mad, MAX_MAD  > MadStack;
+extern t_cpp_stack< ego_mad, MAX_MAD > MadStack;
 
-#define VALID_MAD_RANGE( IMAD ) ( ((IMAD) >= 0) && ((IMAD) < MAX_MAD) )
-#define LOADED_MAD( IMAD )       ( VALID_MAD_RANGE( IMAD ) && MadStack.lst[IMAD].loaded )
+#define LOADED_MAD( IMAD )       ( MadStack.valid_ref( IMAD ) && MadStack[IMAD].loaded )
 
 void MadList_init();
 void MadList_dtor();

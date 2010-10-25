@@ -396,7 +396,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         {
             ego_chr * ptarget = ChrObjList.get_pdata( penc->target_ref );
 
-            if ( peve->seekurse && !ego_chr::get_skill( ptarget, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) )
+            if ( peve->seekurse && !ego_chr_data::get_skill( ptarget, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) )
             {
                 ptarget->see_kurse_level = bfalse;
             }
@@ -523,13 +523,13 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
                         break;
 
                     case SETLIFEBARCOLOR:
-                        penc->setsave[value_idx] = ptarget->lifecolor;
-                        ptarget->lifecolor       = peve->setvalue[value_idx];
+                        penc->setsave[value_idx] = ptarget->life_color;
+                        ptarget->life_color       = peve->setvalue[value_idx];
                         break;
 
                     case SETMANABARCOLOR:
-                        penc->setsave[value_idx] = ptarget->manacolor;
-                        ptarget->manacolor       = peve->setvalue[value_idx];
+                        penc->setsave[value_idx] = ptarget->mana_color;
+                        ptarget->mana_color       = peve->setvalue[value_idx];
                         break;
 
                     case SETSLASHMODIFIER:
@@ -596,7 +596,7 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
                         penc->setsave[value_idx] = ptarget->fly_height;
                         if ( ptarget->pos.z > -2.0f )
                         {
-                            ego_chr::set_fly_height( ptarget, peve->setvalue[value_idx] );
+                            ego_chr_data::set_fly_height( ptarget, peve->setvalue[value_idx] );
                         }
                         break;
 
@@ -657,8 +657,8 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
     if ( !DEFINED_ENC( ienc ) ) return;
     penc = EncObjList.get_valid_pdata( ienc );
 
-    if ( ieve >= MAX_EVE || !EveStack.lst[ieve].loaded ) return;
-    peve = EveStack.lst + ieve;
+    if ( ieve >= MAX_EVE || !EveStack[ieve].loaded ) return;
+    peve = EveStack + ieve;
 
     if ( !peve->addyesno[value_idx] )
     {
@@ -754,23 +754,23 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
 
         case ADDMANA:
             /// @note ZF@> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
-            newvalue = ptarget->manamax;
+            newvalue = ptarget->mana_max;
             valuetoadd = peve->addvalue[value_idx];
             getadd( 0, newvalue, PERFECTBIG, &valuetoadd );
-            ptarget->manamax += valuetoadd;
+            ptarget->mana_max += valuetoadd;
             //ptarget->mana    += valuetoadd;
-            ptarget->mana = CLIP( ptarget->mana, 0, ptarget->manamax );
+            ptarget->mana = CLIP( ptarget->mana, 0, ptarget->mana_max );
             fvaluetoadd = valuetoadd;
             break;
 
         case ADDLIFE:
             /// @note ZF@> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
-            newvalue = ptarget->lifemax;
+            newvalue = ptarget->life_max;
             valuetoadd = peve->addvalue[value_idx];
             getadd( LOWSTAT, newvalue, PERFECTBIG, &valuetoadd );
-            ptarget->lifemax += valuetoadd;
+            ptarget->life_max += valuetoadd;
             //ptarget->life += valuetoadd;
-            ptarget->life = CLIP( ptarget->life, 1, ptarget->lifemax );
+            ptarget->life = CLIP( ptarget->life, 1, ptarget->life_max );
             fvaluetoadd = valuetoadd;
             break;
 
@@ -816,7 +816,7 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::do_construct( ego_enc * penc )
+ego_enc * ego_enc::do_constructing( ego_enc * penc )
 {
     // this object has already been constructed as a part of the
     // ego_obj_enc, so its parent is properly defined
@@ -829,7 +829,7 @@ ego_enc * ego_enc::do_construct( ego_enc * penc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::do_init( ego_enc * penc )
+ego_enc * ego_enc::do_initializing( ego_enc * penc )
 {
     ego_enc_spawn_data * pdata;
     ENC_REF ienc;
@@ -857,7 +857,7 @@ ego_enc * ego_enc::do_init( ego_enc * penc )
         return NULL;
     }
     penc->eve_ref = pdata->eve_ref;
-    peve = EveStack.lst + pdata->eve_ref;
+    peve = EveStack + pdata->eve_ref;
 
     // does the target exist?
     if ( !DEFINED_CHR( pdata->target_ref ) )
@@ -963,7 +963,7 @@ ego_enc * ego_enc::do_init( ego_enc * penc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::do_process( ego_enc * penc )
+ego_enc * ego_enc::do_processing( ego_enc * penc )
 {
     /// @details ZZ@> This function allows enchantments to update, spawn particles,
     //  do drains, stat boosts and despawn.
@@ -1031,9 +1031,9 @@ ego_enc * ego_enc::do_process( ego_enc * penc )
                     {
                         kill_character( owner, target, bfalse );
                     }
-                    if ( ChrObjList.get_data( owner ).life > ChrObjList.get_data( owner ).lifemax )
+                    if ( ChrObjList.get_data( owner ).life > ChrObjList.get_data( owner ).life_max )
                     {
-                        ChrObjList.get_data( owner ).life = ChrObjList.get_data( owner ).lifemax;
+                        ChrObjList.get_data( owner ).life = ChrObjList.get_data( owner ).life_max;
                     }
                 }
 
@@ -1041,14 +1041,14 @@ ego_enc * ego_enc::do_process( ego_enc * penc )
                 if ( penc->owner_mana != 0 )
                 {
                     bool_t mana_paid = cost_mana( owner, -penc->owner_mana, target );
-                    if ( EveStack.lst[eve].endifcantpay && !mana_paid )
+                    if ( EveStack[eve].endifcantpay && !mana_paid )
                     {
                         ego_obj_enc::request_terminate( ienc );
                     }
                 }
 
             }
-            else if ( !EveStack.lst[eve].stayifnoowner )
+            else if ( !EveStack[eve].stayifnoowner )
             {
                 ego_obj_enc::request_terminate( ienc );
             }
@@ -1068,9 +1068,9 @@ ego_enc * ego_enc::do_process( ego_enc * penc )
                         {
                             kill_character( target, owner, bfalse );
                         }
-                        if ( ChrObjList.get_data( target ).life > ChrObjList.get_data( target ).lifemax )
+                        if ( ChrObjList.get_data( target ).life > ChrObjList.get_data( target ).life_max )
                         {
-                            ChrObjList.get_data( target ).life = ChrObjList.get_data( target ).lifemax;
+                            ChrObjList.get_data( target ).life = ChrObjList.get_data( target ).life_max;
                         }
                     }
 
@@ -1078,14 +1078,14 @@ ego_enc * ego_enc::do_process( ego_enc * penc )
                     if ( penc->target_mana != 0 )
                     {
                         bool_t mana_paid = cost_mana( target, -penc->target_mana, owner );
-                        if ( EveStack.lst[eve].endifcantpay && !mana_paid )
+                        if ( EveStack[eve].endifcantpay && !mana_paid )
                         {
                             ego_obj_enc::request_terminate( ienc );
                         }
                     }
 
                 }
-                else if ( !EveStack.lst[eve].stayiftargetdead )
+                else if ( !EveStack[eve].stayiftargetdead )
                 {
                     ego_obj_enc::request_terminate( ienc );
                 }
@@ -1097,7 +1097,7 @@ ego_enc * ego_enc::do_process( ego_enc * penc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::do_deinit( ego_enc * penc )
+ego_enc * ego_enc::do_deinitializing( ego_enc * penc )
 {
     if ( NULL == penc ) return penc;
 
@@ -1107,368 +1107,13 @@ ego_enc * ego_enc::do_deinit( ego_enc * penc )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_enc * ego_enc::do_destruct( ego_enc * penc )
+ego_enc * ego_enc::do_destructing( ego_enc * penc )
 {
     ego_enc * rv = ego_enc::dtor_all( penc );
 
     /* add something here */
 
     return rv;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::run_construct( ego_obj_enc * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the enchant is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_constructing + 1 ) )
-    {
-        ego_obj_enc * tmp_enc = ego_obj_enc::run_deconstruct( pobj, max_iterations );
-        if ( tmp_enc == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_constructing && iterations < max_iterations )
-    {
-        ego_obj_enc * ptmp = ego_obj_enc::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::run_initialize( ego_obj_enc * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the enchant is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_initializing + 1 ) )
-    {
-        ego_obj_enc * tmp_enc = ego_obj_enc::run_deconstruct( pobj, max_iterations );
-        if ( tmp_enc == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_initializing && iterations < max_iterations )
-    {
-        ego_obj_enc * ptmp = ego_obj_enc::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::run_activate( ego_obj_enc * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the enchant is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_processing + 1 ) )
-    {
-        ego_obj_enc * tmp_enc = ego_obj_enc::run_deconstruct( pobj, max_iterations );
-        if ( tmp_enc == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action < ego_obj_processing && iterations < max_iterations )
-    {
-        ego_obj_enc * ptmp = ego_obj_enc::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::run_deinitialize( ego_obj_enc * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the enchant is already beyond this stage, deinitialize it
-    if ( pbase->get_proc().action > ( int )( ego_obj_deinitializing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pbase->get_proc().action < ego_obj_deinitializing )
-    {
-        ego_obj::end_processing( pbase );
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_deinitializing && iterations < max_iterations )
-    {
-        ego_obj_enc * ptmp = ego_obj_enc::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::run_deconstruct( ego_obj_enc * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the enchant is already beyond this stage, deconstruct it
-    if ( pbase->get_proc().action > ( int )( ego_obj_destructing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pbase->get_proc().action < ego_obj_deinitializing )
-    {
-        // make sure that you deinitialize before destructing
-        ego_obj::end_processing( pbase );
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_destructing && iterations < max_iterations )
-    {
-        ego_obj_enc * ptmp = ego_obj_enc::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::run( ego_obj_enc * pobj )
-{
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // set the object to deinitialize if it is not "dangerous" and if was requested
-    if ( FLAG_REQ_TERMINATION_PBASE( pbase ) )
-    {
-        pbase = ego_obj::grant_terminate( pbase );
-    }
-
-    switch ( pbase->get_proc().action )
-    {
-        default:
-        case ego_obj_nothing:
-            /* no operation */
-            break;
-
-        case ego_obj_constructing:
-            pobj = ego_obj_enc::do_constructing( pobj );
-            break;
-
-        case ego_obj_initializing:
-            pobj = ego_obj_enc::do_initializing( pobj );
-            break;
-
-        case ego_obj_processing:
-            pobj = ego_obj_enc::do_processing( pobj );
-            break;
-
-        case ego_obj_deinitializing:
-            pobj = ego_obj_enc::do_deinitializing( pobj );
-            break;
-
-        case ego_obj_destructing:
-            pobj = ego_obj_enc::do_destructing( pobj );
-            break;
-
-        case ego_obj_waiting:
-            /* do nothing */
-            break;
-    }
-
-    if ( NULL == pobj )
-    {
-        pbase->update_guid = INVALID_UPDATE_GUID;
-    }
-    else if ( ego_obj_processing == pbase->get_proc().action )
-    {
-        pbase->update_guid = EncObjList.update_guid();
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_constructing( ego_obj_enc * pobj )
-{
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
-
-    // run the constructor
-    ego_enc * penc = ego_enc::do_construct( pobj->get_pdata() );
-    if ( NULL == penc ) return pobj;
-
-    // move on to the next action
-    ego_obj::end_constructing( pbase );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_initializing( ego_obj_enc * pobj )
-{
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_INITIALIZING_PBASE( pbase ) ) return pobj;
-
-    // tell the game that we're spawning something
-    POBJ_BEGIN_SPAWN( pobj );
-
-    // run the initialization routine
-    ego_enc * penc = ego_enc::do_init( pobj->get_pdata() );
-    if ( NULL == penc ) return pobj;
-
-    // request that we be turned on
-    pbase->proc_req_on( btrue );
-
-    // do something about being turned on
-    if ( 0 == EncObjList.loop_depth )
-    {
-        ego_obj::grant_on( pbase );
-    }
-    else
-    {
-        EncObjList.add_activation( GET_REF_PENC_OBJ( pobj ) );
-    }
-
-    // move on to the next action
-    ego_obj::end_initializing( pbase );
-
-    if ( !LOADED_EVE( pobj->get_data().eve_ref ) )
-    {
-        POBJ_ACTIVATE( pobj, "*UNKNOWN*" );
-    }
-    else
-    {
-        ego_eve * peve = EveStack.lst + pobj->get_data().eve_ref;
-
-        POBJ_ACTIVATE( pobj, peve->name );
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_processing( ego_obj_enc * pobj )
-{
-    // there's nothing to configure if the object is active...
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_PROCESSING_PBASE( pbase ) ) return pobj;
-
-    // do this here (instead of at the end of *_do_object_initializing()) so that
-    // we are sure that the object is actually "on"
-    POBJ_END_SPAWN( pobj );
-
-    // run the main loop
-    ego_enc * penc = ego_enc::do_process( pobj->get_pdata() );
-    if ( NULL == penc ) return pobj;
-
-    /* add stuff here */
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_deinitializing( ego_obj_enc * pobj )
-{
-    /// @details BB@> deinitialize the character data
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_DEINITIALIZING_PBASE( pbase ) ) return pobj;
-
-    // make sure that the spawn is terminated
-    POBJ_END_SPAWN( pobj );
-
-    // run a deinitialization routine
-    ego_enc * penc = ego_enc::do_deinit( pobj->get_pdata() );
-    if ( NULL == penc ) return pobj;
-
-    // move on to the next action
-    ego_obj::end_deinitializing( pbase );
-
-    // make sure the object is off
-    pbase->get_proc().on = bfalse;
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_destructing( ego_obj_enc * pobj )
-{
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_DESTRUCTING_PBASE( pbase ) ) return pobj;
-
-    // make sure that the spawn is terminated
-    POBJ_END_SPAWN( pobj );
-
-    // run the destructor
-    ego_enc * penc = ego_enc::do_destruct( pobj->get_pdata() );
-    if ( NULL == penc ) return pobj;
-
-    // move on to the next action (dead)
-    ego_obj::end_deinitializing( pbase );
-
-    return pobj;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1525,7 +1170,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
 
         return ENC_REF( MAX_ENC );
     }
-    peve = EveStack.lst + eve_ref;
+    peve = EveStack + eve_ref;
 
     // count all the requests for this enchantment type
     peve->ego_enc_request_count++;
@@ -1606,10 +1251,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     penc->spawn_data.eve_ref     = eve_ref;
 
     // actually force the character to spawn
-    pobj = ego_obj_enc::run_activate( pobj, 100 );
-
-    // count out all the requests for this particle type
-    if ( NULL != pobj )
+    if ( NULL != ego_object_engine::run_activate( pobj, 100 ) )
     {
         peve->ego_enc_create_count++;
     }
@@ -1624,9 +1266,9 @@ EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF & ie
 
     EVE_REF retval = EVE_REF( MAX_EVE );
 
-    if ( VALID_EVE_RANGE( ieve ) )
+    if ( EveStack.valid_ref( ieve ) )
     {
-        ego_eve * peve = EveStack.lst + ieve;
+        ego_eve * peve = EveStack + ieve;
 
         if ( NULL != load_one_enchant_file_vfs( szLoadName, peve ) )
         {
@@ -1670,11 +1312,11 @@ void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
             break;
 
         case SETLIFEBARCOLOR:
-            ptarget->lifecolor = penc->setsave[value_idx];
+            ptarget->life_color = penc->setsave[value_idx];
             break;
 
         case SETMANABARCOLOR:
-            ptarget->manacolor = penc->setsave[value_idx];
+            ptarget->mana_color = penc->setsave[value_idx];
             break;
 
         case SETSLASHMODIFIER:
@@ -1726,7 +1368,7 @@ void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
             break;
 
         case SETFLYTOHEIGHT:
-            ego_chr::set_fly_height( ptarget, penc->setsave[value_idx] );
+            ego_chr_data::set_fly_height( ptarget, penc->setsave[value_idx] );
             break;
 
         case SETWALKONWATER:
@@ -1836,14 +1478,14 @@ void ego_enc::remove_add( const ENC_REF & ienc, int value_idx )
 
             case ADDMANA:
                 valuetoadd = penc->addsave[value_idx];
-                ptarget->manamax -= valuetoadd;
+                ptarget->mana_max -= valuetoadd;
                 ptarget->mana -= valuetoadd;
                 if ( ptarget->mana < 0 ) ptarget->mana = 0;
                 break;
 
             case ADDLIFE:
                 valuetoadd = penc->addsave[value_idx];
-                ptarget->lifemax -= valuetoadd;
+                ptarget->life_max -= valuetoadd;
                 ptarget->life -= valuetoadd;
                 if ( ptarget->life < 1 ) ptarget->life = 1;
                 break;
@@ -1881,7 +1523,7 @@ void init_all_eve()
 
     for ( cnt = 0; cnt < MAX_EVE; cnt++ )
     {
-        ego_eve::init( EveStack.lst + cnt );
+        ego_eve::init( EveStack + cnt );
     }
 }
 
@@ -1901,8 +1543,8 @@ bool_t release_one_eve( const EVE_REF & ieve )
 {
     ego_eve * peve;
 
-    if ( !VALID_EVE_RANGE( ieve ) ) return bfalse;
-    peve = EveStack.lst + ieve;
+    if ( !EveStack.valid_ref( ieve ) ) return bfalse;
+    peve = EveStack + ieve;
 
     if ( !peve->loaded ) return btrue;
 
@@ -1919,7 +1561,7 @@ void update_all_enchants()
     // update all enchants
     for ( ienc = 0; ienc < MAX_ENC; ienc++ )
     {
-        ego_obj_enc::run( EncObjList.get_ptr( ienc ) );
+        ego_object_engine::run( EncObjList.get_ptr( ienc ) );
     }
 
     // fix the stat timer
@@ -1967,7 +1609,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
             break;
         }
 
-        //( !INGAME_CHR( EncObjList.get_data(ego_enc_now).target_ref ) && !EveStack.lst[EncObjList.get_data(ego_enc_now).eve_ref].stayiftargetdead )
+        //( !INGAME_CHR( EncObjList.get_data(ego_enc_now).target_ref ) && !EveStack[EncObjList.get_data(ego_enc_now).eve_ref].stayiftargetdead )
 
         // remove any expired enchants
         if ( !INGAME_ENC( ego_enc_now ) )
@@ -2045,7 +1687,7 @@ void cleanup_all_enchants()
             EGOBOO_ASSERT( bfalse );
             continue;
         }
-        peve = EveStack.lst + penc->eve_ref;
+        peve = EveStack + penc->eve_ref;
 
         do_remove = bfalse;
         if ( WAITING_PBASE( pobj ) )
@@ -2116,6 +1758,9 @@ ego_obj_enc * ego_obj_enc::ctor_this( ego_obj_enc * pobj )
 
     if ( NULL == pobj ) return NULL;
 
+    puts( "\t\t" __FUNCTION__ );
+
+    pobj = ego_obj_enc::dealloc( pobj );
     pobj = ego_obj_enc::alloc( pobj );
 
     return pobj;
@@ -2127,6 +1772,8 @@ ego_obj_enc * ego_obj_enc::dtor_this( ego_obj_enc * pobj )
     // destruct this struct, ONLY
 
     if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
+
+    puts( "\t\t" __FUNCTION__ );
 
     pobj = ego_obj_enc::dealloc( pobj );
 

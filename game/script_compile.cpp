@@ -63,8 +63,8 @@ static const char * globalparsename = NULL;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INSTANTIATE_STATIC_ARY( OpListAry, OpList );
-INSTANTIATE_STATIC_ARY( AisStorageAry, AisStorage );
+OpListAry_t  OpList;
+AisStorageAry_t  AisStorage;
 
 int    AisCompiled_offset = 0;
 Uint32 AisCompiled_buffer[AISMAXCOMPILESIZE];
@@ -1902,8 +1902,8 @@ DEFINE_VARIABLE( VARSELFSTR,    "selfstr"    )              // == 44
 DEFINE_VARIABLE( VARSELFWIS,    "selfwis"    )              // == 45
 DEFINE_VARIABLE( VARSELFINT,    "selfint"    )              // == 46
 DEFINE_VARIABLE( VARSELFDEX,    "selfdex"    )              // == 47
-DEFINE_VARIABLE( VARSELFMANAFLOW,    "selfmanaflow"    )         // == 48
-DEFINE_VARIABLE( VARTARGETMANAFLOW,    "targetmanaflow"    )       // == 49
+DEFINE_VARIABLE( VARSELFMANAFLOW,    "selfmana_flow"    )         // == 48
+DEFINE_VARIABLE( VARTARGETMANAFLOW,    "targetmana_flow"    )       // == 49
 DEFINE_VARIABLE( VARSELFATTACHED,    "selfattached"    )         // == 50
 DEFINE_VARIABLE( VARSWINGTURN,    "swingturn"    )            // == 51
 DEFINE_VARIABLE( VARXYDISTANCE,    "xydistance"    )           // == 52

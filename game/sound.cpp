@@ -53,12 +53,6 @@ struct snd_looped_sound_data
 
 static t_cpp_list< snd_looped_sound_data, LOOPED_COUNT  > LoopedList;
 
-//#if !defined(DEBUG_CPP_LISTS)
-//
-//#elif defined(__cplusplus)
-//    static t_cpp_list< snd_looped_sound_data, LOOPED_COUNT  > LoopedList;
-//#endif
-
 static void   LoopedList_init();
 static void   LoopedList_clear();
 static bool_t LoopedList_free_one( size_t index );

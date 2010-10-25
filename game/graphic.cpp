@@ -206,7 +206,7 @@ Uint8   blip_c[MAXBLIP];
 
 int     msgtimechange = 0;
 
-INSTANTIATE_STATIC_ARY( DisplayMsgAry, DisplayMsg );
+DisplayMsgAry_t  DisplayMsg;
 
 ego_line_data line_list[LINE_COUNT];
 
@@ -1256,7 +1256,7 @@ void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t dra
     // draw the ammo, if requested
     if ( draw_ammo && ( NULL != pitem ) )
     {
-        if ( pitem->ammomax != 0 && pitem->ammoknown )
+        if ( pitem->ammo_max != 0 && pitem->ammoknown )
         {
             ego_cap * pitem_cap = ego_chr::get_pcap( item );
 
@@ -1282,9 +1282,9 @@ int draw_character_xp_bar( const CHR_REF & character, float x, float y )
     if ( NULL == pcap ) return y;
 
     // Draw the small XP progress bar
-    if ( pchr->experiencelevel < MAXLEVEL )
+    if ( pchr->experience_level < MAXLEVEL )
     {
-        Uint8  curlevel    = pchr->experiencelevel + 1;
+        Uint8  curlevel    = pchr->experience_level + 1;
         Uint32 xplastlevel = pcap->experience_forlevel[curlevel-1];
         Uint32 xpneed      = pcap->experience_forlevel[curlevel];
 
@@ -1307,8 +1307,8 @@ int draw_status( const CHR_REF & character, float x, float y )
     char cTmp;
     char *readtext;
     STRING generictext;
-    int life, lifemax;
-    int mana, manamax;
+    int life, life_max;
+    int mana, mana_max;
 
     ego_chr * pchr;
     ego_cap * pcap;
@@ -1320,9 +1320,9 @@ int draw_status( const CHR_REF & character, float x, float y )
     if ( NULL == pcap ) return y;
 
     life     = SFP8_TO_SINT( pchr->life );
-    lifemax  = SFP8_TO_SINT( pchr->lifemax );
+    life_max  = SFP8_TO_SINT( pchr->life_max );
     mana     = SFP8_TO_SINT( pchr->mana );
-    manamax  = SFP8_TO_SINT( pchr->manamax );
+    mana_max  = SFP8_TO_SINT( pchr->mana_max );
 
     // grab the character's display name
     readtext = ( char * )ego_chr::get_name( character, CHRNAME_CAPITAL );
@@ -1368,17 +1368,17 @@ int draw_status( const CHR_REF & character, float x, float y )
     // Draw the life bar
     if ( pchr->alive )
     {
-        y = draw_one_bar( pchr->lifecolor, x, y, life, lifemax );
+        y = draw_one_bar( pchr->life_color, x, y, life, life_max );
     }
     else
     {
-        y = draw_one_bar( 0, x, y, 0, lifemax );  // Draw a black bar
+        y = draw_one_bar( 0, x, y, 0, life_max );  // Draw a black bar
     }
 
     // Draw the mana bar
-    if ( manamax > 0 )
+    if ( mana_max > 0 )
     {
-        y = draw_one_bar( pchr->manacolor, x, y, mana, manamax );
+        y = draw_one_bar( pchr->mana_color, x, y, mana, mana_max );
     }
 
     return y;
@@ -1472,7 +1472,7 @@ void draw_map()
             PLA_REF iplayer;
             for ( iplayer = 0; iplayer < MAX_PLAYER; iplayer++ )
             {
-                ego_player * ppla = PlaStack.lst + iplayer;
+                ego_player * ppla = PlaStack + iplayer;
                 if ( !ppla->valid ) continue;
 
                 if ( INPUT_BITS_NONE != ppla->device.bits && INGAME_CHR( ppla->index ) )
@@ -1615,7 +1615,7 @@ int draw_debug_player( PLA_REF ipla, int y )
     ego_player * ppla;
 
     if ( !VALID_PLA( ipla ) ) return y;
-    ppla = PlaStack.lst + ipla;
+    ppla = PlaStack + ipla;
 
     if ( DEFINED_CHR( ppla->index ) )
     {
@@ -1649,7 +1649,7 @@ int draw_debug( int y )
     ipla = PLA_REF( 0 );
     if ( VALID_PLA( ipla ) )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
         if ( DEFINED_CHR( ppla->index ) )
         {
             ego_chr * pchr = ChrObjList.get_pdata( ppla->index );

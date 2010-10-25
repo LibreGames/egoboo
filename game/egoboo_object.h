@@ -27,6 +27,14 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+struct ego_obj;
+struct ego_chr;
+struct ego_enc;
+struct ego_prt;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 // some basic data that all Egoboo objects should have
 
 /// The possible actions that an ego_obj object can perform
@@ -45,14 +53,89 @@ enum e_ego_obj_actions
 
 typedef enum e_ego_obj_actions ego_obj_actions_t;
 
+/// the abstract interface to the "egoboo object process"
+struct i_ego_object_process
+{
+    /// constructing method
+    virtual int do_constructing( void ) = 0;
+    /// initializing method
+    virtual int do_initializing( void ) = 0;
+    /// deinitializing method
+    virtual int do_deinitializing( void ) = 0;
+    /// processing method
+    virtual int do_processing( void ) = 0;
+    /// destructing method
+    virtual int do_destructing( void ) = 0;
+
+    //---- accessor methods
+    virtual ego_obj * get_obj( void ) = 0;
+    virtual ego_chr * get_chr( void ) = 0;
+    virtual ego_enc * get_enc( void ) = 0;
+    virtual ego_prt * get_prt( void ) = 0;
+};
+
 //--------------------------------------------------------------------------------------------
 
-/// The state of an "egoboo object process".
-/// An implementation of the same type of state machine that controls
-/// the "egoboo process"
-struct ego_obj_proc
+/// an abstract interface to the state of an "egoboo object process".
+struct i_ego_object_process_state
 {
-    friend struct ego_obj_proc_data;
+    virtual int end_constructing() = 0;
+    virtual int end_initializing() = 0;
+    virtual int end_processing() = 0;
+    virtual int end_deinitializing() = 0;
+    virtual int end_destructing() = 0;
+    virtual int end_invalidating() = 0;
+
+    virtual int begin_waiting() = 0;
+};
+
+//--------------------------------------------------------------------------------------------
+/// a helper struct so that the data values of ego_object_process_state can be simply cleared
+/// without destroying the virtual function table
+struct ego_object_process_state_data
+{
+    friend struct ego_object_process_engine;
+
+    typedef ego_object_process_state_data its_type;
+
+    //---- accessors
+
+    int set_valid( bool_t val );
+
+    //---- ACCESSORS
+    // use static functions as accessors so the program won't crash on am accidental NULL pointer
+    static const bool_t get_valid( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->valid;       }
+    static const bool_t get_constructed( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->constructed; }
+    static const bool_t get_initialized( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->initialized; }
+    static const bool_t get_active( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->active;      }
+    static const bool_t get_killed( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->killed;      }
+
+    static const bool_t            get_spawning( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse          : ptr->spawning; }
+    static const bool_t            get_on( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse          : ptr->on;       }
+    static const bool_t            get_paused( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse          : ptr->paused;   }
+    static const ego_obj_actions_t get_action( const its_type * ptr ) { return ( NULL == ptr ) ? ego_obj_nothing : ptr->action;   }
+
+    static its_type * invalidate( its_type * ptr ) { if ( NULL != ptr ) ptr->clear(); return ptr; }
+
+protected:
+
+    explicit ego_object_process_state_data() { clear(); }
+    ~ego_object_process_state_data() { clear(); }
+
+    /// @note MAKE SURE there are no virtual functions or any members that are constructed
+    /// before you use memset like this
+    void clear() { memset( this, 0, sizeof( *this ) ); };
+
+    static const bool_t set_on( its_type * ptr, bool_t val )
+    {
+        bool_t rv = bfalse;
+        if ( NULL != ptr )
+        {
+            rv = ( val != ptr->on );
+            ptr->on = val;
+        }
+        return rv;
+    }
 
     // basic flags for where the object is in the creation/desctuction process
     bool_t               valid;       ///< The object is a valid object
@@ -68,132 +151,108 @@ struct ego_obj_proc
 
     ego_obj_actions_t    action;      ///< What action is it performing?
 
-    static ego_obj_proc * ctor_this( ego_obj_proc * );
-    static ego_obj_proc * dtor_this( ego_obj_proc * );
+};
 
-    static ego_obj_proc * set_valid( ego_obj_proc *, bool_t val );
+//--------------------------------------------------------------------------------------------
+/// The state of an "egoboo object process".
+/// An implementation of the same type of state machine that controls
+/// the "egoboo process"
+struct ego_object_process_state : public i_ego_object_process_state, public ego_object_process_state_data
+{
+    //---- implementation of the i_ego_object_process_state methods
 
-    static ego_obj_proc * end_constructing( ego_obj_proc * );
-    static ego_obj_proc * end_initialization( ego_obj_proc * );
-    static ego_obj_proc * end_processing( ego_obj_proc * );
-    static ego_obj_proc * end_deinitializing( ego_obj_proc * );
-    static ego_obj_proc * end_destructing( ego_obj_proc * );
-    static ego_obj_proc * end_invalidating( ego_obj_proc * );
-    static ego_obj_proc * invalidate( ego_obj_proc * );
+    virtual int end_constructing();
+    virtual int end_initializing();
+    virtual int end_processing();
+    virtual int end_deinitializing();
+    virtual int end_destructing();
+    virtual int end_invalidating();
 
-    static ego_obj_proc * begin_waiting( ego_obj_proc * );
-
-    // basic flags for where the object is in the creation/desctuction process
-    static const bool_t get_valid( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->valid;       }
-    static const bool_t get_constructed( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->constructed; }
-    static const bool_t get_initialized( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->initialized; }
-    static const bool_t get_active( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->active;      }
-    static const bool_t get_killed( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->killed;      }
-
-    // other state flags
-    static const bool_t get_spawning( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->spawning; }
-    static const bool_t get_on( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->on;       }
-    static const bool_t get_paused( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->paused;   }
-
-    static const ego_obj_actions_t get_action( const ego_obj_proc * ptr ) { return ( NULL == ptr ) ? ego_obj_nothing : ptr->action; }
-
-private:
-
-    static ego_obj_proc * clear( ego_obj_proc * ptr );
+    virtual int begin_waiting();
 };
 
 //--------------------------------------------------------------------------------------------
 
-/// Structure for deferring communication with the ego_obj_proc.
+/// Structure for deferring communication with the ego_object_process_state.
 /// Users can make requests for changes in the machine state by setting these values.
-struct ego_obj_req
+struct ego_object_request_data
 {
-    friend struct ego_obj_proc_data;
+    friend struct ego_object_process_engine;
+
+    typedef ego_object_request_data its_type;
+
+    //---- ACCESSORS
+    // use static functions as accessors so the program won't crash on am accidental NULL pointer
+
+    static const bool_t  get_pause_off( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->unpause_me;  };
+    static const bool_t  get_pause_on( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->pause_me;    };
+    static const bool_t  get_turn_on( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_on;  };
+    static const bool_t  get_turn_off( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_off; };
+    static const bool_t  get_kill( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->kill_me;     };
+
+protected:
+
+    ego_object_request_data() { clear(); }
+    ~ego_object_request_data() { clear(); }
+
+    /// @note MAKE SURE there are no virtual functions or any members that are constructed
+    /// before you use memset like this
+    void clear() { memset( this, 0, sizeof( *this ) ); };
 
     bool_t  unpause_me;  ///< request to un-pause the object
     bool_t  pause_me;    ///< request to pause the object
     bool_t  turn_me_on;  ///< request to turn on the object
     bool_t  turn_me_off; ///< request to turn on the object
     bool_t  kill_me;     ///< request to destroy the object
-
-    static ego_obj_req * ctor_this( ego_obj_req * ptr );
-    static ego_obj_req * dtor_this( ego_obj_req * ptr );
-
-    static const bool_t  get_pause_off( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->unpause_me;  };
-    static const bool_t  get_pause_on( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->pause_me;    };
-    static const bool_t  get_turn_on( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_on;  };
-    static const bool_t  get_turn_off( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_off; };
-    static const bool_t  get_kill( const ego_obj_req * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->kill_me;     };
-
-private:
-
-    static ego_obj_req * clear( ego_obj_req* ptr );
 };
 
 //--------------------------------------------------------------------------------------------
-/// A container for the "egoboo object process".
-/// Automatically handles creation and destruction of egoboo objects.
-/// Inheriting this struct will give the child a "has a" relationship to
-/// The egoboo object process data.
-struct ego_obj_proc_data
+
+/// a concrete "egoboo object process"
+struct ego_object_process : public i_ego_object_process, public ego_object_request_data, public ego_object_process_state
 {
-    ego_obj_proc_data * get_process_client() { return this; }
+    //---- default implementation of the virtual methods
 
-    ego_obj_proc    * get_pproc() { return &_proc_data; }
-    ego_obj_req     * get_preq()  { return &_req_data;   }
+    /// constructing method
+    virtual int do_constructing()   { return end_constructing();   }
+    /// initializing method
+    virtual int do_initializing()   { return end_initializing();   }
+    /// deinitializing method
+    virtual int do_deinitializing() { return end_deinitializing(); }
+    /// processing method
+    virtual int do_processing()     { return end_processing();     }
+    /// destructing method
+    virtual int do_destructing()    { return end_destructing();    }
 
-    ego_obj_proc    & get_proc() { return _proc_data; }
-    ego_obj_req     & get_req()  { return _req_data;  }
+    //---- accessor methods
+    virtual ego_obj * get_obj() { return NULL; }
+    virtual ego_chr * get_chr() { return NULL; }
+    virtual ego_enc * get_enc() { return NULL; }
+    virtual ego_prt * get_prt() { return NULL; }
 
-    const ego_obj_proc    * cget_pproc() const { return &_proc_data; }
-    const ego_obj_req     * cget_preq()  const { return &_req_data;   }
+    ego_object_process * get_object_process() { return this; }
 
-    const ego_obj_proc    & cget_proc() const { return _proc_data; }
-    const ego_obj_req     & cget_req()  const { return _req_data;  }
+    static egoboo_rv validate( ego_object_process * ptr, bool_t val = btrue );
 
-    egoboo_rv proc_validate( bool_t valid = btrue );
+    egoboo_rv proc_req_on( bool_t val );
+    egoboo_rv proc_req_pause( bool_t val );
+    egoboo_rv proc_req_terminate();
 
     egoboo_rv proc_set_wait();
     egoboo_rv proc_set_process();
-
     egoboo_rv proc_set_killed( bool_t val );
     egoboo_rv proc_set_on( bool_t val );
-    egoboo_rv proc_set_spawning( bool_t val );
-
-    egoboo_rv proc_req_kill();
-    egoboo_rv proc_req_on( bool_t val );
-    egoboo_rv proc_req_pause( bool_t val );
-
     egoboo_rv proc_do_on();
-
-    static const ego_obj_proc    * cget_pproc( const ego_obj_proc_data * pdata ) { return NULL == pdata ? NULL : &( pdata->_proc_data ); }
-    static const ego_obj_req     * cget_preq( const ego_obj_proc_data * pdata )  { return NULL == pdata ? NULL : &( pdata->_req_data ); }
-
-    // basic flags for where the object is in the creation/desctuction process
-    static const bool_t get_valid( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_valid( ptr ); }
-    static const bool_t get_constructed( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_constructed( ptr ); }
-    static const bool_t get_initialized( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_initialized( ptr ); }
-    static const bool_t get_active( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_active( ptr ); }
-    static const bool_t get_killed( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_killed( ptr ); }
-
-    // other state flags
-    static const bool_t get_spawning( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_spawning( ptr ); }
-    static const bool_t get_on( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_on( ptr ); }
-    static const bool_t get_paused( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_paused( ptr ); }
-
-    static const ego_obj_actions_t get_action( const ego_obj_proc_data * pdata ) { const ego_obj_proc * ptr = ego_obj_proc_data::cget_pproc( pdata ); return ego_obj_proc::get_action( ptr ); }
-
-    static const bool_t  get_pause_off( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_pause_off( ptr );  }
-    static const bool_t  get_pause_on( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_pause_on( ptr );  }
-    static const bool_t  get_turn_on( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_turn_on( ptr );  }
-    static const bool_t  get_turn_off( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_turn_off( ptr );  }
-    static const bool_t  get_kill( const ego_obj_proc_data * pdata ) { const ego_obj_req * ptr = ego_obj_proc_data::cget_preq( pdata ); return ego_obj_req::get_kill( ptr );  }
-
-private:
-    // "process" control control
-    ego_obj_proc _proc_data;   ///< The state of the object_base "process"
-    ego_obj_req  _req_data;    ///< place for making requests to change the state
+    egoboo_rv proc_set_spawning( bool_t val );
 };
+
+//--------------------------------------------------------------------------------------------
+struct ego_object_process_engine
+{
+    static ego_object_process * run( ego_object_process * );
+};
+
+extern ego_object_process_engine obj_proc_engine;
 
 //--------------------------------------------------------------------------------------------
 /// Additional data that all egoboo object use
@@ -216,8 +275,10 @@ struct ego_obj_data
 /// It has a "has a" relationship to the "egoboo object process."
 /// It inherits cpp_list_client to provide some helper functions and data up to be a proper "client" for the t_cpp_list<> "server" that stores it.
 
-struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_proc_data
+struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_object_process
 {
+    friend struct ego_object_engine;
+
     /// How many objects have been created?
     static Uint32 guid_counter;
 
@@ -253,18 +314,18 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
     static ego_obj * deallocate( ego_obj * pobj );
 
     // process initialization
-    static ego_obj * validate( ego_obj * );
-    static ego_obj * invalidate( ego_obj * );
+    static ego_obj * validate( ego_obj *, bool_t val = btrue );
 
-    // functions for changing the state of the "egoboo object process"
-    static ego_obj * end_constructing( ego_obj * );
-    static ego_obj * end_initializing( ego_obj * );
-    static ego_obj * end_processing( ego_obj * );
-    static ego_obj * end_deinitializing( ego_obj * );
-    static ego_obj * end_destructing( ego_obj * );
-    static ego_obj * end_invalidating( ego_obj * );
-    static ego_obj * begin_processing( ego_obj *, const char * name );
-    static ego_obj * begin_waiting( ego_obj * );
+    //---- overriding some/all virtual finctions
+    //virtual int end_constructing();
+    //virtual int end_initializing();
+    //virtual int end_processing();
+    //virtual int end_deinitializing();
+    //virtual int end_destructing();
+    //virtual int end_invalidating();
+    //virtual int begin_waiting();
+
+    static ego_obj * begin_processing( ego_obj * , const char * name = "*UNKNOWN*" );
 
     // functions for requesting a change in the "egoboo object process"
     static ego_obj * req_terminate( ego_obj * );
@@ -273,6 +334,27 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
     static ego_obj * grant_terminate( ego_obj * pobj );
     static ego_obj * grant_on( ego_obj * pobj );
     static ego_obj * set_spawning( ego_obj * pobj, bool_t val );
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+/// the engine that runs an "egoboo object process"
+struct ego_object_engine
+{
+    static ego_obj_chr * run( ego_obj_chr * );
+    static ego_obj_enc * run( ego_obj_enc * );
+    static ego_obj_prt * run( ego_obj_prt * );
+
+    static ego_obj * run_construct( ego_obj * pobj, int max_iterations );
+    static ego_obj * run_initialize( ego_obj * pobj, int max_iterations );
+    static ego_obj * run_activate( ego_obj * pobj, int max_iterations );
+    static ego_obj * run_deinitialize( ego_obj * pobj, int max_iterations );
+    static ego_obj * run_deconstruct( ego_obj * pobj, int max_iterations );
+
+private:
+    static ego_obj * run( ego_obj * );
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -344,12 +426,12 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 #define ALLOCATED_PBASE( PBASE )       ( (NULL != (PBASE)) && FLAG_ALLOCATED_PBASE(PBASE) )
 
 /// Is the object flagged as valid?
-#define FLAG_VALID_PBASE( PBASE ) ( ego_obj::get_valid(PBASE) )
+#define FLAG_VALID_PBASE( PBASE ) ( ego_object_process_state_data::get_valid(PBASE) )
 /// Is the object valid?
 #define VALID_PBASE( PBASE )       ( (NULL != (PBASE)) && FLAG_VALID_PBASE(PBASE) && FLAG_ALLOCATED_PBASE( PBASE ) )
 
 /// Is the object flagged as constructed?
-#define FLAG_CONSTRUCTED_PBASE( PBASE ) ( ego_obj::get_constructed(PBASE) )
+#define FLAG_CONSTRUCTED_PBASE( PBASE ) ( ego_object_process_state_data::get_constructed(PBASE) )
 /// Is the object constructed?
 #define CONSTRUCTED_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && FLAG_CONSTRUCTED_PBASE(PBASE) )
 
@@ -399,7 +481,7 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 #define DESTRUCTING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_DESTRUCTING_PBASE(PBASE) )
 
 /// Is the object "waiting to die" state?
-#define STATE_WAITING_PBASE( PBASE ) ( ego_obj_waiting == ego_obj::get_action(PBASE) )
+#define STATE_WAITING_PBASE( PBASE ) ( ego_obj_waiting == ego_object_process_state_data::get_action(PBASE) )
 /// Is the object "waiting to die"?
 #define WAITING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_WAITING_PBASE(PBASE) )
 
@@ -420,4 +502,3 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_obj_pro
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 #define _egoboo_object_h
-

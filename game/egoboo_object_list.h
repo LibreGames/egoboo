@@ -39,7 +39,7 @@ struct t_ego_obj_lst
     t_ego_obj_lst( size_t len = _sz ) : _max_len( len ), loop_depth( 0 ) { init(); }
     ~t_ego_obj_lst() { deinit(); }
 
-    INLINE bool_t validate_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _max_len; };
+    INLINE bool_t valid_ref( const reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _max_len; };
 
     void             update_used();
 

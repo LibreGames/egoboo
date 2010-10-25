@@ -68,10 +68,9 @@ struct ego_passage : public s_passage_data
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-extern t_cpp_stack< ego_passage, MAX_PASS  > PassageStack;
+extern t_cpp_stack< ego_passage, MAX_PASS > PassageStack;
 
-#define VALID_PASSAGE_RANGE( IPASS ) ( ((IPASS) >= 0) && ((IPASS) <   MAX_PASS) )
-#define VALID_PASSAGE( IPASS )       ( VALID_PASSAGE_RANGE( IPASS ) && ((IPASS) <  PassageStack.count) )
+#define VALID_PASSAGE( IPASS )       ( PassageStack.valid_ref( IPASS ) && ((IPASS) <  PassageStack.count) )
 #define INVALID_PASSAGE( IPASS )     ( !VALID_PASSAGE( IPASS ) )
 
 //--------------------------------------------------------------------------------------------
@@ -84,11 +83,9 @@ struct ego_shop
     CHR_REF  owner;    ///< Who gets the gold?
 };
 
-extern t_cpp_stack< ego_shop, MAX_SHOP  > ShopStack;
+extern t_cpp_stack< ego_shop, MAX_SHOP > ShopStack;
 
-#define VALID_SHOP_RANGE( ISHOP ) ( ((ISHOP) >= 0) && ((ISHOP) <   MAX_SHOP) )
-#define VALID_SHOP( ISHOP )       ( VALID_SHOP_RANGE( ISHOP ) && ((ISHOP) <  ShopStack.count) )
-#define INVALID_SHOP( ISHOP )     ( !VALID_SHOP( ISHOP ) )
+#define INVALID_SHOP( ISHOP )     ( !ShopStack.valid_ref( ISHOP ) )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

@@ -338,7 +338,7 @@ struct t_cpp_list
     size_t count_free() { return free_count(); }
     size_t count_used() { return used_count; }
 
-    bool_t validate_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
+    bool_t valid_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
 
     egoboo_rv add_free( const t_reference<_ty> & ref );
     egoboo_rv add_used( const t_reference<_ty> & ref );
@@ -372,9 +372,39 @@ struct t_cpp_stack
 {
     unsigned update_guid;
     int      count;
-    t_cpp_ary<_ty, _sz> lst;
+
+    bool_t valid_idx( const signed index ) const { return index > 0 && index < _sz; }
+    bool_t valid_ref( const t_reference<_ty> & ref ) const { return ref.get_value() < _sz; }
 
     t_cpp_stack() { count = 0; update_guid = 0; }
+
+    _ty & operator []( const t_reference<_ty> & ref )
+    {
+        CPP_EGOBOO_ASSERT( valid_ref( ref ) );
+        return lst[ref];
+    }
+
+    const _ty & operator []( const t_reference<_ty> & ref ) const
+    {
+        CPP_EGOBOO_ASSERT( valid_ref( ref ) );
+        return lst[ref];
+    }
+
+    _ty * operator + ( const t_reference<_ty> & ref )
+    {
+        CPP_EGOBOO_ASSERT( valid_ref( ref ) );
+        return lst + ref;
+    }
+
+    const _ty * operator + ( const t_reference<_ty> & ref ) const
+    {
+        CPP_EGOBOO_ASSERT( valid_ref( ref ) );
+        return lst + ref;
+    }
+
+private:
+    t_cpp_ary<_ty, _sz> lst;
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -423,18 +453,12 @@ struct t_dary : public std::vector< _ty >
 //--------------------------------------------------------------------------------------------
 
 /// a template-like declaration of a statically allocated array
-
-#define DECLARE_STATIC_ARY_TYPE(ARY_T, ELEM_T, SIZE) \
-    struct s_STATIC_ARY_##ARY_T \
-    { \
-        int    count;     \
-        ELEM_T ary[SIZE]; \
-    }; \
-    typedef struct s_STATIC_ARY_##ARY_T ARY_T##_t
-
-#define DECLARE_EXTERN_STATIC_ARY(ARY_T, NAME) extern ARY_T##_t NAME;
-#define STATIC_ARY_INIT_VALS {0}
-#define INSTANTIATE_STATIC_ARY(ARY_T, NAME) ARY_T##_t NAME = STATIC_ARY_INIT_VALS;
+template < typename _ty, size_t _sz >
+struct t_sary
+{
+    int count;
+    _ty ary[_sz];
+};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

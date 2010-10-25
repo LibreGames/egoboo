@@ -105,7 +105,7 @@ bool_t PassageStack_open( const PASS_REF & passage )
 
     if ( INVALID_PASSAGE( passage ) ) return bfalse;
 
-    return ego_passage::do_open( PassageStack.lst + passage );
+    return ego_passage::do_open( PassageStack + passage );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ void PassageStack_flash( const PASS_REF & passage, Uint8 color )
 
     if ( !INVALID_PASSAGE( passage ) )
     {
-        ego_passage::flash( PassageStack.lst + passage, color );
+        ego_passage::flash( PassageStack + passage, color );
     }
 }
 
@@ -127,7 +127,7 @@ bool_t PassageStack_point_is_inside( const PASS_REF & passage, float xpos, float
 
     if ( INVALID_PASSAGE( passage ) ) return useful;
 
-    return ego_passage::point_is_in( PassageStack.lst + passage, xpos, ypos );
+    return ego_passage::point_is_in( PassageStack + passage, xpos, ypos );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ bool_t PassageStack_object_is_inside( const PASS_REF & passage, float xpos, floa
 
     if ( INVALID_PASSAGE( passage ) ) return useful;
 
-    return ego_passage::object_is_in( PassageStack.lst + passage, xpos, ypos, radius );
+    return ego_passage::object_is_in( PassageStack + passage, xpos, ypos, radius );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ CHR_REF PassageStack_who_is_blocking( const PASS_REF & passage, const CHR_REF & 
     // Skip invalid passages
     if ( INVALID_PASSAGE( passage ) ) return CHR_REF( MAX_CHR );
 
-    return ego_passage::who_is_blocking( PassageStack.lst + passage, isrc, idsz, targeting_bits, require_item );
+    return ego_passage::who_is_blocking( PassageStack + passage, isrc, idsz, targeting_bits, require_item );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ void PassageStack_check_music()
     // Check every music passage
     for ( passage = 0; passage < PassageStack.count; passage++ )
     {
-        if ( ego_passage::check_music( PassageStack.lst + passage ) )
+        if ( ego_passage::check_music( PassageStack + passage ) )
         {
             return;
         }
@@ -176,7 +176,7 @@ bool_t PassageStack_close_one( const PASS_REF & passage )
     // Skip invalid passages
     if ( INVALID_PASSAGE( passage ) ) return bfalse;
 
-    return ego_passage::close( PassageStack.lst + passage );
+    return ego_passage::close( PassageStack + passage );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ void PassageStack_add_one( ego_passage * pdata )
     ipass = PassageStack_get_free();
     if ( ipass >= MAX_PASS ) return;
 
-    ego_passage::init( PassageStack.lst + ipass, pdata );
+    ego_passage::init( PassageStack + ipass, pdata );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -202,8 +202,8 @@ void ShopStack_free_all()
 
     for ( cnt = 0; cnt < MAX_PASS; cnt++ )
     {
-        ShopStack.lst[cnt].owner   = SHOP_NOOWNER;
-        ShopStack.lst[cnt].passage = 0;
+        ShopStack[cnt].owner   = SHOP_NOOWNER;
+        ShopStack[cnt].passage = 0;
     }
     ShopStack.count = 0;
 }
@@ -235,11 +235,11 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
     if ( !INGAME_CHR( owner ) || !ChrObjList.get_data( owner ).alive ) return;
 
     ishop = ShopStack_get_free();
-    if ( !VALID_SHOP( ishop ) ) return;
+    if ( !ShopStack.valid_ref( ishop ) ) return;
 
     // The passage exists...
-    ShopStack.lst[ishop].passage = passage;
-    ShopStack.lst[ishop].owner   = owner;
+    ShopStack[ishop].passage = passage;
+    ShopStack[ishop].owner   = owner;
 
     // flag every item in the shop as a shop item
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
@@ -251,7 +251,7 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
 
         if ( pchr->isitem )
         {
-            if ( PassageStack_object_is_inside( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+            if ( PassageStack_object_is_inside( ShopStack[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
             {
                 pchr->isshopitem = btrue;               // Full value
                 pchr->iskursed   = bfalse;              // Shop items are never kursed
@@ -286,12 +286,12 @@ CHR_REF ShopStack_find_owner( int ix, int iy )
         ego_passage * ppass;
         ego_shop    * pshop;
 
-        pshop = ShopStack.lst + cnt;
+        pshop = ShopStack + cnt;
 
         passage = pshop->passage;
 
         if ( INVALID_PASSAGE( passage ) ) continue;
-        ppass = PassageStack.lst + passage;
+        ppass = PassageStack + passage;
 
         if ( irect_point_inside( &( ppass->area ), ix, iy ) )
         {
@@ -521,7 +521,7 @@ bool_t ego_passage::check_music( ego_passage * ppass )
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         ego_chr * pchr;
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         character = ppla->index;
 

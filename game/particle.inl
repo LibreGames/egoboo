@@ -48,7 +48,7 @@ INLINE ego_pip * ego_prt::get_ppip( const PRT_REF & iprt )
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return NULL;
 
-    return PipStack.lst + pprt->pip_ref;
+    return PipStack + pprt->pip_ref;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ INLINE bool_t ego_prt::set_size( ego_prt * pprt, int size )
     if ( !DEFINED_PPRT( pprt ) ) return bfalse;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return bfalse;
-    ppip = PipStack.lst + pprt->pip_ref;
+    ppip = PipStack + pprt->pip_ref;
 
     // set the graphical size
     pprt->size = size;

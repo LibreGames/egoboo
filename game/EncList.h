@@ -32,7 +32,7 @@
 //--------------------------------------------------------------------------------------------
 
 #define VALID_ENC_IDX( INDX )   ( ((INDX) >= 0) && ((INDX) < MAX_ENC) )
-#define VALID_ENC_REF( IENC )     EncObjList.validate_ref(IENC)
+#define VALID_ENC_REF( IENC )     EncObjList.valid_ref(IENC)
 #define ALLOCATED_ENC( IENC )   ( ALLOCATED_PBASE(EncObjList.get_valid_ptr(IENC)) )
 #define VALID_ENC( IENC )       ( VALID_PBASE(EncObjList.get_valid_ptr(IENC)) )
 #define DEFINED_ENC( IENC )     ( VALID_PBASE(EncObjList.get_valid_ptr(IENC) ) && !FLAG_TERMINATED_PBASE(EncObjList.get_valid_ptr(IENC)) )

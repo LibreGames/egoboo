@@ -826,9 +826,9 @@ Uint8 scr_set_TargetToWhoeverCalledForHelp( ego_script_state * pstate, ego_ai_bu
 
     SCRIPT_FUNCTION_BEGIN();
 
-    if ( VALID_TEAM_RANGE( pchr->team ) )
+    if ( TeamStack.valid_ref( pchr->team ) )
     {
-        CHR_REF isissy = TeamStack.lst[pchr->team].sissy;
+        CHR_REF isissy = TeamStack[pchr->team].sissy;
 
         if ( INGAME_CHR( isissy ) )
         {
@@ -986,7 +986,7 @@ Uint8 scr_TargetHasSkillID( ego_script_state * pstate, ego_ai_bundle * pbdl_self
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    returncode = ( 0 != ego_chr::get_skill( pself_target, ( IDSZ )pstate->argument ) );
+    returncode = ( 0 != ego_chr_data::get_skill( pself_target, ( IDSZ )pstate->argument ) );
 
     SCRIPT_FUNCTION_END();
 }
@@ -1231,7 +1231,7 @@ Uint8 scr_PassageOpen( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     {
         PASS_REF ipass = PASS_REF( pstate->argument );
 
-        returncode = PassageStack.lst[ipass].open;
+        returncode = PassageStack[ipass].open;
     }
 
     SCRIPT_FUNCTION_END();
@@ -1652,9 +1652,9 @@ Uint8 scr_set_TargetToTargetOfLeader( ego_script_state * pstate, ego_ai_bundle *
 
     SCRIPT_FUNCTION_BEGIN();
 
-    if ( VALID_TEAM_RANGE( pchr->team ) )
+    if ( TeamStack.valid_ref( pchr->team ) )
     {
-        CHR_REF ileader = TeamStack.lst[pchr->team].leader;
+        CHR_REF ileader = TeamStack[pchr->team].leader;
 
         if ( NOLEADER != ileader && INGAME_CHR( ileader ) )
         {
@@ -1703,7 +1703,7 @@ Uint8 scr_BecomeLeader( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    TeamStack.lst[pchr->team].leader = pself->index;
+    TeamStack[pchr->team].leader = pself->index;
 
     SCRIPT_FUNCTION_END();
 }
@@ -1783,7 +1783,7 @@ Uint8 scr_LeaderIsAlive( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = ( TeamStack.lst[pchr->team].leader != NOLEADER );
+    returncode = ( TeamStack[pchr->team].leader != NOLEADER );
 
     SCRIPT_FUNCTION_END();
 }
@@ -1811,9 +1811,9 @@ Uint8 scr_set_TargetToLeader( ego_script_state * pstate, ego_ai_bundle * pbdl_se
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = bfalse;
-    if ( VALID_TEAM_RANGE( pchr->team ) )
+    if ( TeamStack.valid_ref( pchr->team ) )
     {
-        CHR_REF ileader = TeamStack.lst[pchr->team].leader;
+        CHR_REF ileader = TeamStack[pchr->team].leader;
 
         if ( NOLEADER != ileader && INGAME_CHR( ileader ) )
         {
@@ -2053,7 +2053,7 @@ Uint8 scr_TargetIsHurt( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    if ( !pself_target->alive || pself_target->life > pself_target->lifemax - HURTDAMAGE )
+    if ( !pself_target->alive || pself_target->life > pself_target->life_max - HURTDAMAGE )
         returncode = bfalse;
 
     SCRIPT_FUNCTION_END();
@@ -2126,7 +2126,7 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
         tmp_pos = ego_prt::get_pos( pprt );
 
         // Correct X, Y, Z spacing
-        tmp_pos.z += PipStack.lst[pprt->pip_ref].spacing_vrt_pair.base;
+        tmp_pos.z += PipStack[pprt->pip_ref].spacing_vrt_pair.base;
 
         // Don't spawn in walls
         tmp_pos.x += pstate->x;
@@ -2793,7 +2793,7 @@ Uint8 scr_IncreaseAmmo( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     /// @details ZZ@> This function increases the character's ammo by 1
 
     SCRIPT_FUNCTION_BEGIN();
-    if ( pchr->ammo < pchr->ammomax )
+    if ( pchr->ammo < pchr->ammo_max )
     {
         pchr->ammo++;
     }
@@ -3217,7 +3217,7 @@ Uint8 scr_set_FlyHeight( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ego_chr::set_fly_height( pchr, pstate->argument );
+    ego_chr_data::set_fly_height( pchr, pstate->argument );
 
     SCRIPT_FUNCTION_END();
 }
@@ -3537,7 +3537,7 @@ Uint8 scr_HoldingRangedWeapon( ego_script_state * pstate, ego_ai_bundle * pbdl_s
     {
         ego_cap * pcap = ego_chr::get_pcap( ichr );
 
-        if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data( ichr ).ammomax == 0 || ( ChrObjList.get_data( ichr ).ammo != 0 && ChrObjList.get_data( ichr ).ammoknown ) ) )
+        if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data( ichr ).ammo_max == 0 || ( ChrObjList.get_data( ichr ).ammo != 0 && ChrObjList.get_data( ichr ).ammoknown ) ) )
         {
             if ( pstate->argument == 0 || ( update_wld & 1 ) )
             {
@@ -3555,7 +3555,7 @@ Uint8 scr_HoldingRangedWeapon( ego_script_state * pstate, ego_ai_bundle * pbdl_s
         {
             ego_cap * pcap = ego_chr::get_pcap( ichr );
 
-            if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data( ichr ).ammomax == 0 || ( ChrObjList.get_data( ichr ).ammo != 0 && ChrObjList.get_data( ichr ).ammoknown ) ) )
+            if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data( ichr ).ammo_max == 0 || ( ChrObjList.get_data( ichr ).ammo != 0 && ChrObjList.get_data( ichr ).ammoknown ) ) )
             {
                 pstate->argument = LATCHBUTTON_LEFT;
                 returncode = btrue;
@@ -4677,8 +4677,8 @@ Uint8 scr_GiveLifeToTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self
     if ( pself_target->alive )
     {
         iTmp = pstate->argument;
-        getadd( LOWSTAT, pself_target->lifemax, PERFECTBIG, &iTmp );
-        pself_target->lifemax += iTmp;
+        getadd( LOWSTAT, pself_target->life_max, PERFECTBIG, &iTmp );
+        pself_target->life_max += iTmp;
         if ( iTmp < 0 )
         {
             getadd( 1, pself_target->life, PERFECTBIG, &iTmp );
@@ -4706,8 +4706,8 @@ Uint8 scr_GiveManaToTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self
     if ( pself_target->alive )
     {
         iTmp = pstate->argument;
-        getadd( 0, pself_target->manamax, PERFECTBIG, &iTmp );
-        pself_target->manamax += iTmp;
+        getadd( 0, pself_target->mana_max, PERFECTBIG, &iTmp );
+        pself_target->mana_max += iTmp;
         if ( iTmp < 0 )
         {
             getadd( 0, pself_target->mana, PERFECTBIG, &iTmp );
@@ -4810,7 +4810,7 @@ Uint8 scr_PumpTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     if ( pself_target->alive )
     {
         iTmp = pstate->argument;
-        getadd( 0, pself_target->mana, pself_target->manamax, &iTmp );
+        getadd( 0, pself_target->mana, pself_target->mana_max, &iTmp );
         pself_target->mana += iTmp;
     }
 
@@ -5816,7 +5816,7 @@ Uint8 scr_IdentifyTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     returncode = bfalse;
     ichr = pself->target;
-    if ( ChrObjList.get_data( ichr ).ammomax != 0 )  ChrObjList.get_data( ichr ).ammoknown = btrue;
+    if ( ChrObjList.get_data( ichr ).ammo_max != 0 )  ChrObjList.get_data( ichr ).ammoknown = btrue;
     if ( 0 == strcmp( "Blah", ChrObjList.get_data( ichr ).name ) )
     {
         returncode = !ChrObjList.get_data( ichr ).nameknown;
@@ -5996,7 +5996,7 @@ Uint8 scr_ClearMusicPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     {
         PASS_REF ipass = PASS_REF( pstate->argument );
 
-        PassageStack.lst[ipass].music = NO_MUSIC;
+        PassageStack[ipass].music = NO_MUSIC;
     }
 
     SCRIPT_FUNCTION_END();
@@ -6060,7 +6060,7 @@ Uint8 scr_set_MusicPassage( ego_script_state * pstate, ego_ai_bundle * pbdl_self
     {
         PASS_REF ipass = PASS_REF( pstate->argument );
 
-        PassageStack.lst[ipass].music = pstate->distance;
+        PassageStack[ipass].music = pstate->distance;
     }
 
     SCRIPT_FUNCTION_END();
@@ -6341,7 +6341,7 @@ Uint8 scr_set_VolumeNearestTeammate( ego_script_state * pstate, ego_ai_bundle * 
     volume = -distance;
     volume = volume<<VOLSHIFT;
     if(volume < VOLMIN) volume = VOLMIN;
-    iTmp = CapStack.lst[pro_get_icap(pchr->profile_ref)].wavelist[pstate->argument];
+    iTmp = CapStack[pro_get_icap(pchr->profile_ref)].wavelist[pstate->argument];
     if(iTmp < numsound && iTmp >= 0 && soundon)
     {
     lpDSBuffer[iTmp]->SetVolume(volume);
@@ -6745,7 +6745,7 @@ Uint8 scr_TargetHasNotFullMana( ego_script_state * pstate, ego_ai_bundle * pbdl_
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    if ( !pself_target->alive || pself_target->mana > pself_target->manamax - HURTDAMAGE )
+    if ( !pself_target->alive || pself_target->mana > pself_target->mana_max - HURTDAMAGE )
     {
         returncode = bfalse;
     }
@@ -6903,7 +6903,7 @@ Uint8 scr_Backstabbed( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
         if ( pself->directionlast >= ATK_BEHIND - 8192 && pself->directionlast < ATK_BEHIND + 8192 )
         {
             // And require the backstab skill
-            if ( ego_chr::get_skill( pattacker, MAKE_IDSZ( 'S', 'T', 'A', 'B' ) ) )
+            if ( ego_chr_data::get_skill( pattacker, MAKE_IDSZ( 'S', 'T', 'A', 'B' ) ) )
             {
                 // Finally we require it to be physical damage!
                 Uint16 sTmp = pself->damagetypelast;
@@ -6949,7 +6949,7 @@ Uint8 scr_AddQuest( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ipla = pself_target->is_which_player;
     if ( VALID_PLA( ipla ) )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         quest_level = quest_add( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, 0 );
     }
@@ -6974,7 +6974,7 @@ Uint8 scr_BeatQuestAllPlayers( ego_script_state * pstate, ego_ai_bundle * pbdl_s
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         CHR_REF ichr;
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         if ( !ppla->valid ) continue;
 
@@ -7009,7 +7009,7 @@ Uint8 scr_TargetHasQuest( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ipla = pchr->is_which_player;
     if ( VALID_PLA( ipla ) )
     {
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument );
     }
@@ -7043,7 +7043,7 @@ Uint8 scr_set_QuestLevel( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     if ( VALID_PLA( ipla ) && pstate->distance != 0 )
     {
         int        quest_level = QUEST_NONE;
-        ego_player * ppla        = PlaStack.lst + ipla;
+        ego_player * ppla        = PlaStack + ipla;
 
         quest_level = quest_adjust_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, pstate->distance );
 
@@ -7069,7 +7069,7 @@ Uint8 scr_AddQuestAllPlayers( ego_script_state * pstate, ego_ai_bundle * pbdl_se
     for ( player_count = 0, success_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         int quest_level;
-        ego_player * ppla = PlaStack.lst + ipla;
+        ego_player * ppla = PlaStack + ipla;
 
         if ( !ppla->valid || !INGAME_CHR( ppla->index ) ) continue;
         player_count++;
@@ -7496,8 +7496,8 @@ Uint8 scr_GiveManaFlowToTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_
     if ( pself_target->alive )
     {
         iTmp = pstate->argument;
-        getadd( 0, pself_target->manaflow, PERFECTSTAT, &iTmp );
-        pself_target->manaflow += iTmp;
+        getadd( 0, pself_target->mana_flow, PERFECTSTAT, &iTmp );
+        pself_target->mana_flow += iTmp;
     }
 
     SCRIPT_FUNCTION_END();
@@ -7519,8 +7519,8 @@ Uint8 scr_GiveManaReturnToTarget( ego_script_state * pstate, ego_ai_bundle * pbd
     if ( pself_target->alive )
     {
         iTmp = pstate->argument;
-        getadd( 0, pself_target->manareturn, PERFECTSTAT, &iTmp );
-        pself_target->manareturn += iTmp;
+        getadd( 0, pself_target->mana_return, PERFECTSTAT, &iTmp );
+        pself_target->mana_return += iTmp;
     }
 
     SCRIPT_FUNCTION_END();
@@ -7643,7 +7643,7 @@ Uint8 scr_set_TargetAmmo( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    pself_target->ammo = MIN( pstate->argument, pself_target->ammomax );
+    pself_target->ammo = MIN( pstate->argument, pself_target->ammo_max );
 
     SCRIPT_FUNCTION_END();
 }
@@ -7962,7 +7962,7 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
     ego_passage * ppass;
 
     if ( INVALID_PASSAGE( passage ) ) return bfalse;
-    ppass = PassageStack.lst + passage;
+    ppass = PassageStack + passage;
 
     // Do the first row
     x = x0 >> TILE_BITS;
@@ -8059,6 +8059,6 @@ Uint8 _display_message( const CHR_REF & ichr, const PRO_REF & iprofile, int mess
 //    // tmpargument = GetSkillLevel()
 //    /// @details ZZ@> This function sets tmpargument to the shield proficiency level of the Target
 //   SCRIPT_FUNCTION_BEGIN();
-//   pstate->argument = CapStack.lst[pchr->attachedto].shieldproficiency;
+//   pstate->argument = CapStack[pchr->attachedto].shieldproficiency;
 //   SCRIPT_FUNCTION_END();
 // }

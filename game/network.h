@@ -134,12 +134,11 @@ struct ego_player
     latch_input_t           net_latch;
 };
 
-extern t_cpp_stack< ego_player, MAX_PLAYER  > PlaStack;                         ///< Stack for keeping track of players
+extern t_cpp_stack< ego_player, MAX_PLAYER > PlaStack;                         ///< Stack for keeping track of players
 extern int local_numlpla;                                   ///< Number of local players
 
-#define VALID_PLA_RANGE(IPLA) ( ((IPLA) >= 0) && ((IPLA) < MAX_PLAYER) )
-#define VALID_PLA(IPLA)       ( VALID_PLA_RANGE(IPLA) && ((IPLA) < PlaStack.count) && PlaStack.lst[IPLA].valid )
-#define INVALID_PLA(IPLA)     ( !VALID_PLA_RANGE(IPLA) || ((IPLA) >= PlaStack.count)|| !PlaStack.lst[IPLA].valid )
+#define VALID_PLA(IPLA)       ( PlaStack.valid_ref(IPLA) && ((IPLA) < PlaStack.count) && PlaStack[IPLA].valid )
+#define INVALID_PLA(IPLA)     ( !PlaStack.valid_ref(IPLA) || ((IPLA) >= PlaStack.count)|| !PlaStack[IPLA].valid )
 
 ego_player *     pla_ctor( ego_player * ppla );
 ego_player *     pla_dtor( ego_player * ppla );

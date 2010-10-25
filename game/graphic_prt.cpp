@@ -785,7 +785,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
     if ( NULL == pcam || !INGAME_PPRT_BASE( pprt ) ) return;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return;
-    ppip = PipStack.lst + pprt->pip_ref;
+    ppip = PipStack + pprt->pip_ref;
 
     pinst->type = pprt->type;
 

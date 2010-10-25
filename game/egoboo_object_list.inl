@@ -33,7 +33,7 @@
 template < typename _ty, size_t _sz >
 INLINE _ty & t_ego_obj_lst< _ty, _sz >::get_obj( const t_reference<_ty> & ref )
 {
-    if ( !validate_ref( ref ) )
+    if ( !valid_ref( ref ) )
     {
         // there is no coming back from this error
         EGOBOO_ASSERT( bfalse );
@@ -46,7 +46,7 @@ INLINE _ty & t_ego_obj_lst< _ty, _sz >::get_obj( const t_reference<_ty> & ref )
 template < typename _ty, size_t _sz >
 INLINE _ty * t_ego_obj_lst< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
 {
-    if ( !validate_ref( ref ) ) return NULL;
+    if ( !valid_ref( ref ) ) return NULL;
 
     return ary + ref.get_value();
 }
@@ -121,7 +121,7 @@ void t_ego_obj_lst< _ty, _sz >::deinit()
 
     for ( cnt = 0; cnt < _sz; cnt++ )
     {
-        _ty::run_deconstruct( ary + cnt, 100 );
+        ego_object_engine::run_deconstruct( ary + cnt, 100 );
     }
 }
 
@@ -235,11 +235,10 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::free_one( const t_reference<_ty> & ref )
     else
     {
         // deallocate any dynamically allocated memory
-        pobj = _ty::run_deconstruct( pobj, 100 );
-        if ( NULL == pobj ) return rv_error;
+        if ( NULL == ego_object_engine::run_deconstruct( pobj, 100 ) ) return rv_error;
 
         // we are now done killing the object
-        ego_obj::end_invalidating( pbase );
+        pbase->end_invalidating();
 
         free_raw( ref );
 
@@ -266,7 +265,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::get_free()
         free_queue.pop();
 
         // have we found a valid reference?
-        if ( validate_ref( retval ) && !used_map.has_ref( retval ) ) break;
+        if ( valid_ref( retval ) && !used_map.has_ref( retval ) ) break;
     }
 
     return retval;
@@ -288,7 +287,7 @@ void t_ego_obj_lst< _ty, _sz >::free_all()
 template <typename _ty, size_t _sz>
 t_reference<_ty> t_ego_obj_lst< _ty, _sz >::activate_object( const t_reference<_ty> & ref )
 {
-    if ( !validate_ref( ref ) ) return ref;
+    if ( !valid_ref( ref ) ) return ref;
 
     _ty * pobj = ary + ref.get_value();
     ego_obj * pbase = POBJ_GET_PBASE( pobj );
@@ -302,7 +301,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::activate_object( const t_reference<_
     // allocate the new one
     ego_obj::allocate( pbase, ( ref ).get_value() );
 
-    _ty::run_construct( pobj, 100 );
+    ego_object_engine::run_construct( pobj, 100 );
 
     return ref;
 }
@@ -313,7 +312,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::allocate( const t_reference<_ty> & o
 {
     reference ref( _sz );
 
-    if ( !validate_ref( override ) )
+    if ( !valid_ref( override ) )
     {
         // override is not a valid reference, so just get the next free value
         ref = get_free();
@@ -324,7 +323,7 @@ t_reference<_ty> t_ego_obj_lst< _ty, _sz >::allocate( const t_reference<_ty> & o
         ref = override;
     }
 
-    if ( !validate_ref( ref ) )
+    if ( !valid_ref( ref ) )
     {
         // we didn't get a valid reference
         log_warning( "t_ego_obj_lst<>::allocate() - failed to override a object? Object at index %d already spawned? \n", ( override ).get_value() );
@@ -384,7 +383,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::add_activation( const t_reference<_ty> & re
     // put this object into the activation list so that it can be activated right after
     // the t_ego_obj_lst<> loop is completed
 
-    if ( !validate_ref( ref ) ) return rv_error;
+    if ( !valid_ref( ref ) ) return rv_error;
 
     activation_stack.push( ref.get_value() );
 
@@ -404,7 +403,7 @@ egoboo_rv t_ego_obj_lst< _ty, _sz >::add_termination( const t_reference<_ty> & r
 {
     egoboo_rv retval = rv_fail;
 
-    if ( !validate_ref( ref ) ) return rv_fail;
+    if ( !valid_ref( ref ) ) return rv_fail;
 
     termination_stack.push( ref.get_value() );
 

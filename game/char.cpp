@@ -100,8 +100,6 @@ bool_t apply_one_weapon_matrix( ego_chr * pweap, ego_matrix_cache * mcache );
 // definition that is consistent with using it as a callback in qsort() or some similar function
 static int  cmp_matrix_cache( const void * vlhs, const void * vrhs );
 
-static bool_t chr_upload_cap( ego_chr * pchr, ego_cap * pcap );
-
 void cleanup_one_character( ego_chr * pchr );
 
 static void chr_log_script_time( const CHR_REF & ichr );
@@ -445,14 +443,14 @@ void free_one_character_in_game( const CHR_REF & character )
     CHR_END_LOOP();
 
     // Handle the team
-    if ( pchr->alive && !pcap->invictus && TeamStack.lst[pchr->baseteam].morale > 0 )
+    if ( pchr->alive && !pcap->invictus && TeamStack[pchr->baseteam].morale > 0 )
     {
-        TeamStack.lst[pchr->baseteam].morale--;
+        TeamStack[pchr->baseteam].morale--;
     }
 
-    if ( TeamStack.lst[pchr->team].leader == character )
+    if ( TeamStack[pchr->team].leader == character )
     {
-        TeamStack.lst[pchr->team].leader = NOLEADER;
+        TeamStack[pchr->team].leader = NOLEADER;
     }
 
     // remove any attached particles
@@ -1709,7 +1707,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
     else
     {
         // A generic attack. Spawn the damage particle.
-        if ( pweapon->ammomax == 0 || pweapon->ammo != 0 )
+        if ( pweapon->ammo_max == 0 || pweapon->ammo != 0 )
         {
             if ( pweapon->ammo > 0 && !pweapon_cap->isstackable )
             {
@@ -1842,7 +1840,7 @@ void call_for_help( const CHR_REF & character )
     if ( !INGAME_CHR( character ) ) return;
 
     team = ego_chr::get_iteam( character );
-    TeamStack.lst[team].sissy = character;
+    TeamStack[team].sissy = character;
 
     CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
@@ -1863,7 +1861,7 @@ bool_t setup_xp_table( const CAP_REF & icap )
     ego_cap * pcap;
 
     if ( !LOADED_CAP( icap ) ) return bfalse;
-    pcap = CapStack.lst + icap;
+    pcap = CapStack + icap;
 
     // Calculate xp needed
     for ( level = MAXBASELEVEL; level < MAXLEVEL; level++ )
@@ -1893,7 +1891,7 @@ void do_level_up( const CHR_REF & character )
     if ( NULL == pcap ) return;
 
     // Do level ups and stat changes
-    curlevel = pchr->experiencelevel + 1;
+    curlevel = pchr->experience_level + 1;
     if ( curlevel < MAXLEVEL )
     {
         Uint32 xpcurrent, xpneeded;
@@ -1903,7 +1901,7 @@ void do_level_up( const CHR_REF & character )
         if ( xpcurrent >= xpneeded )
         {
             // do the level up
-            pchr->experiencelevel++;
+            pchr->experience_level++;
             xpneeded = pcap->experience_forlevel[curlevel];
             ADD_BITS( pchr->ai.alert, ALERTIF_LEVELUP );
 
@@ -1944,29 +1942,29 @@ void do_level_up( const CHR_REF & character )
 
             // Life
             number = generate_irand_range( pcap->life_stat.perlevel );
-            number += pchr->lifemax;
+            number += pchr->life_max;
             if ( number > PERFECTBIG ) number = PERFECTBIG;
-            pchr->life += ( number - pchr->lifemax );
-            pchr->lifemax = number;
+            pchr->life += ( number - pchr->life_max );
+            pchr->life_max = number;
 
             // Mana
             number = generate_irand_range( pcap->mana_stat.perlevel );
-            number += pchr->manamax;
+            number += pchr->mana_max;
             if ( number > PERFECTBIG ) number = PERFECTBIG;
-            pchr->mana += ( number - pchr->manamax );
-            pchr->manamax = number;
+            pchr->mana += ( number - pchr->mana_max );
+            pchr->mana_max = number;
 
             // Mana Return
-            number = generate_irand_range( pcap->manareturn_stat.perlevel );
-            number += pchr->manareturn;
+            number = generate_irand_range( pcap->mana_return_stat.perlevel );
+            number += pchr->mana_return;
             if ( number > PERFECTSTAT ) number = PERFECTSTAT;
-            pchr->manareturn = number;
+            pchr->mana_return = number;
 
             // Mana Flow
-            number = generate_irand_range( pcap->manaflow_stat.perlevel );
-            number += pchr->manaflow;
+            number = generate_irand_range( pcap->mana_flow_stat.perlevel );
+            number += pchr->mana_flow;
             if ( number > PERFECTSTAT ) number = PERFECTSTAT;
-            pchr->manaflow = number;
+            pchr->mana_flow = number;
         }
     }
 }
@@ -2123,274 +2121,6 @@ bool_t export_one_character_name_vfs( const char *szSaveName, const CHR_REF & ch
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_upload_cap( ego_chr * pchr, ego_cap * pcap )
-{
-    /// @details BB@> prepare a character profile for exporting, by uploading some special values into the
-    ///     cap. Just so that there is no confusion when you export multiple items of the same type,
-    ///     DO NOT pass the pointer returned by ego_chr::get_pcap(). Instead, use a custom ego_cap declared on the stack,
-    ///     or something similar
-    ///
-    /// @note This has been modified to basically reverse the actions of chr_download_cap().
-    ///       If all enchants have been removed, this should export all permanent changes to the
-    ///       base character profile.
-
-    int tnc;
-
-    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
-
-    if ( NULL == pcap || !pcap->loaded ) return bfalse;
-
-    // export values that override spawn.txt values
-    pcap->content_override   = pchr->ai.content;
-    pcap->state_override     = pchr->ai.state;
-    pcap->money              = pchr->money;
-    pcap->skin_override      = pchr->skin;
-    pcap->level_override     = pchr->experiencelevel;
-
-    // export the current experience
-    ints_to_range( pchr->experience, 0, &( pcap->experience ) );
-
-    // export the current mana and life
-    pcap->life_spawn         = CLIP( pchr->life, 0, pchr->lifemax );
-    pcap->mana_spawn         = CLIP( pchr->mana, 0, pchr->manamax );
-
-    // Movement
-    pcap->anim_speed_sneak = pchr->anim_speed_sneak;
-    pcap->anim_speed_walk = pchr->anim_speed_walk;
-    pcap->anim_speed_run = pchr->anim_speed_run;
-
-    // weight and size
-    pcap->size       = pchr->fat_goto;
-    pcap->bumpdampen = pchr->phys.bumpdampen;
-    if ( pchr->phys.weight == INFINITE_WEIGHT )
-    {
-        pcap->weight = CAP_INFINITE_WEIGHT;
-    }
-    else
-    {
-        Uint32 itmp = pchr->phys.weight / pchr->fat / pchr->fat / pchr->fat;
-        pcap->weight = MIN( itmp, CAP_MAX_WEIGHT );
-    }
-
-    // Other junk
-    pcap->fly_height  = pchr->fly_height;
-    pcap->alpha       = pchr->alpha_base;
-    pcap->light       = pchr->light_base;
-    pcap->flashand    = pchr->flashand;
-    pcap->dampen      = pchr->phys.dampen;
-
-    // Jumping
-    pcap->jump       = pchr->jump_power;
-    pcap->jump_number = pchr->jump_number_reset;
-
-    // Flags
-    pcap->stickybutt      = pchr->stickybutt;
-    pcap->canopenstuff    = pchr->openstuff;
-    pcap->transferblend   = pchr->transferblend;
-    pcap->waterwalk       = pchr->waterwalk;
-    pcap->platform        = pchr->platform;
-    pcap->canuseplatforms = pchr->canuseplatforms;
-    pcap->isitem          = pchr->isitem;
-    pcap->invictus        = pchr->invictus;
-    pcap->ismount         = pchr->ismount;
-    pcap->cangrabmoney    = pchr->cangrabmoney;
-
-    // Damage
-    pcap->attachedprt_reaffirmdamagetype = pchr->reaffirmdamagetype;
-    pcap->damagetargettype               = pchr->damagetargettype;
-
-    // SWID
-    ints_to_range( pchr->strength    , 0, &( pcap->strength_stat.val ) );
-    ints_to_range( pchr->wisdom      , 0, &( pcap->wisdom_stat.val ) );
-    ints_to_range( pchr->intelligence, 0, &( pcap->intelligence_stat.val ) );
-    ints_to_range( pchr->dexterity   , 0, &( pcap->dexterity_stat.val ) );
-
-    // Life and Mana
-    pcap->lifecolor = pchr->lifecolor;
-    pcap->manacolor = pchr->manacolor;
-    ints_to_range( pchr->lifemax     , 0, &( pcap->life_stat.val ) );
-    ints_to_range( pchr->manamax     , 0, &( pcap->mana_stat.val ) );
-    ints_to_range( pchr->manareturn  , 0, &( pcap->manareturn_stat.val ) );
-    ints_to_range( pchr->manaflow    , 0, &( pcap->manaflow_stat.val ) );
-
-    // Gender
-    pcap->gender  = pchr->gender;
-
-    // Ammo
-    pcap->ammomax = pchr->ammomax;
-    pcap->ammo    = pchr->ammo;
-
-    // update any skills that have been learned
-    idsz_map_copy( pchr->skills, SDL_arraysize( pchr->skills ), pcap->skills );
-
-    // Enchant stuff
-    pcap->see_invisible_level = pchr->see_invisible_level;
-
-    // base kurse state
-    pcap->kursechance = pchr->iskursed ? 100 : 0;
-
-    // Model stuff
-    pcap->stoppedby = pchr->stoppedby;
-    pcap->life_heal = pchr->life_heal;
-    pcap->manacost  = pchr->manacost;
-    pcap->nameknown = pchr->nameknown || pchr->ammoknown;          // make sure that identified items are saved as identified
-    pcap->draw_icon = pchr->draw_icon;
-
-    // sound stuff...
-    for ( tnc = 0; tnc < SOUND_COUNT; tnc++ )
-    {
-        pcap->sound_index[tnc] = pchr->sound_index[tnc];
-    }
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t chr_download_cap( ego_chr * pchr, ego_cap * pcap )
-{
-    /// @details BB@> grab all of the data from the data.txt file
-
-    int iTmp, tnc;
-
-    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
-
-    if ( NULL == pcap || !pcap->loaded ) return bfalse;
-
-    // sound stuff...  copy from the cap
-    for ( tnc = 0; tnc < SOUND_COUNT; tnc++ )
-    {
-        pchr->sound_index[tnc] = pcap->sound_index[tnc];
-    }
-
-    // Set up model stuff
-    pchr->stoppedby = pcap->stoppedby;
-    pchr->life_heal = pcap->life_heal;
-    pchr->manacost  = pcap->manacost;
-    pchr->nameknown = pcap->nameknown;
-    pchr->ammoknown = pcap->nameknown;
-    pchr->draw_icon = pcap->draw_icon;
-
-    // calculate a base kurse state. this may be overridden later
-    if ( pcap->isitem )
-    {
-        IPair loc_rand = {1, 100};
-        pchr->iskursed = ( generate_irand_pair( loc_rand ) <= pcap->kursechance );
-    }
-
-    // Skillz
-    idsz_map_copy( pcap->skills, SDL_arraysize( pcap->skills ), pchr->skills );
-    pchr->darkvision_level = ego_chr::get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
-    pchr->see_invisible_level = pcap->see_invisible_level;
-
-    // Ammo
-    pchr->ammomax = pcap->ammomax;
-    pchr->ammo = pcap->ammo;
-
-    // Gender
-    pchr->gender = pcap->gender;
-    if ( pchr->gender == GENDER_RANDOM )  pchr->gender = generate_randmask( GENDER_FEMALE, GENDER_MALE );
-
-    // Life and Mana
-    pchr->lifecolor = pcap->lifecolor;
-    pchr->manacolor = pcap->manacolor;
-    pchr->lifemax = generate_irand_range( pcap->life_stat.val );
-    pchr->life_return = pcap->life_return;
-    pchr->manamax = generate_irand_range( pcap->mana_stat.val );
-    pchr->manaflow = generate_irand_range( pcap->manaflow_stat.val );
-    pchr->manareturn = generate_irand_range( pcap->manareturn_stat.val );
-
-    // SWID
-    pchr->strength = generate_irand_range( pcap->strength_stat.val );
-    pchr->wisdom = generate_irand_range( pcap->wisdom_stat.val );
-    pchr->intelligence = generate_irand_range( pcap->intelligence_stat.val );
-    pchr->dexterity = generate_irand_range( pcap->dexterity_stat.val );
-
-    // Skin
-    pchr->skin = 0;
-    if ( pcap->spelleffect_type != NO_SKIN_OVERRIDE )
-    {
-        pchr->skin = pcap->spelleffect_type % MAX_SKIN;
-    }
-    else if ( pcap->skin_override != NO_SKIN_OVERRIDE )
-    {
-        pchr->skin = pcap->skin_override % MAX_SKIN;
-    }
-
-    // Damage
-    pchr->defense = pcap->defense[pchr->skin];
-    pchr->reaffirmdamagetype = pcap->attachedprt_reaffirmdamagetype;
-    pchr->damagetargettype = pcap->damagetargettype;
-    for ( tnc = 0; tnc < DAMAGE_COUNT; tnc++ )
-    {
-        pchr->damagemodifier[tnc] = pcap->damagemodifier[tnc][pchr->skin];
-    }
-
-    // Flags
-    pchr->stickybutt      = pcap->stickybutt;
-    pchr->openstuff       = pcap->canopenstuff;
-    pchr->transferblend   = pcap->transferblend;
-    pchr->waterwalk       = pcap->waterwalk;
-    pchr->platform        = pcap->platform;
-    pchr->canuseplatforms = pcap->canuseplatforms;
-    pchr->isitem          = pcap->isitem;
-    pchr->invictus        = pcap->invictus;
-    pchr->ismount         = pcap->ismount;
-    pchr->cangrabmoney    = pcap->cangrabmoney;
-
-    // Jumping
-    pchr->jump_power = pcap->jump;
-    ego_chr::set_jump_number_reset( pchr, pcap->jump_number );
-
-    // Other junk
-    ego_chr::set_fly_height( pchr, pcap->fly_height );
-    pchr->maxaccel    = pchr->maxaccel_reset = pcap->maxaccel[pchr->skin];
-    pchr->alpha_base  = pcap->alpha;
-    pchr->light_base  = pcap->light;
-    pchr->flashand    = pcap->flashand;
-    pchr->phys.dampen = pcap->dampen;
-
-    // Load current life and mana. this may be overridden later
-    pchr->life = CLIP( pcap->life_spawn, LOWSTAT, ( UFP8_T )MAX( 0, pchr->lifemax ) );
-    pchr->mana = CLIP( pcap->mana_spawn,       0, ( UFP8_T )MAX( 0, pchr->manamax ) );
-
-    pchr->phys.bumpdampen = pcap->bumpdampen;
-    if ( CAP_INFINITE_WEIGHT == pcap->weight )
-    {
-        pchr->phys.weight = INFINITE_WEIGHT;
-    }
-    else
-    {
-        Uint32 itmp = pcap->weight * pcap->size * pcap->size * pcap->size;
-        pchr->phys.weight = MIN( itmp, MAX_WEIGHT );
-    }
-
-    // Image rendering
-    pchr->uoffvel = pcap->uoffvel;
-    pchr->voffvel = pcap->voffvel;
-
-    // Movement
-    pchr->anim_speed_sneak = pcap->anim_speed_sneak;
-    pchr->anim_speed_walk = pcap->anim_speed_walk;
-    pchr->anim_speed_run = pcap->anim_speed_run;
-
-    // Money is added later
-    pchr->money = pcap->money;
-
-    // Experience
-    iTmp = generate_irand_range( pcap->experience );
-    pchr->experience      = MIN( iTmp, MAXXP );
-    pchr->experiencelevel = pcap->level_override;
-
-    // Particle attachments
-    pchr->reaffirmdamagetype = pcap->attachedprt_reaffirmdamagetype;
-
-    // Character size and bumping
-    ego_chr::init_size( pchr, pcap );
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
 bool_t export_one_character_profile_vfs( const char *szSaveName, const CHR_REF & character )
 {
     /// @details ZZ@> This function creates a data.txt file for the given character.
@@ -2412,7 +2142,7 @@ bool_t export_one_character_profile_vfs( const char *szSaveName, const CHR_REF &
     memcpy( &cap_tmp, pcap, sizeof( ego_cap ) );
 
     // fill in the cap values with the ones we want to export from the character profile
-    chr_upload_cap( pchr, &cap_tmp );
+    ego_chr::upload_cap( pchr, &cap_tmp );
 
     return save_one_cap_data_file_vfs( szSaveName, NULL, &cap_tmp );
 }
@@ -2456,14 +2186,14 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
         icap = pro_get_slot_vfs( tmploadname, MAX_PROFILE );
     }
 
-    if ( !VALID_CAP_RANGE( icap ) )
+    if ( !CapStack.valid_ref( icap ) )
     {
         // The data file wasn't found
         if ( required )
         {
             log_debug( "load_one_character_profile_vfs() - \"%s\" was not found. Overriding a global object?\n", szLoadName );
         }
-        else if ( VALID_CAP_RANGE( slot_override ) && slot_override > PMod->importamount * MAXIMPORTPERPLAYER )
+        else if ( CapStack.valid_idx( slot_override ) && slot_override > PMod->importamount * MAXIMPORTPERPLAYER )
         {
             log_warning( "load_one_character_profile_vfs() - Not able to open file \"%s\"\n", szLoadName );
         }
@@ -2471,7 +2201,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
         return CAP_REF( MAX_CAP );
     }
 
-    pcap = CapStack.lst + icap;
+    pcap = CapStack + icap;
 
     // if there is data in this profile, release it
     if ( pcap->loaded )
@@ -2536,7 +2266,7 @@ bool_t heal_character( const CHR_REF & character, const CHR_REF & healer, int am
     if ( !pchr->alive || ( IS_INVICTUS_PCHR_RAW( pchr ) && !ignore_invictus ) ) return bfalse;
 
     // This actually heals the character
-    pchr->life = CLIP( pchr->life, pchr->life + ABS( amount ), pchr->lifemax );
+    pchr->life = CLIP( pchr->life, pchr->life + ABS( amount ), pchr->life_max );
 
     // Set alerts, but don't alert that we healed ourselves
     if ( healer != character && pchr_h->attachedto != character && ABS( amount ) > HURTDAMAGE )
@@ -2563,19 +2293,19 @@ void cleanup_one_character( ego_chr * pchr )
 
     // Remove it from the team
     pchr->team = pchr->baseteam;
-    if ( TeamStack.lst[pchr->team].morale > 0 ) TeamStack.lst[pchr->team].morale--;
+    if ( TeamStack[pchr->team].morale > 0 ) TeamStack[pchr->team].morale--;
 
-    if ( TeamStack.lst[pchr->team].leader == ichr )
+    if ( TeamStack[pchr->team].leader == ichr )
     {
         // The team now has no leader if the character is the leader
-        TeamStack.lst[pchr->team].leader = NOLEADER;
+        TeamStack[pchr->team].leader = NOLEADER;
     }
 
     // Clear all shop passages that it owned...
     for ( ishop = 0; ishop < ShopStack.count; ishop++ )
     {
-        if ( ShopStack.lst[ishop].owner != ichr ) continue;
-        ShopStack.lst[ishop].owner = SHOP_NOOWNER;
+        if ( ShopStack[ishop].owner != ichr ) continue;
+        ShopStack[ishop].owner = SHOP_NOOWNER;
     }
 
     // detach from any mount
@@ -2711,7 +2441,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
         }
 
         // Check if it was a leader
-        if ( TeamStack.lst[pchr->team].leader == ichr && ego_chr::get_iteam( tnc ) == pchr->team )
+        if ( TeamStack[pchr->team].leader == ichr && ego_chr::get_iteam( tnc ) == pchr->team )
         {
             // All folks on the leaders team get the alert
             ADD_BITS( plistener->ai.alert, ALERTIF_LEADERKILLED );
@@ -2884,7 +2614,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         int delta_mana;
 
         // clip the final mana so it is within the range
-        tmp_final_mana = CLIP( tmp_final_mana, 0, loc_pchr->manamax );
+        tmp_final_mana = CLIP( tmp_final_mana, 0, loc_pchr->mana_max );
         delta_mana     = tmp_final_mana - loc_pchr->mana;
 
         // modify the actual damage amounts
@@ -2900,7 +2630,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         int delta_mana;
 
         // clip the final mana so it is within the range
-        tmp_final_mana = CLIP( tmp_final_mana, 0, loc_pchr->manamax );
+        tmp_final_mana = CLIP( tmp_final_mana, 0, loc_pchr->mana_max );
         delta_mana     = tmp_final_mana - loc_pchr->mana;
 
         // modify the actual damage amounts
@@ -3009,7 +2739,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
             const char * tmpstr;
             int rank;
 
-            tmpstr = describe_wounds( loc_pchr->lifemax, loc_pchr->life );
+            tmpstr = describe_wounds( loc_pchr->life_max, loc_pchr->life );
 
             tmpstr = describe_value( actual_damage, UINT_TO_UFP8( 10 ), &rank );
             if ( rank < 4 )
@@ -3021,10 +2751,10 @@ int damage_character( const CHR_REF & character, FACING_T direction,
                 }
                 else
                 {
-                    tmpstr = describe_damage( actual_damage, loc_pchr->lifemax, &rank );
+                    tmpstr = describe_damage( actual_damage, loc_pchr->life_max, &rank );
                     if ( rank >= -1 && rank <= 1 )
                     {
-                        tmpstr = describe_wounds( loc_pchr->lifemax, loc_pchr->life );
+                        tmpstr = describe_wounds( loc_pchr->life_max, loc_pchr->life );
                     }
                 }
             }
@@ -3167,412 +2897,6 @@ void ego_ai_state::spawn( ego_ai_state * pself, const CHR_REF & index, const PRO
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::do_construct( ego_chr * pchr )
-{
-    // this object has already been constructed as a part of the
-    // ego_obj_chr, so its parent is properly defined
-
-    ego_chr * rv =  ego_chr::ctor_all( pchr, pchr->get_pparent() );
-
-    /* add something here */
-
-    return rv;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::do_init( ego_chr * pchr )
-{
-    CHR_REF  ichr;
-    CAP_REF  icap;
-    TEAM_REF loc_team;
-    int      tnc, iteam, kursechance;
-
-    ego_cap * pcap;
-    fvec3_t pos_tmp;
-
-    if ( NULL == pchr ) return NULL;
-    ichr = GET_IDX_PCHR( pchr );
-
-    // get the character profile pointer
-    pcap = pro_get_pcap( pchr->spawn_data.profile );
-    if ( NULL == pcap )
-    {
-        log_debug( "ego_chr::do_init() - cannot initialize character.\n" );
-
-        return NULL;
-    }
-
-    // get the character profile index
-    icap = pro_get_icap( pchr->spawn_data.profile );
-
-    // make a copy of the data in pchr->spawn_data.pos
-    pos_tmp = pchr->spawn_data.pos;
-
-    // download all the values from the character pchr->spawn_data.profile
-    chr_download_cap( pchr, pcap );
-
-    // Make sure the pchr->spawn_data.team is valid
-    loc_team = pchr->spawn_data.team;
-    iteam = ( loc_team ).get_value();
-    iteam = CLIP( iteam, 0, TEAM_MAX );
-    loc_team = TEAM_REF( iteam );
-
-    // IMPORTANT!!!
-    pchr->missilehandler = ichr;
-
-    // Set up model stuff
-    pchr->profile_ref   = pchr->spawn_data.profile;
-    pchr->basemodel_ref = pchr->spawn_data.profile;
-
-    // Kurse state
-    if ( pcap->isitem )
-    {
-        IPair loc_rand = {1, 100};
-
-        kursechance = pcap->kursechance;
-        if ( cfg.difficulty >= GAME_HARD )                        kursechance *= 2.0f;  // Hard mode doubles chance for Kurses
-        if ( cfg.difficulty < GAME_NORMAL && kursechance != 100 ) kursechance *= 0.5f;  // Easy mode halves chance for Kurses
-        pchr->iskursed = ( generate_irand_pair( loc_rand ) <= kursechance );
-    }
-
-    // AI stuff
-    ego_ai_state::spawn( &( pchr->ai ), ichr, pchr->profile_ref, TeamStack.lst[loc_team].morale );
-
-    // Team stuff
-    pchr->team     = loc_team;
-    pchr->baseteam = loc_team;
-    if ( !IS_INVICTUS_PCHR_RAW( pchr ) )  TeamStack.lst[loc_team].morale++;
-
-    // Firstborn becomes the leader
-    if ( TeamStack.lst[loc_team].leader == NOLEADER )
-    {
-        TeamStack.lst[loc_team].leader = ichr;
-    }
-
-    // Skin
-    if ( pcap->skin_override != NO_SKIN_OVERRIDE )
-    {
-        // override the value passed into the function from spawn.txt
-        // with the calue from the expansion in data.txt
-        pchr->spawn_data.skin = pchr->skin;
-    }
-    if ( pchr->spawn_data.skin >= ProList.lst[pchr->spawn_data.profile].skins )
-    {
-        // place this here so that the random number generator advances
-        // no matter the state of ProList.lst[pchr->spawn_data.profile].skins... Eases
-        // possible synch problems with other systems?
-        int irand = RANDIE;
-
-        pchr->spawn_data.skin = 0;
-        if ( 0 != ProList.lst[pchr->spawn_data.profile].skins )
-        {
-            pchr->spawn_data.skin = irand % ProList.lst[pchr->spawn_data.profile].skins;
-        }
-    }
-    pchr->skin = pchr->spawn_data.skin;
-
-    // fix the pchr->spawn_data.skin-related parameters, in case there was some funy business with overriding
-    // the pchr->spawn_data.skin from the data.txt file
-    if ( pchr->spawn_data.skin != pchr->skin )
-    {
-        pchr->skin = pchr->spawn_data.skin;
-
-        pchr->defense = pcap->defense[pchr->skin];
-        for ( tnc = 0; tnc < DAMAGE_COUNT; tnc++ )
-        {
-            pchr->damagemodifier[tnc] = pcap->damagemodifier[tnc][pchr->skin];
-        }
-
-        ego_chr::set_maxaccel( pchr, pcap->maxaccel[pchr->skin] );
-    }
-
-    // override the default behavior for an "easy" game
-    if ( cfg.difficulty < GAME_NORMAL )
-    {
-        pchr->life = pchr->lifemax;
-        pchr->mana = pchr->manamax;
-    }
-
-    // Character size and bumping
-    pchr->fat_goto      = pchr->fat;
-    pchr->fat_goto_time = 0;
-
-    // grab all of the environment information
-    chr_calc_environment( pchr );
-
-    ego_chr::set_pos( pchr, pos_tmp.v );
-
-    pchr->pos_stt  = pos_tmp;
-    pchr->pos_old  = pos_tmp;
-
-    pchr->ori.facing_z     = pchr->spawn_data.facing;
-    pchr->ori_old.facing_z = pchr->ori.facing_z;
-
-    // Name the character
-    if ( CSTR_END == pchr->spawn_data.name[0] )
-    {
-        // Generate a random pchr->spawn_data.name
-        snprintf( pchr->name, SDL_arraysize( pchr->name ), "%s", pro_create_chop( pchr->spawn_data.profile ) );
-    }
-    else
-    {
-        // A pchr->spawn_data.name has been given
-        tnc = 0;
-
-        while ( tnc < MAXCAPNAMESIZE - 1 )
-        {
-            pchr->name[tnc] = pchr->spawn_data.name[tnc];
-            tnc++;
-        }
-
-        pchr->name[tnc] = CSTR_END;
-    }
-
-    // Particle attachments
-    for ( tnc = 0; tnc < pcap->attachedprt_amount; tnc++ )
-    {
-        spawn_one_particle( pchr->pos, 0, pchr->profile_ref, pcap->attachedprt_pip,
-                            ichr, GRIP_LAST + tnc, pchr->team, ichr, PRT_REF( MAX_PRT ), tnc, CHR_REF( MAX_CHR ) );
-    }
-
-    // is the object part of a shop's inventory?
-    if ( pchr->isitem )
-    {
-        SHOP_REF ishop;
-
-        // Items that are spawned inside shop passages are more expensive than normal
-        pchr->isshopitem = bfalse;
-        for ( ishop = 0; ishop < ShopStack.count; ishop++ )
-        {
-            // Make sure the owner is not dead
-            if ( SHOP_NOOWNER == ShopStack.lst[ishop].owner ) continue;
-
-            if ( PassageStack_object_is_inside( ShopStack.lst[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
-            {
-                pchr->isshopitem = btrue;               // Full value
-                pchr->iskursed   = bfalse;              // Shop items are never kursed
-                pchr->nameknown  = btrue;
-                break;
-            }
-        }
-    }
-
-    // override the shopitem flag if the item is known to be valuable
-    if ( pcap->isvaluable )
-    {
-        pchr->isshopitem = btrue;
-    }
-
-    // initialize the character instance
-    ego_chr_instance::spawn( &( pchr->inst ), pchr->spawn_data.profile, pchr->spawn_data.skin );
-
-    // force the calculation of the matrix
-    ego_chr::update_matrix( pchr, btrue );
-
-    // force the instance to update
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
-
-    // determine whether the object is hidden
-    ego_chr::update_hide( pchr );
-
-#if EGO_DEBUG && defined(DEBUG_WAYPOINTS)
-    if ( !IS_ATTACHED_PCHR( pchr ) && INFINITE_WEIGHT != pchr->phys.weight && !pchr->safe_valid )
-    {
-        log_warning( "spawn_one_character() - \n\tinitial spawn position <%f,%f> is \"inside\" a wall. Wall normal is <%f,%f>\n",
-                     pchr->pos.x, pchr->pos.y, nrm.x, nrm.y );
-    }
-#endif
-
-    return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::do_process( ego_chr * pchr )
-{
-    ego_cap * pcap;
-    int     ripand;
-    CHR_REF ichr;
-
-    if ( NULL == pchr ) return pchr;
-    ichr = GET_REF_PCHR( pchr );
-
-    // then do status updates
-    ego_chr::update_hide( pchr );
-
-    // Don't do items that are in inventory
-    if ( pchr->pack.is_packed ) return pchr;
-
-    pcap = pro_get_pcap( pchr->profile_ref );
-    if ( NULL == pcap ) return pchr;
-
-    // do the character interaction with water
-    if ( !pchr->is_hidden && pchr->pos.z < water.surface_level && ( 0 != ego_mpd::test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER ) ) )
-    {
-        // do splash and ripple
-        if ( !pchr->enviro.inwater )
-        {
-            // Splash
-            fvec3_t vtmp = VECT3( pchr->pos.x, pchr->pos.y, water.surface_level + RAISE );
-
-            spawn_one_particle_global( vtmp, ATK_FRONT, PIP_SPLASH, 0 );
-
-            if ( water.is_water )
-            {
-                ADD_BITS( pchr->ai.alert, ALERTIF_INWATER );
-            }
-        }
-        else
-        {
-            // Ripples
-            if ( !pchr->pack.is_packed && pcap->ripple && pchr->pos.z + pchr->chr_min_cv.maxs[OCT_Z] + RIPPLETOLERANCE > water.surface_level && pchr->pos.z + pchr->chr_min_cv.mins[OCT_Z] < water.surface_level )
-            {
-                int ripple_suppression;
-
-                // suppress ripples if we are far below the surface
-                ripple_suppression = water.surface_level - ( pchr->pos.z + pchr->chr_min_cv.maxs[OCT_Z] );
-                ripple_suppression = ( 4 * ripple_suppression ) / RIPPLETOLERANCE;
-                ripple_suppression = CLIP( ripple_suppression, 0, 4 );
-
-                // make more ripples if we are moving
-                ripple_suppression -= (( int )pchr->vel.x != 0 ) | (( int )pchr->vel.y != 0 );
-
-                if ( ripple_suppression > 0 )
-                {
-                    ripand = ~(( ~RIPPLEAND ) << ripple_suppression );
-                }
-                else
-                {
-                    ripand = RIPPLEAND >> ( -ripple_suppression );
-                }
-
-                if ( 0 == (( update_wld + pchr->get_pparent()->guid ) & ripand ) && pchr->pos.z < water.surface_level && pchr->alive )
-                {
-                    fvec3_t   vtmp = VECT3( pchr->pos.x, pchr->pos.y, water.surface_level );
-
-                    spawn_one_particle_global( vtmp, ATK_FRONT, PIP_RIPPLE, 0 );
-                }
-            }
-
-            if ( water.is_water && HAS_NO_BITS( update_wld, 7 ) )
-            {
-                pchr->jump_ready = btrue;
-                pchr->jump_number = 1;
-            }
-        }
-
-        pchr->enviro.inwater  = btrue;
-    }
-    else
-    {
-        pchr->enviro.inwater = bfalse;
-    }
-
-    // the following functions should not be done the first time through the update loop
-    if ( 0 == update_wld ) return pchr;
-
-    //---- Do timers and such
-
-    // decrement the dismount timer
-    if ( pchr->dismount_timer > 0 )
-    {
-        pchr->dismount_timer--;
-
-        if ( 0 == pchr->dismount_timer )
-        {
-            pchr->dismount_object = CHR_REF( MAX_CHR );
-        }
-    }
-
-    // reduce attack cooldowns
-    if ( pchr->reloadtime > 0 )
-    {
-        pchr->reloadtime--;
-    }
-
-    // Down that ol' damage timer
-    if ( pchr->damagetime > 0 )
-    {
-        pchr->damagetime--;
-    }
-
-    // Do "Be careful!" delay
-    if ( pchr->carefultime > 0 )
-    {
-        pchr->carefultime--;
-    }
-
-    // Down jump timer
-    if ( pchr->jump_time > 0 && ( INGAME_CHR( pchr->attachedto ) || pchr->jump_ready || pchr->jump_number > 0 ) )
-    {
-        pchr->jump_time--;
-    }
-
-    //---- Texture movement
-    pchr->inst.uoffset += pchr->uoffvel;
-    pchr->inst.voffset += pchr->voffvel;
-
-    //---- Do stats once every second
-    if ( clock_chr_stat >= ONESECOND )
-    {
-        // check for a level up
-        do_level_up( ichr );
-
-        // do the mana and life regen for "living" characters
-        if ( pchr->alive )
-        {
-            int manaregen = 0;
-            int liferegen = 0;
-            get_chr_regeneration( pchr, &liferegen, &manaregen );
-
-            pchr->mana += manaregen;
-            pchr->mana = MAX( 0, MIN( pchr->mana, pchr->manamax ) );
-
-            pchr->life += liferegen;
-            pchr->life = MAX( 1, MIN( pchr->life, pchr->lifemax ) );
-        }
-
-        // countdown confuse effects
-        if ( pchr->grogtime > 0 )
-        {
-            pchr->grogtime--;
-        }
-
-        if ( pchr->dazetime > 0 )
-        {
-            pchr->dazetime--;
-        }
-
-        // possibly gain/lose darkvision
-        update_chr_darkvision( ichr );
-    }
-
-    pchr = resize_one_character( pchr );
-
-    return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::do_deinit( ego_chr * pchr )
-{
-    if ( NULL == pchr ) return pchr;
-
-    /* nothing to do yet */
-
-    return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr * ego_chr::do_destruct( ego_chr * pchr )
-{
-    ego_chr * rv = ego_chr::dtor_all( pchr );
-
-    /* add something here */
-
-    return rv;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_REF & team,
                              Uint8 skin, FACING_T facing, const char *name, const CHR_REF & override )
 {
@@ -3622,12 +2946,12 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     pchr->spawn_data.override = override;
 
     // actually force the character to spawn
-    pobj = ego_obj_chr::run_activate( pobj, 100 );
+    ego_object_engine::run_activate( pobj, 100 );
 
 #if defined(DEBUG_OBJECT_SPAWN) && EGO_DEBUG
     {
         CAP_REF icap = pro_get_icap( profile );
-        log_debug( "spawn_one_character() - slot: %i, index: %i, name: %s, class: %s\n", ( profile ).get_value(), ( ichr ).get_value(), name, CapStack.lst[icap].classname );
+        log_debug( "spawn_one_character() - slot: %i, index: %i, name: %s, class: %s\n", ( profile ).get_value(), ( ichr ).get_value(), name, CapStack[icap].classname );
     }
 #endif
 
@@ -3661,8 +2985,8 @@ void ego_chr::respawn( const CHR_REF & character )
     pchr->alive = btrue;
     pchr->boretime = BORETIME;
     pchr->carefultime = CAREFULTIME;
-    pchr->life = pchr->lifemax;
-    pchr->mana = pchr->manamax;
+    pchr->life = pchr->life_max;
+    pchr->mana = pchr->mana_max;
     ego_chr::set_pos( pchr, pchr->pos_stt.v );
     pchr->vel.x = 0;
     pchr->vel.y = 0;
@@ -3671,8 +2995,8 @@ void ego_chr::respawn( const CHR_REF & character )
     pchr->canbecrushed = bfalse;
     pchr->ori.map_facing_y = MAP_TURN_OFFSET;  // These two mean on level surface
     pchr->ori.map_facing_x = MAP_TURN_OFFSET;
-    if ( NOLEADER == TeamStack.lst[pchr->team].leader )  TeamStack.lst[pchr->team].leader = character;
-    if ( !IS_INVICTUS_PCHR_RAW( pchr ) )  TeamStack.lst[pchr->baseteam].morale++;
+    if ( NOLEADER == TeamStack[pchr->team].leader )  TeamStack[pchr->team].leader = character;
+    if ( !IS_INVICTUS_PCHR_RAW( pchr ) )  TeamStack[pchr->baseteam].morale++;
 
     // start the character out in the "dance" animation
     ego_chr::start_anim( pchr, ACTION_DA, btrue, btrue );
@@ -3686,7 +3010,7 @@ void ego_chr::respawn( const CHR_REF & character )
 
     pchr->platform        = pcap->platform;
     pchr->canuseplatforms = pcap->canuseplatforms;
-    ego_chr::set_fly_height( pchr, pcap->fly_height );
+    ego_chr_data::set_fly_height( pchr, pcap->fly_height );
     pchr->phys.bumpdampen = pcap->bumpdampen;
 
     pchr->ai.alert = ALERTIF_CLEANEDUP;
@@ -3890,7 +3214,7 @@ void change_character_full( const CHR_REF & ichr, const PRO_REF & profile, Uint8
     if ( !LOADED_MAD( imad_old ) ) return;
 
     // copy the new name
-    strncpy( MadStack.lst[imad_old].name, MadStack.lst[imad_new].name, SDL_arraysize( MadStack.lst[imad_old].name ) );
+    strncpy( MadStack[imad_old].name, MadStack[imad_new].name, SDL_arraysize( MadStack[imad_old].name ) );
 
     // change their model
     ego_chr::change_profile( ichr, profile, skin, leavewhich );
@@ -4070,7 +3394,7 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
     pchr->manacost  = pcap_new->manacost;
 
     // Ammo
-    pchr->ammomax = pcap_new->ammomax;
+    pchr->ammo_max = pcap_new->ammo_max;
     pchr->ammo    = pcap_new->ammo;
 
     // Gender
@@ -4109,7 +3433,7 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
 
     // change the skillz, too, jack!
     idsz_map_copy( pcap_new->skills, SDL_arraysize( pcap_new->skills ), pchr->skills );
-    pchr->darkvision_level = ego_chr::get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
+    pchr->darkvision_level = ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
     pchr->see_invisible_level = pcap_new->see_invisible_level;
 
     /// @note BB@> changing this could be disastrous, in case you can't un-morph yourself???
@@ -4276,10 +3600,10 @@ bool_t cost_mana( const CHR_REF & character, int amount, const CHR_REF & killer 
 
         pchr->mana = mana_final;
 
-        if ( mana_final > pchr->manamax )
+        if ( mana_final > pchr->mana_max )
         {
-            mana_surplus = mana_final - pchr->manamax;
-            pchr->mana   = pchr->manamax;
+            mana_surplus = mana_final - pchr->mana_max;
+            pchr->mana   = pchr->mana_max;
         }
 
         // allow surplus mana to go to health if you can channel?
@@ -4306,7 +3630,7 @@ void switch_team( const CHR_REF & character, const TEAM_REF & team )
     if ( !IS_INVICTUS_PCHR_RAW( ChrObjList.get_pdata( character ) ) )
     {
         if ( ego_chr::get_pteam_base( character )->morale > 0 ) ego_chr::get_pteam_base( character )->morale--;
-        TeamStack.lst[team].morale++;
+        TeamStack[team].morale++;
     }
     if (( !ChrObjList.get_data( character ).ismount || !INGAME_CHR( ChrObjList.get_data( character ).holdingwhich[SLOT_LEFT] ) ) &&
         ( !ChrObjList.get_data( character ).isitem  || !INGAME_CHR( ChrObjList.get_data( character ).attachedto ) ) )
@@ -4315,9 +3639,9 @@ void switch_team( const CHR_REF & character, const TEAM_REF & team )
     }
 
     ChrObjList.get_data( character ).baseteam = team;
-    if ( TeamStack.lst[team].leader == NOLEADER )
+    if ( TeamStack[team].leader == NOLEADER )
     {
-        TeamStack.lst[team].leader = character;
+        TeamStack[team].leader = character;
     }
 }
 
@@ -4363,10 +3687,10 @@ int restock_ammo( const CHR_REF & character, IDSZ idsz )
     amount = 0;
     if ( ego_chr::is_type_idsz( character, idsz ) )
     {
-        if ( ChrObjList.get_data( character ).ammo < ChrObjList.get_data( character ).ammomax )
+        if ( ChrObjList.get_data( character ).ammo < ChrObjList.get_data( character ).ammo_max )
         {
-            amount = ChrObjList.get_data( character ).ammomax - ChrObjList.get_data( character ).ammo;
-            ChrObjList.get_data( character ).ammo = ChrObjList.get_data( character ).ammomax;
+            amount = ChrObjList.get_data( character ).ammo_max - ChrObjList.get_data( character ).ammo;
+            ChrObjList.get_data( character ).ammo = ChrObjList.get_data( character ).ammo_max;
         }
     }
 
@@ -4374,13 +3698,13 @@ int restock_ammo( const CHR_REF & character, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_chr::get_skill( ego_chr *pchr, IDSZ whichskill )
+int ego_chr_data::get_skill( ego_chr_data *pchr, IDSZ whichskill )
 {
     /// @details ZF@> This returns the skill level for the specified skill or 0 if the character doesn't
     ///                  have the skill. Also checks the skill IDSZ.
     IDSZ_node_t *pskill;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( NULL == pchr ) return bfalse;
 
     // Any [NONE] IDSZ returns always "true"
     if ( IDSZ_NONE == whichskill ) return 1;
@@ -4461,8 +3785,8 @@ bool_t update_chr_darkvision( const CHR_REF & character )
 
     if ( life_regen < 0 )
     {
-        int tmp_level  = -( 10 * life_regen ) / pchr->lifemax;                        // Darkvision gained by poison
-        int base_level = ego_chr::get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );    // Natural darkvision
+        int tmp_level  = -( 10 * life_regen ) / pchr->life_max;                        // Darkvision gained by poison
+        int base_level = ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );    // Natural darkvision
 
         // Use the better of the two darkvision abilities
         pchr->darkvision_level = MAX( base_level, tmp_level );
@@ -4480,7 +3804,7 @@ void update_all_characters()
 
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ego_obj_chr::run( ChrObjList.get_valid_ptr( ichr ) );
+        ego_object_engine::run( ChrObjList.get_valid_ptr( ichr ) );
     }
 
     // fix the stat timer
@@ -4544,7 +3868,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
         // Then check if a skill is needed
         if ( pweapon_cap->needskillidtouse )
         {
-            if ( !ego_chr::get_skill( pchr, ego_chr::get_idsz( iweapon, IDSZ_SKILL ) ) )
+            if ( !ego_chr_data::get_skill( pchr, ego_chr::get_idsz( iweapon, IDSZ_SKILL ) ) )
             {
                 allowedtoattack = bfalse;
             }
@@ -4637,7 +3961,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
 
                 // Check life healing
                 pchr->life += pweapon->life_heal;
-                if ( pchr->life > pchr->lifemax )  pchr->life = pchr->lifemax;
+                if ( pchr->life > pchr->life_max )  pchr->life = pchr->life_max;
 
                 // randomize the action
                 action = randomize_action( action, which_slot );
@@ -5855,7 +5179,7 @@ ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl )
     if ( is_player )
     {
         // determine whether the user is hitting the "sneak button"
-        ego_player * ppla = PlaStack.lst + loc_pchr->is_which_player;
+        ego_player * ppla = PlaStack + loc_pchr->is_which_player;
 
         if ( HAS_SOME_BITS( ppla->device.bits, INPUT_BITS_KEYBOARD ) )
         {
@@ -5889,7 +5213,7 @@ ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl )
         if ( is_player )
         {
             float dv;
-            ego_player * ppla = PlaStack.lst + loc_pchr->is_which_player;
+            ego_player * ppla = PlaStack + loc_pchr->is_which_player;
 
             dv = SQRT( dv2 );
             if ( dv < 1.0f )
@@ -7151,7 +6475,7 @@ bool_t ego_chr_instance::set_mad( ego_chr_instance * pinst, const MAD_REF & imad
     size_t vlst_size;
 
     if ( !LOADED_MAD( imad ) ) return bfalse;
-    pmad = MadStack.lst + imad;
+    pmad = MadStack + imad;
 
     if ( NULL == pmad || pmad->md2_ptr == NULL )
     {
@@ -7317,9 +6641,9 @@ slot_t grip_offset_to_slot( grip_offset_t grip_off )
 void init_slot_idsz()
 {
     inventory_idsz[INVEN_PACK]  = IDSZ_NONE;
-    inventory_idsz[INVEN_NECK]  = MAKE_IDSZ( 'N', 'E', 'C', 'K' );
-    inventory_idsz[INVEN_WRIS]  = MAKE_IDSZ( 'W', 'R', 'I', 'S' );
-    inventory_idsz[INVEN_FOOT]  = MAKE_IDSZ( 'F', 'O', 'O', 'T' );
+    inventory_idsz[INVEN_NECK]  = IDSZ_NECK;
+    inventory_idsz[INVEN_WRIS]  = IDSZ_WRIS;
+    inventory_idsz[INVEN_FOOT]  = IDSZ_FOOT;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -7953,7 +7277,7 @@ void init_all_cap()
 
     for ( cnt = 0; cnt < MAX_PROFILE; cnt++ )
     {
-        ego_cap::init( CapStack.lst + cnt );
+        ego_cap::init( CapStack + cnt );
     }
 }
 
@@ -7977,8 +7301,8 @@ bool_t release_one_cap( const CAP_REF & icap )
 
     ego_cap * pcap;
 
-    if ( !VALID_CAP_RANGE( icap ) ) return bfalse;
-    pcap = CapStack.lst + icap;
+    if ( !CapStack.valid_ref( icap ) ) return bfalse;
+    pcap = CapStack + icap;
 
     if ( !pcap->loaded ) return btrue;
 
@@ -8002,23 +7326,23 @@ void reset_teams()
         // Make the team hate everyone
         for ( teamb = 0; teamb < TEAM_MAX; teamb++ )
         {
-            TeamStack.lst[teama].hatesteam[( teamb ).get_value()] = btrue;
+            TeamStack[teama].hatesteam[( teamb ).get_value()] = btrue;
         }
 
         // Make the team like itself
-        TeamStack.lst[teama].hatesteam[( teama ).get_value()] = bfalse;
+        TeamStack[teama].hatesteam[( teama ).get_value()] = bfalse;
 
         // Set defaults
-        TeamStack.lst[teama].leader = NOLEADER;
-        TeamStack.lst[teama].sissy = 0;
-        TeamStack.lst[teama].morale = 0;
+        TeamStack[teama].leader = NOLEADER;
+        TeamStack[teama].sissy = 0;
+        TeamStack[teama].morale = 0;
     }
 
     // Keep the null team neutral
     for ( teama = 0; teama < TEAM_MAX; teama++ )
     {
-        TeamStack.lst[teama].hatesteam[TEAM_NULL] = bfalse;
-        TeamStack.lst[TEAM_REF( TEAM_NULL )].hatesteam[( teama ).get_value()] = bfalse;
+        TeamStack[teama].hatesteam[TEAM_NULL] = bfalse;
+        TeamStack[TEAM_REF( TEAM_NULL )].hatesteam[( teama ).get_value()] = bfalse;
     }
 }
 
@@ -8982,7 +8306,7 @@ int ego_chr::get_price( const CHR_REF & ichr )
     }
 
     if ( !LOADED_CAP( icap ) ) return 0;
-    pcap = CapStack.lst + icap;
+    pcap = CapStack + icap;
 
     price = ( float ) pcap->skincost[iskin];
 
@@ -8994,11 +8318,11 @@ int ego_chr::get_price( const CHR_REF & ichr )
     {
         price *= pchr->ammo;
     }
-    else if ( pcap->isranged && pchr->ammo < pchr->ammomax )
+    else if ( pcap->isranged && pchr->ammo < pchr->ammo_max )
     {
         if ( 0 != pchr->ammo )
         {
-            price *= ( float ) pchr->ammo / ( float ) pchr->ammomax;
+            price *= ( float ) pchr->ammo / ( float ) pchr->ammo_max;
         }
     }
 
@@ -9083,6 +8407,14 @@ void ego_chr::set_fly_height( ego_chr * pchr, float height )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
+    ego_chr_data::set_fly_height( pchr, height );
+}
+
+//--------------------------------------------------------------------------------------------
+void ego_chr_data::set_fly_height( ego_chr_data * pchr, float height )
+{
+    if ( NULL == pchr ) return;
+
     pchr->fly_height = height;
 
     pchr->is_flying_platform = ( 0.0f != pchr->fly_height );
@@ -9092,6 +8424,14 @@ void ego_chr::set_fly_height( ego_chr * pchr, float height )
 void ego_chr::set_jump_number_reset( ego_chr * pchr, int number )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
+
+    ego_chr_data::set_jump_number_reset( pchr, number );
+}
+
+//--------------------------------------------------------------------------------------------
+void ego_chr_data::set_jump_number_reset( ego_chr_data * pchr, int number )
+{
+    if ( NULL == pchr ) return;
 
     pchr->jump_number_reset = number;
 
@@ -9527,7 +8867,7 @@ ego_mad * ego_chr::get_pmad( const CHR_REF & ichr )
 
     if ( !LOADED_MAD( pchr->inst.imad ) ) return NULL;
 
-    return MadStack.lst + pchr->inst.imad;
+    return MadStack + pchr->inst.imad;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9652,7 +8992,7 @@ ego_chr_bundle * ego_chr_bundle::validate( ego_chr_bundle * pbundle )
     pbundle->cap_ref = pbundle->pro_ptr->icap;
 
     if ( !LOADED_CAP( pbundle->cap_ref ) ) goto ego_chr_bundle__validate_fail;
-    pbundle->cap_ptr = CapStack.lst + pbundle->cap_ref;
+    pbundle->cap_ptr = CapStack + pbundle->cap_ref;
 
     return pbundle;
 
@@ -10636,7 +9976,7 @@ CHR_REF chr_pack_has_a_stack( const CHR_REF & item, const CHR_REF & character )
 
                 found = pstack_cap->isstackable;
 
-                if ( pstack->ammo >= pstack->ammomax )
+                if ( pstack->ammo >= pstack->ammo_max )
                 {
                     found = bfalse;
                 }
@@ -10718,7 +10058,7 @@ bool_t chr_pack_add_item( const CHR_REF & item, const CHR_REF & character )
 
         // add the item ammo to the stack
         newammo = pitem->ammo + pstack->ammo;
-        if ( newammo <= pstack->ammomax )
+        if ( newammo <= pstack->ammo_max )
         {
             // All transferred, so kill the in hand item
             pstack->ammo = newammo;
@@ -10732,8 +10072,8 @@ bool_t chr_pack_add_item( const CHR_REF & item, const CHR_REF & character )
         else
         {
             // Only some were transferred,
-            pitem->ammo     = pitem->ammo + pstack->ammo - pstack->ammomax;
-            pstack->ammo    = pstack->ammomax;
+            pitem->ammo     = pitem->ammo + pstack->ammo - pstack->ammo_max;
+            pstack->ammo    = pstack->ammo_max;
             ADD_BITS( pchr->ai.alert, ALERTIF_TOOMUCHBAGGAGE );
         }
     }
@@ -11226,6 +10566,9 @@ ego_obj_chr * ego_obj_chr::ctor_this( ego_obj_chr * pobj )
 
     if ( NULL == pobj ) return NULL;
 
+    puts( "\t\t" __FUNCTION__ );
+
+    pobj = ego_obj_chr::dealloc( pobj );
     pobj = ego_obj_chr::alloc( pobj );
 
     return pobj;
@@ -11237,6 +10580,8 @@ ego_obj_chr * ego_obj_chr::dtor_this( ego_obj_chr * pobj )
     // destruct this struct, ONLY
 
     if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
+
+    puts( "\t\t" __FUNCTION__ );
 
     pobj = ego_obj_chr::dealloc( pobj );
 
@@ -11297,373 +10642,6 @@ ego_obj_chr * ego_obj_chr::do_alloc( ego_obj_chr * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-// struct ego_obj_chr - external "egoboo object process" handles
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_construct( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_constructing + 1 ) )
-    {
-        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_constructing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_initialize( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_initializing + 1 ) )
-    {
-        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_initializing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_activate( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pbase->get_proc().action > ( int )( ego_obj_processing + 1 ) )
-    {
-        ego_obj_chr * tmp_chr = ego_obj_chr::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action < ego_obj_processing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_deinitialize( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, deinitialize it
-    if ( pbase->get_proc().action > ( int )( ego_obj_deinitializing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pbase->get_proc().action < ego_obj_deinitializing )
-    {
-        ego_obj::end_processing( pbase );
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_deinitializing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run_deconstruct( ego_obj_chr * pobj, int max_iterations )
-{
-    int                 iterations;
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if the character is already beyond this stage, do nothing
-    if ( pbase->get_proc().action > ( int )( ego_obj_destructing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pbase->get_proc().action < ego_obj_deinitializing )
-    {
-        // make sure that you deinitialize before destructing
-        ego_obj::end_processing( pbase );
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pbase->get_proc().action <= ego_obj_destructing && iterations < max_iterations )
-    {
-        ego_obj_chr * ptmp = ego_obj_chr::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::run( ego_obj_chr * pobj )
-{
-    ego_obj * pbase;
-
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // set the object to deinitialize if it is not "dangerous" and if was requested
-    if ( FLAG_REQ_TERMINATION_PBASE( pbase ) )
-    {
-        pbase = ego_obj::grant_terminate( pbase );
-    }
-
-    switch ( pbase->get_proc().action )
-    {
-        default:
-        case ego_obj_nothing:
-            /* no operation */
-            break;
-
-        case ego_obj_constructing:
-            pobj = ego_obj_chr::do_constructing( pobj );
-            break;
-
-        case ego_obj_initializing:
-            pobj = ego_obj_chr::do_initializing( pobj );
-            break;
-
-        case ego_obj_processing:
-            pobj = ego_obj_chr::do_processing( pobj );
-            break;
-
-        case ego_obj_deinitializing:
-            pobj = ego_obj_chr::do_deinitializing( pobj );
-            break;
-
-        case ego_obj_destructing:
-            pobj = ego_obj_chr::do_destructing( pobj );
-            break;
-
-        case ego_obj_waiting:
-            /* do nothing */
-            break;
-    }
-
-    if ( NULL == pobj )
-    {
-        pbase->update_guid = INVALID_UPDATE_GUID;
-    }
-    else if ( ego_obj_processing == pbase->get_proc().action )
-    {
-        pbase->update_guid = ChrObjList.update_guid();
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-// struct ego_obj_chr - internal "egoboo object process" methods
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_constructing( ego_obj_chr * pobj )
-{
-    /// @details BB@> initialize the character data to safe values
-    ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
-    ///     statements are redundant
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_CONSTRUCTING_PBASE( pbase ) ) return pobj;
-
-    // run the constructor
-    ego_chr * pchr = ego_chr::do_construct( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    // move on to the next action
-    ego_obj::end_constructing( pbase );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_initializing( ego_obj_chr * pobj )
-{
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_INITIALIZING_PBASE( pbase ) ) return pobj;
-
-    // tell the game that we're spawning something
-    POBJ_BEGIN_SPAWN( pobj );
-
-    // run the initialization routine
-    ego_chr * pchr = ego_chr::do_init( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    // request that we be turned on
-    pbase->proc_req_on( btrue );
-
-    // do something about being turned on
-    if ( 0 == ChrObjList.loop_depth )
-    {
-        ego_obj::grant_on( pbase );
-    }
-    else
-    {
-        ChrObjList.add_activation( GET_REF_PCHR_OBJ( pobj ) );
-    }
-
-    // move on to the next action
-    ego_obj::end_initializing( pbase );
-
-    // this will only work after the object has been fully initialized
-    if ( !LOADED_PRO( pobj->get_data().spawn_data.profile ) )
-    {
-        POBJ_ACTIVATE( pobj, "*UNKNOWN*" );
-    }
-    else
-    {
-        ego_cap * pcap = pro_get_pcap( pobj->get_data().profile_ref );
-        if ( NULL != pcap )
-        {
-            POBJ_ACTIVATE( pobj, pcap->name );
-        }
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_processing( ego_obj_chr * pobj )
-{
-    // there's nothing to configure if the object is active...
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_PROCESSING_PBASE( pbase ) ) return pobj;
-
-    // do this here (instead of at the end of *_do_object_initializing()) so that
-    // we are sure that the object is actually "on"
-    POBJ_END_SPAWN( pobj );
-
-    // run the main loop
-    ego_chr * pchr = ego_chr::do_process( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    /* add stuff here */
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_deinitializing( ego_obj_chr * pobj )
-{
-    /// @details BB@> deinitialize the character data
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_DEINITIALIZING_PBASE( pbase ) ) return pobj;
-
-    // make sure that the spawn is terminated
-    POBJ_END_SPAWN( pobj );
-
-    // run a deinitialization routine
-    ego_chr * pchr = ego_chr::do_deinit( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    // move on to the next action
-    ego_obj::end_deinitializing( pbase );
-
-    // make sure the object is off
-    pbase->get_proc().on = bfalse;
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_destructing( ego_obj_chr * pobj )
-{
-    /// @details BB@> deinitialize the character data
-
-    ego_obj * pbase;
-
-    // grab the base object
-    pbase = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pbase ) ) return NULL;
-
-    // if we aren't in the correct state, abort.
-    if ( !STATE_DESTRUCTING_PBASE( pbase ) ) return pobj;
-
-    // make sure that the spawn is terminated
-    POBJ_END_SPAWN( pobj );
-
-    // run the destructor
-    ego_chr * pchr = ego_chr::do_destruct( pobj->get_pdata() );
-    if ( NULL == pchr ) return pobj;
-
-    // move on to the next action (dead)
-    ego_obj::end_destructing( pbase );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t ego_obj_chr::request_terminate( const CHR_REF & ichr )
 {
@@ -11697,4 +10675,1100 @@ egoboo_rv ego_chr::update_instance( ego_chr * pchr )
     ego_chr_instance::update_lighting_base( pinst, pchr, bfalse );
 
     return retval;
+}
+
+ego_chr_cap_data::ego_chr_cap_data() :
+        // skins
+        maxaccel_reset( 5 ),
+
+        // overrides
+        skin( 0 ),
+        experience_level_reset( 0 ),
+        state_stt( 0 ),
+        content_stt( 0 ),
+
+        // inventory
+        ammo_max( 0 ),
+        ammo( 0 ),
+        money( 0 ),
+
+        // character stats
+        gender( GENDER_OTHER ),
+
+        // life
+        life_max( LOWSTAT ),
+        life_return( 0 ),
+        life_heal( 0 ),
+
+        //// mana
+        mana_max( LOWSTAT ),
+        mana_return( 0 ),
+        mana_flow( 0 ),
+
+        strength( LOWSTAT ),
+        wisdom( LOWSTAT ),
+        intelligence( LOWSTAT ),
+        dexterity( LOWSTAT ),
+
+        //---- physics
+        weight_stt( 255 ),
+        dampen_stt( 0.1f ),
+        bumpdampen_stt( 0.1f ),
+
+        fat_stt( 1.0f ),
+        shadow_size_stt( 32 ),
+        stoppedby( MPDFX_WALL | MPDFX_IMPASS ),
+
+        //---- movement
+        jump_power( 5 ),
+        jump_number_reset( 1 ),
+        anim_speed_sneak( 1 ),
+        anim_speed_walk( 2 ),
+        anim_speed_run( 3 ),
+        fly_height_reset( 0 ),
+        waterwalk( bfalse ),
+
+        //---- status graphics
+        life_color( COLOR_RED ),
+        mana_color( COLOR_BLUE ),
+        draw_icon( bfalse ),
+
+        //---- graphics
+        flashand( 0 ),
+        alpha_base( 255 ),
+        light_base( 0 ),
+        transferblend( bfalse ),
+        uoffvel( 0.0f ),
+        voffvel( 0.0f ),
+
+        //---- defense
+        defense( 0 ),
+
+        //---- xp
+        experience_reset( 0 ),
+
+        //---- flags
+        isitem( bfalse ),
+        ismount( bfalse ),
+        invictus( bfalse ),
+        platform( bfalse ),
+        canuseplatforms( btrue ),
+        cangrabmoney( bfalse ),
+        openstuff( bfalse ),
+        nameknown( bfalse ),
+        usageknown( bfalse ),
+        ammoknown( bfalse ),
+        damagetargettype( DAMAGE_CRUSH ),
+        iskursed( bfalse ),
+
+        //---- item usage
+        manacost( 0 ),
+
+        //---- special particle effects
+        reaffirmdamagetype( -1 ),
+
+        //---- skill system
+        see_invisible_level( 0 ),
+
+        // random stuff
+        stickybutt( bfalse )
+{
+    // naming
+    strncpy( name, "*UNKNOWN*", SDL_arraysize( name ) );          ///< My name
+
+    // basic bumper size
+    bump_stt.height   = 70;
+    bump_stt.size     = 30;
+    bump_stt.size_big = bump_stt.size * SQRT_TWO;
+
+    // no defenses
+    for ( int cnt = 0; cnt < DAMAGE_COUNT; cnt++ )
+    {
+        damagemodifier[cnt] = 0;
+    }
+
+    // no special sounds
+    for ( int cnt = 0; cnt < SOUND_COUNT; cnt++ )
+    {
+        sound_index[cnt] = -1;
+    }
+
+    // no special skills
+    for ( int cnt = 0; cnt < SOUND_COUNT; cnt++ )
+    {
+        skills[cnt].id    = IDSZ_NONE;
+        skills[cnt].level = -1;
+    }
+
+};
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_chr::download_cap( ego_chr * pchr, ego_cap * pcap )
+{
+    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+
+    if ( NULL == pcap || !pcap->loaded ) return bfalse;
+
+    bool_t rv = ego_chr_data::download_cap( pchr, pcap );
+
+    if ( rv )
+    {
+        /* add something here */
+    }
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_chr_data::download_cap( ego_chr_data * pchr, ego_cap * pcap )
+{
+    bool_t rv = ego_chr_cap_data::download_cap( pchr, pcap );
+
+    if ( rv )
+    {
+        //// sound stuff...  copy from the cap
+        //for ( tnc = 0; tnc < SOUND_COUNT; tnc++ )
+        //{
+        //    pchr->sound_index[tnc] = pcap->sound_index[tnc];
+        //}
+
+        //// Set up model stuff
+        //pchr->stoppedby = pcap->stoppedby;
+        //pchr->life_heal = pcap->life_heal;
+        //pchr->manacost  = pcap->manacost;
+        //pchr->nameknown = pcap->nameknown;
+        //pchr->ammoknown = pcap->nameknown;
+        //pchr->draw_icon = pcap->draw_icon;
+
+        //// calculate a base kurse state. this may be overridden later
+        //if ( pcap->isitem )
+        //{
+        //    IPair loc_rand = {1, 100};
+        //    pchr->iskursed = ( generate_irand_pair( loc_rand ) <= pcap->kursechance );
+        //}
+
+        //// Skillz
+        //idsz_map_copy( pcap->skills, SDL_arraysize( pcap->skills ), pchr->skills );
+        pchr->darkvision_level = ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
+        //pchr->see_invisible_level = pcap->see_invisible_level;
+
+        //// Ammo
+        //pchr->ammo_max = pcap->ammo_max;
+        //pchr->ammo = pcap->ammo;
+
+        //// Gender
+        //pchr->gender = pcap->gender;
+        //if ( pchr->gender == GENDER_RANDOM )  pchr->gender = generate_randmask( GENDER_FEMALE, GENDER_MALE );
+
+        //// Life and Mana
+        //pchr->life_color = pcap->life_color;
+        //pchr->mana_color = pcap->mana_color;
+        //pchr->life_max = generate_irand_range( pcap->life_stat.val );
+        //pchr->life_return = pcap->life_return;
+        //pchr->mana_max = generate_irand_range( pcap->mana_stat.val );
+        //pchr->mana_flow = generate_irand_range( pcap->mana_flow_stat.val );
+        //pchr->mana_return = generate_irand_range( pcap->mana_return_stat.val );
+
+        //// SWID
+        //pchr->strength = generate_irand_range( pcap->strength_stat.val );
+        //pchr->wisdom = generate_irand_range( pcap->wisdom_stat.val );
+        //pchr->intelligence = generate_irand_range( pcap->intelligence_stat.val );
+        //pchr->dexterity = generate_irand_range( pcap->dexterity_stat.val );
+
+        //// Skin
+        //pchr->skin = 0;
+        //if ( pcap->spelleffect_type != NO_SKIN_OVERRIDE )
+        //{
+        //    pchr->skin = pcap->spelleffect_type % MAX_SKIN;
+        //}
+        //else if ( pcap->skin_override != NO_SKIN_OVERRIDE )
+        //{
+        //    pchr->skin = pcap->skin_override % MAX_SKIN;
+        //}
+
+        //// Damage
+        //pchr->defense = pcap->defense[pchr->skin];
+        //pchr->reaffirmdamagetype = pcap->attachedprt_reaffirmdamagetype;
+        //pchr->damagetargettype = pcap->damagetargettype;
+        //for ( tnc = 0; tnc < DAMAGE_COUNT; tnc++ )
+        //{
+        //    pchr->damagemodifier[tnc] = pcap->damagemodifier[tnc][pchr->skin];
+        //}
+
+        //// Flags
+        //pchr->stickybutt      = pcap->stickybutt;
+        //pchr->openstuff       = pcap->canopenstuff;
+        //pchr->transferblend   = pcap->transferblend;
+        //pchr->waterwalk       = pcap->waterwalk;
+        //pchr->platform        = pcap->platform;
+        //pchr->canuseplatforms = pcap->canuseplatforms;
+        //pchr->isitem          = pcap->isitem;
+        //pchr->invictus        = pcap->invictus;
+        //pchr->ismount         = pcap->ismount;
+        //pchr->cangrabmoney    = pcap->cangrabmoney;
+
+        //// Jumping
+        //pchr->jump_power = pcap->jump;
+        ego_chr_data::set_jump_number_reset( pchr, pchr->jump_number_reset );
+
+        //// Other junk
+        ego_chr_data::set_fly_height( pchr, pchr->fly_height_reset );
+        pchr->maxaccel    = pchr->maxaccel_reset;
+        //pchr->alpha_base  = pcap->alpha;
+        //pchr->light_base  = pcap->light;
+        //pchr->flashand    = pcap->flashand;
+        //pchr->phys.dampen = pcap->dampen;
+
+        // Load current life and mana. this may be overridden later
+        pchr->life = pchr->life_max;
+        pchr->mana = pchr->mana_max;
+
+        pchr->phys.bumpdampen = pcap->bumpdampen;
+        if ( CAP_INFINITE_WEIGHT == pcap->weight )
+        {
+            pchr->phys.weight = INFINITE_WEIGHT;
+        }
+        else
+        {
+            Uint32 itmp = pcap->weight * pcap->size * pcap->size * pcap->size;
+            pchr->phys.weight = MIN( itmp, MAX_WEIGHT );
+        }
+
+        //// Image rendering
+        //pchr->uoffvel = pcap->uoffvel;
+        //pchr->voffvel = pcap->voffvel;
+
+        //// Movement
+        //pchr->anim_speed_sneak = pcap->anim_speed_sneak;
+        //pchr->anim_speed_walk = pcap->anim_speed_walk;
+        //pchr->anim_speed_run = pcap->anim_speed_run;
+
+        //// Money is added later
+        //pchr->money = pcap->money;
+
+        //// Experience
+        //iTmp = generate_irand_range( pcap->experience );
+        pchr->experience       = pchr->experience_reset;
+        pchr->experience_level = pchr->experience_level_reset;
+
+        //// Particle attachments
+        //pchr->reaffirmdamagetype = pcap->attachedprt_reaffirmdamagetype;
+
+        // Character size and bumping
+        ego_chr_data::init_size( pchr, pcap );
+    }
+
+    return rv;
+}
+//--------------------------------------------------------------------------------------------
+bool_t ego_chr_cap_data::download_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
+{
+    /// @details BB@> grab all of the data from the data.txt file
+
+    int iTmp, tnc;
+
+    if ( NULL == pchr ) return bfalse;
+
+    if ( NULL == pcap || !pcap->loaded ) return bfalse;
+
+    // sound stuff...  copy from the cap
+    for ( tnc = 0; tnc < SOUND_COUNT; tnc++ )
+    {
+        pchr->sound_index[tnc] = pcap->sound_index[tnc];
+    }
+
+    // Set up model stuff
+    pchr->stoppedby = pcap->stoppedby;
+    pchr->life_heal = pcap->life_heal;
+    pchr->manacost  = pcap->manacost;
+    pchr->nameknown = pcap->nameknown;
+    pchr->ammoknown = pcap->nameknown;
+    pchr->draw_icon = pcap->draw_icon;
+
+    // calculate a base kurse state. this may be overridden later
+    if ( pcap->isitem )
+    {
+        IPair loc_rand = {1, 100};
+        pchr->iskursed = ( generate_irand_pair( loc_rand ) <= pcap->kursechance );
+    }
+
+    // Skillz
+    idsz_map_copy( pcap->skills, SDL_arraysize( pcap->skills ), pchr->skills );
+    //pchr->darkvision_level = ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
+    pchr->see_invisible_level = pcap->see_invisible_level;
+
+    // Ammo
+    pchr->ammo_max = pcap->ammo_max;
+    pchr->ammo = pcap->ammo;
+
+    // Gender
+    pchr->gender = pcap->gender;
+    if ( pchr->gender == GENDER_RANDOM )  pchr->gender = generate_randmask( GENDER_FEMALE, GENDER_MALE );
+
+    // Life and Mana
+    pchr->life_color = pcap->life_color;
+    pchr->mana_color = pcap->mana_color;
+    pchr->life_max = generate_irand_range( pcap->life_stat.val );
+    pchr->life_return = pcap->life_return;
+    pchr->mana_max = generate_irand_range( pcap->mana_stat.val );
+    pchr->mana_flow = generate_irand_range( pcap->mana_flow_stat.val );
+    pchr->mana_return = generate_irand_range( pcap->mana_return_stat.val );
+
+    // SWID
+    pchr->strength = generate_irand_range( pcap->strength_stat.val );
+    pchr->wisdom = generate_irand_range( pcap->wisdom_stat.val );
+    pchr->intelligence = generate_irand_range( pcap->intelligence_stat.val );
+    pchr->dexterity = generate_irand_range( pcap->dexterity_stat.val );
+
+    // Skin
+    pchr->skin = 0;
+    if ( pcap->spelleffect_type != NO_SKIN_OVERRIDE )
+    {
+        pchr->skin = pcap->spelleffect_type % MAX_SKIN;
+    }
+    else if ( pcap->skin_override != NO_SKIN_OVERRIDE )
+    {
+        pchr->skin = pcap->skin_override % MAX_SKIN;
+    }
+
+    // Damage
+    pchr->defense = pcap->defense[pchr->skin];
+    pchr->reaffirmdamagetype = pcap->attachedprt_reaffirmdamagetype;
+    pchr->damagetargettype = pcap->damagetargettype;
+    for ( tnc = 0; tnc < DAMAGE_COUNT; tnc++ )
+    {
+        pchr->damagemodifier[tnc] = pcap->damagemodifier[tnc][pchr->skin];
+    }
+
+    // Flags
+    pchr->stickybutt      = pcap->stickybutt;
+    pchr->openstuff       = pcap->canopenstuff;
+    pchr->transferblend   = pcap->transferblend;
+    pchr->waterwalk       = pcap->waterwalk;
+    pchr->platform        = pcap->platform;
+    pchr->canuseplatforms = pcap->canuseplatforms;
+    pchr->isitem          = pcap->isitem;
+    pchr->invictus        = pcap->invictus;
+    pchr->ismount         = pcap->ismount;
+    pchr->cangrabmoney    = pcap->cangrabmoney;
+
+    // Jumping
+    pchr->jump_power        = pcap->jump;
+    pchr->jump_number_reset = pcap->jump_number;
+
+    // Other junk
+    pchr->fly_height_reset = pcap->fly_height;
+    pchr->maxaccel_reset   = pcap->maxaccel[pchr->skin];
+    pchr->alpha_base       = pcap->alpha;
+    pchr->light_base       = pcap->light;
+    pchr->flashand         = pcap->flashand;
+    //pchr->phys.dampen    = pcap->dampen;
+
+    // Load current life and mana. this may be overridden later
+    pchr->life_max = CLIP( pcap->life_spawn, LOWSTAT, ( UFP8_T )MAX( 0, pchr->life_max ) );
+    pchr->mana_max = CLIP( pcap->mana_spawn,       0, ( UFP8_T )MAX( 0, pchr->mana_max ) );
+
+    //pchr->phys.bumpdampen = pcap->bumpdampen;
+    //if ( CAP_INFINITE_WEIGHT == pcap->weight )
+    //{
+    //    pchr->phys.weight = INFINITE_WEIGHT;
+    //}
+    //else
+    //{
+    //    Uint32 itmp = pcap->weight * pcap->size * pcap->size * pcap->size;
+    //    pchr->phys.weight = MIN( itmp, MAX_WEIGHT );
+    //}
+
+    // Image rendering
+    pchr->uoffvel = pcap->uoffvel;
+    pchr->voffvel = pcap->voffvel;
+
+    // Movement
+    pchr->anim_speed_sneak = pcap->anim_speed_sneak;
+    pchr->anim_speed_walk = pcap->anim_speed_walk;
+    pchr->anim_speed_run = pcap->anim_speed_run;
+
+    // Money is added later
+    pchr->money = pcap->money;
+
+    // Experience
+    iTmp = generate_irand_range( pcap->experience );
+    pchr->experience_reset = MIN( iTmp, MAX_XP );
+    pchr->experience_level_reset = pcap->level_override;
+
+    // Particle attachments
+    pchr->reaffirmdamagetype = pcap->attachedprt_reaffirmdamagetype;
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_chr::upload_cap( ego_chr * pchr, ego_cap * pcap )
+{
+    if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
+
+    if ( NULL == pcap || !pcap->loaded ) return bfalse;
+
+    /* add something here */
+
+    bool_t rv = ego_chr_data::upload_cap( pchr, pcap );
+
+    if ( rv )
+    {
+        // this must be done after ego_chr_data::upload_cap() so that the
+        // more complicatd collision volumes will be updated
+        ego_chr::update_collision_size( pchr, btrue );
+    }
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_chr_data::upload_cap( ego_chr_data * pchr, ego_cap * pcap )
+{
+    /// @details BB@> prepare a character profile for exporting, by uploading some special values into the
+    ///     cap. Just so that there is no confusion when you export multiple items of the same type,
+    ///     DO NOT pass the pointer returned by ego_chr::get_pcap(). Instead, use a custom ego_cap declared on the stack,
+    ///     or something similar
+    ///
+    /// @note This has been modified to basically reverse the actions of ego_chr::download_cap().
+    ///       If all enchants have been removed, this should export all permanent changes to the
+    ///       base character profile.
+
+    if ( NULL == pchr ) return bfalse;
+
+    if ( NULL == pcap || !pcap->loaded ) return bfalse;
+
+    // export values that override spawn.txt values
+    pcap->content_override   = pchr->ai.content;
+    pcap->state_override     = pchr->ai.state;
+    //pcap->money              = pchr->money;
+    //pcap->skin_override      = pchr->skin;
+    pcap->level_override     = pchr->experience_level;
+
+    //// export the current experience
+    ints_to_range( pchr->experience, 0, &( pcap->experience ) );
+
+    // export the current mana and life
+    pcap->life_spawn         = CLIP( pchr->life, 0, pchr->life_max );
+    pcap->mana_spawn         = CLIP( pchr->mana, 0, pchr->mana_max );
+
+    //// Movement
+    //pcap->anim_speed_sneak = pchr->anim_speed_sneak;
+    //pcap->anim_speed_walk = pchr->anim_speed_walk;
+    //pcap->anim_speed_run = pchr->anim_speed_run;
+
+    //// weight and size
+    pcap->size       = pchr->fat_goto;
+    pcap->bumpdampen = pchr->phys.bumpdampen;
+    if ( pchr->phys.weight == INFINITE_WEIGHT )
+    {
+        pcap->weight = CAP_INFINITE_WEIGHT;
+    }
+    else
+    {
+        Uint32 itmp = pchr->phys.weight / pchr->fat / pchr->fat / pchr->fat;
+        pcap->weight = MIN( itmp, CAP_MAX_WEIGHT );
+    }
+
+    //// Other junk
+    pcap->fly_height  = pchr->fly_height;
+    //pcap->alpha       = pchr->alpha_base;
+    //pcap->light       = pchr->light_base;
+    //pcap->flashand    = pchr->flashand;
+    pcap->dampen      = pchr->phys.dampen;
+
+    //// Jumping
+    //pcap->jump       = pchr->jump_power;
+    //pcap->jump_number = pchr->jump_number_reset;
+
+    //// Flags
+    //pcap->stickybutt      = pchr->stickybutt;
+    //pcap->canopenstuff    = pchr->openstuff;
+    //pcap->transferblend   = pchr->transferblend;
+    //pcap->waterwalk       = pchr->waterwalk;
+    //pcap->platform        = pchr->platform;
+    //pcap->canuseplatforms = pchr->canuseplatforms;
+    //pcap->isitem          = pchr->isitem;
+    //pcap->invictus        = pchr->invictus;
+    //pcap->ismount         = pchr->ismount;
+    //pcap->cangrabmoney    = pchr->cangrabmoney;
+
+    //// Damage
+    //pcap->attachedprt_reaffirmdamagetype = pchr->reaffirmdamagetype;
+    //pcap->damagetargettype               = pchr->damagetargettype;
+
+    //// SWID
+    //ints_to_range( pchr->strength    , 0, &( pcap->strength_stat.val ) );
+    //ints_to_range( pchr->wisdom      , 0, &( pcap->wisdom_stat.val ) );
+    //ints_to_range( pchr->intelligence, 0, &( pcap->intelligence_stat.val ) );
+    //ints_to_range( pchr->dexterity   , 0, &( pcap->dexterity_stat.val ) );
+
+    //// Life and Mana
+    //pcap->life_color = pchr->life_color;
+    //pcap->mana_color = pchr->mana_color;
+    //ints_to_range( pchr->life_max     , 0, &( pcap->life_stat.val ) );
+    //ints_to_range( pchr->mana_max     , 0, &( pcap->mana_stat.val ) );
+    //ints_to_range( pchr->mana_return  , 0, &( pcap->mana_return_stat.val ) );
+    //ints_to_range( pchr->mana_flow    , 0, &( pcap->mana_flow_stat.val ) );
+
+    //// Gender
+    //pcap->gender  = pchr->gender;
+
+    //// Ammo
+    //pcap->ammo_max = pchr->ammo_max;
+    //pcap->ammo    = pchr->ammo;
+
+    //// update any skills that have been learned
+    //idsz_map_copy( pchr->skills, SDL_arraysize( pchr->skills ), pcap->skills );
+
+    //// Enchant stuff
+    //pcap->see_invisible_level = pchr->see_invisible_level;
+
+    //// base kurse state
+    //pcap->kursechance = pchr->iskursed ? 100 : 0;
+
+    //// Model stuff
+    //pcap->stoppedby = pchr->stoppedby;
+    //pcap->life_heal = pchr->life_heal;
+    //pcap->manacost  = pchr->manacost;
+    //pcap->nameknown = pchr->nameknown || pchr->ammoknown;          // make sure that identified items are saved as identified
+    //pcap->draw_icon = pchr->draw_icon;
+
+    //// sound stuff...
+    //for ( tnc = 0; tnc < SOUND_COUNT; tnc++ )
+    //{
+    //    pcap->sound_index[tnc] = pchr->sound_index[tnc];
+    //}
+
+    return ego_chr_cap_data::upload_cap( pchr, pcap );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_chr_cap_data::upload_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
+{
+    /// @details BB@> prepare a character profile for exporting, by uploading some special values into the
+    ///     cap. Just so that there is no confusion when you export multiple items of the same type,
+    ///     DO NOT pass the pointer returned by ego_chr::get_pcap(). Instead, use a custom ego_cap declared on the stack,
+    ///     or something similar
+    ///
+    /// @note This has been modified to basically reverse the actions of ego_chr::download_cap().
+    ///       If all enchants have been removed, this should export all permanent changes to the
+    ///       base character profile.
+
+    int tnc;
+
+    if ( NULL == pchr ) return bfalse;
+
+    if ( NULL == pcap || !pcap->loaded ) return bfalse;
+
+    // export values that override spawn.txt values
+    //pcap->content_override   = pchr->ai.content;
+    //pcap->state_override     = pchr->ai.state;
+    pcap->money              = pchr->money;
+    pcap->skin_override      = pchr->skin;
+    //pcap->level_override     = pchr->experience_level;
+
+    // export the current experience
+    //ints_to_range( pchr->experience, 0, &( pcap->experience ) );
+
+    // export the current mana and life
+    //pcap->life_spawn         = CLIP( pchr->life, 0, pchr->life_max );
+    //pcap->mana_spawn         = CLIP( pchr->mana, 0, pchr->mana_max );
+
+    // Movement
+    pcap->anim_speed_sneak = pchr->anim_speed_sneak;
+    pcap->anim_speed_walk = pchr->anim_speed_walk;
+    pcap->anim_speed_run = pchr->anim_speed_run;
+
+    // weight and size
+    //pcap->size       = pchr->fat_goto;
+    //pcap->bumpdampen = pchr->phys.bumpdampen;
+    //if ( pchr->phys.weight == INFINITE_WEIGHT )
+    //{
+    //    pcap->weight = CAP_INFINITE_WEIGHT;
+    //}
+    //else
+    //{
+    //    Uint32 itmp = pchr->phys.weight / pchr->fat / pchr->fat / pchr->fat;
+    //    pcap->weight = MIN( itmp, CAP_MAX_WEIGHT );
+    //}
+
+    // Other junk
+    //pcap->fly_height  = pchr->fly_height;
+    pcap->alpha       = pchr->alpha_base;
+    pcap->light       = pchr->light_base;
+    pcap->flashand    = pchr->flashand;
+    //pcap->dampen      = pchr->phys.dampen;
+
+    // Jumping
+    pcap->jump       = pchr->jump_power;
+    pcap->jump_number = pchr->jump_number_reset;
+
+    // Flags
+    pcap->stickybutt      = pchr->stickybutt;
+    pcap->canopenstuff    = pchr->openstuff;
+    pcap->transferblend   = pchr->transferblend;
+    pcap->waterwalk       = pchr->waterwalk;
+    pcap->platform        = pchr->platform;
+    pcap->canuseplatforms = pchr->canuseplatforms;
+    pcap->isitem          = pchr->isitem;
+    pcap->invictus        = pchr->invictus;
+    pcap->ismount         = pchr->ismount;
+    pcap->cangrabmoney    = pchr->cangrabmoney;
+
+    // Damage
+    pcap->attachedprt_reaffirmdamagetype = pchr->reaffirmdamagetype;
+    pcap->damagetargettype               = pchr->damagetargettype;
+
+    // SWID
+    ints_to_range( pchr->strength    , 0, &( pcap->strength_stat.val ) );
+    ints_to_range( pchr->wisdom      , 0, &( pcap->wisdom_stat.val ) );
+    ints_to_range( pchr->intelligence, 0, &( pcap->intelligence_stat.val ) );
+    ints_to_range( pchr->dexterity   , 0, &( pcap->dexterity_stat.val ) );
+
+    // Life and Mana
+    pcap->life_color = pchr->life_color;
+    pcap->mana_color = pchr->mana_color;
+    ints_to_range( pchr->life_max     , 0, &( pcap->life_stat.val ) );
+    ints_to_range( pchr->mana_max     , 0, &( pcap->mana_stat.val ) );
+    ints_to_range( pchr->mana_return  , 0, &( pcap->mana_return_stat.val ) );
+    ints_to_range( pchr->mana_flow    , 0, &( pcap->mana_flow_stat.val ) );
+
+    // Gender
+    pcap->gender  = pchr->gender;
+
+    // Ammo
+    pcap->ammo_max = pchr->ammo_max;
+    pcap->ammo    = pchr->ammo;
+
+    // update any skills that have been learned
+    idsz_map_copy( pchr->skills, SDL_arraysize( pchr->skills ), pcap->skills );
+
+    // Enchant stuff
+    pcap->see_invisible_level = pchr->see_invisible_level;
+
+    // base kurse state
+    pcap->kursechance = pchr->iskursed ? 100 : 0;
+
+    // Model stuff
+    pcap->stoppedby = pchr->stoppedby;
+    pcap->life_heal = pchr->life_heal;
+    pcap->manacost  = pchr->manacost;
+    pcap->nameknown = pchr->nameknown || pchr->ammoknown;          // make sure that identified items are saved as identified
+    pcap->draw_icon = pchr->draw_icon;
+
+    // sound stuff...
+    for ( tnc = 0; tnc < SOUND_COUNT; tnc++ )
+    {
+        pcap->sound_index[tnc] = pchr->sound_index[tnc];
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_chr *  ego_chr::do_constructing( ego_chr * pchr )
+{
+    // this object has already been constructed as a part of the
+    // ego_obj_chr, so its parent is properly defined
+
+    ego_chr * rv =  ego_chr::ctor_all( pchr, pchr->get_pparent() );
+
+    /* add something here */
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr *  ego_chr::do_initializing( ego_chr * pchr )
+{
+    CHR_REF  ichr;
+    CAP_REF  icap;
+    TEAM_REF loc_team;
+    int      tnc, iteam, kursechance;
+
+    ego_cap * pcap;
+    fvec3_t pos_tmp;
+
+    if ( NULL == pchr ) return NULL;
+    ichr = GET_IDX_PCHR( pchr );
+
+    // get the character profile pointer
+    pcap = pro_get_pcap( pchr->spawn_data.profile );
+    if ( NULL == pcap )
+    {
+        log_debug( "ego_chr::do_init() - cannot initialize character.\n" );
+
+        return NULL;
+    }
+
+    // get the character profile index
+    icap = pro_get_icap( pchr->spawn_data.profile );
+
+    // make a copy of the data in pchr->spawn_data.pos
+    pos_tmp = pchr->spawn_data.pos;
+
+    // download all the values from the character pchr->spawn_data.profile
+    ego_chr::download_cap( pchr, pcap );
+
+    // Make sure the pchr->spawn_data.team is valid
+    loc_team = pchr->spawn_data.team;
+    iteam = ( loc_team ).get_value();
+    iteam = CLIP( iteam, 0, TEAM_MAX );
+    loc_team = TEAM_REF( iteam );
+
+    // IMPORTANT!!!
+    pchr->missilehandler = ichr;
+
+    // Set up model stuff
+    pchr->profile_ref   = pchr->spawn_data.profile;
+    pchr->basemodel_ref = pchr->spawn_data.profile;
+
+    // Kurse state
+    if ( pcap->isitem )
+    {
+        IPair loc_rand = {1, 100};
+
+        kursechance = pcap->kursechance;
+        if ( cfg.difficulty >= GAME_HARD )                        kursechance *= 2.0f;  // Hard mode doubles chance for Kurses
+        if ( cfg.difficulty < GAME_NORMAL && kursechance != 100 ) kursechance *= 0.5f;  // Easy mode halves chance for Kurses
+        pchr->iskursed = ( generate_irand_pair( loc_rand ) <= kursechance );
+    }
+
+    // AI stuff
+    ego_ai_state::spawn( &( pchr->ai ), ichr, pchr->profile_ref, TeamStack[loc_team].morale );
+
+    // Team stuff
+    pchr->team     = loc_team;
+    pchr->baseteam = loc_team;
+    if ( !IS_INVICTUS_PCHR_RAW( pchr ) )  TeamStack[loc_team].morale++;
+
+    // Firstborn becomes the leader
+    if ( TeamStack[loc_team].leader == NOLEADER )
+    {
+        TeamStack[loc_team].leader = ichr;
+    }
+
+    // Skin
+    if ( pcap->skin_override != NO_SKIN_OVERRIDE )
+    {
+        // override the value passed into the function from spawn.txt
+        // with the calue from the expansion in data.txt
+        pchr->spawn_data.skin = pchr->skin;
+    }
+    if ( pchr->spawn_data.skin >= ProList.lst[pchr->spawn_data.profile].skins )
+    {
+        // place this here so that the random number generator advances
+        // no matter the state of ProList.lst[pchr->spawn_data.profile].skins... Eases
+        // possible synch problems with other systems?
+        int irand = RANDIE;
+
+        pchr->spawn_data.skin = 0;
+        if ( 0 != ProList.lst[pchr->spawn_data.profile].skins )
+        {
+            pchr->spawn_data.skin = irand % ProList.lst[pchr->spawn_data.profile].skins;
+        }
+    }
+    pchr->skin = pchr->spawn_data.skin;
+
+    // fix the pchr->spawn_data.skin-related parameters, in case there was some funy business with overriding
+    // the pchr->spawn_data.skin from the data.txt file
+    if ( pchr->spawn_data.skin != pchr->skin )
+    {
+        pchr->skin = pchr->spawn_data.skin;
+
+        pchr->defense = pcap->defense[pchr->skin];
+        for ( tnc = 0; tnc < DAMAGE_COUNT; tnc++ )
+        {
+            pchr->damagemodifier[tnc] = pcap->damagemodifier[tnc][pchr->skin];
+        }
+
+        ego_chr::set_maxaccel( pchr, pcap->maxaccel[pchr->skin] );
+    }
+
+    // override the default behavior for an "easy" game
+    if ( cfg.difficulty < GAME_NORMAL )
+    {
+        pchr->life = pchr->life_max;
+        pchr->mana = pchr->mana_max;
+    }
+
+    // Character size and bumping
+    pchr->fat_goto      = pchr->fat;
+    pchr->fat_goto_time = 0;
+
+    // grab all of the environment information
+    chr_calc_environment( pchr );
+
+    ego_chr::set_pos( pchr, pos_tmp.v );
+
+    pchr->pos_stt  = pos_tmp;
+    pchr->pos_old  = pos_tmp;
+
+    pchr->ori.facing_z     = pchr->spawn_data.facing;
+    pchr->ori_old.facing_z = pchr->ori.facing_z;
+
+    // Name the character
+    if ( CSTR_END == pchr->spawn_data.name[0] )
+    {
+        // Generate a random pchr->spawn_data.name
+        snprintf( pchr->name, SDL_arraysize( pchr->name ), "%s", pro_create_chop( pchr->spawn_data.profile ) );
+    }
+    else
+    {
+        // A pchr->spawn_data.name has been given
+        tnc = 0;
+
+        while ( tnc < MAXCAPNAMESIZE - 1 )
+        {
+            pchr->name[tnc] = pchr->spawn_data.name[tnc];
+            tnc++;
+        }
+
+        pchr->name[tnc] = CSTR_END;
+    }
+
+    // Particle attachments
+    for ( tnc = 0; tnc < pcap->attachedprt_amount; tnc++ )
+    {
+        spawn_one_particle( pchr->pos, 0, pchr->profile_ref, pcap->attachedprt_pip,
+                            ichr, GRIP_LAST + tnc, pchr->team, ichr, PRT_REF( MAX_PRT ), tnc, CHR_REF( MAX_CHR ) );
+    }
+
+    // is the object part of a shop's inventory?
+    if ( pchr->isitem )
+    {
+        SHOP_REF ishop;
+
+        // Items that are spawned inside shop passages are more expensive than normal
+        pchr->isshopitem = bfalse;
+        for ( ishop = 0; ishop < ShopStack.count; ishop++ )
+        {
+            // Make sure the owner is not dead
+            if ( SHOP_NOOWNER == ShopStack[ishop].owner ) continue;
+
+            if ( PassageStack_object_is_inside( ShopStack[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+            {
+                pchr->isshopitem = btrue;               // Full value
+                pchr->iskursed   = bfalse;              // Shop items are never kursed
+                pchr->nameknown  = btrue;
+                break;
+            }
+        }
+    }
+
+    // override the shopitem flag if the item is known to be valuable
+    if ( pcap->isvaluable )
+    {
+        pchr->isshopitem = btrue;
+    }
+
+    // initialize the character instance
+    ego_chr_instance::spawn( &( pchr->inst ), pchr->spawn_data.profile, pchr->spawn_data.skin );
+
+    // force the calculation of the matrix
+    ego_chr::update_matrix( pchr, btrue );
+
+    // force the instance to update
+    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
+
+    // determine whether the object is hidden
+    ego_chr::update_hide( pchr );
+
+#if EGO_DEBUG && defined(DEBUG_WAYPOINTS)
+    if ( !IS_ATTACHED_PCHR( pchr ) && INFINITE_WEIGHT != pchr->phys.weight && !pchr->safe_valid )
+    {
+        log_warning( "spawn_one_character() - \n\tinitial spawn position <%f,%f> is \"inside\" a wall. Wall normal is <%f,%f>\n",
+                     pchr->pos.x, pchr->pos.y, nrm.x, nrm.y );
+    }
+#endif
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_processing( ego_chr * pchr )
+{
+    ego_cap * pcap;
+    int     ripand;
+    CHR_REF ichr;
+
+    if ( NULL == pchr ) return pchr;
+    ichr = GET_REF_PCHR( pchr );
+
+    // then do status updates
+    ego_chr::update_hide( pchr );
+
+    // Don't do items that are in inventory
+    if ( pchr->pack.is_packed ) return pchr;
+
+    pcap = pro_get_pcap( pchr->profile_ref );
+    if ( NULL == pcap ) return pchr;
+
+    // do the character interaction with water
+    if ( !pchr->is_hidden && pchr->pos.z < water.surface_level && ( 0 != ego_mpd::test_fx( PMesh, pchr->onwhichgrid, MPDFX_WATER ) ) )
+    {
+        // do splash and ripple
+        if ( !pchr->enviro.inwater )
+        {
+            // Splash
+            fvec3_t vtmp = VECT3( pchr->pos.x, pchr->pos.y, water.surface_level + RAISE );
+
+            spawn_one_particle_global( vtmp, ATK_FRONT, PIP_SPLASH, 0 );
+
+            if ( water.is_water )
+            {
+                ADD_BITS( pchr->ai.alert, ALERTIF_INWATER );
+            }
+        }
+        else
+        {
+            // Ripples
+            if ( !pchr->pack.is_packed && pcap->ripple && pchr->pos.z + pchr->chr_min_cv.maxs[OCT_Z] + RIPPLETOLERANCE > water.surface_level && pchr->pos.z + pchr->chr_min_cv.mins[OCT_Z] < water.surface_level )
+            {
+                int ripple_suppression;
+
+                // suppress ripples if we are far below the surface
+                ripple_suppression = water.surface_level - ( pchr->pos.z + pchr->chr_min_cv.maxs[OCT_Z] );
+                ripple_suppression = ( 4 * ripple_suppression ) / RIPPLETOLERANCE;
+                ripple_suppression = CLIP( ripple_suppression, 0, 4 );
+
+                // make more ripples if we are moving
+                ripple_suppression -= (( int )pchr->vel.x != 0 ) | (( int )pchr->vel.y != 0 );
+
+                if ( ripple_suppression > 0 )
+                {
+                    ripand = ~(( ~RIPPLEAND ) << ripple_suppression );
+                }
+                else
+                {
+                    ripand = RIPPLEAND >> ( -ripple_suppression );
+                }
+
+                if ( 0 == (( update_wld + pchr->get_pparent()->guid ) & ripand ) && pchr->pos.z < water.surface_level && pchr->alive )
+                {
+                    fvec3_t   vtmp = VECT3( pchr->pos.x, pchr->pos.y, water.surface_level );
+
+                    spawn_one_particle_global( vtmp, ATK_FRONT, PIP_RIPPLE, 0 );
+                }
+            }
+
+            if ( water.is_water && HAS_NO_BITS( update_wld, 7 ) )
+            {
+                pchr->jump_ready = btrue;
+                pchr->jump_number = 1;
+            }
+        }
+
+        pchr->enviro.inwater  = btrue;
+    }
+    else
+    {
+        pchr->enviro.inwater = bfalse;
+    }
+
+    // the following functions should not be done the first time through the update loop
+    if ( 0 == update_wld ) return pchr;
+
+    //---- Do timers and such
+
+    // decrement the dismount timer
+    if ( pchr->dismount_timer > 0 )
+    {
+        pchr->dismount_timer--;
+
+        if ( 0 == pchr->dismount_timer )
+        {
+            pchr->dismount_object = CHR_REF( MAX_CHR );
+        }
+    }
+
+    // reduce attack cooldowns
+    if ( pchr->reloadtime > 0 )
+    {
+        pchr->reloadtime--;
+    }
+
+    // Down that ol' damage timer
+    if ( pchr->damagetime > 0 )
+    {
+        pchr->damagetime--;
+    }
+
+    // Do "Be careful!" delay
+    if ( pchr->carefultime > 0 )
+    {
+        pchr->carefultime--;
+    }
+
+    // Down jump timer
+    if ( pchr->jump_time > 0 && ( INGAME_CHR( pchr->attachedto ) || pchr->jump_ready || pchr->jump_number > 0 ) )
+    {
+        pchr->jump_time--;
+    }
+
+    //---- Texture movement
+    pchr->inst.uoffset += pchr->uoffvel;
+    pchr->inst.voffset += pchr->voffvel;
+
+    //---- Do stats once every second
+    if ( clock_chr_stat >= ONESECOND )
+    {
+        // check for a level up
+        do_level_up( ichr );
+
+        // do the mana and life regen for "living" characters
+        if ( pchr->alive )
+        {
+            int manaregen = 0;
+            int liferegen = 0;
+            get_chr_regeneration( pchr, &liferegen, &manaregen );
+
+            pchr->mana += manaregen;
+            pchr->mana = MAX( 0, MIN( pchr->mana, pchr->mana_max ) );
+
+            pchr->life += liferegen;
+            pchr->life = MAX( 1, MIN( pchr->life, pchr->life_max ) );
+        }
+
+        // countdown confuse effects
+        if ( pchr->grogtime > 0 )
+        {
+            pchr->grogtime--;
+        }
+
+        if ( pchr->dazetime > 0 )
+        {
+            pchr->dazetime--;
+        }
+
+        // possibly gain/lose darkvision
+        update_chr_darkvision( ichr );
+    }
+
+    pchr = resize_one_character( pchr );
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_deinitializing( ego_chr * pchr )
+{
+    if ( NULL == pchr ) return pchr;
+
+    /* nothing to do yet */
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_chr * ego_chr::do_destructing( ego_chr * pchr )
+{
+    ego_chr * rv = ego_chr::dtor_all( pchr );
+
+    /* add something here */
+
+    return rv;
 }

@@ -77,7 +77,7 @@ bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint3
     pinst = &( pchr->inst );
 
     if ( !LOADED_MAD( pinst->imad ) ) return bfalse;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     pmd2 = pmad->md2_ptr;
     if ( NULL == pmd2 ) return bfalse;
@@ -262,7 +262,7 @@ bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, Uint32 b
     pinst = &( pchr->inst );
 
     if ( !LOADED_MAD( pinst->imad ) ) return bfalse;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     pmd2 = pmad->md2_ptr;
     if ( NULL == pmd2 ) return bfalse;
@@ -871,7 +871,7 @@ void ego_chr_instance::update_lighting_base( ego_chr_instance * pinst, ego_chr *
     pinst->lighting_frame_all = frame_all + (( frame_all + pchr->get_pparent()->guid ) & 0x03 );
 
     if ( !LOADED_MAD( pinst->imad ) ) return;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
     pinst->vrt_count = pinst->vrt_count;
 
     // interpolate the lighting for the origin of the object
@@ -936,7 +936,7 @@ egoboo_rv ego_chr_instance::update_bbox( ego_chr_instance * pinst )
 
     // get the model. try to heal a bad model.
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     pmd2 = pmad->md2_ptr;
     if ( NULL == pmd2 ) return rv_error;
@@ -999,7 +999,7 @@ egoboo_rv ego_chr_instance::needs_update( ego_chr_instance * pinst, int vmin, in
 
     // do we hace a valid mad?
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     // check to see if the vlst_cache has been marked as invalid.
     // in this case, everything needs to be updated
@@ -1052,7 +1052,7 @@ egoboo_rv ego_chr_instance::update_vertices( ego_chr_instance * pinst, int vmin,
 
     // get the model
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     pmd2 = pmad->md2_ptr;
     if ( NULL == pmd2 ) return rv_error;
@@ -1342,7 +1342,7 @@ egoboo_rv ego_chr_instance::set_action( ego_chr_instance * pinst, int action, bo
 
     // do we have a valid model?
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     // is the chosen action valid?
     if ( !pmad->action_valid[ action ] ) return rv_fail;
@@ -1380,7 +1380,7 @@ egoboo_rv ego_chr_instance::set_frame( ego_chr_instance * pinst, int frame )
 
     // do we have a valid model?
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     // is the current action valid?
     if ( !pmad->action_valid[ pinst->action_which ] ) return rv_fail;
@@ -1426,7 +1426,7 @@ egoboo_rv ego_chr_instance::start_anim( ego_chr_instance * pinst, int action, bo
     if ( action < 0 || action >= ACTION_COUNT ) return rv_error;
 
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     return ego_chr_instance::set_anim( pinst, action, pmad->action_stt[action], action_ready, override_action );
 }
@@ -1447,7 +1447,7 @@ egoboo_rv ego_chr_instance::increment_action( ego_chr_instance * pinst )
     action_old = pinst->action_which;
 
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     // get the correct action
     action = mad_get_action( pinst->imad, pinst->action_next );
@@ -1522,7 +1522,7 @@ egoboo_rv ego_chr_instance::play_action( ego_chr_instance * pinst, int action, b
     if ( NULL == pinst ) return rv_error;
 
     if ( !LOADED_MAD( pinst->imad ) ) return rv_error;
-    pmad = MadStack.lst + pinst->imad;
+    pmad = MadStack + pinst->imad;
 
     action = mad_get_action( pinst->imad, action );
 

@@ -46,10 +46,9 @@ struct ego_pip_data : public s_pip_data {};
 
 struct ego_pip : public ego_pip_data {};
 
-extern t_cpp_stack< ego_pip, MAX_PIP  > PipStack;
+extern t_cpp_stack< ego_pip, MAX_PIP > PipStack;
 
-#define VALID_PIP_RANGE( IPIP ) ( ((IPIP) >= 0) && ((IPIP) < MAX_PIP) )
-#define LOADED_PIP( IPIP )       ( VALID_PIP_RANGE( IPIP ) && PipStack.lst[IPIP].loaded )
+#define LOADED_PIP( IPIP )       ( PipStack.valid_ref( IPIP ) && PipStack[IPIP].loaded )
 
 //--------------------------------------------------------------------------------------------
 
@@ -216,9 +215,9 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_prt_data * ctor_all( ego_prt_data * ptr ) { if ( NULL != ptr ) new( ptr ) ego_prt_data(); return ptr; }
+    static ego_prt_data * ctor_all( ego_prt_data * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_prt_data(); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_prt_data * dtor_all( ego_prt_data * ptr )  { if ( NULL != ptr ) ptr->~ego_prt_data(); return ptr; }
+    static ego_prt_data * dtor_all( ego_prt_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_prt_data(); puts( "\t" __FUNCTION__ ); } return ptr; }
 
     //---- memory management
 
@@ -293,9 +292,9 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_prt * ctor_all( ego_prt * ptr, ego_obj_prt * pparent ) { if ( NULL != ptr ) new( ptr ) ego_prt( pparent ); return ptr; }
+    static ego_prt * ctor_all( ego_prt * ptr, ego_obj_prt * pparent );
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_prt * dtor_all( ego_prt * ptr )  { if ( NULL != ptr ) ptr->~ego_prt(); return ptr; }
+    static ego_prt * dtor_all( ego_prt * ptr );
 
     //---- memory management
 
@@ -311,11 +310,11 @@ protected:
 
     //---- private implementations of the configuration functions
 
-    static ego_prt * do_construct( ego_prt * pprt );
-    static ego_prt * do_init( ego_prt * pprt );
-    static ego_prt * do_process( ego_prt * pprt );
-    static ego_prt * do_deinit( ego_prt * pprt );
-    static ego_prt * do_destruct( ego_prt * pprt );
+    static ego_prt * do_constructing( ego_prt * pprt );
+    static ego_prt * do_initializing( ego_prt * pprt );
+    static ego_prt * do_processing( ego_prt * pprt );
+    static ego_prt * do_deinitializing( ego_prt * pprt );
+    static ego_prt * do_destructing( ego_prt * pprt );
 
 private:
 
@@ -346,10 +345,10 @@ struct ego_obj_prt : public ego_obj
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_obj_prt() : _prt_data( this ) { ctor_this( this ); }
+    explicit ego_obj_prt() : _prt_data( this ) { puts( __FUNCTION__ ); ctor_this( this ); }
 
     /// default destructor
-    ~ego_obj_prt() { dtor_this( this ); }
+    ~ego_obj_prt() { dtor_this( this ); puts( __FUNCTION__ );  }
 
     //---- implementation of required accessors
 
@@ -371,29 +370,14 @@ struct ego_obj_prt : public ego_obj
     static ego_obj_prt * dtor_this( ego_obj_prt * pobj );
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_obj_prt * ctor_all( ego_obj_prt * ptr ) { if ( NULL != ptr ) new( ptr ) ego_obj_prt(); return ptr; }
+    static ego_obj_prt * ctor_all( ego_obj_prt * ptr );
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_obj_prt * dtor_all( ego_obj_prt * ptr )  { if ( NULL != ptr ) ptr->~ego_obj_prt(); return ptr; }
+    static ego_obj_prt * dtor_all( ego_obj_prt * ptr ) ;
 
     //---- accessors
 
     /// tell the ego_obj_prt whether it is in limbo or not
     static ego_obj_prt * set_limbo( ego_obj_prt * pobj, bool_t val );
-
-    //---- global configuration functions
-
-    /// External handle for iterating the "egoboo object process" state machine
-    static ego_obj_prt * run( ego_obj_prt * pprt );
-    /// External handle for getting an "egoboo object process" into the constructed state
-    static ego_obj_prt * run_construct( ego_obj_prt * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the initialized state
-    static ego_obj_prt * run_initialize( ego_obj_prt * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the active state
-    static ego_obj_prt * run_activate( ego_obj_prt * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the deinitialized state
-    static ego_obj_prt * run_deinitialize( ego_obj_prt * pprt, int max_iterations );
-    /// External handle for getting an "egoboo object process" into the deconstructed state
-    static ego_obj_prt * run_deconstruct( ego_obj_prt * pprt, int max_iterations );
 
     /// Ask the "egoboo object process" to terminate itself
     static bool_t        request_terminate( const PRT_REF & iprt );
@@ -412,18 +396,13 @@ protected:
     /// deallocate data for this struct, and ALL dependent structs
     static ego_obj_prt * do_dealloc( ego_obj_prt * pobj );
 
-    //---- private implementations of the configuration functions
+    //---- implementation of the ego_object_process virtual methods
 
-    /// private implementation of egoboo "egoboo object process's" constructing method
-    static ego_obj_prt * do_constructing( ego_obj_prt * pprt );
-    /// private implementation of egoboo "egoboo object process's" initializing method
-    static ego_obj_prt * do_initializing( ego_obj_prt * pprt );
-    /// private implementation of egoboo "egoboo object process's" deinitializing method
-    static ego_obj_prt * do_deinitializing( ego_obj_prt * pprt );
-    /// private implementation of egoboo "egoboo object process's" processing method
-    static ego_obj_prt * do_processing( ego_obj_prt * pprt );
-    /// private implementation of egoboo "egoboo object process's" destructing method
-    static ego_obj_prt * do_destructing( ego_obj_prt * pprt );
+    virtual int do_constructing()   { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_constructing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_initializing()   { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_initializing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_processing()     { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_processing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_deinitializing() { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_deinitializing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
+    virtual int do_destructing()    { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_destructing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
 
 private:
     ego_prt _prt_data;

@@ -22,7 +22,6 @@
 /// @details
 
 #include "egoboo_object.h"
-
 #include "egoboo_strutil.h"
 
 //--------------------------------------------------------------------------------------------
@@ -32,227 +31,160 @@ Uint32 ego_obj::spawn_depth    = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::ctor_this( ego_obj_proc * ptr )
+int ego_object_process_state::end_constructing()
 {
-    if ( NULL == ptr ) return ptr;
+    if ( NULL == this || !valid ) return -1;
 
-    ptr = ego_obj_proc::clear( ptr );
-    if ( NULL == ptr ) return ptr;
+    //valid       = btrue;
+    constructed = btrue;
+    //initialized = btrue;
+    //killed      = bfalse;
 
-    ptr->action = ego_obj_nothing;
+    //active      = bfalse;
+    action        = ego_obj_initializing;
 
-    return ptr;
+    return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::dtor_this( ego_obj_proc * ptr )
+int ego_object_process_state::end_initializing()
 {
-    if ( NULL == ptr ) return ptr;
+    if ( NULL == this || !valid ) return -1;
 
-    ego_obj_proc::clear( ptr );
+    //valid       = btrue;
+    //constructed = btrue;
+    initialized = btrue;
+    //killed      = bfalse;
 
-    return ptr;
+    //active      = btrue;
+    action        = ego_obj_processing;
+
+    return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::clear( ego_obj_proc * ptr )
+int ego_object_process_state::end_processing()
 {
-    if ( NULL == ptr ) return ptr;
+    if ( NULL == this || !valid ) return -1;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    //valid       = btrue;
+    //constructed = btrue;
+    //initialized = btrue;
+    //killed      = bfalse;
 
-    return ptr;
+    active      = bfalse;
+    action      = ego_obj_deinitializing;
+
+    return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::end_constructing( ego_obj_proc * ptr )
+int ego_object_process_state::end_deinitializing()
 {
-    if ( NULL == ptr || !ptr->valid ) return ptr;
+    if ( NULL == this || !valid ) return -1;
 
-    //ptr->valid       = btrue;
-    ptr->constructed = btrue;
-    //ptr->initialized = btrue;
-    //ptr->killed      = bfalse;
+    //valid       = btrue;
+    //constructed = btrue;
+    initialized = bfalse;
+    //killed      = bfalse;
 
-    //ptr->active      = bfalse;
-    ptr->action        = ego_obj_initializing;
+    active      = bfalse;
+    action      = ego_obj_destructing;
 
-    return ptr;
+    return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::end_initialization( ego_obj_proc * ptr )
+int ego_object_process_state::end_destructing()
 {
-    if ( NULL == ptr || !ptr->valid ) return ptr;
+    if ( NULL == this || !valid ) return -1;
 
-    //ptr->valid       = btrue;
-    //ptr->constructed = btrue;
-    ptr->initialized = btrue;
-    //ptr->killed      = bfalse;
+    //valid       = btrue;
+    constructed = bfalse;
+    initialized = bfalse;
+    killed      = btrue;
 
-    //ptr->active      = btrue;
-    ptr->action        = ego_obj_processing;
+    active      = bfalse;
+    action      = ego_obj_destructing;
 
-    return ptr;
+    return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::end_processing( ego_obj_proc * ptr )
+int ego_object_process_state::end_invalidating()
 {
-    if ( NULL == ptr || !ptr->valid ) return ptr;
+    if ( NULL == this || !valid ) return -1;
 
-    //ptr->valid       = btrue;
-    //ptr->constructed = btrue;
-    //ptr->initialized = btrue;
-    //ptr->killed      = bfalse;
+    ego_object_process_state_data::clear();
+    if ( NULL == this ) return -1;
 
-    ptr->active      = bfalse;
-    ptr->action      = ego_obj_deinitializing;
+    valid       = bfalse;
+    constructed = bfalse;
+    initialized = bfalse;
+    killed      = btrue;         // keep the killed flag on
 
-    return ptr;
+    action      = ego_obj_nothing;
+
+    return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::end_deinitializing( ego_obj_proc * ptr )
+int ego_object_process_state_data::set_valid( bool_t val )
 {
-    if ( NULL == ptr || !ptr->valid ) return ptr;
+    if ( NULL == this ) return -1;
 
-    //ptr->valid       = btrue;
-    //ptr->constructed = btrue;
-    ptr->initialized = bfalse;
-    //ptr->killed      = bfalse;
+    clear();
 
-    ptr->active      = bfalse;
-    ptr->action      = ego_obj_destructing;
+    valid  = val;
+    action = val ? ego_obj_constructing : ego_obj_nothing;
 
-    return ptr;
+    return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::end_destructing( ego_obj_proc * ptr )
-{
-    if ( NULL == ptr || !ptr->valid ) return ptr;
-
-    //ptr->valid       = btrue;
-    ptr->constructed = bfalse;
-    ptr->initialized = bfalse;
-    ptr->killed      = btrue;
-
-    ptr->active      = bfalse;
-    ptr->action      = ego_obj_destructing;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::end_invalidating( ego_obj_proc * ptr )
-{
-    if ( NULL == ptr || !ptr->valid ) return ptr;
-
-    ptr = ego_obj_proc::clear( ptr );
-    if ( NULL == ptr ) return ptr;
-
-    ptr->valid       = bfalse;
-    ptr->constructed = bfalse;
-    ptr->initialized = bfalse;
-    ptr->killed      = btrue;         // keep the killed flag on
-
-    ptr->action      = ego_obj_nothing;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::invalidate( ego_obj_proc * ptr )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ego_obj_proc::dtor_this( ptr );
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::set_valid( ego_obj_proc * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr = ego_obj_proc::clear( ptr );
-    if ( NULL == ptr ) return ptr;
-
-    ptr->valid  = val;
-    ptr->action = val ? ego_obj_constructing : ego_obj_nothing;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_proc * ego_obj_proc::begin_waiting( ego_obj_proc * ptr )
+int ego_object_process_state::begin_waiting( )
 {
     // put the object in the "waiting to be killed" mode. currently used only by particles
 
-    if ( NULL == ptr || !ptr->valid || ptr->killed ) return ptr;
+    if ( NULL == this || !valid || killed ) return -1;
 
-    ptr->action    = ego_obj_waiting;
+    action = ego_obj_waiting;
 
-    return ptr;
+    return 1;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_obj_req * ego_obj_req::ctor_this( ego_obj_req * ptr )
+egoboo_rv ego_object_process::validate( ego_object_process * ptr, bool_t val )
 {
-    return ego_obj_req::clear( ptr );
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_req * ego_obj_req::dtor_this( ego_obj_req * ptr )
-{
-    return ego_obj_req::clear( ptr );
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_req * ego_obj_req::clear( ego_obj_req* ptr )
-{
-    if ( NULL == ptr ) return ptr;
-
-    memset( ptr, 0, sizeof( *ptr ) );
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_validate( bool_t val )
-{
-    if ( NULL == this ) return rv_error;
+    if ( NULL == ptr ) return rv_error;
 
     // clear out the state
-    ego_obj_proc::clear( &_proc_data );
+    ptr->ego_object_process_state::clear();
 
     // clear out any requests
-    ego_obj_req::clear( &_req_data );
+    ptr->ego_object_request_data::clear();
 
     // set the "valid" variable and initialize the action
-    ego_obj_proc::set_valid( &_proc_data, val );
+    ptr->set_valid( val );
 
-    return _proc_data.valid ? rv_success : rv_fail;
+    return ( val == ptr->valid ) ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_req_kill()
+egoboo_rv ego_object_process::proc_req_terminate()
 {
     if ( NULL == this ) return rv_error;
 
-    if ( !_proc_data.valid ) return rv_error;
+    if ( !valid ) return rv_error;
 
-    if ( _proc_data.killed ) return rv_success;
+    if ( killed ) return rv_success;
 
     // save the old value
-    bool_t was_kill_me = _req_data.kill_me;
+    bool_t was_kill_me = kill_me;
 
     // do the request
-    _req_data.kill_me = btrue;
+    kill_me = btrue;
 
     // turn the object off
     proc_set_on( bfalse );
@@ -261,125 +193,123 @@ egoboo_rv ego_obj_proc_data::proc_req_kill()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_req_on( bool_t val )
+egoboo_rv ego_object_process::proc_req_on( bool_t val )
 {
     if ( NULL == this ) return rv_error;
 
-    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+    if ( !valid || killed ) return rv_error;
 
-    bool_t needed = ( val != _req_data.turn_me_on );
+    bool_t needed = ( val != turn_me_on );
 
-    _req_data.turn_me_on  = val;
-    _req_data.turn_me_off = !val;
+    turn_me_on  = val;
+    turn_me_off = !val;
 
     return needed ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_req_pause( bool_t val )
+egoboo_rv ego_object_process::proc_req_pause( bool_t val )
 {
     if ( NULL == this ) return rv_error;
 
-    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+    if ( !valid || killed ) return rv_error;
 
-    bool_t needed = ( val != _req_data.pause_me );
+    bool_t needed = ( val != pause_me );
 
-    _req_data.pause_me   = val;
-    _req_data.unpause_me = !val;
+    pause_me   = val;
+    unpause_me = !val;
 
     return needed ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_set_wait()
+egoboo_rv ego_object_process::proc_set_wait()
 {
-    ego_obj_proc * rv;
-
     if ( NULL == this ) return rv_error;
 
-    rv = ego_obj_proc::begin_waiting( &_proc_data );
+    int rv = ego_object_process::begin_waiting();
 
-    return ( NULL != rv ) ? rv_success : rv_fail;
+    return ( rv > 0 ) ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_set_process()
+egoboo_rv ego_object_process::proc_set_process()
 {
     if ( NULL == this ) return rv_error;
 
-    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+    if ( !valid || killed ) return rv_error;
 
     // don't bother if there is already a request to kill it
-    if ( _req_data.kill_me ) return rv_fail;
+    if ( kill_me ) return rv_fail;
 
     // check the requirements for activating the object
-    if ( !_proc_data.constructed || !_proc_data.initialized )
+    if ( !constructed || !initialized )
         return rv_fail;
 
-    _proc_data.action  = ego_obj_processing;
+    action  = ego_obj_processing;
 
     return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_set_killed( bool_t val )
+egoboo_rv ego_object_process::proc_set_killed( bool_t val )
 {
     if ( NULL == this ) return rv_error;
 
     // don't bother if it's dead
-    if ( !_proc_data.valid ) return rv_error;
+    if ( !valid ) return rv_error;
 
-    bool_t was_killed = _proc_data.killed;
+    bool_t was_killed = killed;
 
     // set the killed value
-    _proc_data.killed = val;
+    killed = val;
 
     // clear all requests
-    _req_data.kill_me  = bfalse;
+    kill_me  = bfalse;
 
     return was_killed ? rv_fail : rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_set_on( bool_t val )
+egoboo_rv ego_object_process::proc_set_on( bool_t val )
 {
     if ( NULL == this ) return rv_error;
 
     // don't bother if it's dead
-    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+    if ( !valid || killed ) return rv_error;
 
-    bool_t was_on = _proc_data.on;
+    bool_t was_on = on;
 
     // turn it off
-    _proc_data.on = val;
+    on = val;
 
     // clear all requests
-    _req_data.turn_me_on  = bfalse;
-    _req_data.turn_me_off = bfalse;
+    turn_me_on  = bfalse;
+    turn_me_off = bfalse;
 
     return was_on ? rv_fail : rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_do_on()
+egoboo_rv ego_object_process::proc_do_on()
 {
     if ( NULL == this ) return rv_error;
 
-    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+    if ( !valid || killed ) return rv_error;
 
     // anything to do?
-    if ( !_req_data.turn_me_on && !_req_data.turn_me_off ) return rv_error;
+    if ( !turn_me_on && !turn_me_off ) return rv_error;
 
     // assume no change
-    bool_t on_val = _proc_data.on;
+    bool_t on_val = on;
 
     // poll the requests
     // let turn_me_off override turn_me_on
-    if ( _req_data.turn_me_off )
+    if ( turn_me_off )
     {
         on_val = bfalse;
     }
-    else if ( _req_data.turn_me_on )
+    else if ( turn_me_on )
     {
         on_val = btrue;
     }
@@ -389,16 +319,16 @@ egoboo_rv ego_obj_proc_data::proc_do_on()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_obj_proc_data::proc_set_spawning( bool_t val )
+egoboo_rv ego_object_process::proc_set_spawning( bool_t val )
 {
     bool_t old_val;
 
     if ( NULL == this ) return rv_error;
 
-    if ( !_proc_data.valid || _proc_data.killed ) return rv_error;
+    if ( !valid || killed ) return rv_error;
 
-    old_val             = _proc_data.spawning;
-    _proc_data.spawning = val;
+    old_val  = spawning;
+    spawning = val;
 
     return ( old_val == val ) ? rv_fail : rv_success;
 }
@@ -438,103 +368,19 @@ ego_obj * ego_obj::deallocate( ego_obj * pbase )
     cpp_list_state::set_allocated( pbase->get_plist(), bfalse );
 
     // invalidate the object
-    return ego_obj::invalidate( pbase );
+    return ego_obj::validate( pbase, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::invalidate( ego_obj * pbase )
+ego_obj * ego_obj::validate( ego_obj * pbase, bool_t val )
 {
     if ( NULL == pbase ) return pbase;
 
-    ego_obj_proc::invalidate( pbase->get_pproc() );
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::end_constructing( ego_obj * pbase )
-{
-    if ( NULL == pbase ) return pbase;
-
-    ego_obj_proc::end_constructing( pbase->get_pproc() );
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::end_initializing( ego_obj * pbase )
-{
-    if ( NULL == pbase ) return pbase;
-
-    ego_obj_proc::end_initialization( pbase->get_pproc() );
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::end_processing( ego_obj * pbase )
-{
-    ego_obj_proc * loc_pproc = NULL;
-
-    if ( NULL == pbase ) return pbase;
-    loc_pproc = pbase->get_pproc();
-
-    ego_obj_proc::end_processing( loc_pproc );
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::end_deinitializing( ego_obj * pbase )
-{
-    if ( NULL == pbase ) return pbase;
-
-    ego_obj_proc::end_deinitializing( pbase->get_pproc() );
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::end_destructing( ego_obj * pbase )
-{
-    if ( NULL == pbase ) return pbase;
-
-    ego_obj_proc::end_destructing( pbase->get_pproc() );
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::end_invalidating( ego_obj * pbase )
-{
-    if ( NULL == pbase ) return pbase;
-
-    ego_obj_proc::end_invalidating( pbase->get_pproc() );
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::validate( ego_obj * pbase )
-{
-    if ( NULL == pbase ) return pbase;
-
-    if ( rv_success == pbase->proc_validate( pbase->get_allocated() ) )
+    if ( rv_success == ego_object_process::validate( pbase, val ) )
     {
         // if this succeeds, assign a new guid
         pbase->guid = ego_obj::guid_counter++;
     }
-
-    return pbase;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::begin_waiting( ego_obj * pbase )
-{
-    if ( NULL == pbase ) return pbase;
-
-    // tell the process to wait
-    pbase->proc_set_wait();
 
     return pbase;
 }
@@ -564,7 +410,7 @@ ego_obj * ego_obj::req_terminate( ego_obj * pbase )
 {
     if ( NULL == pbase ) return pbase;
 
-    pbase->proc_req_kill();
+    pbase->proc_req_terminate();
 
     return pbase;
 }
@@ -578,26 +424,26 @@ ego_obj * ego_obj::grant_terminate( ego_obj * pbase )
     if ( !ego_obj::get_allocated( pbase ) ) return pbase;
 
     // no reason to be in here unless someone is aksking to die
-    if ( !ego_obj::get_kill( pbase ) ) return pbase;
+    if ( !pbase->kill_me ) return pbase;
 
     // poke it to make sure that it is at least a little bit alive
-    if ( !ego_obj::get_valid( pbase ) || ego_obj::get_killed( pbase ) ) return pbase;
+    if ( !pbase->valid || pbase->killed ) return pbase;
 
     // figure out the next step in killing the object
-    if ( ego_obj::get_initialized( pbase ) )
+    if ( get_initialized( pbase ) )
     {
         // ready to be killed. jump to deinitializing
-        ego_obj::end_processing( pbase );
+        pbase->end_processing();
     }
-    else if ( ego_obj::get_constructed( pbase ) )
+    else if ( get_constructed( pbase ) )
     {
         // already deinitialized. jump to deconstructing
-        ego_obj::end_deinitializing( pbase );
+        pbase->end_deinitializing();
     }
-    else if ( ego_obj::get_valid( pbase ) )
+    else if ( get_valid( pbase ) )
     {
         // already deconstructed. jump past deconstructing.
-        ego_obj::end_destructing( pbase );
+        pbase->end_destructing();
 
         /// @note BB@> The ego_obj::end_invalidating() function is called in the
         ///            t_ego_obj_lst<>::free_one() function when the object is finally
@@ -629,3 +475,261 @@ ego_obj * ego_obj::set_spawning( ego_obj * pbase, bool_t val )
 
     return pbase;
 }
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_object_process * ego_object_process_engine::run( ego_object_process * pobj )
+{
+    int rv = -1;
+
+    if ( NULL == pobj || !pobj->valid || pobj->killed ) return NULL;
+
+    switch ( pobj->action )
+    {
+        default:
+        case ego_obj_nothing:
+            // do nothing and DO return an "error"
+            rv = -1;
+            break;
+
+        case ego_obj_constructing:
+            rv = pobj->do_constructing();
+            break;
+
+        case ego_obj_initializing:
+            rv = pobj->do_initializing();
+            break;
+
+        case ego_obj_processing:
+            rv = pobj->do_processing();
+            break;
+
+        case ego_obj_deinitializing:
+            rv = pobj->do_deinitializing();
+            break;
+
+        case ego_obj_destructing:
+            rv = pobj->do_destructing();
+            break;
+
+        case ego_obj_waiting:
+            // do nothing but DON'T return an "error"
+            rv = 1;
+            break;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#include "char.inl"
+
+ego_obj_chr * ego_object_engine::run( ego_obj_chr * pchr )
+{
+    // run the object engine
+    ego_obj * pobj = ego_object_engine::run( static_cast<ego_obj *>( pchr ) );
+
+    // deal with the return state
+    if ( NULL == pobj || !VALID_PBASE( pchr ) )
+    {
+        pchr->update_guid = INVALID_UPDATE_GUID;
+    }
+    else if ( ego_obj_processing == pchr->action )
+    {
+        pchr->update_guid = ChrObjList.update_guid();
+    }
+
+    return pchr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_enc * ego_object_engine::run( ego_obj_enc * penc )
+{
+    // run the object engine
+    ego_obj * pobj = ego_object_engine::run( static_cast<ego_obj *>( penc ) );
+
+    // deal with the return state
+    if ( NULL == pobj || !VALID_PBASE( penc ) )
+    {
+        penc->update_guid = INVALID_UPDATE_GUID;
+    }
+    else if ( ego_obj_processing == penc->action )
+    {
+        penc->update_guid = EncObjList.update_guid();
+    }
+
+    return penc;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_prt * ego_object_engine::run( ego_obj_prt * pprt )
+{
+    // run the object engine
+    ego_obj * pobj = ego_object_engine::run( static_cast<ego_obj *>( pprt ) );
+
+    // deal with the return state
+    if ( NULL == pobj || !VALID_PBASE( pprt ) )
+    {
+        pprt->update_guid = INVALID_UPDATE_GUID;
+    }
+    else if ( ego_obj_processing == pprt->action )
+    {
+        pprt->update_guid = PrtObjList.update_guid();
+    }
+
+    return pprt;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj * ego_object_engine::run( ego_obj * pobj )
+{
+    if ( !VALID_PBASE( pobj ) ) return NULL;
+
+    // set the object to deinitialize if it is not "dangerous" and if was requested
+    if ( pobj->kill_me )
+    {
+        pobj = ego_obj::grant_terminate( pobj );
+    }
+
+    // run the process engine
+    ego_object_process_engine::run( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj * ego_object_engine::run_construct( ego_obj * pobj, int max_iterations )
+{
+    int iterations;
+
+    if ( !VALID_PBASE( pobj ) ) return NULL;
+
+    // if the character is already beyond this stage, deconstruct it and start over
+    if ( pobj->action > ( int )( ego_obj_constructing + 1 ) )
+    {
+        ego_obj * tmp_chr = ego_object_engine::run_deconstruct( pobj, max_iterations );
+        if ( tmp_chr == pobj ) return NULL;
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pobj->action <= ego_obj_constructing && iterations < max_iterations )
+    {
+        ego_obj * ptmp = ego_object_engine::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+
+        iterations++;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj * ego_object_engine::run_initialize( ego_obj * pobj, int max_iterations )
+{
+    int                 iterations;
+
+    if ( !VALID_PBASE( pobj ) ) return NULL;
+
+    // if the character is already beyond this stage, deconstruct it and start over
+    if ( pobj->action > ( int )( ego_obj_initializing + 1 ) )
+    {
+        ego_obj * tmp_chr = ego_object_engine::run_deconstruct( pobj, max_iterations );
+        if ( tmp_chr == pobj ) return NULL;
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pobj->action <= ego_obj_initializing && iterations < max_iterations )
+    {
+        ego_obj * ptmp = ego_object_engine::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+        iterations++;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj * ego_object_engine::run_activate( ego_obj * pobj, int max_iterations )
+{
+    int                 iterations;
+
+    pobj = POBJ_GET_PBASE( pobj );
+    if ( !VALID_PBASE( pobj ) ) return NULL;
+
+    // if the character is already beyond this stage, deconstruct it and start over
+    if ( pobj->action > ( int )( ego_obj_processing + 1 ) )
+    {
+        ego_obj * tmp_chr = ego_object_engine::run_deconstruct( pobj, max_iterations );
+        if ( tmp_chr == pobj ) return NULL;
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pobj->action < ego_obj_processing && iterations < max_iterations )
+    {
+        ego_obj * ptmp = ego_object_engine::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+        iterations++;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj * ego_object_engine::run_deinitialize( ego_obj * pobj, int max_iterations )
+{
+    int iterations;
+
+    if ( !VALID_PBASE( pobj ) ) return NULL;
+
+    // if the character is already beyond this stage, deinitialize it
+    if ( pobj->action > ( int )( ego_obj_deinitializing + 1 ) )
+    {
+        return pobj;
+    }
+    else if ( pobj->action < ego_obj_deinitializing )
+    {
+        pobj->end_processing();
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pobj->action <= ego_obj_deinitializing && iterations < max_iterations )
+    {
+        ego_obj * ptmp = ego_object_engine::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+        iterations++;
+    }
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj * ego_object_engine::run_deconstruct( ego_obj * pobj, int max_iterations )
+{
+    int iterations;
+
+    if ( !VALID_PBASE( pobj ) ) return NULL;
+
+    // if the character is already beyond this stage, do nothing
+    if ( pobj->action > ( int )( ego_obj_destructing + 1 ) )
+    {
+        return pobj;
+    }
+    else if ( pobj->action < ego_obj_deinitializing )
+    {
+        // make sure that you deinitialize before destructing
+        pobj->end_processing();
+    }
+
+    iterations = 0;
+    while ( NULL != pobj && pobj->action <= ego_obj_destructing && iterations < max_iterations )
+    {
+        ego_obj * ptmp = ego_object_engine::run( pobj );
+        if ( ptmp != pobj ) return NULL;
+        iterations++;
+    }
+
+    return pobj;
+}
+

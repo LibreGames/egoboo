@@ -36,7 +36,7 @@
 template < typename _ty, size_t _sz >
 _ty * t_cpp_list< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
 {
-    if ( !validate_ref( ref ) ) return NULL;
+    if ( !valid_ref( ref ) ) return NULL;
 
     return lst + ref;
 }
@@ -77,7 +77,7 @@ size_t t_cpp_list< _ty, _sz >::get_free()
 template < typename _ty, size_t _sz >
 egoboo_rv t_cpp_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
 {
-    if ( !validate_ref( ref ) ) return rv_error;
+    if ( !valid_ref( ref ) ) return rv_error;
     _ty * ptr   = lst + ref;
 
     if ( free_count > _sz ) free_count = _sz;
@@ -131,7 +131,7 @@ int t_cpp_list< _ty, _sz >::get_free_list_index( const t_reference<_ty> & ref )
     size_t cnt;
     _ty  * ptr;
 
-    if ( !validate_ref( ref ) ) return retval;
+    if ( !valid_ref( ref ) ) return retval;
     ptr   = lst + ref;
 
     // shorten the list to remove any bad values on the top
@@ -174,7 +174,7 @@ bool_t t_cpp_list< _ty, _sz >::remove_free_index( int idx )
     free_ref[idx] = _sz;
 
     // let the object know it is not in the list anymore
-    if ( validate_ref( ref ) )
+    if ( valid_ref( ref ) )
     {
         cpp_list_state::set_free( lst[ref].get_plist(), bfalse );
     }
@@ -210,7 +210,7 @@ egoboo_rv t_cpp_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
     egoboo_rv retval;
     _ty * ptr;
 
-    if ( !validate_ref( ref ) ) return rv_error;
+    if ( !valid_ref( ref ) ) return rv_error;
     ptr  = lst + ref;
 
     if ( free_count > _sz ) free_count = _sz;
@@ -266,7 +266,7 @@ int t_cpp_list< _ty, _sz >::get_used_list_index( const t_reference<_ty> & ref )
     size_t cnt;
     _ty * ptr;
 
-    if ( !validate_ref( ref ) ) return retval;
+    if ( !valid_ref( ref ) ) return retval;
     ptr = lst + ref;
 
     // shorten the list to remove any bad values on the top
@@ -309,7 +309,7 @@ bool_t t_cpp_list< _ty, _sz >::remove_used_index( int index )
     used_ref[index] = _sz;
 
     // let the object know it is not in the list anymore
-    if ( validate_ref( ref ) )
+    if ( valid_ref( ref ) )
     {
         cpp_list_state::set_used( lst[ref].get_plist(), bfalse );
     }
@@ -345,7 +345,7 @@ egoboo_rv t_cpp_list< _ty, _sz >::free_one( const t_reference<_ty> & ref )
     egoboo_rv retval = rv_error;
     _ty     * ptr;
 
-    if ( !validate_ref( ref ) ) return rv_error;
+    if ( !valid_ref( ref ) ) return rv_error;
     ptr  = lst + ref;
 
     if ( ptr->in_used_list() )
@@ -496,7 +496,7 @@ bool_t t_cpp_map<_ty, _sz>::add( const t_reference<_ty> & ref, const _ty * val )
     }
     else
     {
-#if defined DEBUG_CPP_MAP
+#if defined DEBUG_CPP_LISTS
         // is the slot already occupied?
         if ( has_ref( ref ) ) return bfalse;
 #endif

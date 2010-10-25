@@ -74,7 +74,7 @@ void MadList_init()
     // initialize all ego_mad
     for ( cnt = 0; cnt < MAX_MAD; cnt++ )
     {
-        ego_mad * pmad = MadStack.lst + cnt;
+        ego_mad * pmad = MadStack + cnt;
 
         // blank out all the data, including the obj_base data
         ego_mad::dtor_this( pmad );
@@ -90,7 +90,7 @@ void MadList_dtor()
 
     for ( cnt = 0; cnt < MAX_MAD; cnt++ )
     {
-        ego_mad::dtor_this( MadStack.lst + cnt );
+        ego_mad::dtor_this( MadStack + cnt );
     }
 }
 
@@ -133,7 +133,7 @@ void action_copy_correct( const MAD_REF & imad, int actiona, int actionb )
     if ( actionb < 0 || actionb >= ACTION_COUNT ) return;
 
     if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack.lst + imad;
+    pmad = MadStack + imad;
 
     // With the new system using the action_map, this is all that is really necessary
     if ( ACTION_COUNT == pmad->action_map[actiona] )
@@ -195,7 +195,7 @@ int mad_get_action( const MAD_REF & imad, int action )
     ego_mad * pmad;
 
     if ( !LOADED_MAD( imad ) ) return ACTION_COUNT;
-    pmad = MadStack.lst + imad;
+    pmad = MadStack + imad;
 
     // you are pretty much guaranteed that ACTION_DA will be valid for a model,
     // I guess it could be invalid if the model had no frames or something
@@ -249,9 +249,9 @@ BIT_FIELD mad_get_actionfx( const MAD_REF & imad, int action )
     ego_MD2_Frame * frame_lst, * pframe;
 
     if ( !LOADED_MAD( imad ) ) return 0;
-    pmad = MadStack.lst + imad;
+    pmad = MadStack + imad;
 
-    md2 = MadStack.lst[imad].md2_ptr;
+    md2 = MadStack[imad].md2_ptr;
     if ( NULL == md2 ) return 0;
 
     if ( action < 0 || action >= ACTION_COUNT ) return 0;
@@ -340,7 +340,7 @@ void mad_get_walk_frame( const MAD_REF & imad, int lip, int action )
     ego_mad * pmad;
 
     if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack.lst + imad;
+    pmad = MadStack + imad;
 
     action = mad_get_action( imad, action );
     if ( ACTION_COUNT == action )
@@ -396,9 +396,9 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF & imad, int frame )
     ego_MD2_Model * md2;
     ego_MD2_Frame * pframe;
 
-    if ( !VALID_MAD_RANGE( imad ) ) return;
+    if ( !MadStack.valid_ref( imad ) ) return;
 
-    md2 = MadStack.lst[imad].md2_ptr;
+    md2 = MadStack[imad].md2_ptr;
     if ( NULL == md2 ) return;
 
     // check for a valid frame number
@@ -594,7 +594,7 @@ void mad_make_framelip( const MAD_REF & imad, int action )
     ego_MD2_Frame * frame_list, * pframe;
 
     if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack.lst + imad;
+    pmad = MadStack + imad;
 
     md2 = pmad->md2_ptr;
     if ( NULL == md2 ) return;
@@ -630,7 +630,7 @@ void mad_make_equally_lit( const MAD_REF & imad )
 
     if ( !LOADED_MAD( imad ) ) return;
 
-    md2         = MadStack.lst[imad].md2_ptr;
+    md2         = MadStack[imad].md2_ptr;
     frame_count = md2_get_numFrames( md2 );
     vert_count  = md2_get_numVertices( md2 );
 
@@ -700,8 +700,8 @@ MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF & ima
     ego_mad * pmad;
     STRING  newloadname;
 
-    if ( !VALID_MAD_RANGE( imad ) ) return MAD_REF( MAX_MAD );
-    pmad = MadStack.lst + imad;
+    if ( !MadStack.valid_ref( imad ) ) return MAD_REF( MAX_MAD );
+    pmad = MadStack + imad;
 
     // clear out the mad
     ego_mad::reconstruct( pmad );
@@ -819,7 +819,7 @@ void mad_finalize( const MAD_REF & imad )
     ego_MD2_Frame * frame_list;
 
     if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack.lst + imad;
+    pmad = MadStack + imad;
 
     pmd2 = pmad->md2_ptr;
     if ( NULL == pmd2 ) return;
@@ -860,7 +860,7 @@ void mad_rip_actions( const MAD_REF & imad )
     ego_MD2_Frame    * frame_list;
 
     if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack.lst + imad;
+    pmad = MadStack + imad;
 
     pmd2 = pmad->md2_ptr;
     if ( NULL == pmd2 ) return;
@@ -1001,7 +1001,7 @@ void init_all_mad()
 
     for ( cnt = 0; cnt < MAX_MAD; cnt++ )
     {
-        ego_mad::reconstruct( MadStack.lst + cnt );
+        ego_mad::reconstruct( MadStack + cnt );
     }
 }
 
@@ -1021,8 +1021,8 @@ bool_t release_one_mad( const MAD_REF & imad )
 {
     ego_mad * pmad;
 
-    if ( !VALID_MAD_RANGE( imad ) ) return bfalse;
-    pmad = MadStack.lst + imad;
+    if ( !MadStack.valid_ref( imad ) ) return bfalse;
+    pmad = MadStack + imad;
 
     if ( !pmad->loaded ) return btrue;
 
@@ -1129,14 +1129,14 @@ int randomize_action( int action, int slot )
 //    int indexofnextnextnextnext;
 //    int frame;
 //
-//    frame = ego_md2_data[MadStack.lst[imad].md2_ref].framestart;
+//    frame = ego_md2_data[MadStack[imad].md2_ref].framestart;
 //    cnt = 0;
 //
-//    while ( cnt < ego_md2_data[MadStack.lst[imad].md2_ref].vertex_lst )
+//    while ( cnt < ego_md2_data[MadStack[imad].md2_ref].vertex_lst )
 //    {
 //        tnc = 0;
 //
-//        while ( tnc < ego_md2_data[MadStack.lst[imad].md2_ref].frames )
+//        while ( tnc < ego_md2_data[MadStack[imad].md2_ref].frames )
 //        {
 //            indexofcurrent = pframe->vrta[cnt];
 //            indexofnext = Md2FrameList[frame+1].vrta[cnt];
@@ -1189,13 +1189,13 @@ int randomize_action( int action, int slot )
 //
 //    // if (imad == 0)
 //    // {
-//    //   for ( cnt = 0; cnt < MadStack.lst[imad].vertex_lst; cnt++ )
+//    //   for ( cnt = 0; cnt < MadStack[imad].vertex_lst; cnt++ )
 //    //   {
 //    //       printf("%d-%d\n", cnt, vertexconnected( imad, cnt ) );
 //    //   }
 //    // }
 //
-//    MadStack.lst[imad].transvertices = ego_md2_data[MadStack.lst[imad].md2_ref].vertex_lst;
+//    MadStack[imad].transvertices = ego_md2_data[MadStack[imad].md2_ref].vertex_lst;
 //}
 
 //--------------------------------------------------------------------------------------------
