@@ -1561,7 +1561,10 @@ void update_all_enchants()
     // update all enchants
     for ( ienc = 0; ienc < MAX_ENC; ienc++ )
     {
-        ego_object_engine::run( EncObjList.get_ptr( ienc ) );
+        ego_obj_enc * penc = EncObjList.get_ptr( ienc );
+        if( NULL == penc ) continue;
+
+        ego_object_engine::run( penc );
     }
 
     // fix the stat timer

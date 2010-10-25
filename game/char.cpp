@@ -3698,6 +3698,102 @@ int restock_ammo( const CHR_REF & character, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
+/// implementation of the constructor
+/// @note all *_REF members will be automatically constructed to an invalid value of unsigned(-1)
+/// The team and baseteam references shouold be initialized to some default team
+ego_chr_data::ego_chr_data() :
+    // character stats
+    life(LOWSTAT),
+    mana(0),
+
+    experience(0),
+    experience_level(0),
+
+    // team stuff
+    team(TEAM_NULL),
+    baseteam(TEAM_NULL),
+
+    fat(1.0f),
+    fat_goto(1.0f),
+    fat_goto_time(0),
+
+    // jump stuff
+    jump_time(JUMP_DELAY),
+    jump_number(1),
+    jump_ready(btrue),
+
+    // attachments
+    inwhich_slot(SLOT_LEFT),
+
+    // platform stuff
+    holdingweight(0),
+
+    // combat stuff
+    damageboost(0),
+    damagethreshold(0),
+
+    // sound stuff
+    loopedsound_channel(INVALID_SOUND_CHANNEL),
+
+    // missile handling
+    missiletreatment(MISSILE_NORMAL),
+    missilecost(0),
+
+    // "variable" properties
+    is_hidden(bfalse),
+    alive(btrue),
+    waskilled(bfalse),
+    islocalplayer(bfalse),
+    hitready(btrue),
+    isequipped(bfalse),
+
+    // "constant" properties
+    isshopitem(bfalse),
+    canbecrushed(bfalse),
+    canchannel(bfalse),
+
+    // misc timers
+    grogtime(0),
+    dazetime(0),
+    boretime(BORETIME),
+    carefultime(CAREFULTIME),
+    reloadtime(0),
+    damagetime(0),
+
+    // graphics info
+    sparkle(NOSPARKLE),
+    StatusList_on(bfalse),
+    shadow_size(30),
+    shadow_size_save(30),
+
+    // model info
+    is_overlay(bfalse),
+
+    // Skills
+    darkvision_level(-1),
+    see_kurse_level(-1),
+
+    onwhichgrid(INVALID_TILE),
+    onwhichblock(INVALID_BLOCK),
+
+    // movement properties
+    turnmode(TURNMODE_VELOCITY),
+
+    movement_bits(-1),
+    maxaccel(50),
+
+    is_flying_platform(bfalse),
+    is_flying_jump(bfalse),
+    fly_height(0.0f),
+
+    safe_valid(bfalse),
+    safe_time(0),
+    safe_grid(INVALID_TILE)
+{ 
+    ego_chr_data::ctor_this( this ); 
+}
+
+//--------------------------------------------------------------------------------------------
 int ego_chr_data::get_skill( ego_chr_data *pchr, IDSZ whichskill )
 {
     /// @details ZF@> This returns the skill level for the specified skill or 0 if the character doesn't
@@ -3804,7 +3900,10 @@ void update_all_characters()
 
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ego_object_engine::run( ChrObjList.get_valid_ptr( ichr ) );
+        ego_obj_chr * pchr = ChrObjList.get_valid_ptr( ichr );
+        if( NULL == pchr ) continue;
+
+        ego_object_engine::run( pchr );
     }
 
     // fix the stat timer

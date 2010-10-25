@@ -308,7 +308,7 @@ struct ego_chr_data : public ego_chr_cap_data
     //---- constructors and destructors
 
     /// default constructor
-    explicit ego_chr_data()  { ego_chr_data::ctor_this( this ); };
+    explicit ego_chr_data();
 
     /// default destructor
     ~ego_chr_data() { ego_chr_data::dtor_this( this ); };

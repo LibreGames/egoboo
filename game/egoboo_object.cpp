@@ -528,6 +528,8 @@ ego_object_process * ego_object_process_engine::run( ego_object_process * pobj )
 
 ego_obj_chr * ego_object_engine::run( ego_obj_chr * pchr )
 {
+    if( NULL == pchr ) return pchr;
+
     // run the object engine
     ego_obj * pobj = ego_object_engine::run( static_cast<ego_obj *>( pchr ) );
 
