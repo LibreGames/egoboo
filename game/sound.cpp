@@ -1095,7 +1095,7 @@ void looped_update_all_sound()
         else
         {
             // make the sound stick to the object
-            diff = fvec3_sub( ChrObjList.get_data( plooped->object ).pos.v, PCamera->track_pos.v );
+            diff = fvec3_sub( ChrObjList.get_data_ref( plooped->object ).pos.v, PCamera->track_pos.v );
 
             _update_stereo_channel( plooped->channel, diff );
         }

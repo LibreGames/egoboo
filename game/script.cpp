@@ -279,7 +279,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
 
         if ( pchr->ismount && INGAME_CHR( rider_ref ) )
         {
-            ego_chr * prider = ChrObjList.get_pdata( rider_ref );
+            ego_chr * prider = ChrObjList.get_data_ptr( rider_ref );
 
             // Mount
             pchr->latch.raw_valid = prider->latch.raw_valid;
@@ -956,12 +956,12 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
     if ( DEFINED_CHR( pself->target ) )
     {
-        ptarget = ChrObjList.get_pdata( pself->target );
+        ptarget = ChrObjList.get_data_ptr( pself->target );
     }
 
     if ( DEFINED_CHR( pself->owner ) )
     {
-        powner = ChrObjList.get_pdata( pself->owner );
+        powner = ChrObjList.get_data_ptr( pself->owner );
     }
 
     // get the operator
@@ -1960,7 +1960,7 @@ ego_ai_bundle * ego_ai_bundle::validate( ego_ai_bundle * pbundle )
     // get the character info from the reference or the pointer
     if ( VALID_CHR( pbundle->chr_ref ) )
     {
-        pbundle->chr_ptr = ChrObjList.get_pdata( pbundle->chr_ref );
+        pbundle->chr_ptr = ChrObjList.get_data_ptr( pbundle->chr_ref );
     }
     else if ( NULL != pbundle->chr_ptr )
     {

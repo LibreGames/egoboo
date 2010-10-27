@@ -108,17 +108,17 @@ static bool_t update_chr_darkvision( const CHR_REF & character );
 
 static const float traction_min = 0.2f;
 
-static ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_chr_environment * penviro );
-static ego_chr_bundle * move_one_character_do_fluid_friction( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_do_voluntary_flying( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_do_involuntary( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_do_orientation( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_do_z_motion( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_do_animation( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_limit_flying( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_do_jump( ego_chr_bundle * pbdl );
-static ego_chr_bundle * move_one_character_do_floor( ego_chr_bundle * pbdl );
+static ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_chr_environment * penviro );
+static ego_bundle_chr * move_one_character_do_fluid_friction( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_do_involuntary( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_do_z_motion( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_do_animation( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_limit_flying( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_do_jump( ego_bundle_chr * pbdl );
+static ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl );
 
 static bool_t pack_validate( ego_pack * ppack );
 
@@ -200,7 +200,7 @@ void keep_weapons_with_holders()
 
         if ( INGAME_CHR( iattached ) )
         {
-            ego_chr * pattached = ChrObjList.get_pdata( iattached );
+            ego_chr * pattached = ChrObjList.get_data_ptr( iattached );
 
             // Keep in hand weapons with iattached
             if ( ego_chr::matrix_valid( pchr ) )
@@ -264,7 +264,7 @@ void keep_weapons_with_holders()
             {
                 PACK_BEGIN_LOOP( iattached, pchr->pack.next )
                 {
-                    ego_chr * tmp_chr = ChrObjList.get_pdata( iattached );
+                    ego_chr * tmp_chr = ChrObjList.get_data_ptr( iattached );
 
                     if ( NULL != tmp_chr )
                     {
@@ -290,7 +290,7 @@ void make_one_character_matrix( const CHR_REF & ichr )
     ego_chr_instance * pinst;
 
     if ( !INGAME_CHR( ichr ) ) return;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
     pinst = &( pchr->inst );
 
     // invalidate this matrix
@@ -302,7 +302,7 @@ void make_one_character_matrix( const CHR_REF & ichr )
         // Overlays are kept with their target...
         if ( INGAME_CHR( pchr->ai.target ) )
         {
-            ego_chr * ptarget = ChrObjList.get_pdata( pchr->ai.target );
+            ego_chr * ptarget = ChrObjList.get_data_ptr( pchr->ai.target );
 
             ego_chr::set_pos( pchr, ego_chr::get_pos_v( ptarget ) );
 
@@ -359,7 +359,7 @@ void chr_log_script_time( const CHR_REF & ichr )
     FILE * ftmp;
 
     if ( !DEFINED_CHR( ichr ) ) return;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     if ( pchr->ai._clkcount <= 0 ) return;
 
@@ -389,7 +389,7 @@ void free_one_character_in_game( const CHR_REF & character )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( character ) ) return;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return;
@@ -471,15 +471,15 @@ void free_inventory_in_game( const CHR_REF & character )
 
     if ( !DEFINED_CHR( character ) ) return;
 
-    PACK_BEGIN_LOOP( cnt, ChrObjList.get_data( character ).pack.next )
+    PACK_BEGIN_LOOP( cnt, ChrObjList.get_data_ref( character ).pack.next )
     {
         free_one_character_in_game( cnt );
     }
     PACK_END_LOOP( cnt );
 
     // set the inventory to the "empty" state
-    ChrObjList.get_data( character ).pack.count = 0;
-    ChrObjList.get_data( character ).pack.next  = CHR_REF( MAX_CHR );
+    ChrObjList.get_data_ref( character ).pack.count = 0;
+    ChrObjList.get_data_ref( character ).pack.next  = CHR_REF( MAX_CHR );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -499,7 +499,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
     {
         goto place_particle_at_vertex_fail;
     }
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // Check validity of attachment
     if ( pchr->pack.is_packed )
@@ -564,7 +564,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
 
 place_particle_at_vertex_fail:
 
-    prt_request_free_ref( GET_REF_PPRT( pprt ) );
+    ego_obj_prt::request_terminate( GET_REF_PPRT( pprt ) );
 
     return NULL;
 }
@@ -580,17 +580,17 @@ void make_all_character_matrices( bool_t do_physics )
     //// blank the accumulators
     //for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     //{
-    //    ChrObjList.get_data(ichr).phys.apos_plat.x = 0.0f;
-    //    ChrObjList.get_data(ichr).phys.apos_plat.y = 0.0f;
-    //    ChrObjList.get_data(ichr).phys.apos_plat.z = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.apos_plat.x = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.apos_plat.y = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.apos_plat.z = 0.0f;
 
-    //    ChrObjList.get_data(ichr).phys.apos_coll.x = 0.0f;
-    //    ChrObjList.get_data(ichr).phys.apos_coll.y = 0.0f;
-    //    ChrObjList.get_data(ichr).phys.apos_coll.z = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.apos_coll.x = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.apos_coll.y = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.apos_coll.z = 0.0f;
 
-    //    ChrObjList.get_data(ichr).phys.avel.x = 0.0f;
-    //    ChrObjList.get_data(ichr).phys.avel.y = 0.0f;
-    //    ChrObjList.get_data(ichr).phys.avel.z = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.avel.x = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.avel.y = 0.0f;
+    //    ChrObjList.get_data_ref(ichr).phys.avel.z = 0.0f;
     //}
 
     // just call ego_chr::update_matrix on every character
@@ -611,7 +611,7 @@ void make_all_character_matrices( bool_t do_physics )
     ////        ego_chr * pchr;
 
     ////        if ( !INGAME_CHR(ichr) ) continue;
-    ////        pchr = ChrObjList.get_pdata(ichr);
+    ////        pchr = ChrObjList.get_data_ptr(ichr);
 
     ////        tmp_pos = ego_chr::get_pos( pchr );
 
@@ -682,7 +682,7 @@ void make_all_character_matrices( bool_t do_physics )
     ////        ego_chr * pchr;
 
     ////        if ( !INGAME_CHR(ichr) ) continue;
-    ////        pchr = ChrObjList.get_pdata(ichr);
+    ////        pchr = ChrObjList.get_data_ptr(ichr);
 
     ////        if( !pchr->inst.matrix_cache.valid ) continue;
 
@@ -870,7 +870,7 @@ void reset_character_accel( const CHR_REF & character )
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // cleanup the enchant list
     cleanup_character_enchants( pchr );
@@ -880,7 +880,7 @@ void reset_character_accel( const CHR_REF & character )
     while ( enchant != MAX_ENC )
     {
         ego_enc::remove_add( enchant, ADDACCEL );
-        enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+        enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
     }
 
     // Set the starting value
@@ -899,7 +899,7 @@ void reset_character_accel( const CHR_REF & character )
     while ( enchant != MAX_ENC )
     {
         ego_enc::apply_add( enchant, ADDACCEL, ego_enc::get_ieve( enchant ) );
-        enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+        enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
     }
 }
 
@@ -916,12 +916,12 @@ bool_t detach_character_from_mount( const CHR_REF & character, Uint8 ignorekurse
 
     // Make sure the character is valid
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // Make sure the character is mounted
-    mount = ChrObjList.get_data( character ).attachedto;
+    mount = ChrObjList.get_data_ref( character ).attachedto;
     if ( !INGAME_CHR( mount ) ) return bfalse;
-    pmount = ChrObjList.get_pdata( mount );
+    pmount = ChrObjList.get_data_ptr( mount );
 
     // Don't allow living characters to drop kursed weapons
     if ( !ignorekurse && pchr->iskursed && pmount->alive && pchr->isitem )
@@ -1030,7 +1030,7 @@ bool_t detach_character_from_mount( const CHR_REF & character, Uint8 ignorekurse
             ego_enc::remove_set( enchant, SETALPHABLEND );
             ego_enc::remove_set( enchant, SETLIGHTBLEND );
 
-            enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+            enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
         }
 
         ego_chr::set_alpha( pchr, pchr->alpha_base );
@@ -1051,7 +1051,7 @@ bool_t detach_character_from_mount( const CHR_REF & character, Uint8 ignorekurse
                 ego_enc::apply_set( enchant, SETLIGHTBLEND, ipro );
             }
 
-            enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+            enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
         }
     }
 
@@ -1075,12 +1075,12 @@ void reset_character_alpha( const CHR_REF & character )
 
     // Make sure the character is valid
     if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // Make sure the character is mounted
-    mount = ChrObjList.get_data( character ).attachedto;
+    mount = ChrObjList.get_data_ref( character ).attachedto;
     if ( !INGAME_CHR( mount ) ) return;
-    pmount = ChrObjList.get_pdata( mount );
+    pmount = ChrObjList.get_data_ptr( mount );
 
     if ( pchr->isitem && pmount->transferblend )
     {
@@ -1094,7 +1094,7 @@ void reset_character_alpha( const CHR_REF & character )
             ego_enc::remove_set( enchant, SETALPHABLEND );
             ego_enc::remove_set( enchant, SETLIGHTBLEND );
 
-            enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+            enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
         }
 
         ego_chr::set_alpha( pchr, pchr->alpha_base );
@@ -1114,7 +1114,7 @@ void reset_character_alpha( const CHR_REF & character )
                 ego_enc::apply_set( enchant, SETLIGHTBLEND, ipro );
             }
 
-            enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+            enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
         }
     }
 }
@@ -1132,7 +1132,7 @@ void attach_character_to_mount( const CHR_REF & iitem, const CHR_REF & iholder, 
     // Make sure the character/item is valid
     // this could be called before the item is fully instantiated
     if ( !DEFINED_CHR( iitem ) ) return;
-    pitem = ChrObjList.get_pdata( iitem );
+    pitem = ChrObjList.get_data_ptr( iitem );
 
     // cannot be mounted if you are packed
     if ( pitem->pack.is_packed ) return;
@@ -1143,7 +1143,7 @@ void attach_character_to_mount( const CHR_REF & iitem, const CHR_REF & iholder, 
 
     // Make sure the holder/mount is valid
     if ( !INGAME_CHR( iholder ) ) return;
-    pholder = ChrObjList.get_pdata( iholder );
+    pholder = ChrObjList.get_data_ptr( iholder );
 
     // cannot be a holder if you are packed
     if ( pholder->pack.is_packed ) return;
@@ -1236,7 +1236,7 @@ void drop_all_idsz( const CHR_REF & character, IDSZ idsz_min, IDSZ idsz_max )
     FACING_T direction;
 
     if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     if ( pchr->pos.z <= ( PITDEPTH >> 1 ) )
     {
@@ -1249,7 +1249,7 @@ void drop_all_idsz( const CHR_REF & character, IDSZ idsz_min, IDSZ idsz_max )
     {
         if ( INGAME_CHR( item ) && item != character )
         {
-            ego_chr * pitem = ChrObjList.get_pdata( item );
+            ego_chr * pitem = ChrObjList.get_data_ptr( item );
 
             if (( ego_chr::get_idsz( item, IDSZ_PARENT ) >= idsz_min && ego_chr::get_idsz( item, IDSZ_PARENT ) <= idsz_max ) ||
                 ( ego_chr::get_idsz( item, IDSZ_TYPE ) >= idsz_min && ego_chr::get_idsz( item, IDSZ_TYPE ) <= idsz_max ) )
@@ -1300,7 +1300,7 @@ bool_t drop_all_items( const CHR_REF & character )
     ego_chr  * pchr;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     detach_character_from_mount( pchr->holdingwhich[SLOT_LEFT], btrue, bfalse );
     detach_character_from_mount( pchr->holdingwhich[SLOT_RIGHT], btrue, bfalse );
@@ -1315,7 +1315,7 @@ bool_t drop_all_items( const CHR_REF & character )
 
             if ( INGAME_CHR( item ) )
             {
-                ego_chr * pitem = ChrObjList.get_pdata( item );
+                ego_chr * pitem = ChrObjList.get_data_ptr( item );
 
                 detach_character_from_mount( item, btrue, btrue );
 
@@ -1409,7 +1409,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
     ego_grab_data ungrab_list[MAX_CHR];
 
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrObjList.get_pdata( ichr_a );
+    pchr_a = ChrObjList.get_data_ptr( ichr_a );
 
     ticks = egoboo_get_ticks();
 
@@ -1521,7 +1521,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
         ego_chr * pchr_b;
 
         ichr_b = grab_list[cnt].ichr;
-        pchr_b = ChrObjList.get_pdata( ichr_b );
+        pchr_b = ChrObjList.get_data_ptr( ichr_b );
 
         if ( grab_list[cnt].dist > GRABSIZE ) continue;
 
@@ -1596,7 +1596,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
                 ichr_b = ungrab_list[cnt].ichr;
                 if ( !INGAME_CHR( ichr_b ) ) continue;
 
-                pchr_b = ChrObjList.get_pdata( ichr_b );
+                pchr_b = ChrObjList.get_data_ptr( ichr_b );
 
                 diff = fvec3_sub( pchr_a->pos.v, pchr_b->pos.v );
 
@@ -1633,7 +1633,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
     bool_t unarmed_attack;
 
     if ( !INGAME_CHR( ichr ) ) return;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     iweapon = pchr->holdingwhich[slot];
 
@@ -1652,7 +1652,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
     }
 
     if ( !INGAME_CHR( iweapon ) ) return;
-    pweapon = ChrObjList.get_pdata( iweapon );
+    pweapon = ChrObjList.get_data_ptr( iweapon );
 
     pweapon_cap = ego_chr::get_pcap( iweapon );
     if ( NULL == pweapon_cap ) return;
@@ -1677,7 +1677,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
         ithrown = spawn_one_character( pchr->pos, pweapon->profile_ref, ego_chr::get_iteam( iholder ), 0, pchr->ori.facing_z, pweapon->name, CHR_REF( MAX_CHR ) );
         if ( INGAME_CHR( ithrown ) )
         {
-            ego_chr * pthrown = ChrObjList.get_pdata( ithrown );
+            ego_chr * pthrown = ChrObjList.get_data_ptr( ithrown );
 
             pthrown->iskursed = bfalse;
             pthrown->ammo = 1;
@@ -1696,7 +1696,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
             {
                 // Poof the item
                 detach_character_from_mount( iweapon, btrue, bfalse );
-                ego_obj_chr::request_terminate( GET_REF_PCHR( pweapon ) );
+                POBJ_REQUEST_TERMINATE( ego_chr::get_obj_ptr( pweapon ) );
             }
             else
             {
@@ -1721,7 +1721,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
                 // will this mess up wands?
                 iparticle = spawn_one_particle( pweapon->pos, pchr->ori.facing_z, pweapon->profile_ref, pweapon_cap->attack_pip, iweapon, spawn_vrt_offset, ego_chr::get_iteam( iholder ), iholder, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
-                ego_prt * pprt = PrtObjList.get_valid_pdata( iparticle );
+                ego_prt * pprt = PrtObjList.get_valid_data_ptr( iparticle );
                 if ( NULL != pprt )
                 {
                     fvec3_t tmp_pos;
@@ -1797,10 +1797,10 @@ void drop_money( const CHR_REF & character, int money )
 
     if ( !INGAME_CHR( character ) ) return;
 
-    if ( money > ChrObjList.get_data( character ).money )  money = ChrObjList.get_data( character ).money;
-    if ( money > 0 && ChrObjList.get_data( character ).pos.z > -2 )
+    if ( money > ChrObjList.get_data_ref( character ).money )  money = ChrObjList.get_data_ref( character ).money;
+    if ( money > 0 && ChrObjList.get_data_ref( character ).pos.z > -2 )
     {
-        ChrObjList.get_data( character ).money = ChrObjList.get_data( character ).money - money;
+        ChrObjList.get_data_ref( character ).money = ChrObjList.get_data_ref( character ).money - money;
         huns = money / 100;  money -= ( huns << 7 ) - ( huns << 5 ) + ( huns << 2 );
         tfives = money / 25;  money -= ( tfives << 5 ) - ( tfives << 3 ) + tfives;
         fives = money / 5;  money -= ( fives << 2 ) + fives;
@@ -1808,25 +1808,25 @@ void drop_money( const CHR_REF & character, int money )
 
         for ( cnt = 0; cnt < ones; cnt++ )
         {
-            spawn_one_particle_global( ChrObjList.get_data( character ).pos, ATK_FRONT, PIP_COIN1, cnt );
+            spawn_one_particle_global( ChrObjList.get_data_ref( character ).pos, ATK_FRONT, PIP_COIN1, cnt );
         }
 
         for ( cnt = 0; cnt < fives; cnt++ )
         {
-            spawn_one_particle_global( ChrObjList.get_data( character ).pos, ATK_FRONT, PIP_COIN5, cnt );
+            spawn_one_particle_global( ChrObjList.get_data_ref( character ).pos, ATK_FRONT, PIP_COIN5, cnt );
         }
 
         for ( cnt = 0; cnt < tfives; cnt++ )
         {
-            spawn_one_particle_global( ChrObjList.get_data( character ).pos, ATK_FRONT, PIP_COIN25, cnt );
+            spawn_one_particle_global( ChrObjList.get_data_ref( character ).pos, ATK_FRONT, PIP_COIN25, cnt );
         }
 
         for ( cnt = 0; cnt < huns; cnt++ )
         {
-            spawn_one_particle_global( ChrObjList.get_data( character ).pos, ATK_FRONT, PIP_COIN100, cnt );
+            spawn_one_particle_global( ChrObjList.get_data_ref( character ).pos, ATK_FRONT, PIP_COIN100, cnt );
         }
 
-        ChrObjList.get_data( character ).damagetime = DAMAGETIME;  // So it doesn't grab it again
+        ChrObjList.get_data_ref( character ).damagetime = DAMAGETIME;  // So it doesn't grab it again
     }
 }
 
@@ -1885,7 +1885,7 @@ void do_level_up( const CHR_REF & character )
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     pcap = ego_chr::get_pcap( character );
     if ( NULL == pcap ) return;
@@ -1980,7 +1980,7 @@ void give_experience( const CHR_REF & character, int amount, xp_type xptype, boo
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     pcap = ego_chr::get_pcap( character );
     if ( NULL == pcap ) return;
@@ -2117,7 +2117,7 @@ bool_t export_one_character_name_vfs( const char *szSaveName, const CHR_REF & ch
 
     if ( !INGAME_CHR( character ) ) return bfalse;
 
-    return chop_export_vfs( szSaveName, ChrObjList.get_data( character ).name );
+    return chop_export_vfs( szSaveName, ChrObjList.get_data_ref( character ).name );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2133,7 +2133,7 @@ bool_t export_one_character_profile_vfs( const char *szSaveName, const CHR_REF &
     ego_cap cap_tmp;
 
     if ( INVALID_CSTR( szSaveName ) && !DEFINED_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return bfalse;
@@ -2161,7 +2161,7 @@ bool_t export_one_character_skin_vfs( const char *szSaveName, const CHR_REF & ch
     if ( NULL == filewrite ) return bfalse;
 
     vfs_printf( filewrite, "// This file is used only by the import menu\n" );
-    vfs_printf( filewrite, ": %d\n", ChrObjList.get_data( character ).skin );
+    vfs_printf( filewrite, ": %d\n", ChrObjList.get_data_ref( character ).skin );
     vfs_close( filewrite );
     return btrue;
 }
@@ -2256,11 +2256,11 @@ bool_t heal_character( const CHR_REF & character, const CHR_REF & healer, int am
 
     // Setup the healed character
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // Setup the healer
     if ( !INGAME_CHR( healer ) ) return bfalse;
-    pchr_h = ChrObjList.get_pdata( healer );
+    pchr_h = ChrObjList.get_data_ptr( healer );
 
     // Don't heal dead and invincible stuff
     if ( !pchr->alive || ( IS_INVICTUS_PCHR_RAW( pchr ) && !ignore_invictus ) ) return bfalse;
@@ -2316,14 +2316,14 @@ void cleanup_one_character( ego_chr * pchr )
 
     // drop your left item
     itmp = pchr->holdingwhich[SLOT_LEFT];
-    if ( INGAME_CHR( itmp ) && ChrObjList.get_data( itmp ).isitem )
+    if ( INGAME_CHR( itmp ) && ChrObjList.get_data_ref( itmp ).isitem )
     {
         detach_character_from_mount( itmp, btrue, bfalse );
     }
 
     // drop your right item
     itmp = pchr->holdingwhich[SLOT_RIGHT];
-    if ( INGAME_CHR( itmp ) && ChrObjList.get_data( itmp ).isitem )
+    if ( INGAME_CHR( itmp ) && ChrObjList.get_data_ref( itmp ).isitem )
     {
         detach_character_from_mount( itmp, btrue, bfalse );
     }
@@ -2348,7 +2348,7 @@ void cleanup_one_character( ego_chr * pchr )
         ego_enc_now = pchr->firstenchant;
         while ( ego_enc_now != MAX_ENC )
         {
-            ego_enc_next = EncObjList.get_data( ego_enc_now ).nextenchant_ref;
+            ego_enc_next = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref;
 
             peve = ego_enc::get_peve( ego_enc_now );
             if ( NULL != peve && !peve->stayiftargetdead )
@@ -2377,7 +2377,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
     ego_ai_bundle tmp_bdl_ai;
 
     if ( !DEFINED_CHR( ichr ) ) return;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // No need to continue is there?
     if ( !pchr->alive || ( IS_INVICTUS_PCHR_RAW( pchr ) && !ignore_invictus ) ) return;
@@ -2472,7 +2472,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
 }
 
 //--------------------------------------------------------------------------------------------
-int damage_character_hurt( ego_chr_bundle * pbdl, int base_damage, int actual_damage, CHR_REF attacker, bool_t ignore_invictus )
+int damage_character_hurt( ego_bundle_chr * pbdl, int base_damage, int actual_damage, CHR_REF attacker, bool_t ignore_invictus )
 {
     CHR_REF      loc_ichr;
     ego_chr      * loc_pchr;
@@ -2504,7 +2504,7 @@ int damage_character_hurt( ego_chr_bundle * pbdl, int base_damage, int actual_da
 }
 
 //--------------------------------------------------------------------------------------------
-int damage_character_heal( ego_chr_bundle * pbdl, int heal_amount, CHR_REF attacker, bool_t ignore_invictus )
+int damage_character_heal( ego_bundle_chr * pbdl, int heal_amount, CHR_REF attacker, bool_t ignore_invictus )
 {
     CHR_REF      loc_ichr;
     ego_chr      * loc_pchr;
@@ -2533,7 +2533,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
     ///    ATK_RIGHT if from the right, ATK_BEHIND if from the back, ATK_LEFT if from the
     ///    left.
 
-    ego_chr_bundle bdl;
+    ego_bundle_chr bdl;
     ego_chr      * loc_pchr;
     ego_cap      * loc_pcap;
     ego_ai_state * loc_pai;
@@ -2545,9 +2545,9 @@ int damage_character( const CHR_REF & character, FACING_T direction,
     bool_t do_feedback = ( FEEDBACK_OFF != cfg.feedback );
 
     if ( !INGAME_CHR( character ) ) return 0;
-    loc_pchr = ChrObjList.get_pdata( character );
+    loc_pchr = ChrObjList.get_data_ptr( character );
 
-    if ( NULL == ego_chr_bundle::set( &bdl, loc_pchr ) ) return 0;
+    if ( NULL == ego_bundle_chr::set( &bdl, loc_pchr ) ) return 0;
     loc_pchr = bdl.chr_ptr;
     loc_pcap = bdl.cap_ptr;
     loc_ichr = bdl.chr_ref;
@@ -2573,7 +2573,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         }
 
         // don't show feedback from random objects hitting each other
-        if ( !ChrObjList.get_data( attacker ).StatusList_on )
+        if ( !ChrObjList.get_data_ref( attacker ).StatusList_on )
         {
             do_feedback = bfalse;
         }
@@ -2667,7 +2667,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
     if ( actual_damage > 0 )
     {
         // Hard mode deals 25% extra actual damage to players!
-        if ( cfg.difficulty >= GAME_HARD && VALID_PLA( loc_pchr->is_which_player ) && !VALID_PLA( ChrObjList.get_data( attacker ).is_which_player ) )
+        if ( cfg.difficulty >= GAME_HARD && VALID_PLA( loc_pchr->is_which_player ) && !VALID_PLA( ChrObjList.get_data_ref( attacker ).is_which_player ) )
         {
             actual_damage *= 1.25f;
         }
@@ -2675,12 +2675,12 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         // Easy mode deals 25% extra actual damage by players and 25% less to players
         if ( cfg.difficulty <= GAME_EASY )
         {
-            if ( VALID_PLA( ChrObjList.get_data( attacker ).is_which_player ) && !VALID_PLA( loc_pchr->is_which_player ) )
+            if ( VALID_PLA( ChrObjList.get_data_ref( attacker ).is_which_player ) && !VALID_PLA( loc_pchr->is_which_player ) )
             {
                 actual_damage *= 1.25f;
             }
 
-            if ( !VALID_PLA( ChrObjList.get_data( attacker ).is_which_player ) &&  VALID_PLA( loc_pchr->is_which_player ) )
+            if ( !VALID_PLA( ChrObjList.get_data_ref( attacker ).is_which_player ) &&  VALID_PLA( loc_pchr->is_which_player ) )
             {
                 actual_damage *= 0.75f;
             }
@@ -2841,7 +2841,7 @@ void spawn_poof( const CHR_REF & character, const PRO_REF & profile )
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     pcap = pro_get_pcap( profile );
     if ( NULL == pcap ) return;
@@ -2867,7 +2867,7 @@ void ego_ai_state::spawn( ego_ai_state * pself, const CHR_REF & index, const PRO
     pself = ego_ai_state::ctor_this( pself );
 
     if ( NULL == pself || !DEFINED_CHR( index ) ) return;
-    pchr = ChrObjList.get_pdata( index );
+    pchr = ChrObjList.get_data_ptr( index );
 
     // a character cannot be spawned without a valid profile
     if ( !LOADED_PRO( iobj ) ) return;
@@ -2933,8 +2933,8 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
         return CHR_REF( MAX_CHR );
     }
 
-    pobj = ChrObjList.get_valid_ptr( ichr );
-    pchr = pobj->get_pdata();
+    pobj = ChrObjList.get_data_ptr( ichr );
+    pchr = ego_obj_chr::get_data_ptr( pobj );
 
     // just set the spawn info
     pchr->spawn_data.pos      = pos;
@@ -2970,7 +2970,7 @@ void ego_chr::respawn( const CHR_REF & character )
     ego_cap * pcap;
 
     if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     if ( pchr->alive ) return;
 
@@ -3023,9 +3023,9 @@ void ego_chr::respawn( const CHR_REF & character )
     // Let worn items come back
     PACK_BEGIN_LOOP( item, pchr->pack.next )
     {
-        if ( INGAME_CHR( item ) && ChrObjList.get_data( item ).isequipped )
+        if ( INGAME_CHR( item ) && ChrObjList.get_data_ref( item ).isequipped )
         {
-            ChrObjList.get_data( item ).isequipped = bfalse;
+            ChrObjList.get_data_ref( item ).isequipped = bfalse;
             ADD_BITS( ego_chr::get_pai( item )->alert, ALERTIF_PUTAWAY ); // same as ALERTIF_ATLASTWAYPOINT
         }
     }
@@ -3056,7 +3056,7 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
     ego_chr_instance * pinst;
 
     if ( !INGAME_CHR( character ) ) return 0;
-    pchr  = ChrObjList.get_pdata( character );
+    pchr  = ChrObjList.get_data_ptr( character );
     pinst = &( pchr->inst );
 
     ppro = ego_chr::get_ppro( character );
@@ -3127,7 +3127,7 @@ int ego_chr::change_armor( const CHR_REF & character, int skin )
     ego_chr * pchr;
 
     if ( !INGAME_CHR( character ) ) return 0;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // cleanup the enchant list
     cleanup_character_enchants( pchr );
@@ -3145,7 +3145,7 @@ int ego_chr::change_armor( const CHR_REF & character, int skin )
         ego_enc::remove_set( enchant, SETICEMODIFIER );
         ego_enc::remove_set( enchant, SETZAPMODIFIER );
 
-        enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+        enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
     }
 
     // Change the skin
@@ -3160,7 +3160,7 @@ int ego_chr::change_armor( const CHR_REF & character, int skin )
         pchr->damagemodifier[iTmp] = pcap->damagemodifier[iTmp][skin];
     }
 
-    // set teh character's maximum acceleration
+    // set the character's maximum acceleration
     ego_chr::set_maxaccel( pchr, pcap->maxaccel[skin] );
 
     // cleanup the enchant list
@@ -3191,7 +3191,7 @@ int ego_chr::change_armor( const CHR_REF & character, int skin )
             ego_enc::apply_add( enchant, ADDDEFENSE,       ieve );
         }
 
-        enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+        enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
     }
 
     return skin;
@@ -3220,7 +3220,7 @@ void change_character_full( const CHR_REF & ichr, const PRO_REF & profile, Uint8
     ego_chr::change_profile( ichr, profile, skin, leavewhich );
 
     // set the base model to the new model, too
-    ChrObjList.get_data( ichr ).basemodel_ref = profile;
+    ChrObjList.get_data_ref( ichr ).basemodel_ref = profile;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3237,7 +3237,7 @@ bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, Uint16 vr
     needs_update = bfalse;
 
     if ( !INGAME_CHR( iitem ) ) return bfalse;
-    pitem = ChrObjList.get_pdata( iitem );
+    pitem = ChrObjList.get_data_ptr( iitem );
     mcache = &( pitem->inst.matrix_cache );
 
     // is the item attached to this valid holder?
@@ -3306,7 +3306,7 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
     int old_attached_prt_count, new_attached_prt_count;
 
     if ( !LOADED_PRO( profile_new ) || !INGAME_CHR( ichr ) ) return;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     old_attached_prt_count = number_of_attached_particles( ichr );
 
@@ -3321,18 +3321,18 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
     if ( INGAME_CHR( item_ref ) && ( !pcap_new->slotvalid[SLOT_LEFT] || pcap_new->ismount ) )
     {
         detach_character_from_mount( item_ref, btrue, btrue );
-        detach_character_from_platform( ChrObjList.get_pdata( item_ref ) );
+        detach_character_from_platform( ChrObjList.get_data_ptr( item_ref ) );
 
         if ( pchr->ismount )
         {
             fvec3_t tmp_pos;
 
-            ChrObjList.get_data( item_ref ).vel.z    = DISMOUNTZVEL;
-            ChrObjList.get_data( item_ref ).jump_time = JUMP_DELAY;
+            ChrObjList.get_data_ref( item_ref ).vel.z    = DISMOUNTZVEL;
+            ChrObjList.get_data_ref( item_ref ).jump_time = JUMP_DELAY;
 
-            tmp_pos = ego_chr::get_pos( ChrObjList.get_pdata( item_ref ) );
+            tmp_pos = ego_chr::get_pos( ChrObjList.get_data_ptr( item_ref ) );
             tmp_pos.z += DISMOUNTZVEL;
-            ego_chr::set_pos( ChrObjList.get_pdata( item_ref ), tmp_pos.v );
+            ego_chr::set_pos( ChrObjList.get_data_ptr( item_ref ), tmp_pos.v );
         }
     }
 
@@ -3341,18 +3341,18 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
     if ( INGAME_CHR( item_ref ) && !pcap_new->slotvalid[SLOT_RIGHT] )
     {
         detach_character_from_mount( item_ref, btrue, btrue );
-        detach_character_from_platform( ChrObjList.get_pdata( item_ref ) );
+        detach_character_from_platform( ChrObjList.get_data_ptr( item_ref ) );
 
         if ( pchr->ismount )
         {
             fvec3_t tmp_pos;
 
-            ChrObjList.get_data( item_ref ).vel.z    = DISMOUNTZVEL;
-            ChrObjList.get_data( item_ref ).jump_time = JUMP_DELAY;
+            ChrObjList.get_data_ref( item_ref ).vel.z    = DISMOUNTZVEL;
+            ChrObjList.get_data_ref( item_ref ).jump_time = JUMP_DELAY;
 
-            tmp_pos = ego_chr::get_pos( ChrObjList.get_pdata( item_ref ) );
+            tmp_pos = ego_chr::get_pos( ChrObjList.get_data_ptr( item_ref ) );
             tmp_pos.z += DISMOUNTZVEL;
-            ego_chr::set_pos( ChrObjList.get_pdata( item_ref ), tmp_pos.v );
+            ego_chr::set_pos( ChrObjList.get_data_ptr( item_ref ), tmp_pos.v );
         }
     }
 
@@ -3372,12 +3372,12 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
         enchant = pchr->firstenchant;
         if ( enchant != MAX_ENC )
         {
-            enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+            enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
             while ( MAX_ENC != enchant )
             {
                 remove_enchant( enchant, NULL );
 
-                enchant = EncObjList.get_data( enchant ).nextenchant_ref;
+                enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
             }
         }
     }
@@ -3531,14 +3531,14 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
     item = pchr->holdingwhich[SLOT_LEFT];
     if ( INGAME_CHR( item ) )
     {
-        EGOBOO_ASSERT( ChrObjList.get_data( item ).attachedto == ichr );
+        EGOBOO_ASSERT( ChrObjList.get_data_ref( item ).attachedto == ichr );
         set_weapongrip( item, ichr, GRIP_LEFT );
     }
 
     item = pchr->holdingwhich[SLOT_RIGHT];
     if ( INGAME_CHR( item ) )
     {
-        EGOBOO_ASSERT( ChrObjList.get_data( item ).attachedto == ichr );
+        EGOBOO_ASSERT( ChrObjList.get_data_ref( item ).attachedto == ichr );
         set_weapongrip( item, ichr, GRIP_RIGHT );
     }
 
@@ -3571,7 +3571,7 @@ bool_t cost_mana( const CHR_REF & character, int amount, const CHR_REF & killer 
     ego_chr * pchr;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     mana_paid  = bfalse;
     mana_final = pchr->mana - amount;
@@ -3627,18 +3627,18 @@ void switch_team( const CHR_REF & character, const TEAM_REF & team )
 
     if ( !INGAME_CHR( character ) || team >= TEAM_MAX ) return;
 
-    if ( !IS_INVICTUS_PCHR_RAW( ChrObjList.get_pdata( character ) ) )
+    if ( !IS_INVICTUS_PCHR_RAW( ChrObjList.get_data_ptr( character ) ) )
     {
         if ( ego_chr::get_pteam_base( character )->morale > 0 ) ego_chr::get_pteam_base( character )->morale--;
         TeamStack[team].morale++;
     }
-    if (( !ChrObjList.get_data( character ).ismount || !INGAME_CHR( ChrObjList.get_data( character ).holdingwhich[SLOT_LEFT] ) ) &&
-        ( !ChrObjList.get_data( character ).isitem  || !INGAME_CHR( ChrObjList.get_data( character ).attachedto ) ) )
+    if (( !ChrObjList.get_data_ref( character ).ismount || !INGAME_CHR( ChrObjList.get_data_ref( character ).holdingwhich[SLOT_LEFT] ) ) &&
+        ( !ChrObjList.get_data_ref( character ).isitem  || !INGAME_CHR( ChrObjList.get_data_ref( character ).attachedto ) ) )
     {
-        ChrObjList.get_data( character ).team = team;
+        ChrObjList.get_data_ref( character ).team = team;
     }
 
-    ChrObjList.get_data( character ).baseteam = team;
+    ChrObjList.get_data_ref( character ).baseteam = team;
     if ( TeamStack[team].leader == NOLEADER )
     {
         TeamStack[team].leader = character;
@@ -3682,15 +3682,15 @@ int restock_ammo( const CHR_REF & character, IDSZ idsz )
     ego_chr * pchr;
 
     if ( !INGAME_CHR( character ) ) return 0;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     amount = 0;
     if ( ego_chr::is_type_idsz( character, idsz ) )
     {
-        if ( ChrObjList.get_data( character ).ammo < ChrObjList.get_data( character ).ammo_max )
+        if ( ChrObjList.get_data_ref( character ).ammo < ChrObjList.get_data_ref( character ).ammo_max )
         {
-            amount = ChrObjList.get_data( character ).ammo_max - ChrObjList.get_data( character ).ammo;
-            ChrObjList.get_data( character ).ammo = ChrObjList.get_data( character ).ammo_max;
+            amount = ChrObjList.get_data_ref( character ).ammo_max - ChrObjList.get_data_ref( character ).ammo;
+            ChrObjList.get_data_ref( character ).ammo = ChrObjList.get_data_ref( character ).ammo_max;
         }
     }
 
@@ -3702,95 +3702,95 @@ int restock_ammo( const CHR_REF & character, IDSZ idsz )
 /// @note all *_REF members will be automatically constructed to an invalid value of unsigned(-1)
 /// The team and baseteam references shouold be initialized to some default team
 ego_chr_data::ego_chr_data() :
-    // character stats
-    life(LOWSTAT),
-    mana(0),
+        // character stats
+        life( LOWSTAT ),
+        mana( 0 ),
 
-    experience(0),
-    experience_level(0),
+        experience( 0 ),
+        experience_level( 0 ),
 
-    // team stuff
-    team(TEAM_NULL),
-    baseteam(TEAM_NULL),
+        // team stuff
+        team( TEAM_NULL ),
+        baseteam( TEAM_NULL ),
 
-    fat(1.0f),
-    fat_goto(1.0f),
-    fat_goto_time(0),
+        fat( 1.0f ),
+        fat_goto( 1.0f ),
+        fat_goto_time( 0 ),
 
-    // jump stuff
-    jump_time(JUMP_DELAY),
-    jump_number(1),
-    jump_ready(btrue),
+        // jump stuff
+        jump_time( JUMP_DELAY ),
+        jump_number( 1 ),
+        jump_ready( btrue ),
 
-    // attachments
-    inwhich_slot(SLOT_LEFT),
+        // attachments
+        inwhich_slot( SLOT_LEFT ),
 
-    // platform stuff
-    holdingweight(0),
+        // platform stuff
+        holdingweight( 0 ),
 
-    // combat stuff
-    damageboost(0),
-    damagethreshold(0),
+        // combat stuff
+        damageboost( 0 ),
+        damagethreshold( 0 ),
 
-    // sound stuff
-    loopedsound_channel(INVALID_SOUND_CHANNEL),
+        // sound stuff
+        loopedsound_channel( INVALID_SOUND_CHANNEL ),
 
-    // missile handling
-    missiletreatment(MISSILE_NORMAL),
-    missilecost(0),
+        // missile handling
+        missiletreatment( MISSILE_NORMAL ),
+        missilecost( 0 ),
 
-    // "variable" properties
-    is_hidden(bfalse),
-    alive(btrue),
-    waskilled(bfalse),
-    islocalplayer(bfalse),
-    hitready(btrue),
-    isequipped(bfalse),
+        // "variable" properties
+        is_hidden( bfalse ),
+        alive( btrue ),
+        waskilled( bfalse ),
+        islocalplayer( bfalse ),
+        hitready( btrue ),
+        isequipped( bfalse ),
 
-    // "constant" properties
-    isshopitem(bfalse),
-    canbecrushed(bfalse),
-    canchannel(bfalse),
+        // "constant" properties
+        isshopitem( bfalse ),
+        canbecrushed( bfalse ),
+        canchannel( bfalse ),
 
-    // misc timers
-    grogtime(0),
-    dazetime(0),
-    boretime(BORETIME),
-    carefultime(CAREFULTIME),
-    reloadtime(0),
-    damagetime(0),
+        // misc timers
+        grogtime( 0 ),
+        dazetime( 0 ),
+        boretime( BORETIME ),
+        carefultime( CAREFULTIME ),
+        reloadtime( 0 ),
+        damagetime( 0 ),
 
-    // graphics info
-    sparkle(NOSPARKLE),
-    StatusList_on(bfalse),
-    shadow_size(30),
-    shadow_size_save(30),
+        // graphics info
+        sparkle( NOSPARKLE ),
+        StatusList_on( bfalse ),
+        shadow_size( 30 ),
+        shadow_size_save( 30 ),
 
-    // model info
-    is_overlay(bfalse),
+        // model info
+        is_overlay( bfalse ),
 
-    // Skills
-    darkvision_level(-1),
-    see_kurse_level(-1),
+        // Skills
+        darkvision_level( -1 ),
+        see_kurse_level( -1 ),
 
-    onwhichgrid(INVALID_TILE),
-    onwhichblock(INVALID_BLOCK),
+        onwhichgrid( INVALID_TILE ),
+        onwhichblock( INVALID_BLOCK ),
 
-    // movement properties
-    turnmode(TURNMODE_VELOCITY),
+        // movement properties
+        turnmode( TURNMODE_VELOCITY ),
 
-    movement_bits(-1),
-    maxaccel(50),
+        movement_bits( -1 ),
+        maxaccel( 50 ),
 
-    is_flying_platform(bfalse),
-    is_flying_jump(bfalse),
-    fly_height(0.0f),
+        is_flying_platform( bfalse ),
+        is_flying_jump( bfalse ),
+        fly_height( 0.0f ),
 
-    safe_valid(bfalse),
-    safe_time(0),
-    safe_grid(INVALID_TILE)
-{ 
-    ego_chr_data::ctor_this( this ); 
+        safe_valid( bfalse ),
+        safe_time( 0 ),
+        safe_grid( INVALID_TILE )
+{
+    ego_chr_data::ctor_this( this );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3856,7 +3856,7 @@ bool_t update_chr_darkvision( const CHR_REF & character )
     ego_chr * pchr;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // cleanup the enchant list
     cleanup_character_enchants( pchr );
@@ -3866,14 +3866,14 @@ bool_t update_chr_darkvision( const CHR_REF & character )
     ego_enc_now = pchr->firstenchant;
     while ( ego_enc_now != MAX_ENC )
     {
-        ego_enc_next = EncObjList.get_data( ego_enc_now ).nextenchant_ref;
+        ego_enc_next = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref;
         peve = ego_enc::get_peve( ego_enc_now );
 
         // Is it true poison?
         if ( NULL != peve && MAKE_IDSZ( 'H', 'E', 'A', 'L' ) == peve->removedbyidsz )
         {
-            life_regen += EncObjList.get_data( ego_enc_now ).target_life;
-            if ( EncObjList.get_data( ego_enc_now ).owner_ref == pchr->ai.index ) life_regen += EncObjList.get_data( ego_enc_now ).owner_life;
+            life_regen += EncObjList.get_data_ref( ego_enc_now ).target_life;
+            if ( EncObjList.get_data_ref( ego_enc_now ).owner_ref == pchr->ai.index ) life_regen += EncObjList.get_data_ref( ego_enc_now ).owner_life;
         }
 
         ego_enc_now = ego_enc_next;
@@ -3900,8 +3900,8 @@ void update_all_characters()
 
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ego_obj_chr * pchr = ChrObjList.get_valid_ptr( ichr );
-        if( NULL == pchr ) continue;
+        ego_obj_chr * pchr = ChrObjList.get_valid_data_ptr( ichr );
+        if ( NULL == pchr ) continue;
 
         ego_object_engine::run( pchr );
     }
@@ -3943,7 +3943,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
         // Unarmed means character itself is the iweapon
         iweapon = ichr;
     }
-    pweapon     = ChrObjList.get_pdata( iweapon );
+    pweapon     = ChrObjList.get_data_ptr( iweapon );
     pweapon_cap = ego_chr::get_pcap( iweapon );
 
     // grab the iweapon's action
@@ -3982,7 +3982,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
         if ( INGAME_CHR( test_weapon ) )
         {
             ego_chr * weapon;
-            weapon     = ChrObjList.get_pdata( test_weapon );
+            weapon     = ChrObjList.get_data_ptr( test_weapon );
             if ( weapon->iskursed ) allowedtoattack = bfalse;
         }
     }
@@ -4020,7 +4020,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
 
         if ( INGAME_CHR( mount ) )
         {
-            ego_chr * pmount = ChrObjList.get_pdata( mount );
+            ego_chr * pmount = ChrObjList.get_data_ptr( mount );
             ego_cap * pmount_cap = ego_chr::get_pcap( mount );
 
             // let the mount steal the rider's attack
@@ -4150,7 +4150,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * chr_do_latch_button( ego_chr_bundle * pbdl )
+ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
 {
     /// @details BB@> Character latches for generalized buttons
 
@@ -4189,7 +4189,7 @@ ego_chr_bundle * chr_do_latch_button( ego_chr_bundle * pbdl )
         {
             // Jump from our mount
 
-            ego_chr * pmount = ChrObjList.get_pdata( loc_pchr->attachedto );
+            ego_chr * pmount = ChrObjList.get_data_ptr( loc_pchr->attachedto );
 
             detach_character_from_mount( loc_ichr, btrue, btrue );
             detach_character_from_platform( loc_pchr );
@@ -4312,7 +4312,7 @@ ego_chr_bundle * chr_do_latch_button( ego_chr_bundle * pbdl )
 
         if ( INGAME_CHR( item ) )
         {
-            ego_chr * pitem = ChrObjList.get_pdata( item );
+            ego_chr * pitem = ChrObjList.get_data_ptr( item );
 
             if (( pitem->iskursed || pro_get_pcap( pitem->profile_ref )->istoobig ) && !pro_get_pcap( pitem->profile_ref )->isequipment )
             {
@@ -4352,7 +4352,7 @@ ego_chr_bundle * chr_do_latch_button( ego_chr_bundle * pbdl )
         item = loc_pchr->holdingwhich[SLOT_RIGHT];
         if ( INGAME_CHR( item ) )
         {
-            ego_chr * pitem     = ChrObjList.get_pdata( item );
+            ego_chr * pitem     = ChrObjList.get_data_ptr( item );
             ego_cap * pitem_cap = ego_chr::get_pcap( item );
 
             if (( pitem->iskursed || pitem_cap->istoobig ) && !pitem_cap->isequipment )
@@ -4799,18 +4799,18 @@ bool_t chr_is_attacking( ego_chr *pchr )
 //--------------------------------------------------------------------------------------------
 bool_t chr_calc_environment( ego_chr * pchr )
 {
-    ego_chr_bundle  bdl, *retval;
+    ego_bundle_chr  bdl, *retval;
 
     if ( NULL == pchr ) return bfalse;
 
-    retval = move_one_character_get_environment( ego_chr_bundle::set( &bdl, pchr ), NULL );
+    retval = move_one_character_get_environment( ego_bundle_chr::set( &bdl, pchr ), NULL );
 
     return NULL != retval;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_chr_environment * penviro )
+ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_chr_environment * penviro )
 {
     Uint32 itile = INVALID_TILE;
 
@@ -4839,7 +4839,7 @@ ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_
     pplatform = NULL;
     if ( INGAME_CHR( loc_pchr->onwhichplatform_ref ) )
     {
-        pplatform = ChrObjList.get_pdata( loc_pchr->onwhichplatform_ref );
+        pplatform = ChrObjList.get_data_ptr( loc_pchr->onwhichplatform_ref );
     }
 
     // get the current tile
@@ -5041,7 +5041,7 @@ ego_chr_bundle * move_one_character_get_environment( ego_chr_bundle * pbdl, ego_
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_fluid_friction( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_fluid_friction( ego_bundle_chr * pbdl )
 {
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
@@ -5074,7 +5074,7 @@ ego_chr_bundle * move_one_character_do_fluid_friction( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_voluntary_flying( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl )
 {
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
@@ -5204,13 +5204,13 @@ ego_chr_bundle * move_one_character_do_voluntary_flying( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_voluntary_riding( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_voluntary_riding( ego_bundle_chr * pbdl )
 {
     return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
 {
     // do voluntary motion
 
@@ -5425,7 +5425,7 @@ ego_chr_bundle * move_one_character_do_voluntary( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_involuntary( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_involuntary( ego_bundle_chr * pbdl )
 {
     /// Do the "non-physics" motion that the character has no control over
 
@@ -5505,7 +5505,7 @@ ego_chr_bundle * move_one_character_do_involuntary( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_orientation( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
 {
     // do voluntary motion
 
@@ -5532,7 +5532,7 @@ ego_chr_bundle * move_one_character_do_orientation( ego_chr_bundle * pbdl )
     // the orientation values
     if ( INGAME_CHR( loc_pchr->attachedto ) )
     {
-        ego_chr * pmount = ChrObjList.get_pdata( loc_pchr->attachedto );
+        ego_chr * pmount = ChrObjList.get_data_ptr( loc_pchr->attachedto );
 
         loc_pchr->ori = pmount->ori;
 
@@ -5703,8 +5703,8 @@ ego_chr_bundle * move_one_character_do_orientation( ego_chr_bundle * pbdl )
                         {
                             fvec2_t loc_diff;
 
-                            loc_diff.x = ChrObjList.get_data( loc_pai->target ).pos.x - loc_pchr->pos.x;
-                            loc_diff.y = ChrObjList.get_data( loc_pai->target ).pos.y - loc_pchr->pos.y;
+                            loc_diff.x = ChrObjList.get_data_ref( loc_pai->target ).pos.x - loc_pchr->pos.x;
+                            loc_diff.y = ChrObjList.get_data_ref( loc_pai->target ).pos.y - loc_pchr->pos.y;
 
                             if ( fvec2_length_abs( loc_diff.v ) > WATCH_SPEED )
                             {
@@ -5783,7 +5783,7 @@ ego_chr_bundle * move_one_character_do_orientation( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_z_motion( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_z_motion( ego_bundle_chr * pbdl )
 {
     ego_chr             * loc_pchr;
     ego_phys_data       * loc_pphys;
@@ -5810,7 +5810,7 @@ ego_chr_bundle * move_one_character_do_z_motion( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_animation( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_animation( ego_bundle_chr * pbdl )
 {
     float dflip, flip_diff;
 
@@ -5895,7 +5895,7 @@ ego_chr_bundle * move_one_character_do_animation( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_limit_flying( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_limit_flying( ego_bundle_chr * pbdl )
 {
     // this should only be called by move_one_character_do_floor() after the
     // normal acceleration has been killed
@@ -5991,7 +5991,7 @@ ego_chr_bundle * move_one_character_limit_flying( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_jump( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_jump( ego_bundle_chr * pbdl )
 {
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
@@ -6048,7 +6048,7 @@ ego_chr_bundle * move_one_character_do_jump( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_flying( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_flying( ego_bundle_chr * pbdl )
 {
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
@@ -6070,7 +6070,7 @@ ego_chr_bundle * move_one_character_do_flying( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * move_one_character_do_floor( ego_chr_bundle * pbdl )
+ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
 {
     /// @details BB@> Friction is complicated when you want to have sliding characters :P
     ///
@@ -6111,7 +6111,7 @@ ego_chr_bundle * move_one_character_do_floor( ego_chr_bundle * pbdl )
     pplatform = NULL;
     if ( ACTIVE_CHR( loc_pchr->onwhichplatform_ref ) )
     {
-        pplatform = ChrObjList.get_pdata( loc_pchr->onwhichplatform_ref );
+        pplatform = ChrObjList.get_data_ptr( loc_pchr->onwhichplatform_ref );
 
         // if the character has just dismounted from this platform, then there is less friction
         fric_lerp *= calc_dismount_lerp( loc_pchr, pplatform );
@@ -6244,7 +6244,7 @@ ego_chr_bundle * move_one_character_do_floor( ego_chr_bundle * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle *  move_one_character( ego_chr_bundle * pbdl )
+ego_bundle_chr *  move_one_character( ego_bundle_chr * pbdl )
 {
     ego_chr * loc_pchr;
 
@@ -6317,13 +6317,13 @@ void move_all_characters( void )
     // Move every character
     CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
-        ego_chr_bundle bdl;
+        ego_bundle_chr bdl;
 
         // prime the environment
         pchr->enviro.air_friction = air_friction;
         pchr->enviro.ice_friction = ice_friction;
 
-        move_one_character( ego_chr_bundle::set( &bdl, pchr ) );
+        move_one_character( ego_bundle_chr::set( &bdl, pchr ) );
     }
     CHR_END_LOOP();
 
@@ -6344,10 +6344,10 @@ void cleanup_all_characters()
         bool_t time_out;
         CHR_REF ichr( cnt );
 
-        ego_obj_chr * pobj = ChrObjList.get_valid_ptr( ichr );
+        ego_obj_chr * pobj = ChrObjList.get_valid_data_ptr( ichr );
         if ( NULL == pobj ) continue;
 
-        ego_chr * pchr = pobj->get_pdata();
+        ego_chr * pchr = ego_obj_chr::get_data_ptr( pobj );
         if ( NULL == pchr ) continue;
 
         time_out = ( pchr->ai.poof_time >= 0 ) && ( pchr->ai.poof_time <= ( Sint32 )update_wld );
@@ -6373,7 +6373,7 @@ void increment_all_character_update_counters()
     {
         ego_obj * pbase;
 
-        pbase = ChrObjList.get_ptr( ChrObjList_t::reference( cnt ) );
+        pbase = ChrObjList.get_data_ptr( CHR_REF( cnt ) );
         if ( !ACTIVE_PBASE( pbase ) ) continue;
 
         pbase->update_count++;
@@ -6392,7 +6392,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
     bool_t  is_invictus;
 
     if ( !INGAME_CHR( character ) ) return btrue;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     pmad = ego_chr::get_pmad( character );
     if ( NULL == pmad ) return btrue;
@@ -6775,7 +6775,7 @@ BBOARD_REF chr_add_billboard( const CHR_REF & ichr, Uint32 lifetime_secs )
     ego_chr * pchr;
 
     if ( !INGAME_CHR( ichr ) ) return BBOARD_REF( INVALID_BILLBOARD );
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     if ( INVALID_BILLBOARD != pchr->ibillboard )
     {
@@ -6806,7 +6806,7 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
     BBOARD_REF ibb = BBOARD_REF( INVALID_BILLBOARD );
 
     if ( !INGAME_CHR( ichr ) ) return NULL;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // create a new billboard or override the old billboard
     ibb = chr_add_billboard( ichr, lifetime_secs );
@@ -6889,7 +6889,7 @@ const char * ego_chr::get_name( const CHR_REF & ichr, Uint32 bits )
     }
     else
     {
-        ego_chr * pchr = ChrObjList.get_pdata( ichr );
+        ego_chr * pchr = ChrObjList.get_data_ptr( ichr );
         ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
         if ( pchr->nameknown )
@@ -6962,7 +6962,7 @@ const char * ego_chr::get_gender_possessive( const CHR_REF & ichr, char buffer[]
         buffer[0] = CSTR_END;
         return buffer;
     }
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     if ( GENDER_FEMALE == pchr->gender )
     {
@@ -6998,7 +6998,7 @@ const char * ego_chr::get_gender_name( const CHR_REF & ichr, char buffer[], size
         buffer[0] = CSTR_END;
         return buffer;
     }
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     if ( GENDER_FEMALE == pchr->gender )
     {
@@ -7025,7 +7025,7 @@ const char * ego_chr::get_dir_name( const CHR_REF & ichr )
     strncpy( buffer, "/debug", SDL_arraysize( buffer ) );
 
     if ( !DEFINED_CHR( ichr ) ) return buffer;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     if ( !LOADED_PRO( pchr->profile_ref ) )
     {
@@ -7034,7 +7034,7 @@ const char * ego_chr::get_dir_name( const CHR_REF & ichr )
         EGOBOO_ASSERT( bfalse );
 
         // copy the character's data.txt path
-        strncpy( buffer, pchr->get_pparent()->base_name, SDL_arraysize( buffer ) );
+        strncpy( buffer, ego_chr::get_obj_ref( *pchr ).base_name, SDL_arraysize( buffer ) );
 
         // the name should be "...some path.../data.txt"
         // grab the path
@@ -7324,7 +7324,7 @@ TX_REF ego_chr::get_icon_ref( const CHR_REF & item )
     ego_pro * pitem_pro;
 
     if ( !DEFINED_CHR( item ) ) return icon_ref;
-    pitem = ChrObjList.get_pdata( item );
+    pitem = ChrObjList.get_data_ptr( item );
 
     if ( !LOADED_PRO( pitem->profile_ref ) ) return icon_ref;
     pitem_pro = ProList.lst + pitem->profile_ref;
@@ -7457,7 +7457,7 @@ bool_t chr_teleport( const CHR_REF & ichr, float x, float y, float z, FACING_T f
     bool_t   retval;
 
     if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     if ( x < 0.0f || x > PMesh->gmem.edge_x ) return bfalse;
     if ( y < 0.0f || y > PMesh->gmem.edge_y ) return bfalse;
@@ -7611,7 +7611,7 @@ int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset 
     }
 
     if ( !INGAME_CHR( imount ) ) return 0;
-    pmount = ChrObjList.get_pdata( imount );
+    pmount = ChrObjList.get_data_ptr( imount );
 
     pmount_mad = ego_chr::get_pmad( imount );
     if ( NULL == pmount_mad ) return 0;
@@ -7671,7 +7671,7 @@ bool_t ego_chr::generate_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp
     {
         // this will pretty much fail the cmp_matrix_cache() every time...
 
-        ego_chr * ptarget = ChrObjList.get_pdata( pchr->ai.target );
+        ego_chr * ptarget = ChrObjList.get_data_ptr( pchr->ai.target );
 
         // make sure we have the latst info from the target
         ego_chr::update_matrix( ptarget, btrue );
@@ -7693,7 +7693,7 @@ bool_t ego_chr::generate_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp
         //---- update the MAT_WEAPON data
         if ( DEFINED_CHR( pchr->attachedto ) )
         {
-            ego_chr * pmount = ChrObjList.get_pdata( pchr->attachedto );
+            ego_chr * pmount = ChrObjList.get_data_ptr( pchr->attachedto );
 
             // make sure we have the latst info from the target
             ego_chr::update_matrix( pmount, btrue );
@@ -7716,7 +7716,7 @@ bool_t ego_chr::generate_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp
         //---- update the MAT_CHARACTER data
         if ( DEFINED_CHR( itarget ) )
         {
-            ego_chr * ptarget = ChrObjList.get_pdata( itarget );
+            ego_chr * ptarget = ChrObjList.get_data_ptr( itarget );
 
             mc_tmp->valid   = btrue;
             ADD_BITS( mc_tmp->type_bits, MAT_CHARACTER );  // add in the MAT_CHARACTER-type data for the object we are "connected to"
@@ -7798,7 +7798,7 @@ int convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[],
     fvec4_t   src_point[GRIP_VERTS];
 
     if ( !INGAME_CHR( iholder ) ) return 0;
-    pholder = ChrObjList.get_pdata( iholder );
+    pholder = ChrObjList.get_data_ptr( iholder );
 
     // find the grip points in the character's "local" or "body-fixed" coordinates
     point_count = convert_grip_to_local_points( pholder, grip_verts, src_point );
@@ -7829,7 +7829,7 @@ bool_t apply_one_weapon_matrix( ego_chr * pweap, ego_matrix_cache * mc_tmp )
     pweap_mcache = &( pweap->inst.matrix_cache );
 
     if ( !INGAME_CHR( mc_tmp->grip_chr ) ) return bfalse;
-    pholder = ChrObjList.get_pdata( mc_tmp->grip_chr );
+    pholder = ChrObjList.get_data_ptr( mc_tmp->grip_chr );
 
     // make sure that the matrix is invalid in case of an error
     pweap_mcache->matrix_valid = bfalse;
@@ -8146,7 +8146,7 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
     {
         egoboo_rv attached_update = rv_error;
 
-        attached_update = ego_chr::update_matrix( ChrObjList.get_pdata( pchr->attachedto ), btrue );
+        attached_update = ego_chr::update_matrix( ChrObjList.get_data_ptr( pchr->attachedto ), btrue );
 
         // if this fails, we should probably do something...
         if ( rv_error == attached_update )
@@ -8172,7 +8172,7 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
     if ( HAS_SOME_BITS( mc_tmp.type_bits, MAT_WEAPON ) && INGAME_CHR( mc_tmp.grip_chr ) )
     {
         egoboo_rv grip_retval;
-        ego_chr   * ptarget = ChrObjList.get_pdata( mc_tmp.grip_chr );
+        ego_chr   * ptarget = ChrObjList.get_data_ptr( mc_tmp.grip_chr );
 
         // has that character changes its animation?
         grip_retval = ego_chr_instance::update_grip_verts( &( ptarget->inst ), mc_tmp.grip_verts, GRIP_VERTS );
@@ -8232,7 +8232,7 @@ CHR_REF chr_has_inventory_idsz( const CHR_REF & ichr, IDSZ idsz, bool_t equipped
     ego_chr * pchr;
 
     if ( !INGAME_CHR( ichr ) ) return CHR_REF( MAX_CHR );
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // make sure that pack_last points to something
     if ( NULL == pack_last ) pack_last = &tmp_var;
@@ -8243,7 +8243,7 @@ CHR_REF chr_has_inventory_idsz( const CHR_REF & ichr, IDSZ idsz, bool_t equipped
 
     PACK_BEGIN_LOOP( tmp_item, pchr->pack.next )
     {
-        matches_equipped = ( !equipped || ( INGAME_CHR( tmp_item ) && ChrObjList.get_data( tmp_item ).isequipped ) );
+        matches_equipped = ( !equipped || ( INGAME_CHR( tmp_item ) && ChrObjList.get_data_ref( tmp_item ).isequipped ) );
 
         if ( ego_chr::is_type_idsz( tmp_item, idsz ) && matches_equipped )
         {
@@ -8268,7 +8268,7 @@ CHR_REF chr_holding_idsz( const CHR_REF & ichr, IDSZ idsz )
     ego_chr * pchr;
 
     if ( !INGAME_CHR( ichr ) ) return CHR_REF( MAX_CHR );
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     item = CHR_REF( MAX_CHR );
     found = bfalse;
@@ -8312,7 +8312,7 @@ CHR_REF chr_has_item_idsz( const CHR_REF & ichr, IDSZ idsz, bool_t equipped, CHR
     ego_chr * pchr;
 
     if ( !INGAME_CHR( ichr ) ) return CHR_REF( MAX_CHR );
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // make sure that pack_last points to something
     if ( NULL == pack_last ) pack_last = &tmp_var;
@@ -8347,10 +8347,10 @@ bool_t chr_can_see_object( const CHR_REF & ichr, const CHR_REF & iobj )
     int     alpha;
 
     if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     if ( !INGAME_CHR( iobj ) ) return bfalse;
-    pobj = ChrObjList.get_pdata( iobj );
+    pobj = ChrObjList.get_data_ptr( iobj );
 
     alpha = pobj->inst.alpha;
     if ( pchr->see_invisible_level > 0 )
@@ -8390,7 +8390,7 @@ int ego_chr::get_price( const CHR_REF & ichr )
     ego_cap * pcap;
 
     if ( !INGAME_CHR( ichr ) ) return 0;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // Make sure spell books are priced according to their spell and not the book itself
     if ( pchr->profile_ref == SPELLBOOK )
@@ -8660,7 +8660,7 @@ CHR_REF ego_chr::get_lowest_attachment( const CHR_REF & ichr, bool_t non_item )
     ///               You should be able to find the holder of a weapon by specifying non_item == btrue
     ///
     ///               To prevent possible loops in the data structures, use a counter to limit
-    ///               the depth of the search, and make sure that ichr != ChrObjList.get_data(object).attachedto
+    ///               the depth of the search, and make sure that ichr != ChrObjList.get_data_ref(object).attachedto
 
     int cnt;
     CHR_REF original_object, object, object_next;
@@ -8670,9 +8670,9 @@ CHR_REF ego_chr::get_lowest_attachment( const CHR_REF & ichr, bool_t non_item )
     original_object = object = ichr;
     for ( cnt = 0, object = ichr; cnt < MAX_CHR && INGAME_CHR( object ); cnt++ )
     {
-        object_next = ChrObjList.get_data( object ).attachedto;
+        object_next = ChrObjList.get_data_ref( object ).attachedto;
 
-        if ( non_item && !ChrObjList.get_data( object ).isitem )
+        if ( non_item && !ChrObjList.get_data_ref( object ).isitem )
         {
             break;
         }
@@ -8758,14 +8758,14 @@ bool_t chr_can_mount( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
 
     // make sure that A is valid
     if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrObjList.get_pdata( ichr_a );
+    pchr_a = ChrObjList.get_data_ptr( ichr_a );
 
     pcap_a = ego_chr::get_pcap( ichr_a );
     if ( NULL == pcap_a ) return bfalse;
 
     // make sure that B is valid
     if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrObjList.get_pdata( ichr_b );
+    pchr_b = ChrObjList.get_data_ptr( ichr_b );
 
     pcap_b = ego_chr::get_pcap( ichr_b );
     if ( NULL == pcap_b ) return bfalse;
@@ -8821,7 +8821,7 @@ egoboo_rv chr_invalidate_child_instances( ego_chr * pchr )
         if ( !INGAME_CHR( iitem ) ) continue;
 
         // invalidate the matrix_cache
-        ChrObjList.get_data( iitem ).inst.matrix_cache.valid = bfalse;
+        ChrObjList.get_data_ref( iitem ).inst.matrix_cache.valid = bfalse;
     }
 
     return rv_success;
@@ -8927,7 +8927,7 @@ MAD_REF ego_chr::get_imad( const CHR_REF & ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return MAD_REF( MAX_MAD );
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // try to repair a bad model if it exists
     if ( !LOADED_MAD( pchr->inst.imad ) )
@@ -8952,7 +8952,7 @@ ego_mad * ego_chr::get_pmad( const CHR_REF & ichr )
     ego_chr * pchr;
 
     if ( !DEFINED_CHR( ichr ) ) return NULL;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // try to repair a bad model if it exists
     if ( !LOADED_MAD( pchr->inst.imad ) )
@@ -9043,7 +9043,7 @@ bool_t ego_chr::set_maxaccel( ego_chr * pchr, float new_val )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * ego_chr_bundle::ctor_this( ego_chr_bundle * pbundle )
+ego_bundle_chr * ego_bundle_chr::ctor_this( ego_bundle_chr * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
@@ -9060,14 +9060,14 @@ ego_chr_bundle * ego_chr_bundle::ctor_this( ego_chr_bundle * pbundle )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * ego_chr_bundle::validate( ego_chr_bundle * pbundle )
+ego_bundle_chr * ego_bundle_chr::validate( ego_bundle_chr * pbundle )
 {
     if ( NULL == pbundle ) return NULL;
 
     // get the character info from the reference or the pointer
     if ( VALID_CHR( pbundle->chr_ref ) )
     {
-        pbundle->chr_ptr = ChrObjList.get_pdata( pbundle->chr_ref );
+        pbundle->chr_ptr = ChrObjList.get_data_ptr( pbundle->chr_ref );
     }
     else if ( NULL != pbundle->chr_ptr )
     {
@@ -9097,16 +9097,16 @@ ego_chr_bundle * ego_chr_bundle::validate( ego_chr_bundle * pbundle )
 
 ego_chr_bundle__validate_fail:
 
-    return ego_chr_bundle::ctor_this( pbundle );
+    return ego_bundle_chr::ctor_this( pbundle );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_bundle * ego_chr_bundle::set( ego_chr_bundle * pbundle, ego_chr * pchr )
+ego_bundle_chr * ego_bundle_chr::set( ego_bundle_chr * pbundle, ego_chr * pchr )
 {
     if ( NULL == pbundle ) return NULL;
 
     // blank out old data
-    pbundle = ego_chr_bundle::ctor_this( pbundle );
+    pbundle = ego_bundle_chr::ctor_this( pbundle );
 
     if ( NULL == pbundle || NULL == pchr ) return pbundle;
 
@@ -9114,7 +9114,7 @@ ego_chr_bundle * ego_chr_bundle::set( ego_chr_bundle * pbundle, ego_chr * pchr )
     pbundle->chr_ptr = pchr;
 
     // validate the particle data
-    pbundle = ego_chr_bundle::validate( pbundle );
+    pbundle = ego_bundle_chr::validate( pbundle );
 
     return pbundle;
 }
@@ -9130,13 +9130,13 @@ void character_physics_initialize()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_mesh_attached( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_mesh_attached( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_mesh( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_mesh( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
     ego_chr             * loc_pchr;
     ego_cap             * loc_pcap;
@@ -9212,13 +9212,13 @@ bool_t chr_bump_mesh( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel,
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_grid_attached( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_grid_attached( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_grid( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_grid( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
     ego_chr             * loc_pchr;
     ego_cap             * loc_pcap;
@@ -9470,7 +9470,7 @@ bool_t chr_bump_grid( ego_chr_bundle * pbdl, fvec3_t test_pos, fvec3_t test_vel,
 }
 
 //--------------------------------------------------------------------------------------------
-void character_physics_finalize_one( ego_chr_bundle * pbdl, float dt )
+void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
 {
     bool_t bumped_mesh = bfalse, bumped_grid  = bfalse, needs_update = bfalse;
 
@@ -9550,7 +9550,7 @@ void character_physics_finalize_one( ego_chr_bundle * pbdl, float dt )
     if ( !needs_update )
     {
         // make a timer that is individual for each object
-        Uint32 chr_update = loc_pchr->get_pparent()->guid + update_wld;
+        Uint32 chr_update = ego_chr::get_obj_ref( *loc_pchr ).guid + update_wld;
 
         needs_update = ( 0 == ( chr_update & 7 ) );
     }
@@ -9567,10 +9567,10 @@ void character_physics_finalize_all( float dt )
     // accumulate the accumulators
     CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
     {
-        ego_chr_bundle bdl;
+        ego_bundle_chr bdl;
 
         // create a bundle for the character data
-        if ( NULL == ego_chr_bundle::set( &bdl, pchr ) ) continue;
+        if ( NULL == ego_bundle_chr::set( &bdl, pchr ) ) continue;
 
         character_physics_finalize_one( &bdl, dt );
     }
@@ -9787,7 +9787,7 @@ bool_t pack_validate( ego_pack * ppack )
     item_ref        = ppack->next;
     for ( cnt = 0; cnt < ppack->count && DEFINED_CHR( item_ref ); cnt++ )
     {
-        ego_chr  * item_ptr      = ChrObjList.get_pdata( item_ref );
+        ego_chr  * item_ptr      = ChrObjList.get_data_ptr( item_ref );
         ego_pack * item_pack_ptr = &( item_ptr->pack );
 
         // make sure that the item "pack" is working as a stored item and not a
@@ -9802,7 +9802,7 @@ bool_t pack_validate( ego_pack * ppack )
         /*        if ( !item_ptr->isitem )
                 {
                     // how did this get in a pack?
-                    log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", item_ptr->get_pparent()->base_name );
+                    log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", ego_chr::get_obj_ref(*item_ptr).base_name );
 
                     // remove the item from the pack
                     parent_pack_ptr->next     = item_pack_ptr->next;
@@ -9868,13 +9868,13 @@ bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
 
     // make sure that the item is valid
     if ( !DEFINED_CHR( item ) ) return bfalse;
-    pitem      = ChrObjList.get_pdata( item );
+    pitem      = ChrObjList.get_data_ptr( item );
     pitem_pack = &( pitem->pack );
 
     // is this item packed in another pack?
     if ( pitem_pack->is_packed )
     {
-        log_warning( "pack_add_item() - Trying to add a packed item (%s) to a pack.\n", pitem->get_pparent()->base_name );
+        log_warning( "pack_add_item() - Trying to add a packed item (%s) to a pack.\n", ego_chr::get_obj_ref( *pitem ).base_name );
 
         return bfalse;
     }
@@ -9882,7 +9882,7 @@ bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
     // does this item have packed objects of its own?
     if ( 0 != pitem_pack->count || MAX_CHR != pitem_pack->next )
     {
-        log_warning( "pack_add_item() - Trying to add an item (%s) to a pack that has a sub-pack.\n", pitem->get_pparent()->base_name );
+        log_warning( "pack_add_item() - Trying to add an item (%s) to a pack that has a sub-pack.\n", ego_chr::get_obj_ref( *pitem ).base_name );
 
         return bfalse;
     }
@@ -9890,7 +9890,7 @@ bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
     // is the item even an item?
     if ( !pitem->isitem )
     {
-        log_debug( "pack_add_item() - Trying to add a non-item %s to a pack.\n", pitem->get_pparent()->base_name );
+        log_debug( "pack_add_item() - Trying to add a non-item %s to a pack.\n", ego_chr::get_obj_ref( *pitem ).base_name );
     }
 
     // add the item to the front of the pack's linked list
@@ -9919,7 +9919,7 @@ bool_t pack_remove_item( ego_pack * ppack, CHR_REF iparent, CHR_REF iitem )
     pitem    = NULL;
     if ( DEFINED_CHR( iitem ) )
     {
-        pitem    = ChrObjList.get_pdata( iitem );
+        pitem    = ChrObjList.get_data_ptr( iitem );
         old_next = pitem->pack.next;
     }
 
@@ -9927,7 +9927,7 @@ bool_t pack_remove_item( ego_pack * ppack, CHR_REF iparent, CHR_REF iitem )
     pparent = NULL;
     if ( DEFINED_CHR( iparent ) )
     {
-        pparent = ChrObjList.get_pdata( iparent );
+        pparent = ChrObjList.get_data_ptr( iparent );
     }
 
     // Remove the item from the pack
@@ -9961,7 +9961,7 @@ bool_t chr_inventory_add_item( const CHR_REF & item, const CHR_REF & character )
     int     cnt;
 
     if ( !INGAME_CHR( item ) ) return bfalse;
-    pitem = ChrObjList.get_pdata( item );
+    pitem = ChrObjList.get_data_ptr( item );
 
     // don't allow sub-inventories
     if ( pitem->pack.is_packed || pitem->isequipped ) return bfalse;
@@ -9970,7 +9970,7 @@ bool_t chr_inventory_add_item( const CHR_REF & item, const CHR_REF & character )
     if ( NULL == pitem_cap ) return bfalse;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // don't allow sub-inventories
     if ( pchr->pack.is_packed || pchr->isequipped ) return bfalse;
@@ -10013,7 +10013,7 @@ CHR_REF chr_inventory_remove_item( const CHR_REF & ichr, grip_offset_t grip_off,
     int     cnt;
 
     if ( !INGAME_CHR( ichr ) ) return CHR_REF( MAX_CHR );
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // make sure the pack is not empty
     if ( 0 == pchr->pack.count || MAX_CHR == pchr->pack.next ) return CHR_REF( MAX_CHR );
@@ -10033,7 +10033,7 @@ CHR_REF chr_inventory_remove_item( const CHR_REF & ichr, grip_offset_t grip_off,
             if ( iitem == pchr->inventory[cnt] )
             {
                 pchr->inventory[cnt]          = CHR_REF( MAX_CHR );
-                ChrObjList.get_data( iitem ).isequipped = bfalse;
+                ChrObjList.get_data_ref( iitem ).isequipped = bfalse;
                 break;
             }
         }
@@ -10061,16 +10061,16 @@ CHR_REF chr_pack_has_a_stack( const CHR_REF & item, const CHR_REF & character )
     istack = CHR_REF( MAX_CHR );
 
     if ( !INGAME_CHR( item ) ) return istack;
-    pitem = ChrObjList.get_pdata( item );
+    pitem = ChrObjList.get_data_ptr( item );
     pitem_cap = ego_chr::get_pcap( item );
 
     if ( pitem_cap->isstackable )
     {
-        PACK_BEGIN_LOOP( istack, ChrObjList.get_data( character ).pack.next )
+        PACK_BEGIN_LOOP( istack, ChrObjList.get_data_ref( character ).pack.next )
         {
             if ( INGAME_CHR( istack ) )
             {
-                ego_chr * pstack     = ChrObjList.get_pdata( istack );
+                ego_chr * pstack     = ChrObjList.get_data_ptr( istack );
                 ego_cap * pstack_cap = ego_chr::get_pcap( istack );
 
                 found = pstack_cap->isstackable;
@@ -10120,12 +10120,12 @@ bool_t chr_pack_add_item( const CHR_REF & item, const CHR_REF & character )
     ego_pack * pchr_pack, * pitem_pack;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr      = ChrObjList.get_pdata( character );
+    pchr      = ChrObjList.get_data_ptr( character );
     pchr_pack = &( pchr->pack );
     pchr_cap  = ego_chr::get_pcap( character );
 
     if ( !INGAME_CHR( item ) ) return bfalse;
-    pitem      = ChrObjList.get_pdata( item );
+    pitem      = ChrObjList.get_data_ptr( item );
     pitem_pack = &( pitem->pack );
     pitem_cap  = ego_chr::get_pcap( item );
 
@@ -10138,7 +10138,7 @@ bool_t chr_pack_add_item( const CHR_REF & item, const CHR_REF & character )
     {
         // We found a similar, stackable item in the pack
 
-        ego_chr  * pstack      = ChrObjList.get_pdata( stack );
+        ego_chr  * pstack      = ChrObjList.get_data_ptr( stack );
         ego_cap  * pstack_cap  = ego_chr::get_pcap( stack );
 
         // reveal the name of the item or the stack
@@ -10219,7 +10219,7 @@ bool_t chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem )
     bool_t removed;
 
     if ( !DEFINED_CHR( ichr ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
     pchr_pack = &( pchr->pack );
 
     // remove it from the pack
@@ -10228,7 +10228,7 @@ bool_t chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem )
     // unequip the item
     if ( removed && DEFINED_CHR( iitem ) )
     {
-        ChrObjList.get_data( iitem ).isequipped = bfalse;
+        ChrObjList.get_data_ref( iitem ).isequipped = bfalse;
     }
 
     return removed;
@@ -10246,7 +10246,7 @@ CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool
 
     // does the chr_ref exist?
     if ( !DEFINED_CHR( chr_ref ) ) return CHR_REF( MAX_CHR );
-    pchr         = ChrObjList.get_pdata( chr_ref );
+    pchr         = ChrObjList.get_data_ptr( chr_ref );
     chr_pack_ptr = &( pchr->pack );
 
     // Can the chr_ref have a pack?
@@ -10276,7 +10276,7 @@ CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool
     item_pack_ptr = NULL;
     if ( DEFINED_CHR( item_ref ) )
     {
-        item_ptr = ChrObjList.get_pdata( item_ref );
+        item_ptr = ChrObjList.get_data_ptr( item_ref );
         item_pack_ptr = &( item_ptr->pack );
     }
 
@@ -10293,7 +10293,7 @@ CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool
     parent_pack_ptr = NULL;
     if ( DEFINED_CHR( parent_ref ) )
     {
-        parent_ptr      = ChrObjList.get_pdata( parent_ref );
+        parent_ptr      = ChrObjList.get_data_ptr( parent_ref );
         parent_pack_ptr = &( parent_ptr->pack );
     }
 
@@ -10654,103 +10654,6 @@ ego_chr * ego_chr::dtor_this( ego_chr * pchr )
     if ( NULL == pchr ) return pchr;
 
     return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-// struct ego_obj_chr - memory management
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::ctor_this( ego_obj_chr * pobj )
-{
-    // construct this struct, ONLY
-
-    if ( NULL == pobj ) return NULL;
-
-    puts( "\t\t" __FUNCTION__ );
-
-    pobj = ego_obj_chr::dealloc( pobj );
-    pobj = ego_obj_chr::alloc( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::dtor_this( ego_obj_chr * pobj )
-{
-    // destruct this struct, ONLY
-
-    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
-
-    puts( "\t\t" __FUNCTION__ );
-
-    pobj = ego_obj_chr::dealloc( pobj );
-
-    // Sets the state to ego_obj_terminated automatically.
-    POBJ_TERMINATE( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::dealloc( ego_obj_chr * pobj )
-{
-    // deallocate this struct
-    if ( !VALID_PBASE( pobj ) ) return pobj;
-
-    /* add something here */
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_dealloc( ego_obj_chr * pobj )
-{
-    // deallocate this struct and all sub structs
-
-    if ( !VALID_PBASE( pobj ) ) return pobj;
-
-    ego_chr::do_dealloc( pobj->get_pdata() );
-
-    ego_obj_chr::dealloc( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::alloc( ego_obj_chr * pobj )
-{
-    // allocate this struct
-    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
-
-    /* add something here */
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_chr * ego_obj_chr::do_alloc( ego_obj_chr * pobj )
-{
-    // allocate this struct and all sub structs
-
-    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
-
-    ego_obj_chr::alloc( pobj );
-
-    ego_chr::do_alloc( pobj->get_pdata() );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-bool_t ego_obj_chr::request_terminate( const CHR_REF & ichr )
-{
-    /// @details BB@> Mark this character for deletion
-
-    if ( !DEFINED_CHR( ichr ) ) return bfalse;
-
-    POBJ_REQUEST_TERMINATE( ChrObjList.get_valid_ptr( ichr ) );
-
-    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -11473,7 +11376,7 @@ ego_chr *  ego_chr::do_constructing( ego_chr * pchr )
     // this object has already been constructed as a part of the
     // ego_obj_chr, so its parent is properly defined
 
-    ego_chr * rv =  ego_chr::ctor_all( pchr, pchr->get_pparent() );
+    ego_chr * rv =  ego_chr::ctor_all( pchr, ego_chr::get_obj_ptr( pchr ) );
 
     /* add something here */
 
@@ -11746,7 +11649,7 @@ ego_chr * ego_chr::do_processing( ego_chr * pchr )
                     ripand = RIPPLEAND >> ( -ripple_suppression );
                 }
 
-                if ( 0 == (( update_wld + pchr->get_pparent()->guid ) & ripand ) && pchr->pos.z < water.surface_level && pchr->alive )
+                if ( 0 == (( update_wld + ego_chr::get_obj_ref( *pchr ).guid ) & ripand ) && pchr->pos.z < water.surface_level && pchr->alive )
                 {
                     fvec3_t   vtmp = VECT3( pchr->pos.x, pchr->pos.y, water.surface_level );
 
@@ -11871,3 +11774,86 @@ ego_chr * ego_chr::do_destructing( ego_chr * pchr )
 
     return rv;
 }
+
+//-------------------------------------------------------------------------------------------
+// ego_chr - specialization (if any) of the i_ego_obj interface
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_chr::object_allocated( void )
+{
+    if ( NULL == this || NULL == _container_ptr ) return bfalse;
+
+    return container_type::get_allocated( _container_ptr );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_chr::object_update_list_id( void )
+{
+    if ( NULL == this ) return bfalse;
+
+    // get a non-const version of the container pointer
+    container_type * pcont = get_container_ptr( this );
+    if ( NULL == pcont ) return bfalse;
+
+    if ( !container_type::get_allocated( pcont ) ) return bfalse;
+
+    // deal with the return state
+    if ( !valid )
+    {
+        container_type::set_list_id( pcont, INVALID_UPDATE_GUID );
+    }
+    else if ( ego_obj_processing == action )
+    {
+        container_type::set_list_id( pcont, ChrObjList.get_list_id() );
+    }
+
+    return INVALID_UPDATE_GUID != container_type::get_list_id( pcont );
+}
+
+//--------------------------------------------------------------------------------------------
+// struct ego_obj_chr -
+//--------------------------------------------------------------------------------------------
+
+bool_t ego_obj_chr::request_terminate( const CHR_REF & ichr )
+{
+    /// @details BB@> Tell the game to get rid of this object and treat it
+    ///               as if it was already dead
+    ///
+    /// @note ego_obj_chr::request_terminate() will force the game to
+    ///       (eventually) call free_one_character_in_game() on this character
+
+    return request_terminate( ChrObjList.get_valid_data_ptr( ichr ) );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_chr::request_terminate( ego_obj_chr * pobj )
+{
+    /// @details BB@> Tell the game to get rid of this object and treat it
+    ///               as if it was already dead
+    ///
+    /// @note ego_obj_chr::request_terminate() will force the game to
+    ///       (eventually) call free_one_character_in_game() on this character
+
+    if ( NULL == pobj || TERMINATED_PCHR( pobj ) ) return bfalse;
+
+    // wait for ChrObjList.cleanup() to work its magic
+    pobj->begin_waiting( );
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_chr::request_terminate( ego_bundle_chr * pbdl_chr )
+{
+    bool_t retval;
+    if ( NULL == pbdl_chr ) return bfalse;
+
+    retval = ego_obj_chr::request_terminate( pbdl_chr->chr_ref );
+
+    if ( retval )
+    {
+        ego_bundle_chr::validate( pbdl_chr );
+    }
+
+    return retval;
+}
+

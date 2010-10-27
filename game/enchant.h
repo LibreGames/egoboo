@@ -22,7 +22,7 @@
 /// @file enchant.h
 /// @details Decleares some stuff used for handling enchants
 
-#include "egoboo_object.h"
+#include "egoboo_object_list.h"
 
 #include "egoboo.h"
 
@@ -32,6 +32,8 @@
 //--------------------------------------------------------------------------------------------
 struct ego_pro;
 struct ego_chr;
+
+typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -149,15 +151,17 @@ protected:
 /// This encapsulates all the enchant functions and some extra data
 struct ego_enc : public ego_enc_data
 {
-    friend struct ego_obj_enc;
+    friend struct t_ego_obj_container< ego_enc, MAX_ENC >;
+
+    typedef ego_obj_enc object_type;
 
 public:
     ego_enc_spawn_data  spawn_data;
 
     //---- constructors and destructors
 
-    /// non-default constructor. We MUST know who our marent is
-    explicit ego_enc( ego_obj_enc * _pparent ) : _parent_obj_ptr( _pparent ) { ego_enc::ctor_this( this ); };
+    /// non-default constructor. We MUST know who our parent is
+    explicit ego_enc( ego_obj_enc * _pparent ) : _obj_ptr( _pparent ) { ego_enc::ctor_this( this ); };
 
     /// default destructor
     ~ego_enc() { ego_enc::dtor_this( this ); };
@@ -168,11 +172,9 @@ public:
     // These have to have generic names to that all objects that are contained in
     // an ego_object can be interfaced with in the same way
 
-    ego_obj_enc *  get_pparent()       { return ( ego_obj_enc * )_parent_obj_ptr; }
-    const ego_obj_enc * cget_pparent() const { return _parent_obj_ptr; }
-
-    static       ego_obj_enc *  get_pparent( ego_enc * ptr ) { return ( NULL == ptr ) ? NULL : ( ego_obj_enc * )ptr->_parent_obj_ptr; }
-    static const ego_obj_enc * cget_pparent( const ego_enc * ptr ) { return ( NULL == ptr ) ? NULL : ptr->_parent_obj_ptr; }
+    static       ego_obj_enc &  get_obj_ref( ego_enc & ref ) { return *(( ego_obj_enc * )ref._obj_ptr ); }
+    static       ego_obj_enc *  get_obj_ptr( ego_enc * ptr ) { return ( NULL == ptr ) ? NULL : ( ego_obj_enc * )ptr->_obj_ptr; }
+    static const ego_obj_enc * cget_obj_ptr( const ego_enc * ptr ) { return ( NULL == ptr ) ? NULL : ptr->_obj_ptr; }
 
     //---- construction and destruction
 
@@ -235,83 +237,53 @@ protected:
 private:
 
     /// a hook to ego_obj_enc, which is the parent container of this object
-    const ego_obj_enc * _parent_obj_ptr;
+    const ego_obj_enc * _obj_ptr;
 };
 
 //--------------------------------------------------------------------------------------------
 
-/// A refinement of the ego_obj and the actual container that will be stored in the t_cpp_list<>
-/// This adds functions for implementing the state machine on this object (the run* and do* functions)
-/// and encapsulates the enchant data
+/// The actual container that will be stored in the t_cpp_list<>
 
-struct ego_obj_enc : public ego_obj
+struct ego_obj_enc : public ego_obj, public ego_enc
 {
-    //---- typedefs
+    typedef ego_enc_container container_type;
+    typedef ego_enc           data_type;
+    typedef ENC_REF           reference_type;
+    typedef ego_obj_enc       its_type;
 
-    /// a type definition so that parent struct t_ego_obj_lst<> can define a function
-    /// to get at the actual enchant data. For instance EncObjList.get_pdata() to return
-    /// a pointer to the enchant data
-    typedef ego_enc data_type;
+    ego_obj_enc( ego_enc_container * pcont ) : ego_enc( this ), _container_ptr( pcont ) {};
 
-    //---- constructors and destructors
+    // This its_type is contained by container_type. We need some way of accessing it.
 
-    /// default constructor
-    explicit ego_obj_enc() : _enc_data( this ) { puts( __FUNCTION__ ); ctor_this( this ); }
+    static       container_type *  get_container_ptr( its_type * ptr ) { return NULL == ptr ? NULL : ( container_type * )ptr->_container_ptr; }
+    static const container_type * cget_container_ptr( const its_type * ptr ) { return NULL == ptr ? NULL : ptr->_container_ptr; }
 
-    /// default destructor
-    ~ego_obj_enc() { dtor_this( this ); puts( __FUNCTION__ ); }
+    static       data_type *  get_data_ptr( its_type * ptr ) { return NULL == ptr ? NULL : static_cast<data_type *>( ptr ); }
+    static const data_type * cget_data_ptr( const its_type * ptr ) { return NULL == ptr ? NULL : static_cast<const data_type *>( ptr ); }
 
-    //---- implementation of required accessors
+    static bool_t request_terminate( const reference_type & ienc );
+    static bool_t request_terminate( its_type * pobj );
+    //static bool_t request_terminate( ego_enc_bundle * pbdl_enc );
 
-    // This container "has a" ego_enc, so we need some way of accessing it
-    // These have to have generic names to that t_ego_obj_lst<> can access the data
-    // for all container types
+    //---- specialization of the ego_object_process methods
+    virtual int do_constructing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_constructing( this ) ? -1 : 1; };
+    virtual int do_initializing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_initializing( this ) ? -1 : 1; };
+    virtual int do_deinitializing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_deinitializing( this ) ? -1 : 1; };
+    virtual int do_processing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_processing( this ) ? -1 : 1; };
+    virtual int do_destructing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_destructing( this ) ? -1 : 1; };
 
-    ego_enc & get_data()  { return _enc_data; }
-    ego_enc * get_pdata() { return &_enc_data; }
-
-    const ego_enc & cget_data()  const { return _enc_data; }
-    const ego_enc * cget_pdata() const { return &_enc_data; }
-
-    //---- construction and destruction
-
-    /// construct this struct, ONLY
-    static ego_obj_enc * ctor_this( ego_obj_enc * pobj );
-    /// destruct this struct, ONLY
-    static ego_obj_enc * dtor_this( ego_obj_enc * pobj );
-
-    /// construct this struct, and ALL dependent structs. use placement new
-    static ego_obj_enc * ctor_all( ego_obj_enc * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_obj_enc(); } return ptr; }
-    /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_obj_enc * dtor_all( ego_obj_enc * ptr )  { if ( NULL != ptr ) { ptr->~ego_obj_enc(); puts( "\t" __FUNCTION__ ); } return ptr; }
-
-    /// Ask the "egoboo object process" to terminate itself
-    static bool_t        request_terminate( const ENC_REF & ienc );
-
-protected:
-
-    //---- memory management
-
-    /// allocate data for this struct, ONLY
-    static ego_obj_enc * alloc( ego_obj_enc * pobj );
-    /// deallocate data for this struct, ONLY
-    static ego_obj_enc * dealloc( ego_obj_enc * pobj );
-
-    /// allocate data for this struct, and ALL dependent structs
-    static ego_obj_enc * do_alloc( ego_obj_enc * pobj );
-    /// deallocate data for this struct, and ALL dependent structs
-    static ego_obj_enc * do_dealloc( ego_obj_enc * pobj );
-
-    //---- implementation of the ego_object_process virtual methods
-
-    virtual int do_constructing()   { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_constructing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_initializing()   { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_initializing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_processing()     { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_processing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_deinitializing() { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_deinitializing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_destructing()    { if ( NULL == this ) return -1; ego_enc * rv = ego_enc::do_destructing( &_enc_data ); return ( NULL == rv ) ? -1 : 1; };
+    //---- specialization (if any) of the i_ego_obj interface
+    virtual bool_t    object_allocated( void );
+    virtual bool_t    object_update_list_id( void );
+    //virtual ego_obj     * get_obj_ptr(void);
+    //virtual ego_obj_chr * get_obj_chr_ptr(void);
+    virtual ego_obj_enc * get_obj_enc_ptr( void )  { return this; }
+    //virtual ego_obj_prt * get_obj_prt_ptr(void);
 
 private:
-    ego_enc _enc_data;
+
+    /// a hook to container_type, which is the parent container of this object
+    const container_type * _container_ptr;
 };
 
 //--------------------------------------------------------------------------------------------

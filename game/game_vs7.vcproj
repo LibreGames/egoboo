@@ -189,9 +189,6 @@
 				RelativePath=".\egoboo_typedef.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_typedef_cpp.inl">
-			</File>
-			<File
 				RelativePath=".\font_bmp.cpp">
 			</File>
 			<File
@@ -536,6 +533,9 @@
 			Filter="">
 			<File
 				RelativePath=".\char.inl">
+			</File>
+			<File
+				RelativePath=".\egoboo_object.inl">
 			</File>
 			<File
 				RelativePath=".\enchant.inl">
@@ -973,6 +973,9 @@
 			Filter="">
 			<File
 				RelativePath=".\egoboo_math.inl">
+			</File>
+			<File
+				RelativePath=".\egoboo_typedef_cpp.inl">
 			</File>
 		</Filter>
 		<Filter

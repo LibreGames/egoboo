@@ -89,7 +89,7 @@ struct ego_process_data
     ego_process_data() { clear( this ); }
     ~ego_process_data() { clear( this ); };
 
-    ego_process_data * get_pdata() { return this; }
+    ego_process_data * get_data_ptr() { return this; }
 
 private:
 

@@ -29,7 +29,7 @@
 
 struct ego_camera;
 struct ego_prt_data;
-struct ego_prt_bundle;
+struct ego_bundle_prt;
 
 //--------------------------------------------------------------------------------------------
 // support for computing the particle texture coordinates on the fly.

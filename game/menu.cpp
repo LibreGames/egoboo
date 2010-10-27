@@ -6952,7 +6952,7 @@ int doMenu( float deltaTime )
                 {
                     // "Restart Module"
                     mnu_end_menu();
-                    game_begin_module( PMod->loadname, ( Uint32 )~0 );
+                    game_begin_module( PMod->loadname, Uint32( ~0L ) );
                     retval = MENU_END;
                 }
                 else if ( result == 3 )

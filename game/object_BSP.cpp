@@ -175,7 +175,7 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_prt_bundle * pbdl_prt )
+bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_bundle_prt * pbdl_prt )
 {
     /// @details BB@> insert a particle's ego_BSP_leaf   into the ego_BSP_tree
 
@@ -260,7 +260,7 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
     ego_obj_BSP::chr_count = 0;
     for ( ichr = 0; ichr < MAX_CHR; ichr++ )
     {
-        ego_chr * pchr = ChrObjList.get_pdata( ichr );
+        ego_chr * pchr = ChrObjList.get_data_ptr( ichr );
         if ( NULL == pchr ) continue;
 
         pchr->bsp_leaf.inserted = bfalse;
@@ -270,7 +270,7 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
     ego_obj_BSP::prt_count = 0;
     for ( iprt = 0; iprt < MAX_PRT; iprt++ )
     {
-        ego_prt * pprt = PrtObjList.get_pdata( iprt );
+        ego_prt * pprt = PrtObjList.get_data_ptr( iprt );
         if ( NULL == pprt ) continue;
 
         pprt->bsp_leaf.inserted = bfalse;

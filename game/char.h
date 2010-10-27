@@ -25,7 +25,7 @@
 
 #include "character_defs.h"
 
-#include "egoboo_object.h"
+#include "egoboo_object_list.h"
 
 #include "file_formats/cap_file.h"
 #include "graphic_mad.h"
@@ -51,13 +51,16 @@ struct ego_ai_state;
 
 struct ego_chr;
 struct ego_obj_chr;
+struct ego_bundle_chr;
+
+typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // no bounds checking
-#define IS_FLYING_CHR_RAW(ICHR)   ( (ChrObjList.get_data(ICHR).is_flying_jump || ChrObjList.get_data(ICHR).is_flying_platform) )
-#define IS_PACKED_CHR_RAW(ICHR)   ( ChrObjList.get_data(ICHR).pack.is_packed )
-#define IS_ATTACHED_CHR_RAW(ICHR) ( (DEFINED_CHR(ChrObjList.get_data(ICHR).attachedto) || ChrObjList.get_data(ICHR).pack.is_packed) )
+#define IS_FLYING_CHR_RAW(ICHR)   ( (ChrObjList.get_data_ref(ICHR).is_flying_jump || ChrObjList.get_data_ref(ICHR).is_flying_platform) )
+#define IS_PACKED_CHR_RAW(ICHR)   ( ChrObjList.get_data_ref(ICHR).pack.is_packed )
+#define IS_ATTACHED_CHR_RAW(ICHR) ( (DEFINED_CHR(ChrObjList.get_data_ref(ICHR).attachedto) || ChrObjList.get_data_ref(ICHR).pack.is_packed) )
 
 #define IS_INVICTUS_PCHR_RAW(PCHR) ( ( VALID_PLA( (PCHR)->is_which_player ) ? PlaStack[(PCHR)->is_which_player].wizard_mode : bfalse ) || (PCHR)->invictus )
 #define IS_FLYING_PCHR_RAW(PCHR)   ( ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
@@ -165,7 +168,7 @@ struct ego_pack
 bool_t pack_add_item( ego_pack * ppack, CHR_REF item );
 bool_t pack_remove_item( ego_pack * ppack, CHR_REF iparent, CHR_REF iitem );
 
-#define PACK_BEGIN_LOOP(IT,INIT) IT = INIT; while( MAX_CHR != IT ) { CHR_REF IT##_internal = ChrObjList.get_data(IT).pack.next;
+#define PACK_BEGIN_LOOP(IT,INIT) IT = INIT; while( MAX_CHR != IT ) { CHR_REF IT##_internal = ChrObjList.get_data_ref(IT).pack.next;
 #define PACK_END_LOOP(IT) IT = IT##_internal; }
 
 //--------------------------------------------------------------------------------------------
@@ -510,7 +513,9 @@ protected:
 /// This encapsulates all the character functions and some extra data
 struct ego_chr : public ego_chr_data
 {
-    friend struct ego_obj_chr;
+    friend struct t_ego_obj_container< ego_chr, MAX_CHR >;
+
+    typedef ego_obj_chr object_type;
 
 public:
 
@@ -525,8 +530,8 @@ public:
 
     //---- constructors and destructors
 
-    /// non-default constructor. We MUST know who our marent is
-    explicit ego_chr( ego_obj_chr * _pparent ) : _parent_obj_ptr( _pparent ) { ego_chr::ctor_this( this ); };
+    /// non-default constructor. We MUST know who our parent is
+    explicit ego_chr( ego_obj_chr * pobj ) : _obj_ptr( pobj ) { ego_chr::ctor_this( this ); };
 
     /// default destructor
     ~ego_chr() { ego_chr::dtor_this( this ); };
@@ -537,11 +542,9 @@ public:
     // These have to have generic names to that all objects that are contained in
     // an ego_object can be interfaced with in the same way
 
-    ego_obj_chr *  get_pparent()       { return ( ego_obj_chr * )_parent_obj_ptr; }
-    const ego_obj_chr * cget_pparent() const { return _parent_obj_ptr; }
-
-    static       ego_obj_chr *  get_pparent( ego_chr * ptr ) { return NULL == ptr ? NULL : ( ego_obj_chr * )ptr->_parent_obj_ptr; }
-    static const ego_obj_chr * cget_pparent( const ego_chr * ptr ) { return NULL == ptr ? NULL : ptr->_parent_obj_ptr; }
+    static       ego_obj_chr &  get_obj_ref( ego_chr & ref ) { return *(( ego_obj_chr * )ref._obj_ptr ); }
+    static       ego_obj_chr *  get_obj_ptr( ego_chr * ptr ) { return NULL == ptr ? NULL : ( ego_obj_chr * )ptr->_obj_ptr; }
+    static const ego_obj_chr * cget_obj_ptr( const ego_chr * ptr ) { return NULL == ptr ? NULL : ptr->_obj_ptr; }
 
     //---- construction and destruction
 
@@ -694,83 +697,53 @@ protected:
 private:
 
     /// a hook to ego_obj_chr, which is the parent container of this object
-    const ego_obj_chr * _parent_obj_ptr;
+    const ego_obj_chr * _obj_ptr;
 };
 
 //--------------------------------------------------------------------------------------------
 
-/// A refinement of the ego_obj and the actual container that will be stored in the t_cpp_list<>
-/// This adds functions for implementing the state machine on this object (the run* and do* functions)
-/// and encapsulates the character data
+/// The actual container that will be stored in the t_cpp_list<>
 
-struct ego_obj_chr : public ego_obj
+struct ego_obj_chr : public ego_obj, public ego_chr
 {
-    //---- typedefs
+    typedef ego_chr_container container_type;
+    typedef ego_chr           data_type;
+    typedef CHR_REF           reference_type;
+    typedef ego_obj_chr       its_type;
 
-    /// a type definition so that parent struct t_ego_obj_lst<> can define a function
-    /// to get at the actual character data. For instance ChrObjList.get_pdata() to return
-    /// a pointer to the character data
-    typedef ego_chr data_type;
+    ego_obj_chr( container_type * pcont ) : ego_chr( this ), _container_ptr( pcont ) {};
 
-    //---- constructors and destructors
+    // This its_type is contained by container_type. We need some way of accessing it.
 
-    /// default constructor
-    explicit ego_obj_chr() : _chr_data( this ) { puts( __FUNCTION__ ); ctor_this( this ); }
+    static       container_type *  get_container_ptr( its_type * ptr ) { return NULL == ptr ? NULL : ( container_type * )ptr->_container_ptr; }
+    static const container_type * cget_container_ptr( const its_type * ptr ) { return NULL == ptr ? NULL : ptr->_container_ptr; }
 
-    /// default destructor
-    ~ego_obj_chr() { dtor_this( this ); puts( __FUNCTION__ ); }
+    static       ego_chr *  get_data_ptr( its_type * ptr ) { return NULL == ptr ? NULL : static_cast<ego_chr *>( ptr ); }
+    static const ego_chr * cget_data_ptr( const its_type * ptr ) { return NULL == ptr ? NULL : static_cast<const ego_chr *>( ptr ); }
 
-    //---- implementation of required accessors
+    static bool_t request_terminate( const reference_type & ichr );
+    static bool_t request_terminate( its_type * pobj );
+    static bool_t request_terminate( ego_bundle_chr * pbdl_chr );
 
-    // This container "has a" ego_chr, so we need some way of accessing it
-    // These have to have generic names to that t_ego_obj_lst<> can access the data
-    // for all container types
+    //---- specialization of the ego_object_process methods
+    virtual int do_constructing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_constructing( this ) ? -1 : 1; };
+    virtual int do_initializing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_initializing( this ) ? -1 : 1; };
+    virtual int do_deinitializing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_deinitializing( this ) ? -1 : 1; };
+    virtual int do_processing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_processing( this ) ? -1 : 1; };
+    virtual int do_destructing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_destructing( this ) ? -1 : 1; };
 
-    ego_chr & get_data()  { return _chr_data; }
-    ego_chr * get_pdata() { return &_chr_data; }
-
-    const ego_chr & cget_data()  const { return _chr_data; }
-    const ego_chr * cget_pdata() const { return &_chr_data; }
-
-    //---- construction and destruction
-
-    /// construct this struct, ONLY
-    static ego_obj_chr * ctor_this( ego_obj_chr * pobj );
-    /// destruct this struct, ONLY
-    static ego_obj_chr * dtor_this( ego_obj_chr * pobj );
-
-    /// construct this struct, and ALL dependent structs. use placement new
-    static ego_obj_chr * ctor_all( ego_obj_chr * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_obj_chr(); } return ptr; }
-    /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_obj_chr * dtor_all( ego_obj_chr * ptr )  { if ( NULL != ptr ) { ptr->~ego_obj_chr(); puts( "\t" __FUNCTION__ ); } return ptr; }
-
-    /// Ask the "egoboo object process" to terminate itself
-    static bool_t        request_terminate( const CHR_REF & ichr );
-
-protected:
-
-    //---- memory management
-
-    /// allocate data for this struct, ONLY
-    static ego_obj_chr * alloc( ego_obj_chr * pobj );
-    /// deallocate data for this struct, ONLY
-    static ego_obj_chr * dealloc( ego_obj_chr * pobj );
-
-    /// allocate data for this struct, and ALL dependent structs
-    static ego_obj_chr * do_alloc( ego_obj_chr * pobj );
-    /// deallocate data for this struct, and ALL dependent structs
-    static ego_obj_chr * do_dealloc( ego_obj_chr * pobj );
-
-    //---- implementation of the ego_object_process virtual methods
-
-    virtual int do_constructing()   { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_constructing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_initializing()   { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_initializing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_processing()     { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_processing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_deinitializing() { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_deinitializing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_destructing()    { if ( NULL == this ) return -1; ego_chr * rv = ego_chr::do_destructing( &_chr_data ); return ( NULL == rv ) ? -1 : 1; };
+    //---- specialization (if any) of the i_ego_obj interface
+    virtual bool_t    object_allocated( void );
+    virtual bool_t    object_update_list_id( void );
+    //virtual data_type     * get_obj_ptr(void);
+    virtual ego_obj_chr * get_obj_chr_ptr( void )  { return this; }
+    //virtual ego_obj_enc * get_obj_enc_ptr(void);
+    //virtual ego_obj_prt * get_obj_prt_ptr(void);
 
 private:
-    ego_chr _chr_data;
+
+    /// a hook to container_type, which is the parent container of this object
+    const container_type * _container_ptr;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -864,7 +837,7 @@ struct ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-struct ego_chr_bundle
+struct ego_bundle_chr
 {
     CHR_REF   chr_ref;
     ego_chr * chr_ptr;
@@ -875,9 +848,36 @@ struct ego_chr_bundle
     CAP_REF   cap_ref;
     ego_cap * cap_ptr;
 
-    static ego_chr_bundle * ctor_this( ego_chr_bundle * pbundle );
-    static ego_chr_bundle * validate( ego_chr_bundle * pbundle );
-    static ego_chr_bundle * set( ego_chr_bundle * pbundle, ego_chr * pchr );
+    static ego_bundle_chr * ctor_this( ego_bundle_chr * pbundle );
+    static ego_bundle_chr * validate( ego_bundle_chr * pbundle );
+    static ego_bundle_chr * set( ego_bundle_chr * pbundle, ego_chr * pchr );
+
+    static ego_chr & get_chr_ref( ego_bundle_chr & ref )
+    {
+        // handle the worst-case scenario
+        if ( NULL == ref.chr_ptr ) { validate( &ref ); CPP_EGOBOO_ASSERT( NULL != ref.chr_ptr ); }
+
+        return *( ref.chr_ptr );
+    }
+
+    static ego_chr * get_chr_ptr( ego_bundle_chr * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        if ( NULL == ptr->chr_ptr ) validate( ptr );
+
+        return ptr->chr_ptr;
+    }
+
+    static const ego_chr * cget_chr_ptr( const ego_bundle_chr * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        // cannot do the following since the bundle is CONST... ;)
+        // if( NULL == ptr->chr_ptr ) validate(ptr);
+
+        return ptr->chr_ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------

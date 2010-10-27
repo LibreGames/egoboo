@@ -178,9 +178,9 @@ bool_t link_pop_module()
             {
                 if ( !INGAME_CHR( j ) ) continue;
 
-                if ( phero->object_index == ChrObjList.get_data( j ).profile_ref )
+                if ( phero->object_index == ChrObjList.get_data_ref( j ).profile_ref )
                 {
-                    pchr = ChrObjList.get_pdata( j );
+                    pchr = ChrObjList.get_data_ptr( j );
                     break;
                 };
             }
@@ -232,7 +232,7 @@ bool_t link_push_module()
         // Is it alive?
         if ( !INGAME_CHR( ppla->index ) ) continue;
         ichr = ppla->index;
-        pchr = ChrObjList.get_pdata( ichr );
+        pchr = ChrObjList.get_data_ptr( ichr );
 
         if ( pentry->hero_count < LINK_HEROES_MAX )
         {

@@ -81,12 +81,12 @@
     return returncode;
 
 #define SET_TARGET_0(ITARGET)         pself->target = ITARGET;
-#define SET_TARGET_1(ITARGET,PTARGET) if( NULL != PTARGET ) { PTARGET = (!INGAME_CHR(ITARGET) ? NULL : ChrObjList.get_pdata(ITARGET) ); }
+#define SET_TARGET_1(ITARGET,PTARGET) if( NULL != PTARGET ) { PTARGET = (!INGAME_CHR(ITARGET) ? NULL : ChrObjList.get_data_ptr(ITARGET) ); }
 #define SET_TARGET(ITARGET,PTARGET)   SET_TARGET_0( ITARGET ); SET_TARGET_1(ITARGET,PTARGET)
 
 #define SCRIPT_REQUIRE_TARGET(PTARGET) \
     if( !INGAME_CHR(pself->target) ) return bfalse; \
-    PTARGET = ChrObjList.get_pdata(pself->target);
+    PTARGET = ChrObjList.get_data_ptr(pself->target);
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -556,7 +556,7 @@ Uint8 scr_FindPath( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     {
         float fx, fy;
 
-        ego_chr * pself_target = ChrObjList.get_pdata( pself->target );
+        ego_chr * pself_target = ChrObjList.get_data_ptr( pself->target );
 
         if ( pstate->distance != MOVE_FOLLOW )
         {
@@ -1119,7 +1119,7 @@ Uint8 scr_DropWeapons( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ichr = pchr->holdingwhich[SLOT_LEFT];
     if ( INGAME_CHR( ichr ) )
     {
-        ego_chr * tmp_pchr = ChrObjList.get_pdata( ichr );
+        ego_chr * tmp_pchr = ChrObjList.get_data_ptr( ichr );
 
         detach_character_from_mount( ichr, btrue, btrue );
         if ( pchr->ismount )
@@ -1138,7 +1138,7 @@ Uint8 scr_DropWeapons( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ichr = pchr->holdingwhich[SLOT_RIGHT];
     if ( INGAME_CHR( ichr ) )
     {
-        ego_chr * tmp_pchr = ChrObjList.get_pdata( ichr );
+        ego_chr * tmp_pchr = ChrObjList.get_data_ptr( ichr );
 
         detach_character_from_mount( ichr, btrue, btrue );
         if ( pchr->ismount )
@@ -1170,7 +1170,7 @@ Uint8 scr_TargetDoAction( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     returncode = bfalse;
     if ( INGAME_CHR( pself->target ) )
     {
-        ego_chr * pself_target = ChrObjList.get_pdata( pself->target );
+        ego_chr * pself_target = ChrObjList.get_data_ptr( pself->target );
 
         if ( pself_target->alive )
         {
@@ -1276,17 +1276,17 @@ Uint8 scr_CostTargetItemID( ego_script_state * pstate, ego_ai_bundle * pbdl_self
     {
         returncode = btrue;
 
-        if ( ChrObjList.get_data( item ).ammo > 1 )
+        if ( ChrObjList.get_data_ref( item ).ammo > 1 )
         {
             // Cost one ammo
-            ChrObjList.get_data( item ).ammo--;
+            ChrObjList.get_data_ref( item ).ammo--;
         }
         else
         {
             // Poof the item
 
             // remove it from a pack, if it was packed
-            pack_remove_item( &( ChrObjList.get_data( ichr ).pack ), pack_last, item );
+            pack_remove_item( &( ChrObjList.get_data_ref( ichr ).pack ), pack_last, item );
 
             // Drop from hand, if held
             detach_character_from_mount( item, btrue, bfalse );
@@ -1446,7 +1446,7 @@ Uint8 scr_TargetCanOpenStuff( ego_script_state * pstate, ego_ai_bundle * pbdl_se
         if ( DEFINED_CHR( iheld ) )
         {
             // can the rider open the
-            returncode = ChrObjList.get_data( iheld ).openstuff;
+            returncode = ChrObjList.get_data_ref( iheld ).openstuff;
         }
     }
 
@@ -1658,7 +1658,7 @@ Uint8 scr_set_TargetToTargetOfLeader( ego_script_state * pstate, ego_ai_bundle *
 
         if ( NOLEADER != ileader && INGAME_CHR( ileader ) )
         {
-            CHR_REF itarget = ChrObjList.get_data( ileader ).ai.target;
+            CHR_REF itarget = ChrObjList.get_data_ref( ileader ).ai.target;
 
             if ( INGAME_CHR( itarget ) )
             {
@@ -1851,12 +1851,12 @@ Uint8 scr_SpawnCharacter( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->get_pparent()->base_name );
+            log_warning( "Object %s failed to spawn a copy of itself\n", ego_chr::get_obj_ref( *pchr ).base_name );
         }
     }
     else
     {
-        ego_chr * pchild = ChrObjList.get_pdata( ichr );
+        ego_chr * pchild = ChrObjList.get_data_ptr( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
@@ -2112,7 +2112,7 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
-    ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
+    ego_prt * pprt = PrtObjList.get_valid_data_ptr( iprt );
     returncode = ( NULL != pprt );
 
     if ( returncode )
@@ -2407,15 +2407,15 @@ Uint8 scr_ScoredAHit( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     SCRIPT_FUNCTION_BEGIN();
 
     // Proceed only if the character scored a hit
-    if ( !INGAME_CHR( pchr->attachedto ) || ChrObjList.get_data( pchr->attachedto ).ismount )
+    if ( !INGAME_CHR( pchr->attachedto ) || ChrObjList.get_data_ref( pchr->attachedto ).ismount )
     {
         returncode = HAS_SOME_BITS( pself->alert, ALERTIF_SCOREDAHIT );
     }
 
     // Proceed only if the holder scored a hit with the character
-    else if ( ChrObjList.get_data( pchr->attachedto ).ai.lastitemused == pself->index )
+    else if ( ChrObjList.get_data_ref( pchr->attachedto ).ai.lastitemused == pself->index )
     {
-        returncode = HAS_SOME_BITS( ChrObjList.get_data( pchr->attachedto ).ai.alert, ALERTIF_SCOREDAHIT );
+        returncode = HAS_SOME_BITS( ChrObjList.get_data_ref( pchr->attachedto ).ai.alert, ALERTIF_SCOREDAHIT );
     }
     else returncode = bfalse;
 
@@ -3096,7 +3096,7 @@ Uint8 scr_KillTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ichr = pself->index;
 
     // Weapons don't kill people, people kill people...
-    if ( INGAME_CHR( pchr->attachedto ) && !ChrObjList.get_data( pchr->attachedto ).ismount )
+    if ( INGAME_CHR( pchr->attachedto ) && !ChrObjList.get_data_ref( pchr->attachedto ).ismount )
     {
         ichr = pchr->attachedto;
     }
@@ -3537,7 +3537,7 @@ Uint8 scr_HoldingRangedWeapon( ego_script_state * pstate, ego_ai_bundle * pbdl_s
     {
         ego_cap * pcap = ego_chr::get_pcap( ichr );
 
-        if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data( ichr ).ammo_max == 0 || ( ChrObjList.get_data( ichr ).ammo != 0 && ChrObjList.get_data( ichr ).ammoknown ) ) )
+        if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data_ref( ichr ).ammo_max == 0 || ( ChrObjList.get_data_ref( ichr ).ammo != 0 && ChrObjList.get_data_ref( ichr ).ammoknown ) ) )
         {
             if ( pstate->argument == 0 || ( update_wld & 1 ) )
             {
@@ -3555,7 +3555,7 @@ Uint8 scr_HoldingRangedWeapon( ego_script_state * pstate, ego_ai_bundle * pbdl_s
         {
             ego_cap * pcap = ego_chr::get_pcap( ichr );
 
-            if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data( ichr ).ammo_max == 0 || ( ChrObjList.get_data( ichr ).ammo != 0 && ChrObjList.get_data( ichr ).ammoknown ) ) )
+            if ( NULL != pcap && pcap->isranged && ( ChrObjList.get_data_ref( ichr ).ammo_max == 0 || ( ChrObjList.get_data_ref( ichr ).ammo != 0 && ChrObjList.get_data_ref( ichr ).ammoknown ) ) )
             {
                 pstate->argument = LATCHBUTTON_LEFT;
                 returncode = btrue;
@@ -4307,7 +4307,7 @@ Uint8 scr_ChildDoActionOverride( ego_script_state * pstate, ego_ai_bundle * pbdl
     {
         int action;
 
-        ego_chr * pchild = ChrObjList.get_pdata( pself->child );
+        ego_chr * pchild = ChrObjList.get_data_ptr( pself->child );
 
         action = mad_get_action( pchild->inst.imad, pstate->argument );
 
@@ -4375,7 +4375,7 @@ Uint8 scr_set_ChildState( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ChrObjList.get_data( pself->child ).ai.state = pstate->argument;
+    ChrObjList.get_data_ref( pself->child ).ai.state = pstate->argument;
 
     SCRIPT_FUNCTION_END();
 }
@@ -4400,7 +4400,7 @@ Uint8 scr_SpawnAttachedSizedParticle( ego_script_state * pstate, ego_ai_bundle *
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
-    ego_prt * pprt = PrtObjList.get_valid_pdata( iprt );
+    ego_prt * pprt = PrtObjList.get_valid_data_ptr( iprt );
     returncode = ( NULL != pprt );
 
     if ( returncode )
@@ -5057,7 +5057,7 @@ Uint8 scr_TargetIsMounted( ego_script_state * pstate, ego_ai_bundle * pbdl_self 
     ichr = pself_target->attachedto;
     if ( INGAME_CHR( ichr ) )
     {
-        returncode = ChrObjList.get_data( ichr ).ismount;
+        returncode = ChrObjList.get_data_ref( ichr ).ismount;
     }
 
     SCRIPT_FUNCTION_END();
@@ -5233,10 +5233,10 @@ Uint8 scr_set_EnchantBoostValues( ego_script_state * pstate, ego_ai_bundle * pbd
     returncode = bfalse;
     if ( INGAME_ENC( iTmp ) )
     {
-        EncObjList.get_data( iTmp ).owner_mana = pstate->argument;
-        EncObjList.get_data( iTmp ).owner_life = pstate->distance;
-        EncObjList.get_data( iTmp ).target_mana = pstate->x;
-        EncObjList.get_data( iTmp ).target_life = pstate->y;
+        EncObjList.get_data_ref( iTmp ).owner_mana = pstate->argument;
+        EncObjList.get_data_ref( iTmp ).owner_life = pstate->distance;
+        EncObjList.get_data_ref( iTmp ).target_mana = pstate->x;
+        EncObjList.get_data_ref( iTmp ).target_life = pstate->y;
 
         returncode = btrue;
     }
@@ -5265,12 +5265,12 @@ Uint8 scr_SpawnCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "Object %s failed to spawn a copy of itself\n", pchr->get_pparent()->base_name );
+            log_warning( "Object %s failed to spawn a copy of itself\n", ego_chr::get_obj_ref( *pchr ).base_name );
         }
     }
     else
     {
-        ego_chr * pchild = ChrObjList.get_pdata( ichr );
+        ego_chr * pchild = ChrObjList.get_data_ptr( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
@@ -5321,12 +5321,12 @@ Uint8 scr_SpawnExactCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbd
         {
             ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
-            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->get_pparent()->base_name, NULL == pcap ? "INVALID" : pcap->classname, pstate->argument );
+            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", ego_chr::get_obj_ref( *pchr ).base_name, NULL == pcap ? "INVALID" : pcap->classname, pstate->argument );
         }
     }
     else
     {
-        ego_chr * pchild = ChrObjList.get_pdata( ichr );
+        ego_chr * pchild = ChrObjList.get_data_ptr( ichr );
 
         // was the child spawned in a "safe" spot?
         if ( !ego_chr::get_safe( pchild, NULL ) )
@@ -5413,7 +5413,7 @@ Uint8 scr_SpawnExactChaseParticle( ego_script_state * pstate, ego_ai_bundle * pb
 
     if ( returncode )
     {
-        PrtObjList.get_data( iprt ).target_ref = pself->target;
+        PrtObjList.get_data_ref( iprt ).target_ref = pself->target;
     }
 
     SCRIPT_FUNCTION_END();
@@ -5471,20 +5471,20 @@ Uint8 scr_UnkurseTargetInventory( ego_script_state * pstate, ego_ai_bundle * pbd
     ichr = pself_target->holdingwhich[SLOT_LEFT];
     if ( INGAME_CHR( ichr ) )
     {
-        ChrObjList.get_data( ichr ).iskursed = bfalse;
+        ChrObjList.get_data_ref( ichr ).iskursed = bfalse;
     }
 
     ichr = pself_target->holdingwhich[SLOT_RIGHT];
     if ( INGAME_CHR( ichr ) )
     {
-        ChrObjList.get_data( ichr ).iskursed = bfalse;
+        ChrObjList.get_data_ref( ichr ).iskursed = bfalse;
     }
 
     PACK_BEGIN_LOOP( ichr, pself_target->pack.next )
     {
         if ( INGAME_CHR( ichr ) )
         {
-            ChrObjList.get_data( ichr ).iskursed = bfalse;
+            ChrObjList.get_data_ref( ichr ).iskursed = bfalse;
         }
     }
     PACK_END_LOOP( ichr );
@@ -5554,7 +5554,7 @@ Uint8 scr_TargetDoActionSetFrame( ego_script_state * pstate, ego_ai_bundle * pbd
     if ( INGAME_CHR( pself->target ) )
     {
         int action;
-        ego_chr * pself_target = ChrObjList.get_pdata( pself->target );
+        ego_chr * pself_target = ChrObjList.get_data_ptr( pself->target );
 
         action = mad_get_action( pself_target->inst.imad, pstate->argument );
 
@@ -5737,7 +5737,7 @@ Uint8 scr_HeldInLeftHand( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     ichr = pchr->attachedto;
     if ( INGAME_CHR( ichr ) )
     {
-        returncode = ( ChrObjList.get_data( ichr ).holdingwhich[SLOT_LEFT] == pself->index );
+        returncode = ( ChrObjList.get_data_ref( ichr ).holdingwhich[SLOT_LEFT] == pself->index );
     }
 
     SCRIPT_FUNCTION_END();
@@ -5765,7 +5765,7 @@ Uint8 scr_set_ChildAmmo( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ChrObjList.get_data( pself->child ).ammo = pstate->argument;
+    ChrObjList.get_data_ref( pself->child ).ammo = pstate->argument;
 
     SCRIPT_FUNCTION_END();
 }
@@ -5816,11 +5816,11 @@ Uint8 scr_IdentifyTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     returncode = bfalse;
     ichr = pself->target;
-    if ( ChrObjList.get_data( ichr ).ammo_max != 0 )  ChrObjList.get_data( ichr ).ammoknown = btrue;
-    if ( 0 == strcmp( "Blah", ChrObjList.get_data( ichr ).name ) )
+    if ( ChrObjList.get_data_ref( ichr ).ammo_max != 0 )  ChrObjList.get_data_ref( ichr ).ammoknown = btrue;
+    if ( 0 == strcmp( "Blah", ChrObjList.get_data_ref( ichr ).name ) )
     {
-        returncode = !ChrObjList.get_data( ichr ).nameknown;
-        ChrObjList.get_data( ichr ).nameknown = btrue;
+        returncode = !ChrObjList.get_data_ref( ichr ).nameknown;
+        ChrObjList.get_data_ref( ichr ).nameknown = btrue;
     }
 
     pcap = ego_chr::get_pcap( pself->target );
@@ -6330,9 +6330,9 @@ Uint8 scr_set_VolumeNearestTeammate( ego_script_state * pstate, ego_ai_bundle * 
     sTmp = 0;
     while(sTmp < MAX_CHR)
     {
-    if(INGAME_CHR(sTmp) && ChrObjList.get_data(sTmp).alive && ChrObjList.get_data(sTmp).Team == pchr->Team)
+    if(INGAME_CHR(sTmp) && ChrObjList.get_data_ref(sTmp).alive && ChrObjList.get_data_ref(sTmp).Team == pchr->Team)
     {
-    distance = ABS(PCamera->trackx-ChrObjList.get_data(sTmp).pos_old.x)+ABS(PCamera->tracky-ChrObjList.get_data(sTmp).pos_old.y);
+    distance = ABS(PCamera->trackx-ChrObjList.get_data_ref(sTmp).pos_old.x)+ABS(PCamera->tracky-ChrObjList.get_data_ref(sTmp).pos_old.y);
     if(distance < iTmp)  iTmp = distance;
     }
     sTmp++;
@@ -6386,7 +6386,7 @@ Uint8 scr_TargetPayForArmor( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
     if ( !INGAME_CHR( pself->target ) ) return bfalse;
 
-    pself_target = ChrObjList.get_pdata( pself->target );
+    pself_target = ChrObjList.get_data_ptr( pself->target );
 
     pcap = ego_chr::get_pcap( pself->target );         // The Target's model
     if ( NULL == pcap )  return bfalse;
@@ -6536,7 +6536,7 @@ Uint8 scr_SpawnExactParticleEndSpawn( ego_script_state * pstate, ego_ai_bundle *
 
     if ( returncode )
     {
-        PrtObjList.get_data( iprt ).spawncharacterstate = pstate->turn;
+        PrtObjList.get_data_ref( iprt ).spawncharacterstate = pstate->turn;
     }
 
     SCRIPT_FUNCTION_END();
@@ -6705,11 +6705,11 @@ Uint8 scr_HolderBlocked( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     if ( INGAME_CHR( iattached ) )
     {
-        BIT_FIELD bits = ChrObjList.get_data( iattached ).ai.alert;
+        BIT_FIELD bits = ChrObjList.get_data_ref( iattached ).ai.alert;
 
         if ( HAS_SOME_BITS( bits, ALERTIF_BLOCKED ) )
         {
-            CHR_REF iattacked = ChrObjList.get_data( iattached ).ai.attacklast;
+            CHR_REF iattacked = ChrObjList.get_data_ref( iattached ).ai.attacklast;
 
             if ( INGAME_CHR( iattacked ) )
             {
@@ -6896,7 +6896,7 @@ Uint8 scr_Backstabbed( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     if ( HAS_SOME_BITS( pself->alert, ALERTIF_ATTACKED ) )
     {
         // Who is the dirty backstabber?
-        ego_chr * pattacker = ChrObjList.get_pdata( pself->attacklast );
+        ego_chr * pattacker = ChrObjList.get_data_ptr( pself->attacklast );
         if ( !ACTIVE_PCHR( pattacker ) ) return bfalse;
 
         // Only if hit from behind
@@ -7177,12 +7177,12 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
         {
             ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
-            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", pchr->get_pparent()->base_name, NULL == pcap ? "IVALID" : pcap->classname, pstate->argument );
+            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", ego_chr::get_obj_ref( *pchr ).base_name, NULL == pcap ? "IVALID" : pcap->classname, pstate->argument );
         }
     }
     else
     {
-        ego_chr * pchild = ChrObjList.get_pdata( ichr );
+        ego_chr * pchild = ChrObjList.get_data_ptr( ichr );
 
         Uint8 grip = ( Uint8 )CLIP( pstate->distance, ATTACH_INVENTORY, ATTACH_RIGHT );
 
@@ -7609,7 +7609,7 @@ Uint8 scr_set_ChildContent( ego_script_state * pstate, ego_ai_bundle * pbdl_self
 
     SCRIPT_FUNCTION_BEGIN();
 
-    ChrObjList.get_data( pself->child ).ai.content = pstate->argument;
+    ChrObjList.get_data_ref( pself->child ).ai.content = pstate->argument;
 
     SCRIPT_FUNCTION_END();
 }

@@ -24,10 +24,19 @@
 #include "egoboo_object.h"
 #include "egoboo_strutil.h"
 
+#include "ChrList.h"
+#include "EncList.h"
+#include "PrtList.h"
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 Uint32 ego_obj::guid_counter   = 0;
 Uint32 ego_obj::spawn_depth    = 0;
+
+// it should not matter whether these are instantiated since all they contain is
+// static functions, but...
+ego_object_process_engine obj_proc_engine;
+ego_object_engine         obj_engine;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -335,40 +344,23 @@ egoboo_rv ego_object_process::proc_set_spawning( bool_t val )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::allocate( ego_obj * pbase, size_t index )
+ego_obj * ego_obj::allocate_all( ego_obj * pobj )
 {
-    cpp_list_state tmp_lst_state;
-
-    if ( NULL == pbase ) return pbase;
-
-    // we don't want to overwrite the cpp_list_state values since some of them belong to the
-    // ChrObjList/PrtObjList/EncObjList rather than to the cpp_list_state
-    tmp_lst_state = pbase->get_list();
-
-    // construct the a new state (this destroys the data in pbase->lst_state)
-    pbase = ego_obj::ctor_all( pbase, index );
-    if ( NULL == pbase ) return pbase;
-
-    // restore the old pbase->lst_state
-    pbase->get_list() = tmp_lst_state;
-
-    // set it to allocated
-    cpp_list_state::set_allocated( pbase->get_plist(), btrue );
+    // re-initialize the ego_obj_lst_state
+    pobj = dtor_all( pobj );
 
     // validate the object
-    return ego_obj::validate( pbase );
+    return ego_obj::validate( pobj );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::deallocate( ego_obj * pbase )
+ego_obj * ego_obj::deallocate_all( ego_obj * pobj )
 {
-    if ( NULL == pbase ) return pbase;
-
-    // set it to not allocated
-    cpp_list_state::set_allocated( pbase->get_plist(), bfalse );
+    // do any deconstruction
+    pobj = ego_obj::ctor_all( pobj );
 
     // invalidate the object
-    return ego_obj::validate( pbase, bfalse );
+    return ego_obj::validate( pobj, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -416,34 +408,36 @@ ego_obj * ego_obj::req_terminate( ego_obj * pbase )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::grant_terminate( ego_obj * pbase )
+ego_obj * ego_obj::grant_terminate( ego_obj * pobj )
 {
     /// Completely turn off an ego_obj object and mark it as no longer allocated
 
+    if ( NULL == pobj ) return pobj;
+
     // if this object os not allocated, get out of here
-    if ( !ego_obj::get_allocated( pbase ) ) return pbase;
+    if ( !pobj->object_allocated() ) return pobj;
 
     // no reason to be in here unless someone is aksking to die
-    if ( !pbase->kill_me ) return pbase;
+    if ( !pobj->kill_me ) return pobj;
 
     // poke it to make sure that it is at least a little bit alive
-    if ( !pbase->valid || pbase->killed ) return pbase;
+    if ( !pobj->valid || pobj->killed ) return pobj;
 
     // figure out the next step in killing the object
-    if ( get_initialized( pbase ) )
+    if ( get_initialized( pobj ) )
     {
         // ready to be killed. jump to deinitializing
-        pbase->end_processing();
+        pobj->end_processing();
     }
-    else if ( get_constructed( pbase ) )
+    else if ( get_constructed( pobj ) )
     {
         // already deinitialized. jump to deconstructing
-        pbase->end_deinitializing();
+        pobj->end_deinitializing();
     }
-    else if ( get_valid( pbase ) )
+    else if ( get_valid( pobj ) )
     {
         // already deconstructed. jump past deconstructing.
-        pbase->end_destructing();
+        pobj->end_destructing();
 
         /// @note BB@> The ego_obj::end_invalidating() function is called in the
         ///            t_ego_obj_lst<>::free_one() function when the object is finally
@@ -451,9 +445,9 @@ ego_obj * ego_obj::grant_terminate( ego_obj * pbase )
     }
 
     // turn it off, no matter what state it is in
-    pbase->proc_set_on( bfalse );
+    pobj->proc_set_on( bfalse );
 
-    return pbase;
+    return pobj;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -522,216 +516,22 @@ ego_object_process * ego_object_process_engine::run( ego_object_process * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-#include "char.inl"
-
-ego_obj_chr * ego_object_engine::run( ego_obj_chr * pchr )
-{
-    if( NULL == pchr ) return pchr;
-
-    // run the object engine
-    ego_obj * pobj = ego_object_engine::run( static_cast<ego_obj *>( pchr ) );
-
-    // deal with the return state
-    if ( NULL == pobj || !VALID_PBASE( pchr ) )
-    {
-        pchr->update_guid = INVALID_UPDATE_GUID;
-    }
-    else if ( ego_obj_processing == pchr->action )
-    {
-        pchr->update_guid = ChrObjList.update_guid();
-    }
-
-    return pchr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_object_engine::run( ego_obj_enc * penc )
-{
-    // run the object engine
-    ego_obj * pobj = ego_object_engine::run( static_cast<ego_obj *>( penc ) );
-
-    // deal with the return state
-    if ( NULL == pobj || !VALID_PBASE( penc ) )
-    {
-        penc->update_guid = INVALID_UPDATE_GUID;
-    }
-    else if ( ego_obj_processing == penc->action )
-    {
-        penc->update_guid = EncObjList.update_guid();
-    }
-
-    return penc;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_object_engine::run( ego_obj_prt * pprt )
-{
-    // run the object engine
-    ego_obj * pobj = ego_object_engine::run( static_cast<ego_obj *>( pprt ) );
-
-    // deal with the return state
-    if ( NULL == pobj || !VALID_PBASE( pprt ) )
-    {
-        pprt->update_guid = INVALID_UPDATE_GUID;
-    }
-    else if ( ego_obj_processing == pprt->action )
-    {
-        pprt->update_guid = PrtObjList.update_guid();
-    }
-
-    return pprt;
-}
-
+// struct ego_object_engine - main engine
 //--------------------------------------------------------------------------------------------
 ego_obj * ego_object_engine::run( ego_obj * pobj )
 {
-    if ( !VALID_PBASE( pobj ) ) return NULL;
+    if ( NULL == pobj ) return pobj;
 
-    // set the object to deinitialize if it is not "dangerous" and if was requested
     if ( pobj->kill_me )
     {
-        pobj = ego_obj::grant_terminate( pobj );
+        ego_obj::grant_terminate( pobj );
     }
 
-    // run the process engine
+    // run the object engine
     ego_object_process_engine::run( pobj );
 
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_object_engine::run_construct( ego_obj * pobj, int max_iterations )
-{
-    int iterations;
-
-    if ( !VALID_PBASE( pobj ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pobj->action > ( int )( ego_obj_constructing + 1 ) )
-    {
-        ego_obj * tmp_chr = ego_object_engine::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pobj->action <= ego_obj_constructing && iterations < max_iterations )
-    {
-        ego_obj * ptmp = ego_object_engine::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-
-        iterations++;
-    }
+    // update the object's update_guid
+    pobj->object_update_list_id();
 
     return pobj;
 }
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_object_engine::run_initialize( ego_obj * pobj, int max_iterations )
-{
-    int                 iterations;
-
-    if ( !VALID_PBASE( pobj ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pobj->action > ( int )( ego_obj_initializing + 1 ) )
-    {
-        ego_obj * tmp_chr = ego_object_engine::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pobj->action <= ego_obj_initializing && iterations < max_iterations )
-    {
-        ego_obj * ptmp = ego_object_engine::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_object_engine::run_activate( ego_obj * pobj, int max_iterations )
-{
-    int                 iterations;
-
-    pobj = POBJ_GET_PBASE( pobj );
-    if ( !VALID_PBASE( pobj ) ) return NULL;
-
-    // if the character is already beyond this stage, deconstruct it and start over
-    if ( pobj->action > ( int )( ego_obj_processing + 1 ) )
-    {
-        ego_obj * tmp_chr = ego_object_engine::run_deconstruct( pobj, max_iterations );
-        if ( tmp_chr == pobj ) return NULL;
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pobj->action < ego_obj_processing && iterations < max_iterations )
-    {
-        ego_obj * ptmp = ego_object_engine::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_object_engine::run_deinitialize( ego_obj * pobj, int max_iterations )
-{
-    int iterations;
-
-    if ( !VALID_PBASE( pobj ) ) return NULL;
-
-    // if the character is already beyond this stage, deinitialize it
-    if ( pobj->action > ( int )( ego_obj_deinitializing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pobj->action < ego_obj_deinitializing )
-    {
-        pobj->end_processing();
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pobj->action <= ego_obj_deinitializing && iterations < max_iterations )
-    {
-        ego_obj * ptmp = ego_object_engine::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj * ego_object_engine::run_deconstruct( ego_obj * pobj, int max_iterations )
-{
-    int iterations;
-
-    if ( !VALID_PBASE( pobj ) ) return NULL;
-
-    // if the character is already beyond this stage, do nothing
-    if ( pobj->action > ( int )( ego_obj_destructing + 1 ) )
-    {
-        return pobj;
-    }
-    else if ( pobj->action < ego_obj_deinitializing )
-    {
-        // make sure that you deinitialize before destructing
-        pobj->end_processing();
-    }
-
-    iterations = 0;
-    while ( NULL != pobj && pobj->action <= ego_obj_destructing && iterations < max_iterations )
-    {
-        ego_obj * ptmp = ego_object_engine::run( pobj );
-        if ( ptmp != pobj ) return NULL;
-        iterations++;
-    }
-
-    return pobj;
-}
-

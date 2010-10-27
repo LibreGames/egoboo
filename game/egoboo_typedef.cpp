@@ -29,61 +29,6 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-cpp_list_state * cpp_list_state::ctor_this( cpp_list_state * ptr, size_t idx )
-{
-    return cpp_list_state::clear( ptr, idx );
-}
-
-//--------------------------------------------------------------------------------------------
-cpp_list_state * cpp_list_state::dtor_this( cpp_list_state * ptr )
-{
-    return cpp_list_state::clear( ptr );
-}
-
-//--------------------------------------------------------------------------------------------
-cpp_list_state * cpp_list_state::clear( cpp_list_state * ptr, size_t idx )
-{
-    if ( NULL == ptr ) return ptr;
-
-    memset( ptr, 0, sizeof( *ptr ) );
-
-    ptr->index = idx;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-cpp_list_state * cpp_list_state::set_allocated( cpp_list_state * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr->allocated = val;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-cpp_list_state * cpp_list_state::set_used( cpp_list_state * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr->in_used_list = val;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-cpp_list_state * cpp_list_state::set_free( cpp_list_state * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr->in_free_list = val;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 const char * undo_idsz( IDSZ idsz )
 {
     /// @details ZZ@> This function takes an integer and makes a text IDSZ out of it.

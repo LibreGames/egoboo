@@ -73,7 +73,7 @@ bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint3
     oglx_texture_t   * ptex;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr  = ChrObjList.get_pdata( character );
+    pchr  = ChrObjList.get_data_ptr( character );
     pinst = &( pchr->inst );
 
     if ( !LOADED_MAD( pinst->imad ) ) return bfalse;
@@ -258,7 +258,7 @@ bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, Uint32 b
     oglx_texture_t   * ptex;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr  = ChrObjList.get_pdata( character );
+    pchr  = ChrObjList.get_data_ptr( character );
     pinst = &( pchr->inst );
 
     if ( !LOADED_MAD( pinst->imad ) ) return bfalse;
@@ -427,7 +427,7 @@ bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bi
     bool_t retval;
 
     if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     if ( pchr->is_hidden ) return bfalse;
 
@@ -465,7 +465,7 @@ bool_t render_one_mad_ref( const CHR_REF & ichr )
     GLXvector4f tint;
 
     if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
     pinst = &( pchr->inst );
 
     if ( pchr->is_hidden ) return bfalse;
@@ -777,7 +777,7 @@ void chr_draw_attached_grip( ego_chr * pchr )
     if ( !ACTIVE_PCHR( pchr ) ) return;
 
     if ( !DEFINED_CHR( pchr->attachedto ) ) return;
-    pholder = ChrObjList.get_pdata( pchr->attachedto );
+    pholder = ChrObjList.get_data_ptr( pchr->attachedto );
 
     pholder_cap = pro_get_pcap( pholder->profile_ref );
     if ( NULL == pholder_cap ) return;
@@ -868,7 +868,7 @@ void ego_chr_instance::update_lighting_base( ego_chr_instance * pinst, ego_chr *
 
     // reduce the amount of updates to an average of about 1 every 2 frames, but dither
     // the updating so that not all objects update on the same frame
-    pinst->lighting_frame_all = frame_all + (( frame_all + pchr->get_pparent()->guid ) & 0x03 );
+    pinst->lighting_frame_all = frame_all + (( frame_all + ego_chr::get_obj_ref( *pchr ).guid ) & 0x03 );
 
     if ( !LOADED_MAD( pinst->imad ) ) return;
     pmad = MadStack + pinst->imad;

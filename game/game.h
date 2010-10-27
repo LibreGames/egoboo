@@ -40,7 +40,7 @@ struct ego_menu_process;
 
 struct ego_chr;
 struct ego_prt;
-struct ego_prt_bundle;
+struct ego_bundle_prt;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -423,4 +423,4 @@ bool_t game_setup_vfs_paths( const char * mod_path );
 
 void cleanup_character_enchants( struct ego_chr * pchr );
 
-bool_t attach_one_particle( struct ego_prt_bundle * pbdl_prt );
+bool_t attach_one_particle( struct ego_bundle_prt * pbdl_prt );

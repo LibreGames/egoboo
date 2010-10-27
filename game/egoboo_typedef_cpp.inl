@@ -115,10 +115,10 @@ egoboo_rv t_cpp_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
     free_count++;
     update_guid++;
 
-    cpp_list_state * plst = ptr->get_plist();
+    ego_obj_lst_state * plst = ptr->get_plist();
 
-    cpp_list_state::set_free( plst, btrue );
-    cpp_list_state::set_used( plst, bfalse );
+    ego_obj_lst_state::set_free( plst, btrue );
+    ego_obj_lst_state::set_used( plst, bfalse );
 
     return rv_success;
 }
@@ -176,7 +176,7 @@ bool_t t_cpp_list< _ty, _sz >::remove_free_index( int idx )
     // let the object know it is not in the list anymore
     if ( valid_ref( ref ) )
     {
-        cpp_list_state::set_free( lst[ref].get_plist(), bfalse );
+        ego_obj_lst_state::set_free( lst[ref].get_plist(), bfalse );
     }
 
     // shorten the list
@@ -250,10 +250,10 @@ egoboo_rv t_cpp_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
     used_count++;
     update_guid++;
 
-    cpp_list_state * plst = ptr->get_plist();
+    ego_obj_lst_state * plst = ptr->get_plist();
 
-    cpp_list_state::set_free( plst, bfalse );
-    cpp_list_state::set_used( plst, btrue );
+    ego_obj_lst_state::set_free( plst, bfalse );
+    ego_obj_lst_state::set_used( plst, btrue );
 
     return rv_success;
 }
@@ -311,7 +311,7 @@ bool_t t_cpp_list< _ty, _sz >::remove_used_index( int index )
     // let the object know it is not in the list anymore
     if ( valid_ref( ref ) )
     {
-        cpp_list_state::set_used( lst[ref].get_plist(), bfalse );
+        ego_obj_lst_state::set_used( lst[ref].get_plist(), bfalse );
     }
 
     // shorten the list
@@ -552,7 +552,8 @@ bool_t t_dary<_ty>::dealloc( t_dary<_ty> * pary )
 {
     if ( NULL == pary ) return bfalse;
 
-    static_cast< std::vector<_ty> * >( pary )->clear();
+    //pary->std::vector<_ty>::clear();
+    pary->std::vector<_ty>::resize( 0 );
     pary->top = 0;
 
     return btrue;

@@ -58,7 +58,7 @@ ego_process * ego_process::clear( ego_process * proc )
 {
     if ( NULL == proc ) return proc;
 
-    ego_process_data * pdata = ego_process_data::clear( proc->get_pdata() );
+    ego_process_data * pdata = ego_process_data::clear( proc->get_data_ptr() );
     if ( NULL == pdata ) return proc;
 
     /* add something here */

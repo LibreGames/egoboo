@@ -69,7 +69,7 @@ extern "C"
     }
     TURN_MODE;
 
-#define MANARETURNSHIFT     44                    ///< ChrObjList.get_data(ichr).mana_return/MANARETURNSHIFT = mana regen per second
+#define MANARETURNSHIFT     44                    ///< ChrObjList.get_data_ref(ichr).mana_return/MANARETURNSHIFT = mana regen per second
 
 #define TURN_SPEED             0.1f                  ///< Cutoff for turning or same direction
 #define WATCH_SPEED            0.1f                  ///< Tolerance for TURNMODE_ACCELERATION

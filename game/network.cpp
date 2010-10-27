@@ -88,7 +88,7 @@ int     local_machine  = 0;        // 0 is host, 1 is 1st remote, 2 is 2nd...
 int     playersready  = 0;         // Number of players ready to start
 int     playersloaded = 0;
 
-Uint32 sv_last_frame = ( Uint32 )~0;
+Uint32 sv_last_frame = Uint32( ~0L );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1727,7 +1727,7 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
 
         tmp_latch.b       = tlatch_list[0].button;
 
-        //log_info( "<<%1.4f, %1.4f>, 0x%x>, Just one latch for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrObjList.get_data(ppla->index).name );
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, Just one latch for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrObjList.get_data_ref(ppla->index).name );
     }
     else if ( latch_count > 1 )
     {
@@ -1772,7 +1772,7 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
             tmp_latch.dir[kZ] /= ( float )weight_sum;
         }
 
-        //log_info( "<<%1.4f, %1.4f>, 0x%x>, %d, multiple latches for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, latch_count, ChrObjList.get_data(ppla->index).name );
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, %d, multiple latches for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, latch_count, ChrObjList.get_data_ref(ppla->index).name );
     }
     else
     {
@@ -1780,7 +1780,7 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
         // do nothing. this lets the old value of the latch persist.
         // this might be a decent guess as to what to do if a packet was
         // dropped?
-        //log_info( "<<%1.4f, %1.4f>, 0x%x>, latch dead reckoning for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrObjList.get_data(ppla->index).name );
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, latch dead reckoning for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrObjList.get_data_ref(ppla->index).name );
     }
 
     if ( latch_count >= ppla->tlatch_count )
@@ -1820,7 +1820,7 @@ void unbuffer_one_player_latch_download( ego_player * ppla )
     if ( NULL == ppla ) return;
 
     if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrObjList.get_pdata( ppla->index );
+    pchr = ChrObjList.get_data_ptr( ppla->index );
 
     pchr->latch.raw_valid = btrue;
     pchr->latch.raw.dir[kX] = ppla->net_latch.raw[kX];
@@ -1842,7 +1842,7 @@ void unbuffer_one_player_latch_do_respawn( ego_player * ppla )
     if ( NULL == ppla ) return;
 
     if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrObjList.get_pdata( ppla->index );
+    pchr = ChrObjList.get_data_ptr( ppla->index );
 
     if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans.b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
     {
@@ -1917,7 +1917,7 @@ void net_initialize( ego_config_data * pcfg )
     memset( net_transferStates, 0, sizeof( net_transferStates ) );
     memset( &net_receiveState, 0, sizeof( net_receiveState ) );
 
-    sv_last_frame = ( Uint32 )~0;
+    sv_last_frame = Uint32( ~0L );
 
     if ( NULL != pcfg && pcfg->cfg_ptr()->network_allowed )
     {
@@ -2269,7 +2269,7 @@ ego_player* net_get_ppla( const CHR_REF & ichr )
     PLA_REF iplayer;
 
     if ( !INGAME_CHR( ichr ) ) return NULL;
-    iplayer = ChrObjList.get_data( ichr ).is_which_player;
+    iplayer = ChrObjList.get_data_ref( ichr ).is_which_player;
 
     if ( !VALID_PLA( iplayer ) ) return NULL;
 
@@ -2286,7 +2286,7 @@ ego_chr  * pla_get_pchr( const PLA_REF & iplayer )
 
     if ( !INGAME_CHR( pplayer->index ) ) return NULL;
 
-    return ChrObjList.get_pdata( pplayer->index );
+    return ChrObjList.get_data_ptr( pplayer->index );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2301,7 +2301,7 @@ latch_2d_t pla_convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src
     // is there a valid character?
     if ( !DEFINED_CHR( ppla->index ) ) return dst;
 
-    return ego_chr::convert_latch_2d( ChrObjList.get_pdata( ppla->index ), src );
+    return ego_chr::convert_latch_2d( ChrObjList.get_data_ptr( ppla->index ), src );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2309,7 +2309,7 @@ void net_reset_players()
 {
     PlaStack_reinit();
 
-    nexttimestamp = (( Uint32 )~0 );
+    nexttimestamp = ( Uint32( ~0L ) );
     numplatimes   = 0;
 }
 

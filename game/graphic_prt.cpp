@@ -100,13 +100,13 @@ static void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst,
 static int  cmp_prt_registry_entity( const void * vlhs, const void * vrhs );
 
 static void draw_one_attachment_point( ego_chr_instance * pinst, ego_mad * pmad, int vrt_offset );
-static void prt_draw_attached_point( ego_prt_bundle * pbdl_prt );
+static void prt_draw_attached_point( ego_bundle_prt * pbdl_prt );
 
-static void render_prt_bbox( ego_prt_bundle * pbdl_prt );
+static void render_prt_bbox( ego_bundle_prt * pbdl_prt );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Uint32  instance_update = ( Uint32 )~0;
+static Uint32  gfx_prt_instance_update_count = Uint32( ~0L );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -197,7 +197,7 @@ bool_t render_one_prt_solid( const PRT_REF & iprt )
     ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtObjList.get_pdata( iprt );
+    pprt = PrtObjList.get_data_ptr( iprt );
     pinst = &( pprt->inst );
 
     // if the particle instance data is not valid, do not continue
@@ -276,7 +276,7 @@ bool_t render_one_prt_trans( const PRT_REF & iprt )
     ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtObjList.get_pdata( iprt );
+    pprt = PrtObjList.get_data_ptr( iprt );
     pinst = &( pprt->inst );
 
     // if the particle instance data is not valid, do not continue
@@ -454,7 +454,7 @@ bool_t render_one_prt_ref( const PRT_REF & iprt )
     ego_prt_instance * pinst;
 
     if ( !DEFINED_PRT( iprt ) ) return bfalse;
-    pprt = PrtObjList.get_pdata( iprt );
+    pprt = PrtObjList.get_data_ptr( iprt );
     pinst = &( pprt->inst );
 
     if ( !pinst->valid ) return bfalse;
@@ -715,7 +715,7 @@ void draw_one_attachment_point( ego_chr_instance * pinst, ego_mad * pmad, int vr
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_draw_attached_point( ego_prt_bundle * pbdl_prt )
+void prt_draw_attached_point( ego_bundle_prt * pbdl_prt )
 {
     ego_mad * pholder_mad;
     ego_cap * pholder_cap;
@@ -729,7 +729,7 @@ void prt_draw_attached_point( ego_prt_bundle * pbdl_prt )
     if ( !INGAME_PPRT_BASE( loc_pprt ) ) return;
 
     if ( !INGAME_CHR( loc_pprt->attachedto_ref ) ) return;
-    pholder = ChrObjList.get_pdata( loc_pprt->attachedto_ref );
+    pholder = ChrObjList.get_data_ptr( loc_pprt->attachedto_ref );
 
     pholder_cap = pro_get_pcap( pholder->profile_ref );
     if ( NULL == pholder_cap ) return;
@@ -748,20 +748,33 @@ void prt_instance_update_all( ego_camera * pcam )
     if ( NULL == pcam ) return;
 
     // only one update per frame
-    if ( instance_update == update_wld ) return;
-    instance_update = update_wld;
+    if ( gfx_prt_instance_update_count == update_wld ) return;
+    gfx_prt_instance_update_count = update_wld;
 
     PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
-        ego_prt_instance * pinst;
-
-        pinst = &( prt_bdl.prt_ptr->inst );
+        // get the parent object
+        ego_obj_prt * pobj = ego_prt::get_obj_ptr( prt_bdl.prt_ptr );
 
         // only do frame counting for particles that are fully activated!
-        prt_bdl.prt_ptr->get_pparent()->frame_count++;
-        if ( prt_bdl.prt_ptr->frames_remaining > 0 ) prt_bdl.prt_ptr->frames_remaining--;
+        if ( !FLAG_VALID_PBASE( pobj ) ) continue;
 
-        if ( !prt_bdl.prt_ptr->inview || prt_bdl.prt_ptr->is_hidden || 0 == prt_bdl.prt_ptr->size )
+        // hidden particles do absolutely nothing
+        if ( pobj->is_hidden ) continue;
+
+        // update the frame counter
+        pobj->frame_count++;
+
+        // down the particle lifetime
+        if ( pobj->frames_remaining > 0 )
+        {
+            pobj->frames_remaining--;
+        }
+
+        // update the instance
+        ego_prt_instance * pinst = &( pobj->inst );
+
+        if ( !pobj->inview || 0 == pobj->size )
         {
             pinst->valid = bfalse;
         }
@@ -770,6 +783,7 @@ void prt_instance_update_all( ego_camera * pcam )
             // calculate the "billboard" for this particle
             prt_instance_update( pcam, iprt, 255, btrue );
         }
+
     }
     PRT_END_LOOP();
 }
@@ -897,7 +911,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
     {
         ego_chr_instance * cinst = ego_chr::get_pinstance( pprt->attachedto_ref );
 
-        if ( ego_chr::matrix_valid( ChrObjList.get_pdata( pprt->attachedto_ref ) ) )
+        if ( ego_chr::matrix_valid( ChrObjList.get_data_ptr( pprt->attachedto_ref ) ) )
         {
             // use the character matrix to orient the particle
             // assume that the particle "up" is in the z-direction in the object's
@@ -1156,7 +1170,7 @@ void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 tra
     ego_prt_instance * pinst;
 
     if ( !INGAME_PRT_BASE( particle ) ) return;
-    pprt = PrtObjList.get_pdata( particle );
+    pprt = PrtObjList.get_data_ptr( particle );
     pinst = &( pprt->inst );
 
     // make sure that the vertices are interpolated
@@ -1167,7 +1181,7 @@ void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 tra
 }
 
 //--------------------------------------------------------------------------------------------
-void render_prt_bbox( ego_prt_bundle * pbdl_prt )
+void render_prt_bbox( ego_bundle_prt * pbdl_prt )
 {
     ego_prt * loc_pprt;
     ego_pip * loc_ppip;

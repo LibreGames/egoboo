@@ -21,7 +21,7 @@
 /// @brief
 /// @details
 
-#include "egoboo_object_list.inl"
+#include "egoboo_object_list.h"
 
 #undef TEST_COMPILE_EGOBOO_OBJECT_LIST
 
@@ -34,7 +34,7 @@ struct blah : public ego_obj
     int val;
 
     int & get_data() { return val; }
-    int * get_pdata() { return &val; }
+    int * get_data_ptr() { return &val; }
 
     /// External handle for iterating the "egoboo object process" state machine
     static blah * run( blah * pchr );
@@ -74,7 +74,7 @@ void flah()
     test.get_valid_ptr( ref );
 
     test.get_data( ref );
-    test.get_pdata( ref );
+    test.get_data_ptr( ref );
     test.get_valid_pdata( ref );
 
     for ( it = test.used_begin(); !test.used_end( it ); test.used_increment( it ) );
@@ -82,59 +82,67 @@ void flah()
 #endif
 
 //--------------------------------------------------------------------------------------------
+// ego_obj_lst_state -
 //--------------------------------------------------------------------------------------------
-
-#include "char.h"
-template <>
-t_ego_obj_lst<ego_obj_chr, MAX_CHR>::iterator   t_ego_obj_lst<ego_obj_chr, MAX_CHR>::used_begin()
+ego_obj_lst_state * ego_obj_lst_state::ctor_this( ego_obj_lst_state * ptr, size_t idx )
 {
-    return used_map.iterator_begin();
+    return ego_obj_lst_state::clear( ptr, idx );
 }
 
-template <>
-bool_t     t_ego_obj_lst<ego_obj_chr, MAX_CHR>::used_end( t_ego_obj_lst<ego_obj_chr, MAX_CHR>::iterator & it )
+//--------------------------------------------------------------------------------------------
+ego_obj_lst_state * ego_obj_lst_state::dtor_this( ego_obj_lst_state * ptr )
 {
-    return used_map.iterator_end( it );
+    return ego_obj_lst_state::clear( ptr );
 }
 
-template <>
-t_ego_obj_lst<ego_obj_chr, MAX_CHR>::iterator & t_ego_obj_lst<ego_obj_chr, MAX_CHR>::used_increment( t_ego_obj_lst<ego_obj_chr, MAX_CHR>::iterator & it )
+//--------------------------------------------------------------------------------------------
+ego_obj_lst_state * ego_obj_lst_state::clear( ego_obj_lst_state * ptr, size_t idx )
 {
-    return used_map.iterator_increment( it );
-}
-#include "enchant.h"
-template <>
-t_ego_obj_lst<ego_obj_enc, MAX_ENC>::iterator   t_ego_obj_lst<ego_obj_enc, MAX_ENC>::used_begin()
-{
-    return used_map.iterator_begin();
+    if ( NULL == ptr ) return ptr;
+
+    memset( ptr, 0, sizeof( *ptr ) );
+
+    ptr->index = idx;
+
+    return ptr;
 }
 
-template <>
-bool_t     t_ego_obj_lst<ego_obj_enc, MAX_ENC>::used_end( t_ego_obj_lst<ego_obj_enc, MAX_ENC>::iterator & it )
+//--------------------------------------------------------------------------------------------
+ego_obj_lst_state * ego_obj_lst_state::set_allocated( ego_obj_lst_state * ptr, bool_t val )
 {
-    return used_map.iterator_end( it );
+    if ( NULL == ptr ) return ptr;
+
+    ptr->allocated = val;
+
+    return ptr;
 }
 
-template <>
-t_ego_obj_lst<ego_obj_enc, MAX_ENC>::iterator & t_ego_obj_lst<ego_obj_enc, MAX_ENC>::used_increment( t_ego_obj_lst<ego_obj_enc, MAX_ENC>::iterator & it )
+//--------------------------------------------------------------------------------------------
+ego_obj_lst_state * ego_obj_lst_state::set_used( ego_obj_lst_state * ptr, bool_t val )
 {
-    return used_map.iterator_increment( it );
-}
-#include "particle.h"
-template <>
-t_ego_obj_lst<ego_obj_prt, MAX_PRT>::iterator   t_ego_obj_lst<ego_obj_prt, MAX_PRT>::used_begin()
-{
-    return used_map.iterator_begin();
+    if ( NULL == ptr ) return ptr;
+
+    ptr->in_used_list = val;
+
+    return ptr;
 }
 
-template <>
-bool_t     t_ego_obj_lst<ego_obj_prt, MAX_PRT>::used_end( t_ego_obj_lst<ego_obj_prt, MAX_PRT>::iterator & it )
+//--------------------------------------------------------------------------------------------
+ego_obj_lst_state * ego_obj_lst_state::set_free( ego_obj_lst_state * ptr, bool_t val )
 {
-    return  used_map.iterator_end( it );
+    if ( NULL == ptr ) return ptr;
+
+    ptr->in_free_list = val;
+
+    return ptr;
 }
 
-template <>
-t_ego_obj_lst<ego_obj_prt, MAX_PRT>::iterator & t_ego_obj_lst<ego_obj_prt, MAX_PRT>::used_increment( t_ego_obj_lst<ego_obj_prt, MAX_PRT>::iterator & it )
+//--------------------------------------------------------------------------------------------
+ego_obj_lst_state * ego_obj_lst_state::set_list_id( ego_obj_lst_state * ptr, unsigned val )
 {
-    return used_map.iterator_increment( it );
+    if ( NULL == ptr ) return ptr;
+
+    ptr->update_guid = val;
+
+    return ptr;
 }

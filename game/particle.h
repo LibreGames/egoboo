@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-#include "egoboo_object.h"
+#include "egoboo_object_list.h"
 
 #include "file_formats/pip_file.h"
 #include "graphic_prt.h"
@@ -30,6 +30,8 @@
 //--------------------------------------------------------------------------------------------
 struct ego_obj_prt;
 struct ego_prt;
+
+typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -232,7 +234,9 @@ protected:
 /// The definition of the particle object
 struct ego_prt : public ego_prt_data
 {
-    friend struct ego_obj_prt;
+    friend struct t_ego_obj_container< ego_prt, MAX_PRT >;
+
+    typedef ego_obj_prt object_type;
 
     //---- extra data
 
@@ -245,8 +249,8 @@ struct ego_prt : public ego_prt_data
 
     //---- constructors and destructors
 
-    /// non-default constructor. We MUST know who our marent is
-    explicit ego_prt( ego_obj_prt * _pparent ) : _parent_obj_ptr( _pparent ) { ego_prt::ctor_this( this ); };
+    /// non-default constructor. We MUST know who our parent is
+    explicit ego_prt( object_type * pobj ) : _obj_ptr( pobj ) { ego_prt::ctor_this( this ); };
 
     /// default destructor
     ~ego_prt() { ego_prt::dtor_this( this ); };
@@ -257,11 +261,9 @@ struct ego_prt : public ego_prt_data
     // These have to have generic names to that all objects that are contained in
     // an ego_object can be interfaced with in the same way
 
-    ego_obj_prt *  get_pparent()       { return ( ego_obj_prt * )_parent_obj_ptr; }
-    const ego_obj_prt * cget_pparent() const { return _parent_obj_ptr; }
-
-    static       ego_obj_prt *  get_pparent( ego_prt * ptr ) { return ( NULL == ptr ) ? NULL : ( ego_obj_prt * )ptr->_parent_obj_ptr; }
-    static const ego_obj_prt * cget_pparent( const ego_prt * ptr ) { return ( NULL == ptr ) ? NULL : ptr->_parent_obj_ptr; }
+    static       object_type &  get_obj_ref( ego_prt & ref ) { return *(( object_type * )ref._obj_ptr ); }
+    static       object_type *  get_obj_ptr( ego_prt * ptr ) { return ( NULL == ptr ) ? NULL : ( object_type * )ptr->_obj_ptr; }
+    static const object_type * cget_obj_ptr( const ego_prt * ptr ) { return ( NULL == ptr ) ? NULL : ptr->_obj_ptr; }
 
     //---- construction and destruction
 
@@ -292,7 +294,7 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_prt * ctor_all( ego_prt * ptr, ego_obj_prt * pparent );
+    static ego_prt * ctor_all( ego_prt * ptr, object_type * pobj );
     /// denstruct this struct, and ALL dependent structs. call the destructor
     static ego_prt * dtor_all( ego_prt * ptr );
 
@@ -318,98 +320,68 @@ protected:
 
 private:
 
-    /// a hook to ego_obj_prt, which is the parent container of this object
-    const ego_obj_prt * _parent_obj_ptr;
+    /// a hook to object_type, which is the parent container of this object
+    const object_type * _obj_ptr;
 };
 
 //--------------------------------------------------------------------------------------------
 
-/// A refinement of the ego_obj and the actual container that will be stored in the t_cpp_list<>
-/// This adds functions for implementing the state machine on this object (the run* and do* functions)
-/// and encapsulates the particle data
+/// The actual container that will be stored in the t_cpp_list<>
 
-struct ego_obj_prt : public ego_obj
+struct ego_obj_prt : public ego_obj, public ego_prt
 {
-    //---- typedefs
+    typedef ego_prt_container container_type;
+    typedef ego_prt           data_type;
+    typedef PRT_REF           reference_type;
+    typedef ego_obj_prt       its_type;
 
-    /// a type definition so that parent struct t_ego_obj_lst<> can define a function
-    /// to get at the actual particle data. For instance PrtObjList.get_pdata() to return
-    /// a pointer to the particle data
-    typedef ego_prt data_type;
+    ego_obj_prt( container_type * pcont ) : ego_prt( this ), _container_ptr( pcont ), obj_base_display( btrue ) {};
 
     //---- extra data
 
     /// the flag for limbo particles
     bool_t  obj_base_display;
 
-    //---- constructors and destructors
-
-    /// default constructor
-    explicit ego_obj_prt() : _prt_data( this ) { puts( __FUNCTION__ ); ctor_this( this ); }
-
-    /// default destructor
-    ~ego_obj_prt() { dtor_this( this ); puts( __FUNCTION__ );  }
-
-    //---- implementation of required accessors
-
-    // This container "has a" ego_prt, so we need some way of accessing it
-    // These have to have generic names to that t_ego_obj_lst<> can access the data
-    // for all container types
-
-    ego_prt & get_data()  { return _prt_data; }
-    ego_prt * get_pdata() { return &_prt_data; }
-
-    const ego_prt & cget_data()  const { return _prt_data; }
-    const ego_prt * cget_pdata() const { return &_prt_data; }
-
-    //---- construction and destruction
-
-    /// construct this struct, ONLY
-    static ego_obj_prt * ctor_this( ego_obj_prt * pobj );
-    /// destruct this struct, ONLY
-    static ego_obj_prt * dtor_this( ego_obj_prt * pobj );
-
-    /// construct this struct, and ALL dependent structs. use placement new
-    static ego_obj_prt * ctor_all( ego_obj_prt * ptr );
-    /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_obj_prt * dtor_all( ego_obj_prt * ptr ) ;
-
     //---- accessors
 
-    /// tell the ego_obj_prt whether it is in limbo or not
-    static ego_obj_prt * set_limbo( ego_obj_prt * pobj, bool_t val );
+    /// tell the its_type whether it is in limbo or not
+    static its_type * set_limbo( its_type * pobj, bool_t val );
 
-    /// Ask the "egoboo object process" to terminate itself
-    static bool_t        request_terminate( const PRT_REF & iprt );
+    // This its_type is contained by container_type. We need some way of accessing it.
 
-protected:
+    static       container_type *  get_container_ptr( its_type * ptr ) { return NULL == ptr ? NULL : ( container_type * )ptr->_container_ptr; }
+    static const container_type * cget_container_ptr( const its_type * ptr ) { return NULL == ptr ? NULL : ptr->_container_ptr; }
 
-    //---- memory management
+    static       data_type *  get_data_ptr( its_type * ptr ) { return NULL == ptr ? NULL : static_cast<data_type *>( ptr ); }
+    static const data_type * cget_data_ptr( const its_type * ptr ) { return NULL == ptr ? NULL : static_cast<const data_type *>( ptr ); }
 
-    /// allocate data for this struct, ONLY
-    static ego_obj_prt * alloc( ego_obj_prt * pobj );
-    /// deallocate data for this struct, ONLY
-    static ego_obj_prt * dealloc( ego_obj_prt * pobj );
+    static bool_t request_terminate( const reference_type & iprt );
+    static bool_t request_terminate( ego_bundle_prt * pbdl_prt );
+    static bool_t request_terminate( its_type * pprt );
 
-    /// allocate data for this struct, and ALL dependent structs
-    static ego_obj_prt * do_alloc( ego_obj_prt * pobj );
-    /// deallocate data for this struct, and ALL dependent structs
-    static ego_obj_prt * do_dealloc( ego_obj_prt * pobj );
+    //---- specialization of the ego_object_process methods
+    virtual int do_constructing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_constructing( this ) ? -1 : 1; };
+    virtual int do_initializing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_initializing( this ) ? -1 : 1; };
+    virtual int do_deinitializing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_deinitializing( this ) ? -1 : 1; };
+    virtual int do_processing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_processing( this ) ? -1 : 1; };
+    virtual int do_destructing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_destructing( this ) ? -1 : 1; };
 
-    //---- implementation of the ego_object_process virtual methods
-
-    virtual int do_constructing()   { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_constructing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_initializing()   { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_initializing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_processing()     { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_processing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_deinitializing() { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_deinitializing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
-    virtual int do_destructing()    { if ( NULL == this ) return -1; ego_prt * rv = ego_prt::do_destructing( &_prt_data ); return ( NULL == rv ) ? -1 : 1; };
+    //---- specialization (if any) of the i_ego_obj interface
+    virtual bool_t    object_allocated( void );
+    virtual bool_t    object_update_list_id( void );
+    //virtual ego_obj     *  get_obj_ptr(void);
+    //virtual ego_obj_chr *  get_obj_chr_ptr(void);
+    //virtual ego_obj_enc *  get_obj_enc_ptr(void);
+    virtual ego_obj_prt *  get_obj_prt_ptr( void )  { return this; }
 
 private:
-    ego_prt _prt_data;
+
+    /// a hook to container_type, which is the parent container of this object
+    const container_type * _container_ptr;
 };
 
 //--------------------------------------------------------------------------------------------
-struct ego_prt_bundle
+struct ego_bundle_prt
 {
     PRT_REF   prt_ref;
     ego_prt   * prt_ptr;
@@ -417,11 +389,38 @@ struct ego_prt_bundle
     PIP_REF   pip_ref;
     ego_pip   * pip_ptr;
 
-    ego_prt_bundle( ego_prt * pprt = NULL ) { ctor_this( this ); if ( NULL != pprt ) set( this, pprt ); }
+    ego_bundle_prt( ego_prt * pprt = NULL ) { ctor_this( this ); if ( NULL != pprt ) set( this, pprt ); }
 
-    static ego_prt_bundle * ctor_this( ego_prt_bundle * pbundle );
-    static ego_prt_bundle * validate( ego_prt_bundle * pbundle );
-    static ego_prt_bundle * set( ego_prt_bundle * pbundle, ego_prt * pprt );
+    static ego_bundle_prt * ctor_this( ego_bundle_prt * pbundle );
+    static ego_bundle_prt * validate( ego_bundle_prt * pbundle );
+    static ego_bundle_prt * set( ego_bundle_prt * pbundle, ego_prt * pprt );
+
+    static ego_prt & get_prt_ref( ego_bundle_prt & ref )
+    {
+        // handle the worst-case scenario
+        if ( NULL == ref.prt_ptr ) { validate( &ref ); CPP_EGOBOO_ASSERT( NULL != ref.prt_ptr ); }
+
+        return *( ref.prt_ptr );
+    }
+
+    static ego_prt * get_prt_ptr( ego_bundle_prt * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        if ( NULL == ptr->prt_ptr ) validate( ptr );
+
+        return ptr->prt_ptr;
+    }
+
+    static const ego_prt * cget_prt_ptr( const ego_bundle_prt * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        // cannot do the following since the bundle is CONST... ;)
+        // if( NULL == ptr->prt_ptr ) validate(ptr);
+
+        return ptr->prt_ptr;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -455,13 +454,11 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
 BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * pressure );
 bool_t    prt_test_wall( ego_prt * pprt, float test_pos[] );
 bool_t    prt_is_over_water( const PRT_REF & particle );
-bool_t    prt_request_free( ego_prt_bundle * pbdl_prt );
-bool_t    prt_request_free_ref( const PRT_REF & iprt );
 
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & pip_override );
 void    reset_particles();
 
-ego_prt_bundle * prt_calc_environment( ego_prt_bundle * pbdl );
+ego_bundle_prt * prt_calc_environment( ego_bundle_prt * pbdl );
 
 #define _particle_h
 

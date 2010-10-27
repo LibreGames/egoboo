@@ -53,7 +53,7 @@ struct ego_obj_BSP
 
     //bool_t insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pnode, int depth, int address_x[], int address_y[], int address_z[] );
     static bool_t insert_chr( ego_obj_BSP * pbsp, struct ego_chr * pchr );
-    static bool_t insert_prt( ego_obj_BSP * pbsp, struct ego_prt_bundle * pbdl_prt );
+    static bool_t insert_prt( ego_obj_BSP * pbsp, struct ego_bundle_prt * pbdl_prt );
 
     static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
 };

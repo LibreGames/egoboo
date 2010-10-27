@@ -194,11 +194,11 @@ ego_enc * ego_enc::dtor_this( ego_enc * penc )
 //--------------------------------------------------------------------------------------------
 bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 {
-    ego_enc * penc = EncObjList.get_valid_pdata( ienc );
+    ego_enc * penc = EncObjList.get_valid_data_ptr( ienc );
     if ( NULL == penc ) return bfalse;
 
     // Unlink it from the spawner (if possible)
-    ego_chr * pspawner = ChrObjList.get_valid_pdata( penc->spawner_ref );
+    ego_chr * pspawner = ChrObjList.get_valid_data_ptr( penc->spawner_ref );
     if ( NULL != pspawner )
     {
         if ( ienc == pspawner->undoenchant )
@@ -212,7 +212,7 @@ bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     {
         ENC_REF ienc_last, ienc_now;
 
-        ego_chr * ptarget =  ChrObjList.get_valid_pdata( penc->target_ref );
+        ego_chr * ptarget =  ChrObjList.get_valid_data_ptr( penc->target_ref );
         if ( NULL != ptarget )
         {
             if ( ptarget->firstenchant == ienc )
@@ -227,13 +227,13 @@ bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
                 while ( MAX_ENC != ienc_now && ienc_now != ienc )
                 {
                     ienc_last    = ienc_now;
-                    ienc_now = EncObjList.get_data( ienc_now ).nextenchant_ref;
+                    ienc_now = EncObjList.get_data_ref( ienc_now ).nextenchant_ref;
                 }
 
                 // Relink the last enchantment
                 if ( ienc_now == ienc )
                 {
-                    ego_enc_parent = &( EncObjList.get_data( ienc_last ).nextenchant_ref );
+                    ego_enc_parent = &( EncObjList.get_data_ref( ienc_last ).nextenchant_ref );
                 }
             }
         }
@@ -242,7 +242,7 @@ bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     // unlink the enchant from the parent reference
     if ( NULL != ego_enc_parent )
     {
-        *ego_enc_parent = EncObjList.get_data( ienc ).nextenchant_ref;
+        *ego_enc_parent = EncObjList.get_data_ref( ienc ).nextenchant_ref;
     }
 
     return NULL != ego_enc_parent;
@@ -262,7 +262,7 @@ bool_t remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz )
 
     // Stop invalid pointers
     if ( !ACTIVE_CHR( ichr ) ) return bfalse;
-    pchr = ChrObjList.get_pdata( ichr );
+    pchr = ChrObjList.get_data_ptr( ichr );
 
     // clean up the enchant list before doing anything
     cleanup_character_enchants( pchr );
@@ -271,7 +271,7 @@ bool_t remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz )
     ego_enc_now = pchr->firstenchant;
     while ( ego_enc_now != MAX_ENC )
     {
-        ego_enc_next  = EncObjList.get_data( ego_enc_now ).nextenchant_ref;
+        ego_enc_next  = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref;
 
         peve = ego_enc::get_peve( ego_enc_now );
         if ( NULL != peve && ( IDSZ_NONE == remove_idsz || remove_idsz == peve->removedbyidsz ) )
@@ -298,7 +298,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     ego_eve * peve;
     CHR_REF itarget, ispawner;
 
-    penc = EncObjList.get_valid_pdata( ienc );
+    penc = EncObjList.get_valid_data_ptr( ienc );
     if ( NULL == penc ) return bfalse;
 
     itarget  = penc->target_ref;
@@ -308,7 +308,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     // Unsparkle the spellbook
     if ( INGAME_CHR( ispawner ) )
     {
-        ego_chr * pspawner = ChrObjList.get_pdata( ispawner );
+        ego_chr * pspawner = ChrObjList.get_data_ptr( ispawner );
 
         pspawner->sparkle = NOSPARKLE;
 
@@ -336,7 +336,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     // Now fix dem weapons
     if ( INGAME_CHR( itarget ) )
     {
-        ego_chr * ptarget = ChrObjList.get_pdata( itarget );
+        ego_chr * ptarget = ChrObjList.get_data_ptr( itarget );
         reset_character_alpha( ptarget->holdingwhich[SLOT_LEFT] );
         reset_character_alpha( ptarget->holdingwhich[SLOT_RIGHT] );
     }
@@ -348,7 +348,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     overlay_ref = penc->overlay_ref;
     if ( INGAME_CHR( overlay_ref ) )
     {
-        ego_chr * povl = ChrObjList.get_pdata( overlay_ref );
+        ego_chr * povl = ChrObjList.get_data_ptr( overlay_ref );
 
         if ( IS_INVICTUS_PCHR_RAW( povl ) )
         {
@@ -370,7 +370,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
             {
                 if ( INGAME_CHR( itarget ) )
                 {
-                    sound_play_chunk( ChrObjList.get_data( itarget ).pos_old, pro_get_chunk( imodel, iwave ) );
+                    sound_play_chunk( ChrObjList.get_data_ref( itarget ).pos_old, pro_get_chunk( imodel, iwave ) );
                 }
                 else
                 {
@@ -394,7 +394,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         // Remove see kurse enchant
         if ( INGAME_CHR( itarget ) )
         {
-            ego_chr * ptarget = ChrObjList.get_pdata( penc->target_ref );
+            ego_chr * ptarget = ChrObjList.get_data_ptr( penc->target_ref );
 
             if ( peve->seekurse && !ego_chr_data::get_skill( ptarget, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) )
             {
@@ -411,7 +411,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     // values of itarget and penc to kill the target (if necessary)
     if ( INGAME_CHR( itarget ) && NULL != peve && peve->killtargetonend )
     {
-        ego_chr * ptarget = ChrObjList.get_pdata( itarget );
+        ego_chr * ptarget = ChrObjList.get_data_ptr( itarget );
 
         if ( IS_INVICTUS_PCHR_RAW( ptarget ) )
         {
@@ -439,9 +439,9 @@ ENC_REF ego_enc::value_filled( const ENC_REF &  ienc, int value_idx )
 
     if ( !INGAME_ENC( ienc ) ) return ENC_REF( MAX_ENC );
 
-    character = EncObjList.get_data( ienc ).target_ref;
+    character = EncObjList.get_data_ref( ienc ).target_ref;
     if ( !INGAME_CHR( character ) ) return ENC_REF( MAX_ENC );
-    pchr = ChrObjList.get_pdata( character );
+    pchr = ChrObjList.get_data_ptr( character );
 
     // cleanup the enchant list
     cleanup_character_enchants( pchr );
@@ -450,12 +450,12 @@ ENC_REF ego_enc::value_filled( const ENC_REF &  ienc, int value_idx )
     currenchant = pchr->firstenchant;
     while ( currenchant != MAX_ENC )
     {
-        if ( INGAME_ENC( currenchant ) && EncObjList.get_data( currenchant ).setyesno[value_idx] )
+        if ( INGAME_ENC( currenchant ) && EncObjList.get_data_ref( currenchant ).setyesno[value_idx] )
         {
             break;
         }
 
-        currenchant = EncObjList.get_data( currenchant ).nextenchant_ref;
+        currenchant = EncObjList.get_data_ref( currenchant ).nextenchant_ref;
     }
 
     return currenchant;
@@ -475,7 +475,7 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
     if ( value_idx < 0 || value_idx >= MAX_ENCHANT_SET ) return;
 
     if ( !DEFINED_ENC( ienc ) ) return;
-    penc = EncObjList.get_valid_pdata( ienc );
+    penc = EncObjList.get_valid_data_ptr( ienc );
 
     peve = pro_get_peve( profile );
     if ( NULL == peve ) return;
@@ -506,7 +506,7 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
             if ( DEFINED_CHR( penc->target_ref ) )
             {
                 character = penc->target_ref;
-                ptarget = ChrObjList.get_pdata( character );
+                ptarget = ChrObjList.get_data_ptr( character );
 
                 penc->setyesno[value_idx] = btrue;
 
@@ -655,7 +655,7 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
     if ( value_idx < 0 || value_idx >= MAX_ENCHANT_ADD ) return;
 
     if ( !DEFINED_ENC( ienc ) ) return;
-    penc = EncObjList.get_valid_pdata( ienc );
+    penc = EncObjList.get_valid_data_ptr( ienc );
 
     if ( ieve >= MAX_EVE || !EveStack[ieve].loaded ) return;
     peve = EveStack + ieve;
@@ -669,7 +669,7 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
 
     if ( !DEFINED_CHR( penc->target_ref ) ) return;
     character = penc->target_ref;
-    ptarget = ChrObjList.get_pdata( character );
+    ptarget = ChrObjList.get_data_ptr( character );
 
     valuetoadd  = 0;
     fvaluetoadd = 0.0f;
@@ -821,7 +821,7 @@ ego_enc * ego_enc::do_constructing( ego_enc * penc )
     // this object has already been constructed as a part of the
     // ego_obj_enc, so its parent is properly defined
 
-    ego_enc * rv =  ego_enc::ctor_all( penc, penc->get_pparent() );
+    ego_enc * rv =  ego_enc::ctor_all( penc, ego_enc::get_obj_ptr( penc ) );
 
     /* add something here */
 
@@ -868,7 +868,7 @@ ego_enc * ego_enc::do_initializing( ego_enc * penc )
     else
     {
         penc->target_ref = pdata->target_ref;
-        ptarget = ChrObjList.get_pdata( penc->target_ref );
+        ptarget = ChrObjList.get_data_ptr( penc->target_ref );
     }
     penc->target_mana  = peve->target_mana;
     penc->target_life  = peve->target_life;
@@ -896,7 +896,7 @@ ego_enc * ego_enc::do_initializing( ego_enc * penc )
         penc->spawner_ref = pdata->spawner_ref;
         penc->spawnermodel_ref = ego_chr::get_ipro( pdata->spawner_ref );
 
-        ChrObjList.get_data( penc->spawner_ref ).undoenchant = ienc;
+        ChrObjList.get_data_ref( penc->spawner_ref ).undoenchant = ienc;
     }
 
     // set some other spawning parameters
@@ -932,7 +932,7 @@ ego_enc * ego_enc::do_initializing( ego_enc * penc )
             ego_mad * povl_mad;
             int action;
 
-            povl     = ChrObjList.get_pdata( overlay );
+            povl     = ChrObjList.get_data_ptr( overlay );
             povl_mad = ego_chr::get_pmad( overlay );
 
             penc->overlay_ref = overlay;  // Kill this character on end...
@@ -990,7 +990,7 @@ ego_enc * ego_enc::do_processing( ego_enc * penc )
         int      tnc;
         FACING_T facing;
         penc->spawntime = peve->contspawn_delay;
-        ptarget = ChrObjList.get_pdata( penc->target_ref );
+        ptarget = ChrObjList.get_data_ptr( penc->target_ref );
 
         facing = ptarget->ori.facing_z;
         for ( tnc = 0; tnc < peve->contspawn_amount; tnc++ )
@@ -1020,20 +1020,20 @@ ego_enc * ego_enc::do_processing( ego_enc * penc )
             eve    = ego_enc::get_ieve( ienc );
 
             // Do drains
-            if ( ChrObjList.get_data( owner ).alive )
+            if ( ChrObjList.get_data_ref( owner ).alive )
             {
 
                 // Change life
                 if ( penc->owner_life != 0 )
                 {
-                    ChrObjList.get_data( owner ).life += penc->owner_life;
-                    if ( ChrObjList.get_data( owner ).life <= 0 )
+                    ChrObjList.get_data_ref( owner ).life += penc->owner_life;
+                    if ( ChrObjList.get_data_ref( owner ).life <= 0 )
                     {
                         kill_character( owner, target, bfalse );
                     }
-                    if ( ChrObjList.get_data( owner ).life > ChrObjList.get_data( owner ).life_max )
+                    if ( ChrObjList.get_data_ref( owner ).life > ChrObjList.get_data_ref( owner ).life_max )
                     {
-                        ChrObjList.get_data( owner ).life = ChrObjList.get_data( owner ).life_max;
+                        ChrObjList.get_data_ref( owner ).life = ChrObjList.get_data_ref( owner ).life_max;
                     }
                 }
 
@@ -1057,20 +1057,20 @@ ego_enc * ego_enc::do_processing( ego_enc * penc )
             // check it again
             if ( INGAME_ENC( ienc ) )
             {
-                if ( ChrObjList.get_data( target ).alive )
+                if ( ChrObjList.get_data_ref( target ).alive )
                 {
 
                     // Change life
                     if ( penc->target_life != 0 )
                     {
-                        ChrObjList.get_data( target ).life += penc->target_life;
-                        if ( ChrObjList.get_data( target ).life <= 0 )
+                        ChrObjList.get_data_ref( target ).life += penc->target_life;
+                        if ( ChrObjList.get_data_ref( target ).life <= 0 )
                         {
                             kill_character( target, owner, bfalse );
                         }
-                        if ( ChrObjList.get_data( target ).life > ChrObjList.get_data( target ).life_max )
+                        if ( ChrObjList.get_data_ref( target ).life > ChrObjList.get_data_ref( target ).life_max )
                         {
-                            ChrObjList.get_data( target ).life = ChrObjList.get_data( target ).life_max;
+                            ChrObjList.get_data_ref( target ).life = ChrObjList.get_data_ref( target ).life_max;
                         }
                     }
 
@@ -1116,6 +1116,40 @@ ego_enc * ego_enc::do_destructing( ego_enc * penc )
     return rv;
 }
 
+//-------------------------------------------------------------------------------------------
+// ego_enc - specialization (if any) of the i_ego_obj interface
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_enc::object_allocated( void )
+{
+    if ( NULL == this || NULL == _container_ptr ) return bfalse;
+
+    return container_type::get_allocated( _container_ptr );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_enc::object_update_list_id( void )
+{
+    if ( NULL == this ) return bfalse;
+
+    // get a non-const version of the container pointer
+    container_type * pcont = get_container_ptr( this );
+    if ( NULL == pcont ) return bfalse;
+
+    if ( !container_type::get_allocated( pcont ) ) return bfalse;
+
+    // deal with the return state
+    if ( !valid )
+    {
+        container_type::set_list_id( pcont, INVALID_UPDATE_GUID );
+    }
+    else if ( ego_obj_processing == action )
+    {
+        container_type::set_list_id( pcont, EncObjList.get_list_id() );
+    }
+
+    return INVALID_UPDATE_GUID != container_type::get_list_id( pcont );
+}
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const CHR_REF & spawner, const ENC_REF & ego_enc_override, const PRO_REF & modeloptional )
@@ -1141,7 +1175,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
         log_warning( "spawn_one_enchant() - failed because the target does not exist.\n" );
         return ENC_REF( MAX_ENC );
     }
-    ptarget = ChrObjList.get_pdata( loc_target );
+    ptarget = ChrObjList.get_data_ptr( loc_target );
 
     // you should be able to enchant dead stuff to raise the dead...
     // if( !ptarget->alive ) return ENC_REF(MAX_ENC);
@@ -1158,7 +1192,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
 
         if ( !LOADED_PRO( loc_profile ) )
         {
-            log_warning( "spawn_one_enchant() - no valid profile for the spawning character \"%s\"(%d).\n", ChrObjList.get_obj( spawner ).base_name, ( spawner ).get_value() );
+            log_warning( "spawn_one_enchant() - no valid profile for the spawning character \"%s\"(%d).\n", ChrObjList.get_data_ref( spawner ).base_name, ( spawner ).get_value() );
             return ENC_REF( MAX_ENC );
         }
     }
@@ -1176,7 +1210,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     peve->ego_enc_request_count++;
 
     // Owner must both be alive and on and valid if it isn't a stayifnoowner enchant
-    if ( !peve->stayifnoowner && ( !INGAME_CHR( owner ) || !ChrObjList.get_data( owner ).alive ) )
+    if ( !peve->stayifnoowner && ( !INGAME_CHR( owner ) || !ChrObjList.get_data_ref( owner ).alive ) )
     {
         log_warning( "spawn_one_enchant() - failed because the required enchant owner cannot be found.\n" );
         return ENC_REF( MAX_ENC );
@@ -1210,7 +1244,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
         log_warning( "spawn_one_enchant() - failed because the target is not alive.\n" );
         return ENC_REF( MAX_ENC );
     }
-    ptarget = ChrObjList.get_pdata( loc_target );
+    ptarget = ChrObjList.get_data_ptr( loc_target );
 
     // Check peve->dontdamagetype
     if ( peve->dontdamagetype != DAMAGE_NONE )
@@ -1241,8 +1275,8 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
         log_warning( "spawn_one_enchant() - could not allocate an enchant.\n" );
         return ENC_REF( MAX_ENC );
     }
-    pobj = EncObjList.get_ptr( ego_enc_ref );
-    penc = EncObjList.get_pdata( ego_enc_ref );
+    pobj = EncObjList.get_data_ptr( ego_enc_ref );
+    penc = ego_obj_enc::get_data_ptr( pobj );
 
     penc->spawn_data.owner_ref   = owner;
     penc->spawn_data.target_ref  = loc_target;
@@ -1292,14 +1326,14 @@ void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
 
     if ( value_idx < 0 || value_idx >= MAX_ENCHANT_SET ) return;
 
-    penc = EncObjList.get_valid_pdata( ienc );
+    penc = EncObjList.get_valid_data_ptr( ienc );
     if ( NULL == penc ) return;
 
     if ( value_idx >= MAX_ENCHANT_SET || !penc->setyesno[value_idx] ) return;
 
     if ( !INGAME_CHR( penc->target_ref ) ) return;
     character = penc->target_ref;
-    ptarget   = ChrObjList.get_pdata( penc->target_ref );
+    ptarget   = ChrObjList.get_data_ptr( penc->target_ref );
 
     switch ( value_idx )
     {
@@ -1414,12 +1448,12 @@ void ego_enc::remove_add( const ENC_REF & ienc, int value_idx )
 
     if ( value_idx < 0 || value_idx >= MAX_ENCHANT_ADD ) return;
 
-    penc = EncObjList.get_valid_pdata( ienc );
+    penc = EncObjList.get_valid_data_ptr( ienc );
     if ( NULL == penc ) return;
 
     if ( !INGAME_CHR( penc->target_ref ) ) return;
     character = penc->target_ref;
-    ptarget = ChrObjList.get_pdata( penc->target_ref );
+    ptarget = ChrObjList.get_data_ptr( penc->target_ref );
 
     if ( penc->addyesno[value_idx] )
     {
@@ -1561,8 +1595,8 @@ void update_all_enchants()
     // update all enchants
     for ( ienc = 0; ienc < MAX_ENC; ienc++ )
     {
-        ego_obj_enc * penc = EncObjList.get_ptr( ienc );
-        if( NULL == penc ) continue;
+        ego_obj_enc * penc = EncObjList.get_data_ptr( ienc );
+        if ( NULL == penc ) continue;
 
         ego_object_engine::run( penc );
     }
@@ -1587,7 +1621,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     ENC_REF first_valid_enchant;
     ENC_REF ego_enc_now, ego_enc_next;
 
-    if ( !VALID_ENC_REF( ienc ) ) return ENC_REF( MAX_ENC );
+    if ( !EncObjList.valid_ref( ienc ) ) return ENC_REF( MAX_ENC );
 
     // clear the list
     memset( ego_enc_used, 0, sizeof( ego_enc_used ) );
@@ -1597,22 +1631,22 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     first_valid_enchant = ego_enc_now = ienc;
     for ( cnt = 0; ego_enc_now < MAX_ENC && ego_enc_next != ego_enc_now && cnt < MAX_ENC; cnt++ )
     {
-        ego_enc_next = EncObjList.get_data( ego_enc_now ).nextenchant_ref;
+        ego_enc_next = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref;
 
         // coerce the list of enchants to a valid value
-        if ( !VALID_ENC_REF( ego_enc_next ) )
+        if ( !EncObjList.valid_ref( ego_enc_next ) )
         {
-            ego_enc_next = EncObjList.get_data( ego_enc_now ).nextenchant_ref = MAX_ENC;
+            ego_enc_next = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref = MAX_ENC;
         }
 
         // fix any loops in the enchant list
         if ( ego_enc_used[( ego_enc_next ).get_value()] )
         {
-            EncObjList.get_data( ego_enc_now ).nextenchant_ref = MAX_ENC;
+            EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref = MAX_ENC;
             break;
         }
 
-        //( !INGAME_CHR( EncObjList.get_data(ego_enc_now).target_ref ) && !EveStack[EncObjList.get_data(ego_enc_now).eve_ref].stayiftargetdead )
+        //( !INGAME_CHR( EncObjList.get_data_ref(ego_enc_now).target_ref ) && !EveStack[EncObjList.get_data_ref(ego_enc_now).eve_ref].stayiftargetdead )
 
         // remove any expired enchants
         if ( !INGAME_ENC( ego_enc_now ) )
@@ -1632,14 +1666,14 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
             }
         }
 
-        ego_enc_parent = &( EncObjList.get_data( ego_enc_now ).nextenchant_ref );
+        ego_enc_parent = &( EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref );
         ego_enc_now    = ego_enc_next;
     }
 
     if ( ego_enc_now == ego_enc_next || cnt >= MAX_ENC )
     {
         // break the loop. this will only happen if the list is messed up.
-        EncObjList.get_data( ego_enc_now ).nextenchant_ref = ENC_REF( MAX_ENC );
+        EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref = ENC_REF( MAX_ENC );
 
         log_warning( "cleanup_enchant_list() - The enchantment list is corrupt!\n" );
     }
@@ -1660,10 +1694,10 @@ void cleanup_all_enchants()
         bool_t    do_remove;
         bool_t valid_owner, valid_target;
 
-        ego_obj_enc * pobj = EncObjList.get_valid_ptr( ENC_REF( cnt ) );
+        ego_obj_enc * pobj = EncObjList.get_valid_data_ptr( ENC_REF( cnt ) );
         if ( NULL == pobj ) continue;
 
-        ego_enc * penc = pobj->get_pdata();
+        ego_enc * penc = ego_obj_enc::get_data_ptr( pobj );
         if ( NULL == penc ) continue;
 
         // try to determine something about the parent
@@ -1671,17 +1705,17 @@ void cleanup_all_enchants()
         valid_target = bfalse;
         if ( INGAME_CHR( penc->target_ref ) )
         {
-            valid_target = ChrObjList.get_data( penc->target_ref ).alive;
+            valid_target = ChrObjList.get_data_ref( penc->target_ref ).alive;
 
             // this is linked to a known character
-            ego_enc_lst = &( ChrObjList.get_data( penc->target_ref ).firstenchant );
+            ego_enc_lst = &( ChrObjList.get_data_ref( penc->target_ref ).firstenchant );
         }
 
         // try to determine if the owner exists and is alive
         valid_owner = bfalse;
         if ( INGAME_CHR( penc->owner_ref ) )
         {
-            valid_owner = ChrObjList.get_data( penc->owner_ref ).alive;
+            valid_owner = ChrObjList.get_data_ref( penc->owner_ref ).alive;
         }
 
         if ( !LOADED_EVE( penc->eve_ref ) )
@@ -1711,7 +1745,7 @@ void cleanup_all_enchants()
         else if ( valid_owner && peve->endifcantpay )
         {
             // Undo enchants that cannot be sustained anymore
-            if ( ChrObjList.get_data( penc->owner_ref ).mana == 0 ) do_remove = btrue;
+            if ( ChrObjList.get_data_ref( penc->owner_ref ).mana == 0 ) do_remove = btrue;
         }
         else
         {
@@ -1734,7 +1768,7 @@ void increment_all_enchant_update_counters()
 
     for ( cnt = 0; cnt < MAX_ENC; cnt++ )
     {
-        ego_obj * pbase = EncObjList.get_valid_ptr( cnt );
+        ego_obj * pbase = EncObjList.get_valid_data_ptr( cnt );
 
         if ( !ACTIVE_PBASE( pbase ) ) continue;
 
@@ -1743,95 +1777,48 @@ void increment_all_enchant_update_counters()
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 bool_t ego_obj_enc::request_terminate( const ENC_REF & ienc )
 {
-    if ( !VALID_ENC( ienc ) || TERMINATED_ENC( ienc ) ) return bfalse;
+    /// @details BB@> Tell the game to get rid of this object and treat it
+    ///               as if it was already dead
+    ///
+    /// @note ego_obj_enc::request_terminate() will force the game to
+    ///       (eventually) call free_one_enchant_in_game() on this enchant
 
-    POBJ_REQUEST_TERMINATE( EncObjList.get_ptr( ienc ) );
+    return request_terminate( EncObjList.get_valid_data_ptr( ienc ) );
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_enc::request_terminate( ego_obj_enc * pobj )
+{
+    /// @details BB@> Tell the game to get rid of this object and treat it
+    ///               as if it was already dead
+    ///
+    /// @note ego_obj_enc::request_terminate() will force the game to
+    ///       (eventually) call free_one_enchant_in_game() on this enchant
+
+    if ( NULL == pobj || TERMINATED_PENC( pobj ) ) return bfalse;
+
+    // wait for EncObjList.cleanup() to work its magic
+    pobj->begin_waiting( );
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-// struct ego_obj_enc - memory management
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::ctor_this( ego_obj_enc * pobj )
-{
-    // construct this struct, ONLY
-
-    if ( NULL == pobj ) return NULL;
-
-    puts( "\t\t" __FUNCTION__ );
-
-    pobj = ego_obj_enc::dealloc( pobj );
-    pobj = ego_obj_enc::alloc( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::dtor_this( ego_obj_enc * pobj )
-{
-    // destruct this struct, ONLY
-
-    if ( NULL == pobj || !FLAG_ALLOCATED_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
-
-    puts( "\t\t" __FUNCTION__ );
-
-    pobj = ego_obj_enc::dealloc( pobj );
-
-    // Sets the state to ego_obj_terminated automatically.
-    POBJ_TERMINATE( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::dealloc( ego_obj_enc * pobj )
-{
-    // deallocate this struct
-    if ( !VALID_PBASE( pobj ) ) return pobj;
-
-    /* add something here */
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_dealloc( ego_obj_enc * pobj )
-{
-    // deallocate this struct and all sub structs
-
-    if ( !VALID_PBASE( pobj ) ) return pobj;
-
-    ego_enc::do_dealloc( pobj->get_pdata() );
-
-    ego_obj_enc::dealloc( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::alloc( ego_obj_enc * pobj )
-{
-    // allocate this struct
-    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
-
-    /* add something here */
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_enc * ego_obj_enc::do_alloc( ego_obj_enc * pobj )
-{
-    // allocate this struct and all sub structs
-
-    if ( !ALLOCATED_PBASE( pobj ) ) return pobj;
-
-    ego_obj_enc::alloc( pobj );
-
-    ego_enc::do_alloc( pobj->get_pdata() );
-
-    return pobj;
-}
+//bool_t ego_obj_enc::request_terminate( ego_enc_bundle * pbdl_enc )
+//{
+//    bool_t retval;
+//    if ( NULL == pbdl_enc ) return bfalse;
+//
+//    retval = ego_obj_enc::request_terminate( pbdl_enc->enc_ref );
+//
+//    if ( retval )
+//    {
+//        ego_enc_bundle::validate( pbdl_enc );
+//    }
+//
+//    return retval;
+//}
+//

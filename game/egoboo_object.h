@@ -213,15 +213,10 @@ struct ego_object_process : public i_ego_object_process, public ego_object_reque
 {
     //---- default implementation of the virtual methods
 
-    /// constructing method
     virtual int do_constructing()   { return end_constructing();   }
-    /// initializing method
     virtual int do_initializing()   { return end_initializing();   }
-    /// deinitializing method
     virtual int do_deinitializing() { return end_deinitializing(); }
-    /// processing method
     virtual int do_processing()     { return end_processing();     }
-    /// destructing method
     virtual int do_destructing()    { return end_destructing();    }
 
     //---- accessor methods
@@ -260,70 +255,50 @@ struct ego_obj_data
 {
     // basic object definitions
     STRING         base_name;     ///< what is its name at creation. Probably related to the filename that generated it.
-    Uint32         guid;          ///< a globally unique identifier
+    Uint32         guid;          ///< a globally unique identifier for each object
 
     // things related to the updating of objects
     size_t         update_count;  ///< How many updates have been made to this object?
     size_t         frame_count;   ///< How many frames have been rendered?
+};
 
-    unsigned       update_guid;   ///< a value that lets you know if an reference in synch with its object list
+//--------------------------------------------------------------------------------------------
+/// an interface for functions that can only be evaluated by an object that inherits ego_obj
+struct i_ego_obj
+{
+    //---- functions that ego_obj cannot call on its own
+    virtual bool_t object_allocated( void ) = 0;
+    virtual bool_t object_update_list_id( void ) = 0;
+
+    //---- pointers to classes that inherit this interface
+    virtual ego_obj     * get_obj_ptr( void )     = 0;
+    virtual ego_obj_chr * get_obj_chr_ptr( void ) = 0;
+    virtual ego_obj_enc * get_obj_enc_ptr( void ) = 0;
+    virtual ego_obj_prt * get_obj_prt_ptr( void ) = 0;
+
 };
 
 //--------------------------------------------------------------------------------------------
 
-/// The full definition of an "egoboo object"
-/// It has a "has a" relationship to the "egoboo object process."
-/// It inherits cpp_list_client to provide some helper functions and data up to be a proper "client" for the t_cpp_list<> "server" that stores it.
+/// The base class for an "egoboo object"
+/// The purpose of this struct is to fully implement the the idea of a process for all objects
 
-struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_object_process
+struct ego_obj : public i_ego_obj, public ego_obj_data, public ego_object_process
 {
     friend struct ego_object_engine;
 
-    /// How many objects have been created?
-    static Uint32 guid_counter;
+    explicit ego_obj() { ctor_this( this ); }
+    ~ego_obj() {  dtor_this( this );  }
 
-    /// How many objects being spawned at the moment
-    static Uint32 spawn_depth;
-
-    // generic accessors so that objects which inherit this struct can access it at will
-    ego_obj & get_ego_obj() { return *this; }
-    ego_obj * get_pego_obj() { return this; }
-
-    const ego_obj & cget_ego_obj() const { return *this; }
-    const ego_obj * cget_pego_obj() const { return this; }
-
-    static       ego_obj * get_pego_obj( ego_obj * ptr ) { return ptr; }
-    static const ego_obj * cget_pego_obj( const ego_obj * ptr ) { return ptr; }
-
-    explicit ego_obj( size_t index = size_t( -1 ) ) : cpp_list_client( index ) { ctor_this( this ); }
-    ~ego_obj() { dtor_this( this ); }
-
-    // generic construction/destruction functions
-    static ego_obj * ctor_this( ego_obj * ptr ) { return ptr; }
-    static ego_obj * dtor_this( ego_obj * ptr ) { return ptr; }
-
-    // use placement new and a destructor call
-    static ego_obj * ctor_all( ego_obj * ptr, size_t index )
+    static ego_obj * reallocate_all( ego_obj * ptr )
     {
-        if ( NULL != ptr )  ptr = new( ptr ) ego_obj( index ); return ptr;
+        ptr = deallocate_all( ptr );
+        ptr = allocate_all( ptr );
+        return ptr;
     }
-    static ego_obj * dtor_all( ego_obj * ptr )                { if ( NULL != ptr ) ptr->~ego_obj(); return ptr; }
-
-    // memory management functions
-    static ego_obj * allocate( ego_obj * pobj, size_t index );
-    static ego_obj * deallocate( ego_obj * pobj );
 
     // process initialization
     static ego_obj * validate( ego_obj *, bool_t val = btrue );
-
-    //---- overriding some/all virtual finctions
-    //virtual int end_constructing();
-    //virtual int end_initializing();
-    //virtual int end_processing();
-    //virtual int end_deinitializing();
-    //virtual int end_destructing();
-    //virtual int end_invalidating();
-    //virtual int begin_waiting();
 
     static ego_obj * begin_processing( ego_obj * , const char * name = "*UNKNOWN*" );
 
@@ -334,6 +309,52 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_object_
     static ego_obj * grant_terminate( ego_obj * pobj );
     static ego_obj * grant_on( ego_obj * pobj );
     static ego_obj * set_spawning( ego_obj * pobj, bool_t val );
+
+    static Uint32    get_spawn_depth()       { return spawn_depth; };
+    static Uint32    increment_spawn_depth() { return ++spawn_depth; };
+    static Uint32    decrement_spawn_depth() { return --spawn_depth; };
+
+    // generic accessors so that objects which inherit this struct can access it at will
+    static       ego_obj &  get_ego_obj_ref( ego_obj & ref ) { return ref; }
+    static const ego_obj & cget_ego_obj_ref( const ego_obj & ref ) { return ref; }
+    static       ego_obj *  get_ego_obj_ptr( ego_obj * ptr ) { return ptr; }
+    static const ego_obj * cget_ego_obj_ptr( const ego_obj * ptr ) { return ptr; }
+
+    //---- implementation of the i_ego_obj interface
+    virtual bool_t        object_allocated( void )   { return bfalse; }
+    virtual bool_t        object_update_list_id( void ) { return bfalse; }
+    virtual ego_obj     * get_obj_ptr( void )        { return this; }
+    virtual ego_obj_chr * get_obj_chr_ptr( void )    { return NULL; }
+    virtual ego_obj_enc * get_obj_enc_ptr( void )    { return NULL; }
+    virtual ego_obj_prt * get_obj_prt_ptr( void )    { return NULL; }
+
+protected:
+
+    // generic construction/destruction functions
+    static ego_obj * ctor_this( ego_obj * ptr ) { return ptr; }
+    static ego_obj * dtor_this( ego_obj * ptr ) { return ptr; }
+
+    // use placement new and a destructor call
+    static ego_obj * ctor_all( ego_obj * ptr ) { if ( NULL != ptr )  ptr = new( ptr ) ego_obj; return ptr; }
+    static ego_obj * dtor_all( ego_obj * ptr ) { if ( NULL != ptr ) ptr->~ego_obj(); return ptr; }
+
+    static ego_obj * allocate_all( ego_obj * ptr );
+    static ego_obj * deallocate_all( ego_obj * ptr );
+
+    // completely reallocate this object
+    static ego_obj * retor_all( ego_obj * ptr )
+    {
+        ptr = ego_obj::dtor_all( ptr );
+        ptr = ego_obj::ctor_all( ptr );
+        return ptr;
+    }
+
+    /// How many objects have been created?
+    static Uint32 guid_counter;
+
+    /// How many objects being spawned at the moment
+    static Uint32 spawn_depth;
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -342,36 +363,28 @@ struct ego_obj : public ego_obj_data, public cpp_list_client, public ego_object_
 /// the engine that runs an "egoboo object process"
 struct ego_object_engine
 {
-    static ego_obj_chr * run( ego_obj_chr * );
-    static ego_obj_enc * run( ego_obj_enc * );
-    static ego_obj_prt * run( ego_obj_prt * );
-
-    static ego_obj * run_construct( ego_obj * pobj, int max_iterations );
-    static ego_obj * run_initialize( ego_obj * pobj, int max_iterations );
-    static ego_obj * run_activate( ego_obj * pobj, int max_iterations );
-    static ego_obj * run_deinitialize( ego_obj * pobj, int max_iterations );
-    static ego_obj * run_deconstruct( ego_obj * pobj, int max_iterations );
-
-private:
     static ego_obj * run( ego_obj * );
 
+    template <typename _ty> static _ty * run_construct( _ty * pobj, int max_iterations );
+    template <typename _ty> static _ty * run_initialize( _ty * pobj, int max_iterations );
+    template <typename _ty> static _ty * run_activate( _ty * pobj, int max_iterations );
+    template <typename _ty> static _ty * run_deinitialize( _ty * pobj, int max_iterations );
+    template <typename _ty> static _ty * run_deconstruct( _ty * pobj, int max_iterations );
 };
+
+extern ego_object_engine obj_engine;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // pointer conversions
 
-// Grab a pointer to the ego_obj of an object that "inherits" this data
-#define POBJ_GET_PBASE( POBJ )    ego_obj::get_pego_obj(POBJ)
-#define POBJ_CGET_PBASE( POBJ )   ego_obj::cget_pego_obj(POBJ)
-
 // Grab a pointer to the parent container object for a data item like ego_chr, ego_enc, or ego_prt
-#define PDATA_GET_POBJ( TYPE, PDATA )    ( TYPE::get_pparent(PDATA) )
-#define PDATA_CGET_POBJ( TYPE, PDATA )   ( TYPE::cget_pparent(PDATA) )
+#define PDATA_GET_POBJ( TYPE, PDATA )    ( TYPE::get_obj_ptr(PDATA) )
+#define PDATA_CGET_POBJ( TYPE, PDATA )   ( TYPE::cget_obj_ptr(PDATA) )
 
 // Grab a pointer to data item like ego_chr, ego_enc, or ego_prt from the parent container
-#define POBJ_GET_PDATA( TYPE, PDATA )    ( TYPE::get_pdata(PDATA) )
-#define POBJ_CGET_PDATA( TYPE, PDATA )   ( TYPE::cget_pdata(PDATA) )
+#define POBJ_GET_PDATA( TYPE, PDATA )    ( TYPE::get_data_ptr(PDATA) )
+#define POBJ_CGET_PDATA( TYPE, PDATA )   ( TYPE::cget_data_ptr(PDATA) )
 
 // Grab a pointer to the ego_obj for a data item like ego_chr, ego_enc, or ego_prt
 #define PDATA_GET_PBASE( TYPE, PDATA )    PDATA_GET_POBJ( TYPE, PDATA )
@@ -381,7 +394,7 @@ private:
 //--------------------------------------------------------------------------------------------
 
 /// Mark a ego_obj object as being allocated
-#define POBJ_ALLOCATE( POBJ, INDEX )   ego_obj::allocate( POBJ, INDEX )
+#define POBJ_ALLOCATE( POBJ, INDEX )   ego_obj::reallocate( POBJ, INDEX )
 #define PDATA_ALLOCATE( TYPE, PDATA, INDEX ) POBJ_ALLOCATE( PDATA_GET_POBJ(TYPE, PDATA, INDEX) )
 
 /// Mark a ego_obj object as being deallocated
@@ -406,7 +419,7 @@ private:
         if( !ego_obj::get_spawning(POBJ) )\
         {\
             ego_obj::set_spawning( POBJ, btrue );\
-            ego_obj::spawn_depth++;\
+            ego_obj::increment_spawn_depth();\
         }\
     }\
      
@@ -416,19 +429,14 @@ private:
         if( ego_obj::get_spawning(POBJ) )\
         {\
             ego_obj::set_spawning( POBJ, bfalse );\
-            ego_obj::spawn_depth--;\
+            ego_obj::decrement_spawn_depth();\
         }\
     }\
      
-/// Is the object flagged as allocated?
-#define FLAG_ALLOCATED_PBASE( PBASE ) ( ego_obj::get_allocated(PBASE) )
-/// Is the object allocated?
-#define ALLOCATED_PBASE( PBASE )       ( (NULL != (PBASE)) && FLAG_ALLOCATED_PBASE(PBASE) )
-
 /// Is the object flagged as valid?
 #define FLAG_VALID_PBASE( PBASE ) ( ego_object_process_state_data::get_valid(PBASE) )
 /// Is the object valid?
-#define VALID_PBASE( PBASE )       ( (NULL != (PBASE)) && FLAG_VALID_PBASE(PBASE) && FLAG_ALLOCATED_PBASE( PBASE ) )
+#define VALID_PBASE( PBASE )       ( FLAG_VALID_PBASE(PBASE) )
 
 /// Is the object flagged as constructed?
 #define FLAG_CONSTRUCTED_PBASE( PBASE ) ( ego_object_process_state_data::get_constructed(PBASE) )
@@ -489,12 +497,8 @@ private:
 #define GET_IDX_PBASE( PBASE, FAIL_VALUE ) ( (NULL == (PBASE) || !VALID_PBASE( PBASE ) ) ? FAIL_VALUE : ego_obj::get_index(PBASE) )
 #define GET_REF_PBASE( PBASE, FAIL_VALUE ) ((REF_T)GET_IDX_PBASE( PBASE, FAIL_VALUE ))
 
-// Grab the index value of object that "inherits" from ego_obj
-#define GET_IDX_POBJ( POBJ, FAIL_VALUE )  GET_IDX_PBASE(POBJ_CGET_PBASE( POBJ ), FAIL_VALUE)
-#define GET_REF_POBJ( POBJ, FAIL_VALUE )  ((REF_T)GET_IDX_POBJ( POBJ, FAIL_VALUE ))
-
 /// Grab the state of object that "inherits" from ego_obj
-#define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ_CGET_PBASE( POBJ ) ) ) ? ego_obj_nothing : ego_obj::get_state(POBJ) )
+#define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ ) ) ? ego_obj_nothing : ego_obj::get_state(POBJ) )
 
 /// Is the object active?
 #define DEFINED_PBASE( PBASE )  ( FLAG_ON_PBASE(PBASE) && !FLAG_TERMINATED_PBASE( PBASE ) )
@@ -502,3 +506,8 @@ private:
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 #define _egoboo_object_h
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+#include "egoboo_object.inl"
