@@ -1275,8 +1275,8 @@ int draw_character_xp_bar( const CHR_REF & character, float x, float y )
     ego_chr * pchr;
     ego_cap * pcap;
 
-    if ( !INGAME_CHR( character ) ) return y;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return y;
 
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return y;
@@ -1313,8 +1313,8 @@ int draw_status( const CHR_REF & character, float x, float y )
     ego_chr * pchr;
     ego_cap * pcap;
 
-    if ( !INGAME_CHR( character ) ) return y;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return y;
 
     pcap = ego_chr::get_pcap( character );
     if ( NULL == pcap ) return y;
@@ -1603,8 +1603,8 @@ int draw_debug_character( CHR_REF ichr, int y )
 {
     ego_chr   *pchr;
 
-    if ( !DEFINED_CHR( ichr ) ) return y;
-    pchr = ChrObjList.get_data_ptr( ichr );
+    pchr = ChrObjList.get_allocated_data_ptr( ichr );
+    if ( !DEFINED_PCHR( pchr ) ) return y;
 
     return y;
 }
@@ -1671,15 +1671,17 @@ int draw_debug( int y )
         // More debug information
         STRING text;
 
+        const net_instance * pnet = network_get_instance();
+
         y = _draw_string_raw( 0, y, "!!!DEBUG MODE-6!!!" );
         y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtObjList.free_count() );
         y = _draw_string_raw( 0, y, "~~FREECHR %d", chr_count_free() );
-        y = _draw_string_raw( 0, y, "~~MACHINE %d", local_machine );
+        y = _draw_string_raw( 0, y, "~~MACHINE %d", NULL == pnet ? 0 : pnet->machine_type );
         if ( PMod->exportvalid ) snprintf( text, SDL_arraysize( text ), "~~EXPORT: TRUE" );
         else                    snprintf( text, SDL_arraysize( text ), "~~EXPORT: FALSE" );
         y = _draw_string_raw( 0, y, text, PMod->exportvalid );
         y = _draw_string_raw( 0, y, "~~PASS %d/%d", ShopStack.count, PassageStack.count );
-        y = _draw_string_raw( 0, y, "~~NETPLAYERS %d", numplayer );
+        y = _draw_string_raw( 0, y, "~~NETPLAYERS %d", NULL == pnet ? 0 : pnet->player_count );
         y = _draw_string_raw( 0, y, "~~DAMAGEPART %d", damagetile.parttype );
 
         // y = _draw_string_raw( 0, y, "~~FOGAFF %d", fog_data.affects_water );
@@ -1720,11 +1722,15 @@ int draw_timer( int y )
 //--------------------------------------------------------------------------------------------
 int draw_game_status( int y )
 {
+    const net_instance * pnet = network_get_instance();
+
+    int loc_numplayer = ( NULL == pnet ) ? 0 : pnet->player_count;
+
     if ( network_waiting_for_players() )
     {
         y = _draw_string_raw( 0, y, "Waiting for players... " );
     }
-    else if ( numplayer > 0 )
+    else if ( loc_numplayer  > 0 )
     {
         if ( local_stats.allpladead || PMod->respawnanytime )
         {

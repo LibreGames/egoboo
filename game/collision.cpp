@@ -419,12 +419,12 @@ bool_t detect_chr_chr_interaction_valid( const CHR_REF & ichr_a, const CHR_REF &
     if ( ichr_a == ichr_b ) return bfalse;
 
     // Ignore invalid characters
-    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrObjList.get_data_ptr( ichr_a );
+    pchr_a = ChrObjList.get_allocated_data_ptr( ichr_a );
+    if ( !INGAME_PCHR( pchr_a ) ) return bfalse;
 
     // Ignore invalid characters
-    if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrObjList.get_data_ptr( ichr_b );
+    pchr_b = ChrObjList.get_allocated_data_ptr( ichr_b );
+    if ( !INGAME_PCHR( pchr_b ) ) return bfalse;
 
     // don't interact if there is no interaction
     if ( 0.0f == pchr_a->bump_stt.size || 0.0f == pchr_b->bump_stt.size ) return bfalse;
@@ -445,8 +445,8 @@ bool_t detect_chr_prt_interaction_valid( const CHR_REF & ichr_a, const PRT_REF &
     ego_prt * pprt_b;
 
     // Ignore invalid characters
-    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrObjList.get_data_ptr( ichr_a );
+    pchr_a = ChrObjList.get_allocated_data_ptr( ichr_a );
+    if ( !INGAME_PCHR( pchr_a ) ) return bfalse;
 
     // Ignore invalid characters
     if ( !INGAME_PRT( iprt_b ) ) return bfalse;
@@ -741,12 +741,12 @@ bool_t do_chr_mount_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
     float hrz_overlap1, hrz_overlap2, hrz_overlap, overlap;
 
     // make sure that A is valid
-    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrObjList.get_data_ptr( ichr_a );
+    pchr_a = ChrObjList.get_allocated_data_ptr( ichr_a );
+    if ( !INGAME_PCHR( pchr_a ) ) return bfalse;
 
     // make sure that B is valid
-    if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrObjList.get_data_ptr( ichr_b );
+    pchr_b = ChrObjList.get_allocated_data_ptr( ichr_b );
+    if ( !INGAME_PCHR( pchr_b ) ) return bfalse;
 
     // only check possible rider-mount interactions
     mount_a = chr_can_mount( ichr_b, ichr_a ) && !INGAME_CHR( pchr_b->attachedto );
@@ -893,12 +893,12 @@ bool_t do_chr_platform_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b
     float hrz_overlap1, hrz_overlap2, hrz_overlap, vrt_overlap, overlap;
 
     // make sure that A is valid
-    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrObjList.get_data_ptr( ichr_a );
+    pchr_a = ChrObjList.get_allocated_data_ptr( ichr_a );
+    if ( !INGAME_PCHR( pchr_a ) ) return bfalse;
 
     // make sure that B is valid
-    if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrObjList.get_data_ptr( ichr_b );
+    pchr_b = ChrObjList.get_allocated_data_ptr( ichr_b );
+    if ( !INGAME_PCHR( pchr_b ) ) return bfalse;
 
     // if you are mounted, only your mount is affected by platforms
     if ( IS_ATTACHED_PCHR( pchr_a ) || IS_ATTACHED_PCHR( pchr_b ) ) return bfalse;
@@ -1044,8 +1044,8 @@ bool_t do_prt_platform_detection( const PRT_REF & iprt_a, const CHR_REF & ichr_b
     pprt_a = PrtObjList.get_data_ptr( iprt_a );
 
     // make sure that B is valid
-    if ( !INGAME_CHR( ichr_b ) ) return bfalse;
-    pchr_b = ChrObjList.get_data_ptr( ichr_b );
+    pchr_b = ChrObjList.get_allocated_data_ptr( ichr_b );
+    if ( !INGAME_PCHR( pchr_b ) ) return bfalse;
 
     // if you are mounted, only your mount is affected by platforms
     if ( DEFINED_CHR( pprt_a->attachedto_ref ) || IS_ATTACHED_PCHR( pchr_b ) ) return bfalse;
@@ -3044,8 +3044,8 @@ bool_t do_chr_prt_collision( ego_CoNode * d )
     iprt_b = d->prtb;
 
     // make sure that it is on
-    if ( !INGAME_CHR( ichr_a ) ) return bfalse;
-    pchr_a = ChrObjList.get_data_ptr( ichr_a );
+    pchr_a = ChrObjList.get_allocated_data_ptr( ichr_a );
+    if ( !INGAME_PCHR( pchr_a ) ) return bfalse;
 
     // skip dead objects
     if ( !pchr_a->alive ) return bfalse;

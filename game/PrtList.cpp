@@ -101,17 +101,17 @@ PRT_REF ego_particle_list::allocate_find()
         }
     }
 
-    if ( PrtObjList.valid_ref( found ) )
+    if ( PrtObjList.in_range_ref( found ) )
     {
         // found a "bad" particle
         iprt = found;
     }
-    else if ( PrtObjList.valid_ref( min_display_idx ) )
+    else if ( PrtObjList.in_range_ref( min_display_idx ) )
     {
         // found a "terminated" particle
         iprt = min_display_idx;
     }
-    else if ( PrtObjList.valid_ref( min_life_idx ) )
+    else if ( PrtObjList.in_range_ref( min_life_idx ) )
     {
         // found a particle that closest to death
         iprt = min_life_idx;
@@ -129,7 +129,7 @@ PRT_REF ego_particle_list::allocate_find()
 //--------------------------------------------------------------------------------------------
 PRT_REF ego_particle_list::allocate_activate( const PRT_REF & iprt )
 {
-    if ( PrtObjList.valid_ref( iprt ) )
+    if ( PrtObjList.in_range_ref( iprt ) )
     {
         // if the particle is already being used, make sure to destroy the old one
         if ( DEFINED_PRT( iprt ) )

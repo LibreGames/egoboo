@@ -424,7 +424,7 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
     pcam->pos.z   = 0.9f * pcam->pos.z + 0.1f * pcam->zgoto;
 
     // Camera controls
-    if ( CAM_TURN_GOOD == pcam->turn_mode && 1 == local_numlpla )
+    if ( CAM_TURN_GOOD == pcam->turn_mode && 1 == net_stats.pla_count_local )
     {
         if ( mous.on )
         {

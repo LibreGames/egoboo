@@ -62,15 +62,15 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 
 #define VALID_PRT( IPRT )       ( ALLOCATED_PRT( IPRT ) && FLAG_VALID_PBASE(IPRT_GET_POBJ(IPRT)) )
 #define DEFINED_PRT( IPRT )     ( VALID_PBASE(IPRT_GET_POBJ(IPRT) ) && !FLAG_TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define ACTIVE_PRT( IPRT )      ( ACTIVE_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define WAITING_PRT( IPRT )     ( WAITING_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define TERMINATED_PRT( IPRT )  ( TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define ACTIVE_PRT( IPRT )      ACTIVE_PBASE(IPRT_GET_POBJ(IPRT))
+#define WAITING_PRT( IPRT )     WAITING_PBASE(IPRT_GET_POBJ(IPRT))
+#define TERMINATED_PRT( IPRT )  TERMINATED_PBASE(IPRT_GET_POBJ(IPRT))
 
 #define VALID_PPRT( PPRT )       ( ALLOCATED_PPRT( PPRT ) && FLAG_VALID_PBASE(PPRT_CGET_POBJ(PPRT)) )
 #define DEFINED_PPRT( PPRT )     ( VALID_PBASE(PPRT_CGET_POBJ(PPRT)) && !FLAG_TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define ACTIVE_PPRT( PPRT )      ( ACTIVE_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define WAITING_PPRT( PPRT )     ( WAITING_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define TERMINATED_PPRT( PPRT )  ( TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
+#define ACTIVE_PPRT( PPRT )      ACTIVE_PBASE(PPRT_CGET_POBJ(PPRT))
+#define WAITING_PPRT( PPRT )     WAITING_PBASE(PPRT_CGET_POBJ(PPRT))
+#define TERMINATED_PPRT( PPRT )  TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT))
 
 /// Is the particle flagged as being in limbo?
 #define FLAG_LIMBO_PPRT_OBJ( PPRT_OBJ )  ( (PPRT_OBJ)->obj_base_display )
@@ -120,7 +120,7 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 //--------------------------------------------------------------------------------------------
 // Macros to determine whether the particle is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"
-#define INGAME_PRT_BASE(IPRT)       ( PrtObjList.valid_ref( IPRT ) && ACTIVE_PBASE( IPRT_GET_POBJ(IPRT) ) && ON_PBASE( IPRT_GET_POBJ(IPRT) ) )
+#define INGAME_PRT_BASE(IPRT)       ( PrtObjList.in_range_ref( IPRT ) && ACTIVE_PBASE( IPRT_GET_POBJ(IPRT) ) && ON_PBASE( IPRT_GET_POBJ(IPRT) ) )
 #define INGAME_PPRT_BASE(PPRT)      ( VALID_PPRT( PPRT ) && ACTIVE_PBASE( PPRT_CGET_POBJ(PPRT) ) && ON_PBASE( PPRT_CGET_POBJ(PPRT) ) )
 
 #define INGAME_PRT(IPRT)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PRT(IPRT) : INGAME_PRT_BASE(IPRT) )

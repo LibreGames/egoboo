@@ -224,7 +224,7 @@ struct t_ego_obj_lst
     bool_t set_length( size_t len );
 
     /// is a given reference within the bounds of this list?
-    INLINE bool_t valid_ref( const lst_reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _max_len; };
+    INLINE bool_t in_range_ref( const lst_reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _max_len; };
 
     //---- public iteration methods - iterate over the used map
 
@@ -248,12 +248,12 @@ struct t_ego_obj_lst
     // grab the container
     INLINE typename container_type & get_ref( const lst_reference & ref );
     INLINE typename container_type * get_ptr( const lst_reference & ref );
-    INLINE typename container_type * get_valid_ptr( const lst_reference & ref );
+    INLINE typename container_type * get_allocated_ptr( const lst_reference & ref );
 
     // grab the container's data
     INLINE typename container_type::data_type &  get_data_ref( const lst_reference & ref );
     INLINE typename container_type::data_type *  get_data_ptr( const lst_reference & ref );
-    INLINE typename container_type::data_type *  get_valid_data_ptr( const lst_reference & ref );
+    INLINE typename container_type::data_type *  get_allocated_data_ptr( const lst_reference & ref );
 
     //---- deferred activation/termination
 
@@ -293,8 +293,23 @@ private:
     /// does not deallocate or deinitialize the element
     bool_t    free_raw( const lst_reference & ref );
 
-    /// internal function to activate a given element
-    lst_reference activate_object( const lst_reference & ref );
+    /// basic function to call to activate a list element
+    lst_reference activate_element( const lst_reference & pcont );
+
+    /// basic function to call to deactivate a list element
+    lst_reference deactivate_element( const lst_reference & pcont );
+
+    /// helper function to activate a given container
+    container_type * activate_container_raw( container_type *, size_t index );
+
+    /// helper function to deactivate a given container
+    container_type * deactivate_container_raw( container_type * );
+
+    /// helper function to activate a container data element
+    _data * activate_data_raw( _data *, const container_type * pcont );
+
+    /// helper function to deactivate a container data element
+    _data * deactivate_data_raw( _data * );
 
     //---- this struct's data
 

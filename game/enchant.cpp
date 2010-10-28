@@ -194,11 +194,11 @@ ego_enc * ego_enc::dtor_this( ego_enc * penc )
 //--------------------------------------------------------------------------------------------
 bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 {
-    ego_enc * penc = EncObjList.get_valid_data_ptr( ienc );
+    ego_enc * penc = EncObjList.get_allocated_data_ptr( ienc );
     if ( NULL == penc ) return bfalse;
 
     // Unlink it from the spawner (if possible)
-    ego_chr * pspawner = ChrObjList.get_valid_data_ptr( penc->spawner_ref );
+    ego_chr * pspawner = ChrObjList.get_allocated_data_ptr( penc->spawner_ref );
     if ( NULL != pspawner )
     {
         if ( ienc == pspawner->undoenchant )
@@ -212,7 +212,7 @@ bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     {
         ENC_REF ienc_last, ienc_now;
 
-        ego_chr * ptarget =  ChrObjList.get_valid_data_ptr( penc->target_ref );
+        ego_chr * ptarget =  ChrObjList.get_allocated_data_ptr( penc->target_ref );
         if ( NULL != ptarget )
         {
             if ( ptarget->firstenchant == ienc )
@@ -298,7 +298,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     ego_eve * peve;
     CHR_REF itarget, ispawner;
 
-    penc = EncObjList.get_valid_data_ptr( ienc );
+    penc = EncObjList.get_allocated_data_ptr( ienc );
     if ( NULL == penc ) return bfalse;
 
     itarget  = penc->target_ref;
@@ -440,8 +440,8 @@ ENC_REF ego_enc::value_filled( const ENC_REF &  ienc, int value_idx )
     if ( !INGAME_ENC( ienc ) ) return ENC_REF( MAX_ENC );
 
     character = EncObjList.get_data_ref( ienc ).target_ref;
-    if ( !INGAME_CHR( character ) ) return ENC_REF( MAX_ENC );
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return ENC_REF( MAX_ENC );
 
     // cleanup the enchant list
     cleanup_character_enchants( pchr );
@@ -475,7 +475,7 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
     if ( value_idx < 0 || value_idx >= MAX_ENCHANT_SET ) return;
 
     if ( !DEFINED_ENC( ienc ) ) return;
-    penc = EncObjList.get_valid_data_ptr( ienc );
+    penc = EncObjList.get_allocated_data_ptr( ienc );
 
     peve = pro_get_peve( profile );
     if ( NULL == peve ) return;
@@ -655,7 +655,7 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
     if ( value_idx < 0 || value_idx >= MAX_ENCHANT_ADD ) return;
 
     if ( !DEFINED_ENC( ienc ) ) return;
-    penc = EncObjList.get_valid_data_ptr( ienc );
+    penc = EncObjList.get_allocated_data_ptr( ienc );
 
     if ( ieve >= MAX_EVE || !EveStack[ieve].loaded ) return;
     peve = EveStack + ieve;
@@ -1138,11 +1138,11 @@ bool_t ego_obj_enc::object_update_list_id( void )
     if ( !container_type::get_allocated( pcont ) ) return bfalse;
 
     // deal with the return state
-    if ( !valid )
+    if ( !get_valid( this ) )
     {
         container_type::set_list_id( pcont, INVALID_UPDATE_GUID );
     }
-    else if ( ego_obj_processing == action )
+    else if ( ego_obj_processing == get_action( this ) )
     {
         container_type::set_list_id( pcont, EncObjList.get_list_id() );
     }
@@ -1300,7 +1300,7 @@ EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF & ie
 
     EVE_REF retval = EVE_REF( MAX_EVE );
 
-    if ( EveStack.valid_ref( ieve ) )
+    if ( EveStack.in_range_ref( ieve ) )
     {
         ego_eve * peve = EveStack + ieve;
 
@@ -1326,7 +1326,7 @@ void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
 
     if ( value_idx < 0 || value_idx >= MAX_ENCHANT_SET ) return;
 
-    penc = EncObjList.get_valid_data_ptr( ienc );
+    penc = EncObjList.get_allocated_data_ptr( ienc );
     if ( NULL == penc ) return;
 
     if ( value_idx >= MAX_ENCHANT_SET || !penc->setyesno[value_idx] ) return;
@@ -1448,7 +1448,7 @@ void ego_enc::remove_add( const ENC_REF & ienc, int value_idx )
 
     if ( value_idx < 0 || value_idx >= MAX_ENCHANT_ADD ) return;
 
-    penc = EncObjList.get_valid_data_ptr( ienc );
+    penc = EncObjList.get_allocated_data_ptr( ienc );
     if ( NULL == penc ) return;
 
     if ( !INGAME_CHR( penc->target_ref ) ) return;
@@ -1577,7 +1577,7 @@ bool_t release_one_eve( const EVE_REF & ieve )
 {
     ego_eve * peve;
 
-    if ( !EveStack.valid_ref( ieve ) ) return bfalse;
+    if ( !EveStack.in_range_ref( ieve ) ) return bfalse;
     peve = EveStack + ieve;
 
     if ( !peve->loaded ) return btrue;
@@ -1595,7 +1595,7 @@ void update_all_enchants()
     // update all enchants
     for ( ienc = 0; ienc < MAX_ENC; ienc++ )
     {
-        ego_obj_enc * penc = EncObjList.get_data_ptr( ienc );
+        ego_obj_enc * penc = EncObjList.get_allocated_data_ptr( ienc );
         if ( NULL == penc ) continue;
 
         ego_object_engine::run( penc );
@@ -1621,7 +1621,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     ENC_REF first_valid_enchant;
     ENC_REF ego_enc_now, ego_enc_next;
 
-    if ( !EncObjList.valid_ref( ienc ) ) return ENC_REF( MAX_ENC );
+    if ( !EncObjList.in_range_ref( ienc ) ) return ENC_REF( MAX_ENC );
 
     // clear the list
     memset( ego_enc_used, 0, sizeof( ego_enc_used ) );
@@ -1634,7 +1634,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         ego_enc_next = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref;
 
         // coerce the list of enchants to a valid value
-        if ( !EncObjList.valid_ref( ego_enc_next ) )
+        if ( !EncObjList.in_range_ref( ego_enc_next ) )
         {
             ego_enc_next = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref = MAX_ENC;
         }
@@ -1694,7 +1694,7 @@ void cleanup_all_enchants()
         bool_t    do_remove;
         bool_t valid_owner, valid_target;
 
-        ego_obj_enc * pobj = EncObjList.get_valid_data_ptr( ENC_REF( cnt ) );
+        ego_obj_enc * pobj = EncObjList.get_allocated_data_ptr( ENC_REF( cnt ) );
         if ( NULL == pobj ) continue;
 
         ego_enc * penc = ego_obj_enc::get_data_ptr( pobj );
@@ -1768,7 +1768,7 @@ void increment_all_enchant_update_counters()
 
     for ( cnt = 0; cnt < MAX_ENC; cnt++ )
     {
-        ego_obj * pbase = EncObjList.get_valid_data_ptr( cnt );
+        ego_obj * pbase = EncObjList.get_allocated_data_ptr( cnt );
 
         if ( !ACTIVE_PBASE( pbase ) ) continue;
 
@@ -1786,7 +1786,7 @@ bool_t ego_obj_enc::request_terminate( const ENC_REF & ienc )
     /// @note ego_obj_enc::request_terminate() will force the game to
     ///       (eventually) call free_one_enchant_in_game() on this enchant
 
-    return request_terminate( EncObjList.get_valid_data_ptr( ienc ) );
+    return request_terminate( EncObjList.get_allocated_data_ptr( ienc ) );
 }
 
 //--------------------------------------------------------------------------------------------

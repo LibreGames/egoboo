@@ -274,7 +274,7 @@ struct t_cpp_list
     size_t count_free() { return free_count(); }
     size_t count_used() { return used_count; }
 
-    bool_t valid_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
+    bool_t in_range_ref( const t_reference<_ty> & ref ) { REF_T tmp = ref.get_value(); return tmp > 0 && tmp < _sz; };
 
     egoboo_rv add_free( const t_reference<_ty> & ref );
     egoboo_rv add_used( const t_reference<_ty> & ref );
@@ -310,31 +310,31 @@ struct t_cpp_stack
     int      count;
 
     bool_t valid_idx( const signed index ) const { return index > 0 && index < _sz; }
-    bool_t valid_ref( const t_reference<_ty> & ref ) const { return ref.get_value() < _sz; }
+    bool_t in_range_ref( const t_reference<_ty> & ref ) const { return ref.get_value() < _sz; }
 
     t_cpp_stack() { count = 0; update_guid = 0; }
 
     _ty & operator []( const t_reference<_ty> & ref )
     {
-        CPP_EGOBOO_ASSERT( valid_ref( ref ) );
+        CPP_EGOBOO_ASSERT( in_range_ref( ref ) );
         return lst[ref];
     }
 
     const _ty & operator []( const t_reference<_ty> & ref ) const
     {
-        CPP_EGOBOO_ASSERT( valid_ref( ref ) );
+        CPP_EGOBOO_ASSERT( in_range_ref( ref ) );
         return lst[ref];
     }
 
     _ty * operator + ( const t_reference<_ty> & ref )
     {
-        CPP_EGOBOO_ASSERT( valid_ref( ref ) );
+        CPP_EGOBOO_ASSERT( in_range_ref( ref ) );
         return lst + ref;
     }
 
     const _ty * operator + ( const t_reference<_ty> & ref ) const
     {
-        CPP_EGOBOO_ASSERT( valid_ref( ref ) );
+        CPP_EGOBOO_ASSERT( in_range_ref( ref ) );
         return lst + ref;
     }
 

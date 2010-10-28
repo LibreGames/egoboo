@@ -71,7 +71,7 @@ void flah()
     test.add_activation( ref );
     test.add_termination( ref );
 
-    test.get_valid_ptr( ref );
+    test.get_allocated_ptr( ref );
 
     test.get_data( ref );
     test.get_data_ptr( ref );

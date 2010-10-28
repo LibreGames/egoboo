@@ -37,7 +37,6 @@
 #include "egoboo_setup.h"
 #include "egoboo.h"
 
-#include "enet/enet.h"
 #include "file_common.h"
 
 #include <stdarg.h>
@@ -50,9 +49,9 @@ static int  numfilesent = 0;                            // For network copy
 static int  numfileexpected = 0;                        // For network copy
 static int  numplayerrespond = 0;
 
-static ego_net_instance _gnet = { bfalse, bfalse, bfalse, bfalse, bfalse };
+static net_instance _gnet;
 
-static bool_t net_instance_init( ego_net_instance * pnet );
+static bool_t net_instance_init( net_instance * pnet );
 
 static void PlaStack_init();
 static void PlaStack_reinit();
@@ -62,33 +61,15 @@ static void net_initialize( ego_config_data * pcfg );
 static void net_shutDown();
 //static void net_logf( const char *format, ... );
 
-static void net_startNewPacket();
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 t_cpp_stack< ego_player, MAX_PLAYER  > PlaStack;
 
-int         lag  = 3;                       // Lag tolerance
-Uint32      numplatimes = 0;
-
-int         local_numlpla;                         // number of players on the local machine
-
 FILE *      globalnetworkerr = NULL;
 
-int     networkservice;
-int     numservice  = 0;
-char    netservicename[MAXSERVICE][NETNAMESIZE];
-int     numsession  = 0;
-char    netsessionname[MAXSESSION][NETNAMESIZE];
-int     numplayer  = 0;
-char    netplayername[MAXNETPLAYER][NETNAMESIZE];
-
-int     local_machine  = 0;        // 0 is host, 1 is 1st remote, 2 is 2nd...
-
-int     playersready  = 0;         // Number of players ready to start
-int     playersloaded = 0;
-
 Uint32 sv_last_frame = Uint32( ~0L );
+
+net_shared_stats net_stats;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -114,33 +95,38 @@ enum NetworkMessage
     NET_NUM_FILES_TO_SEND   = 10010  // Let the other person know how many files you're sending
 };
 
-/// Network information on connected players
-struct NetPlayerInfo
-{
-    int playerSlot;
-};
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-
-Uint32 nexttimestamp;                          // Expected timestamp
-
-// ENet host & client identifiers
-static ENetHost* net_myHost = NULL;
-static ENetPeer* net_gameHost = NULL;
-static ENetPeer* net_playerPeers[MAX_PLAYER];
-static NetPlayerInfo net_playerInfo[MAXNETPLAYER];
-
-static bool_t net_amHost = bfalse;
 
 // Packet reading
 static ENetPacket*    net_readPacket = NULL;
 static size_t         net_readLocation = 0;
 
-// Packet writing
-static Uint32  packethead;                             // The write head
-static Uint32  packetsize;                             // The size of the packet
-static Uint8   packetbuffer[MAXSENDSIZE];              // The data packet
+struct net_packet
+{
+    Uint32  head;                             ///< The write head
+    Uint32  size;                             ///< The size of the packet
+    Uint8   buffer[MAXSENDSIZE];              ///< The data packet
+
+    static void start_new( net_packet * pkt );
+    static void add_UnsignedByte( net_packet *, Uint8 uc );
+    static void add_SignedByte( net_packet *, Sint8 sc );
+    static void add_UnsignedShort( net_packet *, Uint16 us );
+    static void add_SignedShort( net_packet *, Sint16 ss );
+    static void add_UnsignedInt( net_packet *, Uint32 ui );
+    static void add_SignedInt( net_packet *, Sint32 si );
+    static void add_String( net_packet *, const char *string );
+};
+
+static net_packet tmp_packet;
+
+static void net_sendPacketToHost( net_packet * );
+static void net_sendPacketToAllPlayers( net_packet * );
+static void net_sendPacketToHostGuaranteed( net_packet * );
+static void net_sendPacketToAllPlayersGuaranteed( net_packet * );
+static void net_sendPacketToOnePlayerGuaranteed( net_packet *, int player );
+static void net_sendPacketToPeer( net_packet *, ENetPeer *peer );
+static void net_sendPacketToPeerGuaranteed( net_packet *, ENetPeer *peer );
 
 /// Data for network file transfers
 struct NetFileTransfer
@@ -194,11 +180,11 @@ void network_system_end( void )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-const ego_net_instance * network_get_instance()
+const net_instance * network_get_instance()
 {
-    ego_net_instance * retval = NULL;
+    net_instance * retval = NULL;
 
-    if ( !_network_system_init ) return NULL;
+    if ( !_network_system_init || !cfg.network_allowed ) return NULL;
 
     // if it is not initialized, give it one more try
     if ( !_gnet.initialized )
@@ -259,22 +245,22 @@ void close_session()
 
     if ( _gnet.initialized )
     {
-        if ( net_amHost )
+        if ( _gnet.am_host )
         {
             // Disconnect the peers
-            numPeers = net_myHost->peerCount;
+            numPeers = _gnet.my_host->peerCount;
 
             for ( i = 0; i < numPeers; i++ )
             {
 #if defined(ENET11)
-                enet_peer_disconnect( &net_myHost->peers[i], 0 );
+                enet_peer_disconnect( &_gnet.my_host->peers[i], 0 );
 #else
-                enet_peer_disconnect( &net_myHost->peers[i] );
+                enet_peer_disconnect( &_gnet.my_host->peers[i] );
 #endif
             }
 
             // Allow up to 5 seconds for peers to drop
-            while ( enet_host_service( net_myHost, &event, 5000 ) )
+            while ( enet_host_service( _gnet.my_host, &event, 5000 ) )
             {
                 switch ( event.type )
                 {
@@ -293,110 +279,110 @@ void close_session()
             }
 
             // Forcefully disconnect any peers leftover
-            for ( i = 0; i < net_myHost->peerCount; i++ )
+            for ( i = 0; i < _gnet.my_host->peerCount; i++ )
             {
-                enet_peer_reset( &net_myHost->peers[i] );
+                enet_peer_reset( &_gnet.my_host->peers[i] );
             }
         }
 
         log_info( "close_session: Disconnecting from network.\n" );
-        enet_host_destroy( net_myHost );
-        net_myHost = NULL;
-        net_gameHost = NULL;
+        enet_host_destroy( _gnet.my_host );
+        _gnet.my_host = NULL;
+        _gnet.game_host = NULL;
     }
 }
 
 //--------------------------------------------------------------------------------------------
-void net_startNewPacket()
+void net_packet::start_new( net_packet * pkt )
 {
     /// @details ZZ@> This function starts building a network packet
 
-    packethead = 0;
-    packetsize = 0;
+    pkt->head = 0;
+    pkt->size = 0;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void packet_addUnsignedByte( Uint8 uc )
+void net_packet::add_UnsignedByte( net_packet * pkt, Uint8 uc )
 {
     /// @details ZZ@> This function appends an Uint8 to the packet
 
     Uint8* ucp;
-    ucp = ( Uint8* )( &packetbuffer[packethead] );
+    ucp = ( Uint8* )( &pkt->buffer[pkt->head] );
     *ucp = uc;
-    packethead += 1;
-    packetsize += 1;
+    pkt->head += 1;
+    pkt->size += 1;
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_addSignedByte( Sint8 sc )
+void net_packet::add_SignedByte( net_packet * pkt, Sint8 sc )
 {
     /// @details ZZ@> This function appends a Sint8 to the packet
 
     signed char* scp;
-    scp = ( signed char* )( &packetbuffer[packethead] );
+    scp = ( signed char* )( &pkt->buffer[pkt->head] );
     *scp = sc;
-    packethead += 1;
-    packetsize += 1;
+    pkt->head += 1;
+    pkt->size += 1;
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_addUnsignedShort( Uint16 us )
+void net_packet::add_UnsignedShort( net_packet * pkt, Uint16 us )
 {
     /// @details ZZ@> This function appends an Uint16 to the packet
 
     Uint16* usp;
-    usp = ( Uint16* )( &packetbuffer[packethead] );
+    usp = ( Uint16* )( &pkt->buffer[pkt->head] );
 
     *usp = ENET_HOST_TO_NET_16( us );
-    packethead += 2;
-    packetsize += 2;
+    pkt->head += 2;
+    pkt->size += 2;
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_addSignedShort( Sint16 ss )
+void net_packet::add_SignedShort( net_packet * pkt, Sint16 ss )
 {
     /// @details ZZ@> This function appends a Sint16 to the packet
 
     signed short* ssp;
-    ssp = ( signed short* )( &packetbuffer[packethead] );
+    ssp = ( signed short* )( &pkt->buffer[pkt->head] );
 
     *ssp = ENET_HOST_TO_NET_16( ss );
 
-    packethead += 2;
-    packetsize += 2;
+    pkt->head += 2;
+    pkt->size += 2;
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_addUnsignedInt( Uint32 ui )
+void net_packet::add_UnsignedInt( net_packet * pkt, Uint32 ui )
 {
     /// @details ZZ@> This function appends an Uint32 to the packet
 
     Uint32* uip;
-    uip = ( Uint32* )( &packetbuffer[packethead] );
+    uip = ( Uint32* )( &pkt->buffer[pkt->head] );
 
     *uip = ENET_HOST_TO_NET_32( ui );
 
-    packethead += 4;
-    packetsize += 4;
+    pkt->head += 4;
+    pkt->size += 4;
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_addSignedInt( Sint32 si )
+void net_packet::add_SignedInt( net_packet * pkt, Sint32 si )
 {
     /// @details ZZ@> This function appends a Sint32 to the packet
 
     signed int* sip;
-    sip = ( signed int* )( &packetbuffer[packethead] );
+    sip = ( signed int* )( &pkt->buffer[pkt->head] );
 
     *sip = ENET_HOST_TO_NET_32( si );
 
-    packethead += 4;
-    packetsize += 4;
+    pkt->head += 4;
+    pkt->size += 4;
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_addString( const char *string )
+void net_packet::add_String( net_packet * pkt, const char *string )
 {
     /// @details ZZ@> This function appends a null terminated string to the packet
 
@@ -406,15 +392,15 @@ void packet_addString( const char *string )
 
     cnt = 0;
     cTmp = 1;
-    cp = ( char* )( &packetbuffer[packethead] );
+    cp = ( char* )( &pkt->buffer[pkt->head] );
 
     while ( cTmp != 0 )
     {
         cTmp = string[cnt];
         *cp = cTmp;
         cp += 1;
-        packethead += 1;
-        packetsize += 1;
+        pkt->head += 1;
+        pkt->size += 1;
         cnt++;
     }
 }
@@ -547,68 +533,73 @@ size_t packet_remainingSize()
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sendPacketToHost()
+void net_sendPacketToHost( net_packet * pkt )
 {
     /// @details ZZ@> This function sends a packet to the host
 
-    ENetPacket *packet = enet_packet_create( packetbuffer, packetsize, 0 );
-    enet_peer_send( net_gameHost, NET_UNRELIABLE_CHANNEL, packet );
+    ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, 0 );
+
+    enet_peer_send( _gnet.game_host, NET_UNRELIABLE_CHANNEL, packet );
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sendPacketToAllPlayers()
+void net_sendPacketToAllPlayers( net_packet * pkt )
 {
     /// @details ZZ@> This function sends a packet to all the players
 
-    ENetPacket *packet = enet_packet_create( packetbuffer, packetsize, 0 );
-    enet_host_broadcast( net_myHost, NET_UNRELIABLE_CHANNEL, packet );
+    ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, 0 );
+
+    enet_host_broadcast( _gnet.my_host, NET_UNRELIABLE_CHANNEL, packet );
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sendPacketToHostGuaranteed()
+void net_sendPacketToHostGuaranteed( net_packet * pkt )
 {
     /// @details ZZ@> This function sends a packet to the host
 
-    ENetPacket *packet = enet_packet_create( packetbuffer, packetsize, ENET_PACKET_FLAG_RELIABLE );
-    enet_peer_send( net_gameHost, NET_UNRELIABLE_CHANNEL, packet );
+    ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, ENET_PACKET_FLAG_RELIABLE );
+
+    enet_peer_send( _gnet.game_host, NET_UNRELIABLE_CHANNEL, packet );
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sendPacketToAllPlayersGuaranteed()
+void net_sendPacketToAllPlayersGuaranteed( net_packet * pkt )
 {
     /// @details ZZ@> This function sends a packet to all the players
 
-    ENetPacket *packet = enet_packet_create( packetbuffer, packetsize, ENET_PACKET_FLAG_RELIABLE );
-    enet_host_broadcast( net_myHost, NET_GUARANTEED_CHANNEL, packet );
+    ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, ENET_PACKET_FLAG_RELIABLE );
+    enet_host_broadcast( _gnet.my_host, NET_GUARANTEED_CHANNEL, packet );
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sendPacketToOnePlayerGuaranteed( int player )
+void net_sendPacketToOnePlayerGuaranteed( net_packet * pkt, int player )
 {
     /// @details ZZ@> This function sends a packet to one of the players
 
-    ENetPacket *packet = enet_packet_create( packetbuffer, packetsize, ENET_PACKET_FLAG_RELIABLE );
-    if ( player < numplayer )
+    ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, ENET_PACKET_FLAG_RELIABLE );
+    if ( player < _gnet.player_count )
     {
-        enet_peer_send( &net_myHost->peers[player], NET_GUARANTEED_CHANNEL, packet );
+        enet_peer_send( &_gnet.my_host->peers[player], NET_GUARANTEED_CHANNEL, packet );
     }
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sendPacketToPeer( ENetPeer *peer )
+void net_sendPacketToPeer( net_packet * pkt, ENetPeer *peer )
 {
     /// @details JF@> This function sends a packet to a given peer
 
-    ENetPacket *packet = enet_packet_create( packetbuffer, packetsize, ENET_PACKET_FLAG_RELIABLE );
+    ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, ENET_PACKET_FLAG_RELIABLE );
+
     enet_peer_send( peer, NET_UNRELIABLE_CHANNEL, packet );
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sendPacketToPeerGuaranteed( ENetPeer *peer )
+void net_sendPacketToPeerGuaranteed( net_packet * pkt, ENetPeer *peer )
 {
     /// @details JF@> This function sends a packet to a given peer, with guaranteed delivery
 
-    ENetPacket *packet = enet_packet_create( packetbuffer, packetsize, 0 );
+    ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, 0 );
+
     enet_peer_send( peer, NET_GUARANTEED_CHANNEL, packet );
 }
 
@@ -627,7 +618,7 @@ void net_copyFileToAllPlayers( const char *source, const char *dest )
         EGOBOO_ASSERT( state->sourceName[0] == 0 );
 
         // Just do the first player for now
-        state->target = &net_myHost->peers[0];
+        state->target = &_gnet.my_host->peers[0];
         strncpy( state->sourceName, source, NET_MAX_FILE_NAME );
         strncpy( state->destName, dest, NET_MAX_FILE_NAME );
 
@@ -658,16 +649,18 @@ void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
     int fileisdir;
     char cTmp;
 
+    net_packet tmp_packet;
+
     log_info( "net_copyFileToAllPlayers: %s, %s\n", source, dest );
     if ( _gnet.initialized && _gnet.hostactive )
     {
         fileisdir = vfs_isDirectory( source );
         if ( fileisdir )
         {
-            net_startNewPacket();
-            packet_addUnsignedShort( TO_REMOTE_DIR );
-            packet_addString( dest );
-            net_sendPacketToAllPlayersGuaranteed();
+            net_packet::start_new( &tmp_packet );
+            net_packet::add_UnsignedShort( &tmp_packet, TO_REMOTE_DIR );
+            net_packet::add_String( &tmp_packet, dest );
+            net_sendPacketToAllPlayersGuaranteed( &tmp_packet );
         }
         else
         {
@@ -682,11 +675,11 @@ void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
                     start = 0;
                     numfilesent++;
 
-                    net_startNewPacket();
-                    packet_addUnsignedShort( TO_REMOTE_FILE );
-                    packet_addString( dest );
-                    packet_addUnsignedInt( filesize );
-                    packet_addUnsignedInt( start );
+                    net_packet::start_new( &tmp_packet );
+                    net_packet::add_UnsignedShort( &tmp_packet, TO_REMOTE_FILE );
+                    net_packet::add_String( &tmp_packet, dest );
+                    net_packet::add_UnsignedInt( &tmp_packet, filesize );
+                    net_packet::add_UnsignedInt( &tmp_packet, start );
 
                     while ( start < filesize )
                     {
@@ -696,27 +689,27 @@ void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
                         // But I'll leave it alone for now
                         vfs_scanf( fileread, "%c", &cTmp );
 
-                        packet_addUnsignedByte( cTmp );
+                        net_packet::add_UnsignedByte( &tmp_packet, cTmp );
                         size++;
                         start++;
                         if ( size >= COPYSIZE )
                         {
                             // Send off the packet
-                            net_sendPacketToAllPlayersGuaranteed();
-                            enet_host_flush( net_myHost );
+                            net_sendPacketToAllPlayersGuaranteed( &tmp_packet );
+                            enet_host_flush( _gnet.my_host );
 
                             // Start on the next 4K
                             size = 0;
-                            net_startNewPacket();
-                            packet_addUnsignedShort( TO_REMOTE_FILE );
-                            packet_addString( dest );
-                            packet_addUnsignedInt( filesize );
-                            packet_addUnsignedInt( start );
+                            net_packet::start_new( &tmp_packet );
+                            net_packet::add_UnsignedShort( &tmp_packet, TO_REMOTE_FILE );
+                            net_packet::add_String( &tmp_packet, dest );
+                            net_packet::add_UnsignedInt( &tmp_packet, filesize );
+                            net_packet::add_UnsignedInt( &tmp_packet, start );
                         }
                     }
 
                     // Send off the packet
-                    net_sendPacketToAllPlayersGuaranteed();
+                    net_sendPacketToAllPlayersGuaranteed( &tmp_packet );
                 }
 
                 vfs_close( fileread );
@@ -754,7 +747,7 @@ void net_copyFileToHost( const char *source, const char *dest )
         state = &( net_transferStates[net_fileTransferTail] );
         EGOBOO_ASSERT( state->sourceName[0] == 0 );
 
-        state->target = net_gameHost;
+        state->target = _gnet.game_host;
         strncpy( state->sourceName, source, NET_MAX_FILE_NAME );
         strncpy( state->destName, dest, NET_MAX_FILE_NAME );
 
@@ -785,6 +778,8 @@ void net_copyFileToHostOld_vfs( const char *source, const char *dest )
     int fileisdir;
     char cTmp;
 
+    net_packet tmp_packet;
+
     log_info( "net_copyFileToHost: " );
     fileisdir = vfs_isDirectory( source );
     if ( _gnet.hostactive )
@@ -806,11 +801,11 @@ void net_copyFileToHostOld_vfs( const char *source, const char *dest )
         if ( fileisdir )
         {
             log_info( "Creating directory on host: %s\n", dest );
-            net_startNewPacket();
-            packet_addUnsignedShort( TO_HOST_DIR );
-            packet_addString( dest );
-//     net_sendPacketToAllPlayersGuaranteed();
-            net_sendPacketToHost();
+            net_packet::start_new( &tmp_packet );
+            net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_DIR );
+            net_packet::add_String( &tmp_packet, dest );
+//     net_sendPacketToAllPlayersGuaranteed( &tmp_packet);
+            net_sendPacketToHost( &tmp_packet );
         }
         else
         {
@@ -825,36 +820,36 @@ void net_copyFileToHostOld_vfs( const char *source, const char *dest )
                     numfilesent++;
                     size = 0;
                     start = 0;
-                    net_startNewPacket();
-                    packet_addUnsignedShort( TO_HOST_FILE );
-                    packet_addString( dest );
-                    packet_addUnsignedInt( filesize );
-                    packet_addUnsignedInt( start );
+                    net_packet::start_new( &tmp_packet );
+                    net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_FILE );
+                    net_packet::add_String( &tmp_packet, dest );
+                    net_packet::add_UnsignedInt( &tmp_packet, filesize );
+                    net_packet::add_UnsignedInt( &tmp_packet, start );
 
                     while ( start < filesize )
                     {
                         vfs_scanf( fileread, "%c", &cTmp );
-                        packet_addUnsignedByte( cTmp );
+                        net_packet::add_UnsignedByte( &tmp_packet, cTmp );
                         size++;
                         start++;
                         if ( size >= COPYSIZE )
                         {
                             // Send off the packet
-                            net_sendPacketToHostGuaranteed();
-                            enet_host_flush( net_myHost );
+                            net_sendPacketToHostGuaranteed( &tmp_packet );
+                            enet_host_flush( _gnet.my_host );
 
                             // Start on the next 4K
                             size = 0;
-                            net_startNewPacket();
-                            packet_addUnsignedShort( TO_HOST_FILE );
-                            packet_addString( dest );
-                            packet_addUnsignedInt( filesize );
-                            packet_addUnsignedInt( start );
+                            net_packet::start_new( &tmp_packet );
+                            net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_FILE );
+                            net_packet::add_String( &tmp_packet, dest );
+                            net_packet::add_UnsignedInt( &tmp_packet, filesize );
+                            net_packet::add_UnsignedInt( &tmp_packet, start );
                         }
                     }
 
                     // Send off the packet
-                    net_sendPacketToHostGuaranteed();
+                    net_sendPacketToHostGuaranteed( &tmp_packet );
                 }
 
                 vfs_close( fileread );
@@ -973,8 +968,8 @@ void net_sayHello()
     else if ( _gnet.hostactive )
     {
         log_info( "net_sayHello: Server saying hello.\n" );
-        playersloaded++;
-        if ( playersloaded >= numplayer )
+        net_stats.pla_count_loaded++;
+        if ( net_stats.pla_count_loaded >= _gnet.player_count )
         {
             _gnet.waitingforplayers = bfalse;
         }
@@ -982,9 +977,9 @@ void net_sayHello()
     else
     {
         log_info( "net_sayHello: Client saying hello.\n" );
-        net_startNewPacket();
-        packet_addUnsignedShort( TO_HOST_IM_LOADED );
-        net_sendPacketToHostGuaranteed();
+        net_packet::start_new( &tmp_packet );
+        net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_IM_LOADED );
+        net_sendPacketToHostGuaranteed( &tmp_packet );
     }
 }
 
@@ -1017,8 +1012,8 @@ void cl_talkToHost()
     // Start talkin'
     if ( _gnet.initialized && !_gnet.hostactive /*&& !PMod->rtscontrol*/ )
     {
-        net_startNewPacket();
-        packet_addUnsignedShort( TO_HOST_LATCH );        // The message header
+        net_packet::start_new( &tmp_packet );
+        net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_LATCH );        // The message header
 
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
@@ -1028,21 +1023,21 @@ void cl_talkToHost()
             // Find the local players
             if ( INPUT_BITS_NONE != ppla->device.bits )
             {
-                packet_addUnsignedByte(( player ).get_value() );                      // The player index
+                net_packet::add_UnsignedByte( &tmp_packet, ( player ).get_value() );                     // The player index
 
-                packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
-                packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
 
-                packet_addSignedShort( ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( ppla->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
 
-                packet_addUnsignedInt( ppla->local_latch.b );             // Player button states
+                net_packet::add_UnsignedInt( &tmp_packet, ppla->local_latch.b );             // Player button states
             }
         }
 
         // Send it to the host
-        net_sendPacketToHost();
+        net_sendPacketToHost( &tmp_packet );
     }
 }
 
@@ -1062,12 +1057,12 @@ void sv_talkToRemotes()
     {
         if ( _gnet.initialized )
         {
-            time = true_update + lag;
+            time = true_update + net_stats.lag_tolerance;
 
             // Send a message to all players
-            net_startNewPacket();
-            packet_addUnsignedShort( TO_REMOTE_LATCH );                       // The message header
-            packet_addUnsignedInt( time );                                  // The stamp
+            net_packet::start_new( &tmp_packet );
+            net_packet::add_UnsignedShort( &tmp_packet, TO_REMOTE_LATCH );                       // The message header
+            net_packet::add_UnsignedInt( &tmp_packet, time );                                  // The stamp
 
             // Send all player latches...
             for ( player = 0; player < MAX_PLAYER; player++ )
@@ -1076,20 +1071,20 @@ void sv_talkToRemotes()
 
                 if ( !ppla->valid ) continue;
 
-                packet_addUnsignedByte(( player ).get_value() );                      // The player index
+                net_packet::add_UnsignedByte( &tmp_packet, ( player ).get_value() );                     // The player index
 
-                packet_addSignedShort( ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
 
-                packet_addSignedShort( ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
-                packet_addSignedShort( ppla->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
 
-                packet_addUnsignedInt( ppla->local_latch.b );        // Player button states
+                net_packet::add_UnsignedInt( &tmp_packet, ppla->local_latch.b );        // Player button states
             }
 
             // Send the packet
-            net_sendPacketToAllPlayers();
+            net_sendPacketToAllPlayers( &tmp_packet );
         }
         else
         {
@@ -1097,7 +1092,7 @@ void sv_talkToRemotes()
         }
 
         // update the local timed latches with the same info
-        numplatimes = 0;
+        _gnet.timed_latch_count = 0;
         for ( player = 0; player < MAX_PLAYER; player++ )
         {
             int index;
@@ -1131,9 +1126,9 @@ void sv_talkToRemotes()
             {
                 int loc_lag = update_wld - ppla->tlatch[index].time  + 1;
 
-                if ( loc_lag > 0 && ( Uint32 )loc_lag > numplatimes )
+                if ( loc_lag > 0 && ( Uint32 )loc_lag > _gnet.timed_latch_count )
                 {
-                    numplatimes = loc_lag;
+                    _gnet.timed_latch_count = loc_lag;
                 }
             }
         }
@@ -1193,8 +1188,8 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_HOSTMODULEOK\n" );
             if ( _gnet.hostactive )
             {
-                playersready++;
-                if ( playersready >= numplayer )
+                net_stats.pla_count_ready++;
+                if ( net_stats.pla_count_ready >= _gnet.player_count )
                 {
                     _gnet.readytostart = btrue;
                 }
@@ -1231,14 +1226,14 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_HOST_IMLOADED\n" );
             if ( _gnet.hostactive )
             {
-                playersloaded++;
-                if ( playersloaded == numplayer )
+                net_stats.pla_count_loaded++;
+                if ( net_stats.pla_count_loaded == _gnet.player_count )
                 {
                     // Let the games begin...
                     _gnet.waitingforplayers = bfalse;
-                    net_startNewPacket();
-                    packet_addUnsignedShort( TO_REMOTE_START );
-                    net_sendPacketToAllPlayersGuaranteed();
+                    net_packet::start_new( &tmp_packet );
+                    net_packet::add_UnsignedShort( &tmp_packet, TO_REMOTE_START );
+                    net_sendPacketToAllPlayersGuaranteed( &tmp_packet );
                 }
             }
             break;
@@ -1264,17 +1259,17 @@ void net_handlePacket( ENetEvent *event )
                   orderwhen[whichorder] = when;
 
                   // Send the order off to everyone else
-                  net_startNewPacket();
-                  packet_addUnsignedShort(TO_REMOTE_RTS);
+                  net_packet::start_new( &tmp_packet );
+                  net_packet::add_UnsignedShort( &tmp_packet,TO_REMOTE_RTS);
                   cnt = 0;
                   while(cnt < MAXSELECT)
                   {
-                    packet_addUnsignedByte(orderwho[whichorder][cnt]);
+                    net_packet::add_UnsignedByte( &tmp_packet,orderwho[whichorder][cnt]);
                     cnt++;
                   }
-                  packet_addUnsignedInt(what);
-                  packet_addUnsignedInt(when);
-                  net_sendPacketToAllPlayersGuaranteed();
+                  net_packet::add_UnsignedInt( &tmp_packet,what);
+                  net_packet::add_UnsignedInt( &tmp_packet,when);
+                  net_sendPacketToAllPlayersGuaranteed( &tmp_packet);
                   }*/
             }
             break;
@@ -1298,9 +1293,9 @@ void net_handlePacket( ENetEvent *event )
             }
 
             // Acknowledge that we got this file
-            net_startNewPacket();
-            packet_addUnsignedShort( NET_TRANSFER_OK );
-            net_sendPacketToPeer( event->peer );
+            net_packet::start_new( &tmp_packet );
+            net_packet::add_UnsignedShort( &tmp_packet, NET_TRANSFER_OK );
+            net_sendPacketToPeer( &tmp_packet, event->peer );
 
             // And note that we've gotten another one
             numfile++;
@@ -1320,9 +1315,9 @@ void net_handlePacket( ENetEvent *event )
             vfs_mkdir( filename );
 
             // Acknowledge that we got this file
-            net_startNewPacket();
-            packet_addUnsignedShort( NET_TRANSFER_OK );
-            net_sendPacketToPeer( event->peer );
+            net_packet::start_new( &tmp_packet );
+            net_packet::add_UnsignedShort( &tmp_packet, NET_TRANSFER_OK );
+            net_sendPacketToPeer( &tmp_packet, event->peer );
 
             numfile++;  // The client considers directories it sends to be files, so ya.
             break;
@@ -1449,9 +1444,9 @@ void net_handlePacket( ENetEvent *event )
                     _gnet.readytostart = btrue;
 
                     // Tell the host we're ready
-                    net_startNewPacket();
-                    packet_addUnsignedShort( TO_HOST_MODULEOK );
-                    net_sendPacketToHostGuaranteed();
+                    net_packet::start_new( &tmp_packet );
+                    net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_MODULEOK );
+                    net_sendPacketToHostGuaranteed( &tmp_packet );
                 }
                 else
                 {
@@ -1462,9 +1457,9 @@ void net_handlePacket( ENetEvent *event )
                     _gnet.readytostart = bfalse;
 
                     // Tell the host we're not ready
-                    net_startNewPacket();
-                    packet_addUnsignedShort( TO_HOST_MODULEBAD );
-                    net_sendPacketToHostGuaranteed();
+                    net_packet::start_new( &tmp_packet );
+                    net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_MODULEBAD );
+                    net_sendPacketToHostGuaranteed( &tmp_packet );
                 }
             }
             break;
@@ -1576,11 +1571,11 @@ void net_handlePacket( ENetEvent *event )
             {
                 stamp = packet_readUnsignedInt();
                 time = stamp & LAGAND;
-                if ((( Uint32 )( ~0 ) ) == nexttimestamp )
+                if ((( Uint32 )( ~0 ) ) == _gnet.next_time_stamp )
                 {
-                    nexttimestamp = stamp;
+                    _gnet.next_time_stamp = stamp;
                 }
-                if ( stamp < nexttimestamp )
+                if ( stamp < _gnet.next_time_stamp )
                 {
                     log_warning( "net_handlePacket: OUT OF ORDER PACKET\n" );
                     outofsync = btrue;
@@ -1590,16 +1585,16 @@ void net_handlePacket( ENetEvent *event )
                     log_warning( "net_handlePacket: LATE PACKET\n" );
                     outofsync = btrue;
                 }
-                if ( stamp > nexttimestamp )
+                if ( stamp > _gnet.next_time_stamp )
                 {
                     log_warning( "net_handlePacket: MISSED PACKET\n" );
-                    nexttimestamp = stamp;  // Still use it
+                    _gnet.next_time_stamp = stamp;  // Still use it
                     outofsync = btrue;
                 }
-                if ( stamp == nexttimestamp )
+                if ( stamp == _gnet.next_time_stamp )
                 {
                     // Remember that we got it
-                    numplatimes++;
+                    _gnet.timed_latch_count++;
 
                     // Read latches for each player sent
                     while ( packet_remainingSize() > 0 )
@@ -1629,7 +1624,7 @@ void net_handlePacket( ENetEvent *event )
                         }
                     }
 
-                    nexttimestamp = stamp + 1;
+                    _gnet.next_time_stamp = stamp + 1;
                 }
             }
             break;
@@ -1646,7 +1641,7 @@ void listen_for_packets()
     if ( _gnet.initialized )
     {
         // Listen for new messages
-        while ( enet_host_service( net_myHost, &event, 0 ) != 0 )
+        while ( enet_host_service( _gnet.my_host, &event, 0 ) != 0 )
         {
             switch ( event.type )
             {
@@ -1676,7 +1671,7 @@ void listen_for_packets()
 
                         // uh oh, how do we handle losing a player?
                         log_warning( "listen_for_packets: Player %d disconnected!\n",
-                                     info->playerSlot );
+                                     info->which_slot );
                     }
                     break;
 
@@ -1761,7 +1756,7 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
             ADD_BITS( tmp_latch.b, tlatch_list[tnc].button );
         }
 
-        numplatimes = MAX( numplatimes, latch_count );
+        _gnet.timed_latch_count = MAX( _gnet.timed_latch_count, latch_count );
         if ( weight_sum > 0.0f )
         {
             tmp_latch.raw[kX] /= ( float )weight_sum;
@@ -1869,9 +1864,9 @@ void unbuffer_all_player_latches()
 
     PLA_REF ipla;
 
-    // if ( PMod->rtscontrol ) { numplatimes--; return; }
+    // if ( PMod->rtscontrol ) { _gnet.timed_latch_count--; return; }
 
-    numplatimes = 0;
+    _gnet.timed_latch_count = 0;
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
         ego_player * ppla = PlaStack + ipla;
@@ -1905,15 +1900,15 @@ void net_initialize( ego_config_data * pcfg )
     /// @details ZZ@> This starts up the network and logs whatever goes on
 
     // assume the worst
-    numsession = 0;
-    numservice = 0;
+    _gnet.session_count = 0;
+    _gnet.service_count = 0;
 
     net_instance_init( &_gnet );
 
     // Clear all the state variables to 0 to start.
-    memset( net_playerPeers, 0, sizeof( net_playerPeers ) );
-    memset( net_playerInfo, 0, sizeof( net_playerInfo ) );
-    memset( packetbuffer, 0, sizeof( packetbuffer ) );
+    memset( _gnet.player_peers, 0, sizeof( _gnet.player_peers ) );
+    memset( _gnet.player_info, 0, sizeof( _gnet.player_info ) );
+    memset( tmp_packet.buffer, 0, sizeof( tmp_packet.buffer ) );
     memset( net_transferStates, 0, sizeof( net_transferStates ) );
     memset( &net_receiveState, 0, sizeof( net_receiveState ) );
 
@@ -1936,7 +1931,7 @@ void net_initialize( ego_config_data * pcfg )
 
             _gnet.initialized = btrue;
             _gnet.serviceon = btrue;
-            numservice = 1;
+            _gnet.service_count = 1;
         }
     }
     else
@@ -1958,20 +1953,21 @@ void net_shutDown()
 //--------------------------------------------------------------------------------------------
 void find_open_sessions()
 {
-    /*PORT
+    /*PORT - if we are connected to a host, ask it for the open sessions?
+
     /// @details ZZ@> This function finds some open games to join
 
     DPSESSIONDESC2      sessionDesc;
     HRESULT             hr;
     if(_gnet.initialized)
       {
-    numsession = 0;
+    _gnet.session_count = 0;
     if(globalnetworkerr)  vfs_printf(globalnetworkerr, "  Looking for open games...\n");
     ZeroMemory(&sessionDesc, sizeof(DPSESSIONDESC2));
     sessionDesc.dwSize = sizeof(DPSESSIONDESC2);
     sessionDesc.guidApplication = NETWORKID;
     hr = lpDirectPlay3A->EnumSessions(&sessionDesc, 0, SessionsCallback, hGlobalWindow, DPENUMSESSIONS_AVAILABLE);
-    if(globalnetworkerr)  vfs_printf(globalnetworkerr, "    %d sessions found\n", numsession);
+    if(globalnetworkerr)  vfs_printf(globalnetworkerr, "    %d sessions found\n", _gnet.session_count);
       }
     */
 }
@@ -1985,7 +1981,7 @@ void sv_letPlayersJoin()
     STRING hostName;
 
     // Check all pending events for players joining
-    while ( enet_host_service( net_myHost, &event, 0 ) > 0 )
+    while ( enet_host_service( _gnet.my_host, &event, 0 ) > 0 )
     {
         switch ( event.type )
         {
@@ -1998,10 +1994,12 @@ void sv_letPlayersJoin()
 
                 // save the player data here.
                 enet_address_get_host( &event.peer->address, hostName, 64 );
-                strncpy( netplayername[numplayer], hostName, 16 );
+                strncpy( _gnet.player_name[_gnet.player_count], hostName, 16 );
 
-                event.peer->data = &( net_playerInfo[numplayer] );
-                numplayer++;
+                event.peer->data = &( _gnet.player_info[_gnet.player_count] );
+                _gnet.player_count++;
+
+                net_stats.pla_count_network = _gnet.player_count;
 
                 break;
 
@@ -2039,8 +2037,8 @@ int cl_joinGame( const char* hostname )
         log_info( "cl_joinGame: Creating client network connection... " );
         // Create my host thingamabober
         /// @todo Should I limit client bandwidth here?
-        net_myHost = enet_host_create( NULL, 1, 0, 0 );
-        if ( NULL == net_myHost )
+        _gnet.my_host = enet_host_create( NULL, 1, 0, 0 );
+        if ( NULL == _gnet.my_host )
         {
             // can't create a network connection at all
             log_info( "Failure!\n" );
@@ -2055,15 +2053,15 @@ int cl_joinGame( const char* hostname )
         log_info( "cl_joinGame: Attempting to connect to %s:%d\n", hostname, NET_EGOBOO_PORT );
         enet_address_set_host( &address, hostname );
         address.port = NET_EGOBOO_PORT;
-        net_gameHost = enet_host_connect( net_myHost, &address, NET_EGOBOO_NUM_CHANNELS );
-        if ( NULL == net_gameHost )
+        _gnet.game_host = enet_host_connect( _gnet.my_host, &address, NET_EGOBOO_NUM_CHANNELS );
+        if ( NULL == _gnet.game_host )
         {
             log_info( "cl_joinGame: No available peers to create a connection!\n" );
             return bfalse;
         }
 
         // Wait for up to 5 seconds for the connection attempt to succeed
-        if ( enet_host_service( net_myHost, &event, 5000 ) > 0 &&
+        if ( enet_host_service( _gnet.my_host, &event, 5000 ) > 0 &&
              event.type == ENET_EVENT_TYPE_CONNECT )
         {
             log_info( "cl_joinGame: Connected to %s:%d\n", hostname, NET_EGOBOO_PORT );
@@ -2098,20 +2096,20 @@ int sv_hostGame()
         address.port = NET_EGOBOO_PORT;
 
         log_info( "sv_hostGame: Creating game on port %d\n", NET_EGOBOO_PORT );
-        net_myHost = enet_host_create( &address, MAX_PLAYER, 0, 0 );
-        if ( NULL == net_myHost )
+        _gnet.my_host = enet_host_create( &address, MAX_PLAYER, 0, 0 );
+        if ( NULL == _gnet.my_host )
         {
             log_info( "sv_hostGame: Could not create network connection!\n" );
             return bfalse;
         }
 
         // Try to create a host player
-//   return create_player(btrue);
-        net_amHost = btrue;
+        //   return create_player(btrue);
+        _gnet.am_host = btrue;
 
         // Moved from net_sayHello because there they cause a race issue
         _gnet.waitingforplayers = btrue;
-        playersloaded = 0;
+        net_stats.pla_count_loaded = 0;
     }
 
     // Run in solo mode
@@ -2154,10 +2152,10 @@ void net_updateFileTransfers()
             {
                 // Tell the target to create a directory
                 log_info( "net_updateFileTranfers: Creating directory %s on target\n", state->destName );
-                net_startNewPacket();
-                packet_addUnsignedShort( NET_CREATE_DIRECTORY );
-                packet_addString( state->destName );
-                net_sendPacketToPeerGuaranteed( state->target );
+                net_packet::start_new( &tmp_packet );
+                net_packet::add_UnsignedShort( &tmp_packet, NET_CREATE_DIRECTORY );
+                net_packet::add_String( &tmp_packet, state->destName );
+                net_sendPacketToPeerGuaranteed( &tmp_packet, state->target );
 
                 net_waitingForXferAck = 1;
             }
@@ -2228,30 +2226,32 @@ void net_send_message()
 {
     /// @details ZZ@> sends the message in the keyboard buffer to all other players
 
+    if ( !_gnet.initialized ) return;
+
     if ( console_mode || !console_done ) return;
 
-    // if(_gnet.initialized)
-    // {
-    //   start_building_packet();
-    //   add_packet_us(TO_ANY_TEXT);
-    //   add_packet_sz(keyb.buffer);
-    //   send_packet_to_all_players();
-    // }
+    net_packet::start_new( &tmp_packet );
+    net_packet::add_UnsignedShort( &tmp_packet, TO_ANY_TEXT );
+    net_packet::add_String( &tmp_packet, keyb.buffer );
+    net_sendPacketToAllPlayers( &tmp_packet );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t net_instance_init( ego_net_instance * pnet )
+bool_t net_instance_init( net_instance * pnet )
 {
     if ( NULL == pnet ) return bfalse;
 
     memset( pnet, 0, sizeof( *pnet ) );
+
+    // make sure to update the network player count
+    net_stats.pla_count_network = _gnet.player_count;
 
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CHR_REF pla_get_ichr( const PLA_REF & iplayer )
+CHR_REF ego_player::get_ichr( const PLA_REF & iplayer )
 {
     ego_player * pplayer;
 
@@ -2290,7 +2290,7 @@ ego_chr  * pla_get_pchr( const PLA_REF & iplayer )
 }
 
 //--------------------------------------------------------------------------------------------
-latch_2d_t pla_convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src )
+latch_2d_t ego_player::convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src )
 {
     latch_2d_t dst = LATCH_2D_INIT;
     ego_player * ppla;
@@ -2309,8 +2309,8 @@ void net_reset_players()
 {
     PlaStack_reinit();
 
-    nexttimestamp = ( Uint32( ~0L ) );
-    numplatimes   = 0;
+    _gnet.next_time_stamp = ( Uint32( ~0L ) );
+    _gnet.timed_latch_count   = 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2333,20 +2333,20 @@ void tlatch_ary_init( ego_time_latch ary[], size_t len )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_player * pla_reinit( ego_player * ppla )
+ego_player * ego_player::reinit( ego_player * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
     if ( ppla->valid )
     {
-        ppla = pla_dtor( ppla );
+        ppla = ego_player::dtor( ppla );
     }
 
-    return pla_ctor( ppla );
+    return ego_player::ctor( ppla );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_player * pla_dtor( ego_player * ppla )
+ego_player * ego_player::dtor( ego_player * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
@@ -2363,7 +2363,7 @@ ego_player * pla_dtor( ego_player * ppla )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_player * pla_ctor( ego_player * ppla )
+ego_player * ego_player::ctor( ego_player * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
@@ -2432,7 +2432,7 @@ void PlaStack_init()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        pla_ctor( PlaStack + ipla );
+        ego_player::ctor( PlaStack + ipla );
     }
     PlaStack.count = 0;
 }
@@ -2446,7 +2446,7 @@ void PlaStack_dtor()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        pla_dtor( PlaStack + ipla );
+        ego_player::dtor( PlaStack + ipla );
     }
     PlaStack.count = 0;
 }
@@ -2460,7 +2460,7 @@ void PlaStack_reinit()
 
     for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
     {
-        pla_reinit( PlaStack + ipla );
+        ego_player::reinit( PlaStack + ipla );
     }
     PlaStack.count = 0;
 }
@@ -2537,4 +2537,27 @@ bool_t PlaStack_has_wizard()
     }
 
     return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+void net_update_game_clock()
+{
+    if ( !network_initialized() ) return;
+
+    if ( 0 == _gnet.timed_latch_count )
+    {
+        // The remote ran out of messages, and is now twiddling its thumbs...
+        // Make it go slower so it doesn't happen again
+        clock_wld += 25;
+    }
+
+    if ( _gnet.timed_latch_count > 3 && !network_get_host_active() )
+    {
+        // The host has too many messages, and is probably experiencing control
+        // lag...  Speed it up so it gets closer to sync
+        clock_wld -= 5;
+    }
+
 }

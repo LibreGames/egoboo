@@ -235,7 +235,7 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
     if ( !INGAME_CHR( owner ) || !ChrObjList.get_data_ref( owner ).alive ) return;
 
     ishop = ShopStack_get_free();
-    if ( !ShopStack.valid_ref( ishop ) ) return;
+    if ( !ShopStack.in_range_ref( ishop ) ) return;
 
     // The passage exists...
     ShopStack[ishop].passage = passage;
@@ -436,8 +436,8 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
     if ( NULL == ppass ) return CHR_REF( MAX_CHR );
 
     // Skip if the one who is looking doesn't exist
-    if ( !INGAME_CHR( isrc ) ) return CHR_REF( MAX_CHR );
-    psrc = ChrObjList.get_data_ptr( isrc );
+    psrc = ChrObjList.get_allocated_data_ptr( isrc );
+    if ( !INGAME_PCHR( psrc ) ) return CHR_REF( MAX_CHR );
 
     // Look at each character
     foundother = CHR_REF( MAX_CHR );
@@ -525,8 +525,8 @@ bool_t ego_passage::check_music( ego_passage * ppass )
 
         character = ppla->index;
 
-        if ( !INGAME_CHR( character ) ) continue;
-        pchr = ChrObjList.get_data_ptr( character );
+        pchr = ChrObjList.get_allocated_data_ptr( character );
+        if ( !INGAME_PCHR( pchr ) ) continue;
 
         if ( !VALID_PLA( pchr->is_which_player ) || !pchr->alive || pchr->pack.is_packed ) continue;
 

@@ -396,7 +396,7 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF & imad, int frame )
     ego_MD2_Model * md2;
     ego_MD2_Frame * pframe;
 
-    if ( !MadStack.valid_ref( imad ) ) return;
+    if ( !MadStack.in_range_ref( imad ) ) return;
 
     md2 = MadStack[imad].md2_ptr;
     if ( NULL == md2 ) return;
@@ -700,7 +700,7 @@ MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF & ima
     ego_mad * pmad;
     STRING  newloadname;
 
-    if ( !MadStack.valid_ref( imad ) ) return MAD_REF( MAX_MAD );
+    if ( !MadStack.in_range_ref( imad ) ) return MAD_REF( MAX_MAD );
     pmad = MadStack + imad;
 
     // clear out the mad
@@ -1021,7 +1021,7 @@ bool_t release_one_mad( const MAD_REF & imad )
 {
     ego_mad * pmad;
 
-    if ( !MadStack.valid_ref( imad ) ) return bfalse;
+    if ( !MadStack.in_range_ref( imad ) ) return bfalse;
     pmad = MadStack + imad;
 
     if ( !pmad->loaded ) return btrue;

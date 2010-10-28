@@ -100,7 +100,7 @@ typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
 //--------------------------------------------------------------------------------------------
 // Macros to determine whether the enchant is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"
-#define INGAME_ENC_BASE(IENC)       ( EncObjList.valid_ref( IENC ) && ACTIVE_PBASE( IENC_GET_POBJ(IENC) ) && ON_PBASE( IENC_GET_POBJ(IENC) ) )
+#define INGAME_ENC_BASE(IENC)       ( EncObjList.in_range_ref( IENC ) && ACTIVE_PBASE( IENC_GET_POBJ(IENC) ) && ON_PBASE( IENC_GET_POBJ(IENC) ) )
 #define INGAME_PENC_BASE(PENC)      ( VALID_PENC( PENC ) && ACTIVE_PBASE( PENC_CGET_POBJ(PENC) ) && ON_PBASE( PENC_CGET_POBJ(PENC) ) )
 
 #define INGAME_ENC(IENC)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_ENC(IENC) : INGAME_ENC_BASE(IENC) )

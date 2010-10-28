@@ -63,7 +63,7 @@ private:
 
 extern t_cpp_stack< ego_mad, MAX_MAD > MadStack;
 
-#define LOADED_MAD( IMAD )       ( MadStack.valid_ref( IMAD ) && MadStack[IMAD].loaded )
+#define LOADED_MAD( IMAD )       ( MadStack.in_range_ref( IMAD ) && MadStack[IMAD].loaded )
 
 void MadList_init();
 void MadList_dtor();

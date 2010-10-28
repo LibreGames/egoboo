@@ -460,8 +460,8 @@ void statlist_add( const CHR_REF & character )
 
     if ( StatusList_count >= MAXSTAT ) return;
 
-    if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return;
 
     if ( pchr->StatusList_on ) return;
 
@@ -533,8 +533,8 @@ void ego_chr::set_frame( const CHR_REF & character, int action, int frame, int l
     ego_mad * pmad;
     int frame_stt, frame_nxt;
 
-    if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return;
 
     pmad = ego_chr::get_pmad( character );
     if ( NULL == pmad ) return;
@@ -686,12 +686,87 @@ void finalize_all_objects()
 }
 
 //--------------------------------------------------------------------------------------------
+void game_update_player_info()
+{
+    PLA_REF ipla;
+
+    net_stats.pla_count_local = 0;
+    net_stats.pla_count_dead  = 0;
+    net_stats.pla_count_alive = 0;
+
+    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    {
+        CHR_REF ichr;
+        ego_chr * pchr;
+        ego_player * ppla;
+
+        // ignore ivalid players
+        ppla = PlaStack + ipla;
+        if ( !ppla->valid ) continue;
+
+        // fix bad players
+        if ( !INGAME_CHR( ppla->index ) )
+        {
+            ego_player::dtor( ppla );
+            continue;
+        }
+
+        // alias some variables
+        ichr = ppla->index;
+        pchr = ChrObjList.get_data_ptr( ichr );
+
+        // count the total number of players
+        net_stats.pla_count_local++;
+        net_stats.pla_count_total = net_stats.pla_count_local + net_stats.pla_count_network;
+
+        // only interested in local players
+        if ( INPUT_BITS_NONE == ppla->device.bits ) continue;
+
+        if ( pchr->alive )
+        {
+            net_stats.pla_count_alive++;
+
+            if ( pchr->see_invisible_level > 0 )
+            {
+                local_stats.seeinvis_level = MAX( local_stats.seeinvis_level, pchr->see_invisible_level );
+            }
+
+            if ( pchr->see_kurse_level > 0 )
+            {
+                local_stats.seekurse_level = MAX( local_stats.seekurse_level, pchr->see_kurse_level );
+            }
+
+            if ( pchr->darkvision_level > 0 )
+            {
+                local_stats.seedark_level = MAX( local_stats.seedark_level, pchr->darkvision_level );
+            }
+
+            if ( pchr->grogtime > 0 )
+            {
+                local_stats.grog_level += pchr->grogtime;
+            }
+
+            if ( pchr->dazetime > 0 )
+            {
+                local_stats.daze_level += pchr->dazetime;
+            }
+
+            local_stats.listen_level = MAX( local_stats.listen_level, ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'L', 'I', 'S', 'T' ) ) );
+        }
+        else
+        {
+            net_stats.pla_count_dead++;
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------
 int update_game()
 {
     /// @details ZZ@> This function does several iterations of character movements and such
     ///    to keep the game in sync.
 
-    int tnc, numdead, numalive;
+    int tnc;
     int update_loop_cnt;
     PLA_REF ipla;
 
@@ -704,81 +779,18 @@ int update_game()
         // Check for all local players being dead and update shared player abilities
         game_reset_local_shared_stats();
 
-        numplayer = 0;
-        numdead = numalive = 0;
-        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-        {
-            CHR_REF ichr;
-            ego_chr * pchr;
-            ego_player * ppla;
-
-            // ignore ivalid players
-            ppla = PlaStack + ipla;
-            if ( !ppla->valid ) continue;
-
-            // fix bad players
-            if ( !INGAME_CHR( ppla->index ) )
-            {
-                pla_dtor( ppla );
-                continue;
-            }
-
-            // alias some variables
-            ichr = ppla->index;
-            pchr = ChrObjList.get_data_ptr( ichr );
-
-            // count the total number of players
-            numplayer++;
-
-            // only interested in local players
-            if ( INPUT_BITS_NONE == ppla->device.bits ) continue;
-
-            if ( pchr->alive )
-            {
-                numalive++;
-
-                if ( pchr->see_invisible_level > 0 )
-                {
-                    local_stats.seeinvis_level = MAX( local_stats.seeinvis_level, pchr->see_invisible_level );
-                }
-
-                if ( pchr->see_kurse_level > 0 )
-                {
-                    local_stats.seekurse_level = MAX( local_stats.seekurse_level, pchr->see_kurse_level );
-                }
-
-                if ( pchr->darkvision_level > 0 )
-                {
-                    local_stats.seedark_level = MAX( local_stats.seedark_level, pchr->darkvision_level );
-                }
-
-                if ( pchr->grogtime > 0 )
-                {
-                    local_stats.grog_level += pchr->grogtime;
-                }
-
-                if ( pchr->dazetime > 0 )
-                {
-                    local_stats.daze_level += pchr->dazetime;
-                }
-
-                local_stats.listen_level = MAX( local_stats.listen_level, ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'L', 'I', 'S', 'T' ) ) );
-            }
-            else
-            {
-                numdead++;
-            }
-        }
+        // update players of various types
+        game_update_player_info();
 
         // Dampen groggyness if not all players are grogged (this assumes they all share the same camera view)
-        if ( 0 != numalive )
+        if ( 0 != net_stats.pla_count_alive )
         {
-            local_stats.grog_level /= numalive;
-            local_stats.daze_level /= numalive;
+            local_stats.grog_level /= net_stats.pla_count_alive;
+            local_stats.daze_level /= net_stats.pla_count_alive;
         }
 
         // Did everyone die?
-        if ( numdead >= local_numlpla )
+        if ( net_stats.pla_count_dead >= net_stats.pla_count_local )
         {
             local_stats.allpladead = btrue;
         }
@@ -894,21 +906,7 @@ int update_game()
     est_update_game_time = 0.9 * est_update_game_time + 0.1 * est_single_update_time * update_loop_cnt;
     est_max_game_ups     = 0.9 * est_max_game_ups     + 0.1 * 1.0 / est_update_game_time;
 
-    if ( network_initialized() )
-    {
-        if ( numplatimes == 0 )
-        {
-            // The remote ran out of messages, and is now twiddling its thumbs...
-            // Make it go slower so it doesn't happen again
-            clock_wld += 25;
-        }
-        if ( numplatimes > 3 && !network_get_host_active() )
-        {
-            // The host has too many messages, and is probably experiencing control
-            // lag...  Speed it up so it gets closer to sync
-            clock_wld -= 5;
-        }
-    }
+    net_update_game_clock();
 
     return update_loop_cnt;
 }
@@ -1522,8 +1520,8 @@ bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_F
     // Skip non-existing objects
     if ( !ACTIVE_PCHR( psrc ) ) return bfalse;
 
-    if ( !INGAME_CHR( ichr_test ) ) return bfalse;
-    ptst = ChrObjList.get_data_ptr( ichr_test );
+    ptst = ChrObjList.get_allocated_data_ptr( ichr_test );
+    if ( !INGAME_PCHR( ptst ) ) return bfalse;
 
     // Skip hidden characters
     if ( ptst->is_hidden ) return bfalse;
@@ -1666,8 +1664,8 @@ CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD ta
         ego_chr * ptst;
         CHR_REF ichr_test = search_list[cnt];
 
-        if ( !INGAME_CHR( ichr_test ) ) continue;
-        ptst = ChrObjList.get_data_ptr( ichr_test );
+        ptst = ChrObjList.get_allocated_data_ptr( ichr_test );
+        if ( !INGAME_PCHR( ptst ) ) continue;
 
         if ( !check_target( psrc, ichr_test, idsz, targeting_bits ) ) continue;
 
@@ -1927,7 +1925,7 @@ void do_weather_spawn_particles()
         }
 
         // is the particle valid?
-        ego_prt * pprt = PrtObjList.get_valid_data_ptr( weather_iprt );
+        ego_prt * pprt = PrtObjList.get_allocated_data_ptr( weather_iprt );
         if ( NULL != pprt )
         {
             bool_t destroy_particle = bfalse;
@@ -2029,7 +2027,7 @@ void set_one_player_latch( const PLA_REF & player )
         if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_RIGHT_PACK ) )
             ADD_BITS( joy_latch.b, LATCHBUTTON_PACKRIGHT );
 
-        if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
+        if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == net_stats.pla_count_local ) ||
             !control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) )  // Don't allow movement in camera control mode
         {
             dist = SQRT( mous.x * mous.x + mous.y * mous.y );
@@ -2046,7 +2044,7 @@ void set_one_player_latch( const PLA_REF & player )
                 joy_latch.dir[kY] = mous.y * scale;
 
                 if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                     1 == local_numlpla &&
+                     1 == net_stats.pla_count_local &&
                      control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) == 0 )  joy_latch.dir[kX] = 0;
 
                 joy_latch = ego_chr::convert_latch_2d( pchr, joy_latch );
@@ -2090,7 +2088,7 @@ void set_one_player_latch( const PLA_REF & player )
         if ( control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_RIGHT_PACK ) )
             ADD_BITS( joy_latch.b, LATCHBUTTON_PACKRIGHT );
 
-        if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
+        if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == net_stats.pla_count_local ) ||
             !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )
         {
             joy_latch.dir[kX] = joy[0].x;
@@ -2105,7 +2103,7 @@ void set_one_player_latch( const PLA_REF & player )
             }
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                 1 == local_numlpla &&
+                 1 == net_stats.pla_count_local &&
                  !control_is_pressed( INPUT_DEVICE_JOY_A, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
 
             joy_latch = ego_chr::convert_latch_2d( pchr, joy_latch );
@@ -2148,7 +2146,7 @@ void set_one_player_latch( const PLA_REF & player )
         if ( control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_RIGHT_PACK ) )
             ADD_BITS( joy_latch.b, LATCHBUTTON_PACKRIGHT );
 
-        if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
+        if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == net_stats.pla_count_local ) ||
             !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )
         {
             joy_latch.dir[kX] = joy[1].x;
@@ -2163,7 +2161,7 @@ void set_one_player_latch( const PLA_REF & player )
             }
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                 1 == local_numlpla &&
+                 1 == net_stats.pla_count_local &&
                  !control_is_pressed( INPUT_DEVICE_JOY_B, CONTROL_CAMERA ) )  joy_latch.dir[kX] = 0;
 
             joy_latch = ego_chr::convert_latch_2d( pchr, joy_latch );
@@ -2206,14 +2204,14 @@ void set_one_player_latch( const PLA_REF & player )
         if ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_RIGHT_PACK ) )
             ADD_BITS( joy_latch.b, LATCHBUTTON_PACKRIGHT );
 
-        if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == local_numlpla ) ||
+        if (( CAM_TURN_GOOD == PCamera->turn_mode && 1 == net_stats.pla_count_local ) ||
             !control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_CAMERA ) )
         {
             joy_latch.dir[kX] = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_RIGHT ) - control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_LEFT ) );
             joy_latch.dir[kY] = ( control_is_pressed( INPUT_DEVICE_KEYBOARD, CONTROL_DOWN ) - control_is_pressed( INPUT_DEVICE_KEYBOARD,  CONTROL_UP ) );
 
             if ( CAM_TURN_GOOD == PCamera->turn_mode &&
-                 1 == local_numlpla )  joy_latch.dir[kX] = 0;
+                 1 == net_stats.pla_count_local )  joy_latch.dir[kX] = 0;
 
             joy_latch = ego_chr::convert_latch_2d( pchr, joy_latch );
 
@@ -2555,8 +2553,8 @@ void show_full_status( int statindex )
     if ( statindex >= StatusList_count ) return;
 
     character = StatusList[statindex];
-    if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return;
 
     // clean up the enchant list
     cleanup_character_enchants( pchr );
@@ -2596,8 +2594,8 @@ void show_magic_status( int statindex )
 
     character = StatusList[statindex];
 
-    if ( !INGAME_CHR( character ) ) return;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return;
 
     // clean up the enchant list
     cleanup_character_enchants( pchr );
@@ -2768,8 +2766,8 @@ bool_t chr_setup_apply( const CHR_REF & ichr, spawn_file_info_t *pinfo )
     // trap bad pointers
     if ( NULL == pinfo ) return bfalse;
 
-    if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr = ChrObjList.get_data_ptr( ichr );
+    pchr = ChrObjList.get_allocated_data_ptr( ichr );
+    if ( !INGAME_PCHR( pchr ) ) return bfalse;
 
     pparent = NULL;
     if ( INGAME_CHR( CHR_REF( pinfo->parent ) ) ) pparent = ChrObjList.get_data_ptr( CHR_REF( pinfo->parent ) );
@@ -2901,8 +2899,8 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
 {
     int     tnc, local_index = 0;
     CHR_REF new_object;
-    ego_chr * pobject;
     PRO_REF iprofile;
+    bool_t  activated = bfalse;
 
     if ( NULL == psp_info || !psp_info->do_spawn || psp_info->slot < 0 ) return bfalse;
 
@@ -2910,19 +2908,24 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
 
     // Spawn the character
     new_object = spawn_one_character( psp_info->pos, iprofile, TEAM_REF( psp_info->team ), psp_info->skin, psp_info->facing, psp_info->pname, CHR_REF( MAX_CHR ) );
-    if ( !INGAME_CHR( new_object ) ) return bfalse;
 
-    pobject = ChrObjList.get_data_ptr( new_object );
+    // grab a pointer to the ego_obj_chr, if it was allocated
+    ego_obj_chr * pobject = ChrObjList.get_allocated_data_ptr( new_object );
+    if ( NULL == pobject ) goto activate_spawn_file_spawn_exit;
+
+    // is the object in the corect state?
+    if ( !DEFINED_PCHR( pobject ) ) goto activate_spawn_file_spawn_exit;
 
     // determine the attachment
     if ( psp_info->attach == ATTACH_NONE )
     {
         // Free character
-        psp_info->parent = ( new_object ).get_value();
+        psp_info->parent = new_object.get_value();
         make_one_character_matrix( new_object );
     }
 
-    chr_setup_apply( new_object, psp_info );
+    // apply the setup information
+    activated = chr_setup_apply( new_object, psp_info );
 
     // Turn on PlaStack.count input devices
     if ( psp_info->stat )
@@ -2935,7 +2938,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             bool_t player_added;
 
             player_added = bfalse;
-            if ( 0 == local_numlpla )
+            if ( 0 == net_stats.pla_count_local )
             {
                 // the first player gets everything
                 player_added = add_player( new_object, PLA_REF( PlaStack.count ), ( Uint32 )( ~0 ) );
@@ -2946,7 +2949,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
                 BIT_FIELD bits;
 
                 // each new player steals an input device from the 1st player
-                bits = 1 << local_numlpla;
+                bits = 1 << net_stats.pla_count_local;
                 for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
                 {
                     REMOVE_BITS( PlaStack[ipla].device.bits, bits );
@@ -3011,7 +3014,12 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
         statlist_add( new_object );
     }
 
-    return btrue;
+activate_spawn_file_spawn_exit:
+
+    // This object is done spawning
+    POBJ_END_SPAWN( pobject );
+
+    return activated;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3286,8 +3294,8 @@ int reaffirm_attached_particles( const CHR_REF & character )
     ego_chr * pchr;
     ego_cap * pcap;
 
-    if ( !INGAME_CHR( character ) ) return 0;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return 0;
 
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return 0;
@@ -3303,7 +3311,7 @@ int reaffirm_attached_particles( const CHR_REF & character )
     {
         particle = spawn_one_particle( pchr->pos, 0, pchr->profile_ref, pcap->attachedprt_pip, character, GRIP_LAST + number_attached, ego_chr::get_iteam( character ), character, PRT_REF( MAX_PRT ), number_attached, CHR_REF( MAX_CHR ) );
 
-        ego_prt * pprt = PrtObjList.get_valid_data_ptr( particle );
+        ego_prt * pprt = PrtObjList.get_allocated_data_ptr( particle );
         if ( NULL != pprt )
         {
             pprt = place_particle_at_vertex( pprt, character, pprt->attachedto_vrt_off );
@@ -3655,17 +3663,17 @@ bool_t add_player( const CHR_REF & character, const PLA_REF & player, BIT_FIELD 
     ego_player * ppla = NULL;
     ego_chr    * pchr = NULL;
 
-    if ( !PlaStack.valid_ref( player ) ) return bfalse;
+    if ( !PlaStack.in_range_ref( player ) ) return bfalse;
     ppla = PlaStack + player;
 
     // does the player already exist?
     if ( ppla->valid ) return bfalse;
 
     // re-construct the players
-    pla_reinit( ppla );
+    ego_player::reinit( ppla );
 
-    if ( !DEFINED_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
     // set the reference to the player
     pchr->is_which_player = player;
@@ -3680,11 +3688,11 @@ bool_t add_player( const CHR_REF & character, const PLA_REF & player, BIT_FIELD 
     ppla->valid       = btrue;
     ppla->device.bits = device_bits;
 
-    if ( device_bits != EMPTY_BIT_FIELD )
+    if ( EMPTY_BIT_FIELD != device_bits )
     {
         local_stats.noplayers = bfalse;
         pchr->islocalplayer = btrue;
-        local_numlpla++;
+        net_stats.pla_count_local++;
 
         // reset the camera
         ego_camera::reset_target( PCamera, PMesh );
@@ -4953,11 +4961,11 @@ bool_t do_shop_drop( const CHR_REF & idropper, const CHR_REF & iitem )
     ego_chr * pdropper, * pitem;
     bool_t inshop;
 
-    if ( !INGAME_CHR( iitem ) ) return bfalse;
-    pitem = ChrObjList.get_data_ptr( iitem );
+    pitem = ChrObjList.get_allocated_data_ptr( iitem );
+    if ( !INGAME_PCHR( pitem ) ) return bfalse;
 
-    if ( !INGAME_CHR( idropper ) ) return bfalse;
-    pdropper = ChrObjList.get_data_ptr( idropper );
+    pdropper = ChrObjList.get_allocated_data_ptr( idropper );
+    if ( !INGAME_PCHR( pdropper ) ) return bfalse;
 
     inshop = bfalse;
     if ( pitem->isitem && ShopStack.count > 0 )
@@ -5006,11 +5014,11 @@ bool_t do_shop_buy( const CHR_REF & ipicker, const CHR_REF & iitem )
 
     ego_chr * ppicker, * pitem;
 
-    if ( !INGAME_CHR( iitem ) ) return bfalse;
-    pitem = ChrObjList.get_data_ptr( iitem );
+    pitem = ChrObjList.get_allocated_data_ptr( iitem );
+    if ( !INGAME_PCHR( pitem ) ) return bfalse;
 
-    if ( !INGAME_CHR( ipicker ) ) return bfalse;
-    ppicker = ChrObjList.get_data_ptr( ipicker );
+    ppicker = ChrObjList.get_allocated_data_ptr( ipicker );
+    if ( !INGAME_PCHR( ppicker ) ) return bfalse;
 
     can_grab = btrue;
     can_pay  = btrue;
@@ -5088,11 +5096,11 @@ bool_t do_shop_steal( const CHR_REF & ithief, const CHR_REF & iitem )
 
     ego_chr * pthief, * pitem;
 
-    if ( !INGAME_CHR( iitem ) ) return bfalse;
-    pitem = ChrObjList.get_data_ptr( iitem );
+    pitem = ChrObjList.get_allocated_data_ptr( iitem );
+    if ( !INGAME_PCHR( pitem ) ) return bfalse;
 
-    if ( !INGAME_CHR( ithief ) ) return bfalse;
-    pthief = ChrObjList.get_data_ptr( ithief );
+    pthief = ChrObjList.get_allocated_data_ptr( ithief );
+    if ( !INGAME_PCHR( pthief ) ) return bfalse;
 
     can_steal = btrue;
     if ( pitem->isitem && ShopStack.count > 0 )
@@ -5135,11 +5143,11 @@ bool_t do_item_pickup( const CHR_REF & ichr, const CHR_REF & iitem )
     // ?? lol what ??
     if ( ichr == iitem ) return bfalse;
 
-    if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr = ChrObjList.get_data_ptr( ichr );
+    pchr = ChrObjList.get_allocated_data_ptr( ichr );
+    if ( !INGAME_PCHR( pchr ) ) return bfalse;
 
-    if ( !INGAME_CHR( iitem ) ) return bfalse;
-    pitem = ChrObjList.get_data_ptr( iitem );
+    pitem = ChrObjList.get_allocated_data_ptr( iitem );
+    if ( !INGAME_PCHR( pitem ) ) return bfalse;
     ix = pitem->pos.x / GRID_SIZE;
     iy = pitem->pos.y / GRID_SIZE;
 

@@ -50,7 +50,7 @@ struct ego_pip : public ego_pip_data {};
 
 extern t_cpp_stack< ego_pip, MAX_PIP > PipStack;
 
-#define LOADED_PIP( IPIP )       ( PipStack.valid_ref( IPIP ) && PipStack[IPIP].loaded )
+#define LOADED_PIP( IPIP )       ( PipStack.in_range_ref( IPIP ) && PipStack[IPIP].loaded )
 
 //--------------------------------------------------------------------------------------------
 
@@ -335,7 +335,7 @@ struct ego_obj_prt : public ego_obj, public ego_prt
     typedef PRT_REF           reference_type;
     typedef ego_obj_prt       its_type;
 
-    ego_obj_prt( container_type * pcont ) : ego_prt( this ), _container_ptr( pcont ), obj_base_display( btrue ) {};
+    ego_obj_prt( const container_type * pcont ) : ego_prt( this ), _container_ptr( pcont ), obj_base_display( btrue ) {};
 
     //---- extra data
 
@@ -461,4 +461,3 @@ void    reset_particles();
 ego_bundle_prt * prt_calc_environment( ego_bundle_prt * pbdl );
 
 #define _particle_h
-

@@ -426,8 +426,8 @@ bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bi
     ego_chr * pchr;
     bool_t retval;
 
-    if ( !INGAME_CHR( character ) ) return bfalse;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return bfalse;
 
     if ( pchr->is_hidden ) return bfalse;
 
@@ -464,8 +464,8 @@ bool_t render_one_mad_ref( const CHR_REF & ichr )
     ego_chr_instance * pinst;
     GLXvector4f tint;
 
-    if ( !INGAME_CHR( ichr ) ) return bfalse;
-    pchr = ChrObjList.get_data_ptr( ichr );
+    pchr = ChrObjList.get_allocated_data_ptr( ichr );
+    if ( !INGAME_PCHR( pchr ) ) return bfalse;
     pinst = &( pchr->inst );
 
     if ( pchr->is_hidden ) return bfalse;

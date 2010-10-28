@@ -29,12 +29,14 @@
 #include "egoboo_setup.h"
 #include "egoboo.h"
 
+#include "enet/enet.h"
+
 //--------------------------------------------------------------------------------------------
 // Network stuff
 //--------------------------------------------------------------------------------------------
 
 #define NETREFRESH          1000                    ///< Every second
-#define NONETWORK           numservice
+#define NONETWORK           _gnet.service_count
 #define MAXSERVICE          16
 #define NETNAMESIZE         16
 #define MAXSESSION          16
@@ -68,6 +70,40 @@
 #define MAXLAG      64
 #define LAGAND      63
 #define STARTTALK   10
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct net_shared_stats
+{
+    int pla_count_local;             ///< Number of local players
+    int pla_count_network;               ///< Number of network players
+    int pla_count_total;             ///< Number of total players
+
+    int pla_count_ready;               ///< Number of players ready to start
+    int pla_count_loaded;
+
+    int pla_count_alive;
+    int pla_count_dead;
+
+    int lag_tolerance;                 ///< Lag tolerance
+
+    net_shared_stats()
+    {
+        pla_count_local   = 0;
+        pla_count_network = 0;
+        pla_count_total   = 0;
+
+        pla_count_ready   = 0;
+        pla_count_loaded  = 0;
+
+        pla_count_alive   = 0;
+        pla_count_dead    = 0;
+
+        lag_tolerance     = 3;
+    }
+};
+
+extern net_shared_stats net_stats;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -132,34 +168,92 @@ struct ego_player
 
     /// Network latch, set by unbuffer_all_player_latches(), used to set the local character's latch
     latch_input_t           net_latch;
+
+    static ego_player * ctor( ego_player * ppla );
+    static ego_player * dtor( ego_player * ppla );
+    static ego_player * reinit( ego_player * ppla );
+    static CHR_REF      get_ichr( const PLA_REF & iplayer );
+    static latch_2d_t   convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src );
 };
 
 extern t_cpp_stack< ego_player, MAX_PLAYER > PlaStack;                         ///< Stack for keeping track of players
-extern int local_numlpla;                                   ///< Number of local players
 
-#define VALID_PLA(IPLA)       ( PlaStack.valid_ref(IPLA) && ((IPLA) < PlaStack.count) && PlaStack[IPLA].valid )
-#define INVALID_PLA(IPLA)     ( !PlaStack.valid_ref(IPLA) || ((IPLA) >= PlaStack.count)|| !PlaStack[IPLA].valid )
+#define VALID_PLA(IPLA)       ( PlaStack.in_range_ref(IPLA) && ((IPLA) < PlaStack.count) && PlaStack[IPLA].valid )
+#define INVALID_PLA(IPLA)     ( !PlaStack.in_range_ref(IPLA) || ((IPLA) >= PlaStack.count)|| !PlaStack[IPLA].valid )
 
-ego_player *     pla_ctor( ego_player * ppla );
-ego_player *     pla_dtor( ego_player * ppla );
-ego_player *     pla_reinit( ego_player * ppla );
-CHR_REF        pla_get_ichr( const PLA_REF & iplayer );
 struct ego_chr * pla_get_pchr( const PLA_REF & iplayer );
-latch_2d_t     pla_convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src );
-
 ego_player*      net_get_ppla( const CHR_REF & ichr );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-/// The state of the network code used in old-egoboo
-struct ego_net_instance
+/// Network information on connected players
+struct NetPlayerInfo
+{
+    int which_slot;
+};
+
+//--------------------------------------------------------------------------------------------
+
+/// The state of the network code
+struct net_instance
 {
     bool_t  initialized;             ///< Is Networking initialized?
+
+    //---- old network stuff
     bool_t  serviceon;               ///< Do I need to free the interface?
     bool_t  hostactive;              ///< Hosting?
     bool_t  readytostart;            ///< Ready to hit the Start Game button?
     bool_t  waitingforplayers;       ///< Has everyone talked to the host?
+
+    int     machine_type;           ///< 0 is host, 1 is 1st remote, 2 is 2nd...
+
+    // information about the available services
+    int     service_which;                             ///< which service are we using
+    int     service_count;                                 ///< How many we found
+    char    service_name[MAXSERVICE][NETNAMESIZE];    ///< Names of services
+
+    // information about available sessions
+    int     session_count;                                 ///< How many we found
+    char    session_name[MAXSESSION][NETNAMESIZE];    ///< Names of sessions
+
+    // which players are logged on to our machine
+    int     player_count;                                  ///< How many we found
+    char    player_name[MAXNETPLAYER][NETNAMESIZE];   ///< Names of machines
+
+    Uint32  timed_latch_count;
+
+    Uint32  next_time_stamp;                ///< Expected timestamp
+
+    //---- new network stuff
+    bool_t          am_host;
+    ENetHost      * my_host;
+    ENetPeer      * game_host;
+    ENetPeer      * player_peers[MAX_PLAYER];
+    NetPlayerInfo   player_info[MAXNETPLAYER];
+
+    net_instance()
+    {
+        initialized        = bfalse;
+        serviceon          = bfalse;
+        hostactive         = bfalse;
+        readytostart       = bfalse;
+        waitingforplayers  = bfalse;
+
+        machine_type  = 0;
+
+        service_which = -1;
+        service_count = 0;
+        session_count = 0;
+        player_count  = 0;
+
+        timed_latch_count = 0;
+        next_time_stamp   = Uint32( ~0 );
+
+        am_host   = bfalse;
+        my_host   = NULL;
+        game_host = NULL;
+    }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -171,34 +265,19 @@ struct ego_net_instance
 //extern unsigned int            orderwhat[MAXORDER];
 //extern unsigned int            orderwhen[MAXORDER];
 
-extern Uint32                  nexttimestamp;                ///< Expected timestamp
 extern FILE                   *globalnetworkerr;             ///< For debuggin' network
 
 extern Uint32                  randsave;                  ///< Used in network timer
-extern int                     networkservice;
-extern int                     numservice;                                 ///< How many we found
-extern char                    netservicename[MAXSERVICE][NETNAMESIZE];    ///< Names of services
-extern int                     numsession;                                 ///< How many we found
-extern char                    netsessionname[MAXSESSION][NETNAMESIZE];    ///< Names of sessions
-extern int                     numplayer;                                  ///< How many we found
-extern char                    netplayername[MAXNETPLAYER][NETNAMESIZE];   ///< Names of machines
-
-extern int                     local_machine;        ///< 0 is host, 1 is 1st remote, 2 is 2nd...
-
-extern int                     playersready;               ///< Number of players ready to start
-extern int                     playersloaded;
-
-extern Uint32                  numplatimes;
 
 //--------------------------------------------------------------------------------------------
 // Networking functions
 //--------------------------------------------------------------------------------------------
 
-const ego_net_instance * network_get_instance();
-bool_t                 network_initialized();
-bool_t                 network_get_host_active();
-bool_t                 network_set_host_active( bool_t state );
-bool_t                 network_waiting_for_players();
+const net_instance * network_get_instance();
+bool_t               network_initialized();
+bool_t               network_get_host_active();
+bool_t               network_set_host_active( bool_t state );
+bool_t               network_waiting_for_players();
 
 void network_system_begin( ego_config_data * pcfg );
 void network_system_end( void );
@@ -207,19 +286,6 @@ void listen_for_packets();
 void unbuffer_all_player_latches();
 void close_session();
 
-void packet_addUnsignedByte( Uint8 uc );
-void packet_addSignedByte( Sint8 sc );
-void packet_addUnsignedShort( Uint16 us );
-void packet_addSignedShort( Sint16 ss );
-void packet_addUnsignedInt( Uint32 ui );
-void packet_addSignedInt( Sint32 si );
-void packet_addString( const char *string );
-
-void net_sendPacketToHost();
-void net_sendPacketToAllPlayers();
-void net_sendPacketToHostGuaranteed();
-void net_sendPacketToAllPlayersGuaranteed();
-void net_sendPacketToOnePlayerGuaranteed( int player );
 void net_send_message();
 
 void net_updateFileTransfers();
@@ -250,3 +316,5 @@ void   PlaStack_toggle_all_explore();
 void   PlaStack_toggle_all_wizard();
 bool_t PlaStack_has_explore();
 bool_t PlaStack_has_wizard();
+
+void net_update_game_clock();

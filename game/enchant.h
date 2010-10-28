@@ -61,7 +61,7 @@ struct ego_eve : public ego_eve_data
 /// Enchantment template
 extern t_cpp_stack< ego_eve, MAX_EVE > EveStack;
 
-#define LOADED_EVE( IEVE )      ( EveStack.valid_ref( IEVE ) && EveStack[IEVE].loaded )
+#define LOADED_EVE( IEVE )      ( EveStack.in_range_ref( IEVE ) && EveStack[IEVE].loaded )
 
 //--------------------------------------------------------------------------------------------
 struct ego_enc_spawn_data
@@ -251,7 +251,7 @@ struct ego_obj_enc : public ego_obj, public ego_enc
     typedef ENC_REF           reference_type;
     typedef ego_obj_enc       its_type;
 
-    ego_obj_enc( ego_enc_container * pcont ) : ego_enc( this ), _container_ptr( pcont ) {};
+    ego_obj_enc( const ego_enc_container * pcont ) : ego_enc( this ), _container_ptr( pcont ) {};
 
     // This its_type is contained by container_type. We need some way of accessing it.
 

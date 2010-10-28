@@ -102,7 +102,7 @@ typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
 //--------------------------------------------------------------------------------------------
 // Macros to determine whether the character is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"
-#define INGAME_CHR_BASE(ICHR)       ( ChrObjList.valid_ref( ICHR ) && ACTIVE_PBASE( ChrObjList.get_data_ptr(ICHR) ) && ON_PBASE( ChrObjList.get_data_ptr(ICHR) ) )
+#define INGAME_CHR_BASE(ICHR)       ( ChrObjList.in_range_ref( ICHR ) && ACTIVE_PBASE( ChrObjList.get_data_ptr(ICHR) ) && ON_PBASE( ChrObjList.get_data_ptr(ICHR) ) )
 #define INGAME_PCHR_BASE(PCHR)      ( VALID_PCHR( PCHR ) && ACTIVE_PBASE( PCHR_CGET_POBJ(PCHR) ) && ON_PBASE( PCHR_CGET_POBJ(PCHR) ) )
 
 #define INGAME_CHR(ICHR)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_CHR(ICHR) : INGAME_CHR_BASE(ICHR) )

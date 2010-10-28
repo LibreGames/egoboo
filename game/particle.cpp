@@ -271,7 +271,7 @@ void free_one_particle_in_game( const PRT_REF & particle )
 
     CHR_REF child;
 
-    ego_prt * pprt = PrtObjList.get_valid_data_ptr( particle );
+    ego_prt * pprt = PrtObjList.get_allocated_data_ptr( particle );
     if ( NULL == pprt ) return;
 
     if ( DEFINED_PPRT( pprt ) )
@@ -691,11 +691,11 @@ bool_t ego_obj_prt::object_update_list_id( void )
     if ( !container_type::get_allocated( pcont ) ) return bfalse;
 
     // deal with the return state
-    if ( !valid )
+    if ( !get_valid( this ) )
     {
         container_type::set_list_id( pcont, INVALID_UPDATE_GUID );
     }
-    else if ( ego_obj_processing == action )
+    else if ( ego_obj_processing == get_action( this ) )
     {
         container_type::set_list_id( pcont, PrtObjList.get_list_id() );
     }
@@ -929,7 +929,7 @@ void update_all_particles()
     // activate any particles might have been generated last update in an in-active state
     for ( iprt = 0; iprt < maxparticles; iprt++ )
     {
-        ego_prt * pprt = PrtObjList.get_valid_data_ptr( iprt );
+        ego_prt * pprt = PrtObjList.get_allocated_data_ptr( iprt );
         if ( NULL == pprt ) continue;
 
         prt_update( ego_bundle_prt::set( &prt_bdl, pprt ) );
@@ -1550,8 +1550,8 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
     if ( 0 == ppip->bumpspawn_amount && !ppip->spawnenchant ) return 0;
     amount = ppip->bumpspawn_amount;
 
-    if ( !INGAME_CHR( character ) ) return 0;
-    pchr = ChrObjList.get_data_ptr( character );
+    pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return 0;
 
     pmad = ego_chr::get_pmad( character );
     if ( NULL == pmad ) return 0;
@@ -1749,7 +1749,7 @@ PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & p
     ego_pip * ppip;
 
     ipip = PIP_REF( MAX_PIP );
-    if ( PipStack.valid_ref( pip_override ) )
+    if ( PipStack.in_range_ref( pip_override ) )
     {
         release_one_pip( pip_override );
         ipip = pip_override;
@@ -1759,7 +1759,7 @@ PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & p
         ipip = PipStack_get_free();
     }
 
-    if ( !PipStack.valid_ref( ipip ) )
+    if ( !PipStack.in_range_ref( ipip ) )
     {
         return PIP_REF( MAX_PIP );
     }
@@ -1913,7 +1913,7 @@ bool_t release_one_pip( const PIP_REF & ipip )
 {
     ego_pip * ppip;
 
-    if ( !PipStack.valid_ref( ipip ) ) return bfalse;
+    if ( !PipStack.in_range_ref( ipip ) ) return bfalse;
     ppip = PipStack + ipip;
 
     if ( !ppip->loaded ) return btrue;
@@ -1953,7 +1953,7 @@ bool_t _prt_request_terminate_ref( const PRT_REF & iprt )
 
     if ( !VALID_PRT( iprt ) || TERMINATED_PRT( iprt ) ) return bfalse;
 
-    POBJ_REQUEST_TERMINATE( PrtObjList.get_valid_data_ptr( iprt ) );
+    POBJ_REQUEST_TERMINATE( PrtObjList.get_allocated_data_ptr( iprt ) );
 
     return btrue;
 }
@@ -1963,7 +1963,7 @@ int prt_do_end_spawn( const PRT_REF & iprt )
 {
     int end_spawn_count = 0;
 
-    ego_prt * pprt = PrtObjList.get_valid_data_ptr( iprt );
+    ego_prt * pprt = PrtObjList.get_allocated_data_ptr( iprt );
     if ( NULL == pprt || pprt->end_spawn_pip < 0 ) return end_spawn_count;
 
     if ( pprt->end_spawn_pip < 0 ) return end_spawn_count;
@@ -2010,7 +2010,7 @@ void cleanup_all_particles()
         bool_t time_out;
 
         // don't bother with particles that are not allocated
-        ego_obj_prt * pobj = PrtObjList.get_valid_data_ptr( PRT_REF( cnt ) );
+        ego_obj_prt * pobj = PrtObjList.get_allocated_data_ptr( PRT_REF( cnt ) );
         if ( NULL == pobj ) continue;
 
         // don't bother with uninitialized data
@@ -2047,7 +2047,7 @@ void increment_all_particle_update_counters()
 
     for ( cnt = 0; cnt < maxparticles; cnt++ )
     {
-        ego_obj * pbase = PrtObjList.get_valid_data_ptr( cnt );
+        ego_obj * pbase = PrtObjList.get_allocated_data_ptr( cnt );
 
         if ( !ACTIVE_PBASE( pbase ) ) continue;
 
@@ -3443,7 +3443,7 @@ bool_t ego_obj_prt::request_terminate( const PRT_REF & iprt )
     /// @note ego_obj_prt::request_terminate() will force the game to
     ///       (eventually) call free_one_particle_in_game() on this particle
 
-    return request_terminate( PrtObjList.get_valid_data_ptr( iprt ) );
+    return request_terminate( PrtObjList.get_allocated_data_ptr( iprt ) );
 }
 
 //--------------------------------------------------------------------------------------------

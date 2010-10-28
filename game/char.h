@@ -711,7 +711,7 @@ struct ego_obj_chr : public ego_obj, public ego_chr
     typedef CHR_REF           reference_type;
     typedef ego_obj_chr       its_type;
 
-    ego_obj_chr( container_type * pcont ) : ego_chr( this ), _container_ptr( pcont ) {};
+    ego_obj_chr( const container_type * pcont ) : ego_chr( this ), _container_ptr( pcont ) {};
 
     // This its_type is contained by container_type. We need some way of accessing it.
 
@@ -754,7 +754,7 @@ extern t_cpp_stack< ego_team, TEAM_MAX > TeamStack;
 
 extern t_cpp_stack< ego_cap, MAX_CAP > CapStack;
 
-#define LOADED_CAP( ICAP )       ( CapStack.valid_ref( ICAP ) && CapStack[ICAP].loaded )
+#define LOADED_CAP( ICAP )       ( CapStack.in_range_ref( ICAP ) && CapStack[ICAP].loaded )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

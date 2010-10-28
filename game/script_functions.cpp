@@ -826,7 +826,7 @@ Uint8 scr_set_TargetToWhoeverCalledForHelp( ego_script_state * pstate, ego_ai_bu
 
     SCRIPT_FUNCTION_BEGIN();
 
-    if ( TeamStack.valid_ref( pchr->team ) )
+    if ( TeamStack.in_range_ref( pchr->team ) )
     {
         CHR_REF isissy = TeamStack[pchr->team].sissy;
 
@@ -1652,7 +1652,7 @@ Uint8 scr_set_TargetToTargetOfLeader( ego_script_state * pstate, ego_ai_bundle *
 
     SCRIPT_FUNCTION_BEGIN();
 
-    if ( TeamStack.valid_ref( pchr->team ) )
+    if ( TeamStack.in_range_ref( pchr->team ) )
     {
         CHR_REF ileader = TeamStack[pchr->team].leader;
 
@@ -1811,7 +1811,7 @@ Uint8 scr_set_TargetToLeader( ego_script_state * pstate, ego_ai_bundle * pbdl_se
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = bfalse;
-    if ( TeamStack.valid_ref( pchr->team ) )
+    if ( TeamStack.in_range_ref( pchr->team ) )
     {
         CHR_REF ileader = TeamStack[pchr->team].leader;
 
@@ -2112,7 +2112,7 @@ Uint8 scr_SpawnParticle( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
-    ego_prt * pprt = PrtObjList.get_valid_data_ptr( iprt );
+    ego_prt * pprt = PrtObjList.get_allocated_data_ptr( iprt );
     returncode = ( NULL != pprt );
 
     if ( returncode )
@@ -4400,7 +4400,7 @@ Uint8 scr_SpawnAttachedSizedParticle( ego_script_state * pstate, ego_ai_bundle *
 
     iprt = spawn_one_particle( pchr->pos, pchr->ori.facing_z, pchr->profile_ref, pstate->argument, pself->index, pstate->distance, pchr->team, ichr, PRT_REF( MAX_PRT ), 0, CHR_REF( MAX_CHR ) );
 
-    ego_prt * pprt = PrtObjList.get_valid_data_ptr( iprt );
+    ego_prt * pprt = PrtObjList.get_allocated_data_ptr( iprt );
     returncode = ( NULL != pprt );
 
     if ( returncode )

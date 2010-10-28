@@ -42,15 +42,11 @@ ego_object_engine         obj_engine;
 //--------------------------------------------------------------------------------------------
 int ego_object_process_state::end_constructing()
 {
-    if ( NULL == this || !valid ) return -1;
+    if ( !get_valid( this ) ) return -1;
 
-    //valid       = btrue;
-    constructed = btrue;
-    //initialized = btrue;
-    //killed      = bfalse;
+    add_bits( this, full_constructed );
 
-    //active      = bfalse;
-    action        = ego_obj_initializing;
+    set_action( this, ego_obj_initializing );
 
     return 1;
 }
@@ -58,15 +54,18 @@ int ego_object_process_state::end_constructing()
 //--------------------------------------------------------------------------------------------
 int ego_object_process_state::end_initializing()
 {
-    if ( NULL == this || !valid ) return -1;
+    // the two add_bits statements are equivalent to "full_active",
+    // add_bits( this, full_active ), but it is clearer to do it this way...
 
-    //valid       = btrue;
-    //constructed = btrue;
-    initialized = btrue;
-    //killed      = bfalse;
+    if ( !get_valid( this ) ) return -1;
 
-    //active      = btrue;
-    action        = ego_obj_processing;
+    // the obvious things you must do when "end_initializing"
+    add_bits( this, full_initialized );
+    set_action( this, ego_obj_processing );
+
+    // the additional thing we must do since there is no seperate
+    // command to place the object "in game"
+    add_bits( this, on_bit | active_bit );
 
     return 1;
 }
@@ -74,15 +73,11 @@ int ego_object_process_state::end_initializing()
 //--------------------------------------------------------------------------------------------
 int ego_object_process_state::end_processing()
 {
-    if ( NULL == this || !valid ) return -1;
+    if ( !get_valid( this ) ) return -1;
 
-    //valid       = btrue;
-    //constructed = btrue;
-    //initialized = btrue;
-    //killed      = bfalse;
+    remove_bits( this, active_bit | on_bit );
 
-    active      = bfalse;
-    action      = ego_obj_deinitializing;
+    set_action( this, ego_obj_deinitializing );
 
     return 1;
 }
@@ -90,15 +85,11 @@ int ego_object_process_state::end_processing()
 //--------------------------------------------------------------------------------------------
 int ego_object_process_state::end_deinitializing()
 {
-    if ( NULL == this || !valid ) return -1;
+    if ( !get_valid( this ) ) return -1;
 
-    //valid       = btrue;
-    //constructed = btrue;
-    initialized = bfalse;
-    //killed      = bfalse;
+    remove_bits( this, initialized_bit | active_bit | on_bit );
 
-    active      = bfalse;
-    action      = ego_obj_destructing;
+    set_action( this, ego_obj_destructing );
 
     return 1;
 }
@@ -106,15 +97,13 @@ int ego_object_process_state::end_deinitializing()
 //--------------------------------------------------------------------------------------------
 int ego_object_process_state::end_destructing()
 {
-    if ( NULL == this || !valid ) return -1;
+    if ( !get_valid( this ) ) return -1;
 
-    //valid       = btrue;
-    constructed = bfalse;
-    initialized = bfalse;
-    killed      = btrue;
+    remove_bits( this, constructed_bit | initialized_bit | active_bit | on_bit );
 
-    active      = bfalse;
-    action      = ego_obj_destructing;
+    add_bits( this, killed_bit );
+
+    set_action( this, ego_obj_waiting );
 
     return 1;
 }
@@ -122,32 +111,33 @@ int ego_object_process_state::end_destructing()
 //--------------------------------------------------------------------------------------------
 int ego_object_process_state::end_invalidating()
 {
-    if ( NULL == this || !valid ) return -1;
+    if ( !get_valid( this ) ) return -1;
 
-    ego_object_process_state_data::clear();
-    if ( NULL == this ) return -1;
+    ego_object_process_state_data::invalidate( this );
 
-    valid       = bfalse;
-    constructed = bfalse;
-    initialized = bfalse;
-    killed      = btrue;         // keep the killed flag on
-
-    action      = ego_obj_nothing;
+    add_bits( this, killed_bit );
 
     return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_object_process_state_data::set_valid( bool_t val )
+bool_t ego_object_process_state_data::set_valid( ego_object_process_state_data * ptr, bool_t val )
 {
-    if ( NULL == this ) return -1;
+    if ( NULL == ptr ) return bfalse;
 
-    clear();
+    // set the state to the corect values
+    if ( val )
+    {
+        ptr->state_flags = valid_bit;
+        ptr->action      = ego_obj_constructing;
+    }
+    else
+    {
+        ptr->state_flags = 0;
+        ptr->action      = ego_obj_nothing;
+    }
 
-    valid  = val;
-    action = val ? ego_obj_constructing : ego_obj_nothing;
-
-    return 1;
+    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -155,9 +145,9 @@ int ego_object_process_state::begin_waiting( )
 {
     // put the object in the "waiting to be killed" mode. currently used only by particles
 
-    if ( NULL == this || !valid || killed ) return -1;
+    if ( NULL == this || !get_valid( this ) || get_killed( this ) ) return -1;
 
-    action = ego_obj_waiting;
+    set_action( this, ego_obj_waiting );
 
     return 1;
 }
@@ -169,25 +159,23 @@ egoboo_rv ego_object_process::validate( ego_object_process * ptr, bool_t val )
     if ( NULL == ptr ) return rv_error;
 
     // clear out the state
-    ptr->ego_object_process_state::clear();
+    ego_object_process_state::invalidate( ptr );
 
     // clear out any requests
     ptr->ego_object_request_data::clear();
 
     // set the "valid" variable and initialize the action
-    ptr->set_valid( val );
+    set_valid( ptr, val );
 
-    return ( val == ptr->valid ) ? rv_success : rv_fail;
+    return ( val == get_valid( ptr ) ) ? rv_success : rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_object_process::proc_req_terminate()
 {
-    if ( NULL == this ) return rv_error;
+    if ( !get_valid( this ) ) return rv_error;
 
-    if ( !valid ) return rv_error;
-
-    if ( killed ) return rv_success;
+    if ( get_killed( this ) ) return rv_success;
 
     // save the old value
     bool_t was_kill_me = kill_me;
@@ -204,9 +192,7 @@ egoboo_rv ego_object_process::proc_req_terminate()
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_object_process::proc_req_on( bool_t val )
 {
-    if ( NULL == this ) return rv_error;
-
-    if ( !valid || killed ) return rv_error;
+    if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
     bool_t needed = ( val != turn_me_on );
 
@@ -219,9 +205,7 @@ egoboo_rv ego_object_process::proc_req_on( bool_t val )
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_object_process::proc_req_pause( bool_t val )
 {
-    if ( NULL == this ) return rv_error;
-
-    if ( !valid || killed ) return rv_error;
+    if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
     bool_t needed = ( val != pause_me );
 
@@ -244,18 +228,16 @@ egoboo_rv ego_object_process::proc_set_wait()
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_object_process::proc_set_process()
 {
-    if ( NULL == this ) return rv_error;
-
-    if ( !valid || killed ) return rv_error;
+    if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
     // don't bother if there is already a request to kill it
     if ( kill_me ) return rv_fail;
 
     // check the requirements for activating the object
-    if ( !constructed || !initialized )
+    if ( !get_constructed( this ) || !get_initialized( this ) )
         return rv_fail;
 
-    action  = ego_obj_processing;
+    set_action( this, ego_obj_processing );
 
     return rv_success;
 }
@@ -266,12 +248,19 @@ egoboo_rv ego_object_process::proc_set_killed( bool_t val )
     if ( NULL == this ) return rv_error;
 
     // don't bother if it's dead
-    if ( !valid ) return rv_error;
+    if ( !get_valid( this ) ) return rv_error;
 
-    bool_t was_killed = killed;
+    bool_t was_killed = get_killed( this );
 
     // set the killed value
-    killed = val;
+    if ( val )
+    {
+        add_bits( this, killed_bit );
+    }
+    else
+    {
+        remove_bits( this, killed_bit );
+    }
 
     // clear all requests
     kill_me  = bfalse;
@@ -282,15 +271,19 @@ egoboo_rv ego_object_process::proc_set_killed( bool_t val )
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_object_process::proc_set_on( bool_t val )
 {
-    if ( NULL == this ) return rv_error;
+    if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
-    // don't bother if it's dead
-    if ( !valid || killed ) return rv_error;
-
-    bool_t was_on = on;
+    bool_t was_on = get_on( this );
 
     // turn it off
-    on = val;
+    if ( val )
+    {
+        add_bits( this, on_bit );
+    }
+    else
+    {
+        remove_bits( this, on_bit );
+    }
 
     // clear all requests
     turn_me_on  = bfalse;
@@ -302,15 +295,13 @@ egoboo_rv ego_object_process::proc_set_on( bool_t val )
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_object_process::proc_do_on()
 {
-    if ( NULL == this ) return rv_error;
-
-    if ( !valid || killed ) return rv_error;
+    if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
     // anything to do?
     if ( !turn_me_on && !turn_me_off ) return rv_error;
 
     // assume no change
-    bool_t on_val = on;
+    bool_t on_val = get_on( this );
 
     // poll the requests
     // let turn_me_off override turn_me_on
@@ -332,12 +323,18 @@ egoboo_rv ego_object_process::proc_set_spawning( bool_t val )
 {
     bool_t old_val;
 
-    if ( NULL == this ) return rv_error;
+    if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
-    if ( !valid || killed ) return rv_error;
+    old_val  = get_spawning( this );
 
-    old_val  = spawning;
-    spawning = val;
+    if ( val )
+    {
+        add_bits( this, spawning_bit );
+    }
+    else
+    {
+        remove_bits( this, spawning_bit );
+    }
 
     return ( old_val == val ) ? rv_fail : rv_success;
 }
@@ -421,7 +418,7 @@ ego_obj * ego_obj::grant_terminate( ego_obj * pobj )
     if ( !pobj->kill_me ) return pobj;
 
     // poke it to make sure that it is at least a little bit alive
-    if ( !pobj->valid || pobj->killed ) return pobj;
+    if ( !get_valid( pobj ) || get_killed( pobj ) ) return pobj;
 
     // figure out the next step in killing the object
     if ( get_initialized( pobj ) )
@@ -476,7 +473,7 @@ ego_object_process * ego_object_process_engine::run( ego_object_process * pobj )
 {
     int rv = -1;
 
-    if ( NULL == pobj || !pobj->valid || pobj->killed ) return NULL;
+    if ( !ego_object_process::get_valid( pobj ) || ego_object_process::get_killed( pobj ) ) return NULL;
 
     switch ( pobj->action )
     {
@@ -525,6 +522,13 @@ ego_obj * ego_object_engine::run( ego_obj * pobj )
     if ( pobj->kill_me )
     {
         ego_obj::grant_terminate( pobj );
+    }
+
+    // make sure that the object is out of "spawn mode" if it
+    // is fully initialized
+    if ( ego_obj::get_action( pobj ) >= ego_obj_processing )
+    {
+        POBJ_END_SPAWN( pobj );
     }
 
     // run the object engine
