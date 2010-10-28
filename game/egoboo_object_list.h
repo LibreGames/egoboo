@@ -157,9 +157,9 @@ protected:
     static its_type * dtor_this( its_type * pobj );
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static its_type * ctor_all( its_type * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) its_type(); } return ptr; }
+    static its_type * ctor_all( its_type * ptr ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) its_type(); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static its_type * dtor_all( its_type * ptr )  { if ( NULL != ptr ) { ptr->~its_type(); puts( "\t" __FUNCTION__ ); } return ptr; }
+    static its_type * dtor_all( its_type * ptr )  { if ( NULL != ptr ) { ptr->~its_type(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
 
 private:
     data_type _container_data;

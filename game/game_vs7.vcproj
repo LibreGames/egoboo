@@ -319,9 +319,6 @@
 				RelativePath=".\egoboo_object_list.cpp">
 			</File>
 			<File
-				RelativePath=".\egoboo_object_list.inl">
-			</File>
-			<File
 				RelativePath=".\egoboo_rpc.cpp">
 			</File>
 			<File
@@ -536,6 +533,9 @@
 			</File>
 			<File
 				RelativePath=".\egoboo_object.inl">
+			</File>
+			<File
+				RelativePath=".\egoboo_object_list.inl">
 			</File>
 			<File
 				RelativePath=".\enchant.inl">

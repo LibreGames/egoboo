@@ -22,6 +22,8 @@
 /// @file egoboo_typedef_cpp.h
 /// @details cpp-only definitions
 
+#include "clock.h"
+
 #if !defined(__cplusplus)
 #    error egoboo_typedef_cpp.h should only be included if you are compling as c++
 #endif
@@ -39,6 +41,139 @@ class egoboo_exception : public std::exception
 
 #define CPP_EGOBOO_ASSERT(X) if( !(X) ) { throw (std::exception*)(new egoboo_exception( #X )); }
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+// macros to use the high resolution timer for profiling
+#define PROFILE_KEEP  0.9
+#define PROFILE_NEW  (1.0 - PROFILE_KEEP)
+
+struct debug_profiler
+{
+    bool_t         on;
+    ClockState_t * state;
+    double         count;
+    double         time;
+
+    double         rate;
+
+    double         keep_amt, new_amt;
+
+    debug_profiler( bool_t used, const char * name = "DEFAULT_NAME" )
+    {
+        on    = used;
+        state = clk_create( name, -1 );
+        reset( this );
+        set_keep( PROFILE_KEEP );
+    }
+
+    ~debug_profiler() { clk_destroy( &state ); }
+
+    void set_keep( double keep )
+    {
+        keep_amt = std::min( std::max( 0.0, keep ), 1.0 );
+        new_amt  = 1.0 - keep_amt;
+    }
+
+    static debug_profiler * reset( debug_profiler * ptr )
+    {
+        if ( NULL != ptr )
+        {
+            ptr->count = ptr->time = ptr->rate = 0.0;
+        }
+        return ptr;
+    }
+
+    static double query( debug_profiler * ptr )
+    {
+        if ( NULL == ptr ) return 0.0;
+
+        return ptr->on ? ptr->calc() : 1.0;
+    }
+
+    static debug_profiler * begin( debug_profiler * ptr )
+    {
+        if ( NULL != ptr && ptr->on )
+        {
+            clk_frameStep( ptr->state );
+        }
+
+        return ptr;
+    }
+
+    static debug_profiler * end( debug_profiler * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        if ( ptr->on )
+        {
+            clk_frameStep( ptr->state );
+            ptr->count = ptr->count * ptr->keep_amt + ptr->new_amt * 1.0;
+            ptr->time  = ptr->time * ptr->keep_amt + ptr->new_amt * clk_getFrameDuration( ptr->state );
+        }
+        else
+        {
+            ptr->count += 1.0;
+        }
+
+        return ptr;
+    }
+
+
+    static debug_profiler * end2( debug_profiler * ptr )
+    {
+        if ( NULL == ptr ) return ptr;
+
+        if ( ptr->on )
+        {
+            clk_frameStep( ptr->state );
+            ptr->count += 1.0;
+            ptr->time += clk_getFrameDuration( ptr->state );
+        }
+        else
+        {
+            ptr->count += 1.0;
+        }
+
+        return ptr;
+    }
+
+private:
+
+    double calc()
+    {
+        if ( NULL == this || 0.0 == count ) return 0.0;
+
+        rate = time / count;
+
+        return rate;
+    }
+
+};
+
+
+#define PROFILE_QUERY_STRUCT(PTR)  debug_profiler::query( &((PTR)->dbg_pro) )
+#define PROFILE_BEGIN_STRUCT(PTR)  debug_profiler::begin( &((PTR)->dbg_pro) );
+#define PROFILE_END_STRUCT(PTR)    debug_profiler::end( &((PTR)->dbg_pro) );
+#define PROFILE_END2_STRUCT(PTR)   debug_profiler::end2( &((PTR)->dbg_pro) );
+
+#define PROFILE_QUERY(NAME)  debug_profiler::query( &(dbg_pro_##NAME) )
+#define PROFILE_BEGIN(NAME)  debug_profiler::begin( &(dbg_pro_##NAME) );
+#define PROFILE_END(NAME)    debug_profiler::end( &(dbg_pro_##NAME) );
+#define PROFILE_END2(NAME)   debug_profiler::end2( &(dbg_pro_##NAME) );
+
+#if defined(DEBUG_PROFILE) && EGO_DEBUG
+#   define PROFILE_INIT_STRUCT(NAME)    dbg_pro(btrue, #NAME)
+#   define PROFILE_DECLARE(NAME)        debug_profiler dbg_pro_##NAME(btrue, #NAME);
+#else
+#   define PROFILE_INIT_STRUCT(NAME)    dbg_pro(bfalse, #NAME)
+#   define PROFILE_DECLARE(NAME)        debug_profiler dbg_pro_##NAME(bfalse, #NAME);
+#endif
+
+#define PROFILE_FREE(NAME)
+#define PROFILE_INIT(NAME)           debug_profiler::reset( &(dbg_pro_##NAME) );
+#define PROFILE_DECLARE_STRUCT(NAME) debug_profiler dbg_pro;
+#define PROFILE_RESET(NAME)          debug_profiler::reset( &(dbg_pro_##NAME) );
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // definition of the reference template

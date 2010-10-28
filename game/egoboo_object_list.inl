@@ -212,6 +212,7 @@ void t_ego_obj_lst<_d, _sz>::update_used()
         tmp_stack.pop();
     }
 
+#if defined(DEBUG_LIST) && EGO_DEBUG
     // go through the object array and see if (God forbid) there is an
     // object that is marked as allocated, but is not in the used map
     for ( size_t cnt = 0; cnt < _max_len; cnt++ )
@@ -229,6 +230,7 @@ void t_ego_obj_lst<_d, _sz>::update_used()
         ego_obj_lst_state::set_used( pcont, btrue );
         ego_obj_lst_state::set_free( pcont, bfalse );
     }
+#endif
 }
 
 //--------------------------------------------------------------------------------------------
@@ -449,7 +451,7 @@ t_ego_obj_container<_d, _sz> * t_ego_obj_container<_d, _sz>::ctor_this( t_ego_ob
 
     if ( NULL == pobj ) return NULL;
 
-    puts( "\t\t" __FUNCTION__ );
+    /* puts( "\t\t" __FUNCTION__ ); */
 
     //pobj = dealloc( pobj );
     // pobj = alloc( pobj );
@@ -467,7 +469,7 @@ t_ego_obj_container<_d, _sz> * t_ego_obj_container<_d, _sz>::dtor_this( t_ego_ob
 
     //data_type * pobj = get_data_ptr(pcont);
 
-    puts( "\t\t" __FUNCTION__ );
+    /* puts( "\t\t" __FUNCTION__ ); */
 
     //pcont = dealloc( pcont );
 

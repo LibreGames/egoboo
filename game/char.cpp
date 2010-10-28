@@ -363,7 +363,7 @@ void chr_log_script_time( const CHR_REF & ichr )
     pchr = ChrObjList.get_allocated_data_ptr( ichr );
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    if ( pchr->ai._clkcount <= 0 ) return;
+    if ( pchr->ai.dbg_pro.count <= 0 ) return;
 
     pcap = ego_chr::get_pcap( ichr );
     if ( NULL == pcap ) return;
@@ -373,7 +373,7 @@ void chr_log_script_time( const CHR_REF & ichr )
     {
         fprintf( ftmp, "update == %d\tindex == %d\tname == \"%s\"\tclassname == \"%s\"\ttotal_time == %e\ttotal_calls == %f\n",
                  update_wld, ( ichr ).get_value(), pchr->name, pcap->classname,
-                 pchr->ai._clktime, pchr->ai._clkcount );
+                 pchr->ai.dbg_pro.time, pchr->ai.dbg_pro.count );
         fflush( ftmp );
         fclose( ftmp );
     }
@@ -471,17 +471,18 @@ void free_inventory_in_game( const CHR_REF & character )
 
     CHR_REF cnt;
 
-    if ( !DEFINED_CHR( character ) ) return;
+    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !DEFINED_PCHR( pchr ) ) return;
 
-    PACK_BEGIN_LOOP( cnt, ChrObjList.get_data_ref( character ).pack.next )
+    PACK_BEGIN_LOOP( cnt, pchr->pack.next )
     {
         free_one_character_in_game( cnt );
     }
     PACK_END_LOOP( cnt );
 
     // set the inventory to the "empty" state
-    ChrObjList.get_data_ref( character ).pack.count = 0;
-    ChrObjList.get_data_ref( character ).pack.next  = CHR_REF( MAX_CHR );
+    pchr->pack.count = 0;
+    pchr->pack.next  = CHR_REF( MAX_CHR );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1800,12 +1801,13 @@ void drop_money( const CHR_REF & character, int money )
 
     int huns, tfives, fives, ones, cnt;
 
-    if ( !INGAME_CHR( character ) ) return;
+    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return;
 
-    if ( money > ChrObjList.get_data_ref( character ).money )  money = ChrObjList.get_data_ref( character ).money;
-    if ( money > 0 && ChrObjList.get_data_ref( character ).pos.z > -2 )
+    if ( money > pchr->money )  money = pchr->money;
+    if ( money > 0 && pchr->pos.z > -2 )
     {
-        ChrObjList.get_data_ref( character ).money = ChrObjList.get_data_ref( character ).money - money;
+        pchr->money = pchr->money - money;
         huns = money / 100;  money -= ( huns << 7 ) - ( huns << 5 ) + ( huns << 2 );
         tfives = money / 25;  money -= ( tfives << 5 ) - ( tfives << 3 ) + tfives;
         fives = money / 5;  money -= ( fives << 2 ) + fives;
@@ -1813,25 +1815,25 @@ void drop_money( const CHR_REF & character, int money )
 
         for ( cnt = 0; cnt < ones; cnt++ )
         {
-            spawn_one_particle_global( ChrObjList.get_data_ref( character ).pos, ATK_FRONT, PIP_COIN1, cnt );
+            spawn_one_particle_global( pchr->pos, ATK_FRONT, PIP_COIN1, cnt );
         }
 
         for ( cnt = 0; cnt < fives; cnt++ )
         {
-            spawn_one_particle_global( ChrObjList.get_data_ref( character ).pos, ATK_FRONT, PIP_COIN5, cnt );
+            spawn_one_particle_global( pchr->pos, ATK_FRONT, PIP_COIN5, cnt );
         }
 
         for ( cnt = 0; cnt < tfives; cnt++ )
         {
-            spawn_one_particle_global( ChrObjList.get_data_ref( character ).pos, ATK_FRONT, PIP_COIN25, cnt );
+            spawn_one_particle_global( pchr->pos, ATK_FRONT, PIP_COIN25, cnt );
         }
 
         for ( cnt = 0; cnt < huns; cnt++ )
         {
-            spawn_one_particle_global( ChrObjList.get_data_ref( character ).pos, ATK_FRONT, PIP_COIN100, cnt );
+            spawn_one_particle_global( pchr->pos, ATK_FRONT, PIP_COIN100, cnt );
         }
 
-        ChrObjList.get_data_ref( character ).damagetime = DAMAGETIME;  // So it doesn't grab it again
+        pchr->damagetime = DAMAGETIME;  // So it doesn't grab it again
     }
 }
 
@@ -2120,9 +2122,10 @@ bool_t export_one_character_name_vfs( const char *szSaveName, const CHR_REF & ch
 {
     /// @details ZZ@> This function makes the naming.txt file for the character
 
-    if ( !INGAME_CHR( character ) ) return bfalse;
+    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return bfalse;
 
-    return chop_export_vfs( szSaveName, ChrObjList.get_data_ref( character ).name );
+    return chop_export_vfs( szSaveName, pchr->name );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2159,14 +2162,15 @@ bool_t export_one_character_skin_vfs( const char *szSaveName, const CHR_REF & ch
 
     vfs_FILE* filewrite;
 
-    if ( !INGAME_CHR( character ) ) return bfalse;
+    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return bfalse;
 
     // Open the file
     filewrite = vfs_openWrite( szSaveName );
     if ( NULL == filewrite ) return bfalse;
 
     vfs_printf( filewrite, "// This file is used only by the import menu\n" );
-    vfs_printf( filewrite, ": %d\n", ChrObjList.get_data_ref( character ).skin );
+    vfs_printf( filewrite, ": %d\n", pchr->skin );
     vfs_close( filewrite );
     return btrue;
 }
@@ -3703,10 +3707,10 @@ int restock_ammo( const CHR_REF & character, IDSZ idsz )
     amount = 0;
     if ( ego_chr::is_type_idsz( character, idsz ) )
     {
-        if ( ChrObjList.get_data_ref( character ).ammo < ChrObjList.get_data_ref( character ).ammo_max )
+        if ( pchr->ammo < pchr->ammo_max )
         {
-            amount = ChrObjList.get_data_ref( character ).ammo_max - ChrObjList.get_data_ref( character ).ammo;
-            ChrObjList.get_data_ref( character ).ammo = ChrObjList.get_data_ref( character ).ammo_max;
+            amount     = pchr->ammo_max - pchr->ammo;
+            pchr->ammo = pchr->ammo_max;
         }
     }
 
@@ -10073,13 +10077,16 @@ CHR_REF chr_pack_has_a_stack( const CHR_REF & item, const CHR_REF & character )
     found  = bfalse;
     istack = CHR_REF( MAX_CHR );
 
+    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( character );
+    if ( !INGAME_PCHR( pchr ) ) return istack;
+
     pitem = ChrObjList.get_allocated_data_ptr( item );
     if ( !INGAME_PCHR( pitem ) ) return istack;
     pitem_cap = ego_chr::get_pcap( item );
 
     if ( pitem_cap->isstackable )
     {
-        PACK_BEGIN_LOOP( istack, ChrObjList.get_data_ref( character ).pack.next )
+        PACK_BEGIN_LOOP( istack, pchr->pack.next )
         {
             if ( INGAME_CHR( istack ) )
             {

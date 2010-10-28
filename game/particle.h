@@ -217,9 +217,9 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_prt_data * ctor_all( ego_prt_data * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_prt_data(); } return ptr; }
+    static ego_prt_data * ctor_all( ego_prt_data * ptr ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) ego_prt_data(); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_prt_data * dtor_all( ego_prt_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_prt_data(); puts( "\t" __FUNCTION__ ); } return ptr; }
+    static ego_prt_data * dtor_all( ego_prt_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_prt_data(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
 
     //---- memory management
 

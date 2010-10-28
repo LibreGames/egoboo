@@ -820,12 +820,17 @@ ego_enc * ego_enc::do_constructing( ego_enc * penc )
 {
     // this object has already been constructed as a part of the
     // ego_obj_enc, so its parent is properly defined
+    ego_obj_enc * old_parent = ego_enc::get_obj_ptr( penc );
 
-    ego_enc * rv =  ego_enc::ctor_all( penc, ego_enc::get_obj_ptr( penc ) );
+    // reconstruct the enchant data with the old parent
+    penc = ego_enc::ctor_all( penc, old_parent );
 
     /* add something here */
 
-    return rv;
+    // call the parent's virtual function
+    get_obj_ptr( penc )->ego_obj::do_constructing();
+
+    return penc;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -959,6 +964,9 @@ ego_enc * ego_enc::do_initializing( ego_enc * penc )
         ptarget->see_kurse_level = btrue;
     }
 
+    // call the parent's virtual function
+    get_obj_ptr( penc )->ego_obj::do_initializing();
+
     return penc;
 }
 
@@ -1015,25 +1023,28 @@ ego_enc * ego_enc::do_processing( ego_enc * penc )
             if ( penc->time > 0 ) penc->time--;
 
             // To make life easier
-            owner  = ego_enc::get_iowner( ienc );
             target = penc->target_ref;
+            owner  = ego_enc::get_iowner( ienc );
             eve    = ego_enc::get_ieve( ienc );
 
-            // Do drains
-            if ( ChrObjList.get_data_ref( owner ).alive )
-            {
+            ego_obj_chr * powner  = ChrObjList.get_allocated_data_ptr( owner );
+            ego_obj_chr * ptarget = ChrObjList.get_allocated_data_ptr( target );
+            ego_eve *     peve    = !EveStack.in_range_ref( eve ) ? NULL : EveStack + eve;
 
+            // Do drains
+            if ( NULL != powner && powner->alive )
+            {
                 // Change life
                 if ( penc->owner_life != 0 )
                 {
-                    ChrObjList.get_data_ref( owner ).life += penc->owner_life;
-                    if ( ChrObjList.get_data_ref( owner ).life <= 0 )
+                    powner->life += penc->owner_life;
+                    if ( powner->life <= 0 )
                     {
                         kill_character( owner, target, bfalse );
                     }
-                    if ( ChrObjList.get_data_ref( owner ).life > ChrObjList.get_data_ref( owner ).life_max )
+                    if ( powner->life > powner->life_max )
                     {
-                        ChrObjList.get_data_ref( owner ).life = ChrObjList.get_data_ref( owner ).life_max;
+                        powner->life = powner->life_max;
                     }
                 }
 
@@ -1041,36 +1052,35 @@ ego_enc * ego_enc::do_processing( ego_enc * penc )
                 if ( penc->owner_mana != 0 )
                 {
                     bool_t mana_paid = cost_mana( owner, -penc->owner_mana, target );
-                    if ( EveStack[eve].endifcantpay && !mana_paid )
+                    if ( NULL != peve && peve->endifcantpay && !mana_paid )
                     {
                         ego_obj_enc::request_terminate( ienc );
                     }
                 }
 
             }
-            else if ( !EveStack[eve].stayifnoowner )
+            else if ( NULL == peve || !peve->stayifnoowner )
             {
                 ego_obj_enc::request_terminate( ienc );
             }
 
             // the enchant could have been inactivated by the stuff above
             // check it again
-            if ( INGAME_ENC( ienc ) )
+            if ( INGAME_ENC( ienc ) && NULL != ptarget )
             {
-                if ( ChrObjList.get_data_ref( target ).alive )
+                if ( ptarget->alive )
                 {
-
                     // Change life
                     if ( penc->target_life != 0 )
                     {
-                        ChrObjList.get_data_ref( target ).life += penc->target_life;
-                        if ( ChrObjList.get_data_ref( target ).life <= 0 )
+                        ptarget->life += penc->target_life;
+                        if ( ptarget->life <= 0 )
                         {
                             kill_character( target, owner, bfalse );
                         }
-                        if ( ChrObjList.get_data_ref( target ).life > ChrObjList.get_data_ref( target ).life_max )
+                        if ( ptarget->life > ptarget->life_max )
                         {
-                            ChrObjList.get_data_ref( target ).life = ChrObjList.get_data_ref( target ).life_max;
+                            ptarget->life = ptarget->life_max;
                         }
                     }
 
@@ -1078,14 +1088,13 @@ ego_enc * ego_enc::do_processing( ego_enc * penc )
                     if ( penc->target_mana != 0 )
                     {
                         bool_t mana_paid = cost_mana( target, -penc->target_mana, owner );
-                        if ( EveStack[eve].endifcantpay && !mana_paid )
+                        if ( NULL == peve || ( peve->endifcantpay && !mana_paid ) )
                         {
                             ego_obj_enc::request_terminate( ienc );
                         }
                     }
-
                 }
-                else if ( !EveStack[eve].stayiftargetdead )
+                else if ( NULL == peve || !peve->stayiftargetdead )
                 {
                     ego_obj_enc::request_terminate( ienc );
                 }
@@ -1101,7 +1110,10 @@ ego_enc * ego_enc::do_deinitializing( ego_enc * penc )
 {
     if ( NULL == penc ) return penc;
 
-    /* add something here */
+    /* nothing to do yet */
+
+    // call the parent's virtual function
+    get_obj_ptr( penc )->ego_obj::do_deinitializing();
 
     return penc;
 }
@@ -1109,11 +1121,14 @@ ego_enc * ego_enc::do_deinitializing( ego_enc * penc )
 //--------------------------------------------------------------------------------------------
 ego_enc * ego_enc::do_destructing( ego_enc * penc )
 {
-    ego_enc * rv = ego_enc::dtor_all( penc );
+    penc = ego_enc::dtor_all( penc );
 
     /* add something here */
 
-    return rv;
+    // call the parent's virtual function
+    get_obj_ptr( penc )->ego_obj::do_destructing();
+
+    return penc;
 }
 
 //-------------------------------------------------------------------------------------------

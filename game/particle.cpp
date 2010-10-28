@@ -303,12 +303,17 @@ ego_prt * ego_prt::do_constructing( ego_prt * pprt )
 {
     // this object has already been constructed as a part of the
     // ego_obj_prt, so its parent is properly defined
+    ego_obj_prt * old_parent = ego_prt::get_obj_ptr( pprt );
 
-    ego_prt * rv = ego_prt::ctor_all( pprt, ego_prt::get_obj_ptr( pprt ) );
+    // reconstruct the particle data with the old parent
+    pprt = ego_prt::ctor_all( pprt, old_parent );
 
     /* add something here */
 
-    return rv;
+    // call the parent's virtual function
+    get_obj_ptr( pprt )->ego_obj::do_constructing();
+
+    return pprt;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -638,6 +643,9 @@ ego_prt * ego_prt::do_initializing( ego_prt * pprt )
         attach_one_particle( &prt_bdl );
     }
 
+    // call the parent's virtual function
+    get_obj_ptr( pprt )->ego_obj::do_initializing();
+
     return pprt;
 }
 
@@ -656,17 +664,23 @@ ego_prt * ego_prt::do_deinitializing( ego_prt * pprt )
 
     /* nothing to do yet */
 
+    // call the parent's virtual function
+    get_obj_ptr( pprt )->ego_obj::do_deinitializing();
+
     return pprt;
 }
 
 //--------------------------------------------------------------------------------------------
 ego_prt * ego_prt::do_destructing( ego_prt * pprt )
 {
-    ego_prt * rv = ego_prt::dtor_all( pprt );
+    pprt = ego_prt::dtor_all( pprt );
 
     /* add something here */
 
-    return rv;
+    // call the parent's virtual function
+    get_obj_ptr( pprt )->ego_obj::do_destructing();
+
+    return pprt;
 }
 
 //-------------------------------------------------------------------------------------------
@@ -927,7 +941,7 @@ void update_all_particles()
     ego_bundle_prt prt_bdl;
 
     // activate any particles might have been generated last update in an in-active state
-    for ( iprt = 0; iprt < maxparticles; iprt++ )
+    for ( iprt = 0; iprt < MAX_PRT; iprt++ )
     {
         ego_prt * pprt = PrtObjList.get_allocated_data_ptr( iprt );
         if ( NULL == pprt ) continue;
@@ -3416,7 +3430,7 @@ ego_prt * ego_prt::ctor_all( ego_prt * ptr, ego_obj_prt * pparent )
 {
     if ( NULL != ptr )
     {
-        puts( "\t" __FUNCTION__ );
+        /* puts( "\t" __FUNCTION__ ); */
         new( ptr ) ego_prt( pparent );
     }
     return ptr;
@@ -3428,7 +3442,7 @@ ego_prt * ego_prt::dtor_all( ego_prt * ptr )
     if ( NULL != ptr )
     {
         ptr->~ego_prt();
-        puts( "\t" __FUNCTION__ );
+        /* puts( "\t" __FUNCTION__ ); */
     }
     return ptr;
 }

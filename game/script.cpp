@@ -892,7 +892,7 @@ Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
         PROFILE_END2( script_function );
 
         _script_function_calls[valuecode] += 1;
-        _script_function_times[valuecode] += clktime_script_function;
+        _script_function_times[valuecode] += dbg_pro_script_function.time;
     }
 
     return returncode;
@@ -1879,9 +1879,6 @@ bool_t ego_ai_state::dealloc( ego_ai_state * pself )
 {
     if ( NULL == pself ) return bfalse;
 
-    // free any allocated data
-    PROFILE_FREE_STRUCT( pself );
-
     return btrue;
 };
 
@@ -1914,8 +1911,6 @@ ego_ai_state * ego_ai_state::reconstruct( ego_ai_state * pself )
 ego_ai_state * ego_ai_state::ctor_this( ego_ai_state * pself )
 {
     if ( NULL == ego_ai_state::reconstruct( pself ) ) return NULL;
-
-    PROFILE_INIT_STRUCT( ai, pself );
 
     return pself;
 }

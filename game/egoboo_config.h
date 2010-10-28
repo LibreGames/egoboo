@@ -73,7 +73,7 @@
 
 #define  DEBUG_RENDERLIST      ///< Print debugging info for the currently rendered mesh
 
-#undef  DEBUG_PROFILE         ///< Switch the profiling functions on and off
+#define DEBUG_PROFILE         ///< Switch the profiling functions on and off
 #undef  DEBUG_PROFILE_DISPLAY ///< Display the results for the performance profiling
 #undef  DEBUG_PROFILE_RENDER  ///< Display the results for the performance profiling of the generic rendering
 #undef  DEBUG_PROFILE_MESH    ///< Display the results for the performance profiling of the mesh rendering sub-system
@@ -81,9 +81,7 @@
 
 #undef  DEBUG_OBJECT_SPAWN    ///< Log debug info for every object spawned
 
-#undef   DEBUG_PRT_LIST      ///< Track every single deletion from the PrtObjList to make sure the same element is not deleted twice. Prevents corruption of the PrtObjList.free_lst
-#undef   DEBUG_ENC_LIST      ///< Track every single deletion from the EncObjList to make sure the same element is not deleted twice. Prevents corruption of the EncObjList.free_lst
-#undef   DEBUG_CHR_LIST      ///< Track every single deletion from the ChrObjList to make sure the same element is not deleted twice. Prevents corruption of the ChrObjList.free_lst
+#undef  DEBUG_LIST          ///< Perform some extra steps to make sure the data in the XxxObjList do not become corrupt
 
 #define CLIP_LIGHT_FANS      ///< is the light_fans() function going to be throttled?
 #define CLIP_ALL_LIGHT_FANS  ///< a switch for selecting how the fans will be updated

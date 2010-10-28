@@ -180,6 +180,9 @@ struct ego_ai_state
     waypoint_t      wp;                  ///< current waypoint
     ego_waypoint_list wp_lst;              ///< Stored waypoints
 
+    ego_ai_state() : PROFILE_INIT_STRUCT( ai ) { ctor_this( this ); }
+    ~ego_ai_state() { dtor_this( this ); }
+
     static ego_ai_state * ctor_this( ego_ai_state * pself );
     static ego_ai_state * dtor_this( ego_ai_state * pself );
     static bool_t         dealloc( ego_ai_state * pself );
@@ -193,7 +196,7 @@ struct ego_ai_state
     static bool_t         add_order( ego_ai_state * pai, Uint32 value, Uint16 counter );
 
     // performance monitoring
-    PROFILE_DECLARE_STRUCT;
+    PROFILE_DECLARE_STRUCT( ai );
 };
 
 //--------------------------------------------------------------------------------------------

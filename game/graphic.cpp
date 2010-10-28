@@ -1722,15 +1722,11 @@ int draw_timer( int y )
 //--------------------------------------------------------------------------------------------
 int draw_game_status( int y )
 {
-    const net_instance * pnet = network_get_instance();
-
-    int loc_numplayer = ( NULL == pnet ) ? 0 : pnet->player_count;
-
     if ( network_waiting_for_players() )
     {
         y = _draw_string_raw( 0, y, "Waiting for players... " );
     }
-    else if ( loc_numplayer  > 0 )
+    else if ( net_stats.pla_count_total > 0 )
     {
         if ( local_stats.allpladead || PMod->respawnanytime )
         {
@@ -2517,10 +2513,10 @@ void render_scene_mesh( ego_renderlist * prlist )
                 // Bad shadows
                 for ( cnt = 0; cnt < dolist_count; cnt++ )
                 {
-                    CHR_REF ichr = dolist[cnt].ichr;
-                    if ( 0 == ChrObjList.get_data_ref( ichr ).shadow_size ) continue;
+                    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( dolist[cnt].ichr );
+                    if ( NULL == pchr || 0 == pchr->shadow_size ) continue;
 
-                    render_bad_shadow( ichr );
+                    render_bad_shadow( dolist[cnt].ichr );
                 }
             }
             else
@@ -2528,10 +2524,10 @@ void render_scene_mesh( ego_renderlist * prlist )
                 // Good shadows for me
                 for ( cnt = 0; cnt < dolist_count; cnt++ )
                 {
-                    CHR_REF ichr = dolist[cnt].ichr;
-                    if ( 0 == ChrObjList.get_data_ref( ichr ).shadow_size ) continue;
+                    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( dolist[cnt].ichr );
+                    if ( NULL == pchr || 0 == pchr->shadow_size ) continue;
 
-                    render_shadow( ichr );
+                    render_shadow( dolist[cnt].ichr );
                 }
             }
         }

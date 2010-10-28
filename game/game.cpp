@@ -131,6 +131,8 @@ PROFILE_DECLARE( set_local_latches );
 PROFILE_DECLARE( PassageStack_check_music );
 PROFILE_DECLARE( cl_talkToHost );
 
+PROFILE_DECLARE( misc_update );
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t  overrideslots      = bfalse;
@@ -384,20 +386,21 @@ void export_all_players( bool_t require_local )
 
         // Is it alive?
         character = ppla->index;
-        if ( !INGAME_CHR( character ) || !ChrObjList.get_data_ref( character ).alive ) continue;
+        ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( character );
+        if ( !INGAME_PCHR( pchr ) || !pchr->alive ) continue;
 
         // Export the character
         export_one_character( character, character, 0, is_local );
 
         // Export the left hand item
-        item = ChrObjList.get_data_ref( character ).holdingwhich[SLOT_LEFT];
+        item = pchr->holdingwhich[SLOT_LEFT];
         if ( INGAME_CHR( item ) && ChrObjList.get_data_ref( item ).isitem )
         {
             export_one_character( item, character, SLOT_LEFT, is_local );
         }
 
         // Export the right hand item
-        item = ChrObjList.get_data_ref( character ).holdingwhich[SLOT_RIGHT];
+        item = pchr->holdingwhich[SLOT_RIGHT];
         if ( INGAME_CHR( item ) && ChrObjList.get_data_ref( item ).isitem )
         {
             export_one_character( item, character, SLOT_RIGHT, is_local );
@@ -405,7 +408,7 @@ void export_all_players( bool_t require_local )
 
         // Export the inventory
         number = 0;
-        PACK_BEGIN_LOOP( item, ChrObjList.get_data_ref( character ).pack.next )
+        PACK_BEGIN_LOOP( item, pchr->pack.next )
         {
             if ( number >= MAXINVENTORY ) break;
 
@@ -836,7 +839,7 @@ int update_game()
     update_loop_cnt = 0;
     if ( update_wld < true_update )
     {
-        int max_iterations = single_frame_mode ? 1 : 2 * TARGET_UPS;
+        int max_iterations = 1; // single_frame_mode ? 1 : 2 * TARGET_UPS;
 
         /// @todo claforte@> Put that back in place once networking is functional (Jan 6th 2001)
         for ( tnc = 0; update_wld < true_update && tnc < max_iterations; tnc++ )

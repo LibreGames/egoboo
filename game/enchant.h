@@ -128,9 +128,9 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_enc_data * ctor_all( ego_enc_data * ptr ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_enc_data(); } return ptr; }
+    static ego_enc_data * ctor_all( ego_enc_data * ptr ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) ego_enc_data(); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_enc_data * dtor_all( ego_enc_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_enc_data(); puts( "\t" __FUNCTION__ ); } return ptr; }
+    static ego_enc_data * dtor_all( ego_enc_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_enc_data(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
 
     //---- memory management
 
@@ -210,9 +210,9 @@ protected:
     //---- construction and destruction
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static ego_enc * ctor_all( ego_enc * ptr, ego_obj_enc * pparent ) { if ( NULL != ptr ) { puts( "\t" __FUNCTION__ ); new( ptr ) ego_enc( pparent ); } return ptr; }
+    static ego_enc * ctor_all( ego_enc * ptr, ego_obj_enc * pparent ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) ego_enc( pparent ); } return ptr; }
     /// denstruct this struct, and ALL dependent structs. call the destructor
-    static ego_enc * dtor_all( ego_enc * ptr )  { if ( NULL != ptr ) { ptr->~ego_enc(); puts( "\t" __FUNCTION__ ); } return ptr; }
+    static ego_enc * dtor_all( ego_enc * ptr )  { if ( NULL != ptr ) { ptr->~ego_enc(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
 
     //---- memory management
 
