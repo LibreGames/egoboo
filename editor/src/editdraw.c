@@ -1198,7 +1198,7 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int *chosen, int *psg, int *spawn
                     sdlglSetColor(SDLGL_COL_BLACK);
                 }
                 else if (0 == mesh -> fan[fan_no].fx) {
-                    sdlglSetColor(SDLGL_COL_BLUE);
+                    sdlglSetColor(SDLGL_COL_LIGHTGREY);
                 }
                 else {
                     /* Colors >= 15: Others then standard colors */

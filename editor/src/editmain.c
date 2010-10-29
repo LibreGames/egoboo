@@ -28,7 +28,6 @@
 #include <math.h>
 
 #include "sdlgl3d.h"            /* DEG2RAD                              */
-#include "sdlglcfg.h"           /* Reading passages and spawn points    */
 #include "editor.h"             /* Global needed definitions            */
 #include "editfile.h"           /* Load and save map files              */
 #include "editdraw.h"           /* Draw anything                        */
@@ -794,8 +793,8 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi, in
 static void editmainLoadAdditionalData(void)
 {   
     
-    sdlglcfgReadEgoboo("module/passage.txt", &PassageRec);
-    sdlglcfgReadEgoboo("module/spawn.txt", &SpawnRec);
+    editfileText(EDITFILE_WORKDIR, "passage.txt", &PassageRec, 0);
+    editfileText(EDITFILE_WORKDIR, "spawn.txt", &SpawnRec, 0);
     /* --- Set flag, if passages / spawn points are loaded at all   */
     if (Passages[1].line_name[0] > 0) {
         EditState.psg_no = 1;
@@ -1090,7 +1089,7 @@ int editmainMap(int command, int info)
 
         case EDITMAIN_LOADMAP:
             memset(&Mesh, 0, sizeof(MESH_T));
-            if (editfileLoadMapMesh(&Mesh, EditState.msg)) {
+            if (editfileMapMesh(&Mesh, EditState.msg, 0)) {
 
                 editmainCompleteMapData(&Mesh);
                 sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
@@ -1103,7 +1102,7 @@ int editmainMap(int command, int info)
 
         case EDITMAIN_SAVEMAP:
             editmainCalcVrta(&Mesh);
-            return editfileSaveMapMesh(&Mesh, EditState.msg);
+            return editfileMapMesh(&Mesh, EditState.msg, 1);
 
         case EDITMAIN_ROTFAN:
             if (EditState.edit_mode == EDITMAIN_EDIT_FREE) {
@@ -1505,4 +1504,51 @@ void editmainChooseTex(int cx, int cy, int w, int h)
         EditState.ft.tx_no = new_tex;
     }      
   
+}
+
+/*
+ * Name:
+ *     editmainPassage
+ * Description:
+ *     Handles 'Passage'-Data, depending on given command.   
+ *     A copy of the actual chosen passage has to be given/is returned 
+ *     in 'psg'. 
+ * Input:
+ *     cmd:    What to do
+ *     psg *:  Pointer on a copy data to handle
+ *     info:   Additional info for action, if needed  
+ */
+void editmainPassage(char cmd, EDITMAIN_PASSAGE_T *psg, int info)
+{
+    
+    switch(cmd) {
+        case EDITMAIN_TFILE_START:
+            break;
+        case EDITMAIN_TFILE_CHOOSE:
+            break;
+    }
+ 
+}
+
+/*
+ * Name:
+ *     editmainSpawnPt
+ * Description:
+ *     Handles 'SpawnPoint'-Data, depending on given command.   
+ *     A copy of the actual chosen passage has to be given/is returned 
+ *     in 'psg'. 
+ * Input:
+ *     cmd:     What to do
+ *     spawn *: Pointer on a copy of data to handle
+ *     info:    Additional info for action, if needed  
+ */
+void editmainSpawnPt(char cmd, EDITMAIN_SPAWNPT_T *spawn, int info)
+{
+    
+    switch(cmd) {
+        case EDITMAIN_TFILE_START:
+            break;
+        case EDITMAIN_TFILE_CHOOSE:
+            break;
+    }
 }

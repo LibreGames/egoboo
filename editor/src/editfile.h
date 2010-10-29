@@ -26,18 +26,21 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
-#include "editor.h"     /* Definition of map-mesh MESH_T and COMMAND_T */
+#include "editor.h"     /* Definition of map-mesh MESH_T and COMMAND_T  */
+#include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
 
 /*******************************************************************************
 * DEFINES								                                       *
 *******************************************************************************/
+
+#define EDITFILE_WORKDIR    1    /* Main directory  */
 
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
 void editfileSetWorkDir(char *dir_name);
-int  editfileLoadMapMesh(MESH_T *mesh, char *msg);
-int  editfileSaveMapMesh(MESH_T *mesh, char *msg);
+int  editfileMapMesh(MESH_T *mesh, char *msg, char save);
+void editfileText(int dir_no, char *filename, SDLGLCFG_LINEINFO *lineinfo, char save);
 
 #endif  /* _EDITFILE_H_ */

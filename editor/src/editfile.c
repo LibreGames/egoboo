@@ -26,9 +26,6 @@
 #include <stdio.h>
 
 
-#include "editor.h"
-
-
 #include "editfile.h"     /* Own header */
 
 /*******************************************************************************
@@ -117,40 +114,24 @@ static void editfileMakeTwist(MESH_T *mesh)
  * Description:
  *     Generates a filename with path. Path is taken from
  * Input:
- *     mesh*: Pointer on mesh to set twists for
+ *     dir_no:  Which directory to use for filename
+ *     fname *: Name of file to create filename including path
  */
- static char *editfileMakeFileName(char *fname)
- {
- 
+static char *editfileMakeFileName(int dir_no, char *fname)
+{
+
     static char file_name[512];
 
 
-    sprintf(file_name, "%s%s", EditFileWorkDir, fname);
+    file_name[0] = 0;
+
+    switch(dir_no) {
+        case EDITFILE_WORKDIR:
+        default:
+            sprintf(file_name, "%s%s", EditFileWorkDir, fname);
+    }
 
     return file_name;
-    
- }
-
-/* ========================================================================== */
-/* ============================= THE PUBLIC ROUTINES ======================== */
-/* ========================================================================== */
-
-/*
- * Name:
- *     editfileSetWorkDir
- * Description:
- *     Sets the work directory for the file functions 
- *     Loads the map mesh into the data pointed on
- * Input:
- *     mesh*: Pointer on mesh to load
- *     msg *: Pointer on buffer for a message 
- * Output:
- *     Mesh could be loaded yes/no
- */
-void editfileSetWorkDir(char *dir_name)
-{
-
-    sprintf(EditFileWorkDir, "%s/", dir_name);
 
 }
 
@@ -165,7 +146,7 @@ void editfileSetWorkDir(char *dir_name)
  * Output:
  *     Mesh could be loaded yes/no
  */
-int editfileLoadMapMesh(MESH_T *mesh, char *msg)
+static int editfileLoadMapMesh(MESH_T *mesh, char *msg)
 {
 
     FILE* fileread;
@@ -175,7 +156,7 @@ int editfileLoadMapMesh(MESH_T *mesh, char *msg)
     int numfan;
 
 
-    fileread = fopen(editfileMakeFileName("level.mpd"), "rb");
+    fileread = fopen(editfileMakeFileName(EDITFILE_WORKDIR, "level.mpd"), "rb");
 
     if (NULL == fileread)
     {
@@ -187,7 +168,7 @@ int editfileLoadMapMesh(MESH_T *mesh, char *msg)
     {
 
         fread( &uiTmp32, 4, 1, fileread );
-        if ( uiTmp32 != MAPID ) 
+        if ( uiTmp32 != MAPID )
         {
             sprintf(msg, "%s", "Map file has invalid Map-ID.");
             return 0;
@@ -234,7 +215,7 @@ int editfileLoadMapMesh(MESH_T *mesh, char *msg)
 
     return 0;
 
-}
+} 
 
 /*
  * Name:
@@ -247,7 +228,7 @@ int editfileLoadMapMesh(MESH_T *mesh, char *msg)
  * Output:
  *     Save worked yes/no
  */
-int editfileSaveMapMesh(MESH_T *mesh, char *msg)
+static int editfileSaveMapMesh(MESH_T *mesh, char *msg)
 {
 
     FILE* filewrite;
@@ -264,7 +245,7 @@ int editfileSaveMapMesh(MESH_T *mesh, char *msg)
 
         numwritten = 0;
 
-        filewrite = fopen(editfileMakeFileName("level.mpd"), "wb");
+        filewrite = fopen(editfileMakeFileName(EDITFILE_WORKDIR, "level.mpd"), "wb");
         if (filewrite) {
 
             itmp = MAPID;
@@ -315,5 +296,77 @@ int editfileSaveMapMesh(MESH_T *mesh, char *msg)
     sprintf(msg, "%s", "Saving map has failed.");
 
 	return 0;
+
+}
+
+/* ========================================================================== */
+/* ============================= THE PUBLIC ROUTINES ======================== */
+/* ========================================================================== */
+
+/*
+ * Name:
+ *     editfileSetWorkDir
+ * Description:
+ *     Sets the work directory for the file functions 
+ *     Loads the map mesh into the data pointed on
+ * Input:
+ *     mesh*: Pointer on mesh to load
+ *     msg *: Pointer on buffer for a message 
+ * Output:
+ *     Mesh could be loaded yes/no
+ */
+void editfileSetWorkDir(char *dir_name)
+{
+
+    sprintf(EditFileWorkDir, "%s/", dir_name);
+
+}
+
+/*
+ * Name:
+ *     editfileMesh
+ * Description:
+ *     Load/Save an egoboo mesh
+ * Input:
+ *     mesh *: Pointer on mesh to save
+ *     msg *:  About waht failed if load/save failed
+ *     save:   Save it yes/no  
+ * Output:
+ *     Success yes/no
+ */
+int  editfileMapMesh(MESH_T *mesh, char *msg, char save)
+{
+
+    if (save) {
+        return editfileSaveMapMesh(mesh, msg);
+    }
+    else {
+        return editfileLoadMapMesh(mesh, msg);
+    }
+
+}
+
+/*
+ * Name:
+ *     editfileText
+ * Description:
+ *     Load an egoboo-type text-file 
+ * Input:
+ *     dir_no:     Which directory to use for read/write
+ *     filename *: Name of file itself
+ *     lineinfo *: Description, how to read/write the data
+ *     write:      Write it yes/no
+ * Output:
+ *     None
+ */
+void editfileText(int dir_no, char *filename, SDLGLCFG_LINEINFO *lineinfo, char write)
+{
+
+    if (write) {
+
+    }
+    else {
+        sdlglcfgReadEgoboo(editfileMakeFileName(dir_no, filename), lineinfo);
+    }
 
 }

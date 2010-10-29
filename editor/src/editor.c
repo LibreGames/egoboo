@@ -89,6 +89,9 @@
 #define EDITOR_MAPDLG_OK        ((char)6)
 
 #define EDITOR_TOOL_TILE        ((char)1)
+#define EDITOR_TOOL_PASSAGE     ((char)2)
+#define EDITOR_TOOL_SPAWN       ((char)3)
+#define EDITOR_TOOL_WAWALITE    ((char)4)
 
 /* ------- Drawing types ----- */
 #define EDITOR_DRAW2DMAP    ((char)SDLGL_TYPE_MENU + 10)
@@ -195,6 +198,8 @@ static SDLGL_FIELD SubMenu[] = {
     /* Tools-Menu */
     { SDLGL_TYPE_STD,  { 116, 16, 128, 16 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, { 124, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE, "Tile Properties" },
+    { SDLGL_TYPE_MENU, { 124, 36, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passages" },
+    { SDLGL_TYPE_MENU, { 124, 36, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_SPAWN, "Spawn Points" },
     { 0 }
 };
 

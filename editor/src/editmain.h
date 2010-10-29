@@ -41,8 +41,8 @@
 #define EDITMAIN_SAVEMAP     4
 #define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
 #define EDITMAIN_SETFANPROPERTY 6   /* Set the properties of a fan (fx and texture)     */       
-#define EDITMAIN_CHOOSEPASSAGE  6   /* Choose a passage, if passages are loaded         */
-#define EDITMAIN_CHOOSESPAWNPOS 7   /* Choose a spawn pos, if span positions are loaded */
+#define EDITMAIN_CHOOSEPASSAGE  6   /* Choose a passage, if loaded                      */
+#define EDITMAIN_CHOOSESPAWNPOS 7   /* Choose a spawn pos, if loaded                    */
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -54,6 +54,12 @@
 #define EDITMAIN_EDIT_FX        0x03    /* Edit FX-Flags of chosen fan(s)       */
 #define EDITMAIN_EDIT_TEXTURE   0x04    /* Edit the textures of chosen fan(s)   */
 #define EDITMAIN_EDIT_MAX       0x04    /* Maximum number of edit states        */
+/* -- Edit-States for text files -- */
+#define EDITMAIN_EDIT_PASSAGE   0x0A
+#define EDITMAIN_EDIT_SPAWNPT   0x0B 
+
+#define EDITMAIN_TFILE_START  ((char)1)      
+#define EDITMAIN_TFILE_CHOOSE ((char)2)       
 
 /* --------- Other values ------- */
 #define EDITMAIN_MAX_MAPSIZE  64
@@ -126,6 +132,8 @@ typedef struct {
     
 } EDITMAIN_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
 
+/* TODO: Add struct for 'menu.txt' */
+
 typedef struct {
     int           x;
     int           y;
@@ -148,6 +156,8 @@ void editmainFanTypeName(char *fan_name);
 void editmainChooseFanType(int dir, char *fan_name);
 void editmain2DTex(int x, int y, int w, int h);
 void editmainChooseTex(int cx, int cy, int w, int h);
+void editmainPassage(char cmd, EDITMAIN_PASSAGE_T *psg, int info);
+void editmainSpawnPt(char cmd, EDITMAIN_SPAWNPT_T *spawn, int info); 
 
 #endif /* _EDITMAIN_H_	*/
 
