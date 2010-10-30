@@ -1504,6 +1504,7 @@ SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field)
     
     
     ActFont = ActualStyle.fontno;
+    
     while(field -> sdlgl_type != 0) {
 
         switch(field -> sdlgl_type) {
@@ -1520,8 +1521,7 @@ SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field)
 
             /*
             case SDLGL_TYPE_STRING:
-                ActFont = style -> fontno;
-                sdlglstrIString(pos, text, textcolor, hotkeycolor);
+                sdlglstrIString(pos, text, textcolor, textcolor);
                 break;
             */
             default:

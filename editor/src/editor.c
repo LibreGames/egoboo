@@ -60,6 +60,8 @@
 #define EDITOR_MAPDLG   ((char)109)         /* Settings for new map         */
 #define EDITOR_FANPROPERTY  ((char)110)     /* Properties of chosen fan(s)  */
 #define EDITOR_SHOWMAP      ((char)111)
+#define EDITOR_PASSAGE  ((char)113)
+#define EDITOR_SPAWNPT  ((char)114)
 
 /* Sub-Commands */
 #define EDITOR_FILE_LOAD  ((char)1)
@@ -244,12 +246,12 @@ static SDLGL_FIELD MapDlg[] = {
  * Name:
  *     editorSetDialog
  * Description:
- *     Opens/Closes dialog with given number. 
+ *     Opens/Closes dialog with given number.
  * Input:
  *     which: Which dialog to open/close
- *     open:  Open it yes/no 
+ *     open:  Open it yes/no
  */
-static editorSetDialog(char which, char open)
+static void editorSetDialog(char which, char open)
 {
 
     SDLGL_FIELD *dlg;
@@ -259,10 +261,13 @@ static editorSetDialog(char which, char open)
         case EDITOR_MAPDLG:
             dlg = &MapDlg[0];
             break;
-        case EDITOR_FANPROPERTY:    
+        case EDITOR_FANPROPERTY:
             dlg = &FanInfoDlg[0];
             break;
-            /* TODO: Add dialogs for Passages and Spawn Points */ 
+            /* TODO: Add dialogs for Passages and Spawn Points */
+
+        case EDITOR_PASSAGE:
+        case EDITOR_SPAWNPT:
         default:
             return;
     }
@@ -272,10 +277,10 @@ static editorSetDialog(char which, char open)
         EditorActDlg = which;
     }
     else {
-        sdlglInputRemove(which); 
+        sdlglInputRemove(which);
         EditorActDlg = 0;
-    }        
-    
+    }
+
 }
 
 /* =================== Map-Settings-Dialog ================ */
@@ -443,7 +448,7 @@ static void editor2DMap(SDLGL_EVENT *event)
             }
             break;
         case EDITOR_2DMAP_FANROTATE:
-            editmainMap(EDITMAIN_ROTFAN, 0);
+            editmainMap(EDITMAIN_ROTFAN);
             break;
 
         case EDITOR_2DMAP_FANBROWSE:
@@ -472,11 +477,11 @@ static int editorFileMenu(char which)
 
     switch(which) {
         case EDITOR_FILE_LOAD:
-            editmainMap(EDITMAIN_LOADMAP, 0);
+            editmainMap(EDITMAIN_LOADMAP);
             break;
             
         case EDITOR_FILE_SAVE:
-            editmainMap(EDITMAIN_SAVEMAP, 0);
+            editmainMap(EDITMAIN_SAVEMAP);
             break;
 
         case EDITOR_FILE_NEW:
@@ -489,7 +494,7 @@ static int editorFileMenu(char which)
                 sdlglInputRemove(EDITOR_FANDLG);
             }
             */
-            if (! editmainMap(EDITMAIN_NEWMAP, 0)) {
+            if (! editmainMap(EDITMAIN_NEWMAP)) {
                 /* TODO: Display message, what has gone wrong   */
                 /* TODO: Close menu, if menu-point is chosen    */
             }
@@ -567,7 +572,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     sdlgl3dMoveObjects(event -> secondspassed);
 
     /* Draw the 3D-View before the 2D-Screen */
-    editmainMap(EDITMAIN_DRAWMAP, 0);
+    editmainMap(EDITMAIN_DRAWMAP);
 
     /* ---- Prepare drawing in 2D-Mode ---- */
     glPolygonMode(GL_FRONT, GL_FILL);
@@ -584,6 +589,13 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
         if (fields -> fstate & SDLGL_FSTATE_MOUSEOVER) {
 
             mouse_over = 1;
+            if (fields -> sdlgl_type == SDLGL_TYPE_MENU
+                && fields -> code > 0
+                && fields -> sub_code == 0) {
+
+                editorSetMenu(fields -> code);
+
+            }
 
         }
 
@@ -598,17 +610,11 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
                 sdlglstrSetColorNo(SDLGL_COL_WHITE);
                 sdlglstrString(&fields -> rect, fields -> pdata);
                 break;
-                
-            case SDLGL_TYPE_MENU:                    
+
+            case SDLGL_TYPE_MENU:
                 if (fields -> fstate & SDLGL_FSTATE_MOUSEOVER) {
 
                     color = SDLGL_COL_RED;
-
-                    if (fields -> code > 0 && fields -> sub_code == 0) {
-
-                        editorSetMenu(fields -> code);
-
-                    }
 
                 }
                 else {
@@ -621,31 +627,31 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
                 sdlglstrString(&fields -> rect, fields -> pdata);
                 break;
 
-            case EDITOR_DRAW2DMAP:  
+            case EDITOR_DRAW2DMAP:
                 editmainDrawMap2D(fields -> rect.x, fields -> rect.y);
                 break;
-                
+
             case EDITOR_DRAWTEXTURE:
                 editmain2DTex(fields -> rect.x, fields -> rect.y,
                               fields -> rect.w, fields -> rect.h);
                 break;
-                
+
             case SDLGL_TYPE_CHECKBOX:
                 editorDrawCheckBox(fields);
                 break;
-                
+
             case SDLGL_TYPE_BUTTON:
                 sdlglstrDrawButton(&fields -> rect, fields -> pdata, 0);
                 break;
-                
+
             case SDLGL_TYPE_SLI_AL:
                 sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_SLI_AL, 0);
                 break;
-                
+
             case SDLGL_TYPE_SLI_AR:
                 sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_SLI_AR, 0);
                 break;
-                
+
         }
 
         fields++;
@@ -745,6 +751,15 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 editor2DMap(event);
                 break;
 
+            case EDITOR_MAPDLG:
+                /* TODO: Handle map dialog input */
+                break;
+            case EDITOR_PASSAGE:
+                /* TODO: Handle passage dialog input */
+                break;
+            case EDITOR_SPAWNPT:
+                /* TODO: Handle spawn point dialog input */
+                break;
             case EDITOR_TOOLS:
                 /* Add this Dialog at position */
                 Map2DState |= event -> sub_code;

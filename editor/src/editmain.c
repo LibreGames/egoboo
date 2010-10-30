@@ -166,7 +166,7 @@ static EDITMAIN_XY AdjacentXY[8] = {
  *     -------
  * Input:
  *     mesh*:      Pointer on mesh with info about map size
- *     fan:        To find the adjacent tiles for  
+ *     fan:        To find the adjacent tiles for
  *     adjacent *: Where to return the list of fan-positions 
  * Output: 
  *     Number of adjacent tiles 
@@ -800,7 +800,7 @@ static void editmainLoadAdditionalData(void)
         EditState.psg_no = 1;
     }
     else {
-        EditState.psg_no = 1;
+        EditState.psg_no = 0;
     }
     
     if (SpawnObjects[1].line_name[0] > 0) {
@@ -812,85 +812,6 @@ static void editmainLoadAdditionalData(void)
 
 }
 
-/*                                             
- * Name:
- *     editmainChoosePassage
- * Description:
- *     If 'dir' = 0, then the list index is reset 
- *     Loads additional data needed for map. SPAWN-Points an Passages
- * Input:
- *     dir:   Move index into this direction 
- */
-static int editmainChoosePassage(int dir)
-{
-
-    if (EditState.psg_no > 0) {
-        /* If a passage at all */
-        if (dir == 0) {
-            EditState.psg_no = 1;
-        }
-        else if (dir > 0) {
-            if (Passages[EditState.psg_no + 1].line_name[0] > 0) {
-                EditState.psg_no++;
-            }
-        }
-        else if (dir < 0) {
-            if (EditState.psg_no > 1) {
-                EditState.psg_no--;
-            }
-        }
-        if (dir != 0) {
-            /* TODO: Fill the list of fan numbers for this passage */
-            PassageFan[0] = -1;
-        }
-        return 1;
-    }
-    
-    PassageFan[0] = -1;
-    
-    return 0;
-    
-}
-
-/*                                             
- * Name:
- *     editmainChooseSpawnPos
- * Description:
- *     Loads additional data needed for map. SPAWN-Points an Passages 
- * Input:
- *     dir:   Move index into this direction
- */
-static int editmainChooseSpawnPos(int dir)
-{
-
-    if (EditState.spawnpos_no > 0) {
-        /* If a spawn point at all */
-        if (dir == 0) {
-            EditState.spawnpos_no = 1;
-        }
-        else if (dir > 0) {
-            if (SpawnObjects[EditState.spawnpos_no + 1].line_name[0] > 0) {
-                EditState.spawnpos_no++;
-            }            
-        }
-        else if (dir < 0) {
-            if (EditState.spawnpos_no > 1) {
-                EditState.spawnpos_no--;
-            }
-        }
-        if (dir != 0) {
-            /* TODO: Fill the list of fan numbers for this spawn pos */
-
-            SpawnFan[0] = -1;       /* No fan at all */
-        }
-        return 1;
-    }
-
-    SpawnFan[0] = -1;       /* No fan at all */
-    
-    return 0;    
-    
-}
 
 /*
  * Name:
@@ -905,7 +826,7 @@ static void editmainUpdateChosenFreeFan(void)
 
     int cnt, tx, ty;
     
-    
+
     if (-1 != EditState.fan_selected[0]) {
                     
         /* Get copy at original position */
@@ -1059,11 +980,10 @@ void editmainExit(void)
  *      Does the work for editing and sets edit states, if needed 
  * Input:
  *      command:  What to do
- *      info:     additional info for command
  * Output:
  *      Result of given command
  */
-int editmainMap(int command, int info)
+int editmainMap(int command)
 {
                                        
     switch(command) {
@@ -1112,12 +1032,6 @@ int editmainMap(int command, int info)
                 editmainUpdateChosenFreeFan();
             }
             return 1;
-            
-        case EDITMAIN_CHOOSEPASSAGE:
-            return editmainChoosePassage(info);
-            
-        case EDITMAIN_CHOOSESPAWNPOS:
-            return editmainChooseSpawnPos(info);
  
     }
 
@@ -1510,45 +1424,116 @@ void editmainChooseTex(int cx, int cy, int w, int h)
  * Name:
  *     editmainPassage
  * Description:
- *     Handles 'Passage'-Data, depending on given command.   
- *     A copy of the actual chosen passage has to be given/is returned 
- *     in 'psg'. 
+ *     Handles 'Passage'-Data, depending on given command.
+ *     A copy of the actual chosen passage has to be given/is returned
+ *     in 'psg'.
  * Input:
  *     cmd:    What to do
  *     psg *:  Pointer on a copy data to handle
- *     info:   Additional info for action, if needed  
+ *     info:   Additional info for action, if needed
  */
 void editmainPassage(char cmd, EDITMAIN_PASSAGE_T *psg, int info)
 {
-    
+
     switch(cmd) {
         case EDITMAIN_TFILE_START:
+            if (EditState.psg_no > 0) {
+                EditState.psg_no = 1;
+                memcpy(psg, &Passages[EditState.psg_no], sizeof(EDITMAIN_PASSAGE_T));
+                /* TODO: Fill the list of fan numbers for this passage */
+                PassageFan[0] = -1;
+            }
             break;
         case EDITMAIN_TFILE_CHOOSE:
+            if (EditState.psg_no > 0) {
+                /* If a passage at all --> Write the update to list */
+                memcpy(&Passages[EditState.psg_no], psg, sizeof(EDITMAIN_PASSAGE_T));
+                if (info > 0) {
+                    if (Passages[EditState.psg_no + 1].line_name[0] > 0) {
+                        EditState.psg_no++;
+                    }
+                }
+                else if (info < 0) {
+                    if (EditState.psg_no > 1) {
+                        EditState.psg_no--;
+                    }
+                }
+                if (info != 0) {
+                    /* Hand copy over to caller for editing */
+                    memcpy(psg, &Passages[EditState.psg_no], sizeof(EDITMAIN_PASSAGE_T));
+                    /* TODO: Fill the list of fan numbers for this passage */
+                    PassageFan[0] = -1;
+                }
+                return;
+            }
+            PassageFan[0] = -1;
+            break;
+        case EDITMAIN_TFILE_UPDATE:
+            /* Write the update to list */
+            memcpy(&Passages[EditState.psg_no], psg, sizeof(EDITMAIN_PASSAGE_T));
+            break;
+        case EDITMAIN_TFILE_SAVE:
+            /* TODO: Save the changes to file */
+            editfileText(EDITFILE_WORKDIR, "passage.txt", &PassageRec, 1);
             break;
     }
- 
+
 }
 
 /*
  * Name:
  *     editmainSpawnPt
  * Description:
- *     Handles 'SpawnPoint'-Data, depending on given command.   
- *     A copy of the actual chosen passage has to be given/is returned 
- *     in 'psg'. 
+ *     Handles 'SpawnPoint'-Data, depending on given command.
+ *     A copy of the actual chosen passage has to be given/is returned
+ *     in 'psg'.
  * Input:
  *     cmd:     What to do
  *     spawn *: Pointer on a copy of data to handle
- *     info:    Additional info for action, if needed  
+ *     info:    Additional info for action, if needed
  */
 void editmainSpawnPt(char cmd, EDITMAIN_SPAWNPT_T *spawn, int info)
 {
-    
+
     switch(cmd) {
         case EDITMAIN_TFILE_START:
+            if (EditState.spawnpos_no > 0) {
+                EditState.spawnpos_no = 1;
+                memcpy(spawn, &SpawnObjects[EditState.spawnpos_no], sizeof(EDITMAIN_SPAWNPT_T));
+                /* TODO: Fill the list of fan numbers for this spawn pos */
+                SpawnFan[0] = -1;
+            }
             break;
         case EDITMAIN_TFILE_CHOOSE:
+            if (EditState.spawnpos_no > 0) {
+                /* If a spawn point at all */
+                memcpy(&SpawnObjects[EditState.spawnpos_no], spawn, sizeof(EDITMAIN_SPAWNPT_T));
+                if (info > 0) {
+                    if (SpawnObjects[EditState.spawnpos_no + 1].line_name[0] > 0) {
+                        EditState.spawnpos_no++;
+                    }
+                }
+                else if (info < 0) {
+                    if (EditState.spawnpos_no > 1) {
+                        EditState.spawnpos_no--;
+                    }
+                }
+                if (info != 0) {
+                    /* TODO: Fill the list of fan numbers for this spawn pos */
+                    memcpy(spawn, &SpawnObjects[EditState.spawnpos_no], sizeof(EDITMAIN_SPAWNPT_T));
+                    SpawnFan[0] = -1;       /* No fan at all */
+                }
+                return;
+            }
+            SpawnFan[0] = -1;       /* No fan at all */
+            break;
+        case EDITMAIN_TFILE_UPDATE:
+            memcpy(spawn, &SpawnObjects[EditState.spawnpos_no], sizeof(EDITMAIN_SPAWNPT_T));
+            break;
+        case EDITMAIN_TFILE_SAVE:
+            /* TODO: Save the changes to file */
+            editfileText(EDITFILE_WORKDIR, "spawn.txt", &SpawnRec, 1);
             break;
     }
+
 }

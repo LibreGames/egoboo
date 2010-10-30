@@ -41,8 +41,6 @@
 #define EDITMAIN_SAVEMAP     4
 #define EDITMAIN_ROTFAN      5      /* Rotates the actual chosen fan if browsing        */ 
 #define EDITMAIN_SETFANPROPERTY 6   /* Set the properties of a fan (fx and texture)     */       
-#define EDITMAIN_CHOOSEPASSAGE  6   /* Choose a passage, if loaded                      */
-#define EDITMAIN_CHOOSESPAWNPOS 7   /* Choose a spawn pos, if loaded                    */
 
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
@@ -59,7 +57,9 @@
 #define EDITMAIN_EDIT_SPAWNPT   0x0B 
 
 #define EDITMAIN_TFILE_START  ((char)1)      
-#define EDITMAIN_TFILE_CHOOSE ((char)2)       
+#define EDITMAIN_TFILE_CHOOSE ((char)2)
+#define EDITMAIN_TFILE_UPDATE ((char)3) /* Do update of single record   */
+#define EDITMAIN_TFILE_SAVE   ((char)4) /* Write changes to file        */
 
 /* --------- Other values ------- */
 #define EDITMAIN_MAX_MAPSIZE  64
@@ -147,7 +147,7 @@ typedef struct {
 
 EDITMAIN_STATE_T *editmainInit(int map_size, int minimap_w, int minimap_h);
 void editmainExit(void);
-int  editmainMap(int command, int info);
+int  editmainMap(int command);
 void editmainDrawMap2D(int x, int y);
 char editmainToggleFlag(int which, unsigned char flag);
 void editmainChooseFan(int cx, int cy, int is_floor);

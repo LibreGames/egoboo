@@ -1,3 +1,6 @@
+2010-10-30 <bitnapper>
+- More work towards display/editing passages and spawn points
+
 2010-10-10 <bitnapper>
 - Adjusted drawing code for 3D-Display. Draw bottom before walls 
 - Known bugs: Setting walls in 'simple mode' still doesn't work correct
