@@ -186,20 +186,20 @@ ego_OVolume ego_OVolume::do_merge( ego_OVolume * pv1, ego_OVolume * pv2 )
 
         // merge the volumes
 
-        rv.oct.mins[OCT_X] = MIN( pv1->oct.mins[OCT_X], pv2->oct.mins[OCT_X] );
-        rv.oct.maxs[OCT_X] = MAX( pv1->oct.maxs[OCT_X], pv2->oct.maxs[OCT_X] );
+        rv.oct.mins[OCT_X] = SDL_min( pv1->oct.mins[OCT_X], pv2->oct.mins[OCT_X] );
+        rv.oct.maxs[OCT_X] = SDL_max( pv1->oct.maxs[OCT_X], pv2->oct.maxs[OCT_X] );
 
-        rv.oct.mins[OCT_Y] = MIN( pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_Y] );
-        rv.oct.maxs[OCT_Y] = MAX( pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_Y] );
+        rv.oct.mins[OCT_Y] = SDL_min( pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_Y] );
+        rv.oct.maxs[OCT_Y] = SDL_max( pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_Y] );
 
-        rv.oct.mins[OCT_Z] = MIN( pv1->oct.mins[OCT_Z], pv2->oct.mins[OCT_Z] );
-        rv.oct.maxs[OCT_Z] = MAX( pv1->oct.maxs[OCT_Z], pv2->oct.maxs[OCT_Z] );
+        rv.oct.mins[OCT_Z] = SDL_min( pv1->oct.mins[OCT_Z], pv2->oct.mins[OCT_Z] );
+        rv.oct.maxs[OCT_Z] = SDL_max( pv1->oct.maxs[OCT_Z], pv2->oct.maxs[OCT_Z] );
 
-        rv.oct.mins[OCT_XY] = MIN( pv1->oct.mins[OCT_XY], pv2->oct.mins[OCT_XY] );
-        rv.oct.maxs[OCT_XY] = MAX( pv1->oct.maxs[OCT_XY], pv2->oct.maxs[OCT_XY] );
+        rv.oct.mins[OCT_XY] = SDL_min( pv1->oct.mins[OCT_XY], pv2->oct.mins[OCT_XY] );
+        rv.oct.maxs[OCT_XY] = SDL_max( pv1->oct.maxs[OCT_XY], pv2->oct.maxs[OCT_XY] );
 
-        rv.oct.mins[OCT_YX] = MIN( pv1->oct.mins[OCT_YX], pv2->oct.mins[OCT_YX] );
-        rv.oct.maxs[OCT_YX] = MAX( pv1->oct.maxs[OCT_YX], pv2->oct.maxs[OCT_YX] );
+        rv.oct.mins[OCT_YX] = SDL_min( pv1->oct.mins[OCT_YX], pv2->oct.mins[OCT_YX] );
+        rv.oct.maxs[OCT_YX] = SDL_max( pv1->oct.maxs[OCT_YX], pv2->oct.maxs[OCT_YX] );
 
         // check for an invalid volume
         binvalid = ( rv.oct.mins[OCT_X] >= rv.oct.maxs[OCT_X] ) || ( rv.oct.mins[OCT_Y] >= rv.oct.maxs[OCT_Y] ) || ( rv.oct.mins[OCT_Z] >= rv.oct.maxs[OCT_Z] );
@@ -237,56 +237,56 @@ ego_OVolume ego_OVolume::do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 )
         }
 
         // intersect the volumes
-        rv.oct.mins[OCT_X] = MAX( pv1->oct.mins[OCT_X], pv2->oct.mins[OCT_X] );
-        rv.oct.maxs[OCT_X] = MIN( pv1->oct.maxs[OCT_X], pv2->oct.maxs[OCT_X] );
+        rv.oct.mins[OCT_X] = SDL_max( pv1->oct.mins[OCT_X], pv2->oct.mins[OCT_X] );
+        rv.oct.maxs[OCT_X] = SDL_min( pv1->oct.maxs[OCT_X], pv2->oct.maxs[OCT_X] );
         if ( rv.oct.mins[OCT_X] >= rv.oct.maxs[OCT_X] ) return rv;
 
-        rv.oct.mins[OCT_Y] = MAX( pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_Y] );
-        rv.oct.maxs[OCT_Y] = MIN( pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_Y] );
+        rv.oct.mins[OCT_Y] = SDL_max( pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_Y] );
+        rv.oct.maxs[OCT_Y] = SDL_min( pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_Y] );
         if ( rv.oct.mins[OCT_Y] >= rv.oct.maxs[OCT_Y] ) return rv;
 
-        rv.oct.mins[OCT_Z] = MAX( pv1->oct.mins[OCT_Z], pv2->oct.mins[OCT_Z] );
-        rv.oct.maxs[OCT_Z] = MIN( pv1->oct.maxs[OCT_Z], pv2->oct.maxs[OCT_Z] );
+        rv.oct.mins[OCT_Z] = SDL_max( pv1->oct.mins[OCT_Z], pv2->oct.mins[OCT_Z] );
+        rv.oct.maxs[OCT_Z] = SDL_min( pv1->oct.maxs[OCT_Z], pv2->oct.maxs[OCT_Z] );
         if ( rv.oct.mins[OCT_Z] >= rv.oct.maxs[OCT_Z] ) return rv;
 
         if ( pv1->lod >= 0 && pv2->lod >= 0 )
         {
-            rv.oct.mins[OCT_XY] = MAX( pv1->oct.mins[OCT_XY], pv2->oct.mins[OCT_XY] );
-            rv.oct.maxs[OCT_XY] = MIN( pv1->oct.maxs[OCT_XY], pv2->oct.maxs[OCT_XY] );
+            rv.oct.mins[OCT_XY] = SDL_max( pv1->oct.mins[OCT_XY], pv2->oct.mins[OCT_XY] );
+            rv.oct.maxs[OCT_XY] = SDL_min( pv1->oct.maxs[OCT_XY], pv2->oct.maxs[OCT_XY] );
             if ( rv.oct.mins[OCT_XY] >= rv.oct.maxs[OCT_XY] ) return rv;
 
-            rv.oct.mins[OCT_YX] = MAX( pv1->oct.mins[OCT_YX], pv2->oct.mins[OCT_YX] );
-            rv.oct.maxs[OCT_YX] = MIN( pv1->oct.maxs[OCT_YX], pv2->oct.maxs[OCT_YX] );
+            rv.oct.mins[OCT_YX] = SDL_max( pv1->oct.mins[OCT_YX], pv2->oct.mins[OCT_YX] );
+            rv.oct.maxs[OCT_YX] = SDL_min( pv1->oct.maxs[OCT_YX], pv2->oct.maxs[OCT_YX] );
             if ( rv.oct.mins[OCT_YX] >= rv.oct.maxs[OCT_YX] ) return rv;
         }
         else if ( pv1->lod >= 0 )
         {
-            rv.oct.mins[OCT_XY] = MAX( pv1->oct.mins[OCT_XY], pv2->oct.mins[OCT_X] + pv2->oct.mins[OCT_Y] );
-            rv.oct.maxs[OCT_XY] = MIN( pv1->oct.maxs[OCT_XY], pv2->oct.maxs[OCT_X] + pv2->oct.maxs[OCT_Y] );
+            rv.oct.mins[OCT_XY] = SDL_max( pv1->oct.mins[OCT_XY], pv2->oct.mins[OCT_X] + pv2->oct.mins[OCT_Y] );
+            rv.oct.maxs[OCT_XY] = SDL_min( pv1->oct.maxs[OCT_XY], pv2->oct.maxs[OCT_X] + pv2->oct.maxs[OCT_Y] );
             if ( rv.oct.mins[OCT_XY] >= rv.oct.maxs[OCT_XY] ) return rv;
 
-            rv.oct.mins[OCT_YX] = MAX( pv1->oct.mins[OCT_YX], -pv2->oct.maxs[OCT_X] + pv2->oct.mins[OCT_Y] );
-            rv.oct.maxs[OCT_YX] = MIN( pv1->oct.maxs[OCT_YX], -pv2->oct.mins[OCT_X] + pv2->oct.maxs[OCT_Y] );
+            rv.oct.mins[OCT_YX] = SDL_max( pv1->oct.mins[OCT_YX], -pv2->oct.maxs[OCT_X] + pv2->oct.mins[OCT_Y] );
+            rv.oct.maxs[OCT_YX] = SDL_min( pv1->oct.maxs[OCT_YX], -pv2->oct.mins[OCT_X] + pv2->oct.maxs[OCT_Y] );
             if ( rv.oct.mins[OCT_YX] >= rv.oct.maxs[OCT_YX] ) return rv;
         }
         else if ( pv2->lod >= 0 )
         {
-            rv.oct.mins[OCT_XY] = MAX( pv1->oct.mins[OCT_X] + pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_XY] );
-            rv.oct.maxs[OCT_XY] = MIN( pv1->oct.maxs[OCT_X] + pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_XY] );
+            rv.oct.mins[OCT_XY] = SDL_max( pv1->oct.mins[OCT_X] + pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_XY] );
+            rv.oct.maxs[OCT_XY] = SDL_min( pv1->oct.maxs[OCT_X] + pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_XY] );
             if ( rv.oct.mins[OCT_XY] >= rv.oct.maxs[OCT_XY] ) return rv;
 
-            rv.oct.mins[OCT_YX] = MAX( -pv1->oct.maxs[OCT_X] + pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_YX] );
-            rv.oct.maxs[OCT_YX] = MIN( -pv1->oct.mins[OCT_X] + pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_YX] );
+            rv.oct.mins[OCT_YX] = SDL_max( -pv1->oct.maxs[OCT_X] + pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_YX] );
+            rv.oct.maxs[OCT_YX] = SDL_min( -pv1->oct.mins[OCT_X] + pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_YX] );
             if ( rv.oct.mins[OCT_YX] >= rv.oct.maxs[OCT_YX] ) return rv;
         }
         else
         {
-            rv.oct.mins[OCT_XY] = MAX( pv1->oct.mins[OCT_X] + pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_X] + pv2->oct.mins[OCT_Y] );
-            rv.oct.maxs[OCT_XY] = MIN( pv1->oct.maxs[OCT_X] + pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_X] + pv2->oct.maxs[OCT_Y] );
+            rv.oct.mins[OCT_XY] = SDL_max( pv1->oct.mins[OCT_X] + pv1->oct.mins[OCT_Y], pv2->oct.mins[OCT_X] + pv2->oct.mins[OCT_Y] );
+            rv.oct.maxs[OCT_XY] = SDL_min( pv1->oct.maxs[OCT_X] + pv1->oct.maxs[OCT_Y], pv2->oct.maxs[OCT_X] + pv2->oct.maxs[OCT_Y] );
             if ( rv.oct.mins[OCT_XY] >= rv.oct.maxs[OCT_XY] ) return rv;
 
-            rv.oct.mins[OCT_YX] = MAX( -pv1->oct.maxs[OCT_X] + pv1->oct.mins[OCT_Y], -pv2->oct.maxs[OCT_X] + pv2->oct.mins[OCT_Y] );
-            rv.oct.maxs[OCT_YX] = MIN( -pv1->oct.mins[OCT_X] + pv1->oct.maxs[OCT_Y], -pv2->oct.mins[OCT_X] + pv2->oct.maxs[OCT_Y] );
+            rv.oct.mins[OCT_YX] = SDL_max( -pv1->oct.maxs[OCT_X] + pv1->oct.mins[OCT_Y], -pv2->oct.maxs[OCT_X] + pv2->oct.mins[OCT_Y] );
+            rv.oct.maxs[OCT_YX] = SDL_min( -pv1->oct.mins[OCT_X] + pv1->oct.maxs[OCT_Y], -pv2->oct.mins[OCT_X] + pv2->oct.maxs[OCT_Y] );
             if ( rv.oct.mins[OCT_YX] >= rv.oct.maxs[OCT_YX] ) return rv;
         }
 
@@ -296,7 +296,7 @@ ego_OVolume ego_OVolume::do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 )
         }
         else
         {
-            rv.lod = MIN( pv1->lod, pv2->lod );
+            rv.lod = SDL_min( pv1->lod, pv2->lod );
         }
     }
 
@@ -451,7 +451,7 @@ bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolum
 
     // use qsort to order the points according to their rotation angle
     // relative to the centroid
-    qsort(( void * )pd, count, sizeof( ego_cv_point_data ), cv_point_data_cmp );
+    SDL_qsort(( void * )pd, count, sizeof( ego_cv_point_data ), cv_point_data_cmp );
 
     // now we can use geometry to find the area of the planar collision area
     fvec3_self_clear( centroid.v );
@@ -470,19 +470,19 @@ bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolum
             tnc = cnt + 1;
 
             // optimize the bounding volume
-            pov->oct.mins[OCT_X] = MIN( pov->oct.mins[OCT_X], pd[tnc].pos.x );
-            pov->oct.maxs[OCT_X] = MAX( pov->oct.maxs[OCT_X], pd[tnc].pos.x );
+            pov->oct.mins[OCT_X] = SDL_min( pov->oct.mins[OCT_X], pd[tnc].pos.x );
+            pov->oct.maxs[OCT_X] = SDL_max( pov->oct.maxs[OCT_X], pd[tnc].pos.x );
 
-            pov->oct.mins[OCT_Y] = MIN( pov->oct.mins[OCT_Y], pd[tnc].pos.y );
-            pov->oct.maxs[OCT_Y] = MAX( pov->oct.maxs[OCT_Y], pd[tnc].pos.y );
+            pov->oct.mins[OCT_Y] = SDL_min( pov->oct.mins[OCT_Y], pd[tnc].pos.y );
+            pov->oct.maxs[OCT_Y] = SDL_max( pov->oct.maxs[OCT_Y], pd[tnc].pos.y );
 
             ftmp = pd[tnc].pos.x + pd[tnc].pos.y;
-            pov->oct.mins[OCT_XY] = MIN( pov->oct.mins[OCT_XY], ftmp );
-            pov->oct.maxs[OCT_XY] = MAX( pov->oct.maxs[OCT_XY], ftmp );
+            pov->oct.mins[OCT_XY] = SDL_min( pov->oct.mins[OCT_XY], ftmp );
+            pov->oct.maxs[OCT_XY] = SDL_max( pov->oct.maxs[OCT_XY], ftmp );
 
             ftmp = -pd[tnc].pos.x + pd[tnc].pos.y;
-            pov->oct.mins[OCT_YX] = MIN( pov->oct.mins[OCT_YX], ftmp );
-            pov->oct.maxs[OCT_YX] = MAX( pov->oct.maxs[OCT_YX], ftmp );
+            pov->oct.mins[OCT_YX] = SDL_min( pov->oct.mins[OCT_YX], ftmp );
+            pov->oct.maxs[OCT_YX] = SDL_max( pov->oct.maxs[OCT_YX], ftmp );
 
             // determine the area for this element
             diff1.x = pd[cnt].pos.x - center.x;
@@ -528,7 +528,7 @@ bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolum
     }
 
     // determine the volume center
-    if ( NULL != pcenter && ABS( area ) > 0 )
+    if ( NULL != pcenter && SDL_abs( area ) > 0 )
     {
         ( *pcenter ).x = centroid.x / area;
         ( *pcenter ).y = centroid.y / area;
@@ -536,7 +536,7 @@ bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolum
     }
 
     // determine the volume
-    volume = ABS( area ) * ( pov->oct.maxs[OCT_Z] - pov->oct.mins[OCT_Z] );
+    volume = SDL_abs( area ) * ( pov->oct.maxs[OCT_Z] - pov->oct.mins[OCT_Z] );
     if ( NULL != pvolume )
     {
         ( *pvolume ) = volume;
@@ -564,7 +564,7 @@ bool_t ego_CVolume::ctor_this( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume
 
     //---- refine the collision volume ----
 
-    cv.ov.lod = MIN( pva->lod, pvb->lod );
+    cv.ov.lod = SDL_min( pva->lod, pvb->lod );
     retval = ego_CVolume::refine( &cv );
 
     if ( NULL != pcv )
@@ -892,24 +892,24 @@ void points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count )
         float tmp_x, tmp_y, tmp_z, tmp_xy, tmp_yx;
 
         tmp_x = pos[cnt].x;
-        pbmp->mins[OCT_X]  = MIN( pbmp->mins[OCT_X], tmp_x );
-        pbmp->maxs[OCT_X]  = MAX( pbmp->maxs[OCT_X], tmp_x );
+        pbmp->mins[OCT_X]  = SDL_min( pbmp->mins[OCT_X], tmp_x );
+        pbmp->maxs[OCT_X]  = SDL_max( pbmp->maxs[OCT_X], tmp_x );
 
         tmp_y = pos[cnt].y;
-        pbmp->mins[OCT_Y]  = MIN( pbmp->mins[OCT_Y], tmp_y );
-        pbmp->maxs[OCT_Y]  = MAX( pbmp->maxs[OCT_Y], tmp_y );
+        pbmp->mins[OCT_Y]  = SDL_min( pbmp->mins[OCT_Y], tmp_y );
+        pbmp->maxs[OCT_Y]  = SDL_max( pbmp->maxs[OCT_Y], tmp_y );
 
         tmp_z = pos[cnt].z;
-        pbmp->mins[OCT_Z]  = MIN( pbmp->mins[OCT_Z], tmp_z );
-        pbmp->maxs[OCT_Z]  = MAX( pbmp->maxs[OCT_Z], tmp_z );
+        pbmp->mins[OCT_Z]  = SDL_min( pbmp->mins[OCT_Z], tmp_z );
+        pbmp->maxs[OCT_Z]  = SDL_max( pbmp->maxs[OCT_Z], tmp_z );
 
         tmp_xy = tmp_x + tmp_y;
-        pbmp->mins[OCT_XY] = MIN( pbmp->mins[OCT_XY], tmp_xy );
-        pbmp->maxs[OCT_XY] = MAX( pbmp->maxs[OCT_XY], tmp_xy );
+        pbmp->mins[OCT_XY] = SDL_min( pbmp->mins[OCT_XY], tmp_xy );
+        pbmp->maxs[OCT_XY] = SDL_max( pbmp->maxs[OCT_XY], tmp_xy );
 
         tmp_yx = -tmp_x + tmp_y;
-        pbmp->mins[OCT_YX] = MIN( pbmp->mins[OCT_YX], tmp_yx );
-        pbmp->maxs[OCT_YX] = MAX( pbmp->maxs[OCT_YX], tmp_yx );
+        pbmp->mins[OCT_YX] = SDL_min( pbmp->mins[OCT_YX], tmp_yx );
+        pbmp->maxs[OCT_YX] = SDL_max( pbmp->maxs[OCT_YX], tmp_yx );
     }
 }
 
@@ -969,20 +969,20 @@ bool_t ego_oct_bb::do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   
 
     if ( NULL == pdst ) return bfalse;
 
-    pdst->mins[OCT_X]  = MIN( src1.mins[OCT_X],  src2.mins[OCT_X] );
-    pdst->maxs[OCT_X]  = MAX( src1.maxs[OCT_X],  src2.maxs[OCT_X] );
+    pdst->mins[OCT_X]  = SDL_min( src1.mins[OCT_X],  src2.mins[OCT_X] );
+    pdst->maxs[OCT_X]  = SDL_max( src1.maxs[OCT_X],  src2.maxs[OCT_X] );
 
-    pdst->mins[OCT_Y]  = MIN( src1.mins[OCT_Y],  src2.mins[OCT_Y] );
-    pdst->maxs[OCT_Y]  = MAX( src1.maxs[OCT_Y],  src2.maxs[OCT_Y] );
+    pdst->mins[OCT_Y]  = SDL_min( src1.mins[OCT_Y],  src2.mins[OCT_Y] );
+    pdst->maxs[OCT_Y]  = SDL_max( src1.maxs[OCT_Y],  src2.maxs[OCT_Y] );
 
-    pdst->mins[OCT_XY] = MIN( src1.mins[OCT_XY], src2.mins[OCT_XY] );
-    pdst->maxs[OCT_XY] = MAX( src1.maxs[OCT_XY], src2.maxs[OCT_XY] );
+    pdst->mins[OCT_XY] = SDL_min( src1.mins[OCT_XY], src2.mins[OCT_XY] );
+    pdst->maxs[OCT_XY] = SDL_max( src1.maxs[OCT_XY], src2.maxs[OCT_XY] );
 
-    pdst->mins[OCT_YX] = MIN( src1.mins[OCT_YX], src2.mins[OCT_YX] );
-    pdst->maxs[OCT_YX] = MAX( src1.maxs[OCT_YX], src2.maxs[OCT_YX] );
+    pdst->mins[OCT_YX] = SDL_min( src1.mins[OCT_YX], src2.mins[OCT_YX] );
+    pdst->maxs[OCT_YX] = SDL_max( src1.maxs[OCT_YX], src2.maxs[OCT_YX] );
 
-    pdst->mins[OCT_Z]  = MIN( src1.mins[OCT_Z],  src2.mins[OCT_Z] );
-    pdst->maxs[OCT_Z]  = MAX( src1.maxs[OCT_Z],  src2.maxs[OCT_Z] );
+    pdst->mins[OCT_Z]  = SDL_min( src1.mins[OCT_Z],  src2.mins[OCT_Z] );
+    pdst->maxs[OCT_Z]  = SDL_max( src1.maxs[OCT_Z],  src2.maxs[OCT_Z] );
 
     return btrue;
 }
@@ -994,20 +994,20 @@ bool_t ego_oct_bb::do_intersection( ego_oct_bb & src1, ego_oct_bb & src2, ego_oc
 
     if ( NULL == pdst ) return bfalse;
 
-    pdst->mins[OCT_X]  = MAX( src1.mins[OCT_X],  src2.mins[OCT_X] );
-    pdst->maxs[OCT_X]  = MIN( src1.maxs[OCT_X],  src2.maxs[OCT_X] );
+    pdst->mins[OCT_X]  = SDL_max( src1.mins[OCT_X],  src2.mins[OCT_X] );
+    pdst->maxs[OCT_X]  = SDL_min( src1.maxs[OCT_X],  src2.maxs[OCT_X] );
 
-    pdst->mins[OCT_Y]  = MAX( src1.mins[OCT_Y],  src2.mins[OCT_Y] );
-    pdst->maxs[OCT_Y]  = MIN( src1.maxs[OCT_Y],  src2.maxs[OCT_Y] );
+    pdst->mins[OCT_Y]  = SDL_max( src1.mins[OCT_Y],  src2.mins[OCT_Y] );
+    pdst->maxs[OCT_Y]  = SDL_min( src1.maxs[OCT_Y],  src2.maxs[OCT_Y] );
 
-    pdst->mins[OCT_XY] = MAX( src1.mins[OCT_XY], src2.mins[OCT_XY] );
-    pdst->maxs[OCT_XY] = MIN( src1.maxs[OCT_XY], src2.maxs[OCT_XY] );
+    pdst->mins[OCT_XY] = SDL_max( src1.mins[OCT_XY], src2.mins[OCT_XY] );
+    pdst->maxs[OCT_XY] = SDL_min( src1.maxs[OCT_XY], src2.maxs[OCT_XY] );
 
-    pdst->mins[OCT_YX] = MAX( src1.mins[OCT_YX], src2.mins[OCT_YX] );
-    pdst->maxs[OCT_YX] = MIN( src1.maxs[OCT_YX], src2.maxs[OCT_YX] );
+    pdst->mins[OCT_YX] = SDL_max( src1.mins[OCT_YX], src2.mins[OCT_YX] );
+    pdst->maxs[OCT_YX] = SDL_min( src1.maxs[OCT_YX], src2.maxs[OCT_YX] );
 
-    pdst->mins[OCT_Z]  = MAX( src1.mins[OCT_Z],  src2.mins[OCT_Z] );
-    pdst->maxs[OCT_Z]  = MIN( src1.maxs[OCT_Z],  src2.maxs[OCT_Z] );
+    pdst->mins[OCT_Z]  = SDL_max( src1.mins[OCT_Z],  src2.mins[OCT_Z] );
+    pdst->maxs[OCT_Z]  = SDL_min( src1.maxs[OCT_Z],  src2.maxs[OCT_Z] );
 
     return btrue;
 }
@@ -1077,11 +1077,11 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
         }
         else
         {
-            // have to use MAX here because the height can be distorted due
+            // have to use SDL_max here because the height can be distorted due
             // to make object-particle interactions easier (i.e. it allows you to
             // hit a grub bug with your hands)
 
-            pdst_bump->height = MAX( bump_base.height, psrc_bb->maxs[OCT_Z] );
+            pdst_bump->height = SDL_max( bump_base.height, psrc_bb->maxs[OCT_Z] );
         }
 
         if ( 0.0f == bump_stt.size )
@@ -1090,11 +1090,11 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
         }
         else
         {
-            val1 = ABS( psrc_bb->mins[OCT_X] );
-            val2 = ABS( psrc_bb->maxs[OCT_Y] );
-            val3 = ABS( psrc_bb->mins[OCT_Y] );
-            val4 = ABS( psrc_bb->maxs[OCT_Y] );
-            pdst_bump->size = MAX( MAX( val1, val2 ), MAX( val3, val4 ) );
+            val1 = SDL_abs( psrc_bb->mins[OCT_X] );
+            val2 = SDL_abs( psrc_bb->maxs[OCT_Y] );
+            val3 = SDL_abs( psrc_bb->mins[OCT_Y] );
+            val4 = SDL_abs( psrc_bb->maxs[OCT_Y] );
+            pdst_bump->size = SDL_max( SDL_max( val1, val2 ), SDL_max( val3, val4 ) );
         }
 
         if ( 0.0f == bump_stt.size_big )
@@ -1103,21 +1103,21 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
         }
         else
         {
-            val1 = ABS( psrc_bb->maxs[OCT_YX] );
-            val2 = ABS( psrc_bb->mins[OCT_YX] );
-            val3 = ABS( psrc_bb->maxs[OCT_XY] );
-            val4 = ABS( psrc_bb->mins[OCT_XY] );
-            pdst_bump->size_big = MAX( MAX( val1, val2 ), MAX( val3, val4 ) );
+            val1 = SDL_abs( psrc_bb->maxs[OCT_YX] );
+            val2 = SDL_abs( psrc_bb->mins[OCT_YX] );
+            val3 = SDL_abs( psrc_bb->maxs[OCT_XY] );
+            val4 = SDL_abs( psrc_bb->mins[OCT_XY] );
+            pdst_bump->size_big = SDL_max( SDL_max( val1, val2 ), SDL_max( val3, val4 ) );
         }
     }
 
     //---- handle all of the pdst_bb data second
     if ( NULL != pdst_bb )
     {
-        // memcpy() can fail horribly if the domains overlap, so use memmove()
+        // SDL_memcpy() can fail horribly if the domains overlap, so use SDL_memmove()
         if ( pdst_bb != psrc_bb )
         {
-            memmove( pdst_bb, psrc_bb, sizeof( *pdst_bb ) );
+            SDL_memmove( pdst_bb, psrc_bb, sizeof( *pdst_bb ) );
         }
 
         if ( 0.0f == bump_stt.height )
@@ -1127,7 +1127,7 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
         else
         {
             // handle the vertical distortion the same as above
-            pdst_bb->maxs[OCT_Z] = MAX( bump_base.height, psrc_bb->maxs[OCT_Z] );
+            pdst_bb->maxs[OCT_Z] = SDL_max( bump_base.height, psrc_bb->maxs[OCT_Z] );
         }
 
         // 0.0f == bump_stt.size is supposed to be shorthand for "this object doesn't interact

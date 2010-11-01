@@ -30,7 +30,7 @@
 #include "../egoboo_fileutil.h"
 #include "../egoboo_math.inl"
 
-#include <SDL_stdinc.h>
+#include <SDL.h>
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ wawalite_water_t * read_wawalite_water( vfs_FILE * fileread, wawalite_water_t * 
 {
     if ( NULL == pwater ) return pwater;
 
-    memset( pwater, 0, sizeof( *pwater ) );
+    SDL_memset( pwater, 0, sizeof( *pwater ) );
 
     if ( NULL == fileread ) return pwater;
 
@@ -162,7 +162,7 @@ wawalite_physics_t * read_wawalite_physics( vfs_FILE * fileread, wawalite_physic
 {
     if ( NULL == pphys ) return pphys;
 
-    memset( pphys, 0, sizeof( *pphys ) );
+    SDL_memset( pphys, 0, sizeof( *pphys ) );
 
     if ( NULL == fileread ) return pphys;
 
@@ -182,7 +182,7 @@ wawalite_animtile_t * read_wawalite_animtile( vfs_FILE * fileread, wawalite_anim
 {
     if ( NULL == panimtile ) return panimtile;
 
-    memset( panimtile, 0, sizeof( *panimtile ) );
+    SDL_memset( panimtile, 0, sizeof( *panimtile ) );
 
     if ( NULL == fileread ) return panimtile;
 
@@ -213,7 +213,7 @@ wawalite_weather_t * read_wawalite_weather( vfs_FILE * fileread, wawalite_data_t
     wawalite_weather_t * pweather = &( pdata->weather );
     if ( NULL == pweather ) return pweather;
 
-    memset( pweather, 0, sizeof( *pweather ) );
+    SDL_memset( pweather, 0, sizeof( *pweather ) );
 
     if ( NULL == fileread ) return pweather;
 
@@ -237,7 +237,7 @@ wawalite_graphics_t * read_wawalite_graphics( vfs_FILE * fileread, wawalite_grap
 {
     if ( NULL == pgraphics ) return pgraphics;
 
-    memset( pgraphics, 0, sizeof( *pgraphics ) );
+    SDL_memset( pgraphics, 0, sizeof( *pgraphics ) );
 
     if ( NULL == fileread ) return pgraphics;
 
@@ -253,7 +253,7 @@ wawalite_camera_t * read_wawalite_camera( vfs_FILE * fileread, wawalite_camera_t
 {
     if ( NULL == pcamera ) return pcamera;
 
-    memset( pcamera, 0, sizeof( *pcamera ) );
+    SDL_memset( pcamera, 0, sizeof( *pcamera ) );
 
     if ( NULL == fileread ) return pcamera;
 
@@ -552,7 +552,7 @@ bool_t wawalite_water_init( wawalite_water_t * pdata )
 {
     if ( NULL == pdata ) return bfalse;
 
-    memset( pdata, 0, sizeof( *pdata ) );
+    SDL_memset( pdata, 0, sizeof( *pdata ) );
 
     pdata->spek_start =   128;
     pdata->spek_level =   128;
@@ -569,7 +569,7 @@ bool_t wawalite_weather_init( wawalite_weather_t * pdata )
 {
     if ( NULL == pdata ) return bfalse;
 
-    memset( pdata, 0, sizeof( *pdata ) );
+    SDL_memset( pdata, 0, sizeof( *pdata ) );
 
     pdata->timer_reset = 10;
 
@@ -596,7 +596,7 @@ bool_t wawalite_animtile_init( wawalite_animtile_t * pdata )
 {
     if ( NULL == pdata ) return bfalse;
 
-    memset( pdata, 0, sizeof( *pdata ) );
+    SDL_memset( pdata, 0, sizeof( *pdata ) );
 
     pdata->update_and    = 7;                        // New tile every 7 frames
     pdata->frame_and     = 3;              // Only 4 frames

@@ -429,7 +429,7 @@ struct ego_bundle_prt
 void particle_system_begin();
 void particle_system_end();
 
-void initialize_particle_physics();
+void particle_physics_initialize_all();
 void particle_physics_finalize_all( float dt );
 
 void   init_all_pip();

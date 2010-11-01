@@ -108,17 +108,13 @@ bool_t link_follow_modname( const char * modname, bool_t push_current_module )
     }
     else
     {
-        pickedmodule_index         = -1;
-        pickedmodule_path[0]       = CSTR_END;
-        pickedmodule_name[0]       = CSTR_END;
-        pickedmodule_write_path[0] = CSTR_END;
+        pickedmodule.init( mnu_get_mod_number( modname ) );
 
-        pickedmodule_index = mnu_get_mod_number( modname );
-        if ( -1 != pickedmodule_index )
+        if ( -1 != pickedmodule.index )
         {
-            strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path( pickedmodule_index ), SDL_arraysize( pickedmodule_path ) );
-            strncpy( pickedmodule_name,       mnu_ModList_get_name( pickedmodule_index ), SDL_arraysize( pickedmodule_name ) );
-            strncpy( pickedmodule_write_path, mnu_ModList_get_dest_path( pickedmodule_index ), SDL_arraysize( pickedmodule_write_path ) );
+            strncpy( pickedmodule.path,       mnu_ModList_get_vfs_path( pickedmodule.index ), SDL_arraysize( pickedmodule.path ) );
+            strncpy( pickedmodule.name,       mnu_ModList_get_name( pickedmodule.index ), SDL_arraysize( pickedmodule.name ) );
+            strncpy( pickedmodule.write_path, mnu_ModList_get_dest_path( pickedmodule.index ), SDL_arraysize( pickedmodule.write_path ) );
         }
     }
 
@@ -207,14 +203,14 @@ bool_t link_push_module()
     ego_link_stack_entry * pentry;
     PLA_REF ipla;
 
-    if ( link_stack_count >= MAX_PLAYER || pickedmodule_index < 0 ) return bfalse;
+    if ( link_stack_count >= MAX_PLAYER || pickedmodule.index < 0 ) return bfalse;
 
     // grab an entry
     pentry = link_stack + link_stack_count;
-    memset( pentry, 0, sizeof( *pentry ) );
+    SDL_memset( pentry, 0, sizeof( *pentry ) );
 
     // store the load name of the module
-    strncpy( pentry->modname, mnu_ModList_get_vfs_path( pickedmodule_index ), SDL_arraysize( pentry->modname ) );
+    strncpy( pentry->modname, mnu_ModList_get_vfs_path( pickedmodule.index ), SDL_arraysize( pentry->modname ) );
 
     // find all of the exportable characters
     pentry->hero_count = 0;

@@ -437,7 +437,7 @@ ego_obj * ego_obj::grant_terminate( ego_obj * pobj )
         pobj->end_destructing();
 
         /// @note BB@> The ego_obj::end_invalidating() function is called in the
-        ///            t_ego_obj_lst<>::free_one() function when the object is finally
+        ///            t_obj_lst_map<>::free_one() function when the object is finally
         ///            deallocated. Do not call it here.
     }
 

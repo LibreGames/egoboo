@@ -101,7 +101,7 @@ struct UiContext
 
     static UiContext * clear( UiContext * ptr )
     {
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         ptr->active = UI_Nothing;
         ptr->hot    = UI_Nothing;
@@ -927,7 +927,7 @@ display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr,
     }
 
     // convert the text string
-    vsnprintf_rv = vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
+    vsnprintf_rv = SDL_vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
 
     // some problem printing the text?
     if ( vsnprintf_rv < 0 )
@@ -1173,7 +1173,7 @@ bool_t ui_Widget::copy( ui_Widget * pdst, ui_Widget * psrc )
 
     if ( NULL == pdst || NULL == psrc ) return bfalse;
 
-    rv_ptr = memcpy( pdst, psrc, sizeof( ui_Widget ) );
+    rv_ptr = SDL_memcpy( pdst, psrc, sizeof( ui_Widget ) );
 
     // we do not own these, even if the source does
     pdst->img_own = bfalse;
@@ -1350,8 +1350,8 @@ bool_t ui_Widget::update_bound( ui_Widget * pw, frect_t * pbound )
     but_h = 30.0f;
     if ( 0 == cnt_w && ui_Widget::DisplayMask_Test( pw, UI_DISPLAY_BUTTON ) )
     {
-        but_w = MAX( but_w, pw->vwidth );
-        but_h = MAX( but_h, pw->vheight );
+        but_w = SDL_max( but_w, pw->vwidth );
+        but_h = SDL_max( but_h, pw->vheight );
     }
 
     // set the position
@@ -1372,8 +1372,8 @@ bool_t ui_Widget::update_bound( ui_Widget * pw, frect_t * pbound )
         pbound->h = 10 + img_h + txt_h;
 
         // make sure that it bigger than the default size
-        pbound->w = MAX( but_w, pbound->w );
-        pbound->h = MAX( but_h, pbound->h );
+        pbound->w = SDL_max( but_w, pbound->w );
+        pbound->h = SDL_max( but_h, pbound->h );
     }
 
     return btrue;
@@ -1408,8 +1408,8 @@ bool_t ui_Widget::set_bound( ui_Widget * pw, float x, float y, float w, float h 
     // store the button position
     pw->vx      = size.x;
     pw->vy      = size.y;
-    pw->vwidth  = MAX( 30, size.w );
-    pw->vheight = MAX( 30, size.h );
+    pw->vwidth  = SDL_max( 30, size.w );
+    pw->vheight = SDL_max( 30, size.h );
 
     // update the text position
     ui_Widget::update_text_pos( pw );
@@ -1559,7 +1559,7 @@ bool_t ui_Widget::update_text_pos( ui_Widget * pw )
             break;
     }
 
-    new_x = MAX( new_x, pw->vx );
+    new_x = SDL_max( new_x, pw->vx );
 
     //---- do the y coordinate
 
@@ -1589,7 +1589,7 @@ bool_t ui_Widget::update_text_pos( ui_Widget * pw )
             break;
     }
 
-    new_y = MAX( new_y, pw->vy );
+    new_y = SDL_max( new_y, pw->vy );
 
     display_list_adjust_bound( pw->tx_lst, new_x - tx_bound.x, new_y - tx_bound.y );
 
@@ -1602,7 +1602,7 @@ ui_Widget * ui_Widget::clear( ui_Widget * pw )
     if ( NULL == pw ) return pw;
 
     // blank the data
-    memset( pw, 0, sizeof( *pw ) );
+    SDL_memset( pw, 0, sizeof( *pw ) );
 
     // set the id (probably UI_Nothing)
     pw->id = UI_Nothing;
@@ -1804,7 +1804,7 @@ void ui_set_virtual_screen( float vw, float vh, float ww, float wh )
     ui_context.wh = wh;
 
     // define the forward transform
-    k = MIN( sdl_scr.x / ww, sdl_scr.y / wh );
+    k = SDL_min( sdl_scr.x / ww, sdl_scr.y / wh );
     ui_context.aw = k;
     ui_context.ah = k;
     ui_context.bw = ( sdl_scr.x - k * ww ) * 0.5f;
@@ -1851,12 +1851,12 @@ void ui_joy_init( UiContext * pctxt )
 
     for ( cnt = 0; cnt < UI_MAX_JOYSTICKS; cnt++ )
     {
-        memset( pctxt->joys + cnt, 0, sizeof( ego_ui_control_info ) );
+        SDL_memset( pctxt->joys + cnt, 0, sizeof( ego_ui_control_info ) );
     }
 
-    memset( &( pctxt->joy ), 0, sizeof( ego_ui_control_info ) );
+    SDL_memset( &( pctxt->joy ), 0, sizeof( ego_ui_control_info ) );
 
-    memset( &( pctxt->mouse ), 0, sizeof( ego_ui_control_info ) );
+    SDL_memset( &( pctxt->mouse ), 0, sizeof( ego_ui_control_info ) );
 }
 
 //--------------------------------------------------------------------------------------------

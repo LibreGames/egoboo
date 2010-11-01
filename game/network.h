@@ -82,22 +82,32 @@ struct net_shared_stats
     int pla_count_ready;               ///< Number of players ready to start
     int pla_count_loaded;
 
-    int pla_count_alive;
-    int pla_count_dead;
+    int pla_count_local_alive;
+    int pla_count_network_alive;
+    int pla_count_total_alive;
+
+    int pla_count_local_dead;
+    int pla_count_network_dead;
+    int pla_count_total_dead;
 
     int lag_tolerance;                 ///< Lag tolerance
 
     net_shared_stats()
     {
-        pla_count_local   = 0;
+        pla_count_local = 0;
         pla_count_network = 0;
-        pla_count_total   = 0;
+        pla_count_total = 0;
 
-        pla_count_ready   = 0;
-        pla_count_loaded  = 0;
+        pla_count_local_alive = 0;
+        pla_count_network_alive = 0;
+        pla_count_total_alive = 0;
 
-        pla_count_alive   = 0;
-        pla_count_dead    = 0;
+        pla_count_local_dead = 0;
+        pla_count_network_dead = 0;
+        pla_count_total_dead = 0;
+
+        pla_count_ready = 0;
+        pla_count_loaded = 0;
 
         lag_tolerance     = 3;
     }
@@ -153,7 +163,7 @@ struct ego_player
     /// the buffered input from the local input devices
     ego_input_device          device;
 
-    /// Local latch, set by set_one_player_latch(), read by sv_talkToRemotes()
+    /// Local latch, set by read_player_local_latch(), read by sv_talkToRemotes()
     latch_input_t           local_latch;
 
     // quest log for this player
@@ -282,7 +292,7 @@ bool_t               network_waiting_for_players();
 void network_system_begin( ego_config_data * pcfg );
 void network_system_end( void );
 
-void listen_for_packets();
+void net_dispatch_packets();
 void unbuffer_all_player_latches();
 void close_session();
 
@@ -317,4 +327,4 @@ void   PlaStack_toggle_all_wizard();
 bool_t PlaStack_has_explore();
 bool_t PlaStack_has_wizard();
 
-void net_update_game_clock();
+void net_synchronize_game_clock();

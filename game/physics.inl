@@ -149,15 +149,15 @@ INLINE bool_t test_interaction_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oc
     // calculate the depth
     for ( cnt = 0; cnt < OCT_Z; cnt++ )
     {
-        float ftmp1 = MIN(( ob[cnt] + cv_b.maxs[cnt] ) - oa[cnt], oa[cnt] - ( ob[cnt] + cv_b.mins[cnt] ) );
-        float ftmp2 = MIN(( oa[cnt] + cv_a.maxs[cnt] ) - ob[cnt], ob[cnt] - ( oa[cnt] + cv_a.mins[cnt] ) );
-        depth = MAX( ftmp1, ftmp2 );
+        float ftmp1 = SDL_min(( ob[cnt] + cv_b.maxs[cnt] ) - oa[cnt], oa[cnt] - ( ob[cnt] + cv_b.mins[cnt] ) );
+        float ftmp2 = SDL_min(( oa[cnt] + cv_a.maxs[cnt] ) - ob[cnt], ob[cnt] - ( oa[cnt] + cv_a.mins[cnt] ) );
+        depth = SDL_max( ftmp1, ftmp2 );
         if ( depth <= 0.0f ) return bfalse;
     }
 
     // treat the z coordinate the same as always
-    depth = MIN( cv_b.maxs[OCT_Z] + ob[OCT_Z], cv_a.maxs[OCT_Z] + oa[OCT_Z] ) -
-            MAX( cv_b.mins[OCT_Z] + ob[OCT_Z], cv_a.mins[OCT_Z] + oa[OCT_Z] );
+    depth = SDL_min( cv_b.maxs[OCT_Z] + ob[OCT_Z], cv_a.maxs[OCT_Z] + oa[OCT_Z] ) -
+            SDL_max( cv_b.mins[OCT_Z] + ob[OCT_Z], cv_a.mins[OCT_Z] + oa[OCT_Z] );
 
     return test_platform ? ( depth > -PLATTOLERANCE ) : ( depth > 0.0f );
 }
@@ -179,15 +179,15 @@ INLINE bool_t test_interaction_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb &
     // calculate the depth
     for ( cnt = 0; cnt < OCT_Z; cnt++ )
     {
-        depth  = MIN( cv_b.maxs[cnt] + ob[cnt], cv_a.maxs[cnt] + oa[cnt] ) -
-                 MAX( cv_b.mins[cnt] + ob[cnt], cv_a.mins[cnt] + oa[cnt] );
+        depth  = SDL_min( cv_b.maxs[cnt] + ob[cnt], cv_a.maxs[cnt] + oa[cnt] ) -
+                 SDL_max( cv_b.mins[cnt] + ob[cnt], cv_a.mins[cnt] + oa[cnt] );
 
         if ( depth <= 0.0f ) return bfalse;
     }
 
     // treat the z coordinate the same as always
-    depth = MIN( cv_b.maxs[OCT_Z] + ob[OCT_Z], cv_a.maxs[OCT_Z] + oa[OCT_Z] ) -
-            MAX( cv_b.mins[OCT_Z] + ob[OCT_Z], cv_a.mins[OCT_Z] + oa[OCT_Z] );
+    depth = SDL_min( cv_b.maxs[OCT_Z] + ob[OCT_Z], cv_a.maxs[OCT_Z] + oa[OCT_Z] ) -
+            SDL_max( cv_b.mins[OCT_Z] + ob[OCT_Z], cv_a.mins[OCT_Z] + oa[OCT_Z] );
 
     return ( 0 != test_platform ) ? ( depth > -PLATTOLERANCE ) : ( depth > 0.0f );
 }
@@ -272,9 +272,9 @@ INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & 
     valid = btrue;
     for ( cnt = 0; cnt < OCT_Z; cnt++ )
     {
-        float ftmp1 = MIN(( ob[cnt] + cv_b.maxs[cnt] ) - oa[cnt], oa[cnt] - ( ob[cnt] + cv_b.mins[cnt] ) );
-        float ftmp2 = MIN(( oa[cnt] + cv_a.maxs[cnt] ) - ob[cnt], ob[cnt] - ( oa[cnt] + cv_a.mins[cnt] ) );
-        depth[cnt] = MAX( ftmp1, ftmp2 );
+        float ftmp1 = SDL_min(( ob[cnt] + cv_b.maxs[cnt] ) - oa[cnt], oa[cnt] - ( ob[cnt] + cv_b.mins[cnt] ) );
+        float ftmp2 = SDL_min(( oa[cnt] + cv_a.maxs[cnt] ) - ob[cnt], ob[cnt] - ( oa[cnt] + cv_a.mins[cnt] ) );
+        depth[cnt] = SDL_max( ftmp1, ftmp2 );
 
         if ( depth[cnt] <= 0.0f )
         {
@@ -284,8 +284,8 @@ INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & 
     }
 
     // treat the z coordinate the same as always
-    depth[OCT_Z]  = MIN( cv_b.maxs[OCT_Z] + ob[OCT_Z], cv_a.maxs[OCT_Z] + oa[OCT_Z] ) -
-                    MAX( cv_b.mins[OCT_Z] + ob[OCT_Z], cv_a.mins[OCT_Z] + oa[OCT_Z] );
+    depth[OCT_Z]  = SDL_min( cv_b.maxs[OCT_Z] + ob[OCT_Z], cv_a.maxs[OCT_Z] + oa[OCT_Z] ) -
+                    SDL_max( cv_b.mins[OCT_Z] + ob[OCT_Z], cv_a.mins[OCT_Z] + oa[OCT_Z] );
 
     if ( depth[OCT_Z] <= 0.0f )
     {
@@ -318,8 +318,8 @@ INLINE bool_t get_depth_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, 
     valid = btrue;
     for ( cnt = 0; cnt < OCT_COUNT; cnt++ )
     {
-        depth[cnt]  = MIN( cv_b.maxs[cnt] + ob[cnt], cv_a.maxs[cnt] + oa[cnt] ) -
-                      MAX( cv_b.mins[cnt] + ob[cnt], cv_a.mins[cnt] + oa[cnt] );
+        depth[cnt]  = SDL_min( cv_b.maxs[cnt] + ob[cnt], cv_a.maxs[cnt] + oa[cnt] ) -
+                      SDL_max( cv_b.mins[cnt] + ob[cnt], cv_a.mins[cnt] + oa[cnt] );
 
         if ( depth[cnt] <= 0.0f )
         {
@@ -388,7 +388,7 @@ INLINE bool_t phys_data_accumulate_avel_index( ego_phys_data * pdata, const floa
 
     if ( 0.0f == acc ) return btrue;
 
-    //if( ABS(acc) > 100.0f )
+    //if( SDL_abs(acc) > 100.0f )
     //    acc = 0.0f;
 
     if ( index >= 0 && index <= kZ )
@@ -409,7 +409,7 @@ INLINE bool_t phys_data_accumulate_apos_coll_index( ego_phys_data * pdata, const
 
     if ( 0.0f == acc ) return btrue;
 
-    //if( ABS(acc) > 100.0f )
+    //if( SDL_abs(acc) > 100.0f )
     //    acc = 0.0f;
 
     if ( index >= 0 && index <= kZ )
@@ -430,7 +430,7 @@ INLINE bool_t phys_data_accumulate_apos_plat_index( ego_phys_data * pdata, const
 
     if ( 0.0f == acc ) return btrue;
 
-    //if( ABS(acc) > 100.0f )
+    //if( SDL_abs(acc) > 100.0f )
     //    acc = 0.0f;
 
     if ( index >= 0 && index <= kZ )

@@ -65,8 +65,8 @@ void sys_fs_init()
     printf( "Initializing filesystem services...\n" );
 
     // grab the user's home directory
-    userhome = getenv( "HOME" );
-    snprintf( linux_userdataPath, SDL_arraysize( linux_userdataPath ), "%s/.egoboo-2.x", userhome );
+    userhome = SDL_getenv( "HOME" );
+    SDL_snprintf( linux_userdataPath, SDL_arraysize( linux_userdataPath ), "%s/.egoboo-2.x", userhome );
 
 #if defined(_NIX_PREFIX) && defined(PREFIX)
     // the access to these directories is completely unknown
@@ -171,9 +171,9 @@ const char *fs_findFirstFile( const char *searchDir, const char *searchExtension
     fs_search->ptr.l = pcnt;
 
     if ( searchExtension )
-        snprintf( pattern, PATH_MAX, "%s" SLASH_STR "*.%s", searchDir, searchExtension );
+        SDL_snprintf( pattern, PATH_MAX, "%s" SLASH_STR "*.%s", searchDir, searchExtension );
     else
-        snprintf( pattern, PATH_MAX, "%s" SLASH_STR "*", searchDir );
+        SDL_snprintf( pattern, PATH_MAX, "%s" SLASH_STR "*", searchDir );
 
     pcnt->last_find.gl_offs = 0;
     glob( pattern, GLOB_NOSORT, NULL, &pcnt->last_find );
@@ -181,7 +181,7 @@ const char *fs_findFirstFile( const char *searchDir, const char *searchExtension
         return NULL;
 
     pcnt->find_index = 0;
-    last_slash = strrchr( pcnt->last_find.gl_pathv[pcnt->find_index], '/' );
+    last_slash = SDL_strrchr( pcnt->last_find.gl_pathv[pcnt->find_index], '/' );
     if ( last_slash )
         return last_slash + 1;
 
@@ -204,7 +204,7 @@ const char *fs_findNextFile( fs_find_context_t * fs_search )
     if ( pcnt->find_index >= pcnt->last_find.gl_pathc )
         return NULL;
 
-    last_slash = strrchr( pcnt->last_find.gl_pathv[pcnt->find_index], '/' );
+    last_slash = SDL_strrchr( pcnt->last_find.gl_pathv[pcnt->find_index], '/' );
     if ( last_slash )
         return last_slash + 1;
 
@@ -226,7 +226,7 @@ void fs_findClose( fs_find_context_t * fs_search )
 
     EGOBOO_DELETE( pcnt );
 
-    memset( fs_search, 0, sizeof( *fs_search ) );
+    SDL_memset( fs_search, 0, sizeof( *fs_search ) );
 }
 
 //--------------------------------------------------------------------------------------------

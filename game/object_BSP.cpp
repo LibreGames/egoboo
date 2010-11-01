@@ -48,7 +48,7 @@ bool_t ego_obj_BSP::alloc( ego_obj_BSP * pbsp, int depth )
     ego_obj_BSP::dealloc( pbsp );
 
     // make a 3D BSP tree, depth copied from the mesh depth
-    rv = ego_BSP_tree::ctor_this( &( pbsp->tree ), 3, depth );
+    rv = ego_BSP_tree::init( &( pbsp->tree ), 3, depth );
 
     return ( NULL != rv );
 }
@@ -75,7 +75,7 @@ bool_t ego_obj_BSP::ctor_this( ego_obj_BSP * pbsp, mpd_BSP * pmesh_bsp )
 
     if ( NULL == pbsp || NULL == pmesh_bsp ) return bfalse;
 
-    memset( pbsp, 0, sizeof( *pbsp ) );
+    SDL_memset( pbsp, 0, sizeof( *pbsp ) );
 
     // allocate the data
     ego_obj_BSP::alloc( pbsp, pmesh_bsp->tree.depth );
@@ -90,9 +90,9 @@ bool_t ego_obj_BSP::ctor_this( ego_obj_BSP * pbsp, mpd_BSP * pmesh_bsp )
     t->bbox.maxs[1] = pmesh_bsp->volume.maxs[OCT_Y];
 
     // make some extra space in the z direction
-    bsp_size = MAX( ABS( t->bbox.mins[kX] ), ABS( t->bbox.maxs[kX] ) );
-    bsp_size = MAX( bsp_size, MAX( ABS( t->bbox.mins[kY] ), ABS( t->bbox.maxs[kY] ) ) );
-    bsp_size = MAX( bsp_size, MAX( ABS( t->bbox.mins[kZ] ), ABS( t->bbox.maxs[kZ] ) ) );
+    bsp_size = SDL_max( SDL_abs( t->bbox.mins[kX] ), SDL_abs( t->bbox.maxs[kX] ) );
+    bsp_size = SDL_max( bsp_size, SDL_max( SDL_abs( t->bbox.mins[kY] ), SDL_abs( t->bbox.maxs[kY] ) ) );
+    bsp_size = SDL_max( bsp_size, SDL_max( SDL_abs( t->bbox.mins[kZ] ), SDL_abs( t->bbox.maxs[kZ] ) ) );
 
     t->bbox.mins[2] = -bsp_size * 2;
     t->bbox.maxs[2] =  bsp_size * 2;
@@ -115,7 +115,7 @@ bool_t ego_obj_BSP::dtor_this( ego_obj_BSP * pbsp )
     ego_obj_BSP::dealloc( pbsp );
 
     // run the destructors on all of the sub-objects
-    ego_BSP_tree::dtor_this( &( pbsp->tree ) );
+    ego_BSP_tree::deinit( &( pbsp->tree ) );
 
     return btrue;
 }
@@ -129,7 +129,7 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
     ego_BSP_leaf * pleaf;
     ego_BSP_tree   * ptree;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
 
     // no interactions with hidden objects
     if ( pchr->is_hidden )
@@ -197,7 +197,7 @@ bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_bundle_prt * pbdl_prt )
     loc_pprt = pbdl_prt->prt_ptr;
     loc_ppip = pbdl_prt->pip_ptr;
 
-    if ( !ACTIVE_PPRT( loc_pprt ) || loc_pprt->is_hidden ) return bfalse;
+    if ( !PROCESSING_PPRT( loc_pprt ) || loc_pprt->is_hidden ) return bfalse;
 
     // Make this optional? Is there any reason to fail if the particle has no profile reference?
     has_enchant = bfalse;
@@ -207,7 +207,7 @@ bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_bundle_prt * pbdl_prt )
         has_enchant = LOADED_EVE( ppro->ieve );
     }
 
-    does_damage = ( ABS( loc_pprt->damage.base ) + ABS( loc_pprt->damage.rand ) ) > 0;
+    does_damage = ( SDL_abs( loc_pprt->damage.base ) + SDL_abs( loc_pprt->damage.rand ) ) > 0;
 
     does_status_effect = ( 0 != loc_ppip->grogtime ) || ( 0 != loc_ppip->dazetime );
     needs_bump     = loc_ppip->end_bump || loc_ppip->end_ground || ( loc_ppip->bumpspawn_amount > 0 ) || ( 0 != loc_ppip->bump_money );
@@ -228,7 +228,7 @@ bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_bundle_prt * pbdl_prt )
     };
 
     retval = bfalse;
-    if ( ACTIVE_PPRT( loc_pprt ) )
+    if ( PROCESSING_PPRT( loc_pprt ) )
     {
         ego_oct_bb   tmp_oct;
 
@@ -258,23 +258,19 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
 
     // unlink all used character nodes
     ego_obj_BSP::chr_count = 0;
-    for ( ichr = 0; ichr < MAX_CHR; ichr++ )
+    CHR_BEGIN_LOOP_DEFINED( ichr, pchr )
     {
-        ego_chr * pchr = ChrObjList.get_data_ptr( ichr );
-        if ( NULL == pchr ) continue;
-
         pchr->bsp_leaf.inserted = bfalse;
     }
+    CHR_END_LOOP();
 
     // unlink all used particle nodes
     ego_obj_BSP::prt_count = 0;
-    for ( iprt = 0; iprt < MAX_PRT; iprt++ )
+    PRT_BEGIN_LOOP_DEFINED( iprt, bdl )
     {
-        ego_prt * pprt = PrtObjList.get_data_ptr( iprt );
-        if ( NULL == pprt ) continue;
-
-        pprt->bsp_leaf.inserted = bfalse;
+        bdl.prt_ptr->bsp_leaf.inserted = bfalse;
     }
+    PRT_END_LOOP();
 
     return btrue;
 }

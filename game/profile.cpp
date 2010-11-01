@@ -72,7 +72,7 @@ void init_all_profiles()
     init_all_pip();
     init_all_eve();
     init_all_cap();
-    init_all_mad();
+    MadStack_reconstruct_all();
     init_all_ai_scripts();
 
     // initialize the profile list
@@ -98,7 +98,7 @@ void release_all_profiles()
     release_all_pip();
     release_all_eve();
     release_all_cap();
-    release_all_mad();
+    MadStack_release_all();
     release_all_ai_scripts();
 
     // re-initialize the profile list
@@ -170,7 +170,7 @@ bool_t pro_init( ego_pro * pobj )
     }
 
     //---- reset everything to safe values
-    memset( pobj, 0, sizeof( *pobj ) );
+    SDL_memset( pobj, 0, sizeof( *pobj ) );
 
     pobj->icap = CAP_REF( MAX_CAP );
     pobj->imad = MAD_REF( MAX_MAD );
@@ -440,7 +440,7 @@ bool_t release_one_pro( const PRO_REF & iobj )
     // release all of the sub-profiles
     //release_one_ai ( pobj->iai  );
     release_one_cap( pobj->icap );
-    release_one_mad( pobj->imad );
+    MadStack_release_one( pobj->imad );
     //release_one_eve( pobj->ieve );
 
     release_one_local_pips( iobj );
@@ -498,7 +498,7 @@ int load_profile_skins_vfs( const char * tmploadname, const PRO_REF & object )
     min_skin_tx = min_icon_tx = INVALID_TX_TEXTURE;
     for ( cnt = 0; cnt < MAX_SKIN; cnt++ )
     {
-        snprintf( newloadname, SDL_arraysize( newloadname ), "%s/tris%d", tmploadname, cnt );
+        SDL_snprintf( newloadname, SDL_arraysize( newloadname ), "%s/tris%d", tmploadname, cnt );
 
         pobj->tex_ref[cnt] = TxTexture_load_one_vfs( newloadname, TX_REF( INVALID_TX_TEXTURE ), TRANSCOLOR );
         if ( INVALID_TX_TEXTURE != pobj->tex_ref[cnt] )
@@ -510,7 +510,7 @@ int load_profile_skins_vfs( const char * tmploadname, const PRO_REF & object )
             }
         }
 
-        snprintf( newloadname, SDL_arraysize( newloadname ), "%s/icon%d", tmploadname, cnt );
+        SDL_snprintf( newloadname, SDL_arraysize( newloadname ), "%s/icon%d", tmploadname, cnt );
         pobj->ico_ref[cnt] = TxTexture_load_one_vfs( newloadname, TX_REF( INVALID_TX_TEXTURE ), INVALID_KEY );
 
         if ( INVALID_TX_TEXTURE != pobj->ico_ref[cnt] )
@@ -542,7 +542,7 @@ int load_profile_skins_vfs( const char * tmploadname, const PRO_REF & object )
         log_debug( "Object is missing a skin (%s)!\n", tmploadname );
     }
 
-    max_tex = MAX( max_skin, max_icon );
+    max_tex = SDL_max( max_skin, max_icon );
 
     // fill in any missing textures
     iskin = min_skin_tx;
@@ -817,7 +817,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     islot = ( pobj->icap ).get_value();
 
     // Load the model for this iobj
-    pobj->imad = load_one_model_profile_vfs( tmploadname, MAD_REF( islot ) );
+    pobj->imad = MadLoader.load_vfs( tmploadname, MAD_REF( islot ) );
 
     // Load the enchantment for this iobj
     make_newloadname( tmploadname, "/enchant.txt", newloadname );
@@ -834,7 +834,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     // Load the particles for this iobj
     for ( cnt = 0; cnt < MAX_PIP_PER_PROFILE; cnt++ )
     {
-        snprintf( newloadname, SDL_arraysize( newloadname ), "%s/part%d.txt", tmploadname, cnt );
+        SDL_snprintf( newloadname, SDL_arraysize( newloadname ), "%s/part%d.txt", tmploadname, cnt );
 
         // Make sure it's referenced properly
         pobj->prtpip[cnt] = load_one_particle_profile_vfs( newloadname, PIP_REF( MAX_PIP ) );
@@ -847,7 +847,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     {
         STRING  szLoadName, wavename;
 
-        snprintf( wavename, SDL_arraysize( wavename ), "/sound%d", cnt );
+        SDL_snprintf( wavename, SDL_arraysize( wavename ), "/sound%d", cnt );
         make_newloadname( tmploadname, wavename, szLoadName );
         pobj->wavelist[cnt] = sound_load_chunk_vfs( szLoadName );
     }
@@ -1064,7 +1064,7 @@ bool_t chop_load_vfs( ego_chop_data * pdata, const char *szLoadname, ego_chop_de
                 int itmp;
                 pdefinition->section[which_section].size  = section_count;
                 itmp = ( signed )pdata->chop_count - ( signed )section_count;
-                pdefinition->section[which_section].start = MAX( 0, itmp );
+                pdefinition->section[which_section].start = SDL_max( 0, itmp );
             }
 
             which_section++;
@@ -1077,7 +1077,7 @@ bool_t chop_load_vfs( ego_chop_data * pdata, const char *szLoadname, ego_chop_de
 
             // fill in the chop data
             pdata->start[pdata->chop_count] = pdata->carat;
-            chop_len = snprintf( pdata->buffer + pdata->carat, CHOPDATACHUNK - pdata->carat - 1, "%s", tmp_buffer );
+            chop_len = SDL_snprintf( pdata->buffer + pdata->carat, CHOPDATACHUNK - pdata->carat - 1, "%s", tmp_buffer );
 
             pdata->carat += chop_len + 1;
             pdata->chop_count++;
@@ -1093,7 +1093,7 @@ bool_t chop_load_vfs( ego_chop_data * pdata, const char *szLoadname, ego_chop_de
         int itmp;
         pdefinition->section[which_section].size  = section_count;
         itmp = ( signed )pdata->chop_count - ( signed )section_count;
-        pdefinition->section[which_section].start = MAX( 0, itmp );
+        pdefinition->section[which_section].start = SDL_max( 0, itmp );
     }
 
     vfs_close( fileread );

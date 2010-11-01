@@ -47,7 +47,7 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
     // clear all the module info
     if ( NULL == pmod ) return NULL;
 
-    memset( pmod, 0, sizeof( *pmod ) );
+    SDL_memset( pmod, 0, sizeof( *pmod ) );
 
     // see if we can open the file
     fileread = vfs_openRead( szLoadName );
@@ -65,8 +65,8 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
     pmod->maxplayers   = fget_next_int( fileread );
 
     cTmp = fget_next_char( fileread );
-    if ( 'T' == toupper( cTmp ) )  pmod->respawnvalid = btrue;
-    if ( 'A' == toupper( cTmp ) )  pmod->respawnvalid = RESPAWN_ANYTIME;
+    if ( 'T' == SDL_toupper( cTmp ) )  pmod->respawnvalid = btrue;
+    if ( 'A' == SDL_toupper( cTmp ) )  pmod->respawnvalid = RESPAWN_ANYTIME;
 
     fget_next_char( fileread );
     pmod->rtscontrol = bfalse;        //< depecrated, not in use
@@ -79,7 +79,7 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
     {
         pmod->rank[0] = CSTR_END;
     }
-    else if ( 'U' == toupper( pmod->rank[0] ) )
+    else if ( 'U' == SDL_toupper( pmod->rank[0] ) )
     {
         pmod->rank[0] = CSTR_END;
     }
@@ -111,12 +111,12 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
             cTmp = fget_first_letter( fileread );
 
             // parse the expansion value
-            if ( 'M' == toupper( cTmp ) )  pmod->moduletype = FILTER_MAIN;
-            else if ( 'S' == toupper( cTmp ) )  pmod->moduletype = FILTER_SIDE;
-            else if ( 'T' == toupper( cTmp ) )  pmod->moduletype = FILTER_TOWN;
-            else if ( 'F' == toupper( cTmp ) )  pmod->moduletype = FILTER_FUN;
-            else if ( 'S' == toupper( cTmp ) )  pmod->moduletype = FILTER_STARTER;
-            else if ( 'D' == toupper( cTmp ) )  pmod->moduletype = cfg.dev_mode ? FILTER_DEBUG : FILTER_HIDDEN;
+            if ( 'M' == SDL_toupper( cTmp ) )  pmod->moduletype = FILTER_MAIN;
+            else if ( 'S' == SDL_toupper( cTmp ) )  pmod->moduletype = FILTER_SIDE;
+            else if ( 'T' == SDL_toupper( cTmp ) )  pmod->moduletype = FILTER_TOWN;
+            else if ( 'F' == SDL_toupper( cTmp ) )  pmod->moduletype = FILTER_FUN;
+            else if ( 'S' == SDL_toupper( cTmp ) )  pmod->moduletype = FILTER_STARTER;
+            else if ( 'D' == SDL_toupper( cTmp ) )  pmod->moduletype = cfg.dev_mode ? FILTER_DEBUG : FILTER_HIDDEN;
         }
         else if ( MAKE_IDSZ( 'B', 'E', 'A', 'T' ) == idsz )
         {
@@ -144,7 +144,7 @@ int module_has_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, ch
 
     if ( 0 == strcmp( szModName, "NONE" ) ) return bfalse;
 
-    snprintf( newloadname, SDL_arraysize( newloadname ), "mp_modules/%s/gamedat/menu.txt", szModName );
+    SDL_snprintf( newloadname, SDL_arraysize( newloadname ), "mp_modules/%s/gamedat/menu.txt", szModName );
 
     fileread = vfs_openRead( newloadname );
     if ( NULL == fileread ) return bfalse;
@@ -214,8 +214,8 @@ bool_t module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len,
         STRING src_file, dst_file;
 
         // make sure that the file exists in the user data directory since we are WRITING to it
-        snprintf( src_file, SDL_arraysize( src_file ), "mp_modules/%s/gamedat/menu.txt", szModName );
-        snprintf( dst_file, SDL_arraysize( dst_file ), "/modules/%s/gamedat/menu.txt", szModName );
+        SDL_snprintf( src_file, SDL_arraysize( src_file ), "mp_modules/%s/gamedat/menu.txt", szModName );
+        SDL_snprintf( dst_file, SDL_arraysize( dst_file ), "/modules/%s/gamedat/menu.txt", szModName );
         vfs_copyFile( src_file, dst_file );
 
         // Try to open the file in append mode

@@ -64,82 +64,6 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int win32_filter( unsigned int code, struct _EXCEPTION_POINTERS *ep )
-{
-    puts( "in filter." );
-
-    int rv = EXCEPTION_EXECUTE_HANDLER;
-    switch ( code )
-    {
-        case EXCEPTION_ACCESS_VIOLATION:
-            puts( "EXCEPTION_ACCESS_VIOLATION" );
-            break;
-        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-            puts( "EXCEPTION_ARRAY_BOUNDS_EXCEEDED" );
-            break;
-        case EXCEPTION_BREAKPOINT:
-            puts( "EXCEPTION_BREAKPOINT" );
-            break;
-        case EXCEPTION_DATATYPE_MISALIGNMENT:
-            puts( "EXCEPTION_DATATYPE_MISALIGNMENT" );
-            break;
-        case EXCEPTION_FLT_DENORMAL_OPERAND:
-            puts( "EXCEPTION_FLT_DENORMAL_OPERAND" );
-            break;
-        case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-            puts( "EXCEPTION_FLT_DIVIDE_BY_ZERO" );
-            break;
-        case EXCEPTION_FLT_INEXACT_RESULT:
-            puts( "EXCEPTION_FLT_INEXACT_RESULT" );
-            break;
-        case EXCEPTION_FLT_INVALID_OPERATION:
-            puts( "EXCEPTION_FLT_INVALID_OPERATION" );
-            break;
-        case EXCEPTION_FLT_OVERFLOW:
-            puts( "EXCEPTION_FLT_OVERFLOW" );
-            break;
-        case EXCEPTION_FLT_STACK_CHECK:
-            puts( "EXCEPTION_FLT_STACK_CHECK" );
-            break;
-        case EXCEPTION_FLT_UNDERFLOW:
-            puts( "EXCEPTION_FLT_UNDERFLOW" );
-            break;
-        case EXCEPTION_ILLEGAL_INSTRUCTION:
-            puts( "EXCEPTION_ILLEGAL_INSTRUCTION" );
-            break;
-        case EXCEPTION_IN_PAGE_ERROR:
-            puts( "EXCEPTION_IN_PAGE_ERROR" );
-            break;
-        case EXCEPTION_INT_DIVIDE_BY_ZERO:
-            puts( "EXCEPTION_INT_DIVIDE_BY_ZERO" );
-            break;
-        case EXCEPTION_INT_OVERFLOW:
-            puts( "EXCEPTION_INT_OVERFLOW" );
-            break;
-        case EXCEPTION_INVALID_DISPOSITION:
-            puts( "EXCEPTION_INVALID_DISPOSITION" );
-            break;
-        case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-            puts( "EXCEPTION_NONCONTINUABLE_EXCEPTION" );
-            break;
-        case EXCEPTION_PRIV_INSTRUCTION:
-            puts( "EXCEPTION_PRIV_INSTRUCTION" );
-            break;
-        case EXCEPTION_SINGLE_STEP:
-            puts( "EXCEPTION_SINGLE_STEP" );
-            break;
-        case EXCEPTION_STACK_OVERFLOW:
-            puts( "EXCEPTION_STACK_OVERFLOW" );
-            break;
-        default:
-            rv = EXCEPTION_CONTINUE_SEARCH;
-    }
-
-    return rv;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 
 /// The possible states of the menu state machine
 enum e_menu_states
@@ -184,7 +108,7 @@ struct mnu_SlidyButtons
     {
         if ( NULL == ps ) return NULL;
 
-        memset( ps, 0, sizeof( *ps ) );
+        SDL_memset( ps, 0, sizeof( *ps ) );
 
         return ps;
     }
@@ -956,15 +880,15 @@ void Main_data::format()
     // calculate the centered position of the background
     if ( 0 != background.imgW )
     {
-        fminw = ( float ) MIN( GFX_WIDTH , background.imgW ) / ( float ) background.imgW;
+        fminw = ( float ) SDL_min( GFX_WIDTH , background.imgW ) / ( float ) background.imgW;
     }
 
     if ( 0 != background.imgH )
     {
-        fminh = ( float ) MIN( GFX_HEIGHT, background.imgH ) / ( float ) background.imgH;
+        fminh = ( float ) SDL_min( GFX_HEIGHT, background.imgH ) / ( float ) background.imgH;
     }
 
-    fmin  = MIN( fminw, fminh );
+    fmin  = SDL_min( fminw, fminh );
 
     bg_rect.w = background.imgW * fmin;
     bg_rect.h = background.imgH * fmin;
@@ -972,7 +896,7 @@ void Main_data::format()
     bg_rect.y = ( GFX_HEIGHT - bg_rect.h ) * 0.5f;
 
     // calculate the position of the logo
-    fmin  = MIN( bg_rect.w * 0.5f / logo.imgW, bg_rect.h * 0.5f / logo.imgH );
+    fmin  = SDL_min( bg_rect.w * 0.5f / logo.imgW, bg_rect.h * 0.5f / logo.imgH );
 
     logo_rect.x = bg_rect.x;
     logo_rect.y = bg_rect.y;
@@ -1480,7 +1404,7 @@ void ChooseModule_data::init()
     numValidModules = 0;
     for ( int i = 0; i < MAX_MODULE; i++ )
     {
-        memset( validModules + i, 0, sizeof( MOD_REF ) );
+        SDL_memset( validModules + i, 0, sizeof( MOD_REF ) );
     }
 
     keycooldown           = 0;
@@ -1535,10 +1459,10 @@ void ChooseModule_data::format()
     mnu_state_data::format();
 
     moduleMenuOffsetX = ( GFX_WIDTH  - 640 ) / 2;
-    moduleMenuOffsetX = MAX( 0, moduleMenuOffsetX );
+    moduleMenuOffsetX = SDL_max( 0, moduleMenuOffsetX );
 
     moduleMenuOffsetY = ( GFX_HEIGHT - 480 ) / 2;
-    moduleMenuOffsetY = MAX( 0, moduleMenuOffsetY );
+    moduleMenuOffsetY = SDL_max( 0, moduleMenuOffsetY );
 
     // do formatting
     float x = ( GFX_WIDTH  / 2 ) - ( background.imgW / 2 );
@@ -1598,42 +1522,42 @@ bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, MOD_REF valid
     {
         name_string = pmod->longname;
     }
-    carat += snprintf( carat, carat_end - carat - 1, "%s\n", name_string );
+    carat += SDL_snprintf( carat, carat_end - carat - 1, "%s\n", name_string );
 
     rank_string = "Unranked";
     if ( CSTR_END != pmod->rank[0] )
     {
         rank_string = pmod->rank;
     }
-    carat += snprintf( carat, carat_end - carat - 1, "Difficulty: %s\n", rank_string );
+    carat += SDL_snprintf( carat, carat_end - carat - 1, "Difficulty: %s\n", rank_string );
 
     if ( pmod->maxplayers > 1 )
     {
         if ( pmod->minplayers == pmod->maxplayers )
         {
-            carat += snprintf( carat, carat_end - carat - 1, "%d Players\n", pmod->minplayers );
+            carat += SDL_snprintf( carat, carat_end - carat - 1, "%d Players\n", pmod->minplayers );
         }
         else
         {
-            carat += snprintf( carat, carat_end - carat - 1, "%d - %d Players\n", pmod->minplayers, pmod->maxplayers );
+            carat += SDL_snprintf( carat, carat_end - carat - 1, "%d - %d Players\n", pmod->minplayers, pmod->maxplayers );
         }
     }
     else
     {
         if ( 0 != pmod->importamount )
         {
-            carat += snprintf( carat, carat_end - carat - 1, "Single Player\n" );
+            carat += SDL_snprintf( carat, carat_end - carat - 1, "Single Player\n" );
         }
         else
         {
-            carat += snprintf( carat, carat_end - carat - 1, "Starter Module\n" );
+            carat += SDL_snprintf( carat, carat_end - carat - 1, "Starter Module\n" );
         }
     }
-    carat += snprintf( carat, carat_end - carat - 1, " \n" );
+    carat += SDL_snprintf( carat, carat_end - carat - 1, " \n" );
 
     for ( i = 0; i < SUMMARYLINES; i++ )
     {
-        carat += snprintf( carat, carat_end - carat - 1, "%s\n", pmod->summary[i] );
+        carat += SDL_snprintf( carat, carat_end - carat - 1, "%s\n", pmod->summary[i] );
     }
 
     // Draw a text box
@@ -1801,7 +1725,7 @@ int ChooseModule_data::run( double deltaTime )
                 // sort the modules by difficulty. easiest to hardest for starting a new character
                 // hardest to easiest for loading a module
                 cmp_mod_ref_mult = start_new_player ? 1 : -1;
-                qsort( validModules, numValidModules, sizeof( MOD_REF ), cmp_mod_ref );
+                SDL_qsort( validModules, numValidModules, sizeof( MOD_REF ), cmp_mod_ref );
 
                 // load background depending on current filter
                 if ( start_new_player )
@@ -1903,7 +1827,7 @@ int ChooseModule_data::run( double deltaTime )
                 // Draw buttons for the modules that can be selected
                 x = 93;
                 y = 20;
-                for ( i = startIndex; i < MIN( startIndex + 3, numValidModules ); i++ )
+                for ( i = startIndex; i < SDL_min( startIndex + 3, numValidModules ); i++ )
                 {
                     // fix the menu images in case one or more of them are undefined
                     MOD_REF          smod       = validModules[i];
@@ -2012,10 +1936,7 @@ int ChooseModule_data::run( double deltaTime )
 
         case MM_Finish:
             {
-                pickedmodule_index         = -1;
-                pickedmodule_path[0]       = CSTR_END;
-                pickedmodule_name[0]       = CSTR_END;
-                pickedmodule_write_path[0] = CSTR_END;
+                pickedmodule.init();
 
                 if ( selectedModule == -1 )
                 {
@@ -2024,11 +1945,11 @@ int ChooseModule_data::run( double deltaTime )
                 else
                 {
                     // Save the name of the module that we've picked
-                    pickedmodule_index = selectedModule;
+                    pickedmodule.index = selectedModule;
 
-                    strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path( pickedmodule_index ), SDL_arraysize( pickedmodule_path ) );
-                    strncpy( pickedmodule_name,       mnu_ModList_get_name( pickedmodule_index ), SDL_arraysize( pickedmodule_name ) );
-                    strncpy( pickedmodule_write_path, mnu_ModList_get_dest_path( pickedmodule_index ), SDL_arraysize( pickedmodule_write_path ) );
+                    strncpy( pickedmodule.path,       mnu_ModList_get_vfs_path( pickedmodule.index ), SDL_arraysize( pickedmodule.path ) );
+                    strncpy( pickedmodule.name,       mnu_ModList_get_name( pickedmodule.index ), SDL_arraysize( pickedmodule.name ) );
+                    strncpy( pickedmodule.write_path, mnu_ModList_get_dest_path( pickedmodule.index ), SDL_arraysize( pickedmodule.write_path ) );
 
                     if ( !game_choose_module( selectedModule, -1 ) )
                     {
@@ -2037,7 +1958,7 @@ int ChooseModule_data::run( double deltaTime )
                     }
                     else
                     {
-                        pickedmodule_ready = btrue;
+                        pickedmodule.ready = btrue;
                         result = ( PMod->importamount > 0 ) ? 1 : 2;
                     }
                 }
@@ -2084,7 +2005,7 @@ Player_stats_info * Player_stats_info::ctor_this( Player_stats_info * ptr )
     }
 
     // clear the data
-    memset( ptr, 0, sizeof( *ptr ) );
+    SDL_memset( ptr, 0, sizeof( *ptr ) );
 
     // set special data
     ptr->player      = -1;
@@ -2360,129 +2281,119 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         ptr->item_ptr = display_item_free( ptr->item_ptr, btrue );
     }
 
+    // try to isolate any OpenGL errors to functions after these statements
     glFlush();
-    glGetError();
-    SDL_ClearError();
-    __try
+
+    // start capturing the ogl commands
+    if ( INVALID_GL_ID != list_index )
     {
-        // start capturing the ogl commands
-        if ( INVALID_GL_ID != list_index )
+        oglx_NewList_active = GL_TRUE;
+        GL_DEBUG( glNewList )( list_index, GL_COMPILE );
+    }
+
+    {
+        // do the actual display
+        x1 = x + 25;
+        y1 = y + 25;
+
+        Uint8 skin = ( Uint8 )SDL_max( 0, pcap->skin_override );
+
+        ui_drawButton( UI_Nothing, x, y, width, height, NULL );
+
+        // Character level and class
+        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+
+        // fix class name capitalization
+        strncpy( classname, pcap->classname, SDL_arraysize( classname ) );
+        classname[0] = SDL_toupper( classname[0] );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "A level %d %s", pcap->level_override + 1, classname );
+
+        // Armor
+        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 40, "Wearing %s %s", pcap->skinname[skin], HAS_SOME_BITS( pcap->skindressy, 1 << skin ) ? "(Light)" : "(Heavy)" );
+
+        // Life and mana (can be less than maximum if not in easy mode)
+        if ( cfg.difficulty >= GAME_NORMAL )
         {
-            oglx_NewList_active = GL_TRUE;
-            GL_DEBUG( glNewList )( list_index, GL_COMPILE );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
+            y1 = draw_one_bar( pcap->life_color, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
+
+            if ( pcap->mana_stat.val.from > 0 )
+            {
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", SDL_min(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
+                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
+            }
         }
-
+        else
         {
-            // do the actual display
-            x1 = x + 25;
-            y1 = y + 25;
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d", ( int )pcap->life_stat.val.from );
+            y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
 
-            Uint8 skin = ( Uint8 )MAX( 0, pcap->skin_override );
-
-            ui_drawButton( UI_Nothing, x, y, width, height, NULL );
-
-            // Character level and class
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-
-            // fix class name capitalization
-            strncpy( classname, pcap->classname, SDL_arraysize( classname ) );
-            classname[0] = toupper( classname[0] );
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "A level %d %s", pcap->level_override + 1, classname );
-
-            // Armor
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 40, "Wearing %s %s", pcap->skinname[skin], HAS_SOME_BITS( pcap->skindressy, 1 << skin ) ? "(Light)" : "(Heavy)" );
-
-            // Life and mana (can be less than maximum if not in easy mode)
-            if ( cfg.difficulty >= GAME_NORMAL )
+            if ( pcap->mana_stat.val.from > 0 )
             {
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
-                y1 = draw_one_bar( pcap->life_color, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
-
-                if ( pcap->mana_stat.val.from > 0 )
-                {
-                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", MIN(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
-                    y1 = draw_one_bar( pcap->mana_color, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
-                }
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d", ( int )pcap->mana_stat.val.from );
+                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
             }
-            else
+        }
+        y1 += 20;
+
+        // SWID
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Stats" );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Int: %s (%d)", describe_value( pcap->intelligence_stat.val.from, 60, NULL ), ( int )pcap->intelligence_stat.val.from );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Dex: %s (%d)", describe_value( pcap->dexterity_stat.val.from,    60, NULL ), ( int )pcap->dexterity_stat.val.from );
+
+        y1 += 20;
+
+        if ( ptr->objects.count > 1 )
+        {
+            ego_ChoosePlayer_element * pdata;
+
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Inventory" );
+
+            for ( i = 1; i < ptr->objects.count; i++ )
             {
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d", ( int )pcap->life_stat.val.from );
-                y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
+                pdata = ptr->objects.pro_data + i;
 
-                if ( pcap->mana_stat.val.from > 0 )
+                icap = pdata->cap_ref;
+                if ( LOADED_CAP( icap ) )
                 {
-                    y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d", ( int )pcap->mana_stat.val.from );
-                    y1 = draw_one_bar( pcap->mana_color, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
-                }
-            }
-            y1 += 20;
+                    const int icon_indent = 8;
+                    TX_REF  icon_ref;
+                    STRING itemname;
+                    ego_cap * tmp_pcap = CapStack + icap;
 
-            // SWID
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Stats" );
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from );
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from );
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Int: %s (%d)", describe_value( pcap->intelligence_stat.val.from, 60, NULL ), ( int )pcap->intelligence_stat.val.from );
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Dex: %s (%d)", describe_value( pcap->dexterity_stat.val.from,    60, NULL ), ( int )pcap->dexterity_stat.val.from );
+                    if ( tmp_pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
+                    else                   strncpy( itemname, tmp_pcap->classname,   SDL_arraysize( itemname ) );
 
-            y1 += 20;
+                    icon_ref = mnu_get_icon_ref( icap, pdata->tx_ref );
+                    draw_one_icon( icon_ref, x1 + icon_indent, y1, NOSPARKLE );
 
-            if ( ptr->objects.count > 1 )
-            {
-                ego_ChoosePlayer_element * pdata;
-
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Inventory" );
-
-                for ( i = 1; i < ptr->objects.count; i++ )
-                {
-                    pdata = ptr->objects.pro_data + i;
-
-                    icap = pdata->cap_ref;
-                    if ( LOADED_CAP( icap ) )
+                    if ( icap == SLOT_LEFT + 1 )
                     {
-                        const int icon_indent = 8;
-                        TX_REF  icon_ref;
-                        STRING itemname;
-                        ego_cap * tmp_pcap = CapStack + icap;
-
-                        if ( tmp_pcap->nameknown ) strncpy( itemname, chop_create( &chop_mem, &( pdata->chop ) ), SDL_arraysize( itemname ) );
-                        else                   strncpy( itemname, tmp_pcap->classname,   SDL_arraysize( itemname ) );
-
-                        icon_ref = mnu_get_icon_ref( icap, pdata->tx_ref );
-                        draw_one_icon( icon_ref, x1 + icon_indent, y1, NOSPARKLE );
-
-                        if ( icap == SLOT_LEFT + 1 )
-                        {
-                            ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Left: %s", itemname );
-                            y1 += ICON_SIZE;
-                        }
-                        else if ( icap == SLOT_RIGHT + 1 )
-                        {
-                            ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Right: %s", itemname );
-                            y1 += ICON_SIZE;
-                        }
-                        else
-                        {
-                            ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Item: %s", itemname );
-                            y1 += ICON_SIZE;
-                        }
+                        ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Left: %s", itemname );
+                        y1 += ICON_SIZE;
+                    }
+                    else if ( icap == SLOT_RIGHT + 1 )
+                    {
+                        ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Right: %s", itemname );
+                        y1 += ICON_SIZE;
+                    }
+                    else
+                    {
+                        ui_drawTextBoxImmediate( menuFont, x1 + icon_indent + ICON_SIZE, y1 + 6, ICON_SIZE, "  Item: %s", itemname );
+                        y1 += ICON_SIZE;
                     }
                 }
             }
         }
-
-        if ( INVALID_GL_ID != list_index )
-        {
-            GL_DEBUG_END_LIST();
-            oglx_NewList_active = GL_FALSE;
-        }
     }
-    __except( win32_filter( GetExceptionCode(), GetExceptionInformation() ) )
+
+    if ( INVALID_GL_ID != list_index )
     {
-        printf( "SUXXORZ an opengl exception was generated!\n" );
-        puts( SDL_GetError() );
-        handle_gl_error();
-        goto ChoosePlayer_data__render_stats_fail;
+        GL_DEBUG_END_LIST();
+        oglx_NewList_active = GL_FALSE;
     }
 
     return ptr;
@@ -2595,7 +2506,7 @@ bool_t ChoosePlayer_data::load_profiles( int player, ego_ChoosePlayer_profiles *
     {
         int slot = i + 1;
 
-        snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj", loadplayer[player].dir, i );
+        SDL_snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj", loadplayer[player].dir, i );
 
         // load the profile
         ref_temp = load_one_character_profile_vfs( szFilename, slot, bfalse );
@@ -2610,11 +2521,11 @@ bool_t ChoosePlayer_data::load_profiles( int player, ego_ChoosePlayer_profiles *
             pdata->cap_ref = ref_temp;
 
             // load the icon
-            snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/icon%d", loadplayer[player].dir, i, MAX( 0, pcap->skin_override ) );
+            SDL_snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/icon%d", loadplayer[player].dir, i, SDL_max( 0, pcap->skin_override ) );
             pdata->tx_ref = TxTexture_load_one_vfs( szFilename, TX_REF( INVALID_TX_TEXTURE ), INVALID_KEY );
 
             // load the naming
-            snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/naming.txt", loadplayer[player].dir, i );
+            SDL_snprintf( szFilename, SDL_arraysize( szFilename ), "%s/%d.obj/naming.txt", loadplayer[player].dir, i );
             chop_load_vfs( &chop_mem, szFilename, &( pdata->chop ) );
         }
     }
@@ -3020,7 +2931,7 @@ int ChoosePlayer_data::run( double deltaTime )
 
                         // Copy the character to the import directory
                         strncpy( srcDir, loadplayer[selectedPlayer].dir, SDL_arraysize( srcDir ) );
-                        snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] );
+                        SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] );
                         if ( !vfs_copyDirectory( srcDir, destDir ) )
                         {
                             log_warning( "game_initialize_imports() - Failed to copy a import character \"%s\" to \"%s\" (%s)\n", srcDir, destDir, vfs_getError() );
@@ -3029,12 +2940,12 @@ int ChoosePlayer_data::run( double deltaTime )
                         // Copy all of the character's items to the import directory
                         for ( j = 0; j < MAXIMPORTOBJECTS; j++ )
                         {
-                            snprintf( srcDir, SDL_arraysize( srcDir ), "%s/%d.obj", loadplayer[selectedPlayer].dir, j );
+                            SDL_snprintf( srcDir, SDL_arraysize( srcDir ), "%s/%d.obj", loadplayer[selectedPlayer].dir, j );
 
                             // make sure the source directory exists
                             if ( vfs_isDirectory( srcDir ) )
                             {
-                                snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] + j + 1 );
+                                SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] + j + 1 );
                                 vfs_copyDirectory( srcDir, destDir );
                             }
                         }
@@ -4003,7 +3914,7 @@ int OptionsInput_data::run( double deltaTime )
                 if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_player ) )
                 {
                     int new_player;
-                    new_player = CLIP( player, -1, MAX( 0, ( int )input_device_count - 1 ) );
+                    new_player = CLIP( player, -1, SDL_max( 0, ( int )input_device_count - 1 ) );
                     new_player++;
 
                     if ( new_player >= 0 && ( Uint32 )new_player >= input_device_count ) new_player = 0;
@@ -5331,7 +5242,7 @@ int OptionsVideo_data::fix_fullscreen_resolution( config_data_t * pcfg, SDLX_scr
         diff1 = log( sdl_aspect_ratio / aspect_ratio );
         diff2 = log( sdl_screen_area / req_screen_area );
 
-        diff = 2.0f * ABS( diff1 ) + ABS( diff2 );
+        diff = 2.0f * SDL_abs( diff1 ) + SDL_abs( diff2 );
 
         if ( NULL == found_rect || diff < min_diff )
         {
@@ -5408,7 +5319,7 @@ int OptionsVideo_data::fix_fullscreen_resolution( config_data_t * pcfg, SDLX_scr
         }
     }
 
-    snprintf( *psz_screen_size, sizeof( *psz_screen_size ), "%dx%d - %s", pcfg->scrx_req, pcfg->scry_req, sz_aspect_ratio );
+    SDL_snprintf( *psz_screen_size, sizeof( *psz_screen_size ), "%dx%d - %s", pcfg->scrx_req, pcfg->scry_req, sz_aspect_ratio );
 
     return btrue;
 }
@@ -5446,8 +5357,8 @@ bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val 
     if ( use_aniso && val >= TX_ANISOTROPIC )
     {
         float aniso = val - TX_ANISOTROPIC;
-        aniso = MAX( 0.0f, aniso ) + 1.0f;
-        aniso = MIN( aniso, ogl_caps.maxAnisotropy );
+        aniso = SDL_max( 0.0f, aniso ) + 1.0f;
+        aniso = SDL_min( aniso, ogl_caps.maxAnisotropy );
 
         retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Anisotropic %i", ( int )aniso );
     }
@@ -6243,7 +6154,7 @@ int ShowResults_data::run( double deltaTime )
                 // Prepeare the summary text
                 for ( i = 0; i < SUMMARYLINES; i++ )
                 {
-                    carat += snprintf( carat, carat_end - carat - 1, "%s\n", mnu_ModList[MOD_REF( selectedModule )].base.summary[i] );
+                    carat += SDL_snprintf( carat, carat_end - carat - 1, "%s\n", mnu_ModList[MOD_REF( selectedModule )].base.summary[i] );
                 }
 
                 // Randomize the next game hint, but only if not in hard mode
@@ -6456,9 +6367,8 @@ int GamePaused_data::run( double deltaTime )
             menuChoice = 0;
 
             {
-
-                if ( PMod->exportvalid && !local_stats.allpladead ) sz_buttons[0] = "Save and Exit";
-                else                                                sz_buttons[0] = "Quit Module";
+                if ( PMod->exportvalid && !( 0 == net_stats.pla_count_total_alive ) ) sz_buttons[0] = "Save and Exit";
+                else                                                                sz_buttons[0] = "Quit Module";
 
                 mnu_SlidyButtons::init( &but_state, 1.0f, 0, sz_buttons, w_buttons );
             }
@@ -6697,7 +6607,7 @@ int ShowEndgame_data::run( double deltaTime )
                 // try to go to the world map
                 // if( !reloaded )
                 // {
-                //    reloaded = link_load_parent( mnu_ModList[pickedmodule_index].base.parent_modname, mnu_ModList[pickedmodule_index].base.parent_pos );
+                //    reloaded = link_load_parent( mnu_ModList[pickedmodule.index].base.parent_modname, mnu_ModList[pickedmodule.index].base.parent_pos );
                 // }
 
                 // fix the menu that is returned when you break out of the game
@@ -6726,7 +6636,7 @@ int ShowEndgame_data::run( double deltaTime )
                 if ( !reloaded )
                 {
                     game_finish_module();
-                    pickedmodule_index = -1;
+                    pickedmodule.index = -1;
                     GProc->kill();
                 }
 
@@ -6937,7 +6847,7 @@ int doMenu( float deltaTime )
                     // try to go to the world map
                     // if( !reloaded )
                     // {
-                    //    reloaded = link_load_parent( mnu_ModList[pickedmodule_index].base.parent_modname, mnu_ModList[pickedmodule_index].base.parent_pos );
+                    //    reloaded = link_load_parent( mnu_ModList[pickedmodule.index].base.parent_modname, mnu_ModList[pickedmodule.index].base.parent_pos );
                     // }
 
                     if ( !reloaded )
@@ -7132,7 +7042,7 @@ void mnu_load_all_module_images_vfs()
         else if ( mnu_test_by_index( imod, 0, NULL ) )
         {
             // @note just because we can't load the title image DOES NOT mean that we ignore the module
-            snprintf( loadname, SDL_arraysize( loadname ), "%s/gamedat/title", mnu_ModList[imod].vfs_path );
+            SDL_snprintf( loadname, SDL_arraysize( loadname ), "%s/gamedat/title", mnu_ModList[imod].vfs_path );
 
             mnu_ModList[imod].tex_index = TxTitleImage_load_one_vfs( loadname );
 
@@ -7291,7 +7201,7 @@ void mnu_module_init( mnu_module * pmod )
     if ( NULL == pmod ) return;
 
     // clear the module
-    memset( pmod, 0, sizeof( *pmod ) );
+    SDL_memset( pmod, 0, sizeof( *pmod ) );
 
     pmod->tex_index = INVALID_TITLE_TEXTURE;
 }
@@ -7319,7 +7229,7 @@ void mnu_load_all_module_info()
         mnu_module_init( pmod );
 
         // save the filename
-        snprintf( loadname, SDL_arraysize( loadname ), "%s/gamedat/menu.txt", vfs_ModPath );
+        SDL_snprintf( loadname, SDL_arraysize( loadname ), "%s/gamedat/menu.txt", vfs_ModPath );
         if ( NULL != module_load_info_vfs( loadname, &( pmod->base ) ) )
         {
             mnu_ModList.count++;
@@ -7333,7 +7243,7 @@ void mnu_load_all_module_info()
             // Save the user data directory version of the module path.
             // @note This is kinda a cheat since we know that the virtual paths all begin with "mp_" at the moment.
             // If that changes, this line must be changed as well.
-            snprintf( pmod->dest_path, SDL_arraysize( pmod->dest_path ), "/%s", vfs_ModPath + 3 );
+            SDL_snprintf( pmod->dest_path, SDL_arraysize( pmod->dest_path ), "/%s", vfs_ModPath + 3 );
 
             // same problem as above
             strncpy( pmod->name, vfs_ModPath + 11, SDL_arraysize( pmod->name ) );
@@ -7406,7 +7316,7 @@ void mnu_ModList_release_all()
             mnu_release_one_module( cnt );
         }
 
-        memset( mnu_ModList + cnt, 0, sizeof( mnu_module ) );
+        SDL_memset( mnu_ModList + cnt, 0, sizeof( mnu_module ) );
     }
 
     mnu_ModList.count = 0;
@@ -7933,25 +7843,25 @@ bool_t loadplayer_import_one( const char * foundfile )
 
     pinfo = loadplayer + loadplayer_count;
 
-    snprintf( filename, SDL_arraysize( filename ), "%s/skin.txt", foundfile );
+    SDL_snprintf( filename, SDL_arraysize( filename ), "%s/skin.txt", foundfile );
     skin = read_skin_vfs( filename );
 
-    //snprintf( filename, SDL_arraysize(filename), "%s" SLASH_STR "tris.md2", foundfile );
+    //SDL_snprintf( filename, SDL_arraysize(filename), "%s" SLASH_STR "tris.md2", foundfile );
     //md2_load_one( vfs_resolveReadFilename(filename), &(MadStack[loadplayer_count].md2_data) );
 
-    snprintf( filename, SDL_arraysize( filename ), "%s/icon%d", foundfile, skin );
+    SDL_snprintf( filename, SDL_arraysize( filename ), "%s/icon%d", foundfile, skin );
     pinfo->tx_ref = TxTexture_load_one_vfs( filename, TX_REF( INVALID_TX_TEXTURE ), INVALID_KEY );
 
     // quest info
-    snprintf( pinfo->dir, SDL_arraysize( pinfo->dir ), "%s", str_convert_slash_net(( char* )foundfile, strlen( foundfile ) ) );
+    SDL_snprintf( pinfo->dir, SDL_arraysize( pinfo->dir ), "%s", str_convert_slash_net(( char* )foundfile, SDL_strlen( foundfile ) ) );
     quest_log_download_vfs( pinfo->quest_log, SDL_arraysize( pinfo->quest_log ), pinfo->dir );
 
     // load the chop data
-    snprintf( filename, SDL_arraysize( filename ), "%s/naming.txt", foundfile );
+    SDL_snprintf( filename, SDL_arraysize( filename ), "%s/naming.txt", foundfile );
     chop_load_vfs( &chop_mem, filename, &( pinfo->chop ) );
 
     // generate the name from the chop
-    snprintf( pinfo->name, SDL_arraysize( pinfo->name ), "%s", chop_create( &chop_mem, &( pinfo->chop ) ) );
+    SDL_snprintf( pinfo->name, SDL_arraysize( pinfo->name ), "%s", chop_create( &chop_mem, &( pinfo->chop ) ) );
 
     loadplayer_count++;
 

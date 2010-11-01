@@ -87,7 +87,7 @@ SDL_bool SDLX_Get_Screen_Info( SDLX_screen_info_t * psi, SDL_bool make_report )
     SDL_Surface * ps;
     const SDL_VideoInfo * pvi;
 
-    memset( psi, 1, sizeof( *psi ) );
+    SDL_memset( psi, 1, sizeof( *psi ) );
 
     init_flags = SDL_WasInit( SDL_INIT_EVERYTHING );
     if ( 0 == init_flags )
@@ -566,7 +566,7 @@ SDL_bool SDLX_sdl_video_flags_default( SDLX_sdl_video_flags_t * pflags )
 {
     if ( NULL == pflags ) return SDL_FALSE;
 
-    memset( pflags, 1, sizeof( *pflags ) );
+    SDL_memset( pflags, 1, sizeof( *pflags ) );
 
     pflags->double_buf  = 1;
     pflags->full_screen = 1;
@@ -580,7 +580,7 @@ SDL_bool SDLX_sdl_gl_attrib_default( SDLX_sdl_gl_attrib_t * patt )
 {
     if ( NULL == patt ) return SDL_FALSE;
 
-    memset( patt, 1, sizeof( *patt ) );
+    SDL_memset( patt, 1, sizeof( *patt ) );
 
     patt->multi_buffers      = 1;
     patt->multi_samples      = 2;
@@ -660,7 +660,7 @@ SDLX_video_parameters_t * SDLX_set_mode( SDLX_video_parameters_t * v_old, SDLX_v
         }
         else
         {
-            memcpy( &param_old, v_old, sizeof( SDLX_video_parameters_t ) );
+            SDL_memcpy( &param_old, v_old, sizeof( SDLX_video_parameters_t ) );
         }
     }
     else
@@ -676,7 +676,7 @@ SDLX_video_parameters_t * SDLX_set_mode( SDLX_video_parameters_t * v_old, SDLX_v
     }
     else
     {
-        memcpy( &param_new, v_new, sizeof( SDLX_video_parameters_t ) );
+        SDL_memcpy( &param_new, v_new, sizeof( SDLX_video_parameters_t ) );
     }
 
     // assume any problem with setting the graphics mode is with the multisampling
@@ -693,7 +693,7 @@ SDLX_video_parameters_t * SDLX_set_mode( SDLX_video_parameters_t * v_old, SDLX_v
         param_new.surface = surface;
         if ( NULL != v_new )
         {
-            memcpy( v_new, &param_new, sizeof( SDLX_video_parameters_t ) );
+            SDL_memcpy( v_new, &param_new, sizeof( SDLX_video_parameters_t ) );
         }
         retval = v_new;
     }
@@ -711,7 +711,7 @@ SDLX_video_parameters_t * SDLX_set_mode( SDLX_video_parameters_t * v_old, SDLX_v
             param_old.surface = surface;
             if ( v_old != &param_old )
             {
-                memcpy( v_old, &param_old, sizeof( SDLX_video_parameters_t ) );
+                SDL_memcpy( v_old, &param_old, sizeof( SDLX_video_parameters_t ) );
             }
         }
 

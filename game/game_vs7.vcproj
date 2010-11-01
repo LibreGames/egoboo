@@ -19,22 +19,19 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="4"
-				InlineFunctionExpansion="0"
-				ImproveFloatingPointConsistency="FALSE"
-				OptimizeForProcessor="1"
-				OptimizeForWindowsApplication="TRUE"
+				Optimization="0"
+				OptimizeForProcessor="3"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)enet\include&quot;;&quot;$(SolutionDir)game&quot;;file_formats;platform;extensions;Fluid_Studios_Memory_Manager"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CONSOLE;_CRT_SECURE_NO_DEPRECATE"
 				GeneratePreprocessedFile="0"
 				KeepComments="FALSE"
 				MinimalRebuild="TRUE"
-				BasicRuntimeChecks="3"
+				BasicRuntimeChecks="1"
 				RuntimeLibrary="3"
 				StructMemberAlignment="0"
-				BufferSecurityCheck="TRUE"
+				BufferSecurityCheck="FALSE"
 				EnableFunctionLevelLinking="TRUE"
-				EnableEnhancedInstructionSet="2"
+				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="4"
@@ -85,11 +82,11 @@
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
 			CharacterSet="2"
-			WholeProgramOptimization="FALSE">
+			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="4"
-				GlobalOptimizations="FALSE"
+				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="FALSE"
 				FavorSizeOrSpeed="1"
@@ -108,7 +105,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="3"
-				CompileAs="1"
+				CompileAs="0"
 				ShowIncludes="FALSE"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -281,6 +278,16 @@
 			</File>
 		</Filter>
 		<Filter
+			Name="Core Inline"
+			Filter="">
+			<File
+				RelativePath=".\egoboo_math.inl">
+			</File>
+			<File
+				RelativePath=".\egoboo_typedef_cpp.inl">
+			</File>
+		</Filter>
+		<Filter
 			Name="Game Source"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
@@ -430,6 +437,9 @@
 			</File>
 			<File
 				RelativePath=".\egoboo.h">
+			</File>
+			<File
+				RelativePath=".\egoboo_defs.h">
 			</File>
 			<File
 				RelativePath=".\egoboo_object_list.h">
@@ -966,16 +976,6 @@
 			</File>
 			<File
 				RelativePath="..\res\old-egoboo.ico">
-			</File>
-		</Filter>
-		<Filter
-			Name="Core Inline"
-			Filter="">
-			<File
-				RelativePath=".\egoboo_math.inl">
-			</File>
-			<File
-				RelativePath=".\egoboo_typedef_cpp.inl">
 			</File>
 		</Filter>
 		<Filter

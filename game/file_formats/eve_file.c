@@ -36,7 +36,7 @@ eve_data_t * eve_data_init( eve_data_t * peve )
 {
     if ( NULL == peve ) return peve;
 
-    memset( peve, 0, sizeof( *peve ) );
+    SDL_memset( peve, 0, sizeof( *peve ) );
 
     peve->endsound_index = INVALID_SOUND;
 
@@ -144,8 +144,8 @@ eve_data_t * load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * pev
 
     peve->setyesno[SETMISSILETREATMENT] = fget_next_bool( fileread );
     cTmp = fget_first_letter( fileread );
-    if ( 'R' == toupper( cTmp ) )  peve->setvalue[SETMISSILETREATMENT] = MISSILE_REFLECT;
-    else if ( 'D' == toupper( cTmp ) )  peve->setvalue[SETMISSILETREATMENT] = MISSILE_DEFLECT;
+    if ( 'R' == SDL_toupper( cTmp ) )  peve->setvalue[SETMISSILETREATMENT] = MISSILE_REFLECT;
+    else if ( 'D' == SDL_toupper( cTmp ) )  peve->setvalue[SETMISSILETREATMENT] = MISSILE_DEFLECT;
     else                                peve->setvalue[SETMISSILETREATMENT] = MISSILE_NORMAL;
 
     peve->setyesno[SETCOSTFOREACHMISSILE] = fget_next_bool( fileread );

@@ -40,7 +40,7 @@
 cap_data_t * cap_data_init( cap_data_t * pcap )
 {
     /// @details BB@> initialize the character profile data to safe values
-    ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
+    ///     since we use SDL_memset(..., 0, ...), all = 0, = false, and = 0.0f
     ///     statements are redundant
 
     int cnt;
@@ -48,7 +48,7 @@ cap_data_t * cap_data_init( cap_data_t * pcap )
     if ( NULL == pcap ) return pcap;
 
     // clear out all the data
-    memset( pcap, 0, sizeof( *pcap ) );
+    SDL_memset( pcap, 0, sizeof( *pcap ) );
 
     for ( cnt = 0; cnt < IDSZ_COUNT; cnt++ )
     {
@@ -133,9 +133,9 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
 
     // Gender
     cTmp = fget_next_char( fileread );
-    if ( 'F' == toupper( cTmp ) )  pcap->gender = GENDER_FEMALE;
-    else if ( 'M' == toupper( cTmp ) )  pcap->gender = GENDER_MALE;
-    else if ( 'R' == toupper( cTmp ) )  pcap->gender = GENDER_RANDOM;
+    if ( 'F' == SDL_toupper( cTmp ) )  pcap->gender = GENDER_FEMALE;
+    else if ( 'M' == SDL_toupper( cTmp ) )  pcap->gender = GENDER_MALE;
+    else if ( 'R' == SDL_toupper( cTmp ) )  pcap->gender = GENDER_RANDOM;
     else                              pcap->gender = GENDER_OTHER;
 
     // Read in the icap stats
@@ -233,7 +233,7 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
 
         for ( cnt = 0; cnt < MAX_SKIN; cnt++ )
         {
-            cTmp = toupper( fget_first_letter( fileread ) );
+            cTmp = SDL_toupper( fget_first_letter( fileread ) );
             switch ( cTmp )
             {
                 case 'T':    pcap->damagemodifier[damagetype][cnt] |= DAMAGEINVERT;        break;
@@ -314,8 +314,8 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
 
     // Blud
     cTmp = fget_next_char( fileread );
-    if ( 'T' == toupper( cTmp ) )  pcap->blud_valid = btrue;
-    else if ( 'U' == toupper( cTmp ) )  pcap->blud_valid = ULTRABLUDY;
+    if ( 'T' == SDL_toupper( cTmp ) )  pcap->blud_valid = btrue;
+    else if ( 'U' == SDL_toupper( cTmp ) )  pcap->blud_valid = ULTRABLUDY;
     else                              pcap->blud_valid = bfalse;
 
     pcap->blud_pip = fget_next_int( fileread );

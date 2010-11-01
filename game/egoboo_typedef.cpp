@@ -60,15 +60,15 @@ bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst )
 
     if ( NULL == src1 && NULL == src2 )
     {
-        memset( dst, 0, sizeof( frect_t ) );
+        SDL_memset( dst, 0, sizeof( frect_t ) );
     }
     else if ( NULL == src1 )
     {
-        memmove( src2, dst, sizeof( frect_t ) );
+        SDL_memmove( src2, dst, sizeof( frect_t ) );
     }
     else if ( NULL == src2 )
     {
-        memmove( src1, dst, sizeof( frect_t ) );
+        SDL_memmove( src1, dst, sizeof( frect_t ) );
     }
     else
     {
@@ -85,10 +85,10 @@ bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst )
         x4 = src2->x + src2->w;
         y4 = src2->y + src2->h;
 
-        x1 = MIN( x1, x3 );
-        y1 = MIN( y1, y3 );
-        x2 = MAX( x2, x4 );
-        y2 = MAX( y2, y4 );
+        x1 = SDL_min( x1, x3 );
+        y1 = SDL_min( y1, y3 );
+        x2 = SDL_max( x2, x4 );
+        y2 = SDL_max( y2, y4 );
 
         dst->x = x1;
         dst->y = y1;
@@ -128,7 +128,7 @@ void latch_input_init( latch_input_t * platch )
 {
     if ( NULL == platch ) return;
 
-    memset( platch, 0, sizeof( *platch ) );
+    SDL_memset( platch, 0, sizeof( *platch ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -154,8 +154,8 @@ void pair_to_range( IPair pair, FRange * prange )
         fFrom = SFP8_TO_FLOAT( pair.base );
         fTo   = SFP8_TO_FLOAT( pair.base + pair.rand );
 
-        prange->from = MIN( fFrom, fTo );
-        prange->to   = MAX( fFrom, fTo );
+        prange->from = SDL_min( fFrom, fTo );
+        prange->to   = SDL_max( fFrom, fTo );
     }
 }
 
@@ -173,8 +173,8 @@ void range_to_pair( FRange range, IPair * ppair )
     {
         float fFrom, fTo;
 
-        fFrom = MIN( range.from, range.to );
-        fTo   = MAX( range.from, range.to );
+        fFrom = SDL_min( range.from, range.to );
+        fTo   = SDL_max( range.from, range.to );
 
         ppair->base = FLOAT_TO_SFP8( fFrom );
         ppair->rand = FLOAT_TO_SFP8( fTo - fFrom );

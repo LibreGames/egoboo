@@ -99,8 +99,22 @@ enum NetworkMessage
 //--------------------------------------------------------------------------------------------
 
 // Packet reading
-static ENetPacket*    net_readPacket = NULL;
-static size_t         net_readLocation = 0;
+struct enet_pkt
+{
+    ENetPacket*    packet;
+    size_t         location;
+
+    enet_pkt( ENetPacket * pkt = NULL ) { init( pkt ); }
+
+    void init( ENetPacket * pkt = NULL )
+    {
+        packet = pkt;
+        location = 0;
+    }
+
+};
+
+enet_pkt net_read;
 
 struct net_packet
 {
@@ -406,21 +420,19 @@ void net_packet::add_String( net_packet * pkt, const char *string )
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_startReading( ENetPacket *packet )
+void packet_startReading( enet_pkt & pkt, ENetPacket *packet )
 {
-    net_readPacket = packet;
-    net_readLocation = 0;
+    pkt.init( packet );
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_doneReading()
+void packet_doneReading( enet_pkt & pkt )
 {
-    net_readPacket = NULL;
-    net_readLocation = 0;
+    pkt.init();
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_readString( char *buffer, int maxLen )
+void packet_readString( enet_pkt & pkt, char *buffer, int maxLen )
 {
     /// @details ZZ@> This function reads a null terminated string from the packet
 
@@ -428,108 +440,115 @@ void packet_readString( char *buffer, int maxLen )
     Uint16 outindex;
 
     outindex = 0;
-    uc = net_readPacket->data[net_readLocation];
-    net_readLocation++;
+    uc = pkt.packet->data[pkt.location];
+    pkt.location++;
 
     while ( uc != 0 && outindex < maxLen )
     {
         buffer[outindex] = uc;
         outindex++;
-        uc = net_readPacket->data[net_readLocation];
-        net_readLocation++;
+        uc = pkt.packet->data[pkt.location];
+        pkt.location++;
     }
 
     buffer[outindex] = 0;
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 packet_readUnsignedByte()
+Uint8 packet_readUnsignedByte( enet_pkt & pkt )
 {
     /// @details ZZ@> This function reads an Uint8 from the packet
 
     Uint8 uc;
-    uc = ( Uint8 )net_readPacket->data[net_readLocation];
-    net_readLocation++;
+
+    uc = ( Uint8 )pkt.packet->data[pkt.location];
+    pkt.location++;
+
     return uc;
 }
 
 //--------------------------------------------------------------------------------------------
-Sint8 packet_readSignedByte()
+Sint8 packet_readSignedByte( enet_pkt & pkt )
 {
     /// @details ZZ@> This function reads a Sint8 from the packet
 
     Sint8 sc;
-    sc = ( signed char )net_readPacket->data[net_readLocation];
-    net_readLocation++;
+
+    sc = ( signed char )pkt.packet->data[pkt.location];
+    pkt.location++;
+
     return sc;
 }
 
 //--------------------------------------------------------------------------------------------
-Uint16 packet_readUnsignedShort()
+Uint16 packet_readUnsignedShort( enet_pkt & pkt )
 {
     /// @details ZZ@> This function reads an Uint16 from the packet
 
     Uint16 us;
     Uint16* usp;
-    usp = ( Uint16* )( &net_readPacket->data[net_readLocation] );
 
+    usp = ( Uint16* )( pkt.packet->data + pkt.location );
     us = ENET_NET_TO_HOST_16( *usp );
 
-    net_readLocation += 2;
+    pkt.location += 2;
+
     return us;
 }
 
 //--------------------------------------------------------------------------------------------
-Sint16 packet_readSignedShort()
+Sint16 packet_readSignedShort( enet_pkt & pkt )
 {
     /// @details ZZ@> This function reads a Sint16 from the packet
 
     Sint16 ss;
     signed short* ssp;
-    ssp = ( signed short* )( &net_readPacket->data[net_readLocation] );
+
+    ssp = ( signed short* )( pkt.packet->data + pkt.location );
 
     ss = ENET_NET_TO_HOST_16( *ssp );
 
-    net_readLocation += 2;
+    pkt.location += 2;
+
     return ss;
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 packet_readUnsignedInt()
+Uint32 packet_readUnsignedInt( enet_pkt & pkt )
 {
     /// @details ZZ@> This function reads an Uint32 from the packet
 
     Uint32 ui;
     Uint32* uip;
-    uip = ( Uint32* )( &net_readPacket->data[net_readLocation] );
+    uip = ( Uint32* )( pkt.packet->data + pkt.location );
 
     ui = ENET_NET_TO_HOST_32( *uip );
 
-    net_readLocation += 4;
+    pkt.location += 4;
     return ui;
 }
 
 //--------------------------------------------------------------------------------------------
-Sint32 packet_readSignedInt()
+Sint32 packet_readSignedInt( enet_pkt & pkt )
 {
     /// @details ZZ@> This function reads a Sint32 from the packet
 
     Sint32 si;
     signed int* sip;
-    sip = ( signed int* )( &net_readPacket->data[net_readLocation] );
+    sip = ( signed int* )( pkt.packet->data + pkt.location );
 
     si = ENET_NET_TO_HOST_32( *sip );
 
-    net_readLocation += 4;
+    pkt.location += 4;
     return si;
 }
 
 //--------------------------------------------------------------------------------------------
-size_t packet_remainingSize()
+size_t packet_remainingSize( enet_pkt & pkt )
 {
     /// @details ZZ@> This function tells if there's still data left in the packet
 
-    return net_readPacket->dataLength - net_readLocation;
+    return pkt.packet->dataLength - pkt.location;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -887,7 +906,7 @@ void net_copyDirectoryToHost( const char *dirname, const char *todirname )
             // that we don't want to copy.  This keeps repository
             // directories, /., and /.. from being copied
             // Also avoid copying directories in general.
-            snprintf( fromname, SDL_arraysize( fromname ), "%s/%s", dirname, searchResult );
+            SDL_snprintf( fromname, SDL_arraysize( fromname ), "%s/%s", dirname, searchResult );
             if ( '.' == searchResult[0] || vfs_isDirectory( fromname ) )
             {
                 ctxt = vfs_findNext( &ctxt );
@@ -895,8 +914,8 @@ void net_copyDirectoryToHost( const char *dirname, const char *todirname )
                 continue;
             }
 
-            snprintf( fromname, SDL_arraysize( fromname ), "%s/%s", dirname, searchResult );
-            snprintf( toname, SDL_arraysize( toname ), "%s/%s", todirname, searchResult );
+            SDL_snprintf( fromname, SDL_arraysize( fromname ), "%s/%s", dirname, searchResult );
+            SDL_snprintf( toname, SDL_arraysize( toname ), "%s/%s", todirname, searchResult );
 
             net_copyFileToHost( fromname, toname );
 
@@ -944,8 +963,8 @@ void net_copyDirectoryToAllPlayers( const char *dirname, const char *todirname )
                 continue;
             }
 
-            snprintf( fromname, SDL_arraysize( fromname ), "%s/%s", dirname, searchResult );
-            snprintf( toname, SDL_arraysize( toname ), "%s/%s", todirname, searchResult );
+            SDL_snprintf( fromname, SDL_arraysize( fromname ), "%s/%s", dirname, searchResult );
+            SDL_snprintf( toname, SDL_arraysize( toname ), "%s/%s", todirname, searchResult );
             net_copyFileToAllPlayers( fromname, toname );
 
             ctxt = vfs_findNext( &ctxt );
@@ -992,7 +1011,7 @@ void cl_talkToHost()
 
     // Let the players respawn
     if ( SDLKEYDOWN( SDLK_SPACE )
-         && ( local_stats.allpladead || PMod->respawnanytime )
+         && (( 0 == net_stats.pla_count_total_alive ) || PMod->respawnanytime )
          && PMod->respawnvalid
          && cfg.difficulty < GAME_HARD
          && !console_mode )
@@ -1173,14 +1192,14 @@ void net_handlePacket( ENetEvent *event )
 
     log_info( "net_handlePacket: Received " );
 
-    packet_startReading( event->packet );
-    header = packet_readUnsignedShort();
+    packet_startReading( net_read,  event->packet );
+    header = packet_readUnsignedShort( net_read );
 
     switch ( header )
     {
         case TO_ANY_TEXT:
             log_info( "TO_ANY_TEXT\n" );
-            packet_readString( filename, 255 );
+            packet_readString( net_read, filename, 255 );
             debug_printf( filename );
             break;
 
@@ -1200,21 +1219,21 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_HOST_LATCH\n" );
             if ( _gnet.hostactive )
             {
-                while ( packet_remainingSize() > 0 )
+                while ( packet_remainingSize( net_read ) > 0 )
                 {
                     latch_input_t tmp_latch;
 
-                    player = packet_readUnsignedByte();
-                    time   = packet_readUnsignedInt();
+                    player = packet_readUnsignedByte( net_read );
+                    time   = packet_readUnsignedInt( net_read );
 
-                    tmp_latch.raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
-                    tmp_latch.raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                    tmp_latch.raw[kX] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                    tmp_latch.raw[kY] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
 
-                    tmp_latch.dir[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
-                    tmp_latch.dir[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
-                    tmp_latch.dir[kZ] = packet_readSignedShort() * FFFF_TO_LATCH;
+                    tmp_latch.dir[kX] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                    tmp_latch.dir[kY] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                    tmp_latch.dir[kZ] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
 
-                    tmp_latch.b       = packet_readUnsignedInt();
+                    tmp_latch.b       = packet_readUnsignedInt( net_read );
 
                     pla_add_tlatch( player, time, tmp_latch );
                 }
@@ -1249,11 +1268,11 @@ void net_handlePacket( ENetEvent *event )
                   cnt = 0;
                   while(cnt < MAXSELECT)
                   {
-                    who = packet_readUnsignedByte();
+                    who = packet_readUnsignedByte( net_read );
                     orderwho[whichorder][cnt] = who;
                     cnt++;
                   }
-                  what = packet_readUnsignedInt();
+                  what = packet_readUnsignedInt( net_read );
                   when = update_wld + orderlag;
                   orderwhat[whichorder] = what;
                   orderwhen[whichorder] = when;
@@ -1275,8 +1294,8 @@ void net_handlePacket( ENetEvent *event )
             break;
 
         case NET_TRANSFER_FILE:
-            packet_readString( filename, 256 );
-            fileSize = packet_readUnsignedInt();
+            packet_readString( net_read, filename, 256 );
+            fileSize = packet_readUnsignedInt( net_read );
 
             log_info( "NET_TRANSFER_FILE: %s with size %d.\n", filename, fileSize );
 
@@ -1284,7 +1303,7 @@ void net_handlePacket( ENetEvent *event )
             file = vfs_openWriteB( filename );
             if ( NULL != file )
             {
-                vfs_write( net_readPacket->data + net_readLocation, 1, fileSize, file );
+                vfs_write( net_read.packet->data + net_read.location, 1, fileSize, file );
                 vfs_close( file );
             }
             else
@@ -1309,7 +1328,7 @@ void net_handlePacket( ENetEvent *event )
             break;
 
         case NET_CREATE_DIRECTORY:
-            packet_readString( filename, 256 );
+            packet_readString( net_read, filename, 256 );
             log_info( "NET_CREATE_DIRECTORY: %s\n", filename );
 
             vfs_mkdir( filename );
@@ -1329,13 +1348,13 @@ void net_handlePacket( ENetEvent *event )
 
         case NET_NUM_FILES_TO_SEND:
             log_info( "NET_NUM_FILES_TO_SEND\n" );
-            numfileexpected = ( int )packet_readUnsignedShort();
+            numfileexpected = ( int )packet_readUnsignedShort( net_read );
             break;
 
         case TO_HOST_FILE:
             log_info( "TO_HOST_FILE\n" );
-            packet_readString( filename, 255 );
-            newfilesize = packet_readUnsignedInt();
+            packet_readString( net_read, filename, 255 );
+            newfilesize = packet_readUnsignedInt( net_read );
 
             // Change the size of the file if need be
             newfile = 0;
@@ -1374,15 +1393,15 @@ void net_handlePacket( ENetEvent *event )
             }
 
             // Go to the position in the file and copy data
-            fileposition = packet_readUnsignedInt();
+            fileposition = packet_readUnsignedInt( net_read );
             file = vfs_openReadB( filename );
             if ( file )
             {
                 if ( vfs_seek( file, fileposition ) == 0 )
                 {
-                    while ( packet_remainingSize() > 0 )
+                    while ( packet_remainingSize( net_read ) > 0 )
                     {
-                        vfs_putc( packet_readUnsignedByte(), file );
+                        vfs_putc( packet_readUnsignedByte( net_read ), file );
                     }
                 }
 
@@ -1394,7 +1413,7 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_HOST_DIR\n" );
             if ( _gnet.hostactive )
             {
-                packet_readString( filename, 255 );
+                packet_readString( net_read, filename, 255 );
                 vfs_mkdir( filename );
             }
             break;
@@ -1403,7 +1422,7 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_HOST_FILESENT\n" );
             if ( _gnet.hostactive )
             {
-                numfileexpected += packet_readUnsignedInt();
+                numfileexpected += packet_readUnsignedInt( net_read );
                 numplayerrespond++;
             }
             break;
@@ -1412,7 +1431,7 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_REMOTE_FILESENT\n" );
             if ( !_gnet.hostactive )
             {
-                numfileexpected += packet_readUnsignedInt();
+                numfileexpected += packet_readUnsignedInt( net_read );
                 numplayerrespond++;
             }
             break;
@@ -1421,24 +1440,19 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_REMOTE_MODULE\n" );
             if ( !_gnet.hostactive && !_gnet.readytostart )
             {
-                PMod->seed = packet_readUnsignedInt();
-                packet_readString( filename, 255 );
+                PMod->seed = packet_readUnsignedInt( net_read );
+                packet_readString( net_read, filename, 255 );
 
-                pickedmodule_index         = -1;
-                pickedmodule_path[0]       = CSTR_END;
-                pickedmodule_name[0]       = CSTR_END;
-                pickedmodule_write_path[0] = CSTR_END;
-
-                pickedmodule_index = mnu_get_mod_number( filename );
+                pickedmodule.init( mnu_get_mod_number( filename ) );
 
                 // Check to see if the module exists
-                if ( -1 != pickedmodule_index )
+                if ( -1 != pickedmodule.index )
                 {
-                    strncpy( pickedmodule_path,       mnu_ModList_get_vfs_path( pickedmodule_index ), SDL_arraysize( pickedmodule_path ) );
-                    strncpy( pickedmodule_name,       mnu_ModList_get_name( pickedmodule_index ), SDL_arraysize( pickedmodule_name ) );
-                    strncpy( pickedmodule_write_path, mnu_ModList_get_dest_path( pickedmodule_index ), SDL_arraysize( pickedmodule_write_path ) );
+                    strncpy( pickedmodule.path,       mnu_ModList_get_vfs_path( pickedmodule.index ), SDL_arraysize( pickedmodule.path ) );
+                    strncpy( pickedmodule.name,       mnu_ModList_get_name( pickedmodule.index ), SDL_arraysize( pickedmodule.name ) );
+                    strncpy( pickedmodule.write_path, mnu_ModList_get_dest_path( pickedmodule.index ), SDL_arraysize( pickedmodule.write_path ) );
 
-                    pickedmodule_ready = btrue;
+                    pickedmodule.ready = btrue;
 
                     // Make ourselves ready
                     _gnet.readytostart = btrue;
@@ -1451,7 +1465,7 @@ void net_handlePacket( ENetEvent *event )
                 else
                 {
                     // The module doesn't exist locally
-                    pickedmodule_ready = bfalse;
+                    pickedmodule.ready = bfalse;
 
                     // Halt the process
                     _gnet.readytostart = bfalse;
@@ -1483,12 +1497,12 @@ void net_handlePacket( ENetEvent *event )
                       cnt = 0;
                       while(cnt < MAXSELECT)
                       {
-                        who = packet_readUnsignedByte();
+                        who = packet_readUnsignedByte( net_read );
                         orderwho[whichorder][cnt] = who;
                         cnt++;
                       }
-                      what = packet_readUnsignedInt();
-                      when = packet_readUnsignedInt();
+                      what = packet_readUnsignedInt( net_read );
+                      when = packet_readUnsignedInt( net_read );
                       orderwhat[whichorder] = what;
                       orderwhen[whichorder] = when;
                     }*/
@@ -1499,8 +1513,8 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_REMOTE_FILE\n" );
             if ( !_gnet.hostactive )
             {
-                packet_readString( filename, 255 );
-                newfilesize = packet_readUnsignedInt();
+                packet_readString( net_read, filename, 255 );
+                newfilesize = packet_readUnsignedInt( net_read );
 
                 // Change the size of the file if need be
                 newfile = 0;
@@ -1539,15 +1553,15 @@ void net_handlePacket( ENetEvent *event )
                 }
 
                 // Go to the position in the file and copy data
-                fileposition = packet_readUnsignedInt();
+                fileposition = packet_readUnsignedInt( net_read );
                 file = vfs_openReadB( filename );
                 if ( file )
                 {
                     if ( vfs_seek( file, fileposition ) == 0 )
                     {
-                        while ( packet_remainingSize() > 0 )
+                        while ( packet_remainingSize( net_read ) > 0 )
                         {
-                            vfs_putc( packet_readUnsignedByte(), file );
+                            vfs_putc( packet_readUnsignedByte( net_read ), file );
                         }
                     }
 
@@ -1560,7 +1574,7 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_REMOTE_DIR\n" );
             if ( !_gnet.hostactive )
             {
-                packet_readString( filename, 255 );
+                packet_readString( net_read, filename, 255 );
                 vfs_mkdir( filename );
             }
             break;
@@ -1569,7 +1583,7 @@ void net_handlePacket( ENetEvent *event )
             log_info( "TO_REMOTE_LATCH\n" );
             if ( !_gnet.hostactive )
             {
-                stamp = packet_readUnsignedInt();
+                stamp = packet_readUnsignedInt( net_read );
                 time = stamp & LAGAND;
                 if ((( Uint32 )( ~0 ) ) == _gnet.next_time_stamp )
                 {
@@ -1597,30 +1611,30 @@ void net_handlePacket( ENetEvent *event )
                     _gnet.timed_latch_count++;
 
                     // Read latches for each player sent
-                    while ( packet_remainingSize() > 0 )
+                    while ( packet_remainingSize( net_read ) > 0 )
                     {
-                        player = packet_readUnsignedByte();
+                        player = packet_readUnsignedByte( net_read );
                         if ( VALID_PLA( player ) )
                         {
                             ego_player * ppla = PlaStack + player;
 
-                            ppla->tlatch[time].raw[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
-                            ppla->tlatch[time].raw[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
+                            ppla->tlatch[time].raw[kX] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                            ppla->tlatch[time].raw[kY] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
 
-                            ppla->tlatch[time].dir[kX] = packet_readSignedShort() * FFFF_TO_LATCH;
-                            ppla->tlatch[time].dir[kY] = packet_readSignedShort() * FFFF_TO_LATCH;
-                            ppla->tlatch[time].dir[kZ] = packet_readSignedShort() * FFFF_TO_LATCH;
+                            ppla->tlatch[time].dir[kX] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                            ppla->tlatch[time].dir[kY] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                            ppla->tlatch[time].dir[kZ] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
 
-                            ppla->tlatch[time].button  = packet_readUnsignedInt();
+                            ppla->tlatch[time].button  = packet_readUnsignedInt( net_read );
                         }
                         else
                         {
                             // dump the data
-                            packet_readSignedShort();
-                            packet_readSignedShort();
-                            packet_readSignedShort();
-                            packet_readSignedShort();
-                            packet_readUnsignedInt();
+                            packet_readSignedShort( net_read );
+                            packet_readSignedShort( net_read );
+                            packet_readSignedShort( net_read );
+                            packet_readSignedShort( net_read );
+                            packet_readUnsignedInt( net_read );
                         }
                     }
 
@@ -1632,7 +1646,7 @@ void net_handlePacket( ENetEvent *event )
 }
 
 //--------------------------------------------------------------------------------------------
-void listen_for_packets()
+void net_dispatch_packets()
 {
     /// @details ZZ@> This function reads any new messages and sets the player latch and matrix needed
     ///    lists...
@@ -1652,7 +1666,7 @@ void listen_for_packets()
 
                 case ENET_EVENT_TYPE_CONNECT:
                     // don't allow anyone to connect during the game session
-                    log_warning( "listen_for_packets: Client tried to connect during the game: %x:%u\n",
+                    log_warning( "net_dispatch_packets: Client tried to connect during the game: %x:%u\n",
                                  event.peer->address.host, event.peer->address.port );
 #if defined(ENET11)
                     enet_peer_disconnect( event.peer, 0 );
@@ -1670,7 +1684,7 @@ void listen_for_packets()
                         NetPlayerInfo *info = ( NetPlayerInfo * )event.peer->data;
 
                         // uh oh, how do we handle losing a player?
-                        log_warning( "listen_for_packets: Player %d disconnected!\n",
+                        log_warning( "net_dispatch_packets: Player %d disconnected!\n",
                                      info->which_slot );
                     }
                     break;
@@ -1756,7 +1770,7 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
             ADD_BITS( tmp_latch.b, tlatch_list[tnc].button );
         }
 
-        _gnet.timed_latch_count = MAX( _gnet.timed_latch_count, latch_count );
+        _gnet.timed_latch_count = SDL_max( _gnet.timed_latch_count, latch_count );
         if ( weight_sum > 0.0f )
         {
             tmp_latch.raw[kX] /= ( float )weight_sum;
@@ -1841,7 +1855,7 @@ void unbuffer_one_player_latch_do_respawn( ego_player * ppla )
 
     if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans.b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
     {
-        if ( !pchr->alive && 0 == revivetimer )
+        if ( !pchr->alive && 0 == timer_revive )
         {
             ego_chr::respawn( ppla->index );
             TeamStack[pchr->team].leader = ppla->index;
@@ -1906,11 +1920,11 @@ void net_initialize( ego_config_data * pcfg )
     net_instance_init( &_gnet );
 
     // Clear all the state variables to 0 to start.
-    memset( _gnet.player_peers, 0, sizeof( _gnet.player_peers ) );
-    memset( _gnet.player_info, 0, sizeof( _gnet.player_info ) );
-    memset( tmp_packet.buffer, 0, sizeof( tmp_packet.buffer ) );
-    memset( net_transferStates, 0, sizeof( net_transferStates ) );
-    memset( &net_receiveState, 0, sizeof( net_receiveState ) );
+    SDL_memset( _gnet.player_peers, 0, sizeof( _gnet.player_peers ) );
+    SDL_memset( _gnet.player_info, 0, sizeof( _gnet.player_info ) );
+    SDL_memset( tmp_packet.buffer, 0, sizeof( tmp_packet.buffer ) );
+    SDL_memset( net_transferStates, 0, sizeof( net_transferStates ) );
+    SDL_memset( &net_receiveState, 0, sizeof( net_receiveState ) );
 
     sv_last_frame = Uint32( ~0L );
 
@@ -1998,9 +2012,6 @@ void sv_letPlayersJoin()
 
                 event.peer->data = &( _gnet.player_info[_gnet.player_count] );
                 _gnet.player_count++;
-
-                net_stats.pla_count_network = _gnet.player_count;
-
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
@@ -2170,7 +2181,7 @@ void net_updateFileTransfers()
                     vfs_seek( file, 0 );
 
                     // Make room for the file's name
-                    nameLen = strlen( state->destName ) + 1;
+                    nameLen = SDL_strlen( state->destName ) + 1;
                     transferSize = nameLen;
 
                     // And for the file's size
@@ -2207,7 +2218,7 @@ void net_updateFileTransfers()
             }
 
             // update transfer queue state
-            memset( state, 0, sizeof( *state ) );
+            SDL_memset( state, 0, sizeof( *state ) );
             net_fileTransferHead++;
             if ( net_fileTransferHead >= NET_MAX_FILE_TRANSFERS )
             {
@@ -2218,7 +2229,7 @@ void net_updateFileTransfers()
     } // end if net_numFileTransfers > 0
 
     // Let the recieve loop run at least once
-    listen_for_packets();
+    net_dispatch_packets();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2241,7 +2252,7 @@ bool_t net_instance_init( net_instance * pnet )
 {
     if ( NULL == pnet ) return bfalse;
 
-    memset( pnet, 0, sizeof( *pnet ) );
+    SDL_memset( pnet, 0, sizeof( *pnet ) );
 
     // make sure to update the network player count
     net_stats.pla_count_network = _gnet.player_count;
@@ -2367,7 +2378,7 @@ ego_player * ego_player::ctor( ego_player * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
-    memset( ppla, 0, sizeof( *ppla ) );
+    SDL_memset( ppla, 0, sizeof( *ppla ) );
 
     ppla->index       = CHR_REF( MAX_CHR );
 
@@ -2542,7 +2553,7 @@ bool_t PlaStack_has_wizard()
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-void net_update_game_clock()
+void net_synchronize_game_clock()
 {
     if ( !network_initialized() ) return;
 
@@ -2559,5 +2570,4 @@ void net_update_game_clock()
         // lag...  Speed it up so it gets closer to sync
         clock_wld -= 5;
     }
-
 }

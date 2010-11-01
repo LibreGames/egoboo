@@ -42,7 +42,7 @@ static void export_control( vfs_FILE * filewrite, const char * text, Sint32 devi
 {
     STRING buffer;
 
-    snprintf( buffer, SDL_arraysize( buffer ), "%s : %s\n", text, scantag_get_string( device, pcontrol->tag, pcontrol->is_key ) );
+    SDL_snprintf( buffer, SDL_arraysize( buffer ), "%s : %s\n", text, scantag_get_string( device, pcontrol->tag, pcontrol->is_key ) );
     vfs_puts( buffer, filewrite );
 }
 
@@ -180,7 +180,7 @@ bool_t input_settings_save_vfs( const char* szFilename )
     {
         pdevice = controls + i;
 
-        snprintf( buffer, SDL_arraysize( buffer ), "\n\nJoystick %d\n", i - INPUT_DEVICE_JOY );
+        SDL_snprintf( buffer, SDL_arraysize( buffer ), "\n\nJoystick %d\n", i - INPUT_DEVICE_JOY );
         vfs_puts( buffer, filewrite );
         vfs_puts( "========\n", filewrite );
         export_control( filewrite, "Jump                ", pdevice->device, pdevice->control + CONTROL_JUMP );

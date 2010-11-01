@@ -126,7 +126,7 @@ bool_t phys_estimate_chr_chr_normal( ego_oct_vec & opos_a, ego_oct_vec & opos_b,
     if ( fvec3_length_abs( nrm ) > 0.0f )
     {
         fvec3_t vtmp = fvec3_normalize( nrm );
-        memcpy( nrm, vtmp.v, sizeof( fvec3_base_t ) );
+        SDL_memcpy( nrm, vtmp.v, sizeof( fvec3_base_t ) );
         retval = btrue;
     }
 
@@ -151,8 +151,8 @@ egoboo_rv ego_oct_bb::intersect_index( int index, ego_oct_bb & src1, ego_oct_vec
     time[2] = (( src1.maxs[index] + opos1[index] ) - ( src2.mins[index] + opos2[index] ) ) / diff;
     time[3] = (( src1.maxs[index] + opos1[index] ) - ( src2.maxs[index] + opos2[index] ) ) / diff;
 
-    *tmin = MIN( MIN( time[0], time[1] ), MIN( time[2], time[3] ) );
-    *tmax = MAX( MAX( time[0], time[1] ), MAX( time[2], time[3] ) );
+    *tmin = SDL_min( SDL_min( time[0], time[1] ), SDL_min( time[2], time[3] ) );
+    *tmax = SDL_max( SDL_max( time[0], time[1] ), SDL_max( time[2], time[3] ) );
 
     // normalize the results for the diagonal directions
     if ( OCT_XY == index || OCT_YX == index )
@@ -192,18 +192,18 @@ egoboo_rv ego_oct_bb::intersect_index_close( int index, ego_oct_bb & src1, ego_o
         time[1] = ( opos1[index] - ( src2.maxs[index] + opos2[index] ) ) / diff;
         time[2] = ( opos1[index] - ( src2.mins[index] + opos2[index] ) ) / diff;
         time[3] = ( opos1[index] - ( src2.maxs[index] + opos2[index] ) ) / diff;
-        tmp_min1 = MIN( MIN( time[0], time[1] ), MIN( time[2], time[3] ) );
-        tmp_max1 = MAX( MAX( time[0], time[1] ), MAX( time[2], time[3] ) );
+        tmp_min1 = SDL_min( SDL_min( time[0], time[1] ), SDL_min( time[2], time[3] ) );
+        tmp_max1 = SDL_max( SDL_max( time[0], time[1] ), SDL_max( time[2], time[3] ) );
 
         time[4] = (( src1.mins[index] + opos1[index] ) - opos2[index] ) / diff;
         time[5] = (( src1.mins[index] + opos1[index] ) - opos2[index] ) / diff;
         time[6] = (( src1.maxs[index] + opos1[index] ) - opos2[index] ) / diff;
         time[7] = (( src1.maxs[index] + opos1[index] ) - opos2[index] ) / diff;
-        tmp_min2 = MIN( MIN( time[4], time[5] ), MIN( time[6], time[7] ) );
-        tmp_max2 = MAX( MAX( time[4], time[5] ), MAX( time[6], time[7] ) );
+        tmp_min2 = SDL_min( SDL_min( time[4], time[5] ), SDL_min( time[6], time[7] ) );
+        tmp_max2 = SDL_max( SDL_max( time[4], time[5] ), SDL_max( time[6], time[7] ) );
 
-        *tmin = MIN( tmp_min1, tmp_min2 );
-        *tmax = MAX( tmp_max1, tmp_max2 );
+        *tmin = SDL_min( tmp_min1, tmp_min2 );
+        *tmax = SDL_max( tmp_max1, tmp_max2 );
 
         // normalize the results for the diagonal directions
         if ( OCT_XY == index || OCT_YX == index )
@@ -297,8 +297,8 @@ bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1
                 }
                 else
                 {
-                    *tmin = MAX( *tmin, tmp_min );
-                    *tmax = MIN( *tmax, tmp_max );
+                    *tmin = SDL_max( *tmin, tmp_min );
+                    *tmax = SDL_min( *tmax, tmp_max );
                 }
 
                 if ( *tmax < *tmin ) return bfalse;
@@ -422,7 +422,7 @@ bool_t phys_expand_chr_bb( ego_chr * pchr, float tmin, float tmax, ego_oct_bb   
 
     ego_oct_bb   tmp_oct1, tmp_oct2;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
 
     // copy the volume
     // the "platform" version was expanded in the z direction, but only if it was needed
@@ -443,7 +443,7 @@ bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   
 
     ego_oct_bb   tmp_oct;
 
-    if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
+    if ( !PROCESSING_PPRT( pprt ) ) return bfalse;
 
     // add in the current position to the bounding volume
     {
@@ -461,7 +461,7 @@ ego_breadcrumb * breadcrumb_init_chr( ego_breadcrumb * bc, ego_chr * pchr )
 {
     if ( NULL == bc ) return bc;
 
-    memset( bc, 0, sizeof( ego_breadcrumb ) );
+    SDL_memset( bc, 0, sizeof( ego_breadcrumb ) );
     bc->time = update_wld;
 
     if ( NULL == pchr ) return bc;
@@ -488,7 +488,7 @@ ego_breadcrumb * breadcrumb_init_prt( ego_breadcrumb * bc, ego_prt * pprt )
 
     if ( NULL == bc ) return bc;
 
-    memset( bc, 0, sizeof( ego_breadcrumb ) );
+    SDL_memset( bc, 0, sizeof( ego_breadcrumb ) );
     bc->time = update_wld;
 
     if ( NULL == pprt ) return bc;
@@ -571,7 +571,7 @@ void breadcrumb_list_compact( ego_breadcrumb_list * lst )
         {
             if ( bc_src != bc_dst )
             {
-                memcpy( bc_dst, bc_src, sizeof( ego_breadcrumb ) );
+                SDL_memcpy( bc_dst, bc_src, sizeof( ego_breadcrumb ) );
             }
 
             tnc++;
@@ -615,7 +615,7 @@ void breadcrumb_list_validate( ego_breadcrumb_list * lst )
     // sort the values from lowest to highest
     if ( lst->count > 1 )
     {
-        qsort( lst->lst, lst->count, sizeof( ego_breadcrumb ), breadcrumb_cmp );
+        SDL_qsort( lst->lst, lst->count, sizeof( ego_breadcrumb ), breadcrumb_cmp );
     }
 }
 
@@ -836,7 +836,7 @@ bool_t breadcrumb_list_add( ego_breadcrumb_list * lst, ego_breadcrumb * pnew )
             if ( INVALID_TILE == ptmp->grid )
             {
                 // both are off the map, so determine the difference in distance
-                if ( ABS( ptmp->pos.x - pnew->pos.x ) < GRID_SIZE && ABS( ptmp->pos.y - pnew->pos.y ) < GRID_SIZE )
+                if ( SDL_abs( ptmp->pos.x - pnew->pos.x ) < GRID_SIZE && SDL_abs( ptmp->pos.y - pnew->pos.y ) < GRID_SIZE )
                 {
                     // not far enough apart
                     pold = ptmp;
@@ -916,7 +916,7 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
         }
 
         // perpendicular to the ground
-        if ( 1.0f == ABS( nrm[kZ] ) )
+        if ( 1.0f == SDL_abs( nrm[kZ] ) )
         {
             dot = acc[kZ] * nrm[kZ];
 
@@ -1114,8 +1114,8 @@ bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, 
 //            }
 //            else
 //            {
-//                *tmin = MAX( *tmin, tmp_min );
-//                *tmax = MIN( *tmax, tmp_max );
+//                *tmin = SDL_max( *tmin, tmp_min );
+//                *tmax = SDL_min( *tmax, tmp_max );
 //            }
 //        }
 //

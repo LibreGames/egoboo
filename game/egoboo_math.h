@@ -80,7 +80,7 @@ extern "C"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// Just define ABS, MIN, and MAX using macros for the moment. This is likely to be the
+// Just define ABS, MIN, and SDL_max using macros for the moment. This is likely to be the
 // fastest and most cross-platform solution
 
 #if !defined(ABS)
@@ -132,7 +132,7 @@ extern "C"
 #endif
 
 #define CNV(i,j) v[4*i+j]
-#define CopyMatrix( pMatrixDest, pMatrixSource ) memcpy( (pMatrixDest), (pMatrixSource), sizeof( fmat_4x4_t ) )
+#define CopyMatrix( pMatrixDest, pMatrixSource ) SDL_memcpy( (pMatrixDest), (pMatrixSource), sizeof( fmat_4x4_t ) )
 
 #if defined(TEST_NAN_RESULT)
 #    define LOG_NAN(XX)      if( isnan(XX) ) log_error( "**** A math operation resulted in an invalid result (NAN) ****\n    (\"%s\" - %d)\n", __FILE__, __LINE__ );

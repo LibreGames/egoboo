@@ -235,7 +235,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
     }
 
     // reset the script state
-    memset( &my_state, 0, sizeof( my_state ) );
+    SDL_memset( &my_state, 0, sizeof( my_state ) );
 
     // reset the ai
     pai->terminate = bfalse;
@@ -310,7 +310,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
 
             if ( vert_len2 > 1.0f && vert_len2 >= horiz_len2 )
             {
-                scale = 1.0f / ABS( pchr->latch.trans.dir[kZ] );
+                scale = 1.0f / SDL_abs( pchr->latch.trans.dir[kZ] );
             }
             else if ( horiz_len2 > 1.0f && horiz_len2 > vert_len2 )
             {
@@ -972,7 +972,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
     {
         // Get the working opcode from a constant, constants are all but high 5 bits
         iTmp = pself->opcode & VALUE_BITS;
-        if ( debug_scripts ) snprintf( buffer, SDL_arraysize( buffer ), "%d", iTmp );
+        if ( debug_scripts ) SDL_snprintf( buffer, SDL_arraysize( buffer ), "%d", iTmp );
     }
     else
     {
@@ -1156,8 +1156,8 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
                 }
                 else
                 {
-                    iTmp = ABS( pself->wp[kX] - pchr->pos.x ) +
-                           ABS( pself->wp[kY] - pchr->pos.y );
+                    iTmp = SDL_abs( pself->wp[kX] - pchr->pos.x ) +
+                           SDL_abs( pself->wp[kY] - pchr->pos.y );
                 }
                 break;
 
@@ -1252,17 +1252,17 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
             case VARTARGETSPEEDX:
                 varname = "TARGETSPEEDX";
-                iTmp = ( NULL == ptarget ) ? 0 : ABS( ptarget->vel.x );
+                iTmp = ( NULL == ptarget ) ? 0 : SDL_abs( ptarget->vel.x );
                 break;
 
             case VARTARGETSPEEDY:
                 varname = "TARGETSPEEDY";
-                iTmp = ( NULL == ptarget ) ? 0 : ABS( ptarget->vel.y );
+                iTmp = ( NULL == ptarget ) ? 0 : SDL_abs( ptarget->vel.y );
                 break;
 
             case VARTARGETSPEEDZ:
                 varname = "TARGETSPEEDZ";
-                iTmp = ( NULL == ptarget ) ? 0 : ABS( ptarget->vel.z );
+                iTmp = ( NULL == ptarget ) ? 0 : SDL_abs( ptarget->vel.z );
                 break;
 
             case VARSELFSPAWNX:
@@ -1795,8 +1795,8 @@ void set_alerts( ego_ai_bundle * pbdl_ai )
     at_waypoint = bfalse;
     if ( pself->wp_valid )
     {
-        at_waypoint = ( ABS( pchr->pos.x - pself->wp[kX] ) < WAYTHRESH ) &&
-                      ( ABS( pchr->pos.y - pself->wp[kY] ) < WAYTHRESH );
+        at_waypoint = ( SDL_abs( pchr->pos.x - pself->wp[kX] ) < WAYTHRESH ) &&
+                      ( SDL_abs( pchr->pos.y - pself->wp[kY] ) < WAYTHRESH );
     }
 
     if ( at_waypoint )
@@ -1891,7 +1891,7 @@ ego_ai_state * ego_ai_state::reconstruct( ego_ai_state * pself )
     ego_ai_state::dealloc( pself );
 
     // set everything to safe values
-    memset( pself, 0, sizeof( *pself ) );
+    SDL_memset( pself, 0, sizeof( *pself ) );
 
     pself->index      = CHR_REF( MAX_CHR );
     pself->target     = CHR_REF( MAX_CHR );

@@ -312,14 +312,14 @@ INLINE ego_ai_state * ego_chr::get_pai( const CHR_REF & ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_chr_instance * ego_chr::get_pinstance( const CHR_REF & ichr )
+INLINE gfx_mad_instance * ego_chr::get_pinstance( const CHR_REF & ichr )
 {
     ego_chr * pchr;
 
     pchr = ChrObjList.get_allocated_data_ptr( ichr );
     if ( !DEFINED_PCHR( pchr ) ) return NULL;
 
-    return &( pchr->inst );
+    return &( pchr->gfx_inst );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -394,7 +394,7 @@ INLINE bool_t ego_chr::get_MatUp( ego_chr *pchr, fvec3_t   *pvec )
 
     if ( ego_chr::matrix_valid( pchr ) )
     {
-        ( *pvec ) = mat_getChrUp( pchr->inst.matrix );
+        ( *pvec ) = mat_getChrUp( pchr->gfx_inst.matrix );
     }
     else
     {
@@ -421,7 +421,7 @@ INLINE bool_t ego_chr::get_MatRight( ego_chr *pchr, fvec3_t   *pvec )
 
     if ( ego_chr::matrix_valid( pchr ) )
     {
-        ( *pvec ) = mat_getChrForward( pchr->inst.matrix );
+        ( *pvec ) = mat_getChrForward( pchr->gfx_inst.matrix );
     }
     else
     {
@@ -449,7 +449,7 @@ INLINE bool_t ego_chr::get_MatForward( ego_chr *pchr, fvec3_t   *pvec )
 
     if ( ego_chr::matrix_valid( pchr ) )
     {
-        ( *pvec ) = mat_getChrRight( pchr->inst.matrix );
+        ( *pvec ) = mat_getChrRight( pchr->gfx_inst.matrix );
     }
     else
     {
@@ -477,7 +477,7 @@ INLINE bool_t ego_chr::get_MatTranslate( ego_chr *pchr, fvec3_t   *pvec )
 
     if ( ego_chr::matrix_valid( pchr ) )
     {
-        ( *pvec ) = mat_getTranslate( pchr->inst.matrix );
+        ( *pvec ) = mat_getTranslate( pchr->gfx_inst.matrix );
     }
     else
     {

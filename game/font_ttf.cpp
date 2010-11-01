@@ -256,7 +256,7 @@ display_item_t * fnt_vprintf( display_item_t * pitem, TTF_Font * ttf_ptr, SDL_Co
     STRING szText = EMPTY_CSTR;
 
     // evaluate the variable args
-    rv = vsnprintf( szText, SDL_arraysize( szText ) - 1, format, args );
+    rv = SDL_vsnprintf( szText, SDL_arraysize( szText ) - 1, format, args );
 
     if ( rv < 0 )
     {
@@ -345,7 +345,7 @@ const char * fnt_vgetTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, co
     text[0] = CSTR_END;
 
     // convert the string
-    rv = vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
+    rv = SDL_vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
 
     // if there was an error converting the string, return
     if ( rv < 0 || NULL == text || '\0' == text[0] ) return NULL;
@@ -395,7 +395,7 @@ int fnt_vconvertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, i
 
     char text[4096] = EMPTY_CSTR;
 
-    vsnprintf_rv = vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
+    vsnprintf_rv = SDL_vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
 
     // some problem printing the text?
     if ( vsnprintf_rv < 0 )
@@ -450,7 +450,7 @@ int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, i
     }
 
     // Split the passed in text into separate lines
-    len = strlen( text );
+    len = SDL_strlen( text );
     buffer = EGOBOO_NEW_ARY( char, len + 1 );
     strncpy( buffer, text, len + 1 );
 
@@ -520,7 +520,7 @@ const char * fnt_vgetTextBoxSize( TTF_Font *ttf_ptr, int spacing, int *pwidth, i
     text[0] = CSTR_END;
 
     // convert the string
-    rv = vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
+    rv = SDL_vsnprintf( text, SDL_arraysize( text ) - 1, format, args );
 
     // if there was an error converting the string, return
     if ( rv < 0 || NULL == text || '\0' == text[0] ) return NULL;
@@ -533,7 +533,7 @@ const char * fnt_vgetTextBoxSize( TTF_Font *ttf_ptr, int spacing, int *pwidth, i
     if ( NULL == pheight ) pheight = &loc_height;
 
     // Allocate a buffer to hold a copy of the string
-    len = strlen( text );
+    len = SDL_strlen( text );
     buffer = EGOBOO_NEW_ARY( char, len + 1 );
     strncpy( buffer, text, len );
 

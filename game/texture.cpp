@@ -186,7 +186,7 @@ bool_t TxTexture_free_one( const TX_REF & itex )
     if ( TxTexture._free_count >= TX_TEXTURE_COUNT )
         return bfalse;
 
-    // do not put anything below TX_LAST back onto the SDL_free stack
+    // do not put anything below TX_LAST back onto the free stack
     if ( itex >= TX_LAST )
     {
         TxTexture.free_ref[TxTexture._free_count] = ( itex ).get_value();

@@ -104,7 +104,7 @@ config_data_t cfg;
 //--------------------------------------------------------------------------------------------
 void egoboo_config_init( config_data_t * pcfg )
 {
-    memset( &cfg_default, 0, sizeof( cfg_default ) );
+    SDL_memset( &cfg_default, 0, sizeof( cfg_default ) );
 
     // {GRAPHIC}
     pcfg->fullscreen_req        = bfalse;        // Start in fullscreen?
@@ -186,7 +186,7 @@ egoboo_rv setup_read_vfs()
 
     // Read the local setup.txt
     fs_ensureUserFile( "setup.txt", btrue );
-    snprintf( _config_filename, SDL_arraysize( _config_filename ), "%s" SLASH_STR "setup.txt", fs_getUserDirectory() );
+    SDL_snprintf( _config_filename, SDL_arraysize( _config_filename ), "%s" SLASH_STR "setup.txt", fs_getUserDirectory() );
 
     // do NOT force the file to open in a read directory if it doesn't exist. this will cause a failure in
     // linux if the directory is read-only
@@ -320,7 +320,7 @@ bool_t setup_download( config_data_t * pcfg )
     // Do we do texture filtering?
     GetKey_string( "TEXTURE_FILTERING", lTempStr, 24, "0_UNFILTERED" );
     // MUCH simpler
-    pcfg->texturefilter_req = strtol( lTempStr, NULL, 10 );
+    pcfg->texturefilter_req = SDL_strtol( lTempStr, NULL, 10 );
 
     // Max number of lights
     GetKey_int( "MAX_DYNAMIC_LIGHTS", pcfg->dyna_count_req, cfg_default.dyna_count_req );
@@ -371,9 +371,9 @@ bool_t setup_download( config_data_t * pcfg )
     // Which difficulty mode do we use?
     GetKey_string( "DIFFICULTY_MODE", lTempStr, 24, "NORMAL" );
     pcfg->difficulty = cfg_default.difficulty;
-    if ( 'E' == toupper( lTempStr[0] ) )  pcfg->difficulty = GAME_EASY;
-    if ( 'N' == toupper( lTempStr[0] ) )  pcfg->difficulty = GAME_NORMAL;
-    if ( 'H' == toupper( lTempStr[0] ) )  pcfg->difficulty = GAME_HARD;
+    if ( 'E' == SDL_toupper( lTempStr[0] ) )  pcfg->difficulty = GAME_EASY;
+    if ( 'N' == SDL_toupper( lTempStr[0] ) )  pcfg->difficulty = GAME_NORMAL;
+    if ( 'H' == SDL_toupper( lTempStr[0] ) )  pcfg->difficulty = GAME_HARD;
 
     // Feedback
     GetKey_int( "FEEDBACK", lTempInt, cfg_default.feedback );
@@ -382,9 +382,9 @@ bool_t setup_download( config_data_t * pcfg )
     // Camera control mode
     GetKey_string( "AUTOTURN_CAMERA", lTempStr, 24, "GOOD" );
     pcfg->autoturncamera = cfg_default.autoturncamera;
-    if ( 'G' == toupper( lTempStr[0] ) )  pcfg->autoturncamera = CAM_TURN_GOOD;
-    else if ( 'T' == toupper( lTempStr[0] ) )  pcfg->autoturncamera = CAM_TURN_AUTO;
-    else if ( 'F' == toupper( lTempStr[0] ) )  pcfg->autoturncamera = CAM_TURN_NONE;
+    if ( 'G' == SDL_toupper( lTempStr[0] ) )  pcfg->autoturncamera = CAM_TURN_GOOD;
+    else if ( 'T' == SDL_toupper( lTempStr[0] ) )  pcfg->autoturncamera = CAM_TURN_AUTO;
+    else if ( 'F' == SDL_toupper( lTempStr[0] ) )  pcfg->autoturncamera = CAM_TURN_NONE;
 
     // Max number of messages displayed
     GetKey_int( "MAX_TEXT_MESSAGE", pcfg->message_count_req, cfg_default.message_count_req );
@@ -551,7 +551,7 @@ bool_t setup_upload( config_data_t * pcfg )
             case TX_LINEAR:      sz_literal = "LINEAR";      break;
         }
     }
-    snprintf( buffer, SDL_arraysize( buffer ), "%d_%s", pcfg->texturefilter_req, sz_literal );
+    SDL_snprintf( buffer, SDL_arraysize( buffer ), "%d_%s", pcfg->texturefilter_req, sz_literal );
 
     SetKey_string( "TEXTURE_FILTERING", buffer );
 

@@ -23,17 +23,16 @@
 
 #include "camera.h"
 
-#include "egoboo_setup.h"
-
 #include "input.h"
 #include "graphic.h"
 #include "network.h"
+#include "game.h"
+
 #include "file_formats/controls_file.h"
+#include "extensions/SDL_extensions.h"
 
 #include "egoboo_setup.h"
 #include "egoboo.h"
-
-#include "extensions/SDL_extensions.h"
 
 #include "char.inl"
 #include "mesh.inl"
@@ -154,18 +153,18 @@ void ego_camera::make_matrix( ego_camera * pcam )
     {
         float zoom_add;
         pcam->swing = ( pcam->swing + 120 ) & 0x3FFF;
-        local_swingamp = MAX( local_swingamp, 0.175f );
+        local_swingamp = SDL_max( local_swingamp, 0.175f );
 
         zoom_add = ( 0 == ( local_stats.grog_level % 2 ) ? 1 : - 1 ) * CAM_TURN_KEY * local_stats.grog_level * 0.35f;
         pcam->zaddgoto = CLIP( pcam->zaddgoto + zoom_add, CAM_ZADD_MIN, CAM_ZADD_MAX );
-        pcam->motion_blur = MIN( 1.00f, 0.6f + 0.075f * local_stats.grog_level );
+        pcam->motion_blur = SDL_min( 1.00f, 0.6f + 0.075f * local_stats.grog_level );
     }
 
     //Rotate camera if they are dazed and apply motion blur
     if ( local_stats.daze_level > 0 )
     {
         pcam->turnadd = local_stats.daze_level * CAM_TURN_KEY;
-        pcam->motion_blur = MIN( 1.00f, 0.6f + 0.075f * local_stats.daze_level );
+        pcam->motion_blur = SDL_min( 1.00f, 0.6f + 0.075f * local_stats.daze_level );
     }
 
     //Apply camera swinging
@@ -183,7 +182,7 @@ void ego_camera::make_matrix( ego_camera * pcam )
         pcam->mView = MatrixMult( RotateY( pcam->roll ), pcam->mView );
 
         // Come to a standstill at some point
-        if ( ABS( pcam->roll ) < 0.001f )
+        if ( SDL_abs( pcam->roll ) < 0.001f )
         {
             pcam->roll = 0;
             pcam->swing = 0;
@@ -378,7 +377,7 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
                 // but there is no real way to do this?
 
                 // get the maximum effect
-                weight =  MAX( weight1, weight2 );
+                weight =  SDL_max( weight1, weight2 );
 
                 // The character is on foot
                 sum_pos.x += pchr->pos.x * weight;

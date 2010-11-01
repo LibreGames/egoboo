@@ -40,7 +40,7 @@ ConfigFilePtr_t quest_file_open( const char *player_directory )
     if ( !VALID_CSTR( player_directory ) ) return NULL;
 
     // Figure out the file path
-    snprintf( newloadname, SDL_arraysize( newloadname ), "%s/quest.txt", player_directory );
+    SDL_snprintf( newloadname, SDL_arraysize( newloadname ), "%s/quest.txt", player_directory );
 
     retval = LoadConfigFile( newloadname, bfalse );
     if ( NULL == retval )
@@ -112,7 +112,7 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
     idsz_map_init( quest_log );
 
     // Figure out the file path
-    snprintf( newloadname, SDL_arraysize( newloadname ), "%s/quest.txt", player_directory );
+    SDL_snprintf( newloadname, SDL_arraysize( newloadname ), "%s/quest.txt", player_directory );
 
     // try to open the file
     fileread = vfs_openRead( newloadname );
@@ -239,7 +239,7 @@ int quest_adjust_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz
 
         // Modify the quest level for that specific quest
         if ( adjustment == QUEST_MAXVAL ) dst_level = QUEST_BEATEN;
-        else                             dst_level = MAX( 0, src_level + adjustment );
+        else                             dst_level = SDL_max( 0, src_level + adjustment );
 
         // set the quest level
         pquest->level = dst_level;

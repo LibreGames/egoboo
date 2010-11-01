@@ -32,7 +32,7 @@ passage_data_t * passage_data_init( passage_data_t * ppass )
 {
     if ( NULL == ppass ) return ppass;
 
-    memset( ppass, 0, sizeof( *ppass ) );
+    SDL_memset( ppass, 0, sizeof( *ppass ) );
 
     ppass->music = NO_MUSIC;     // Set no song as default
 

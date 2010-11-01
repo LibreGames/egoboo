@@ -33,7 +33,7 @@ ego_process_data * ego_process_data::clear( ego_process_data * pdata )
 {
     if ( NULL == pdata ) return pdata;
 
-    memset( pdata, 0, sizeof( *pdata ) );
+    SDL_memset( pdata, 0, sizeof( *pdata ) );
 
     pdata->terminated = btrue;
     pdata->result     = -1;

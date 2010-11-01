@@ -93,7 +93,7 @@ extern "C"
 /// The basic parameters needed to create an mpd
     struct s_mpd_info
     {
-        size_t          vertcount;                        ///< For malloc
+        size_t          vertcount;                        ///< For SDL_malloc
         int             tiles_x;                          ///< Size in tiles
         int             tiles_y;
     };

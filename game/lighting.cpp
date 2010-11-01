@@ -121,7 +121,7 @@ ego_lighting_cache_base * lighting_cache_base_init( ego_lighting_cache_base * ca
 {
     if ( NULL == cache ) return NULL;
 
-    memset( cache, 0, sizeof( *cache ) );
+    SDL_memset( cache, 0, sizeof( *cache ) );
 
     return cache;
 }
@@ -133,10 +133,10 @@ bool_t lighting_cache_base_max_light( ego_lighting_cache_base * cache )
     float max_light;
 
     // determine the lighting extents
-    max_light = ABS( cache->lighting[0] );
+    max_light = SDL_abs( cache->lighting[0] );
     for ( cnt = 1; cnt < LIGHTING_VEC_SIZE - 1; cnt++ )
     {
-        max_light = MAX( max_light, ABS( cache->lighting[cnt] ) );
+        max_light = SDL_max( max_light, SDL_abs( cache->lighting[cnt] ) );
     }
 
     cache->max_light = max_light;
@@ -163,11 +163,11 @@ bool_t lighting_cache_base_blend( ego_lighting_cache_base * cold, ego_lighting_c
         max_delta = 0.0f;
         for ( tnc = 0; tnc < LIGHTING_VEC_SIZE; tnc++ )
         {
-            float delta = ABS( cnew->lighting[tnc] - cold->lighting[tnc] );
+            float delta = SDL_abs( cnew->lighting[tnc] - cold->lighting[tnc] );
 
             cold->lighting[tnc] = cnew->lighting[tnc];
 
-            max_delta = MAX( max_delta, delta );
+            max_delta = SDL_max( max_delta, delta );
         }
     }
     else
@@ -179,7 +179,7 @@ bool_t lighting_cache_base_blend( ego_lighting_cache_base * cold, ego_lighting_c
 
             ftmp = cold->lighting[tnc];
             cold->lighting[tnc] = ftmp * keep + cnew->lighting[tnc] * ( 1.0f - keep );
-            max_delta = MAX( max_delta, ABS( cold->lighting[tnc] - ftmp ) );
+            max_delta = SDL_max( max_delta, SDL_abs( cold->lighting[tnc] - ftmp ) );
         }
     }
 
@@ -213,7 +213,7 @@ bool_t lighting_cache_max_light( ego_lighting_cache * cache )
     lighting_cache_base_max_light( &( cache->hgh ) );
 
     // set the maximum direct light
-    cache->max_light = MAX( cache->low.max_light, cache->hgh.max_light );
+    cache->max_light = SDL_max( cache->low.max_light, cache->hgh.max_light );
 
     return btrue;
 }
@@ -228,7 +228,7 @@ bool_t lighting_cache_blend( ego_lighting_cache * cache, ego_lighting_cache * cn
     lighting_cache_base_blend( &( cache->hgh ), ( &cnew->hgh ), keep );
 
     // find the absolute maximum delta
-    cache->max_delta = MAX( cache->low.max_delta, cache->hgh.max_delta );
+    cache->max_delta = SDL_max( cache->low.max_delta, cache->hgh.max_delta );
 
     return btrue;
 }
@@ -611,7 +611,7 @@ bool_t sum_dyna_lighting( ego_dynalight * pdyna, lighting_vector_t lighting, fve
     rad_sqr = rho_sqr + nrm[kZ] * nrm[kZ];
 
     // make a local copy of the normal so we do not normalize the data in the calling function
-    memcpy( local_nrm, nrm, sizeof( local_nrm ) );
+    SDL_memcpy( local_nrm, nrm, sizeof( local_nrm ) );
 
     // do the normalization
     if ( 1.0f != rad_sqr && 0.0f != rad_sqr )

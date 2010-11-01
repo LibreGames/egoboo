@@ -216,7 +216,7 @@ ego_CoNode * CoNode_ctor( ego_CoNode * n )
     if ( NULL == n ) return n;
 
     // clear all data
-    memset( n, 0, sizeof( *n ) );
+    SDL_memset( n, 0, sizeof( *n ) );
 
     // the "colliding" objects
     n->chra = CHR_REF( MAX_CHR );
@@ -477,7 +477,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
     mi = &( PMesh->info );
 
     // allocate a ego_BSP_aabb   once, to be shared for all collision tests
-    ego_BSP_aabb::ctor_this( &tmp_aabb, ego_obj_BSP::root.tree.dimensions );
+    ego_BSP_aabb::init( &tmp_aabb, ego_obj_BSP::root.tree.dimensions );
 
     // renew the ego_CoNode hash table.
     ego_hash_list::renew( pchlst );
@@ -686,7 +686,7 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
     //}
 
     // do this manually in C
-    ego_BSP_aabb::dtor_this( &tmp_aabb );
+    //ego_BSP_aabb::deinit( &tmp_aabb );
 
     return btrue;
 }
@@ -759,8 +759,8 @@ bool_t do_chr_mount_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
     if ( !mount_a && !mount_b ) return bfalse;
 
     // determine whether any collision is possible
-    z_overlap  = MIN( pchr_b->chr_min_cv.maxs[OCT_Z] + pchr_b->pos.z, pchr_a->chr_min_cv.maxs[OCT_Z] + pchr_a->pos.z ) -
-                 MAX( pchr_b->chr_min_cv.mins[OCT_Z] + pchr_b->pos.z, pchr_a->chr_min_cv.mins[OCT_Z] + pchr_a->pos.z );
+    z_overlap  = SDL_min( pchr_b->chr_min_cv.maxs[OCT_Z] + pchr_b->pos.z, pchr_a->chr_min_cv.maxs[OCT_Z] + pchr_a->pos.z ) -
+                 SDL_max( pchr_b->chr_min_cv.mins[OCT_Z] + pchr_b->pos.z, pchr_a->chr_min_cv.mins[OCT_Z] + pchr_a->pos.z );
 
     if ( z_overlap <= 0.0f ) return bfalse;
 
@@ -774,10 +774,10 @@ bool_t do_chr_mount_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
         depth_a = ( pchr_b->pos.z + pchr_b->chr_min_cv.maxs[OCT_Z] ) - pchr_a->pos.z;
         depth_b = ( pchr_a->pos.z + pchr_a->chr_min_cv.maxs[OCT_Z] ) - pchr_b->pos.z;
 
-        depth_max = MIN( pchr_b->pos.z + pchr_b->chr_min_cv.maxs[OCT_Z] + MOUNTTOLERANCE, pchr_a->pos.z + pchr_a->chr_min_cv.maxs[OCT_Z] + MOUNTTOLERANCE ) -
-                    MAX( pchr_b->pos.z, pchr_a->pos.z );
+        depth_max = SDL_min( pchr_b->pos.z + pchr_b->chr_min_cv.maxs[OCT_Z] + MOUNTTOLERANCE, pchr_a->pos.z + pchr_a->chr_min_cv.maxs[OCT_Z] + MOUNTTOLERANCE ) -
+                    SDL_max( pchr_b->pos.z, pchr_a->pos.z );
 
-        chara_on_top = ABS( depth_max - depth_a ) < ABS( depth_max - depth_b );
+        chara_on_top = SDL_abs( depth_max - depth_a ) < SDL_abs( depth_max - depth_b );
 
         if ( chara_on_top )
         {
@@ -830,7 +830,7 @@ bool_t do_chr_mount_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
     // Calculate the interaction depths. The size of the rider doesn't matter.
     for ( cnt = 0; cnt < OCT_COUNT; cnt ++ )
     {
-        odepth[cnt] = MIN( grip_cv.maxs[cnt], rider_cv.maxs[cnt] ) - MAX( grip_cv.mins[cnt], rider_cv.mins[cnt] );
+        odepth[cnt] = SDL_min( grip_cv.maxs[cnt], rider_cv.maxs[cnt] ) - SDL_max( grip_cv.mins[cnt], rider_cv.mins[cnt] );
         if ( odepth[cnt] <= 0.0f ) return bfalse;
     }
 
@@ -841,7 +841,7 @@ bool_t do_chr_mount_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
     // estimate the amount of overlap area in the horizontal direction
     hrz_overlap1 = odepth[OCT_X ] * odepth[OCT_Y ];
     hrz_overlap2 = odepth[OCT_XY] * odepth[OCT_YX];
-    hrz_overlap  = MIN( hrz_overlap1, hrz_overlap2 );
+    hrz_overlap  = SDL_min( hrz_overlap1, hrz_overlap2 );
     if ( hrz_overlap <= 0.0f ) return bfalse;
 
     // convert this to an estimate of the volume
@@ -919,8 +919,8 @@ bool_t do_chr_platform_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b
         return bfalse;
 
     // determine whether any collision is possible
-    z_overlap  = MIN( pchr_b->chr_max_cv.maxs[OCT_Z] + pchr_b->pos.z, pchr_a->chr_max_cv.maxs[OCT_Z] + pchr_a->pos.z ) -
-                 MAX( pchr_b->chr_max_cv.mins[OCT_Z] + pchr_b->pos.z, pchr_a->chr_max_cv.mins[OCT_Z] + pchr_a->pos.z );
+    z_overlap  = SDL_min( pchr_b->chr_max_cv.maxs[OCT_Z] + pchr_b->pos.z, pchr_a->chr_max_cv.maxs[OCT_Z] + pchr_a->pos.z ) -
+                 SDL_max( pchr_b->chr_max_cv.mins[OCT_Z] + pchr_b->pos.z, pchr_a->chr_max_cv.mins[OCT_Z] + pchr_a->pos.z );
 
     if ( z_overlap <= 0.0f ) return bfalse;
 
@@ -934,10 +934,10 @@ bool_t do_chr_platform_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b
         depth_a = ( pchr_b->pos.z + pchr_b->chr_max_cv.maxs[OCT_Z] ) - pchr_a->pos.z;
         depth_b = ( pchr_a->pos.z + pchr_a->chr_max_cv.maxs[OCT_Z] ) - pchr_b->pos.z;
 
-        depth_max = MIN( pchr_b->pos.z + pchr_b->chr_max_cv.maxs[OCT_Z], pchr_a->pos.z + pchr_a->chr_max_cv.maxs[OCT_Z] ) -
-                    MAX( pchr_b->pos.z, pchr_a->pos.z );
+        depth_max = SDL_min( pchr_b->pos.z + pchr_b->chr_max_cv.maxs[OCT_Z], pchr_a->pos.z + pchr_a->chr_max_cv.maxs[OCT_Z] ) -
+                    SDL_max( pchr_b->pos.z, pchr_a->pos.z );
 
-        chara_on_top = ABS( depth_max - depth_a ) < ABS( depth_max - depth_b );
+        chara_on_top = SDL_abs( depth_max - depth_a ) < SDL_abs( depth_max - depth_b );
 
         if ( chara_on_top )
         {
@@ -972,7 +972,7 @@ bool_t do_chr_platform_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b
     // the size of the object doesn't matter
     for ( cnt = 0; cnt < OCT_COUNT; cnt ++ )
     {
-        odepth[cnt] = MIN( platform_max_cv.maxs[cnt] - opos_object[cnt], opos_object[cnt] - platform_max_cv.mins[cnt] );
+        odepth[cnt] = SDL_min( platform_max_cv.maxs[cnt] - opos_object[cnt], opos_object[cnt] - platform_max_cv.mins[cnt] );
         if ( odepth[cnt] <= 0.0f ) return bfalse;
     }
 
@@ -983,11 +983,11 @@ bool_t do_chr_platform_detection( const CHR_REF & ichr_a, const CHR_REF & ichr_b
     // estimate the amount of overlap area in the horizontal direction
     hrz_overlap1 = odepth[OCT_X ] * odepth[OCT_Y ];
     hrz_overlap2 = odepth[OCT_XY] * odepth[OCT_YX];
-    hrz_overlap  = MIN( hrz_overlap1, hrz_overlap2 );
+    hrz_overlap  = SDL_min( hrz_overlap1, hrz_overlap2 );
     if ( hrz_overlap <= 0.0f ) return bfalse;
 
     // estimate the amount of overlap height
-    vrt_overlap = PLATTOLERANCE - ABS( opos_object[OCT_Z] - platform_min_cv.maxs[OCT_Z] );
+    vrt_overlap = PLATTOLERANCE - SDL_abs( opos_object[OCT_Z] - platform_min_cv.maxs[OCT_Z] );
     vrt_overlap = CLIP( vrt_overlap, 0.0f, PLATTOLERANCE );
     if ( vrt_overlap <= 0.0f ) return bfalse;
 
@@ -1055,8 +1055,8 @@ bool_t do_prt_platform_detection( const PRT_REF & iprt_a, const CHR_REF & ichr_b
     if ( !platform_b ) return bfalse;
 
     // determine whether any collision is possible
-    z_overlap  = MIN( pchr_b->chr_max_cv.maxs[OCT_Z] + pchr_b->pos.z, pprt_a->prt_min_cv.maxs[OCT_Z] + pprt_a->pos.z ) -
-                 MAX( pchr_b->chr_max_cv.mins[OCT_Z] + pchr_b->pos.z, pprt_a->prt_min_cv.mins[OCT_Z] + pprt_a->pos.z );
+    z_overlap  = SDL_min( pchr_b->chr_max_cv.maxs[OCT_Z] + pchr_b->pos.z, pprt_a->prt_min_cv.maxs[OCT_Z] + pprt_a->pos.z ) -
+                 SDL_max( pchr_b->chr_max_cv.mins[OCT_Z] + pchr_b->pos.z, pprt_a->prt_min_cv.mins[OCT_Z] + pprt_a->pos.z );
 
     if ( z_overlap <= 0.0f ) return bfalse;
 
@@ -1072,7 +1072,7 @@ bool_t do_prt_platform_detection( const PRT_REF & iprt_a, const CHR_REF & ichr_b
     // the size of the object doesn't matter
     for ( cnt = 0; cnt < OCT_COUNT; cnt ++ )
     {
-        odepth[cnt] = MIN( platform_max_cv.maxs[cnt] - opos_object[cnt], opos_object[cnt] - platform_max_cv.mins[cnt] );
+        odepth[cnt] = SDL_min( platform_max_cv.maxs[cnt] - opos_object[cnt], opos_object[cnt] - platform_max_cv.mins[cnt] );
         if ( odepth[cnt] <= 0.0f ) return bfalse;
     }
 
@@ -1083,11 +1083,11 @@ bool_t do_prt_platform_detection( const PRT_REF & iprt_a, const CHR_REF & ichr_b
     // estimate the amount of overlap area in the horizontal direction
     hrz_overlap1 = odepth[OCT_X ] * odepth[OCT_Y ];
     hrz_overlap2 = odepth[OCT_XY] * odepth[OCT_YX];
-    hrz_overlap  = MIN( hrz_overlap1, hrz_overlap2 );
+    hrz_overlap  = SDL_min( hrz_overlap1, hrz_overlap2 );
     if ( hrz_overlap <= 0.0f ) return bfalse;
 
     // estimate the amount of overlap height
-    vrt_overlap = PLATTOLERANCE - ABS( opos_object[OCT_Z] - platform_min_cv.maxs[OCT_Z] );
+    vrt_overlap = PLATTOLERANCE - SDL_abs( opos_object[OCT_Z] - platform_min_cv.maxs[OCT_Z] );
     vrt_overlap = CLIP( vrt_overlap, 0.0f, PLATTOLERANCE );
     if ( vrt_overlap <= 0.0f ) return bfalse;
 
@@ -1114,8 +1114,8 @@ bool_t attach_chr_to_platform( ego_chr * pchr, ego_chr * pplat )
     ego_cap * pchr_cap;
 
     // verify that we do not have two dud pointers
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
-    if ( !ACTIVE_PCHR( pplat ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pplat ) ) return bfalse;
 
     pchr_cap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pchr_cap ) return bfalse;
@@ -1162,7 +1162,7 @@ bool_t detach_character_from_platform( ego_chr * pchr )
     ego_chr * pplat;
 
     // verify that we do not have two dud pointers
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
 
     pchr->onwhichplatform_update   = 0;
     pchr->targetplatform_ref       = CHR_REF( MAX_CHR );
@@ -1170,7 +1170,7 @@ bool_t detach_character_from_platform( ego_chr * pchr )
 
     // grab a pointer to the old platform
     pplat = NULL;
-    if ( ACTIVE_CHR( pchr->onwhichplatform_ref ) )
+    if ( PROCESSING_CHR( pchr->onwhichplatform_ref ) )
     {
         pplat = ChrObjList.get_data_ptr( pchr->onwhichplatform_ref );
     }
@@ -1183,7 +1183,7 @@ bool_t detach_character_from_platform( ego_chr * pchr )
     {
         // adjust the platform's weight, if necessary
         pplat->holdingweight -= pchr->onwhichplatform_weight;
-        pplat->holdingweight = MAX( 0.0f, pplat->holdingweight );
+        pplat->holdingweight = SDL_max( 0.0f, pplat->holdingweight );
 
         // update the character-platform properties
         chr_calc_environment( pchr );
@@ -1203,8 +1203,8 @@ bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat )
     ego_pip   * pprt_pip;
 
     // verify that we do not have two dud pointers
-    if ( !ACTIVE_PPRT( pprt ) ) return bfalse;
-    if ( !ACTIVE_PCHR( pplat ) ) return bfalse;
+    if ( !PROCESSING_PPRT( pprt ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pplat ) ) return bfalse;
 
     pprt_pip = ego_prt::get_ppip( GET_REF_PPRT( pprt ) );
     if ( NULL == pprt_pip ) return bfalse;
@@ -1399,7 +1399,7 @@ bool_t bump_all_platforms( CoNode_ary * pcn_ary )
 egoboo_rv bump_prepare( ego_obj_BSP * pbsp )
 {
     CHashList_t * pchlst;
-    size_t        co_node_count;
+    size_t        co_node_count = 0;
 
     // create a collision hash table that can keep track of 512
     // binary collisions per frame
@@ -1419,34 +1419,34 @@ egoboo_rv bump_prepare( ego_obj_BSP * pbsp )
     // fill up the BSP structures
     fill_bumplists( pbsp );
 
-    // use the BSP structures to detect possible binary interactions
-    fill_interaction_list( pchlst, &_co_ary, &_hn_ary );
+    //// use the BSP structures to detect possible binary interactions
+    //fill_interaction_list( pchlst, &_co_ary, &_hn_ary );
 
-    // convert the CHashList_t into a CoNode_ary and sort
-    co_node_count = ego_hash_list::count_nodes( pchlst );
+    //// convert the CHashList_t into a CoNode_ary and sort
+    //co_node_count = ego_hash_list::count_nodes( pchlst );
 
-    if ( co_node_count > 0 )
-    {
-        ego_hash_list_iterator it;
+    //if ( co_node_count > 0 )
+    //{
+    //    ego_hash_list_iterator it;
 
-        _coll_node_lst.top = 0;
+    //    _coll_node_lst.top = 0;
 
-        ego_hash_list_iterator::ctor_this( &it );
-        ego_hash_list_iterator::set_begin( &it, pchlst );
-        for ( /* nothing */; !ego_hash_list_iterator::done( &it, pchlst ); ego_hash_list_iterator::next( &it, pchlst ) )
-        {
-            ego_CoNode * ptr = ( ego_CoNode * )ego_hash_list_iterator::ptr( &it );
-            if ( NULL == ptr ) break;
+    //    ego_hash_list_iterator::ctor_this( &it );
+    //    ego_hash_list_iterator::set_begin( &it, pchlst );
+    //    for ( /* nothing */; !ego_hash_list_iterator::done( &it, pchlst ); ego_hash_list_iterator::next( &it, pchlst ) )
+    //    {
+    //        ego_CoNode * ptr = ( ego_CoNode * )ego_hash_list_iterator::ptr( &it );
+    //        if ( NULL == ptr ) break;
 
-            CoNode_ary::push_back( &_coll_node_lst, *ptr );
-        }
+    //        CoNode_ary::push_back( &_coll_node_lst, *ptr );
+    //    }
 
-        if ( _coll_node_lst.top > 1 )
-        {
-            // arrange the actual nodes by time order
-            std::sort( _coll_node_lst.begin(), _coll_node_lst.end(), CoNode_greater() );
-        }
-    }
+    //    if ( _coll_node_lst.top > 1 )
+    //    {
+    //        // arrange the actual nodes by time order
+    //        std::sort( _coll_node_lst.begin(), _coll_node_lst.end(), CoNode_greater() );
+    //    }
+    //}
 
     return ( co_node_count > 0 ) ? rv_success : rv_fail;
 }
@@ -1585,10 +1585,10 @@ egoboo_rv do_chr_platform_physics( ego_CoNode * d, ego_bundle_chr *pbdl_item, eg
     pplat = pbdl_plat->chr_ptr;
 
     // does the item exist?
-    if ( !ACTIVE_PCHR( pitem ) ) return rv_error;
+    if ( !PROCESSING_PCHR( pitem ) ) return rv_error;
 
     // does the platform exist?
-    if ( !ACTIVE_PCHR( pplat ) ) return rv_error;
+    if ( !PROCESSING_PCHR( pplat ) ) return rv_error;
 
     // wrong platform for this character
     if ( pitem->onwhichplatform_ref != GET_REF_PCHR( pplat ) ) return rv_error;
@@ -1602,7 +1602,7 @@ egoboo_rv do_chr_platform_physics( ego_CoNode * d, ego_bundle_chr *pbdl_item, eg
     vnrm = fvec3_dot_product( vdiff.v, platform_up.v );
 
     // if the character is moving too fast relative to the platform, then bounce instead of attaching
-    if ( ABS( vnrm ) > max_vnrm )
+    if ( SDL_abs( vnrm ) > max_vnrm )
     {
         goto do_chr_platform_physics_fail;
     }
@@ -1627,7 +1627,7 @@ egoboo_rv do_chr_platform_physics( ego_CoNode * d, ego_bundle_chr *pbdl_item, eg
     vel_lerp = 0.0f;
     if ( vnrm > 0.0f )
     {
-        vel_lerp = ABS( vnrm ) / max_vnrm;
+        vel_lerp = SDL_abs( vnrm ) / max_vnrm;
         vel_lerp = CLIP( vel_lerp, 0.0f, 1.0f );
     }
 
@@ -1695,9 +1695,9 @@ float estimate_chr_prt_normal( ego_chr * pchr, ego_prt * pprt, fvec3_base_t nrm,
     fvec3_t collision_size;
     float dot;
 
-    collision_size.x = MAX( pchr->chr_min_cv.maxs[OCT_X] - pchr->chr_min_cv.mins[OCT_X], 2.0f * pprt->bump_min.size );
-    collision_size.y = MAX( pchr->chr_min_cv.maxs[OCT_Y] - pchr->chr_min_cv.mins[OCT_Y], 2.0f * pprt->bump_min.size );
-    collision_size.z = MAX( pchr->chr_min_cv.maxs[OCT_Z] - pchr->chr_min_cv.mins[OCT_Z], 2.0f * pprt->bump_min.height );
+    collision_size.x = SDL_max( pchr->chr_min_cv.maxs[OCT_X] - pchr->chr_min_cv.mins[OCT_X], 2.0f * pprt->bump_min.size );
+    collision_size.y = SDL_max( pchr->chr_min_cv.maxs[OCT_Y] - pchr->chr_min_cv.mins[OCT_Y], 2.0f * pprt->bump_min.size );
+    collision_size.z = SDL_max( pchr->chr_min_cv.maxs[OCT_Z] - pchr->chr_min_cv.mins[OCT_Z], 2.0f * pprt->bump_min.height );
 
     // estimate the "normal" for the collision, using the center-of-mass difference
     nrm[kX] = pprt->pos.x - pchr->pos.x;
@@ -1757,7 +1757,7 @@ float estimate_chr_prt_normal( ego_chr * pchr, ego_prt * pprt, fvec3_base_t nrm,
     {
         // Make the normal a unit normal
         fvec3_t ntmp = fvec3_normalize( nrm );
-        memcpy( nrm, ntmp.v, sizeof( fvec3_base_t ) );
+        SDL_memcpy( nrm, ntmp.v, sizeof( fvec3_base_t ) );
 
         // determine the actual dot product
         dot = fvec3_dot_product( vdiff, nrm );
@@ -1869,8 +1869,8 @@ bool_t do_chr_chr_collision_interaction( ego_CoNode * d, ego_bundle_chr *pbdl_a,
     interaction_strength = 1.0f;
 
     // ghosts don't interact much
-    interaction_strength *= loc_pchr_a->inst.alpha * INV_FF;
-    interaction_strength *= loc_pchr_b->inst.alpha * INV_FF;
+    interaction_strength *= loc_pchr_a->gfx_inst.alpha * INV_FF;
+    interaction_strength *= loc_pchr_b->gfx_inst.alpha * INV_FF;
 
     // are we interacting with a previous mount?
     interaction_strength *= calc_dismount_lerp( loc_pchr_a, loc_pchr_b );
@@ -1901,7 +1901,7 @@ bool_t do_chr_chr_collision_interaction( ego_CoNode * d, ego_bundle_chr *pbdl_a,
         lerp_z = CLIP( lerp_z, -1, 1 );
 
         // if the platform is close to your level, ignore it
-        interaction_strength *= ABS( lerp_z );
+        interaction_strength *= SDL_abs( lerp_z );
     }
 
     if ( loc_pchr_b->platform && INGAME_CHR( loc_pchr_a->onwhichplatform_ref ) && loc_ichr_b != loc_pchr_a->onwhichplatform_ref )
@@ -1910,7 +1910,7 @@ bool_t do_chr_chr_collision_interaction( ego_CoNode * d, ego_bundle_chr *pbdl_a,
         lerp_z = CLIP( lerp_z, -1, 1 );
 
         // if the platform is close to your level, ignore it
-        interaction_strength *= ABS( lerp_z );
+        interaction_strength *= SDL_abs( lerp_z );
     }
 
     // estimate the collision volume and depth from a 10% overlap
@@ -2071,25 +2071,25 @@ bool_t do_chr_chr_collision_interaction( ego_CoNode * d, ego_bundle_chr *pbdl_a,
             tmin = 1e6;
             if ( nrm.x != 0.0f )
             {
-                tmin = MIN( tmin, odepth[OCT_X] / ABS( nrm.x ) );
+                tmin = SDL_min( tmin, odepth[OCT_X] / SDL_abs( nrm.x ) );
             }
             if ( nrm.y != 0.0f )
             {
-                tmin = MIN( tmin, odepth[OCT_Y] / ABS( nrm.y ) );
+                tmin = SDL_min( tmin, odepth[OCT_Y] / SDL_abs( nrm.y ) );
             }
             if ( nrm.z != 0.0f )
             {
-                tmin = MIN( tmin, odepth[OCT_Z] / ABS( nrm.z ) );
+                tmin = SDL_min( tmin, odepth[OCT_Z] / SDL_abs( nrm.z ) );
             }
 
             if ( nrm.x + nrm.y != 0.0f )
             {
-                tmin = MIN( tmin, odepth[OCT_XY] / ABS( nrm.x + nrm.y ) );
+                tmin = SDL_min( tmin, odepth[OCT_XY] / SDL_abs( nrm.x + nrm.y ) );
             }
 
             if ( -nrm.x + nrm.y != 0.0f )
             {
-                tmin = MIN( tmin, odepth[OCT_YX] / ABS( -nrm.x + nrm.y ) );
+                tmin = SDL_min( tmin, odepth[OCT_YX] / SDL_abs( -nrm.x + nrm.y ) );
             }
 
             if ( tmin < 1e6 )
@@ -2098,7 +2098,7 @@ bool_t do_chr_chr_collision_interaction( ego_CoNode * d, ego_bundle_chr *pbdl_a,
 
                 if ( wta >= 0.0f )
                 {
-                    float ratio = ( float )ABS( wtb ) / (( float )ABS( wta ) + ( float )ABS( wtb ) );
+                    float ratio = ( float )SDL_abs( wtb ) / (( float )SDL_abs( wta ) + ( float )SDL_abs( wtb ) );
 
                     imp_a.x = tmin * nrm.x * ratio * pressure_strength;
                     imp_a.y = tmin * nrm.y * ratio * pressure_strength;
@@ -2107,7 +2107,7 @@ bool_t do_chr_chr_collision_interaction( ego_CoNode * d, ego_bundle_chr *pbdl_a,
 
                 if ( wtb >= 0.0f )
                 {
-                    float ratio = ( float )ABS( wta ) / (( float )ABS( wta ) + ( float )ABS( wtb ) );
+                    float ratio = ( float )SDL_abs( wta ) / (( float )SDL_abs( wta ) + ( float )SDL_abs( wtb ) );
 
                     imp_b.x = -tmin * nrm.x * ratio * pressure_strength;
                     imp_b.y = -tmin * nrm.y * ratio * pressure_strength;
@@ -2305,10 +2305,10 @@ bool_t do_prt_platform_physics( ego_prt * pprt, ego_chr * pplat, ego_chr_prt_col
     if ( NULL == pdata ) return bfalse;
 
     // is the platform a platform?
-    if ( !ACTIVE_PCHR( pplat ) || !pplat->platform ) return bfalse;
+    if ( !PROCESSING_PCHR( pplat ) || !pplat->platform ) return bfalse;
 
     // can the particle interact with it?
-    if ( !ACTIVE_PPRT( pprt ) || INGAME_CHR( pprt->attachedto_ref ) ) return bfalse;
+    if ( !PROCESSING_PPRT( pprt ) || INGAME_CHR( pprt->attachedto_ref ) ) return bfalse;
 
     // this is handled elsewhere
     if ( GET_REF_PCHR( pplat ) == pprt->onwhichplatform_ref ) return bfalse;
@@ -2392,7 +2392,7 @@ bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, ego_chr_prt
 
     if ( NULL == pdata ) return bfalse;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
 
     if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
@@ -2472,7 +2472,7 @@ bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, ego_chr_prt
             chr_make_text_billboard( GET_REF_PCHR( pchr ), "Blocked!", text_color, tint, lifetime, ( BIT_FIELD )bb_opt_all );
 
             // If the attack was blocked by a shield, then check if the block caused a knockback
-            if ( chr_is_invictus && ACTION_IS_TYPE( pchr->inst.action_which, P ) )
+            if ( chr_is_invictus && ACTION_IS_TYPE( pchr->mad_inst.action.which, P ) )
             {
                 bool_t using_shield;
                 CHR_REF item;
@@ -2542,7 +2542,7 @@ bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
 
     if ( NULL == pdata ) return 0;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
 
     if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
@@ -2593,7 +2593,7 @@ bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
         // at almost zero velocity, which would make for a huge "effective mass".
         // by making a reasonable "minimum velocity", we limit the maximum mass to
         // something reasonable
-        prt_vel2 = MAX( 100.0f, prt_vel2 );
+        prt_vel2 = SDL_max( 100.0f, prt_vel2 );
 
         // get the "kinetic energy" from the damage
         prt_ke = 3.0f * pdata->max_damage;
@@ -2621,7 +2621,7 @@ bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
         // modify it by the the severity of the damage
         // reduces the damage below pdata->actual_damage == pchr->life_max
         // and it doubles it if pdata->actual_damage is really huge
-        //factor *= 2.0f * ( float )pdata->actual_damage / ( float )( ABS( pdata->actual_damage ) + pchr->life_max );
+        //factor *= 2.0f * ( float )pdata->actual_damage / ( float )( SDL_abs( pdata->actual_damage ) + pchr->life_max );
 
         factor = CLIP( factor, 0.0f, 3.0f );
 
@@ -2695,7 +2695,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
     bool_t prt_needs_impact;
 
     if ( NULL == pdata ) return bfalse;
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
     if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     // clean up the enchant list before doing anything
@@ -2719,7 +2719,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
         ADD_BITS( pchr->ai.alert, ALERTIF_CONFUSED );
         if ( pdata->ppip->grogtime > pchr->grogtime )
         {
-            pchr->grogtime = MAX( 0, pchr->grogtime + pdata->ppip->grogtime );
+            pchr->grogtime = SDL_max( 0, pchr->grogtime + pdata->ppip->grogtime );
         }
     }
     if ( pdata->ppip->dazetime > 0 && pdata->pcap->canbedazed )
@@ -2727,7 +2727,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
         ADD_BITS( pchr->ai.alert, ALERTIF_CONFUSED );
         if ( pdata->ppip->dazetime > pchr->dazetime )
         {
-            pchr->dazetime = MAX( 0, pchr->dazetime + pdata->ppip->dazetime );
+            pchr->dazetime = SDL_max( 0, pchr->dazetime + pdata->ppip->dazetime );
         }
     }
 
@@ -2785,7 +2785,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
                     drain = pchr->life;
                     pchr->life = CLIP( pchr->life, 1, pchr->life - pprt->lifedrain );
                     drain -= pchr->life;
-                    powner->life = MIN( powner->life + drain, powner->life_max );
+                    powner->life = SDL_min( powner->life + drain, powner->life_max );
                 }
 
                 // Steal some mana
@@ -2794,7 +2794,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
                     drain = pchr->mana;
                     pchr->mana = CLIP( pchr->mana, 0, pchr->mana - pprt->manadrain );
                     drain -= pchr->mana;
-                    powner->mana = MIN( powner->mana + drain, powner->mana_max );
+                    powner->mana = SDL_min( powner->mana + drain, powner->mana_max );
                 }
 
                 // Notify the attacker of a scored hit
@@ -2833,7 +2833,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
     //---- estimate the impulse on the particle
     if ( pdata->dot < 0.0f )
     {
-        if ( 0 == ABS( pdata->max_damage ) || ( ABS( pdata->max_damage ) - ABS( pdata->actual_damage ) ) == 0 )
+        if ( 0 == SDL_abs( pdata->max_damage ) || ( SDL_abs( pdata->max_damage ) - SDL_abs( pdata->actual_damage ) ) == 0 )
         {
             // the simple case
             pdata->impulse.x -= pprt->vel.x;
@@ -2851,7 +2851,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
 
             // assume that the particle damage is like the kinetic energy,
             // then vfinal must be scaled by recoil^2
-            recoil = ( float )ABS( ABS( pdata->max_damage ) - ABS( pdata->actual_damage ) ) / ( float )ABS( pdata->max_damage );
+            recoil = ( float )SDL_abs( SDL_abs( pdata->max_damage ) - SDL_abs( pdata->actual_damage ) ) / ( float )SDL_abs( pdata->max_damage );
 
             vfinal.x *= recoil * recoil;
             vfinal.y *= recoil * recoil;
@@ -2879,7 +2879,7 @@ bool_t do_chr_prt_collision_bump( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_co
     bool_t valid_onlydamagehate;
 
     if ( NULL == pdata ) return bfalse;
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
     if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     // if the particle was deflected, then it can't bump the character
@@ -2931,7 +2931,7 @@ bool_t do_chr_prt_collision_handle_bump( ego_chr * pchr, ego_prt * pprt, ego_chr
 {
     if ( NULL == pdata || !pdata->prt_bumps_chr ) return bfalse;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
     if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     if ( !pdata->prt_bumps_chr ) return bfalse;
@@ -2986,9 +2986,9 @@ bool_t do_chr_prt_collision_init( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_co
 
     if ( NULL == pdata ) return bfalse;
 
-    memset( pdata, 0, sizeof( *pdata ) );
+    SDL_memset( pdata, 0, sizeof( *pdata ) );
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
     if ( !INGAME_PPRT( pprt ) ) return bfalse;
 
     // initialize the collision data
@@ -3008,7 +3008,7 @@ bool_t do_chr_prt_collision_init( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_co
     // estimate the maximum possible "damage" from this particle
     // other effects can magnify this number, like vulnerabilities
     // or DAMFX_* bits
-    pdata->max_damage = ABS( pprt->damage.base ) + ABS( pprt->damage.rand );
+    pdata->max_damage = SDL_abs( pprt->damage.base ) + SDL_abs( pprt->damage.rand );
 
     return full_collision;
 }
@@ -3226,7 +3226,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
     const float default_chr_height = 88.0f;
     const float default_chr_radius = 22.0f;
 
-    ego_chr_instance * pmount_inst;
+    gfx_mad_instance * pmount_inst;
 
     int       grip_count;
     Uint16    grip_verts[GRIP_VERTS];
@@ -3237,7 +3237,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
     if ( NULL == grip_cv_ptr || !DEFINED_PCHR( pmount ) ) return bfalse;
 
     // alias this variable for notation simplicity
-    pmount_inst = &( pmount->inst );
+    pmount_inst = &( pmount->gfx_inst );
 
     // tune the grip radius
     for ( cnt = 0; cnt < OCT_Z; cnt++ )
@@ -3259,8 +3259,8 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
 
     // do the automatic vertex update
     vertex = ( signed )( pmount_inst->vrt_count ) - ( signed )grip_offset;
-    vertex = MAX( 0, vertex );
-    ego_chr_instance::update_vertices( pmount_inst, vertex, vertex + grip_offset, bfalse );
+    vertex = SDL_max( 0, vertex );
+    gfx_mad_instance::update_vertices( pmount_inst, pmount->mad_inst.state, gfx_range( vertex, vertex + grip_offset ), bfalse );
 
     // calculate the grip vertices
     for ( grip_count = 0, cnt = 0; cnt < GRIP_VERTS && ( size_t )( vertex + cnt ) < pmount_inst->vrt_count; grip_count++, cnt++ )
@@ -3554,12 +3554,12 @@ bool CoNode_greater::operator()
 //        // determine the actual location of the mount point
 //        {
 //            int vertex;
-//            ego_chr_instance * pinst = &( pchr_b->inst );
+//            gfx_mad_instance * pinst = &( pchr_b->inst );
 //
 //            vertex = (( signed )pinst->vrt_count ) - GRIP_LEFT;
 //
 //            // do the automatic update
-//            ego_chr_instance::update_vertices( pinst, vertex, vertex, bfalse );
+//            gfx_mad_instance::update_vertices( pinst, vertex, vertex, bfalse );
 //
 //            // Calculate grip point locations with linear interpolation and other silly things
 //            point[0].x = pinst->vrt_lst[vertex].pos[XX];
@@ -3571,8 +3571,8 @@ bool CoNode_greater::operator()
 //            TransformVertices( &( pinst->matrix ), point, nupoint, 1 );
 //        }
 //
-//        dx = ABS( xa - nupoint[0].x );
-//        dy = ABS( ya - nupoint[0].y );
+//        dx = SDL_abs( xa - nupoint[0].x );
+//        dy = SDL_abs( ya - nupoint[0].y );
 //        dist = dx + dy;
 //        depth_z = za - nupoint[0].z;
 //
@@ -3600,12 +3600,12 @@ bool CoNode_greater::operator()
 //        // determine the actual location of the mount point
 //        {
 //            int vertex;
-//            ego_chr_instance * pinst = &( pchr_a->inst );
+//            gfx_mad_instance * pinst = &( pchr_a->inst );
 //
 //            vertex = (( signed )pinst->vrt_count ) - GRIP_LEFT;
 //
 //            // do the automatic update
-//            ego_chr_instance::update_vertices( pinst, vertex, vertex, bfalse );
+//            gfx_mad_instance::update_vertices( pinst, vertex, vertex, bfalse );
 //
 //            // Calculate grip point locations with linear interpolation and other silly things
 //            point[0].x = pinst->vrt_lst[vertex].pos[XX];
@@ -3617,8 +3617,8 @@ bool CoNode_greater::operator()
 //            TransformVertices( &( pinst->matrix ), point, nupoint, 1 );
 //        }
 //
-//        dx = ABS( xb - nupoint[0].x );
-//        dy = ABS( yb - nupoint[0].y );
+//        dx = SDL_abs( xb - nupoint[0].x );
+//        dy = SDL_abs( yb - nupoint[0].y );
 //        dist = dx + dy;
 //        depth_z = zb - nupoint[0].z;
 //

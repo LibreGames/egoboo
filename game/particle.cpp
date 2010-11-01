@@ -220,7 +220,7 @@ ego_prt * ego_prt::alloc( ego_prt * pprt )
     if ( NULL == pprt ) return pprt;
 
     // initialize the bsp node for this particle
-    ego_BSP_leaf::ctor_this( &( pprt->bsp_leaf ), 3, pprt, LEAF_PRT );
+    ego_BSP_leaf::init( &( pprt->bsp_leaf ), 3, pprt, LEAF_PRT );
 
     return pprt;
 }
@@ -231,7 +231,7 @@ ego_prt * ego_prt::dealloc( ego_prt * pprt )
     if ( NULL == pprt ) return pprt;
 
     // initialize the bsp node for this particle
-    ego_BSP_leaf::dtor_this( &( pprt->bsp_leaf ) );
+    ego_BSP_leaf::deinit( &( pprt->bsp_leaf ) );
 
     return pprt;
 }
@@ -549,7 +549,7 @@ ego_prt * ego_prt::do_initializing( ego_prt * pprt )
 
     // make the particle display AT LEAST one frame, regardless of how many updates
     // it has or when someone requests for it to terminate
-    pprt->frames_remaining = MAX( 1, prt_lifetime );
+    pprt->frames_remaining = SDL_max( 1, prt_lifetime );
 
     // Damage stuff
     range_to_pair( ppip->damage, &( pprt->damage ) );
@@ -591,7 +591,7 @@ ego_prt * ego_prt::do_initializing( ego_prt * pprt )
 
     {
         const float buoyancy_min       = 0.0f;
-        const float buoyancy_max       = 2.0f * ABS( STANDARD_GRAVITY );
+        const float buoyancy_max       = 2.0f * SDL_abs( STANDARD_GRAVITY );
         const float air_resistance_min = 0.0f;
         const float air_resistance_max = 1.0f;
 
@@ -690,7 +690,7 @@ bool_t ego_obj_prt::object_allocated( void )
 {
     if ( NULL == this || NULL == _container_ptr ) return bfalse;
 
-    return container_type::get_allocated( _container_ptr );
+    return FLAG_ALLOCATED_PCONT( container_type,  _container_ptr );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -702,7 +702,7 @@ bool_t ego_obj_prt::object_update_list_id( void )
     container_type * pcont = get_container_ptr( this );
     if ( NULL == pcont ) return bfalse;
 
-    if ( !container_type::get_allocated( pcont ) ) return bfalse;
+    if ( !FLAG_ALLOCATED_PCONT( container_type,  pcont ) ) return bfalse;
 
     // deal with the return state
     if ( !get_valid( this ) )
@@ -905,7 +905,7 @@ bool_t prt_test_wall( ego_prt * pprt, float test_pos[] )
     ego_pip * ppip;
     BIT_FIELD  stoppedby;
 
-    if ( !ACTIVE_PPRT( pprt ) ) return 0;
+    if ( !PROCESSING_PPRT( pprt ) ) return 0;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return bfalse;
     ppip = PipStack + pprt->pip_ref;
@@ -937,17 +937,12 @@ void update_all_particles()
     ///               PRT_BEGIN_LOOP_* macro.
     ///               Converted all the update functions to the ego_obj_prt::run() paradigm.
 
-    PRT_REF iprt;
-    ego_bundle_prt prt_bdl;
-
     // activate any particles might have been generated last update in an in-active state
-    for ( iprt = 0; iprt < MAX_PRT; iprt++ )
+    PRT_BEGIN_LOOP_USED( iprt, bdl )
     {
-        ego_prt * pprt = PrtObjList.get_allocated_data_ptr( iprt );
-        if ( NULL == pprt ) continue;
-
-        prt_update( ego_bundle_prt::set( &prt_bdl, pprt ) );
+        prt_update( &bdl );
     }
+    PRT_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -955,11 +950,11 @@ void ego_prt::set_level( ego_prt * pprt, float level )
 {
     float loc_height;
 
-    if ( !INGAME_PPRT_BASE( pprt ) ) return;
+    if ( !INGAME_PPRT( pprt ) ) return;
 
     pprt->enviro.floor_level = level;
 
-    loc_height = ego_prt::get_scale( pprt ) * MAX( UFP8_TO_FLOAT( pprt->size ), pprt->offset.z * 0.5 );
+    loc_height = ego_prt::get_scale( pprt ) * SDL_max( UFP8_TO_FLOAT( pprt->size ), pprt->offset.z * 0.5 );
 
     pprt->enviro.grid_adj  = pprt->enviro.grid_level;
     pprt->enviro.floor_adj = pprt->enviro.floor_level;
@@ -1011,7 +1006,7 @@ ego_bundle_prt * move_one_particle_get_environment( ego_bundle_prt * pbdl_prt, e
     loc_level = penviro->grid_level;
     if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
     {
-        loc_level = MAX( penviro->grid_level, ChrObjList.get_data_ref( loc_pprt->onwhichplatform_ref ).pos.z + ChrObjList.get_data_ref( loc_pprt->onwhichplatform_ref ).chr_min_cv.maxs[OCT_Z] );
+        loc_level = SDL_max( penviro->grid_level, ChrObjList.get_data_ref( loc_pprt->onwhichplatform_ref ).pos.z + ChrObjList.get_data_ref( loc_pprt->onwhichplatform_ref ).chr_min_cv.maxs[OCT_Z] );
     }
     ego_prt::set_level( loc_pprt, loc_level );
 
@@ -1055,7 +1050,7 @@ ego_bundle_prt * move_one_particle_get_environment( ego_bundle_prt * pbdl_prt, e
         ego_chr::get_MatUp( ChrObjList.get_data_ptr( loc_pprt->onwhichplatform_ref ), &platform_up );
         fvec3_self_normalize( platform_up.v );
 
-        penviro->traction = ABS( platform_up.z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
+        penviro->traction = SDL_abs( platform_up.z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
 
         if ( penviro->is_slippy )
         {
@@ -1064,7 +1059,7 @@ ego_bundle_prt * move_one_particle_get_environment( ego_bundle_prt * pbdl_prt, e
     }
     else if ( ego_mpd::grid_is_valid( PMesh, loc_pprt->onwhichgrid ) )
     {
-        penviro->traction = ABS( map_twist_nrm[penviro->grid_twist].z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
+        penviro->traction = SDL_abs( map_twist_nrm[penviro->grid_twist].z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
 
         if ( penviro->is_slippy )
         {
@@ -1338,7 +1333,7 @@ ego_bundle_prt * move_one_particle_do_floor( ego_bundle_prt * pbdl_prt )
     loc_pphys    = &( loc_pprt->phys );
 
     // no friction for attached particles
-    if ( ACTIVE_CHR( loc_pprt->attachedto_ref ) ) return pbdl_prt;
+    if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) ) return pbdl_prt;
 
     // determine the surface normal for the particle's "floor"
     if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
@@ -1453,7 +1448,7 @@ bool_t move_one_particle( ego_bundle_prt * pbdl_prt )
     loc_pprt     = pbdl_prt->prt_ptr;
     loc_penviro  = &( loc_pprt->enviro );
 
-    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return bfalse;
+    if ( !INGAME_PPRT( loc_pprt ) ) return bfalse;
 
     // if the particle is hidden it is frozen in time. do nothing.
     if ( loc_pprt->is_hidden ) return bfalse;
@@ -1613,8 +1608,8 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
                 grip_verts = GRIP_VERTS * slot_count;
             }
 
-            vertices = ( int )pchr->inst.vrt_count - ( int )grip_verts;
-            vertices = MAX( 0, vertices );
+            vertices = ( int )pchr->gfx_inst.vrt_count - ( int )grip_verts;
+            vertices = SDL_max( 0, vertices );
 
             if ( vertices != 0 )
             {
@@ -1642,9 +1637,9 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
                 // prepare the array values
                 for ( cnt = 0; cnt < vertices; cnt++ )
                 {
-                    dist = ABS( x - pchr->inst.vrt_lst[vertices-cnt-1].pos[XX] ) +
-                           ABS( y - pchr->inst.vrt_lst[vertices-cnt-1].pos[YY] ) +
-                           ABS( z - pchr->inst.vrt_lst[vertices-cnt-1].pos[ZZ] );
+                    dist = SDL_abs( x - pchr->gfx_inst.vrt_lst[vertices-cnt-1].pos[XX] ) +
+                           SDL_abs( y - pchr->gfx_inst.vrt_lst[vertices-cnt-1].pos[YY] ) +
+                           SDL_abs( z - pchr->gfx_inst.vrt_lst[vertices-cnt-1].pos[ZZ] );
 
                     vertex_distance[cnt] = dist;
                     vertex_occupied[cnt] = MAX_PRT;
@@ -1889,7 +1884,7 @@ void release_all_pip()
         {
             ego_pip * ppip = PipStack + cnt;
 
-            max_request = MAX( max_request, ppip->prt_request_count );
+            max_request = SDL_max( max_request, ppip->prt_request_count );
             tnc++;
         }
     }
@@ -2019,54 +2014,47 @@ void cleanup_all_particles()
 {
     // do end-of-life care for particles. Must iterate over all particles since the
     // number of particles could change inside this list
-    for ( int cnt = 0; cnt < MAX_PRT; cnt++ )
+
+    PRT_BEGIN_LOOP_DEFINED( iprt, bdl )
     {
         bool_t time_out;
 
         // don't bother with particles that are not allocated
-        ego_obj_prt * pobj = PrtObjList.get_allocated_data_ptr( PRT_REF( cnt ) );
+        ego_obj_prt * pobj = ego_prt::get_obj_ptr( bdl.prt_ptr );
         if ( NULL == pobj ) continue;
 
-        // don't bother with uninitialized data
-        ego_prt * pprt = ego_obj_prt::get_data_ptr( pobj );
-        if ( NULL == pprt ) continue;
-
-        ego_obj * pbase = PDATA_GET_POBJ( ego_prt, pprt );
-        if ( !FLAG_VALID_PBASE( pbase ) ) continue;
-
-        if ( FLAG_TERMINATED_PBASE( pbase ) )
+        if ( FLAG_TERMINATED_PBASE( pobj ) )
         {
             // the memory area is marked as invalid,
             // but it has not been "killed" yet
-            PrtObjList.free_one( GET_REF_PPRT( pprt ) );
+            PrtObjList.free_one( iprt );
         }
-        else if ( STATE_WAITING_PBASE( pbase ) )
+        else if ( STATE_WAITING_PBASE( pobj ) )
         {
             // the object is waiting to be killed, so
             // do all of the end of life care for the particle
-            prt_do_end_spawn( PRT_REF( cnt ) );
+            prt_do_end_spawn( iprt );
 
-            free_one_particle_in_game( PRT_REF( cnt ) );
+            free_one_particle_in_game( iprt );
 
             // tell the particle to finish deallocating itself
-            pbase->end_processing();
+            pobj->end_processing();
         }
     }
+    PRT_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------
 void increment_all_particle_update_counters()
 {
-    PRT_REF cnt;
-
-    for ( cnt = 0; cnt < maxparticles; cnt++ )
+    PRT_BEGIN_LOOP_DEFINED( cnt, bdl )
     {
-        ego_obj * pbase = PrtObjList.get_allocated_data_ptr( cnt );
-
-        if ( !ACTIVE_PBASE( pbase ) ) continue;
+        ego_obj * pbase = ego_prt::get_obj_ptr( bdl.prt_ptr );
+        if ( NULL == pbase ) continue;
 
         pbase->update_count++;
     }
+    PRT_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2168,7 +2156,7 @@ int prt_do_contspawn( ego_bundle_prt * pbdl_prt )
                 /// @note ZF@> I have disabled this at the moment. This is what caused the erratic particle movement for the Adventurer Torch
                 /// @note BB@> taking out the test works, though  I should have checked vs. loc_pprt->attached_ref, anyway,
                 ///            since we already specified that the particle is not attached in the function call :P
-                /*if( !ACTIVE_CHR( loc_pprt->attachedto_ref ) )
+                /*if( !PROCESSING_CHR( loc_pprt->attachedto_ref ) )
                 {
                     PrtObjList.get_data_ref(prt_child).vel.x += loc_pprt->vel.x;
                     PrtObjList.get_data_ref(prt_child).vel.y += loc_pprt->vel.y;
@@ -2465,7 +2453,7 @@ ego_bundle_prt * prt_update_limbo( ego_bundle_prt * pbdl_prt )
     loc_ppip = pbdl_prt->pip_ptr;
 
     pbase = PDATA_GET_PBASE( ego_prt, pbdl_prt->prt_ptr );
-    if ( !VALID_PBASE( pbase ) ) return pbdl_prt;
+    if ( !FLAG_VALID_PBASE( pbase ) ) return pbdl_prt;
 
     request_terminate = FLAG_REQ_TERMINATION_PBASE( pbase );
     if ( !loc_pprt->is_eternal )
@@ -2608,8 +2596,8 @@ bool_t prt_update_safe( ego_prt * pprt, bool_t force )
 
         if ( INVALID_TILE == new_grid )
         {
-            if ( ABS( pprt->pos.x - pprt->safe_pos.x ) > GRID_SIZE ||
-                 ABS( pprt->pos.y - pprt->safe_pos.y ) > GRID_SIZE )
+            if ( SDL_abs( pprt->pos.x - pprt->safe_pos.x ) > GRID_SIZE ||
+                 SDL_abs( pprt->pos.y - pprt->safe_pos.y ) > GRID_SIZE )
             {
                 needs_update = btrue;
             }
@@ -2677,7 +2665,7 @@ bool_t ego_prt::set_pos( ego_prt * pprt, fvec3_base_t pos )
 
     if (( pos[kX] != pprt->pos.v[kX] ) || ( pos[kY] != pprt->pos.v[kY] ) || ( pos[kZ] != pprt->pos.v[kZ] ) )
     {
-        memmove( pprt->pos.v, pos, sizeof( fvec3_base_t ) );
+        SDL_memmove( pprt->pos.v, pos, sizeof( fvec3_base_t ) );
 
         retval = prt_update_pos( pprt );
     }
@@ -2770,7 +2758,7 @@ ego_bundle_prt * ego_bundle_prt::set( ego_bundle_prt * pbundle, ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void initialize_particle_physics()
+void particle_physics_initialize_all()
 {
     PRT_BEGIN_LOOP_USED( cnt, bdl_prt )
     {
@@ -2799,7 +2787,7 @@ ego_bundle_prt * prt_bump_mesh_attached( ego_bundle_prt * pbdl, fvec3_t test_pos
     loc_penviro  = &( loc_pprt->enviro );
 
     // if the particle is not still in "display mode" there is no point in going on
-    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return pbdl;
+    if ( !INGAME_PPRT( loc_pprt ) ) return pbdl;
 
     // only deal with attached particles
     if ( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl;
@@ -2849,7 +2837,7 @@ ego_bundle_prt * prt_bump_grid_attached( ego_bundle_prt * pbdl, fvec3_t test_pos
     loc_penviro  = &( loc_pprt->enviro );
 
     // if the particle is not still in "display mode" there is no point in going on
-    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return pbdl;
+    if ( !INGAME_PPRT( loc_pprt ) ) return pbdl;
 
     // only deal with attached particles
     if ( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl;
@@ -2932,7 +2920,7 @@ ego_bundle_prt *  prt_bump_mesh( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_
     loc_pphys    = &( loc_pprt->phys );
 
     // if the particle is not still in "display mode" there is no point in going on
-    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return pbdl;
+    if ( !INGAME_PPRT( loc_pprt ) ) return pbdl;
 
     // no point in doing this if the particle thinks it's attached
     if ( MAX_CHR != loc_pprt->attachedto_ref )
@@ -3071,7 +3059,7 @@ ego_bundle_prt *  prt_bump_mesh( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_
             final_vel.z = vpara.z + vperp.z;
         }
 
-        if ( nrm_total.z != 0.0f && ABS( final_vel.z ) < STOPBOUNCINGPART )
+        if ( nrm_total.z != 0.0f && SDL_abs( final_vel.z ) < STOPBOUNCINGPART )
         {
             // this is the very last bounce
             final_vel.z = 0.0f;
@@ -3134,7 +3122,7 @@ ego_bundle_prt *  prt_bump_grid( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_
     loc_pphys    = &( loc_pprt->phys );
 
     // if the particle is not still in "display mode" there is no point in going on
-    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return pbdl;
+    if ( !INGAME_PPRT( loc_pprt ) ) return pbdl;
 
     // no point in doing this if the particle thinks it's attached
     if ( MAX_CHR != loc_pprt->attachedto_ref )
@@ -3248,7 +3236,7 @@ ego_bundle_prt *  prt_bump_grid( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_
             final_vel.z = vpara.z + vperp.z;
         }
 
-        if ( nrm_total.z != 0.0f && ABS( test_vel.z ) < STOPBOUNCINGPART )
+        if ( nrm_total.z != 0.0f && SDL_abs( test_vel.z ) < STOPBOUNCINGPART )
         {
             // this is the very last bounce
             final_vel.z = 0.0f;
@@ -3327,7 +3315,7 @@ egoboo_rv particle_physics_finalize_one( ego_bundle_prt * pbdl, float dt )
 
     // bump the particles with the mesh
     bumped_mesh = bfalse;
-    if ( ACTIVE_CHR( loc_pprt->attachedto_ref ) )
+    if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) )
     {
         pbdl = prt_bump_mesh_attached( pbdl, test_pos, test_vel, dt );
     }
@@ -3347,7 +3335,7 @@ egoboo_rv particle_physics_finalize_one( ego_bundle_prt * pbdl, float dt )
     }
 
     bumped_grid = bfalse;
-    if ( ACTIVE_CHR( loc_pprt->attachedto_ref ) )
+    if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) )
     {
         pbdl = prt_bump_grid_attached( pbdl, test_pos, test_vel, dt );
     }
@@ -3373,7 +3361,7 @@ egoboo_rv particle_physics_finalize_one( ego_bundle_prt * pbdl, float dt )
     }
 
     // fix the particle orientation
-    if ( !ACTIVE_CHR( loc_pprt->attachedto_ref ) && loc_ppip->rotatetoface )
+    if ( !PROCESSING_CHR( loc_pprt->attachedto_ref ) && loc_ppip->rotatetoface )
     {
         if ( fvec2_length_abs( test_vel.v ) > 1e-6 )
         {

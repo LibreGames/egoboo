@@ -29,7 +29,7 @@
 struct ego_BSP_leaf;
 struct ego_BSP_branch;
 
-typedef std::vector< ego_BSP_branch   >  branch_list_t;
+typedef std::vector< ego_BSP_branch   > branch_list_t;
 typedef std::vector< ego_BSP_branch * > branch_child_list_t;
 
 typedef std::vector< ego_BSP_leaf > leaf_list_t;
@@ -41,25 +41,26 @@ typedef EGOBOO_SET< ego_BSP_leaf * > leaf_child_list_t;
 //--------------------------------------------------------------------------------------------
 struct ego_BSP_aabb
 {
-    size_t     dim;
-    float_ary mins;
-    float_ary mids;
-    float_ary maxs;
+    size_t             dim;
+    std::vector<float> mins;
+    std::vector<float> mids;
+    std::vector<float> maxs;
 
-    ego_BSP_aabb( size_t _dim = 0 ) : mins( _dim ), maxs( _dim ), mids( _dim ) { clear( this ); ctor_this( this, _dim ); };
-    ~ego_BSP_aabb()                { dtor_this( this ); };
+    ego_BSP_aabb( size_t _dim = 0 ) : mins( _dim ), maxs( _dim ), mids( _dim ) { clear( this ); init( this, _dim ); };
+    ~ego_BSP_aabb()                { deinit( this ); };
 
-    static ego_BSP_aabb * ctor_this( ego_BSP_aabb * pbb, size_t dim );
-    static ego_BSP_aabb * dtor_this( ego_BSP_aabb * pbb );
+    static ego_BSP_aabb * init( ego_BSP_aabb * pbb, size_t dim );
+    static ego_BSP_aabb * deinit( ego_BSP_aabb * pbb );
 
     static ego_BSP_aabb * alloc( ego_BSP_aabb * pbb, size_t dim );
     static ego_BSP_aabb * dealloc( ego_BSP_aabb * pbb );
     static bool_t         reset( ego_BSP_aabb * psrc );
     static bool_t         empty( ego_BSP_aabb * psrc1 );
-    static bool_t         lhs_contains_rhs( ego_BSP_aabb * psrc1, ego_BSP_aabb * psrc2 );
-    static bool_t         do_overlap( ego_BSP_aabb * psrc1, ego_BSP_aabb * psrc2 );
 
     static bool_t         from_oct_bb( ego_BSP_aabb * pdst, ego_oct_bb   * psrc );
+
+    static bool_t         test_intersection( const ego_BSP_aabb & lhs, const ego_BSP_aabb & rhs );
+    static bool_t         lhs_contains_rhs( const ego_BSP_aabb & psrc1, const ego_BSP_aabb & psrc2 );
 
 private:
     static ego_BSP_aabb * clear( ego_BSP_aabb * ptr )
@@ -83,13 +84,14 @@ struct ego_BSP_leaf
 
     ego_BSP_aabb   bbox;
 
-    ego_BSP_leaf( int _dim = 0, void * _data = NULL, int _type = -1 ) { clear( this ); ctor_this( this, _dim, _data, _type ); } ;
-    ~ego_BSP_leaf() { dtor_this( this ); };
+    ego_BSP_leaf( int _dim = 0, void * _data = NULL, int _type = -1 ) { clear( this ); init( this, _dim, _data, _type ); } ;
+    ~ego_BSP_leaf() { deinit( this ); };
 
-    static ego_BSP_leaf * create( int dim, void * data, int type );
-    static bool_t         destroy( ego_BSP_leaf ** ppleaf );
-    static ego_BSP_leaf * ctor_this( ego_BSP_leaf * t, int dim, void * data, int type );
-    static ego_BSP_leaf * dtor_this( ego_BSP_leaf * t );
+    //static ego_BSP_leaf * create( int dim, void * data, int type );
+    //static bool_t         destroy( ego_BSP_leaf ** ppleaf );
+
+    static ego_BSP_leaf * init( ego_BSP_leaf * t, int dim, void * data, int type );
+    static ego_BSP_leaf * deinit( ego_BSP_leaf * t );
 
     static ego_BSP_leaf * alloc( ego_BSP_leaf * L, int dim );
     static ego_BSP_leaf * dealloc( ego_BSP_leaf * L );
@@ -121,9 +123,10 @@ struct ego_BSP_branch
 
     ego_BSP_aabb      bbox;
     int               depth;
+    bool_t            do_insert;
 
-    static ego_BSP_branch * create( size_t dim );
-    static bool_t           destroy( ego_BSP_branch ** ppbranch );
+    //static ego_BSP_branch * create( size_t dim );
+    //static bool_t           destroy( ego_BSP_branch ** ppbranch );
 
     static ego_BSP_branch * create_ary( size_t ary_size, size_t dim );
     static bool_t           destroy_ary( size_t ary_size, ego_BSP_branch ** ppbranch );
@@ -135,18 +138,18 @@ struct ego_BSP_branch
 
     static bool_t           insert_leaf( ego_BSP_branch * B, ego_BSP_leaf * n );
     static bool_t           insert_branch( ego_BSP_branch * B, int index, ego_BSP_branch * B2 );
-    static bool_t           clear_nodes( ego_BSP_branch * B, bool_t recursive );
-    static bool_t           free_nodes( ego_BSP_branch * B, bool_t recursive );
+    static bool_t           clear_nodes( ego_BSP_branch * B, bool_t recursive = bfalse );
+    static bool_t           free_nodes( ego_BSP_branch * B, bool_t recursive = bfalse );
     static bool_t           unlink( ego_BSP_branch * B );
     static bool_t           add_all_nodes( ego_BSP_branch * pbranch, leaf_child_list_t & colst );
 
-    ego_BSP_branch( size_t dim = 0 ) { clear( this ); ctor_this( this, dim ); }
-    ~ego_BSP_branch()                { dtor_this( this ); }
+    ego_BSP_branch( size_t dim = 0 ) { clear( this ); init( this, dim ); }
+    ~ego_BSP_branch()                { deinit( this ); }
 
 private:
 
-    static ego_BSP_branch * ctor_this( ego_BSP_branch * B, size_t dim );
-    static ego_BSP_branch * dtor_this( ego_BSP_branch * B );
+    static ego_BSP_branch * init( ego_BSP_branch * B, size_t dim );
+    static ego_BSP_branch * deinit( ego_BSP_branch * B );
 
     static ego_BSP_branch * clear( ego_BSP_branch * ptr )
     {
@@ -166,7 +169,7 @@ private:
     }
 
     static bool_t             collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
-    static bool_t             dealloc_nodes( ego_BSP_branch * B, bool_t recursive );
+    static bool_t             dealloc_nodes( ego_BSP_branch * B, bool_t recursive = bfalse );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -178,34 +181,29 @@ struct ego_BSP_tree
     size_t dimensions;
     int    depth;
 
-    branch_list_t       branch_all;
-
-    branch_set_t   branch_used;
-    branch_stack_t branch_free;
-
     ego_BSP_branch      * root;
 
     leaf_child_list_t     infinite;
 
     ego_BSP_aabb          bbox;
 
-    ego_BSP_tree()                           { clear( this ); };
+    ego_BSP_tree()  { clear( this ); };
 
-    ego_BSP_tree( Sint32 _dim, Sint32 _depth ) { clear( this ); ctor_this( this, _dim, _depth ); }
-    ~ego_BSP_tree()                          { dtor_this( this ); }
+    ego_BSP_tree( Sint32 _dim, Sint32 _depth ) { clear( this ); init( this, _dim, _depth ); }
+    ~ego_BSP_tree()                            { deinit( this ); }
 
-    static ego_BSP_tree   * create( size_t count );
-    static bool_t           destroy( ego_BSP_tree   ** ptree );
+    //static ego_BSP_tree   * create( size_t count );
+    //static bool_t           destroy( ego_BSP_tree   ** ptree );
 
-    static ego_BSP_tree   * ctor_this( ego_BSP_tree   * t, Sint32 dim, Sint32 depth );
-    static ego_BSP_tree   * dtor_this( ego_BSP_tree   * t );
+    static ego_BSP_tree   * init( ego_BSP_tree   * t, Sint32 dim, Sint32 depth );
+    static ego_BSP_tree   * deinit( ego_BSP_tree   * t );
     static bool_t           alloc( ego_BSP_tree   * t, Sint32 dim, Sint32 depth );
     static bool_t           dealloc( ego_BSP_tree   * t );
 
     static bool_t           init_0( ego_BSP_tree   * t );
 
-    static bool_t             clear_nodes( ego_BSP_tree   * t, bool_t recursive );
-    static bool_t             dealloc_nodes( ego_BSP_tree   * t, bool_t recursive );
+    static bool_t             clear_nodes( ego_BSP_tree   * t, bool_t recursive = bfalse );
+    static bool_t             dealloc_nodes( ego_BSP_tree   * t, bool_t recursive = bfalse );
     static bool_t             dealloc_all( ego_BSP_tree   * t );
     static bool_t             prune( ego_BSP_tree   * t );
     static ego_BSP_branch * get_free( ego_BSP_tree   * t );
@@ -222,7 +220,7 @@ struct ego_BSP_tree
 protected:
 
     static bool_t             prune_branch( ego_BSP_tree   * t, ego_BSP_branch * B );
-    static bool_t             prune_one_branch( ego_BSP_tree   * t, ego_BSP_branch * B, bool_t recursive );
+    static bool_t             prune_one_branch( ego_BSP_tree   * t, ego_BSP_branch * B, bool_t recursive = bfalse );
 
     static bool_t             dealloc_branch( ego_BSP_tree   * t, ego_BSP_branch * B );
     static bool_t             remove_used( ego_BSP_tree   * t, ego_BSP_branch * B );
@@ -235,6 +233,12 @@ protected:
     static bool_t             free_allocation_lists( ego_BSP_tree   * t );
 
 private:
+
+    //---- pre-allocated arrays of branches
+    branch_list_t       branch_all;
+    branch_set_t        branch_used;
+    branch_stack_t      branch_free;
+
     static ego_BSP_tree * clear( ego_BSP_tree * ptr )
     {
         if ( NULL == ptr ) return ptr;

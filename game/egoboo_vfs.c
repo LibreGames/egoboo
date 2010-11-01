@@ -162,7 +162,7 @@ void vfs_init()
     if ( _vfs_initialized ) return;
 
     // set the root path to be the Data Directory, regardless of the executable's path
-    snprintf( tmp_path, SDL_arraysize( tmp_path ), "%s" SLASH_STR, fs_getDataDirectory() );
+    SDL_snprintf( tmp_path, SDL_arraysize( tmp_path ), "%s" SLASH_STR, fs_getDataDirectory() );
     PHYSFS_init( tmp_path );
 
     //---- !!!! make sure the basic directories exist !!!!
@@ -182,7 +182,7 @@ void vfs_init()
     {
         char dir_path[1024] = EMPTY_CSTR;
 
-        snprintf( dir_path, SDL_arraysize( dir_path ), "%s/debug", fs_getUserDirectory() );
+        SDL_snprintf( dir_path, SDL_arraysize( dir_path ), "%s/debug", fs_getUserDirectory() );
 
         str_convert_slash_sys( dir_path, SDL_arraysize( dir_path ) );
         fs_createDirectory( dir_path );
@@ -215,7 +215,7 @@ const char* vfs_getVersion()
 
     //PHYSFS_getLinkedVersion(&version);        // Linked version number
     PHYSFS_VERSION( &version );         // Compiled version number
-    snprintf( buffer, SDL_arraysize( buffer ), "%d.%d.%d", version.major, version.minor, version.patch );
+    SDL_snprintf( buffer, SDL_arraysize( buffer ), "%d.%d.%d", version.major, version.minor, version.patch );
 
     return buffer;
 }
@@ -351,7 +351,7 @@ const char * _vfs_convert_fname_sys( const char * fname )
     strncpy( copy_fname, fname, SDL_arraysize( copy_fname ) );
 
     // convert the path string to local notation
-    string_ptr = str_convert_slash_sys( copy_fname, strlen( fname ) );
+    string_ptr = str_convert_slash_sys( copy_fname, SDL_strlen( fname ) );
     if ( !VALID_CSTR( string_ptr ) )
     {
         strncpy( local_fname, SLASH_STR, SDL_arraysize( local_fname ) );
@@ -418,18 +418,18 @@ const char * _vfs_convert_fname( const char * fname )
 
     if ( _vfs_mount_info_search( copy_fname ) )
     {
-        snprintf( local_fname, SDL_arraysize( local_fname ), "%s", copy_fname );
+        SDL_snprintf( local_fname, SDL_arraysize( local_fname ), "%s", copy_fname );
     }
     else if ( NET_SLASH_CHR == copy_fname[0] || WIN32_SLASH_CHR == copy_fname[0] )
     {
-        snprintf( local_fname, SDL_arraysize( local_fname ), "%s", copy_fname );
+        SDL_snprintf( local_fname, SDL_arraysize( local_fname ), "%s", copy_fname );
     }
     else
     {
-        snprintf( local_fname, SDL_arraysize( local_fname ), NET_SLASH_STR "%s", copy_fname );
+        SDL_snprintf( local_fname, SDL_arraysize( local_fname ), NET_SLASH_STR "%s", copy_fname );
     }
 
-    return str_convert_slash_net( local_fname, strlen( local_fname ) );
+    return str_convert_slash_net( local_fname, SDL_strlen( local_fname ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -491,7 +491,7 @@ const char * _vfs_potential_mount_point( const char * some_path, const char ** p
     }
 
     // return the potential mount point in system-dependent format
-    return str_convert_slash_sys( found_path, strlen( found_path ) );
+    return str_convert_slash_sys( found_path, SDL_strlen( found_path ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -553,11 +553,11 @@ const char * vfs_resolveReadFilename( const char * src_filename )
 
             if ( VALID_CSTR( ptmp ) )
             {
-                snprintf( read_name_str, SDL_arraysize( read_name_str ), "%s/%s", retval, ptmp );
+                SDL_snprintf( read_name_str, SDL_arraysize( read_name_str ), "%s/%s", retval, ptmp );
             }
             else
             {
-                snprintf( read_name_str, SDL_arraysize( read_name_str ), "%s/", retval );
+                SDL_snprintf( read_name_str, SDL_arraysize( read_name_str ), "%s/", retval );
             }
 
             retval     = read_name_str;
@@ -583,7 +583,7 @@ const char * vfs_resolveReadFilename( const char * src_filename )
         {
             ptmp = _vfs_strip_path( loc_fname );
 
-            snprintf( read_name_str, SDL_arraysize( read_name_str ), "%s/%s", tmp_dirname, ptmp );
+            SDL_snprintf( read_name_str, SDL_arraysize( read_name_str ), "%s/%s", tmp_dirname, ptmp );
             retval     = read_name_str;
             retval_len = SDL_arraysize( read_name_str );
         }
@@ -620,7 +620,7 @@ const char * vfs_resolveWriteFilename( const char * src_filename )
     }
 
     // append the write_dir to the szTemp to get the total path
-    snprintf( szFname, SDL_arraysize( szFname ), "%s" SLASH_STR "%s", write_dir, szTemp );
+    SDL_snprintf( szFname, SDL_arraysize( szFname ), "%s" SLASH_STR "%s", write_dir, szTemp );
 
     // make sure that the slashes are correct for this system, and that they are not doubled
     return str_convert_slash_sys( szFname, SDL_arraysize( szFname ) );
@@ -676,7 +676,7 @@ int _vfs_ensure_write_directory( const char * filename, bool_t is_directory )
     // grab the system-independent path relative to the write directory
     if ( !is_directory && !vfs_isDirectory( temp_dirname ) )
     {
-        tmpstr = strrchr( temp_dirname, NET_SLASH_CHR );
+        tmpstr = SDL_strrchr( temp_dirname, NET_SLASH_CHR );
         if ( NULL == tmpstr )
         {
             strncpy( temp_dirname, NET_SLASH_STR, SDL_arraysize( temp_dirname ) );
@@ -833,14 +833,14 @@ int vfs_close( vfs_FILE * pfile )
     if ( vfs_cfile == pfile->type )
     {
         retval = fclose( pfile->ptr.c );
-        memset( pfile, 0, sizeof( *pfile ) );
+        SDL_memset( pfile, 0, sizeof( *pfile ) );
 
         EGOBOO_DELETE( pfile );
     }
     else if ( vfs_physfs == pfile->type )
     {
         retval = PHYSFS_close( pfile->ptr.p );
-        memset( pfile, 0, sizeof( *pfile ) );
+        SDL_memset( pfile, 0, sizeof( *pfile ) );
 
         EGOBOO_DELETE( pfile );
     }
@@ -1352,7 +1352,7 @@ int vfs_read_float( vfs_FILE * pfile, float * val )
 //
 //    if( NULL == file || INVALID_CSTR(format) ) return 0;
 //
-//    format_end = (char *)(format + strlen(format));
+//    format_end = (char *)(format + SDL_strlen(format));
 //
 //    // scan throuh the format string looking for formats
 //    argcount = 0;
@@ -1367,7 +1367,7 @@ int vfs_read_float( vfs_FILE * pfile, float * val )
 //        format_next  = format_tmp;
 //        while( format_next < format_end )
 //        {
-//            format_next = strchr( format_tmp, '%' );
+//            format_next = SDL_strchr( format_tmp, '%' );
 //
 //            // handle the occurrence of "%%"
 //            if( '%' == *(format_next + 1) )
@@ -1427,7 +1427,7 @@ int fake_physfs_vprintf( PHYSFS_File * pfile, const char *format, va_list args )
 
     if ( NULL == pfile || INVALID_CSTR( format ) ) return 0;
 
-    written = vsnprintf( buffer, SDL_arraysize( buffer ), format, args );
+    written = SDL_vsnprintf( buffer, SDL_arraysize( buffer ), format, args );
 
     if ( written > 0 )
     {
@@ -1572,11 +1572,11 @@ vfs_search_context_t * _vfs_search( vfs_search_context_t ** pctxt )
 
             if ( INVALID_CSTR(( *pctxt )->path ) )
             {
-                snprintf( path_buffer, SDL_arraysize( path_buffer ), NET_SLASH_STR "%s", *(( *pctxt )->ptr ) );
+                SDL_snprintf( path_buffer, SDL_arraysize( path_buffer ), NET_SLASH_STR "%s", *(( *pctxt )->ptr ) );
             }
             else
             {
-                snprintf( path_buffer, SDL_arraysize( path_buffer ), "%s" NET_SLASH_STR "%s", ( *pctxt )->path, *(( *pctxt )->ptr ) );
+                SDL_snprintf( path_buffer, SDL_arraysize( path_buffer ), "%s" NET_SLASH_STR "%s", ( *pctxt )->path, *(( *pctxt )->ptr ) );
             }
 
             loc_path = ( char * )_vfs_convert_fname( path_buffer );
@@ -1607,7 +1607,7 @@ vfs_search_context_t * _vfs_search( vfs_search_context_t ** pctxt )
     }
     else
     {
-        size_t extension_length = strlen(( *pctxt )->ext );
+        size_t extension_length = SDL_strlen(( *pctxt )->ext );
 
         // scan through the list
         for ( /* nothing */; NULL != *(( *pctxt )->ptr ); ( *pctxt )->ptr++ )
@@ -1621,11 +1621,11 @@ vfs_search_context_t * _vfs_search( vfs_search_context_t ** pctxt )
 
             if ( INVALID_CSTR(( *pctxt )->path ) )
             {
-                snprintf( path_buffer, SDL_arraysize( path_buffer ), NET_SLASH_STR "%s", *(( *pctxt )->ptr ) );
+                SDL_snprintf( path_buffer, SDL_arraysize( path_buffer ), NET_SLASH_STR "%s", *(( *pctxt )->ptr ) );
             }
             else
             {
-                snprintf( path_buffer, SDL_arraysize( path_buffer ), "%s" NET_SLASH_STR "%s", ( *pctxt )->path, *(( *pctxt )->ptr ) );
+                SDL_snprintf( path_buffer, SDL_arraysize( path_buffer ), "%s" NET_SLASH_STR "%s", ( *pctxt )->path, *(( *pctxt )->ptr ) );
             }
 
             loc_path = ( char * )_vfs_convert_fname( path_buffer );
@@ -1651,7 +1651,7 @@ vfs_search_context_t * _vfs_search( vfs_search_context_t ** pctxt )
             sztest = *(( *pctxt )->ptr );
 
             // get the length
-            string_length = strlen( sztest );
+            string_length = SDL_strlen( sztest );
 
             // grab the last bit of the test string
             if ((( signed )string_length - ( signed )extension_length ) >= 0 )
@@ -1763,7 +1763,7 @@ vfs_search_context_t * vfs_findFirst( const char * search_path, const char * sea
     }
     else
     {
-        snprintf( ctxt->ext, SDL_arraysize( ctxt->ext ), ".%s", search_extension );
+        SDL_snprintf( ctxt->ext, SDL_arraysize( ctxt->ext ), ".%s", search_extension );
     }
 
     // set the search path
@@ -1944,7 +1944,7 @@ int vfs_copyDirectory( const char *sourceDir, const char *destDir )
     }
 
     // get the a filename that we are allowed to write to
-    snprintf( szDst, SDL_arraysize( szDst ), "%s",  vfs_resolveWriteFilename( destDir ) );
+    SDL_snprintf( szDst, SDL_arraysize( szDst ), "%s",  vfs_resolveWriteFilename( destDir ) );
     real_dst = szDst;
 
     // List all the files in the directory
@@ -1956,8 +1956,8 @@ int vfs_copyDirectory( const char *sourceDir, const char *destDir )
         // Ignore files that begin with a .
         if ( '.' != fileName[0] )
         {
-            snprintf( srcPath, SDL_arraysize( srcPath ), "%s/%s", sourceDir, fileName );
-            snprintf( destPath, SDL_arraysize( destPath ), "%s/%s", destDir, fileName );
+            SDL_snprintf( srcPath, SDL_arraysize( srcPath ), "%s/%s", sourceDir, fileName );
+            SDL_snprintf( destPath, SDL_arraysize( destPath ), "%s/%s", destDir, fileName );
 
             if ( !vfs_copyFile( srcPath, destPath ) )
             {
@@ -2058,7 +2058,7 @@ int vfs_puts( const char * str , vfs_FILE * pfile )
     }
     else if ( vfs_physfs == pfile->type )
     {
-        size_t len = strlen( str );
+        size_t len = SDL_strlen( str );
 
         retval = PHYSFS_write( pfile->ptr.p, str, len + 1, sizeof( char ) );
     }
@@ -2138,7 +2138,7 @@ int _vfs_vfscanf( FILE * file, const char * format, va_list args )
 
     if ( NULL == file || INVALID_CSTR( format ) ) return 0;
 
-    format_end = ( char * )( format + strlen( format ) );
+    format_end = ( char * )( format + SDL_strlen( format ) );
 
     // scan through the format string looking for formats
     argcount = 0;
@@ -2153,7 +2153,7 @@ int _vfs_vfscanf( FILE * file, const char * format, va_list args )
         format_next  = format_tmp;
         while ( format_next < format_end )
         {
-            format_next = strchr( format_tmp, '%' );
+            format_next = SDL_strchr( format_tmp, '%' );
 
             // handle the occurrence of "%%"
             if ( '%' == *( format_next + 1 ) )
@@ -2261,7 +2261,7 @@ const char * vfs_getError()
     // try to get the stdio error state
     file_error = strerror( errno );
 
-    snprintf( errors, SDL_arraysize( errors ), "c stdio says:\"%s\" -- physfs says:\"%s\"", file_error, physfs_error );
+    SDL_snprintf( errors, SDL_arraysize( errors ), "c stdio says:\"%s\" -- physfs says:\"%s\"", file_error, physfs_error );
 
     return errors;
 }
@@ -2283,7 +2283,7 @@ int vfs_add_mount_point( const char * root_path, const char * relative_path, con
     // make a complete version of the pathname
     if ( VALID_CSTR( root_path ) && VALID_CSTR( relative_path ) )
     {
-        snprintf( dirname, SDL_arraysize( dirname ), "%s" SLASH_STR "%s", root_path, relative_path );
+        SDL_snprintf( dirname, SDL_arraysize( dirname ), "%s" SLASH_STR "%s", root_path, relative_path );
     }
     else if ( VALID_CSTR( root_path ) )
     {
@@ -2386,8 +2386,8 @@ int _vfs_mount_info_search( const char * some_path )
             break;
         }
 
-        snprintf( temp_path, SDL_arraysize( temp_path ), "%s" NET_SLASH_STR, _vfs_mount_info[cnt].mount );
-        len = strlen( temp_path );
+        SDL_snprintf( temp_path, SDL_arraysize( temp_path ), "%s" NET_SLASH_STR, _vfs_mount_info[cnt].mount );
+        len = SDL_strlen( temp_path );
 
         if ( 0 == strncmp( temp_path, some_path, len ) )
         {
@@ -2424,7 +2424,7 @@ const char * _vfs_strip_path( const char * some_path )
     offset = 0;
     for ( cnt = 0; cnt < _vfs_mount_info_count; cnt++ )
     {
-        offset = strlen( _vfs_mount_info[cnt].mount );
+        offset = SDL_strlen( _vfs_mount_info[cnt].mount );
         if ( offset <= 0 ) continue;
 
         if ( 0 == strncmp( some_path, _vfs_mount_info[cnt].mount, offset ) )
@@ -2525,7 +2525,7 @@ bool_t _vfs_mount_info_add( const char * mount_point, const char * root_path, co
     // make a complete version of the pathname
     if ( VALID_CSTR( root_path ) && VALID_CSTR( relative_path ) )
     {
-        snprintf( local_path, SDL_arraysize( local_path ), "%s" SLASH_STR "%s", root_path, relative_path );
+        SDL_snprintf( local_path, SDL_arraysize( local_path ), "%s" SLASH_STR "%s", root_path, relative_path );
     }
     else if ( VALID_CSTR( root_path ) )
     {
@@ -2588,7 +2588,7 @@ bool_t _vfs_mount_info_remove( int cnt )
     // fill in the hole in the list
     if ( _vfs_mount_info_count > 1 )
     {
-        memmove( _vfs_mount_info + cnt, _vfs_mount_info + ( _vfs_mount_info_count - 1 ), sizeof( vfs_path_data_t ) );
+        SDL_memmove( _vfs_mount_info + cnt, _vfs_mount_info + ( _vfs_mount_info_count - 1 ), sizeof( vfs_path_data_t ) );
     }
 
     // shorten the list

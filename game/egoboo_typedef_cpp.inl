@@ -461,33 +461,28 @@ void t_cpp_list< _ty, _sz >::compact_free()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
-_ty * t_cpp_map<_ty, _sz>::get_ptr( const t_reference<_ty> & ref )
+template < typename _ty, typename _ity >
+_ty * t_cpp_map<_ty, _ity>::get_ptr( const t_reference<_ty> & ref )
 {
     if ( !ref_validate( ref ) ) return NULL;
 
-    t_cpp_map<_ty, _sz>::map_iterator it = _map.find( ref.get_value() );
+    t_cpp_map<_ty, _ity>::map_iterator it = _map.find( ref.get_value() );
     if ( it == _map.end() ) return NULL;
 
     return it->second;
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
-bool_t t_cpp_map<_ty, _sz>::has_ref( const t_reference<_ty> & ref )
+template < typename _ty, typename _ity >
+bool_t t_cpp_map<_ty, _ity>::has_ref( const t_reference<_ty> & ref )
 {
-    if ( !ref_validate( ref ) ) return bfalse;
-
     return _map.end() != _map.find( ref.get_value() );
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
-bool_t t_cpp_map<_ty, _sz>::add( const t_reference<_ty> & ref, const _ty * val )
+template < typename _ty, typename _ity >
+bool_t t_cpp_map<_ty, _ity>::add( const t_reference<_ty> & ref, const _ty * val )
 {
-    // is it in the valid range?
-    if ( !ref_validate( ref ) ) return bfalse;
-
     // is it a valid pointer?
     if ( NULL == val )
     {
@@ -510,16 +505,71 @@ bool_t t_cpp_map<_ty, _sz>::add( const t_reference<_ty> & ref, const _ty * val )
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
-bool_t t_cpp_map<_ty, _sz>::remove( const t_reference<_ty> & ref )
+template < typename _ty, typename _ity >
+bool_t t_cpp_map<_ty, _ity>::remove( const t_reference<_ty> & ref )
 {
-    // is it in the valid range?
-    if ( !ref_validate( ref ) ) return bfalse;
-
     // add the value
     bool_t rv = bfalse;
     if ( 0 != _map.erase( ref.get_value() ) )
     {
+        _id++;
+        rv = btrue;
+    }
+
+    return rv;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+template < typename _ty, typename _ity >
+typename t_cpp_deque<_ty, _ity>::deque_iterator t_cpp_deque<_ty, _ity>::find_ref( const t_reference<_ty> & ref )
+{
+    const _ity ref_val = ref.get_value();
+
+    if ( _deque.empty() ) return _deque.end();
+
+    for ( deque_iterator it = _deque.begin(); it != _deque.end(); it++ )
+    {
+        if ( *it == ref_val )
+        {
+            break;
+        }
+    }
+
+    return it;
+}
+
+//--------------------------------------------------------------------------------------------
+template < typename _ty, typename _ity >
+bool_t t_cpp_deque<_ty, _ity>::has_ref( const t_reference<_ty> & ref )
+{
+    return find_ref( ref ) != _deque.end();
+}
+
+//--------------------------------------------------------------------------------------------
+template < typename _ty, typename _ity >
+bool_t t_cpp_deque<_ty, _ity>::add( const t_reference<_ty> & ref )
+{
+    // is it in the valid range?
+    if ( has_ref( ref ) ) return bfalse;
+
+    // add the value
+    _deque.push_back( ref.get_value() );
+    _id++;
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+template < typename _ty, typename _ity >
+bool_t t_cpp_deque<_ty, _ity>::remove( const t_reference<_ty> & ref )
+{
+    deque_iterator it = find_ref( ref );
+
+    bool_t rv = bfalse;
+    if ( it != _deque.end() )
+    {
+        _deque.erase( it );
         _id++;
         rv = btrue;
     }

@@ -70,6 +70,26 @@ int cmp_chr_anim_data( void const * vp_lhs, void const * vp_rhs );
 //--------------------------------------------------------------------------------------------
 static IDSZ    inventory_idsz[INVEN_COUNT];
 
+PROFILE_DECLARE( move_one_character );
+PROFILE_DECLARE( keep_weapons_with_holders );
+PROFILE_DECLARE( attach_all_particles );
+PROFILE_DECLARE( make_all_character_matrices );
+
+PROFILE_DECLARE( move_one_character_get_environment );
+PROFILE_DECLARE( move_one_character_do_fluid_friction );
+PROFILE_DECLARE( move_one_character_do_voluntary_flying );
+PROFILE_DECLARE( move_one_character_do_voluntary );
+PROFILE_DECLARE( move_one_character_do_involuntary );
+PROFILE_DECLARE( move_one_character_do_orientation );
+PROFILE_DECLARE( move_one_character_do_z_motion );
+PROFILE_DECLARE( move_one_character_do_animation );
+PROFILE_DECLARE( move_one_character_limit_flying );
+PROFILE_DECLARE( move_one_character_do_jump );
+PROFILE_DECLARE( move_one_character_do_floor );
+
+PROFILE_DECLARE( chr_do_latch_button );
+PROFILE_DECLARE( move_one_character_do_flying );
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 t_cpp_stack< ego_cap, MAX_PROFILE  > CapStack;
@@ -91,14 +111,6 @@ static bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, Ui
 static BBOARD_REF chr_add_billboard( const CHR_REF & ichr, Uint32 lifetime_secs );
 
 static ego_chr * resize_one_character( ego_chr * pchr );
-
-static int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset );
-
-bool_t apply_one_character_matrix( ego_chr * pchr, ego_matrix_cache * mcache );
-bool_t apply_one_weapon_matrix( ego_chr * pweap, ego_matrix_cache * mcache );
-
-// definition that is consistent with using it as a callback in qsort() or some similar function
-static int  cmp_matrix_cache( const void * vlhs, const void * vrhs );
 
 void cleanup_one_character( ego_chr * pchr );
 
@@ -124,6 +136,8 @@ static bool_t pack_validate( ego_pack * ppack );
 
 static fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure );
 //static float   get_mesh_pressure( ego_chr * pchr, float test_pos[] );
+
+static egoboo_rv chr_invalidate_instances( ego_chr * pchr );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -158,32 +172,32 @@ void flash_character_height( const CHR_REF & character, Uint8 valuelow, Sint16 l
     Sint16 z;
 
     ego_mad * pmad;
-    ego_chr_instance * pinst;
+    gfx_mad_instance * pgfx_inst;
 
-    pinst = ego_chr::get_pinstance( character );
-    if ( NULL == pinst ) return;
+    pgfx_inst = ego_chr::get_pinstance( character );
+    if ( NULL == pgfx_inst ) return;
 
     pmad = ego_chr::get_pmad( character );
     if ( NULL == pmad ) return;
 
-    for ( cnt = 0; cnt < pinst->vrt_count; cnt++ )
+    for ( cnt = 0; cnt < pgfx_inst->vrt_count; cnt++ )
     {
-        z = pinst->vrt_lst[cnt].pos[ZZ];
+        z = pgfx_inst->vrt_lst[cnt].pos[ZZ];
 
         if ( z < low )
         {
-            pinst->color_amb = valuelow;
+            pgfx_inst->color_amb = valuelow;
         }
         else
         {
             if ( z > high )
             {
-                pinst->color_amb = valuehigh;
+                pgfx_inst->color_amb = valuehigh;
             }
             else
             {
-                pinst->color_amb = ( valuehigh * ( z - low ) / ( high - low ) ) +
-                                   ( valuelow * ( high - z ) / ( high - low ) );
+                pgfx_inst->color_amb = ( valuehigh * ( z - low ) / ( high - low ) ) +
+                                       ( valuelow * ( high - z ) / ( high - low ) );
             }
         }
     }
@@ -206,7 +220,7 @@ void keep_weapons_with_holders()
             // Keep in hand weapons with iattached
             if ( ego_chr::matrix_valid( pchr ) )
             {
-                ego_chr::set_pos( pchr, mat_getTranslate_v( pchr->inst.matrix ) );
+                ego_chr::set_pos( pchr, mat_getTranslate_v( pchr->gfx_inst.matrix ) );
             }
             else
             {
@@ -220,7 +234,7 @@ void keep_weapons_with_holders()
             {
 
                 // Items become partially invisible in hands of players
-                if ( VALID_PLA( pattached->is_which_player ) && 255 != pattached->inst.alpha )
+                if ( VALID_PLA( pattached->is_which_player ) && 255 != pattached->gfx_inst.alpha )
                 {
                     ego_chr::set_alpha( pchr, SEEINVISIBLE );
                 }
@@ -229,7 +243,7 @@ void keep_weapons_with_holders()
                     // Only if not naturally transparent
                     if ( 255 == pchr->alpha_base )
                     {
-                        ego_chr::set_alpha( pchr, pattached->inst.alpha );
+                        ego_chr::set_alpha( pchr, pattached->gfx_inst.alpha );
                     }
                     else
                     {
@@ -238,7 +252,7 @@ void keep_weapons_with_holders()
                 }
 
                 // Do light too
-                if ( VALID_PLA( pattached->is_which_player ) && 255 != pattached->inst.light )
+                if ( VALID_PLA( pattached->is_which_player ) && 255 != pattached->gfx_inst.light )
                 {
                     ego_chr::set_light( pchr, SEEINVISIBLE );
                 }
@@ -247,7 +261,7 @@ void keep_weapons_with_holders()
                     // Only if not naturally transparent
                     if ( 255 == ego_chr::get_pcap( cnt )->light )
                     {
-                        ego_chr::set_light( pchr, pattached->inst.light );
+                        ego_chr::set_light( pchr, pattached->gfx_inst.light );
                     }
                     else
                     {
@@ -288,15 +302,15 @@ void make_one_character_matrix( const CHR_REF & ichr )
     /// @details ZZ@> This function sets one character's matrix
 
     ego_chr * pchr;
-    ego_chr_instance * pinst;
+    gfx_mad_instance * pgfx_inst;
 
     pchr = ChrObjList.get_allocated_data_ptr( ichr );
     if ( !INGAME_PCHR( pchr ) ) return;
 
-    pinst = &( pchr->inst );
+    pgfx_inst = &( pchr->gfx_inst );
 
     // invalidate this matrix
-    pinst->matrix_cache.matrix_valid = bfalse;
+    pgfx_inst->mcache.matrix_valid = bfalse;
 
     if ( pchr->is_overlay )
     {
@@ -309,44 +323,44 @@ void make_one_character_matrix( const CHR_REF & ichr )
             ego_chr::set_pos( pchr, ego_chr::get_pos_v( ptarget ) );
 
             // copy the matrix
-            CopyMatrix( &( pinst->matrix ), &( ptarget->inst.matrix ) );
+            CopyMatrix( &( pgfx_inst->matrix ), &( ptarget->gfx_inst.matrix ) );
 
             // copy the matrix data
-            pinst->matrix_cache = ptarget->inst.matrix_cache;
+            pgfx_inst->mcache = ptarget->gfx_inst.mcache;
         }
     }
     else
     {
         if ( pchr->stickybutt )
         {
-            pinst->matrix = ScaleXYZRotateXYZTranslate_SpaceFixed( pchr->fat, pchr->fat, pchr->fat,
-                            TO_TURN( pchr->ori.facing_z ),
-                            TO_TURN( pchr->ori.map_facing_x - MAP_TURN_OFFSET ),
-                            TO_TURN( pchr->ori.map_facing_y - MAP_TURN_OFFSET ),
-                            pchr->pos.x, pchr->pos.y, pchr->pos.z );
+            pgfx_inst->matrix = ScaleXYZRotateXYZTranslate_SpaceFixed( pchr->fat, pchr->fat, pchr->fat,
+                                TO_TURN( pchr->ori.facing_z ),
+                                TO_TURN( pchr->ori.map_facing_x - MAP_TURN_OFFSET ),
+                                TO_TURN( pchr->ori.map_facing_y - MAP_TURN_OFFSET ),
+                                pchr->pos.x, pchr->pos.y, pchr->pos.z );
         }
         else
         {
-            pinst->matrix = ScaleXYZRotateXYZTranslate_BodyFixed( pchr->fat, pchr->fat, pchr->fat,
-                            TO_TURN( pchr->ori.facing_z ),
-                            TO_TURN( pchr->ori.map_facing_x - MAP_TURN_OFFSET ),
-                            TO_TURN( pchr->ori.map_facing_y - MAP_TURN_OFFSET ),
-                            pchr->pos.x, pchr->pos.y, pchr->pos.z );
+            pgfx_inst->matrix = ScaleXYZRotateXYZTranslate_BodyFixed( pchr->fat, pchr->fat, pchr->fat,
+                                TO_TURN( pchr->ori.facing_z ),
+                                TO_TURN( pchr->ori.map_facing_x - MAP_TURN_OFFSET ),
+                                TO_TURN( pchr->ori.map_facing_y - MAP_TURN_OFFSET ),
+                                pchr->pos.x, pchr->pos.y, pchr->pos.z );
         }
 
-        pinst->matrix_cache.valid        = btrue;
-        pinst->matrix_cache.matrix_valid = btrue;
-        pinst->matrix_cache.type_bits    = MAT_CHARACTER;
+        pgfx_inst->mcache.valid        = btrue;
+        pgfx_inst->mcache.matrix_valid = btrue;
+        pgfx_inst->mcache.type_bits    = MAT_CHARACTER;
 
-        pinst->matrix_cache.self_scale.x = pchr->fat;
-        pinst->matrix_cache.self_scale.y = pchr->fat;
-        pinst->matrix_cache.self_scale.z = pchr->fat;
+        pgfx_inst->mcache.self_scale.x = pchr->fat;
+        pgfx_inst->mcache.self_scale.y = pchr->fat;
+        pgfx_inst->mcache.self_scale.z = pchr->fat;
 
-        pinst->matrix_cache.rotate.x = CLIP_TO_16BITS( pchr->ori.map_facing_x - MAP_TURN_OFFSET );
-        pinst->matrix_cache.rotate.y = CLIP_TO_16BITS( pchr->ori.map_facing_y - MAP_TURN_OFFSET );
-        pinst->matrix_cache.rotate.z = pchr->ori.facing_z;
+        pgfx_inst->mcache.rotate.x = CLIP_TO_16BITS( pchr->ori.map_facing_x - MAP_TURN_OFFSET );
+        pgfx_inst->mcache.rotate.y = CLIP_TO_16BITS( pchr->ori.map_facing_y - MAP_TURN_OFFSET );
+        pgfx_inst->mcache.rotate.z = pchr->ori.facing_z;
 
-        pinst->matrix_cache.pos = ego_chr::get_pos( pchr );
+        pgfx_inst->mcache.pos = ego_chr::get_pos( pchr );
     }
 }
 
@@ -524,7 +538,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
 
         if ( vertex_offset == GRIP_ORIGIN )
         {
-            fvec3_t tmp_pos = VECT3( pchr->inst.matrix.CNV( 3, 0 ), pchr->inst.matrix.CNV( 3, 1 ), pchr->inst.matrix.CNV( 3, 2 ) );
+            fvec3_t tmp_pos = VECT3( pchr->gfx_inst.matrix.CNV( 3, 0 ), pchr->gfx_inst.matrix.CNV( 3, 1 ), pchr->gfx_inst.matrix.CNV( 3, 2 ) );
             ego_prt::set_pos( pprt, tmp_pos.v );
 
             return pprt;
@@ -533,15 +547,15 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
         vertex = 0;
         if ( NULL != pmad )
         {
-            vertex = (( signed )pchr->inst.vrt_count ) - vertex_offset;
+            vertex = (( signed )pchr->gfx_inst.vrt_count ) - vertex_offset;
 
             // do the automatic update
-            ego_chr_instance::update_vertices( &( pchr->inst ), vertex, vertex, bfalse );
+            gfx_mad_instance::update_vertices( &( pchr->gfx_inst ), pchr->mad_inst.state, gfx_range( vertex, vertex ), bfalse );
 
             // Calculate vertex_offset point locations with linear interpolation and other silly things
-            point[0].x = pchr->inst.vrt_lst[vertex].pos[XX];
-            point[0].y = pchr->inst.vrt_lst[vertex].pos[YY];
-            point[0].z = pchr->inst.vrt_lst[vertex].pos[ZZ];
+            point[0].x = pchr->gfx_inst.vrt_lst[vertex].pos[XX];
+            point[0].y = pchr->gfx_inst.vrt_lst[vertex].pos[YY];
+            point[0].z = pchr->gfx_inst.vrt_lst[vertex].pos[ZZ];
             point[0].w = 1.0f;
         }
         else
@@ -553,7 +567,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
         }
 
         // Do the transform
-        TransformVertices( &( pchr->inst.matrix ), point, nupoint, 1 );
+        TransformVertices( &( pchr->gfx_inst.matrix ), point, nupoint, 1 );
 
         ego_prt::set_pos( pprt, nupoint[0].v );
     }
@@ -624,7 +638,7 @@ void make_all_character_matrices( bool_t do_physics )
     ////        pchr->vel.z += pchr->phys.avel.z;
 
     ////        // do the "integration" on the position
-    ////        if ( ABS(pchr->phys.apos_coll.x) > 0 )
+    ////        if ( SDL_abs(pchr->phys.apos_coll.x) > 0 )
     ////        {
     ////            tmpx = tmp_pos.x;
     ////            tmp_pos.x += pchr->phys.apos_coll.x;
@@ -640,7 +654,7 @@ void make_all_character_matrices( bool_t do_physics )
     ////            }
     ////        }
 
-    ////        if ( ABS(pchr->phys.apos_coll.y) > 0 )
+    ////        if ( SDL_abs(pchr->phys.apos_coll.y) > 0 )
     ////        {
     ////            tmpy = tmp_pos.y;
     ////            tmp_pos.y += pchr->phys.apos_coll.y;
@@ -656,7 +670,7 @@ void make_all_character_matrices( bool_t do_physics )
     ////            }
     ////        }
 
-    ////        if ( ABS(pchr->phys.apos_coll.z) > 0 )
+    ////        if ( SDL_abs(pchr->phys.apos_coll.z) > 0 )
     ////        {
     ////            tmpz = tmp_pos.z;
     ////            tmp_pos.z += pchr->phys.apos_coll.z;
@@ -687,11 +701,11 @@ void make_all_character_matrices( bool_t do_physics )
     ////        if ( !INGAME_CHR(ichr) ) continue;
     ////        pchr = ChrObjList.get_data_ptr(ichr);
 
-    ////        if( !pchr->inst.matrix_cache.valid ) continue;
+    ////        if( !pchr->gfx_inst.mcache.valid ) continue;
 
-    ////        pchr->inst.matrix.CNV( 3, 0 ) = pchr->pos.x;
-    ////        pchr->inst.matrix.CNV( 3, 1 ) = pchr->pos.y;
-    ////        pchr->inst.matrix.CNV( 3, 2 ) = pchr->pos.z;
+    ////        pchr->gfx_inst.matrix.CNV( 3, 0 ) = pchr->pos.x;
+    ////        pchr->gfx_inst.matrix.CNV( 3, 1 ) = pchr->pos.y;
+    ////        pchr->gfx_inst.matrix.CNV( 3, 2 ) = pchr->pos.z;
     ////    }
     ////}
 }
@@ -707,7 +721,6 @@ void free_all_chraracters()
     // free_all_players
     PlaStack.count = 0;
     net_stats.pla_count_local = 0;
-    local_stats.noplayers = btrue;
 
     // free_all_stats
     StatusList_count = 0;
@@ -833,7 +846,7 @@ bool_t chr_test_wall( ego_chr * pchr, float test_pos[] )
     bool_t retval;
     float  radius;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return 0;
+    if ( !PROCESSING_PCHR( pchr ) ) return 0;
 
     if ( 0.0f == pchr->bump_stt.size || INFINITE_WEIGHT == pchr->phys.weight ) return bfalse;
 
@@ -953,17 +966,17 @@ bool_t detach_character_from_mount( const CHR_REF & character, Uint8 ignorekurse
         // play the falling animation...
         ego_chr::play_action( pchr, ACTION_JB + hand, bfalse );
     }
-    else if ( pchr->inst.action_which < ACTION_KA || pchr->inst.action_which > ACTION_KD )
+    else if ( pchr->mad_inst.action.which < ACTION_KA || pchr->mad_inst.action.which > ACTION_KD )
     {
         // play the "killed" animation...
         ego_chr::play_action( pchr, ACTION_KA + generate_randmask( 0, 3 ), bfalse );
-        pchr->inst.action_keep = btrue;
+        pchr->mad_inst.action.keep = btrue;
     }
 
     // Set the positions
     if ( ego_chr::matrix_valid( pchr ) )
     {
-        ego_chr::set_pos( pchr, mat_getTranslate_v( pchr->inst.matrix ) );
+        ego_chr::set_pos( pchr, mat_getTranslate_v( pchr->gfx_inst.matrix ) );
     }
     else
     {
@@ -1008,7 +1021,7 @@ bool_t detach_character_from_mount( const CHR_REF & character, Uint8 ignorekurse
     pchr->vel.z = DROPZVEL;
 
     // Turn looping off
-    pchr->inst.action_loop = bfalse;
+    pchr->mad_inst.action.loop = bfalse;
 
     // Reset the team if it is a mount
     if ( pmount->ismount )
@@ -1175,7 +1188,7 @@ void attach_character_to_mount( const CHR_REF & iitem, const CHR_REF & iholder, 
 
     ego_chr::update_matrix( pitem, btrue );
 
-    ego_chr::set_pos( pitem, mat_getTranslate_v( pitem->inst.matrix ) );
+    ego_chr::set_pos( pitem, mat_getTranslate_v( pitem->gfx_inst.matrix ) );
 
     pitem->enviro.inwater  = bfalse;
     pitem->jump_time = 4 * JUMP_DELAY;
@@ -1185,19 +1198,19 @@ void attach_character_to_mount( const CHR_REF & iitem, const CHR_REF & iholder, 
     {
         // Riding iholder
         ego_chr::play_action( pitem, ACTION_MI, btrue );
-        pitem->inst.action_loop = btrue;
+        pitem->mad_inst.action.loop = btrue;
     }
     else if ( pitem->alive )
     {
         /// @note ZF@> hmm, here is the torch holding bug. Removing
         /// the interpolation seems to fix it...
         ego_chr::play_action( pitem, ACTION_MM + slot, bfalse );
-        pitem->inst.frame_lst = pitem->inst.frame_nxt;
+        pitem->mad_inst.state.frame_lst = pitem->mad_inst.state.frame_nxt;
 
         if ( pitem->isitem )
         {
             // Item grab
-            pitem->inst.action_keep = btrue;
+            pitem->mad_inst.action.keep = btrue;
         }
     }
 
@@ -1431,20 +1444,20 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
     if ( ego_chr::matrix_valid( pchr_a ) )
     {
         // Transform the weapon grip_off from pchr_a->profile_ref to world space
-        frame_nxt = pchr_a->inst.frame_nxt;
-        vertex    = pchr_a->inst.vrt_count - grip_off;
+        frame_nxt = pchr_a->mad_inst.state.frame_nxt;
+        vertex    = pchr_a->gfx_inst.vrt_count - grip_off;
 
         // do the automatic update
-        ego_chr_instance::update_vertices( &( pchr_a->inst ), vertex, vertex, bfalse );
+        gfx_mad_instance::update_vertices( &( pchr_a->gfx_inst ), pchr_a->mad_inst.state, gfx_range( vertex, vertex ), bfalse );
 
         // Calculate grip_off point locations with linear interpolation and other silly things
-        point[0].x = pchr_a->inst.vrt_lst[vertex].pos[XX];
-        point[0].y = pchr_a->inst.vrt_lst[vertex].pos[YY];
-        point[0].z = pchr_a->inst.vrt_lst[vertex].pos[ZZ];
+        point[0].x = pchr_a->gfx_inst.vrt_lst[vertex].pos[XX];
+        point[0].y = pchr_a->gfx_inst.vrt_lst[vertex].pos[YY];
+        point[0].z = pchr_a->gfx_inst.vrt_lst[vertex].pos[ZZ];
         point[0].w = 1.0f;
 
         // Do the transform
-        TransformVertices( &( pchr_a->inst.matrix ), point, nupoint, 1 );
+        TransformVertices( &( pchr_a->gfx_inst.matrix ), point, nupoint, 1 );
     }
     else
     {
@@ -1478,12 +1491,12 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
         pos_b = pchr_grab->pos;
 
         // First check absolute value diamond
-        dx = ABS( nupoint[0].x - pos_b.x );
-        dy = ABS( nupoint[0].y - pos_b.y );
-        dz = ABS( nupoint[0].z - pos_b.z );
+        dx = SDL_abs( nupoint[0].x - pos_b.x );
+        dy = SDL_abs( nupoint[0].y - pos_b.y );
+        dz = SDL_abs( nupoint[0].z - pos_b.z );
         dxy = dx + dy;
 
-        if ( dxy > GRID_SIZE * 2 || dz > MAX( pchr_grab->bump.height, GRABSIZE ) ) continue;
+        if ( dxy > GRID_SIZE * 2 || dz > SDL_max( pchr_grab->bump.height, GRABSIZE ) ) continue;
 
         // reasonable carrying capacity
         if ( pchr_grab->phys.weight > pchr_a->phys.weight + pchr_a->strength * INV_FF )
@@ -1516,7 +1529,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
     // sort the grab list
     if ( grab_count > 1 )
     {
-        qsort( grab_list, grab_count, sizeof( ego_grab_data ), grab_data_cmp );
+        SDL_qsort( grab_list, grab_count, sizeof( ego_grab_data ), grab_data_cmp );
     }
 
     // try to grab something
@@ -1589,7 +1602,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
             // sort the ungrab list
             if ( ungrab_count > 1 )
             {
-                qsort( ungrab_list, ungrab_count, sizeof( ego_grab_data ), grab_data_cmp );
+                SDL_qsort( ungrab_list, ungrab_count, sizeof( ego_grab_data ), grab_data_cmp );
             }
 
             for ( cnt = 0; cnt < ungrab_count; cnt++ )
@@ -1654,7 +1667,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
     {
         unarmed_attack   = bfalse;
         spawn_vrt_offset = GRIP_LAST;
-        action = pchr->inst.action_which;
+        action = pchr->mad_inst.action.which;
     }
 
     pweapon = ChrObjList.get_allocated_data_ptr( iweapon );
@@ -1677,7 +1690,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
     }
 
     // What kind of attack are we going to do?
-    if ( !unarmed_attack && (( pweapon_cap->isstackable && pweapon->ammo > 1 ) || ACTION_IS_TYPE( pweapon->inst.action_which, F ) ) )
+    if ( !unarmed_attack && (( pweapon_cap->isstackable && pweapon->ammo > 1 ) || ACTION_IS_TYPE( pweapon->mad_inst.action.which, F ) ) )
     {
         // Throw the weapon if it's stacked or a hurl animation
         ithrown = spawn_one_character( pchr->pos, pweapon->profile_ref, ego_chr::get_iteam( iholder ), 0, pchr->ori.facing_z, pweapon->name, CHR_REF( MAX_CHR ) );
@@ -1690,7 +1703,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
             ADD_BITS( pthrown->ai.alert, ALERTIF_THROWN );
             velocity = pchr->strength / ( pthrown->phys.weight * THROWFIX );
             velocity += MINTHROWVELOCITY;
-            velocity = MIN( velocity, MAXTHROWVELOCITY );
+            velocity = SDL_min( velocity, MAXTHROWVELOCITY );
 
             turn = TO_TURN( pchr->ori.facing_z + ATK_BEHIND );
             {
@@ -2095,7 +2108,7 @@ ego_chr * resize_one_character( ego_chr * pchr )
             else
             {
                 Uint32 itmp = pcap->weight * pchr->fat * pchr->fat * pchr->fat;
-                pchr->phys.weight = MIN( itmp, MAX_WEIGHT );
+                pchr->phys.weight = SDL_min( itmp, MAX_WEIGHT );
             }
         }
     }
@@ -2147,7 +2160,7 @@ bool_t export_one_character_profile_vfs( const char *szSaveName, const CHR_REF &
     if ( NULL == pcap ) return bfalse;
 
     // load up the temporary cap
-    memcpy( &cap_tmp, pcap, sizeof( ego_cap ) );
+    SDL_memcpy( &cap_tmp, pcap, sizeof( ego_cap ) );
 
     // fill in the cap values with the ones we want to export from the character profile
     ego_chr::upload_cap( pchr, &cap_tmp );
@@ -2252,7 +2265,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
     pcap->sound_index[SOUND_JUMP]     = CLIP( pcap->sound_index[SOUND_JUMP], INVALID_SOUND, MAX_WAVE );
 
     // bumpdampen == 0 means infinite mass, and causes some problems
-    pcap->bumpdampen = MAX( INV_FF, pcap->bumpdampen );
+    pcap->bumpdampen = SDL_max( INV_FF, pcap->bumpdampen );
 
     return icap;
 }
@@ -2275,10 +2288,10 @@ bool_t heal_character( const CHR_REF & character, const CHR_REF & healer, int am
     if ( !pchr->alive || ( IS_INVICTUS_PCHR_RAW( pchr ) && !ignore_invictus ) ) return bfalse;
 
     // This actually heals the character
-    pchr->life = CLIP( pchr->life, pchr->life + ABS( amount ), pchr->life_max );
+    pchr->life = CLIP( pchr->life, pchr->life + SDL_abs( amount ), pchr->life_max );
 
     // Set alerts, but don't alert that we healed ourselves
-    if ( healer != character && pchr_h->attachedto != character && ABS( amount ) > HURTDAMAGE )
+    if ( healer != character && pchr_h->attachedto != character && SDL_abs( amount ) > HURTDAMAGE )
     {
         ADD_BITS( pchr->ai.alert, ALERTIF_HEALED );
         pchr->ai.attacklast = healer;
@@ -2407,7 +2420,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
     // Play the death animation
     action = ACTION_KA + generate_randmask( 0, 3 );
     ego_chr::play_action( pchr, action, bfalse );
-    pchr->inst.action_keep = btrue;
+    pchr->mad_inst.action.keep = btrue;
 
     // Give kill experience
     experience = pcap->experience_worth + ( pchr->experience * pcap->experience_exchange );
@@ -2468,7 +2481,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
     cleanup_one_character( pchr );
 
     // If it's a player, let it die properly before enabling respawn
-    if ( VALID_PLA( pchr->is_which_player ) ) revivetimer = ONESECOND; // 1 second
+    if ( VALID_PLA( pchr->is_which_player ) ) timer_revive = ONESECOND; // 1 second
 
     // Let its AI script run one last time
     pchr->ai.timer = update_wld + 1;            // Prevent IfTimeOut in scr_run_chr_script()
@@ -2506,7 +2519,7 @@ int damage_character_hurt( ego_bundle_chr * pbdl, int base_damage, int actual_da
     }
     else if ( base_damage > HURTDAMAGE )
     {
-        ego_chr::play_action( loc_pchr, randomize_action( ACTION_HA, 0 ), bfalse );
+        ego_chr::play_action( loc_pchr, mad_randomize_action( ACTION_HA, 0 ), bfalse );
     }
 
     return actual_damage;
@@ -2542,7 +2555,6 @@ int damage_character( const CHR_REF & character, FACING_T direction,
     ///    ATK_RIGHT if from the right, ATK_BEHIND if from the back, ATK_LEFT if from the
     ///    left.
 
-    ego_bundle_chr bdl;
     ego_chr      * loc_pchr;
     ego_cap      * loc_pcap;
     ego_ai_state * loc_pai;
@@ -2555,6 +2567,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
 
     loc_pchr = ChrObjList.get_allocated_data_ptr( character );
     if ( !INGAME_PCHR( loc_pchr ) ) return 0;
+    ego_bundle_chr bdl( loc_pchr );
 
     if ( NULL == ego_bundle_chr::set( &bdl, loc_pchr ) ) return 0;
     loc_pchr = bdl.chr_ptr;
@@ -2596,7 +2609,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
 
     actual_damage = 0;
     mana_damage   = 0;
-    max_damage    = ABS( damage.base ) + ABS( damage.rand );
+    max_damage    = SDL_abs( damage.base ) + SDL_abs( damage.rand );
 
     // Lessen actual_damage for resistance, 0 = Weakness, 1 = Normal, 2 = Resist, 3 = Big Resist
     // This can also be used to lessen effectiveness of healing
@@ -2783,7 +2796,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
                 GLXvector4f tint_enemy  = { 1.00f, 0.75f, 0.75f, 1.00f };
 
                 // write the string into the buffer
-                snprintf( text_buffer, SDL_arraysize( text_buffer ), "%s", tmpstr );
+                SDL_snprintf( text_buffer, SDL_arraysize( text_buffer ), "%s", tmpstr );
 
                 chr_make_text_billboard( loc_ichr, text_buffer, text_color, friendly_fire ? tint_friend : tint_enemy, lifetime, ( BIT_FIELD )bb_opt_all );
             }
@@ -2815,7 +2828,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
             GLXvector4f tint = { 1.00f, 1.00f, 0.75f, 1.00f };
 
             // write the string into the buffer
-            snprintf( text_buffer, SDL_arraysize( text_buffer ), "%s", describe_value( actual_heal, damage.base + damage.rand, NULL ) );
+            SDL_snprintf( text_buffer, SDL_arraysize( text_buffer ), "%s", describe_value( actual_heal, damage.base + damage.rand, NULL ) );
 
             chr_make_text_billboard( loc_ichr, text_buffer, text_color, tint, lifetime, ( BIT_FIELD )bb_opt_all );
         }
@@ -3041,7 +3054,7 @@ void ego_chr::respawn( const CHR_REF & character )
     PACK_END_LOOP( item );
 
     // re-initialize the instance
-    ego_chr_instance::spawn( &( pchr->inst ), pchr->profile_ref, pchr->skin );
+    gfx_mad_instance::spawn( &( pchr->gfx_inst ), pchr->profile_ref, pchr->skin );
     ego_chr::update_matrix( pchr, btrue );
 
     // determine whether the object is hidden
@@ -3053,7 +3066,7 @@ void ego_chr::respawn( const CHR_REF & character )
         new_attached_prt_count = number_of_attached_particles( character );
     }
 
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3062,12 +3075,14 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
     ego_chr * pchr;
     ego_pro * ppro;
     ego_mad * pmad;
-    ego_chr_instance * pinst;
+    gfx_mad_instance * pgfx_inst;
+    mad_instance     * pmad_inst;
 
     pchr  = ChrObjList.get_data_ptr( character );
     if ( !INGAME_PCHR( pchr ) ) return 0;
 
-    pinst = &( pchr->inst );
+    pgfx_inst = &( pchr->gfx_inst );
+    pmad_inst = &( pchr->mad_inst );
 
     ppro = ego_chr::get_ppro( character );
 
@@ -3075,9 +3090,9 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
     if ( NULL == pmad )
     {
         // make sure that the instance has a valid imad
-        if ( NULL != ppro && !LOADED_MAD( pinst->imad ) )
+        if ( NULL != ppro && !LOADED_MAD( pmad_inst->imad ) )
         {
-            if ( ego_chr_instance::set_mad( pinst, ppro->imad ) )
+            if ( ego_chr::set_mad( pchr, ppro->imad ) )
             {
                 ego_chr::update_collision_size( pchr, btrue );
             }
@@ -3088,7 +3103,7 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
     if ( NULL == pmad )
     {
         pchr->skin     = 0;
-        pinst->texture = TX_WATER_TOP;
+        pgfx_inst->texture = TX_WATER_TOP;
     }
     else
     {
@@ -3114,7 +3129,7 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
         }
 
         pchr->skin     = skin;
-        pinst->texture = txref;
+        pgfx_inst->texture = txref;
     }
 
     // If the we are respawning a player, then the camera needs to be reset
@@ -3241,14 +3256,14 @@ bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, Uint16 vr
     bool_t needs_update;
     Uint16 grip_verts[GRIP_VERTS];
 
-    ego_matrix_cache * mcache;
+    gfx_mad_matrix_data * mcache;
     ego_chr * pitem;
 
     needs_update = bfalse;
 
     pitem = ChrObjList.get_allocated_data_ptr( iitem );
     if ( !INGAME_PCHR( pitem ) ) return bfalse;
-    mcache = &( pitem->inst.matrix_cache );
+    mcache = &( pitem->gfx_inst.mcache );
 
     // is the item attached to this valid holder?
     if ( pitem->attachedto != iholder ) return bfalse;
@@ -3257,7 +3272,7 @@ bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, Uint16 vr
 
     if ( GRIP_VERTS == get_grip_verts( grip_verts, iholder, vrt_off ) )
     {
-        //---- detect any changes in the matrix_cache data
+        //---- detect any changes in the mcache data
 
         needs_update  = bfalse;
 
@@ -3505,7 +3520,7 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
     else
     {
         Uint32 itmp = pcap_new->weight * pchr->fat * pchr->fat * pchr->fat;
-        pchr->phys.weight = MIN( itmp, MAX_WEIGHT );
+        pchr->phys.weight = SDL_min( itmp, MAX_WEIGHT );
     }
 
     // Image rendering
@@ -3518,13 +3533,13 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
     pchr->anim_speed_run   = pcap_new->anim_speed_run;
 
     // initialize the instance
-    ego_chr_instance::spawn( &( pchr->inst ), profile_new, skin );
+    gfx_mad_instance::spawn( &( pchr->gfx_inst ), profile_new, skin );
     ego_chr::update_matrix( pchr, btrue );
 
-    // Action stuff that must be down after ego_chr_instance::spawn()
-    pchr->inst.action_ready = bfalse;
-    pchr->inst.action_keep  = bfalse;
-    pchr->inst.action_loop  = bfalse;
+    // Action stuff that must be down after gfx_mad_instance::spawn()
+    pchr->mad_inst.action.ready = bfalse;
+    pchr->mad_inst.action.keep  = bfalse;
+    pchr->mad_inst.action.loop  = bfalse;
     if ( pchr->alive )
     {
         ego_chr::play_action( pchr, ACTION_DA, bfalse );
@@ -3532,13 +3547,13 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
     else
     {
         ego_chr::play_action( pchr, ACTION_KA + generate_randmask( 0, 3 ), bfalse );
-        pchr->inst.action_keep = btrue;
+        pchr->mad_inst.action.keep = btrue;
     }
 
-    // Set the skin after changing the model in ego_chr_instance::spawn()
+    // Set the skin after changing the model in gfx_mad_instance::spawn()
     ego_chr::change_armor( ichr, skin );
 
-    // Must set the weapon grip AFTER the model is changed in ego_chr_instance::spawn()
+    // Must set the weapon grip AFTER the model is changed in gfx_mad_instance::spawn()
     if ( INGAME_CHR( pchr->attachedto ) )
     {
         set_weapongrip( ichr, pchr->attachedto, slot_to_grip_offset( pchr->inwhich_slot ) );
@@ -3571,7 +3586,7 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
 
     ego_ai_state::set_changed( &( pchr->ai ) );
 
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -3799,7 +3814,7 @@ ego_chr_data::ego_chr_data() :
         // movement properties
         turnmode( TURNMODE_VELOCITY ),
 
-        movement_bits( -1 ),
+        movement_bits( BIT_FIELD( ~0 ) ),
         maxaccel( 50 ),
 
         is_flying_platform( bfalse ),
@@ -3905,7 +3920,7 @@ bool_t update_chr_darkvision( const CHR_REF & character )
         int base_level = ego_chr_data::get_skill( pchr, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );    // Natural darkvision
 
         // Use the better of the two darkvision abilities
-        pchr->darkvision_level = MAX( base_level, tmp_level );
+        pchr->darkvision_level = SDL_max( base_level, tmp_level );
     }
 
     return btrue;
@@ -3916,15 +3931,11 @@ void update_all_characters()
 {
     /// @details ZZ@> This function updates stats and such for every character
 
-    CHR_REF ichr;
-
-    for ( ichr = 0; ichr < MAX_CHR; ichr++ )
+    CHR_BEGIN_LOOP_DEFINED( ichr, pchr )
     {
-        ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( ichr );
-        if ( NULL == pchr ) continue;
-
-        ego_object_engine::run( pchr );
+        ego_object_engine::run( ego_chr::get_obj_ptr( pchr ) );
     }
+    CHR_END_LOOP();
 
     // fix the stat timer
     if ( clock_chr_stat >= ONESECOND )
@@ -3949,7 +3960,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
 
     bool_t retval = bfalse;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
     ichr = GET_REF_PCHR( pchr );
 
     imad = ego_chr::get_imad( ichr );
@@ -3968,7 +3979,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
 
     // grab the iweapon's action
     base_action = pweapon_cap->weaponaction;
-    hand_action = randomize_action( base_action, which_slot );
+    hand_action = mad_randomize_action( base_action, which_slot );
 
     // see if the character can play this action
     action       = mad_get_action( imad, hand_action );
@@ -4049,7 +4060,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
             if ( pmount->ismount && pmount->alive )
             {
                 // can the mount be told what to do?
-                if ( !VALID_PLA( pmount->is_which_player ) && pmount->inst.action_ready )
+                if ( !VALID_PLA( pmount->is_which_player ) && pmount->mad_inst.action.ready )
                 {
                     if ( !ACTION_IS_TYPE( action, P ) || !pmount_cap->ridercanattack )
                     {
@@ -4067,7 +4078,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
     // Attack button
     if ( allowedtoattack )
     {
-        if ( pchr->inst.action_ready && action_valid )
+        if ( pchr->mad_inst.action.ready && action_valid )
         {
             // Check mana cost
             bool_t mana_paid = cost_mana( ichr, pweapon->manacost, iweapon );
@@ -4082,7 +4093,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
                 if ( pchr->life > pchr->life_max )  pchr->life = pchr->life_max;
 
                 // randomize the action
-                action = randomize_action( action, which_slot );
+                action = mad_randomize_action( action, which_slot );
 
                 // make sure it is valid
                 action = mad_get_action( imad, action );
@@ -4124,8 +4135,8 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
                     }
 
                     // Determine the attack speed (how fast we play the animation)
-                    pchr->inst.rate = 0.125f;                       // base attack speed
-                    pchr->inst.rate += chr_dex / 40;                // +0.25f for every 10 dexterity
+                    pchr->mad_inst.action.rate = 0.125f;                       // base attack speed
+                    pchr->mad_inst.action.rate += chr_dex / 40;                // +0.25f for every 10 dexterity
 
                     // Add some reload time as a true limit to attacks per second
                     // Dexterity decreases the reload time for all weapons. We could allow other stats like intelligence
@@ -4181,7 +4192,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
     CHR_REF item;
     bool_t attack_handled;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_ichr    = pbdl->chr_ref;
@@ -4270,7 +4281,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
             phys_data_accumulate_apos_plat_index( loc_pphys, jump_pos, kZ );
 
             // Set to jump animation if not doing anything better
-            if ( loc_pchr->inst.action_ready )
+            if ( loc_pchr->mad_inst.action.ready )
             {
                 ego_chr::play_action( loc_pchr, ACTION_JA, btrue );
             }
@@ -4293,7 +4304,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
         }
     }
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_ALTLEFT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_ALTLEFT ) && loc_pchr->mad_inst.action.ready && 0 == loc_pchr->reloadtime )
     {
         loc_pchr->reloadtime = GRABDELAY;
         if ( !INGAME_CHR( loc_pchr->holdingwhich[SLOT_LEFT] ) )
@@ -4308,7 +4319,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
         }
     }
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_ALTRIGHT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_ALTRIGHT ) && loc_pchr->mad_inst.action.ready && 0 == loc_pchr->reloadtime )
     {
         loc_pchr->reloadtime = GRABDELAY;
         if ( !INGAME_CHR( loc_pchr->holdingwhich[SLOT_RIGHT] ) )
@@ -4323,7 +4334,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
         }
     }
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_PACKLEFT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_PACKLEFT ) && loc_pchr->mad_inst.action.ready && 0 == loc_pchr->reloadtime )
     {
         loc_pchr->reloadtime = PACKDELAY;
         item = loc_pchr->holdingwhich[SLOT_LEFT];
@@ -4363,7 +4374,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
         ego_chr::play_action( loc_pchr, ACTION_MG, bfalse );
     }
 
-    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_PACKRIGHT ) && loc_pchr->inst.action_ready && 0 == loc_pchr->reloadtime )
+    if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_PACKRIGHT ) && loc_pchr->mad_inst.action.ready && 0 == loc_pchr->reloadtime )
     {
         loc_pchr->reloadtime = PACKDELAY;
         item = loc_pchr->holdingwhich[SLOT_RIGHT];
@@ -4420,65 +4431,63 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t chr_handle_madfx( ego_chr * pchr )
+bool_t chr_handle_madfx( ego_chr * pchr, BIT_FIELD madfx )
 {
     ///@details This handles special commands an animation frame might execute, for example
     ///         grabbing stuff or spawning attack particles.
     CHR_REF ichr;
-    Uint32 framefx;
 
-    if ( NULL == pchr ) return bfalse;
+    if ( NULL == pchr || EMPTY_BIT_FIELD == madfx ) return bfalse;
 
-    ichr    = GET_REF_PCHR( pchr );
-    framefx = ego_chr::get_framefx( pchr );
+    ichr = GET_REF_PCHR( pchr );
 
     // Check frame effects
-    if ( HAS_SOME_BITS( framefx, MADFX_ACTLEFT ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_ACTLEFT ) )
     {
         character_swipe( ichr, SLOT_LEFT );
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_ACTRIGHT ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_ACTRIGHT ) )
     {
         character_swipe( ichr, SLOT_RIGHT );
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_GRABLEFT ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_GRABLEFT ) )
     {
         character_grab_stuff( ichr, GRIP_LEFT, bfalse );
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_GRABRIGHT ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_GRABRIGHT ) )
     {
         character_grab_stuff( ichr, GRIP_RIGHT, bfalse );
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_CHARLEFT ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_CHARLEFT ) )
     {
         character_grab_stuff( ichr, GRIP_LEFT, btrue );
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_CHARRIGHT ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_CHARRIGHT ) )
     {
         character_grab_stuff( ichr, GRIP_RIGHT, btrue );
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_DROPLEFT ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_DROPLEFT ) )
     {
         detach_character_from_mount( pchr->holdingwhich[SLOT_LEFT], bfalse, btrue );
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_DROPRIGHT ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_DROPRIGHT ) )
     {
         detach_character_from_mount( pchr->holdingwhich[SLOT_RIGHT], bfalse, btrue );
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_POOF ) && !VALID_PLA( pchr->is_which_player ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_POOF ) && !VALID_PLA( pchr->is_which_player ) )
     {
         pchr->ai.poof_time = update_wld;
     }
 
-    if ( HAS_SOME_BITS( framefx, MADFX_FOOTFALL ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_FOOTFALL ) )
     {
         ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
         if ( NULL != pcap )
@@ -4542,7 +4551,8 @@ float set_character_animation_rate( ego_chr * pchr )
     int           frame_count;
     ego_MD2_Frame * frame_list, * pframe_nxt;
 
-    ego_chr_instance * pinst;
+    gfx_mad_instance * pgfx_inst;
+    mad_instance     * pmad_inst;
     ego_mad          * pmad;
     CHR_REF          ichr;
 
@@ -4550,40 +4560,41 @@ float set_character_animation_rate( ego_chr * pchr )
     speed = 0;
 
     if ( NULL == pchr ) return 1.0f;
-    pinst = &( pchr->inst );
+    pgfx_inst = &( pchr->gfx_inst );
+    pmad_inst = &( pchr->mad_inst );
     ichr  = GET_REF_PCHR( pchr );
 
     // get the model
     pmad = ego_chr::get_pmad( ichr );
-    if ( NULL == pmad ) return pinst->rate;
+    if ( NULL == pmad ) return pmad_inst->action.rate;
 
     // if the action is set to keep then do nothing
-    can_be_interrupted = !pinst->action_keep;
-    if ( !can_be_interrupted ) return pinst->rate = 1.0f;
+    can_be_interrupted = !pmad_inst->action.keep;
+    if ( !can_be_interrupted ) return pmad_inst->action.rate = 1.0f;
 
     // don't change the rate if it is an attack animation
-    if ( chr_is_attacking( pchr ) )    return pinst->rate;
+    if ( chr_is_attacking( pchr ) )    return pmad_inst->action.rate;
 
     // if the animation is not a walking-type animation, ignore the variable animation rates
     // and the automatic determination of the walk animation
     // "dance" is walking with zero speed
-    is_walk_type = ACTION_IS_TYPE( pinst->action_which, D ) || ACTION_IS_TYPE( pinst->action_which, W );
-    if ( !is_walk_type ) return pinst->rate = 1.0f;
+    is_walk_type = ACTION_IS_TYPE( pmad_inst->action.which, D ) || ACTION_IS_TYPE( pmad_inst->action.which, W );
+    if ( !is_walk_type ) return pmad_inst->action.rate = 1.0f;
 
     // if the action cannot be changed on the at this time, there's nothing to do.
     // keep the same animation rate
-    if ( !pinst->action_ready )
+    if ( !pmad_inst->action.ready )
     {
-        if ( 0.0f == pinst->rate ) pinst->rate = 1.0f;
-        return pinst->rate;
+        if ( 0.0f == pmad_inst->action.rate ) pmad_inst->action.rate = 1.0f;
+        return pmad_inst->action.rate;
     }
 
     // go back to a base animation rate, in case the next frame is not a
     // "variable speed frame"
-    pinst->rate = 1.0f;
+    pmad_inst->action.rate = 1.0f;
 
     // for non-flying objects, you have to be touching the ground
-    if ( !pchr->enviro.grounded && !pchr->is_flying_platform ) return pinst->rate;
+    if ( !pchr->enviro.grounded && !pchr->is_flying_platform ) return pmad_inst->action.rate;
 
     // estimate our speed
     if ( pchr->is_flying_platform )
@@ -4609,7 +4620,7 @@ float set_character_animation_rate( ego_chr * pchr )
     // get the rate based on the speed data in data.txt
     action = ACTION_DA;
     lip    = LIPDA;
-    if ( ABS( speed ) > 1.0f )
+    if ( SDL_abs( speed ) > 1.0f )
     {
         int             anim_count;
         ego_chr_anim_data anim_info[CHR_MOVEMENT_COUNT];
@@ -4688,21 +4699,21 @@ float set_character_animation_rate( ego_chr * pchr )
         // nothing to be done
         if ( 0 == anim_count )
         {
-            return pinst->rate;
+            return pmad_inst->action.rate;
         }
 
         // sort the allowed movement(s) data
-        qsort( anim_info, CHR_MOVEMENT_COUNT, sizeof( ego_chr_anim_data ), cmp_chr_anim_data );
+        SDL_qsort( anim_info, CHR_MOVEMENT_COUNT, sizeof( ego_chr_anim_data ), cmp_chr_anim_data );
 
         // handle a special case
         if ( 1 == anim_count )
         {
             if ( 0.0f != anim_info[0].speed )
             {
-                pinst->rate = speed / anim_info[0].speed ;
+                pmad_inst->action.rate = speed / anim_info[0].speed ;
             }
 
-            return pinst->rate;
+            return pmad_inst->action.rate;
         }
 
         // search for the correct animation
@@ -4727,7 +4738,7 @@ float set_character_animation_rate( ego_chr * pchr )
                 lip    = anim_info[cnt].lip;
                 if ( 0.0f != anim_info[cnt].speed )
                 {
-                    pinst->rate = speed / anim_info[cnt].speed;
+                    pmad_inst->action.rate = speed / anim_info[cnt].speed;
                 }
                 break;
             }
@@ -4739,22 +4750,22 @@ float set_character_animation_rate( ego_chr * pchr )
             lip    = anim_info[cnt].lip;
             if ( 0.0f != anim_info[cnt].speed )
             {
-                pinst->rate = speed / anim_info[cnt].speed;
+                pmad_inst->action.rate = speed / anim_info[cnt].speed;
             }
             found = btrue;
         }
 
         if ( !found )
         {
-            return pinst->rate;
+            return pmad_inst->action.rate;
         }
     }
 
     frame_count = md2_get_numFrames( pmad->md2_ptr );
     frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmad->md2_ptr );
-    pframe_nxt  = frame_list + pinst->frame_nxt;
+    pframe_nxt  = frame_list + pmad_inst->state.frame_nxt;
 
-    EGOBOO_ASSERT( pinst->frame_nxt < frame_count );
+    EGOBOO_ASSERT( pmad_inst->state.frame_nxt < frame_count );
 
     if ( ACTION_DA == action )
     {
@@ -4771,16 +4782,16 @@ float set_character_animation_rate( ego_chr * pchr )
 
             // set the action to "bored", which is ACTION_DB, ACTION_DC, or ACTION_DD
             rand_val   = RANDIE;
-            tmp_action = mad_get_action( pinst->imad, ACTION_DB + ( rand_val % 3 ) );
+            tmp_action = mad_get_action( pmad_inst->imad, ACTION_DB + ( rand_val % 3 ) );
             ego_chr::start_anim( pchr, tmp_action, btrue, btrue );
         }
         else
         {
             // if the current action is not ACTION_D* switch to ACTION_DA
-            if ( !ACTION_IS_TYPE( pinst->action_which, D ) )
+            if ( !ACTION_IS_TYPE( pmad_inst->action.which, D ) )
             {
                 // get an appropriate version of the boredom action
-                int tmp_action = mad_get_action( pinst->imad, ACTION_DA );
+                int tmp_action = mad_get_action( pmad_inst->imad, ACTION_DA );
 
                 // start the animation
                 ego_chr::start_anim( pchr, tmp_action, btrue, btrue );
@@ -4789,28 +4800,28 @@ float set_character_animation_rate( ego_chr * pchr )
     }
     else
     {
-        int tmp_action = mad_get_action( pinst->imad, action );
+        int tmp_action = mad_get_action( pmad_inst->imad, action );
         if ( ACTION_COUNT != tmp_action )
         {
-            if ( pinst->action_which != tmp_action )
+            if ( pmad_inst->action.which != tmp_action )
             {
-                ego_chr::set_anim( pchr, tmp_action, pmad->frameliptowalkframe[lip][pframe_nxt->framelip], btrue, btrue );
+                ego_chr::set_anim( pchr, tmp_action, pmad->frameliptowalkframe[lip][pframe_nxt->framelip] );
             }
 
             // "loop" the action
-            pinst->action_next = tmp_action;
+            pmad_inst->action.next = tmp_action;
         }
     }
 
-    pinst->rate = CLIP( pinst->rate, 0.1f, 10.0f );
+    pmad_inst->action.rate = CLIP( pmad_inst->action.rate, 0.1f, 10.0f );
 
-    return pinst->rate;
+    return pmad_inst->action.rate;
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t chr_is_attacking( ego_chr *pchr )
 {
-    return pchr->inst.action_which >= ACTION_UA && pchr->inst.action_which <= ACTION_FD;
+    return pchr->mad_inst.action.which >= ACTION_UA && pchr->mad_inst.action.which <= ACTION_FD;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4839,7 +4850,7 @@ ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_
     float   grid_level, water_level;
     ego_chr * pplatform = NULL;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr  = pbdl->chr_ptr;
@@ -4892,7 +4903,7 @@ ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_
     loc_penviro->fly_level = loc_penviro->walk_level;
     if ( 0 != ego_mpd::test_fx( PMesh, loc_pchr->onwhichgrid, MPDFX_WATER ) )
     {
-        loc_penviro->fly_level = MAX( loc_penviro->walk_level, water.surface_level );
+        loc_penviro->fly_level = SDL_max( loc_penviro->walk_level, water.surface_level );
     }
 
     if ( loc_penviro->fly_level < 0 )
@@ -4996,7 +5007,7 @@ ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_
         if ( 0 == loc_pchr->jump_time )
         {
             // Reset jumping
-            loc_pchr->jump_number = MIN( 1, loc_pchr->jump_number_reset );
+            loc_pchr->jump_number = SDL_min( 1, loc_pchr->jump_number_reset );
         }
     }
     else
@@ -5064,7 +5075,7 @@ ego_bundle_chr * move_one_character_do_fluid_friction( ego_bundle_chr * pbdl )
     ego_chr_environment * loc_penviro;
     ego_phys_data       * loc_pphys;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr    = pbdl->chr_ptr;
@@ -5107,7 +5118,7 @@ ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl )
     fvec3_t acc_up, acc_rt, acc_fw, acc;
     fvec3_t loc_latch;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr    = pbdl->chr_ptr;
@@ -5139,9 +5150,9 @@ ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl )
     max_lift     = -gravity + max_control;
 
     // the model's frame of reference
-    mdl_up = mat_getChrUp( loc_pchr->inst.matrix );
-    mdl_rt = mat_getChrRight( loc_pchr->inst.matrix );
-    mdl_fw = mat_getChrForward( loc_pchr->inst.matrix );
+    mdl_up = mat_getChrUp( loc_pchr->gfx_inst.matrix );
+    mdl_rt = mat_getChrRight( loc_pchr->gfx_inst.matrix );
+    mdl_fw = mat_getChrForward( loc_pchr->gfx_inst.matrix );
 
     // a frame of reference for flying
     fly_fw = fvec3_normalize( mdl_fw.v );
@@ -5159,7 +5170,7 @@ ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl )
         speed_lerp = fvec3_dot_product( mdl_fw.v, loc_pchr->vel.v ) / maxspeed;
 
         // give the character a minimum of traction in the air (0.1)
-        speed_lerp = CLIP( ABS( speed_lerp ), 0.1f, 1.0f );
+        speed_lerp = CLIP( SDL_abs( speed_lerp ), 0.1f, 1.0f );
     }
 
     // initialize the control vector to 0
@@ -5186,7 +5197,7 @@ ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl )
 
     // yaw effect
     tmp_flt = fvec3_dot_product( fly_rt.v, loc_pchr->vel.v );
-    yaw_factor = ABS( tmp_flt ) / maxspeed;
+    yaw_factor = SDL_abs( tmp_flt ) / maxspeed;
     acc_rt = fvec3_scale( fly_rt.v, - tmp_flt * 0.2f * ( 1.0f - jump_lerp ) * CLIP( yaw_factor, 0.0f, 1.0f ) );
 
     // angle of attack effects
@@ -5257,7 +5268,7 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
     fvec3_self_clear( loc_penviro->chr_vel.v );
 
     // non-active characters do not move themselves
-    if ( !ACTIVE_PCHR( loc_pchr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( loc_pchr ) ) return pbdl;
 
     // if it is attached to another character, there is no voluntary motion
     if ( IS_ATTACHED_PCHR( loc_pchr ) )
@@ -5365,7 +5376,7 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
     }
 
     // add the special "limp" effect
-    if ( 0 != ( ego_chr::get_framefx( loc_pchr ) & MADFX_STOP ) )
+    if ( 0 != ( mad_instance::get_framefx( &( loc_pchr->mad_inst ) ) & MADFX_STOP ) )
     {
         fvec3_self_clear( loc_penviro->chr_vel.v );
     }
@@ -5397,7 +5408,7 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
     if ( !IS_FLYING_PCHR( loc_pchr ) && acc_old > 0.0f )
     {
         // remove any voluntary motion that is in the character's "up" direction
-        if ( 1.0f == ABS( loc_penviro->walk_nrm.z ) )
+        if ( 1.0f == SDL_abs( loc_penviro->walk_nrm.z ) )
         {
             loc_penviro->chr_acc.z = 0.0f;
         }
@@ -5451,7 +5462,7 @@ ego_bundle_chr * move_one_character_do_involuntary( ego_bundle_chr * pbdl )
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr    = pbdl->chr_ptr;
@@ -5503,7 +5514,7 @@ ego_bundle_chr * move_one_character_do_involuntary( ego_bundle_chr * pbdl )
     //        fvec3_t vfront, diff_side;
 
     //        //---- get the "bad" velocity (perpendicular to the direction of motion)
-    //        vfront = mat_getChrRight( loc_pchr->inst.matrix );
+    //        vfront = mat_getChrRight( loc_pchr->gfx_inst.matrix );
     //        fvec3_self_normalize( vfront.v );
     //        ftmp   = fvec3_dot_product( local_diff.v, vfront.v );
 
@@ -5533,7 +5544,7 @@ ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
 
     bool_t can_control_direction;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr    = pbdl->chr_ptr;
@@ -5716,7 +5727,7 @@ ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
                     // Face the target
                 case TURNMODE_WATCHTARGET:
                     {
-                        if ( loc_ichr != loc_pai->target )
+                        if ( ChrObjList.in_range_ref( loc_pai->target ) && loc_ichr != loc_pai->target )
                         {
                             fvec2_t loc_diff;
 
@@ -5773,7 +5784,8 @@ ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
     // Characters with sticky butts lie on the surface of the mesh
     if ( loc_penviro->walk_lerp < 1.0f && !loc_pchr->is_flying_jump && !loc_pchr->is_flying_platform )
     {
-        FACING_T new_facing_x = MAP_TURN_OFFSET, new_facing_y = MAP_TURN_OFFSET;
+        FACING_T new_facing_x = MAP_TURN_OFFSET;
+        FACING_T new_facing_y = MAP_TURN_OFFSET;
 
         float loc_lerp = CLIP( loc_penviro->walk_lerp, 0.0f, 1.0f );
         float fkeep = ( 7.0f + loc_lerp ) / 8.0f;
@@ -5806,7 +5818,7 @@ ego_bundle_chr * move_one_character_do_z_motion( ego_bundle_chr * pbdl )
     ego_phys_data       * loc_pphys;
     ego_chr_environment * loc_penviro;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // aliases for easier notiation
     loc_pchr    = pbdl->chr_ptr;
@@ -5830,83 +5842,82 @@ ego_bundle_chr * move_one_character_do_z_motion( ego_bundle_chr * pbdl )
 ego_bundle_chr * move_one_character_do_animation( ego_bundle_chr * pbdl )
 {
     float dflip, flip_diff;
+    float test_amount;
 
     ego_chr          * loc_pchr;
-    ego_chr_instance * loc_pinst;
-    CHR_REF          loc_ichr;
+    gfx_mad_instance * loc_pgfx_inst;
+    mad_instance     * loc_pmad_inst;
+    CHR_REF            loc_ichr;
+    unsigned           old_id;
 
     if ( NULL == pbdl || !INGAME_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
-    loc_pchr  = pbdl->chr_ptr;
-    loc_ichr  = pbdl->chr_ref;
-    loc_pinst = &( loc_pchr->inst );
+    loc_pchr      = pbdl->chr_ptr;
+    loc_ichr      = pbdl->chr_ref;
+    loc_pgfx_inst = &( loc_pchr->gfx_inst );
+    loc_pmad_inst = &( loc_pchr->mad_inst );
+
+    // save the old mad_instance id
+    old_id = loc_pmad_inst->state.id;
 
     // Animate the character.
     // Right now there are 50/4 = 12.5 animation frames per second
-    dflip       = 0.25f * loc_pinst->rate;
-    flip_diff = fmod( loc_pinst->flip, 0.25f ) + dflip;
+    dflip       = 0.25f * loc_pmad_inst->action.rate;
+    flip_diff = fmod( loc_pmad_inst->state.flip, 0.25f ) + dflip;
 
-    while ( flip_diff >= 0.25f )
+    // grab the amount to take you to the next ilip
+    test_amount = pose_data::get_remaining_flip( &( loc_pmad_inst->state ) );
+    if ( test_amount <= 0.0f || test_amount > 0.25f ) test_amount = 0.25f;
+
+    // fun through all the animation steps until you are left with
+    // a little bit past the last full ilip
+    while ( flip_diff >= test_amount )
     {
-        flip_diff -= 0.25f;
+        flip_diff -= test_amount;
 
-        // update the lips
-        loc_pinst->ilip   = ( loc_pinst->ilip + 1 ) % 4;
-        loc_pinst->flip  += 0.25f;
+        // update the animation to the next ilip
+        BIT_FIELD madfx = mad_instance::update_animation_one( loc_pmad_inst );
 
         // handle frame FX for the new frame
-        if ( 3 == loc_pinst->ilip )
+        if ( 3 == loc_pmad_inst->state.ilip )
         {
-            chr_handle_madfx( loc_pchr );
+            chr_handle_madfx( loc_pchr, madfx );
         }
 
-        if ( 0 == loc_pinst->ilip )
-        {
-            if ( rv_success == ego_chr::increment_frame( loc_pchr ) )
-            {
-                loc_pinst->flip = fmod( loc_pinst->flip, 1.0f );
-            }
-            else
-            {
-                log_warning( "ego_chr::increment_frame() did not succeed" );
-            }
-        }
+        test_amount = 0.25f;
     }
 
+    // handle any remaining flip_diff
     if ( flip_diff > 0.0f )
     {
-        int ilip_new;
+        int ilip_old = loc_pmad_inst->state.ilip;
 
-        // update the lips
-        loc_pinst->flip  += flip_diff;
-        ilip_new      = (( int )floor( loc_pinst->flip * 4 ) ) % 4;
+        // updte the animation thto the next fraction of an ilip
+        BIT_FIELD madfx = mad_instance::update_animation( loc_pmad_inst, flip_diff );
 
-        if ( ilip_new != loc_pinst->ilip )
+        // don't do the framefx more than once
+        if ( ilip_old != loc_pmad_inst->state.ilip )
         {
-            loc_pinst->ilip = ilip_new;
-
             // handle frame FX for the new frame
-            if ( 3 == loc_pinst->ilip )
+            if ( 3 == loc_pmad_inst->state.ilip )
             {
-                chr_handle_madfx( loc_pchr );
-            }
-
-            if ( 0 == loc_pinst->ilip )
-            {
-                if ( rv_success == ego_chr::increment_frame( loc_pchr ) )
-                {
-                    loc_pinst->flip = fmod( loc_pinst->flip, 1.0f );
-                }
-                else
-                {
-                    log_warning( "ego_chr::increment_frame() did not succeed" );
-                }
+                chr_handle_madfx( loc_pchr, madfx );
             }
         }
     }
 
     set_character_animation_rate( loc_pchr );
+
+    // NOW invalidate the instances, if the mad_instance was changed
+    if ( old_id != loc_pmad_inst->state.id )
+    {
+        // invalidate the current model data
+        loc_pgfx_inst->vrange.valid = bfalse;
+
+        // invalidate all the child instances
+        chr_invalidate_instances( loc_pchr );
+    }
 
     return pbdl;
 }
@@ -5925,7 +5936,7 @@ ego_bundle_chr * move_one_character_limit_flying( ego_bundle_chr * pbdl )
 
     return pbdl;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr    = pbdl->chr_ptr;
@@ -5975,10 +5986,10 @@ ego_bundle_chr * move_one_character_limit_flying( ego_bundle_chr * pbdl )
                 // since fvec3_dot_product(loc_pchr->vel.v, total_acc.v) == chr_vel_len * total_acc_para_len
                 total_acc_para_len = term / chr_vel_len;
 
-                if ( ABS( total_acc_para_len ) > 0.0f )
+                if ( SDL_abs( total_acc_para_len ) > 0.0f )
                 {
                     // limit the tangential acceleration
-                    fvec3_self_normalize_to( total_acc.v, ABS( total_acc_para_len ) );
+                    fvec3_self_normalize_to( total_acc.v, SDL_abs( total_acc_para_len ) );
                 }
                 else
                 {
@@ -6019,7 +6030,7 @@ ego_bundle_chr * move_one_character_do_jump( ego_bundle_chr * pbdl )
 
     float jump_lerp, fric_lerp;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr    = pbdl->chr_ptr;
@@ -6071,7 +6082,7 @@ ego_bundle_chr * move_one_character_do_flying( ego_bundle_chr * pbdl )
     ego_chr_environment * loc_penviro;
     ego_phys_data       * loc_pphys;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr    = pbdl->chr_ptr;
@@ -6111,7 +6122,7 @@ ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
 
     float  fric_lerp;
 
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
     loc_pchr    = pbdl->chr_ptr;
@@ -6126,7 +6137,7 @@ ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
 
     fric_lerp = 1.0f;
     pplatform = NULL;
-    if ( ACTIVE_CHR( loc_pchr->onwhichplatform_ref ) )
+    if ( PROCESSING_CHR( loc_pchr->onwhichplatform_ref ) )
     {
         pplatform = ChrObjList.get_data_ptr( loc_pchr->onwhichplatform_ref );
 
@@ -6188,7 +6199,7 @@ ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
         est_max_friction_acc *= friction_magnification;
 
         // determine an effective coefficient of static friction
-        coefficient = fric_lerp * loc_penviro->traction * est_max_friction_acc / ABS( gravity );
+        coefficient = fric_lerp * loc_penviro->traction * est_max_friction_acc / SDL_abs( gravity );
 
         // determine the maximum amount of acceleration from static friction
         max_fric_acc = coefficient * normal_acc_len;
@@ -6215,7 +6226,7 @@ ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
 
             // recompute the max_fric_acc with the "slippy" coefficient of friction
             est_max_friction_acc *= 0.5f;
-            coefficient           = fric_lerp * loc_penviro->traction * est_max_friction_acc  / ABS( gravity );
+            coefficient           = fric_lerp * loc_penviro->traction * est_max_friction_acc  / SDL_abs( gravity );
             max_fric_acc          = coefficient * normal_acc_len;
 
             // we are slipping
@@ -6261,14 +6272,12 @@ ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr *  move_one_character( ego_bundle_chr * pbdl )
+ego_bundle_chr * move_one_character( ego_bundle_chr * pbdl )
 {
-    ego_chr * loc_pchr;
-
-    if ( NULL == pbdl || !ACTIVE_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
     // alias some variables
-    loc_pchr = pbdl->chr_ptr;
+    ego_chr * loc_pchr = pbdl->chr_ptr;
 
     // calculate the acceleration from the last time-step
     loc_pchr->enviro.acc = fvec3_sub( loc_pchr->vel.v, loc_pchr->vel_old.v );
@@ -6280,7 +6289,9 @@ ego_bundle_chr *  move_one_character( ego_bundle_chr * pbdl )
 
     // determine the character's environment
     // if this is not done, reflections will not update properly
-    move_one_character_get_environment( pbdl, NULL );
+    PROFILE_BEGIN( move_one_character_get_environment );
+    pbdl = move_one_character_get_environment( pbdl, NULL );
+    PROFILE_END2( move_one_character_get_environment );
 
     //---- none of the remaining functions are valid for attached characters
     if ( IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
@@ -6292,34 +6303,54 @@ ego_bundle_chr *  move_one_character( ego_bundle_chr * pbdl )
     }
 
     // apply the fluid friction for the object
-    move_one_character_do_fluid_friction( pbdl );
+    PROFILE_BEGIN( move_one_character_do_fluid_friction );
+    pbdl = move_one_character_do_fluid_friction( pbdl );
+    PROFILE_END2( move_one_character_do_fluid_friction );
 
     // determine how the character would *like* to move
-    move_one_character_do_voluntary( pbdl );
+    PROFILE_BEGIN( move_one_character_do_voluntary );
+    pbdl = move_one_character_do_voluntary( pbdl );
+    PROFILE_END2( move_one_character_do_voluntary );
 
     // apply gravitational an buoyancy effects
-    move_one_character_do_z_motion( pbdl );
+    PROFILE_BEGIN( move_one_character_do_z_motion );
+    pbdl = move_one_character_do_z_motion( pbdl );
+    PROFILE_END2( move_one_character_do_z_motion );
 
     // determine how the character is being *forced* to move
-    move_one_character_do_involuntary( pbdl );
+    PROFILE_BEGIN( move_one_character_do_involuntary );
+    pbdl = move_one_character_do_involuntary( pbdl );
+    PROFILE_END2( move_one_character_do_involuntary );
 
     // read and apply any latch buttons
-    chr_do_latch_button( pbdl );
+    PROFILE_BEGIN( chr_do_latch_button );
+    pbdl = chr_do_latch_button( pbdl );
+    PROFILE_END2( chr_do_latch_button );
 
     // allow the character to control its flight
-    move_one_character_do_flying( pbdl );
+    PROFILE_BEGIN( move_one_character_do_flying );
+    pbdl = move_one_character_do_flying( pbdl );
+    PROFILE_END2( move_one_character_do_flying );
 
     // allow the character to have some additional control over jumping
-    move_one_character_do_jump( pbdl );
+    PROFILE_BEGIN( move_one_character_do_jump );
+    pbdl = move_one_character_do_jump( pbdl );
+    PROFILE_END2( move_one_character_do_jump );
 
     // determine how the character can *actually* move
-    move_one_character_do_floor( pbdl );
+    PROFILE_BEGIN( move_one_character_do_floor );
+    pbdl = move_one_character_do_floor( pbdl );
+    PROFILE_END2( move_one_character_do_floor );
 
     // do the character animation and apply any MADFX found in the animation frames
-    move_one_character_do_animation( pbdl );
+    PROFILE_BEGIN( move_one_character_do_animation );
+    pbdl = move_one_character_do_animation( pbdl );
+    PROFILE_END2( move_one_character_do_animation );
 
     // set the rotation angles for the character
-    move_one_character_do_orientation( pbdl );
+    PROFILE_BEGIN( move_one_character_do_orientation );
+    pbdl = move_one_character_do_orientation( pbdl );
+    PROFILE_END2( move_one_character_do_orientation );
 
     return pbdl;
 }
@@ -6334,41 +6365,48 @@ void move_all_characters( void )
     // Move every character
     CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
-        ego_bundle_chr bdl;
+        PROFILE_BEGIN( move_one_character );
+
+        ego_bundle_chr bdl( pchr );
 
         // prime the environment
         pchr->enviro.air_friction = air_friction;
         pchr->enviro.ice_friction = ice_friction;
 
-        move_one_character( ego_bundle_chr::set( &bdl, pchr ) );
+        move_one_character( &bdl );
+
+        PROFILE_END2( move_one_character );
     }
     CHR_END_LOOP();
 
     // The following functions need to be called any time you actually change a charcter's position
+    PROFILE_DECLARE( keep_weapons_with_holders );
     keep_weapons_with_holders();
+    PROFILE_END2( keep_weapons_with_holders );
+
+    PROFILE_DECLARE( attach_all_particles );
     attach_all_particles();
+    PROFILE_END2( attach_all_particles );
+
+    PROFILE_DECLARE( make_all_character_matrices );
     make_all_character_matrices( update_wld != 0 );
+    PROFILE_END2( make_all_character_matrices );
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void cleanup_all_characters()
 {
-
     // Do poofing
-    for ( int cnt = 0; cnt < MAX_CHR; cnt++ )
+    CHR_BEGIN_LOOP_DEFINED( ichr, pchr )
     {
         bool_t time_out;
-        CHR_REF ichr( cnt );
 
-        ego_obj_chr * pobj = ChrObjList.get_allocated_data_ptr( ichr );
+        ego_obj_chr * pobj = ego_chr::get_obj_ptr( pchr );
         if ( NULL == pobj ) continue;
 
-        ego_chr * pchr = ego_obj_chr::get_data_ptr( pobj );
-        if ( NULL == pchr ) continue;
-
         time_out = ( pchr->ai.poof_time >= 0 ) && ( pchr->ai.poof_time <= ( Sint32 )update_wld );
-        if ( !WAITING_PBASE( PDATA_GET_PBASE( ego_chr, pchr ) ) && !time_out ) continue;
+        if ( !WAITING_PBASE( pobj ) && !time_out ) continue;
 
         // detach the character from the game
         cleanup_one_character( pchr );
@@ -6379,22 +6417,20 @@ void cleanup_all_characters()
         // free the character
         free_one_character_in_game( ichr );
     }
+    CHR_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------
 void increment_all_character_update_counters()
 {
-    CHR_REF cnt;
-
-    for ( cnt = 0; cnt < MAX_CHR; cnt++ )
+    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
-        ego_obj * pbase;
-
-        pbase = ChrObjList.get_data_ptr( CHR_REF( cnt ) );
-        if ( !ACTIVE_PBASE( pbase ) ) continue;
+        ego_obj * pbase = ego_chr::get_obj_ptr( pchr );
+        if ( NULL == pbase ) continue;
 
         pbase->update_count++;
     }
+    CHR_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -6424,7 +6460,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
     if ( HAS_SOME_BITS( effects, DAMFX_NBLOC ) ) return bfalse;
 
     // if the character's frame is invictus, then check the angles
-    if ( HAS_SOME_BITS( ego_chr::get_framefx( pchr ), MADFX_INVICTUS ) )
+    if ( HAS_SOME_BITS( mad_instance::get_framefx( &( pchr->mad_inst ) ), MADFX_INVICTUS ) )
     {
         // I Frame
         direction -= pcap->iframefacing;
@@ -6432,9 +6468,9 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
         right      = pcap->iframeangle;
 
         // If using shield, use the shield invictus instead
-        if ( ACTION_IS_TYPE( pchr->inst.action_which, P ) )
+        if ( ACTION_IS_TYPE( pchr->mad_inst.action.which, P ) )
         {
-            bool_t parry_left = ( pchr->inst.action_which < ACTION_PC );
+            bool_t parry_left = ( pchr->mad_inst.action.which < ACTION_PC );
 
             // Using a shield?
             if ( parry_left )
@@ -6478,108 +6514,20 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr_instance::clear_cache( ego_chr_instance * pinst )
+bool_t ego_chr::set_mad( ego_chr * pchr, const MAD_REF & imad )
 {
-    /// @details BB@> force ego_chr_instance::update_vertices() recalculate the vertices the next time
-    ///     the function is called
+    bool_t gfx_set, mad_set;
 
-    vlst_cache_init( &( pinst->save ) );
+    if ( NULL == pchr ) return bfalse;
 
-    ego_matrix_cache::init( &( pinst->matrix_cache ) );
+    mad_set = mad_instance::set_mad( &( pchr->mad_inst ), imad );
+    gfx_set = gfx_mad_instance::set_mad( &( pchr->gfx_inst ), imad );
 
-    ego_chr_reflection_cache::init( &( pinst->ref ) );
-
-    pinst->lighting_update_wld = 0;
-    pinst->lighting_frame_all  = 0;
+    return gfx_set && mad_set;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr_instance * ego_chr_instance::dtor_this( ego_chr_instance * pinst )
-{
-    if ( NULL == pinst ) return pinst;
-
-    ego_chr_instance::dealloc( pinst );
-
-    EGOBOO_ASSERT( NULL == pinst->vrt_lst );
-
-    memset( pinst, 0, sizeof( *pinst ) );
-
-    return clear( pinst );
-}
-
-//--------------------------------------------------------------------------------------------
-ego_chr_instance * ego_chr_instance::ctor_this( ego_chr_instance * pinst )
-{
-    Uint32 cnt;
-
-    if ( NULL == pinst ) return pinst;
-
-    memset( pinst, 0, sizeof( *pinst ) );
-
-    // model parameters
-    pinst->imad = MAX_MAD;
-    pinst->vrt_count = 0;
-
-    // set the initial cache parameters
-    ego_chr_instance::clear_cache( pinst );
-
-    // Set up initial fade in lighting
-    pinst->color_amb = 0;
-    for ( cnt = 0; cnt < pinst->vrt_count; cnt++ )
-    {
-        pinst->vrt_lst[cnt].color_dir = 0;
-    }
-
-    // clear out the matrix cache
-    ego_matrix_cache::init( &( pinst->matrix_cache ) );
-
-    // the matrix should never be referenced if the cache is not valid,
-    // but it never pays to have a 0 matrix...
-    pinst->matrix = IdentityMatrix();
-
-    // set the animation state
-    pinst->rate         = 1.0f;
-    pinst->action_next  = ACTION_DA;
-    pinst->action_ready = btrue;                     // argh! this must be set at the beginning, script's spawn animations do not work!
-    pinst->frame_nxt    = pinst->frame_lst = 0;
-
-    // the vlst_cache parameters are not valid
-    pinst->save.valid = bfalse;
-
-    return pinst;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_chr_instance::dealloc( ego_chr_instance * pinst )
-{
-    if ( NULL == pinst ) return bfalse;
-
-    EGOBOO_DELETE_ARY( pinst->vrt_lst );
-    pinst->vrt_count = 0;
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_chr_instance::alloc( ego_chr_instance * pinst, size_t vlst_size )
-{
-    if ( NULL == pinst ) return bfalse;
-
-    ego_chr_instance::dealloc( pinst );
-
-    if ( 0 == vlst_size ) return btrue;
-
-    pinst->vrt_lst = EGOBOO_NEW_ARY( ego_GLvertex, vlst_size );
-    if ( NULL != pinst->vrt_lst )
-    {
-        pinst->vrt_count = vlst_size;
-    }
-
-    return ( NULL != pinst->vrt_lst );
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_chr_instance::set_mad( ego_chr_instance * pinst, const MAD_REF & imad )
+bool_t mad_instance::set_mad( mad_instance * pmad_inst, const MAD_REF & imad )
 {
     /// @details BB@> try to set the model used by the character instance.
     ///     If this fails, it leaves the old data. Just to be safe it
@@ -6588,7 +6536,6 @@ bool_t ego_chr_instance::set_mad( ego_chr_instance * pinst, const MAD_REF & imad
 
     ego_mad * pmad;
     bool_t updated = bfalse;
-    size_t vlst_size;
 
     if ( !LOADED_MAD( imad ) ) return bfalse;
     pmad = MadStack + imad;
@@ -6599,124 +6546,20 @@ bool_t ego_chr_instance::set_mad( ego_chr_instance * pinst, const MAD_REF & imad
         return bfalse;
     }
 
-    if ( pinst->imad != imad )
+    if ( pmad_inst->imad != imad )
     {
         updated = btrue;
-        pinst->imad = imad;
-    }
-
-    // set the vertex size
-    vlst_size = md2_get_numVertices( pmad->md2_ptr );
-    if ( pinst->vrt_count != vlst_size )
-    {
-        updated = btrue;
-        ego_chr_instance::alloc( pinst, vlst_size );
+        pmad_inst->imad = imad;
     }
 
     // set the frames to frame 0 of this object's data
-    if ( pinst->frame_nxt != 0 || pinst->frame_lst != 0 )
+    if ( pmad_inst->state.frame_nxt != 0 || pmad_inst->state.frame_lst != 0 )
     {
         updated = btrue;
-        pinst->frame_nxt = pinst->frame_lst = 0;
-
-        // the vlst_cache parameters are not valid
-        pinst->save.valid = bfalse;
-    }
-
-    if ( updated )
-    {
-        // update the vertex and lighting cache
-        ego_chr_instance::clear_cache( pinst );
-        ego_chr_instance::update_vertices( pinst, -1, -1, btrue );
+        pmad_inst->state.frame_nxt = pmad_inst->state.frame_lst = 0;
     }
 
     return updated;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_chr_instance::update_ref( ego_chr_instance * pinst, float grid_level, bool_t need_matrix )
-{
-    int trans_temp;
-
-    if ( NULL == pinst ) return bfalse;
-
-    if ( need_matrix )
-    {
-        // reflect the ordinary matrix
-        apply_reflection_matrix( pinst, grid_level );
-    }
-
-    trans_temp = 255;
-    if ( pinst->ref.matrix_valid )
-    {
-        float pos_z;
-
-        // determine the reflection alpha
-        pos_z = grid_level - pinst->ref.matrix.CNV( 3, 2 );
-        if ( pos_z < 0 ) pos_z = 0;
-
-        trans_temp -= (( int )pos_z ) >> 1;
-        if ( trans_temp < 0 ) trans_temp = 0;
-
-        trans_temp |= gfx.reffadeor;  // Fix for Riva owners
-        trans_temp = CLIP( trans_temp, 0, 255 );
-    }
-
-    pinst->ref.alpha = ( pinst->alpha * trans_temp * INV_FF ) * 0.5f;
-    pinst->ref.light = ( 255 == pinst->light ) ? 255 : ( pinst->light * trans_temp * INV_FF ) * 0.5f;
-
-    pinst->ref.redshift = pinst->redshift + 1;
-    pinst->ref.grnshift = pinst->grnshift + 1;
-    pinst->ref.blushift = pinst->blushift + 1;
-
-    pinst->ref.sheen    = pinst->sheen >> 1;
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_chr_instance::spawn( ego_chr_instance * pinst, const PRO_REF & profile, Uint8 skin )
-{
-    Sint8 greensave = 0, redsave = 0, bluesave = 0;
-
-    ego_pro * pobj;
-    ego_cap * pcap;
-
-    if ( NULL == pinst ) return bfalse;
-
-    // Remember any previous color shifts in case of lasting enchantments
-    greensave = pinst->grnshift;
-    redsave   = pinst->redshift;
-    bluesave  = pinst->blushift;
-
-    // clear the instance
-    ego_chr_instance::ctor_this( pinst );
-
-    if ( !LOADED_PRO( profile ) ) return bfalse;
-    pobj = ProList.lst + profile;
-
-    pcap = pro_get_pcap( profile );
-
-    // lighting parameters
-    pinst->texture   = pobj->tex_ref[skin];
-    pinst->enviro    = pcap->enviro;
-    pinst->alpha     = pcap->alpha;
-    pinst->light     = pcap->light;
-    pinst->sheen     = pcap->sheen;
-    pinst->grnshift  = greensave;
-    pinst->redshift  = redsave;
-    pinst->blushift  = bluesave;
-
-    // model parameters
-    ego_chr_instance::set_mad( pinst, pro_get_imad( profile ) );
-
-    // set the initial action, all actions override it
-    ego_chr_instance::play_action( pinst, ACTION_DA, btrue );
-
-    // upload these parameters to the reflection cache, but don't compute the matrix
-    ego_chr_instance::update_ref( pinst, 0, bfalse );
-
-    return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -6843,7 +6686,7 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
     else
     {
         // copy the tint over
-        memmove( pbb->tint, tint, sizeof( GLXvector4f ) );
+        SDL_memmove( pbb->tint, tint, sizeof( GLXvector4f ) );
 
         if ( HAS_SOME_BITS( opt_bits, bb_opt_randomize_pos ) )
         {
@@ -6871,8 +6714,8 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
         {
             float minval, maxval;
 
-            minval = MIN( MIN( pbb->tint[RR], pbb->tint[GG] ), pbb->tint[BB] );
-            maxval = MAX( MAX( pbb->tint[RR], pbb->tint[GG] ), pbb->tint[BB] );
+            minval = SDL_min( SDL_min( pbb->tint[RR], pbb->tint[GG] ), pbb->tint[BB] );
+            maxval = SDL_max( SDL_max( pbb->tint[RR], pbb->tint[GG] ), pbb->tint[BB] );
 
             if ( pbb->tint[RR] != maxval )
             {
@@ -6911,7 +6754,7 @@ const char * ego_chr::get_name( const CHR_REF & ichr, Uint32 bits )
 
         if ( pchr->nameknown )
         {
-            snprintf( szName, SDL_arraysize( szName ), "%s", pchr->name );
+            SDL_snprintf( szName, SDL_arraysize( szName ), "%s", pchr->name );
         }
         else if ( NULL != pcap )
         {
@@ -6927,7 +6770,7 @@ const char * ego_chr::get_name( const CHR_REF & ichr, Uint32 bits )
                 }
                 else
                 {
-                    lTmp = toupper( pcap->classname[0] );
+                    lTmp = SDL_toupper( pcap->classname[0] );
 
                     if ( 'A' == lTmp || 'E' == lTmp || 'I' == lTmp || 'O' == lTmp || 'U' == lTmp )
                     {
@@ -6939,11 +6782,11 @@ const char * ego_chr::get_name( const CHR_REF & ichr, Uint32 bits )
                     }
                 }
 
-                snprintf( szName, SDL_arraysize( szName ), "%s %s", article, pcap->classname );
+                SDL_snprintf( szName, SDL_arraysize( szName ), "%s %s", article, pcap->classname );
             }
             else
             {
-                snprintf( szName, SDL_arraysize( szName ), "%s", pcap->classname );
+                SDL_snprintf( szName, SDL_arraysize( szName ), "%s", pcap->classname );
             }
         }
         else
@@ -6955,7 +6798,7 @@ const char * ego_chr::get_name( const CHR_REF & ichr, Uint32 bits )
     if ( 0 != ( bits & CHRNAME_CAPITAL ) )
     {
         // capitalize the name ?
-        szName[0] = toupper( szName[0] );
+        szName[0] = SDL_toupper( szName[0] );
     }
 
     return szName;
@@ -6983,15 +6826,15 @@ const char * ego_chr::get_gender_possessive( const CHR_REF & ichr, char buffer[]
 
     if ( GENDER_FEMALE == pchr->gender )
     {
-        snprintf( buffer, buffer_len, "her" );
+        SDL_snprintf( buffer, buffer_len, "her" );
     }
     else if ( GENDER_MALE == pchr->gender )
     {
-        snprintf( buffer, buffer_len, "his" );
+        SDL_snprintf( buffer, buffer_len, "his" );
     }
     else
     {
-        snprintf( buffer, buffer_len, "its" );
+        SDL_snprintf( buffer, buffer_len, "its" );
     }
 
     return buffer;
@@ -7019,15 +6862,15 @@ const char * ego_chr::get_gender_name( const CHR_REF & ichr, char buffer[], size
 
     if ( GENDER_FEMALE == pchr->gender )
     {
-        snprintf( buffer, buffer_len, "female " );
+        SDL_snprintf( buffer, buffer_len, "female " );
     }
     else if ( GENDER_MALE == pchr->gender )
     {
-        snprintf( buffer, buffer_len, "male " );
+        SDL_snprintf( buffer, buffer_len, "male " );
     }
     else
     {
-        snprintf( buffer, buffer_len, " " );
+        SDL_snprintf( buffer, buffer_len, " " );
     }
 
     return buffer;
@@ -7056,7 +6899,7 @@ const char * ego_chr::get_dir_name( const CHR_REF & ichr )
         // the name should be "...some path.../data.txt"
         // grab the path
 
-        sztmp = strstr( buffer, "/\\" );
+        sztmp = SDL_strstr( buffer, "/\\" );
         if ( NULL != sztmp ) *sztmp = CSTR_END;
     }
     else
@@ -7107,20 +6950,20 @@ egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
     }
 
     // make sure the bounding box is calculated properly
-    if ( rv_error == ego_chr_instance::update_bbox( &( pchr->inst ) ) )
+    if ( rv_error == gfx_mad_instance::update_bbox( &( pchr->gfx_inst ) ) )
     {
         return rv_error;
     }
 
-    // convert the point cloud in the ego_GLvertex array (pchr->inst.vrt_lst) to
+    // convert the point cloud in the ego_GLvertex array (pchr->gfx_inst.vrt_lst) to
     // a level 1 bounding box. Subtract off the position of the character
-    memcpy( &bsrc, &( pchr->inst.bbox ), sizeof( bsrc ) );
+    SDL_memcpy( &bsrc, &( pchr->gfx_inst.bbox ), sizeof( bsrc ) );
 
     // convert the corners of the level 1 bounding box to a point cloud
     vrt_count = oct_bb_to_points( &bsrc, src_vrts, 16 );
 
     // transform the new point cloud
-    TransformVertices( &( pchr->inst.matrix ), src_vrts, dst_vrts, vrt_count );
+    TransformVertices( &( pchr->gfx_inst.matrix ), src_vrts, dst_vrts, vrt_count );
 
     // convert the new point cloud into a level 1 bounding box
     points_to_oct_bb( &bdst, dst_vrts, vrt_count );
@@ -7138,15 +6981,15 @@ egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
         pchr->chr_cv.maxs[OCT_X ] =  pchr->bump.size;
         pchr->chr_cv.maxs[OCT_Y ] =  pchr->bump.size;
 
-        pchr->chr_min_cv.mins[OCT_X ] = MAX( pchr->chr_min_cv.mins[OCT_X ], -pchr->bump.size );
-        pchr->chr_min_cv.mins[OCT_Y ] = MAX( pchr->chr_min_cv.mins[OCT_Y ], -pchr->bump.size );
-        pchr->chr_min_cv.maxs[OCT_X ] = MIN( pchr->chr_min_cv.maxs[OCT_X ],  pchr->bump.size );
-        pchr->chr_min_cv.maxs[OCT_Y ] = MIN( pchr->chr_min_cv.maxs[OCT_Y ],  pchr->bump.size );
+        pchr->chr_min_cv.mins[OCT_X ] = SDL_max( pchr->chr_min_cv.mins[OCT_X ], -pchr->bump.size );
+        pchr->chr_min_cv.mins[OCT_Y ] = SDL_max( pchr->chr_min_cv.mins[OCT_Y ], -pchr->bump.size );
+        pchr->chr_min_cv.maxs[OCT_X ] = SDL_min( pchr->chr_min_cv.maxs[OCT_X ],  pchr->bump.size );
+        pchr->chr_min_cv.maxs[OCT_Y ] = SDL_min( pchr->chr_min_cv.maxs[OCT_Y ],  pchr->bump.size );
 
-        pchr->chr_max_cv.mins[OCT_X ] = MIN( pchr->chr_max_cv.mins[OCT_X ], -pchr->bump.size );
-        pchr->chr_max_cv.mins[OCT_Y ] = MIN( pchr->chr_max_cv.mins[OCT_Y ], -pchr->bump.size );
-        pchr->chr_max_cv.maxs[OCT_X ] = MAX( pchr->chr_max_cv.maxs[OCT_X ],  pchr->bump.size );
-        pchr->chr_max_cv.maxs[OCT_Y ] = MAX( pchr->chr_max_cv.maxs[OCT_Y ],  pchr->bump.size );
+        pchr->chr_max_cv.mins[OCT_X ] = SDL_min( pchr->chr_max_cv.mins[OCT_X ], -pchr->bump.size );
+        pchr->chr_max_cv.mins[OCT_Y ] = SDL_min( pchr->chr_max_cv.mins[OCT_Y ], -pchr->bump.size );
+        pchr->chr_max_cv.maxs[OCT_X ] = SDL_max( pchr->chr_max_cv.maxs[OCT_X ],  pchr->bump.size );
+        pchr->chr_max_cv.maxs[OCT_Y ] = SDL_max( pchr->chr_max_cv.maxs[OCT_Y ],  pchr->bump.size );
     }
 
     // only use pchr->bump.size_big if it was overridden in data.txt through the [MODL] expansion
@@ -7157,15 +7000,15 @@ egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
         pchr->chr_cv.maxs[OCT_YX] =  pchr->bump.size_big;
         pchr->chr_cv.maxs[OCT_XY] =  pchr->bump.size_big;
 
-        pchr->chr_min_cv.mins[OCT_YX] = MAX( pchr->chr_min_cv.mins[OCT_YX], -pchr->bump.size_big );
-        pchr->chr_min_cv.mins[OCT_XY] = MAX( pchr->chr_min_cv.mins[OCT_XY], -pchr->bump.size_big );
-        pchr->chr_min_cv.maxs[OCT_YX] = MIN( pchr->chr_min_cv.maxs[OCT_YX], pchr->bump.size_big );
-        pchr->chr_min_cv.maxs[OCT_XY] = MIN( pchr->chr_min_cv.maxs[OCT_XY], pchr->bump.size_big );
+        pchr->chr_min_cv.mins[OCT_YX] = SDL_max( pchr->chr_min_cv.mins[OCT_YX], -pchr->bump.size_big );
+        pchr->chr_min_cv.mins[OCT_XY] = SDL_max( pchr->chr_min_cv.mins[OCT_XY], -pchr->bump.size_big );
+        pchr->chr_min_cv.maxs[OCT_YX] = SDL_min( pchr->chr_min_cv.maxs[OCT_YX], pchr->bump.size_big );
+        pchr->chr_min_cv.maxs[OCT_XY] = SDL_min( pchr->chr_min_cv.maxs[OCT_XY], pchr->bump.size_big );
 
-        pchr->chr_max_cv.mins[OCT_YX] = MIN( pchr->chr_max_cv.mins[OCT_YX], -pchr->bump.size_big );
-        pchr->chr_max_cv.mins[OCT_XY] = MIN( pchr->chr_max_cv.mins[OCT_XY], -pchr->bump.size_big );
-        pchr->chr_max_cv.maxs[OCT_YX] = MAX( pchr->chr_max_cv.maxs[OCT_YX], pchr->bump.size_big );
-        pchr->chr_max_cv.maxs[OCT_XY] = MAX( pchr->chr_max_cv.maxs[OCT_XY], pchr->bump.size_big );
+        pchr->chr_max_cv.mins[OCT_YX] = SDL_min( pchr->chr_max_cv.mins[OCT_YX], -pchr->bump.size_big );
+        pchr->chr_max_cv.mins[OCT_XY] = SDL_min( pchr->chr_max_cv.mins[OCT_XY], -pchr->bump.size_big );
+        pchr->chr_max_cv.maxs[OCT_YX] = SDL_max( pchr->chr_max_cv.maxs[OCT_YX], pchr->bump.size_big );
+        pchr->chr_max_cv.maxs[OCT_XY] = SDL_max( pchr->chr_max_cv.maxs[OCT_XY], pchr->bump.size_big );
     }
 
     // only use pchr->bump.height if it was overridden in data.txt through the [MODL] expansion
@@ -7174,11 +7017,11 @@ egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
         pchr->chr_cv.mins[OCT_Z ] = 0.0f;
         pchr->chr_cv.maxs[OCT_Z ] = pchr->bump.height * pchr->fat;
 
-        pchr->chr_min_cv.mins[OCT_Z ] = MAX( pchr->chr_min_cv.mins[OCT_Z ], 0.0f );
-        pchr->chr_min_cv.maxs[OCT_Z ] = MIN( pchr->chr_min_cv.maxs[OCT_Z ], pchr->bump.height   * pchr->fat );
+        pchr->chr_min_cv.mins[OCT_Z ] = SDL_max( pchr->chr_min_cv.mins[OCT_Z ], 0.0f );
+        pchr->chr_min_cv.maxs[OCT_Z ] = SDL_min( pchr->chr_min_cv.maxs[OCT_Z ], pchr->bump.height   * pchr->fat );
 
-        pchr->chr_max_cv.mins[OCT_Z ] = MIN( pchr->chr_max_cv.mins[OCT_Z ], 0.0f );
-        pchr->chr_max_cv.maxs[OCT_Z ] = MAX( pchr->chr_max_cv.maxs[OCT_Z ], pchr->bump.height   * pchr->fat );
+        pchr->chr_max_cv.mins[OCT_Z ] = SDL_min( pchr->chr_max_cv.mins[OCT_Z ], 0.0f );
+        pchr->chr_max_cv.maxs[OCT_Z ] = SDL_max( pchr->chr_max_cv.maxs[OCT_Z ], pchr->bump.height   * pchr->fat );
     }
 
     // raise the upper bound for platforms
@@ -7226,7 +7069,7 @@ const char* describe_value( float value, float maxval, int * rank_ptr )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )value ) );
+        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )value ) );
         return retval;
     }
 
@@ -7266,7 +7109,7 @@ const char* describe_damage( float value, float maxval, int * rank_ptr )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )value ) );
+        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )value ) );
         return retval;
     }
 
@@ -7309,7 +7152,7 @@ const char* describe_wounds( float max, float current )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )current ) );
+        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )current ) );
         return retval;
     }
 
@@ -7571,31 +7414,6 @@ bool_t ego_ai_state::set_changed( ego_ai_state * pai )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_matrix_cache * ego_matrix_cache::init( ego_matrix_cache * mcache )
-{
-    /// @details BB@> clear out the matrix cache data
-
-    int cnt;
-
-    if ( NULL == mcache ) return mcache;
-
-    memset( mcache, 0, sizeof( *mcache ) );
-
-    mcache->type_bits = MAT_UNKNOWN;
-    mcache->grip_chr  = CHR_REF( MAX_CHR );
-    for ( cnt = 0; cnt < GRIP_VERTS; cnt++ )
-    {
-        mcache->grip_verts[cnt] = 0xFFFF;
-    }
-
-    mcache->rotate.x = 0;
-    mcache->rotate.y = 0;
-    mcache->rotate.z = 0;
-
-    return mcache;
-}
-
-//--------------------------------------------------------------------------------------------
 bool_t ego_chr::matrix_valid( ego_chr * pchr )
 {
     /// @details BB@> Determine whether the character has a valid matrix
@@ -7603,540 +7421,50 @@ bool_t ego_chr::matrix_valid( ego_chr * pchr )
     if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
     // both the cache and the matrix need to be valid
-    return pchr->inst.matrix_cache.valid && pchr->inst.matrix_cache.matrix_valid;
+    return pchr->gfx_inst.mcache.valid && pchr->gfx_inst.mcache.matrix_valid;
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset )
-{
-    /// @details BB@> Fill the grip_verts[] array from the mount's data.
-    ///     Return the number of vertices found.
-
-    Uint32  i;
-    int vrt_count, tnc;
-
-    ego_chr * pmount;
-    ego_mad * pmount_mad;
-
-    if ( NULL == grip_verts ) return 0;
-
-    // set all the vertices to a "safe" value
-    for ( i = 0; i < GRIP_VERTS; i++ )
-    {
-        grip_verts[i] = 0xFFFF;
-    }
-
-    pmount = ChrObjList.get_allocated_data_ptr( imount );
-    if ( !INGAME_PCHR( pmount ) ) return 0;
-
-    pmount_mad = ego_chr::get_pmad( imount );
-    if ( NULL == pmount_mad ) return 0;
-
-    if ( 0 == pmount->inst.vrt_count ) return 0;
-
-    //---- set the proper weapongrip vertices
-    tnc = ( signed )pmount->inst.vrt_count - ( signed )vrt_offset;
-
-    // if the starting vertex is less than 0, just take the first vertex
-    if ( tnc < 0 )
-    {
-        grip_verts[0] = 0;
-        return 1;
-    }
-
-    vrt_count = 0;
-    for ( i = 0; i < GRIP_VERTS; i++ )
-    {
-        if ( tnc + i < pmount->inst.vrt_count )
-        {
-            grip_verts[i] = tnc + i;
-            vrt_count++;
-        }
-        else
-        {
-            grip_verts[i] = 0xFFFF;
-        }
-    }
-
-    return vrt_count;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_chr::generate_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp )
-{
-    /// @details BB@> grab the matrix cache data for a given character and put it into mc_tmp.
-
-    bool_t handled;
-    CHR_REF itarget, ichr;
-
-    if ( NULL == mc_tmp ) return bfalse;
-    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
-    ichr = GET_REF_PCHR( pchr );
-
-    handled = bfalse;
-    itarget = CHR_REF( MAX_CHR );
-
-    // initialize xome parameters in case we fail
-    mc_tmp->valid     = bfalse;
-    mc_tmp->type_bits = MAT_UNKNOWN;
-
-    mc_tmp->self_scale.x = mc_tmp->self_scale.y = mc_tmp->self_scale.z = pchr->fat;
-
-    // handle the overlay first of all
-    if ( !handled && pchr->is_overlay && ichr != pchr->ai.target && INGAME_CHR( pchr->ai.target ) )
-    {
-        // this will pretty much fail the cmp_matrix_cache() every time...
-
-        ego_chr * ptarget = ChrObjList.get_data_ptr( pchr->ai.target );
-
-        // make sure we have the latst info from the target
-        ego_chr::update_matrix( ptarget, btrue );
-
-        // grab the matrix cache into from the character we are overlaying
-        memcpy( mc_tmp, &( ptarget->inst.matrix_cache ), sizeof( ego_matrix_cache ) );
-
-        // just in case the overlay's matrix cannot be corrected
-        // then treat it as if it is not an overlay
-        handled = mc_tmp->valid;
-    }
-
-    // this will happen if the overlay "failed" or for any non-overlay character
-    if ( !handled )
-    {
-        // assume that the "target" of the MAT_CHARACTER data will be the character itself
-        itarget = GET_REF_PCHR( pchr );
-
-        //---- update the MAT_WEAPON data
-        if ( DEFINED_CHR( pchr->attachedto ) )
-        {
-            ego_chr * pmount = ChrObjList.get_data_ptr( pchr->attachedto );
-
-            // make sure we have the latst info from the target
-            ego_chr::update_matrix( pmount, btrue );
-
-            // just in case the mount's matrix cannot be corrected
-            // then treat it as if it is not mounted... yuck
-            if ( pmount->inst.matrix_cache.matrix_valid )
-            {
-                mc_tmp->valid     = btrue;
-                ADD_BITS( mc_tmp->type_bits, MAT_WEAPON );        // add in the weapon data
-
-                mc_tmp->grip_chr  = pchr->attachedto;
-                mc_tmp->grip_slot = pchr->inwhich_slot;
-                get_grip_verts( mc_tmp->grip_verts, pchr->attachedto, slot_to_grip_offset( pchr->inwhich_slot ) );
-
-                itarget = pchr->attachedto;
-            }
-        }
-
-        //---- update the MAT_CHARACTER data
-        if ( DEFINED_CHR( itarget ) )
-        {
-            ego_chr * ptarget = ChrObjList.get_data_ptr( itarget );
-
-            mc_tmp->valid   = btrue;
-            ADD_BITS( mc_tmp->type_bits, MAT_CHARACTER );  // add in the MAT_CHARACTER-type data for the object we are "connected to"
-
-            mc_tmp->rotate.x = CLIP_TO_16BITS( ptarget->ori.map_facing_x - MAP_TURN_OFFSET );
-            mc_tmp->rotate.y = CLIP_TO_16BITS( ptarget->ori.map_facing_y - MAP_TURN_OFFSET );
-            mc_tmp->rotate.z = ptarget->ori.facing_z;
-
-            mc_tmp->pos = ego_chr::get_pos( ptarget );
-
-            mc_tmp->grip_scale.x = mc_tmp->grip_scale.y = mc_tmp->grip_scale.z = ptarget->fat;
-        }
-    }
-
-    return mc_tmp->valid;
-}
-
-//--------------------------------------------------------------------------------------------
-int convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_t dst_point[] )
-{
-    /// @details ZZ@> a helper function for apply_one_weapon_matrix()
-
-    int cnt, point_count;
-
-    if ( NULL == grip_verts || NULL == dst_point ) return 0;
-
-    if ( !ACTIVE_PCHR( pholder ) ) return 0;
-
-    // count the valid weapon connection dst_points
-    point_count = 0;
-    for ( cnt = 0; cnt < GRIP_VERTS; cnt++ )
-    {
-        if ( 0xFFFF != grip_verts[cnt] )
-        {
-            point_count++;
-        }
-    }
-
-    // do the best we can
-    if ( 0 == point_count )
-    {
-        // punt! attach to origin
-        dst_point[0].x = pholder->pos.x;
-        dst_point[0].y = pholder->pos.y;
-        dst_point[0].z = pholder->pos.z;
-        dst_point[0].w = 1;
-
-        point_count = 1;
-    }
-    else
-    {
-        // update the grip vertices
-        ego_chr_instance::update_grip_verts( &( pholder->inst ), grip_verts, GRIP_VERTS );
-
-        // copy the vertices into dst_point[]
-        for ( point_count = 0, cnt = 0; cnt < GRIP_VERTS; cnt++, point_count++ )
-        {
-            Uint16 vertex = grip_verts[cnt];
-
-            if ( 0xFFFF == vertex ) continue;
-
-            dst_point[point_count].x = pholder->inst.vrt_lst[vertex].pos[XX];
-            dst_point[point_count].y = pholder->inst.vrt_lst[vertex].pos[YY];
-            dst_point[point_count].z = pholder->inst.vrt_lst[vertex].pos[ZZ];
-            dst_point[point_count].w = 1.0f;
-        }
-    }
-
-    return point_count;
-}
-
-//--------------------------------------------------------------------------------------------
-int convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[], fvec4_t   dst_point[] )
-{
-    /// @details ZZ@> a helper function for apply_one_weapon_matrix()
-
-    ego_chr *   pholder;
-    int       point_count;
-    fvec4_t   src_point[GRIP_VERTS];
-
-    pholder = ChrObjList.get_allocated_data_ptr( iholder );
-    if ( !INGAME_PCHR( pholder ) ) return 0;
-
-    // find the grip points in the character's "local" or "body-fixed" coordinates
-    point_count = convert_grip_to_local_points( pholder, grip_verts, src_point );
-
-    if ( 0 == point_count ) return 0;
-
-    // use the math function instead of rolling out own
-    TransformVertices( &( pholder->inst.matrix ), src_point, dst_point, point_count );
-
-    return point_count;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t apply_one_weapon_matrix( ego_chr * pweap, ego_matrix_cache * mc_tmp )
-{
-    /// @details ZZ@> Request that the data in the matrix cache be used to create a "character matrix".
-    ///               i.e. a matrix that is not being held by anything.
-
-    fvec4_t   nupoint[GRIP_VERTS];
-    int       iweap_points;
-
-    ego_chr * pholder;
-    ego_matrix_cache * pweap_mcache;
-
-    if ( NULL == mc_tmp || !mc_tmp->valid || 0 == ( MAT_WEAPON & mc_tmp->type_bits ) ) return bfalse;
-
-    if ( !DEFINED_PCHR( pweap ) ) return bfalse;
-    pweap_mcache = &( pweap->inst.matrix_cache );
-
-    if ( !INGAME_CHR( mc_tmp->grip_chr ) ) return bfalse;
-    pholder = ChrObjList.get_data_ptr( mc_tmp->grip_chr );
-
-    // make sure that the matrix is invalid in case of an error
-    pweap_mcache->matrix_valid = bfalse;
-
-    // grab the grip points in world coordinates
-    iweap_points = convert_grip_to_global_points( mc_tmp->grip_chr, mc_tmp->grip_verts, nupoint );
-
-    if ( 4 == iweap_points )
-    {
-        // Calculate weapon's matrix based on positions of grip points
-        // chrscale is recomputed at time of attachment
-        pweap->inst.matrix = FourPoints( nupoint[0].v, nupoint[1].v, nupoint[2].v, nupoint[3].v, mc_tmp->self_scale.z );
-
-        // update the weapon position
-        ego_chr::set_pos( pweap, nupoint[3].v );
-
-        memcpy( &( pweap->inst.matrix_cache ), mc_tmp, sizeof( ego_matrix_cache ) );
-
-        pweap_mcache->matrix_valid = btrue;
-    }
-    else if ( iweap_points > 0 )
-    {
-        // cannot find enough vertices. punt.
-        // ignore the shape of the grip and just stick the character to the single mount point
-
-        // update the character position
-        ego_chr::set_pos( pweap, nupoint[0].v );
-
-        // make sure we have the right data
-        ego_chr::generate_matrix_cache( pweap, mc_tmp );
-
-        // add in the appropriate mods
-        // this is a hybrid character and weapon matrix
-        ADD_BITS( mc_tmp->type_bits, MAT_CHARACTER );
-
-        // treat it like a normal character matrix
-        apply_one_character_matrix( pweap, mc_tmp );
-    }
-
-    return pweap_mcache->matrix_valid;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t apply_one_character_matrix( ego_chr * pchr, ego_matrix_cache * mc_tmp )
-{
-    /// @details ZZ@> Request that the matrix cache data be used to create a "weapon matrix".
-    ///               i.e. a matrix that is attached to a specific grip.
-
-    if ( NULL == mc_tmp ) return bfalse;
-
-    // only apply character matrices using this function
-    if ( 0 == ( MAT_CHARACTER & mc_tmp->type_bits ) ) return bfalse;
-
-    pchr->inst.matrix_cache.matrix_valid = bfalse;
-
-    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
-
-    if ( pchr->stickybutt )
-    {
-        pchr->inst.matrix = ScaleXYZRotateXYZTranslate_SpaceFixed( mc_tmp->self_scale.x, mc_tmp->self_scale.y, mc_tmp->self_scale.z,
-                            TO_TURN( mc_tmp->rotate.z ), TO_TURN( mc_tmp->rotate.x ), TO_TURN( mc_tmp->rotate.y ),
-                            mc_tmp->pos.x, mc_tmp->pos.y, mc_tmp->pos.z );
-    }
-    else
-    {
-        pchr->inst.matrix = ScaleXYZRotateXYZTranslate_BodyFixed( mc_tmp->self_scale.x, mc_tmp->self_scale.y, mc_tmp->self_scale.z,
-                            TO_TURN( mc_tmp->rotate.z ), TO_TURN( mc_tmp->rotate.x ), TO_TURN( mc_tmp->rotate.y ),
-                            mc_tmp->pos.x, mc_tmp->pos.y, mc_tmp->pos.z );
-    }
-
-    memcpy( &( pchr->inst.matrix_cache ), mc_tmp, sizeof( ego_matrix_cache ) );
-
-    pchr->inst.matrix_cache.matrix_valid = btrue;
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t apply_reflection_matrix( ego_chr_instance * pinst, float grid_level )
+bool_t apply_reflection_matrix( gfx_mad_instance * pgfx_inst, float grid_level )
 {
     /// @details BB@> Generate the extra data needed to display a reflection for this character
 
-    if ( NULL == pinst ) return bfalse;
+    if ( NULL == pgfx_inst ) return bfalse;
 
     // invalidate the current matrix
-    pinst->ref.matrix_valid = bfalse;
+    pgfx_inst->ref.matrix_valid = bfalse;
 
     // actually flip the matrix
-    if ( pinst->matrix_cache.valid )
+    if ( pgfx_inst->mcache.valid )
     {
-        pinst->ref.matrix = pinst->matrix;
+        pgfx_inst->ref.matrix = pgfx_inst->matrix;
 
-        pinst->ref.matrix.CNV( 0, 2 ) = -pinst->ref.matrix.CNV( 0, 2 );
-        pinst->ref.matrix.CNV( 1, 2 ) = -pinst->ref.matrix.CNV( 1, 2 );
-        pinst->ref.matrix.CNV( 2, 2 ) = -pinst->ref.matrix.CNV( 2, 2 );
-        pinst->ref.matrix.CNV( 3, 2 ) = 2 * grid_level - pinst->ref.matrix.CNV( 3, 2 );
+        pgfx_inst->ref.matrix.CNV( 0, 2 ) = -pgfx_inst->ref.matrix.CNV( 0, 2 );
+        pgfx_inst->ref.matrix.CNV( 1, 2 ) = -pgfx_inst->ref.matrix.CNV( 1, 2 );
+        pgfx_inst->ref.matrix.CNV( 2, 2 ) = -pgfx_inst->ref.matrix.CNV( 2, 2 );
+        pgfx_inst->ref.matrix.CNV( 3, 2 ) = 2 * grid_level - pgfx_inst->ref.matrix.CNV( 3, 2 );
 
-        pinst->ref.matrix_valid = btrue;
+        pgfx_inst->ref.matrix_valid = btrue;
     }
 
-    return pinst->ref.matrix_valid;
+    return pgfx_inst->ref.matrix_valid;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t apply_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp )
-{
-    /// @details BB@> request that the info in the matrix cache mc_tmp, be used to
-    ///               make a matrix for the character pchr.
-
-    bool_t applied = bfalse;
-
-    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
-    if ( NULL == mc_tmp || !mc_tmp->valid ) return bfalse;
-
-    if ( 0 != ( MAT_WEAPON & mc_tmp->type_bits ) )
-    {
-        if ( DEFINED_CHR( mc_tmp->grip_chr ) )
-        {
-            applied = apply_one_weapon_matrix( pchr, mc_tmp );
-        }
-        else
-        {
-            ego_matrix_cache * mcache = &( pchr->inst.matrix_cache );
-
-            // !!!the mc_tmp was mis-labeled as a MAT_WEAPON!!!
-            make_one_character_matrix( GET_REF_PCHR( pchr ) );
-
-            // recover the matrix_cache values from the character
-            ADD_BITS( mcache->type_bits, MAT_CHARACTER );
-            if ( mcache->matrix_valid )
-            {
-                mcache->valid     = btrue;
-                mcache->type_bits = MAT_CHARACTER;
-
-                mcache->self_scale.x =
-                    mcache->self_scale.y =
-                        mcache->self_scale.z = pchr->fat;
-
-                mcache->grip_scale = mcache->self_scale;
-
-                mcache->rotate.x = CLIP_TO_16BITS( pchr->ori.map_facing_x - MAP_TURN_OFFSET );
-                mcache->rotate.y = CLIP_TO_16BITS( pchr->ori.map_facing_y - MAP_TURN_OFFSET );
-                mcache->rotate.z = pchr->ori.facing_z;
-
-                mcache->pos = ego_chr::get_pos( pchr );
-
-                applied = btrue;
-            }
-        }
-    }
-    else if ( 0 != ( MAT_CHARACTER & mc_tmp->type_bits ) )
-    {
-        applied = apply_one_character_matrix( pchr, mc_tmp );
-    }
-
-    if ( applied )
-    {
-        apply_reflection_matrix( &( pchr->inst ), pchr->enviro.grid_level );
-    }
-
-    return applied;
-}
-
-//--------------------------------------------------------------------------------------------
-int cmp_matrix_cache( const void * vlhs, const void * vrhs )
-{
-    /// @details BB@> check for differences between the data pointed to
-    ///     by vlhs and vrhs, assuming that they point to ego_matrix_cache data.
-    ///
-    ///    The function is implemented this way so that in principle
-    ///    if could be used in a function like qsort().
-    ///
-    ///    We could almost certainly make something easier and quicker by
-    ///    using the function memcmp()
-
-    int   itmp, cnt;
-    float ftmp;
-
-    ego_matrix_cache * plhs = ( ego_matrix_cache * )vlhs;
-    ego_matrix_cache * prhs = ( ego_matrix_cache * )vrhs;
-
-    // handle problems with pointers
-    if ( plhs == prhs )
-    {
-        return 0;
-    }
-    else if ( NULL == plhs )
-    {
-        return 1;
-    }
-    else if ( NULL == prhs )
-    {
-        return -1;
-    }
-
-    // handle one of both if the matrix caches being invalid
-    if ( !plhs->valid && !prhs->valid )
-    {
-        return 0;
-    }
-    else if ( !plhs->valid )
-    {
-        return 1;
-    }
-    else if ( !prhs->valid )
-    {
-        return -1;
-    }
-
-    // handle differences in the type
-    itmp = plhs->type_bits - prhs->type_bits;
-    if ( 0 != itmp ) goto cmp_matrix_cache_end;
-
-    //---- check for differences in the MAT_WEAPON data
-    if ( HAS_SOME_BITS( plhs->type_bits, MAT_WEAPON ) )
-    {
-        itmp = ( signed )( plhs->grip_chr ).get_value() - ( signed )( prhs->grip_chr ).get_value();
-        if ( 0 != itmp ) goto cmp_matrix_cache_end;
-
-        itmp = ( signed )plhs->grip_slot - ( signed )prhs->grip_slot;
-        if ( 0 != itmp ) goto cmp_matrix_cache_end;
-
-        for ( cnt = 0; cnt < GRIP_VERTS; cnt++ )
-        {
-            itmp = ( signed )plhs->grip_verts[cnt] - ( signed )prhs->grip_verts[cnt];
-            if ( 0 != itmp ) goto cmp_matrix_cache_end;
-        }
-
-        // handle differences in the scale of our mount
-        for ( cnt = 0; cnt < 3; cnt ++ )
-        {
-            ftmp = plhs->grip_scale.v[cnt] - prhs->grip_scale.v[cnt];
-            if ( 0.0f != ftmp ) { itmp = SGN( ftmp ); goto cmp_matrix_cache_end; }
-        }
-    }
-
-    //---- check for differences in the MAT_CHARACTER data
-    if ( HAS_SOME_BITS( plhs->type_bits, MAT_CHARACTER ) )
-    {
-        // handle differences in the "Euler" rotation angles in 16-bit form
-        for ( cnt = 0; cnt < 3; cnt++ )
-        {
-            ftmp = plhs->rotate.v[cnt] - prhs->rotate.v[cnt];
-            if ( 0.0f != ftmp ) { itmp = SGN( ftmp ); goto cmp_matrix_cache_end; }
-        }
-
-        // handle differences in the translate vector
-        for ( cnt = 0; cnt < 3; cnt++ )
-        {
-            ftmp = plhs->pos.v[cnt] - prhs->pos.v[cnt];
-            if ( 0.0f != ftmp ) { itmp = SGN( ftmp ); goto cmp_matrix_cache_end; }
-        }
-    }
-
-    //---- check for differences in the shared data
-    if ( HAS_SOME_BITS( plhs->type_bits, MAT_WEAPON ) || HAS_SOME_BITS( plhs->type_bits, MAT_CHARACTER ) )
-    {
-        // handle differences in our own scale
-        for ( cnt = 0; cnt < 3; cnt ++ )
-        {
-            ftmp = plhs->self_scale.v[cnt] - prhs->self_scale.v[cnt];
-            if ( 0.0f != ftmp ) { itmp = SGN( ftmp ); goto cmp_matrix_cache_end; }
-        }
-    }
-
-    // if it got here, the data is all the same
-    itmp = 0;
-
-cmp_matrix_cache_end:
-
-    return SGN( itmp );
-}
-
-//--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::matrix_cache_needs_update( ego_chr * pchr, ego_matrix_cache * pmc )
+egoboo_rv ego_chr::matrix_data_needs_update( ego_chr * pchr, gfx_mad_matrix_data & mc )
 {
     /// @details BB@> determine whether a matrix cache has become invalid and needs to be updated
 
-    ego_matrix_cache local_mc;
     bool_t needs_cache_update;
 
     if ( !DEFINED_PCHR( pchr ) ) return rv_error;
 
-    if ( NULL == pmc ) pmc = &local_mc;
-
     // get the matrix data that is supposed to be used to make the matrix
-    ego_chr::generate_matrix_cache( pchr, pmc );
+    gfx_mad_matrix_data::download( mc, pchr );
 
     // compare that data to the actual data used to make the matrix
-    needs_cache_update = ( 0 != cmp_matrix_cache( pmc, &( pchr->inst.matrix_cache ) ) );
+    needs_cache_update = ( 0 != cmp_matrix_data( &mc, &( pchr->gfx_inst.mcache ) ) );
 
     return needs_cache_update ? rv_success : rv_fail;
 }
@@ -8152,11 +7480,11 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
     egoboo_rv      retval;
     bool_t         needs_update = bfalse;
     bool_t         applied      = bfalse;
-    ego_matrix_cache mc_tmp;
-    ego_matrix_cache *pchr_mc = NULL;
+    gfx_mad_matrix_data mc_tmp;
+    gfx_mad_matrix_data *pchr_mc = NULL;
 
     if ( !DEFINED_PCHR( pchr ) ) return rv_error;
-    pchr_mc = &( pchr->inst.matrix_cache );
+    pchr_mc = &( pchr->gfx_inst.mcache );
 
     // recursively make sure that any mount matrices are updated
     if ( DEFINED_CHR( pchr->attachedto ) )
@@ -8181,7 +7509,7 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
     }
 
     // does the matrix cache need an update at all?
-    retval = ego_chr::matrix_cache_needs_update( pchr, &mc_tmp );
+    retval = ego_chr::matrix_data_needs_update( pchr, mc_tmp );
     if ( rv_error == retval ) return rv_error;
     needs_update = ( rv_success == retval );
 
@@ -8192,7 +7520,7 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
         ego_chr   * ptarget = ChrObjList.get_data_ptr( mc_tmp.grip_chr );
 
         // has that character changes its animation?
-        grip_retval = ego_chr_instance::update_grip_verts( &( ptarget->inst ), mc_tmp.grip_verts, GRIP_VERTS );
+        grip_retval = gfx_mad_instance::update_grip_verts( &( ptarget->gfx_inst ), mc_tmp.grip_verts, GRIP_VERTS );
 
         if ( rv_error   == grip_retval ) return rv_error;
         if ( rv_success == grip_retval ) needs_update = btrue;
@@ -8205,7 +7533,7 @@ egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
         // we know the matrix is not valid
         pchr_mc->matrix_valid = bfalse;
 
-        applied = apply_matrix_cache( pchr, &mc_tmp );
+        applied = gfx_mad_matrix_data::generate_matrix( mc_tmp, pchr );
     }
 
     if ( applied && update_size )
@@ -8369,7 +7697,7 @@ bool_t chr_can_see_object( const CHR_REF & ichr, const CHR_REF & iobj )
     pobj = ChrObjList.get_allocated_data_ptr( iobj );
     if ( !INGAME_PCHR( pobj ) ) return bfalse;
 
-    alpha = pobj->inst.alpha;
+    alpha = pobj->gfx_inst.alpha;
     if ( pchr->see_invisible_level > 0 )
     {
         alpha *= pchr->see_invisible_level + 1;
@@ -8379,9 +7707,9 @@ bool_t chr_can_see_object( const CHR_REF & ichr, const CHR_REF & iobj )
     /// @note ZF@> Invictus characters can always see through darkness (spells, items, quest handlers, etc.)
     if ( IS_INVICTUS_PCHR_RAW( pchr ) && alpha >= INVISIBLE ) return btrue;
 
-    enviro_light = ( alpha * pobj->inst.max_light ) * INV_FF;
-    self_light   = ( pobj->inst.light == 255 ) ? 0 : pobj->inst.light;
-    light        = MAX( enviro_light, self_light );
+    enviro_light = ( alpha * pobj->gfx_inst.max_light ) * INV_FF;
+    self_light   = ( pobj->gfx_inst.light == 255 ) ? 0 : pobj->gfx_inst.light;
+    light        = SDL_max( enviro_light, self_light );
 
     if ( pchr->darkvision_level > 0 )
     {
@@ -8454,7 +7782,7 @@ void ego_chr::set_enviro_grid_level( ego_chr * pchr, float level )
     {
         pchr->enviro.grid_level = level;
 
-        apply_reflection_matrix( &( pchr->inst ), level );
+        apply_reflection_matrix( &( pchr->gfx_inst ), level );
     }
 }
 
@@ -8463,9 +7791,9 @@ void ego_chr::set_redshift( ego_chr * pchr, int rs )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    pchr->inst.redshift = rs;
+    pchr->gfx_inst.redshift = rs;
 
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8473,9 +7801,9 @@ void ego_chr::set_grnshift( ego_chr * pchr, int gs )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    pchr->inst.grnshift = gs;
+    pchr->gfx_inst.grnshift = gs;
 
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8483,9 +7811,9 @@ void ego_chr::set_blushift( ego_chr * pchr, int bs )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    pchr->inst.blushift = bs;
+    pchr->gfx_inst.blushift = bs;
 
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8493,9 +7821,9 @@ void ego_chr::set_sheen( ego_chr * pchr, int sheen )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    pchr->inst.sheen = sheen;
+    pchr->gfx_inst.sheen = sheen;
 
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8503,9 +7831,9 @@ void ego_chr::set_alpha( ego_chr * pchr, int alpha )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    pchr->inst.alpha = CLIP( alpha, 0, 255 );
+    pchr->gfx_inst.alpha = CLIP( alpha, 0, 255 );
 
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8513,9 +7841,9 @@ void ego_chr::set_light( ego_chr * pchr, int light )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    pchr->inst.light = CLIP( light, 0, 255 );
+    pchr->gfx_inst.light = CLIP( light, 0, 255 );
 
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, bfalse );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, bfalse );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8552,120 +7880,6 @@ void ego_chr_data::set_jump_number_reset( ego_chr_data * pchr, int number )
     pchr->jump_number_reset = number;
 
     pchr->can_fly_jump = ( JUMP_NUMBER_INFINITE == pchr->jump_number_reset );
-}
-
-//--------------------------------------------------------------------------------------------
-void ego_chr_instance::get_tint( ego_chr_instance * pinst, GLfloat * tint, BIT_FIELD bits )
-{
-    int i;
-    float weight_sum;
-    GLXvector4f local_tint;
-
-    int local_alpha;
-    int local_light;
-    int local_sheen;
-    int local_redshift;
-    int local_grnshift;
-    int local_blushift;
-
-    if ( NULL == tint ) tint = local_tint;
-
-    if ( HAS_SOME_BITS( bits, CHR_REFLECT ) )
-    {
-        // this is a reflection, use the reflected parameters
-        local_alpha    = pinst->ref.alpha;
-        local_light    = pinst->ref.light;
-        local_sheen    = pinst->ref.sheen;
-        local_redshift = pinst->ref.redshift;
-        local_grnshift = pinst->ref.grnshift;
-        local_blushift = pinst->ref.blushift;
-    }
-    else
-    {
-        // this is NOT a reflection, use the normal parameters
-        local_alpha    = pinst->alpha;
-        local_light    = pinst->light;
-        local_sheen    = pinst->sheen;
-        local_redshift = pinst->redshift;
-        local_grnshift = pinst->grnshift;
-        local_blushift = pinst->blushift;
-    }
-
-    // modify these values based on local character abilities
-    local_alpha = get_local_alpha( local_alpha );
-    local_light = get_local_light( local_light );
-
-    // clear out the tint
-    weight_sum = 0;
-    for ( i = 0; i < 4; i++ ) tint[i] = 0;
-
-    if ( HAS_SOME_BITS( bits, CHR_SOLID ) )
-    {
-        // solid characters are not blended onto the canvas
-        // the alpha channel is not important
-        weight_sum += 1.0;
-
-        tint[0] += 1.0f / ( 1 << local_redshift );
-        tint[1] += 1.0f / ( 1 << local_grnshift );
-        tint[2] += 1.0f / ( 1 << local_blushift );
-        tint[3] += 1.0f;
-    }
-
-    if ( HAS_SOME_BITS( bits, CHR_ALPHA ) )
-    {
-        // alpha characters are blended onto the canvas using the alpha channel
-        // the alpha channel is not important
-        weight_sum += 1.0;
-
-        tint[0] += 1.0f / ( 1 << local_redshift );
-        tint[1] += 1.0f / ( 1 << local_grnshift );
-        tint[2] += 1.0f / ( 1 << local_blushift );
-        tint[3] += local_alpha * INV_FF;
-    }
-
-    if ( HAS_SOME_BITS( bits, CHR_LIGHT ) )
-    {
-        // alpha characters are blended onto the canvas by adding their color
-        // the more black the colors, the less visible the character
-        // the alpha channel is not important
-
-        weight_sum += 1.0;
-
-        if ( local_light < 255 )
-        {
-            tint[0] += local_light * INV_FF / ( 1 << local_redshift );
-            tint[1] += local_light * INV_FF / ( 1 << local_grnshift );
-            tint[2] += local_light * INV_FF / ( 1 << local_blushift );
-        }
-
-        tint[3] += 1.0f;
-    }
-
-    if ( HAS_SOME_BITS( bits, CHR_PHONG ) )
-    {
-        // Phong is essentially the same as light, but it is the
-        // sheen that sets the effect
-
-        float amount;
-
-        weight_sum += 1.0;
-
-        amount = ( CLIP( local_sheen, 0, 15 ) << 4 ) / 240.0f;
-
-        tint[0] += amount;
-        tint[1] += amount;
-        tint[2] += amount;
-        tint[3] += 1.0f;
-    }
-
-    // average the tint
-    if ( weight_sum != 0.0f && weight_sum != 1.0f )
-    {
-        for ( i = 0; i < 4; i++ )
-        {
-            tint[i] /= weight_sum;
-        }
-    }
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8714,7 +7928,7 @@ bool_t character_physics_get_mass_pair( ego_chr * pchr_a, ego_chr * pchr_b, floa
     float loc_wta, loc_wtb;
     bool_t infinite_weight;
 
-    if ( !ACTIVE_PCHR( pchr_a ) || !ACTIVE_PCHR( pchr_b ) ) return bfalse;
+    if ( !PROCESSING_PCHR( pchr_a ) || !PROCESSING_PCHR( pchr_b ) ) return bfalse;
 
     if ( NULL == wta ) wta = &loc_wta;
     if ( NULL == wtb ) wtb = &loc_wtb;
@@ -8800,91 +8014,60 @@ bool_t chr_can_mount( const CHR_REF & ichr_a, const CHR_REF & ichr_b )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 ego_chr::get_framefx( ego_chr * pchr )
+egoboo_rv chr_invalidate_instances( ego_chr * pchr )
 {
-    int           frame_count;
-    ego_MD2_Frame * frame_list, * pframe_nxt;
-    ego_mad       * pmad;
-    ego_MD2_Model * pmd2;
+    /// recursively invalidate all gfx_mad_instances which depend on the location of this object's vertices
 
-    if ( !DEFINED_PCHR( pchr ) ) return 0;
+    if ( !PROCESSING_PCHR( pchr ) ) return rv_error;
 
-    pmad = ego_chr::get_pmad( GET_REF_PCHR( pchr ) );
-    if ( NULL == pmad ) return 0;
-
-    pmd2 = pmad->md2_ptr;
-    if ( NULL == pmd2 ) return 0;
-
-    frame_count = md2_get_numFrames( pmd2 );
-    EGOBOO_ASSERT( pchr->inst.frame_nxt < frame_count );
-
-    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
-    pframe_nxt  = frame_list + pchr->inst.frame_nxt;
-
-    return pframe_nxt->framefx;
-}
-
-//--------------------------------------------------------------------------------------------
-egoboo_rv chr_invalidate_child_instances( ego_chr * pchr )
-{
-    int cnt;
-
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
-
-    // invalidate vlst_cache of everything in this character's holdingwhich array
-    for ( cnt = 0; cnt < SLOT_COUNT; cnt++ )
+    // does the current mad_instance change the validation of the current gfx_mad_instance caches?
+    // if there is no change, then there is nothing to do
+    if ( rv_success == gfx_mad_instance::validate_pose( &( pchr->gfx_inst ), &( pchr->mad_inst ) ) )
     {
-        CHR_REF iitem = pchr->holdingwhich[SLOT_LEFT];
-        if ( !INGAME_CHR( iitem ) ) continue;
+        return rv_success;
+    }
 
-        // invalidate the matrix_cache
-        ChrObjList.get_data_ref( iitem ).inst.matrix_cache.valid = bfalse;
+    // set the flags to invalid
+    pchr->gfx_inst.vrange.valid = bfalse;
+    pchr->gfx_inst.mcache.valid = bfalse;
+
+    // if it DOES change the invalidation of the gfx_mad_instance, then invalidate any child instances
+    for ( int cnt = 0; cnt < SLOT_COUNT; cnt++ )
+    {
+        CHR_REF iitem = pchr->holdingwhich[cnt];
+
+        chr_invalidate_instances( ChrObjList.get_data_ptr( iitem ) );
     }
 
     return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::set_action( ego_chr * pchr, int action, bool_t action_ready, bool_t override_action )
+egoboo_rv ego_chr::set_action( ego_chr * pchr, int new_action, bool_t new_ready, bool_t override_action )
 {
     egoboo_rv retval;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
+    if ( !PROCESSING_PCHR( pchr ) ) return rv_error;
 
-    retval = ego_chr_instance::set_action( &( pchr->inst ), action, action_ready, override_action );
+    retval = mad_instance::set_action( &( pchr->mad_inst ), new_action, new_ready, override_action );
     if ( rv_success != retval ) return retval;
 
-    chr_invalidate_child_instances( pchr );
+    chr_invalidate_instances( pchr );
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::start_anim( ego_chr * pchr, int action, bool_t action_ready, bool_t override_action )
+egoboo_rv ego_chr::start_anim( ego_chr * pchr, int new_action, bool_t new_ready, bool_t override_action )
 {
     egoboo_rv retval;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
+    if ( !PROCESSING_PCHR( pchr ) ) return rv_error;
 
-    retval = ego_chr_instance::start_anim( &( pchr->inst ), action, action_ready, override_action );
+    retval = mad_instance::start_anim( &( pchr->mad_inst ), new_action, new_ready, override_action );
     if ( rv_success != retval ) return retval;
 
-    chr_invalidate_child_instances( pchr );
-
-    return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::set_anim( ego_chr * pchr, int action, int frame, bool_t action_ready, bool_t override_action )
-{
-    egoboo_rv retval;
-
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
-
-    retval = ego_chr_instance::set_anim( &( pchr->inst ), action, frame, action_ready, override_action );
-    if ( rv_success != retval ) return retval;
-
-    chr_invalidate_child_instances( pchr );
+    chr_invalidate_instances( pchr );
 
     return retval;
 }
@@ -8894,12 +8077,12 @@ egoboo_rv ego_chr::increment_action( ego_chr * pchr )
 {
     egoboo_rv retval;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
+    if ( !PROCESSING_PCHR( pchr ) ) return rv_error;
 
-    retval = ego_chr_instance::increment_action( &( pchr->inst ) );
+    retval = mad_instance::increment_action( &( pchr->mad_inst ) );
     if ( rv_success != retval ) return retval;
 
-    chr_invalidate_child_instances( pchr );
+    chr_invalidate_instances( pchr );
 
     return retval;
 }
@@ -8908,32 +8091,28 @@ egoboo_rv ego_chr::increment_action( ego_chr * pchr )
 egoboo_rv ego_chr::increment_frame( ego_chr * pchr )
 {
     egoboo_rv retval;
-    ego_mad * pmad;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
+    if ( !PROCESSING_PCHR( pchr ) ) return rv_error;
 
-    pmad = ego_chr::get_pmad( GET_REF_PCHR( pchr ) );
-    if ( NULL == pmad ) return rv_error;
-
-    retval = ego_chr_instance::increment_frame( &( pchr->inst ), pmad, pchr->attachedto );
+    retval = mad_instance::increment_frame( &( pchr->mad_inst ), DEFINED_CHR( pchr->attachedto ) );
     if ( rv_success != retval ) return retval;
 
-    chr_invalidate_child_instances( pchr );
+    chr_invalidate_instances( pchr );
 
     return retval;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::play_action( ego_chr * pchr, int action, bool_t action_ready )
+egoboo_rv ego_chr::play_action( ego_chr * pchr, int new_action, bool_t new_ready )
 {
     egoboo_rv retval;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
+    if ( !PROCESSING_PCHR( pchr ) ) return rv_error;
 
-    retval = ego_chr_instance::play_action( &( pchr->inst ), action, action_ready );
+    retval = mad_instance::play_action( &( pchr->mad_inst ), new_action, new_ready );
     if ( rv_success != retval ) return retval;
 
-    chr_invalidate_child_instances( pchr );
+    chr_invalidate_instances( pchr );
 
     return retval;
 }
@@ -8947,20 +8126,20 @@ MAD_REF ego_chr::get_imad( const CHR_REF & ichr )
     if ( !DEFINED_PCHR( pchr ) ) return MAD_REF( MAX_MAD );
 
     // try to repair a bad model if it exists
-    if ( !LOADED_MAD( pchr->inst.imad ) )
+    if ( !LOADED_MAD( pchr->mad_inst.imad ) )
     {
         MAD_REF imad_tmp = pro_get_imad( pchr->profile_ref );
         if ( LOADED_MAD( imad_tmp ) )
         {
-            if ( ego_chr_instance::set_mad( &( pchr->inst ), imad_tmp ) )
+            if ( ego_chr::set_mad( pchr, imad_tmp ) )
             {
                 ego_chr::update_collision_size( pchr, btrue );
             }
         }
-        if ( !LOADED_MAD( pchr->inst.imad ) ) return MAD_REF( MAX_MAD );
+        if ( !LOADED_MAD( pchr->mad_inst.imad ) ) return MAD_REF( MAX_MAD );
     }
 
-    return pchr->inst.imad;
+    return pchr->mad_inst.imad;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8972,18 +8151,18 @@ ego_mad * ego_chr::get_pmad( const CHR_REF & ichr )
     if ( !DEFINED_PCHR( pchr ) ) return NULL;
 
     // try to repair a bad model if it exists
-    if ( !LOADED_MAD( pchr->inst.imad ) )
+    if ( !LOADED_MAD( pchr->mad_inst.imad ) )
     {
         MAD_REF imad_tmp = pro_get_imad( pchr->profile_ref );
         if ( LOADED_MAD( imad_tmp ) )
         {
-            ego_chr_instance::set_mad( &( pchr->inst ), imad_tmp );
+            ego_chr::set_mad( pchr, imad_tmp );
         }
     }
 
-    if ( !LOADED_MAD( pchr->inst.imad ) ) return NULL;
+    if ( !LOADED_MAD( pchr->mad_inst.imad ) ) return NULL;
 
-    return MadStack + pchr->inst.imad;
+    return MadStack + pchr->mad_inst.imad;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9035,7 +8214,7 @@ bool_t ego_chr::set_pos( ego_chr * pchr, fvec3_base_t pos )
 
     if (( pos[kX] != pchr->pos.v[kX] ) || ( pos[kY] != pchr->pos.v[kY] ) || ( pos[kZ] != pchr->pos.v[kZ] ) )
     {
-        memmove( pchr->pos.v, pos, sizeof( fvec3_base_t ) );
+        SDL_memmove( pchr->pos.v, pos, sizeof( fvec3_base_t ) );
 
         retval = chr_update_pos( pchr );
     }
@@ -9137,7 +8316,7 @@ ego_bundle_chr * ego_bundle_chr::set( ego_bundle_chr * pbundle, ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-void character_physics_initialize()
+void character_physics_initialize_all()
 {
     CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
@@ -9203,7 +8382,7 @@ bool_t chr_bump_mesh( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel,
         }
 
         // determine some special cases
-        if ( ABS( final_vel_z ) < STOPBOUNCING )
+        if ( SDL_abs( final_vel_z ) < STOPBOUNCING )
         {
             // STICK!
             // make the object come to rest on the surface rather than bouncing forever
@@ -9437,7 +8616,7 @@ bool_t chr_bump_grid( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel,
         diff_perp.y = nrm.y * dot / nrm2;
 
         // normalize the diff_perp so that it is at most tile_fraction of a grid in any direction
-        ftmp = MAX( ABS( diff_perp.x ), ABS( diff_perp.y ) );
+        ftmp = SDL_max( SDL_abs( diff_perp.x ), SDL_abs( diff_perp.y ) );
         if ( ftmp > 0.0f )
         {
             diff_perp.x *= tile_fraction * GRID_SIZE / ftmp;
@@ -9511,7 +8690,7 @@ void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
 
     // bump the character with the mesh
     bumped_mesh = bfalse;
-    if ( ACTIVE_CHR( loc_pchr->attachedto ) )
+    if ( PROCESSING_CHR( loc_pchr->attachedto ) )
     {
         bumped_mesh = chr_bump_mesh_attached( pbdl, test_pos, test_vel, dt );
     }
@@ -9531,7 +8710,7 @@ void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
 
     // bump the character with the grid flags
     bumped_grid = bfalse;
-    if ( ACTIVE_CHR( loc_pchr->attachedto ) )
+    if ( PROCESSING_CHR( loc_pchr->attachedto ) )
     {
         bumped_grid = chr_bump_grid_attached( pbdl, test_pos, test_vel, dt );
     }
@@ -9584,11 +8763,7 @@ void character_physics_finalize_all( float dt )
     // accumulate the accumulators
     CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
     {
-        ego_bundle_chr bdl;
-
-        // create a bundle for the character data
-        if ( NULL == ego_bundle_chr::set( &bdl, pchr ) ) continue;
-
+        ego_bundle_chr bdl( pchr );
         character_physics_finalize_one( &bdl, dt );
     }
     CHR_END_LOOP();
@@ -9641,8 +8816,8 @@ bool_t ego_chr::update_breadcrumb( ego_chr * pchr, bool_t force )
 
         if ( INVALID_TILE == new_grid )
         {
-            if ( ABS( pchr->pos.x - bc_ptr->pos.x ) > GRID_SIZE ||
-                 ABS( pchr->pos.y - bc_ptr->pos.y ) > GRID_SIZE )
+            if ( SDL_abs( pchr->pos.x - bc_ptr->pos.x ) > GRID_SIZE ||
+                 SDL_abs( pchr->pos.y - bc_ptr->pos.y ) > GRID_SIZE )
             {
                 needs_update = btrue;
             }
@@ -9714,8 +8889,8 @@ bool_t ego_chr::update_safe( ego_chr * pchr, bool_t force )
 
         if ( INVALID_TILE == new_grid )
         {
-            if ( ABS( pchr->pos.x - pchr->safe_pos.x ) > GRID_SIZE ||
-                 ABS( pchr->pos.y - pchr->safe_pos.y ) > GRID_SIZE )
+            if ( SDL_abs( pchr->pos.x - pchr->safe_pos.x ) > GRID_SIZE ||
+                 SDL_abs( pchr->pos.y - pchr->safe_pos.y ) > GRID_SIZE )
             {
                 needs_update = btrue;
             }
@@ -9750,7 +8925,7 @@ bool_t ego_chr::get_safe( ego_chr * pchr, fvec3_base_t pos_v )
         if ( !chr_hit_wall( pchr, NULL, NULL, NULL ) )
         {
             found = btrue;
-            memmove( pos_v, pchr->safe_pos.v, sizeof( fvec3_base_t ) );
+            SDL_memmove( pos_v, pchr->safe_pos.v, sizeof( fvec3_base_t ) );
         }
     }
 
@@ -9763,7 +8938,7 @@ bool_t ego_chr::get_safe( ego_chr * pchr, fvec3_base_t pos_v )
         if ( NULL != bc )
         {
             found = btrue;
-            memmove( pos_v, bc->pos.v, sizeof( fvec3_base_t ) );
+            SDL_memmove( pos_v, bc->pos.v, sizeof( fvec3_base_t ) );
         }
     }
 
@@ -9782,7 +8957,7 @@ void latch_game_init( ego_latch_game * platch )
 {
     if ( NULL == platch ) return;
 
-    memset( platch, 0, sizeof( *platch ) );
+    SDL_memset( platch, 0, sizeof( *platch ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -9798,7 +8973,7 @@ bool_t pack_validate( ego_pack * ppack )
     ppack->was_packed = bfalse;
 
     // limit the number of objects in the pack to less than the total number of objects...
-    ppack->count = MIN( ppack->count, MAX_CHR - 1 );
+    ppack->count = SDL_min( ppack->count, MAX_CHR - 1 );
 
     parent_pack_ptr = ppack;
     item_ref        = ppack->next;
@@ -10421,8 +9596,8 @@ bool_t chr_copy_enviro( ego_chr * chr_psrc, ego_chr * chr_pdst )
     ego_chr::set_enviro_grid_level( chr_pdst, psrc->grid_level );
 
     // now just copy the other data.
-    // use memmove() in the odd case the regions overlap
-    memmove( psrc, pdst, sizeof( *psrc ) );
+    // use SDL_memmove() in the odd case the regions overlap
+    SDL_memmove( psrc, pdst, sizeof( *psrc ) );
 
     return btrue;
 }
@@ -10437,7 +9612,7 @@ ego_chr_data * ego_chr_data::alloc( ego_chr_data * pdata )
     if ( NULL == pdata ) return pdata;
 
     // allocate
-    ego_chr_instance::ctor_this( &( pdata->inst ) );
+    gfx_mad_instance::ctor_this( &( pdata->gfx_inst ) );
 
     return pdata;
 }
@@ -10449,9 +9624,9 @@ ego_chr_data * ego_chr_data::dealloc( ego_chr_data * pdata )
 
     if ( NULL == pdata ) return pdata;
 
-    ego_chr_instance::dtor_this( &( pdata->inst ) );
+    gfx_mad_instance::dtor_this( &( pdata->gfx_inst ) );
 
-    EGOBOO_ASSERT( NULL == pdata->inst.vrt_lst );
+    EGOBOO_ASSERT( NULL == pdata->gfx_inst.vrt_lst );
 
     return pdata;
 }
@@ -10501,7 +9676,7 @@ ego_chr_data * ego_chr_data::dtor_this( ego_chr_data * pdata )
 ego_chr_data * ego_chr_data::init( ego_chr_data * pdata )
 {
     /// @details BB@> initialize the character data to safe values
-    ///     since we use memset(..., 0, ...), everything == 0 == false == 0.0f
+    ///     since we use SDL_memset(..., 0, ...), everything == 0 == false == 0.0f
     ///     statements are redundant
 
     int cnt;
@@ -10594,7 +9769,7 @@ ego_chr * ego_chr::alloc( ego_chr * pchr )
     dealloc( pchr );
 
     // initialize the bsp node for this character
-    ego_BSP_leaf::ctor_this( &( pchr->bsp_leaf ), 3, pchr, 1 );
+    ego_BSP_leaf::init( &( pchr->bsp_leaf ), 3, pchr, 1 );
 
     return pchr;
 }
@@ -10680,21 +9855,21 @@ ego_chr * ego_chr::dtor_this( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_chr::update_instance( ego_chr * pchr )
 {
-    ego_chr_instance * pinst;
+    gfx_mad_instance * pgfx_inst;
     egoboo_rv retval;
 
-    if ( !ACTIVE_PCHR( pchr ) ) return rv_error;
-    pinst = &( pchr->inst );
+    if ( !PROCESSING_PCHR( pchr ) ) return rv_error;
+    pgfx_inst = &( pchr->gfx_inst );
 
     // make sure that the vertices are interpolated
-    retval = ego_chr_instance::update_vertices( pinst, -1, -1, btrue );
+    retval = gfx_mad_instance::update_vertices( pgfx_inst, pchr->mad_inst.state, gfx_range( -1, -1 ), btrue );
     if ( rv_error == retval )
     {
         return rv_error;
     }
 
     // do the basic lighting
-    ego_chr_instance::update_lighting_base( pinst, pchr, bfalse );
+    gfx_mad_instance::update_lighting_base( pgfx_inst, pchr, bfalse );
 
     return retval;
 }
@@ -10953,7 +10128,7 @@ bool_t ego_chr_data::download_cap( ego_chr_data * pchr, ego_cap * pcap )
         else
         {
             Uint32 itmp = pcap->weight * pcap->size * pcap->size * pcap->size;
-            pchr->phys.weight = MIN( itmp, MAX_WEIGHT );
+            pchr->phys.weight = SDL_min( itmp, MAX_WEIGHT );
         }
 
         //// Image rendering
@@ -11087,8 +10262,8 @@ bool_t ego_chr_cap_data::download_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
     //pchr->phys.dampen    = pcap->dampen;
 
     // Load current life and mana. this may be overridden later
-    pchr->life_max = CLIP( pcap->life_spawn, LOWSTAT, ( UFP8_T )MAX( 0, pchr->life_max ) );
-    pchr->mana_max = CLIP( pcap->mana_spawn,       0, ( UFP8_T )MAX( 0, pchr->mana_max ) );
+    pchr->life_max = CLIP( pcap->life_spawn, LOWSTAT, ( UFP8_T )SDL_max( 0, pchr->life_max ) );
+    pchr->mana_max = CLIP( pcap->mana_spawn,       0, ( UFP8_T )SDL_max( 0, pchr->mana_max ) );
 
     //pchr->phys.bumpdampen = pcap->bumpdampen;
     //if ( CAP_INFINITE_WEIGHT == pcap->weight )
@@ -11098,7 +10273,7 @@ bool_t ego_chr_cap_data::download_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
     //else
     //{
     //    Uint32 itmp = pcap->weight * pcap->size * pcap->size * pcap->size;
-    //    pchr->phys.weight = MIN( itmp, MAX_WEIGHT );
+    //    pchr->phys.weight = SDL_min( itmp, MAX_WEIGHT );
     //}
 
     // Image rendering
@@ -11115,7 +10290,7 @@ bool_t ego_chr_cap_data::download_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
 
     // Experience
     iTmp = generate_irand_range( pcap->experience );
-    pchr->experience_reset = MIN( iTmp, MAX_XP );
+    pchr->experience_reset = SDL_min( iTmp, MAX_XP );
     pchr->experience_level_reset = pcap->level_override;
 
     // Particle attachments
@@ -11190,7 +10365,7 @@ bool_t ego_chr_data::upload_cap( ego_chr_data * pchr, ego_cap * pcap )
     else
     {
         Uint32 itmp = pchr->phys.weight / pchr->fat / pchr->fat / pchr->fat;
-        pcap->weight = MIN( itmp, CAP_MAX_WEIGHT );
+        pcap->weight = SDL_min( itmp, CAP_MAX_WEIGHT );
     }
 
     //// Other junk
@@ -11313,7 +10488,7 @@ bool_t ego_chr_cap_data::upload_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
     //else
     //{
     //    Uint32 itmp = pchr->phys.weight / pchr->fat / pchr->fat / pchr->fat;
-    //    pcap->weight = MIN( itmp, CAP_MAX_WEIGHT );
+    //    pcap->weight = SDL_min( itmp, CAP_MAX_WEIGHT );
     //}
 
     // Other junk
@@ -11541,7 +10716,7 @@ ego_chr *  ego_chr::do_initializing( ego_chr * pchr )
     if ( CSTR_END == pchr->spawn_data.name[0] )
     {
         // Generate a random pchr->spawn_data.name
-        snprintf( pchr->name, SDL_arraysize( pchr->name ), "%s", pro_create_chop( pchr->spawn_data.profile ) );
+        SDL_snprintf( pchr->name, SDL_arraysize( pchr->name ), "%s", pro_create_chop( pchr->spawn_data.profile ) );
     }
     else
     {
@@ -11593,13 +10768,13 @@ ego_chr *  ego_chr::do_initializing( ego_chr * pchr )
     }
 
     // initialize the character instance
-    ego_chr_instance::spawn( &( pchr->inst ), pchr->spawn_data.profile, pchr->spawn_data.skin );
+    gfx_mad_instance::spawn( &( pchr->gfx_inst ), pchr->spawn_data.profile, pchr->spawn_data.skin );
 
     // force the calculation of the matrix
     ego_chr::update_matrix( pchr, btrue );
 
     // force the instance to update
-    ego_chr_instance::update_ref( &( pchr->inst ), pchr->enviro.grid_level, btrue );
+    gfx_mad_instance::update_ref( &( pchr->gfx_inst ), pchr->enviro.grid_level, btrue );
 
     // determine whether the object is hidden
     ego_chr::update_hide( pchr );
@@ -11740,8 +10915,8 @@ ego_chr * ego_chr::do_processing( ego_chr * pchr )
     }
 
     //---- Texture movement
-    pchr->inst.uoffset += pchr->uoffvel;
-    pchr->inst.voffset += pchr->voffvel;
+    pchr->gfx_inst.uoffset += pchr->uoffvel;
+    pchr->gfx_inst.voffset += pchr->voffvel;
 
     //---- Do stats once every second
     if ( clock_chr_stat >= ONESECOND )
@@ -11757,10 +10932,10 @@ ego_chr * ego_chr::do_processing( ego_chr * pchr )
             get_chr_regeneration( pchr, &liferegen, &manaregen );
 
             pchr->mana += manaregen;
-            pchr->mana = MAX( 0, MIN( pchr->mana, pchr->mana_max ) );
+            pchr->mana = SDL_max( 0, SDL_min( pchr->mana, pchr->mana_max ) );
 
             pchr->life += liferegen;
-            pchr->life = MAX( 1, MIN( pchr->life, pchr->life_max ) );
+            pchr->life = SDL_max( 1, SDL_min( pchr->life, pchr->life_max ) );
         }
 
         // countdown confuse effects
@@ -11816,7 +10991,7 @@ bool_t ego_obj_chr::object_allocated( void )
 {
     if ( NULL == this || NULL == _container_ptr ) return bfalse;
 
-    return container_type::get_allocated( _container_ptr );
+    return FLAG_ALLOCATED_PCONT( container_type,  _container_ptr );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -11828,7 +11003,7 @@ bool_t ego_obj_chr::object_update_list_id( void )
     container_type * pcont = get_container_ptr( this );
     if ( NULL == pcont ) return bfalse;
 
-    if ( !container_type::get_allocated( pcont ) ) return bfalse;
+    if ( !FLAG_ALLOCATED_PCONT( container_type,  pcont ) ) return bfalse;
 
     // deal with the return state
     if ( !get_valid( this ) )
@@ -11891,3 +11066,184 @@ bool_t ego_obj_chr::request_terminate( ego_bundle_chr * pbdl_chr )
     return retval;
 }
 
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_chr::set_frame( ego_chr * pchr, int frame, int ilip )
+{
+    /// @details ZZ@> This function sets the frame for a character explicitly.
+    /// This is used to rotate Tank turrets
+
+    if ( NULL == pchr ) return rv_error;
+
+    if ( rv_success != mad_instance::set_frame( &( pchr->mad_inst ), frame, ilip ) )
+    {
+        return rv_fail;
+    }
+
+    chr_invalidate_instances( pchr );
+
+    return rv_success;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv ego_chr::set_anim( ego_chr * pchr, int action, int frame, int ilip )
+{
+    /// @details ZZ@> This function sets a frame and an action explicitly
+
+    egoboo_rv retval = rv_fail;
+    ego_mad * pmad;
+
+    mad_instance * pmad_inst;
+    gfx_mad_instance * pgfx_inst;
+
+    if ( !INGAME_PCHR( pchr ) ) return rv_error;
+    pmad_inst  = &( pchr->mad_inst );
+    pgfx_inst  = &( pchr->gfx_inst );
+
+    if ( LOADED_MAD( pmad_inst->imad ) ) return rv_error;
+    pmad = MadStack + pmad_inst->imad;
+
+    // grab the correct action
+    action = mad_get_action( pmad_inst->imad, action );
+
+    // set the action and frame
+    retval = rv_fail;
+    if ( rv_success == ego_chr::set_action( pchr, action, btrue, btrue ) )
+    {
+        retval = ego_chr::set_frame( pchr, frame, ilip );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset )
+{
+    /// @details BB@> Fill the grip_verts[] array from the mount's data.
+    ///     Return the number of vertices found.
+
+    Uint32  i;
+    int vrt_count, tnc;
+
+    ego_chr * pmount;
+    ego_mad * pmount_mad;
+
+    if ( NULL == grip_verts ) return 0;
+
+    // set all the vertices to a "safe" value
+    for ( i = 0; i < GRIP_VERTS; i++ )
+    {
+        grip_verts[i] = 0xFFFF;
+    }
+
+    pmount = ChrObjList.get_allocated_data_ptr( imount );
+    if ( !INGAME_PCHR( pmount ) ) return 0;
+
+    pmount_mad = ego_chr::get_pmad( imount );
+    if ( NULL == pmount_mad ) return 0;
+
+    if ( 0 == pmount->gfx_inst.vrt_count ) return 0;
+
+    //---- set the proper weapongrip vertices
+    tnc = ( signed )pmount->gfx_inst.vrt_count - ( signed )vrt_offset;
+
+    // if the starting vertex is less than 0, just take the first vertex
+    if ( tnc < 0 )
+    {
+        grip_verts[0] = 0;
+        return 1;
+    }
+
+    vrt_count = 0;
+    for ( i = 0; i < GRIP_VERTS; i++ )
+    {
+        if ( tnc + i < pmount->gfx_inst.vrt_count )
+        {
+            grip_verts[i] = tnc + i;
+            vrt_count++;
+        }
+        else
+        {
+            grip_verts[i] = 0xFFFF;
+        }
+    }
+
+    return vrt_count;
+}
+
+//--------------------------------------------------------------------------------------------
+int convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_t dst_point[] )
+{
+    /// @details ZZ@> a helper function for gfx_mad_matrix_data::generate_weapon_matrix()
+
+    int cnt, point_count;
+
+    if ( NULL == grip_verts || NULL == dst_point ) return 0;
+
+    if ( !PROCESSING_PCHR( pholder ) ) return 0;
+
+    // count the valid weapon connection dst_points
+    point_count = 0;
+    for ( cnt = 0; cnt < GRIP_VERTS; cnt++ )
+    {
+        if ( 0xFFFF != grip_verts[cnt] )
+        {
+            point_count++;
+        }
+    }
+
+    // do the best we can
+    if ( 0 == point_count )
+    {
+        // punt! attach to origin
+        dst_point[0].x = pholder->pos.x;
+        dst_point[0].y = pholder->pos.y;
+        dst_point[0].z = pholder->pos.z;
+        dst_point[0].w = 1;
+
+        point_count = 1;
+    }
+    else
+    {
+        // update the grip vertices
+        gfx_mad_instance::update_grip_verts( &( pholder->gfx_inst ), grip_verts, GRIP_VERTS );
+
+        // copy the vertices into dst_point[]
+        for ( point_count = 0, cnt = 0; cnt < GRIP_VERTS; cnt++, point_count++ )
+        {
+            Uint16 vertex = grip_verts[cnt];
+
+            if ( 0xFFFF == vertex ) continue;
+
+            dst_point[point_count].x = pholder->gfx_inst.vrt_lst[vertex].pos[XX];
+            dst_point[point_count].y = pholder->gfx_inst.vrt_lst[vertex].pos[YY];
+            dst_point[point_count].z = pholder->gfx_inst.vrt_lst[vertex].pos[ZZ];
+            dst_point[point_count].w = 1.0f;
+        }
+    }
+
+    return point_count;
+}
+
+//--------------------------------------------------------------------------------------------
+int convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[], fvec4_t   dst_point[] )
+{
+    /// @details ZZ@> a helper function for gfx_mad_matrix_data::generate_weapon_matrix()
+
+    ego_chr *   pholder;
+    int       point_count;
+    fvec4_t   src_point[GRIP_VERTS];
+
+    pholder = ChrObjList.get_allocated_data_ptr( iholder );
+    if ( !INGAME_PCHR( pholder ) ) return 0;
+
+    // find the grip points in the character's "local" or "body-fixed" coordinates
+    point_count = convert_grip_to_local_points( pholder, grip_verts, src_point );
+
+    if ( 0 == point_count ) return 0;
+
+    // use the math function instead of rolling out own
+    TransformVertices( &( pholder->gfx_inst.matrix ), src_point, dst_point, point_count );
+
+    return point_count;
+}

@@ -415,9 +415,10 @@ struct ego_chr_data : public ego_chr_cap_data
 
     // model info
     bool_t           is_overlay;                    ///< Is this an overlay? Track aitarget...
-    PRO_REF          profile_ref;                      ///< Character's profile
-    PRO_REF          basemodel_ref;                     ///< The true form
-    ego_chr_instance inst;                          ///< the render data
+    PRO_REF          profile_ref;                   ///< Character's profile
+    PRO_REF          basemodel_ref;                 ///< The true form
+    gfx_mad_instance gfx_inst;                      ///< the render data
+    mad_instance     mad_inst;                      ///< the animation data
 
     // Skills
     int           darkvision_level;
@@ -565,7 +566,6 @@ public:
     static ego_chr *  update_hide( ego_chr * pchr );
     static egoboo_rv  update_collision_size( ego_chr * pchr, bool_t update_matrix );
     static bool_t     matrix_valid( ego_chr * pchr );
-    static bool_t     generate_matrix_cache( ego_chr * pchr, ego_matrix_cache * mc_tmp );
 
     // generic accessors
     static void set_enviro_grid_level( ego_chr * pchr, float level );
@@ -594,14 +594,14 @@ public:
     static TX_REF         get_icon_ref( const CHR_REF & item );
 
     // animation stuff
-    static Uint32    get_framefx( ego_chr * pchr );
-    static void      set_frame( const CHR_REF & character, int action, int frame, int lip );
-    static egoboo_rv set_action( ego_chr * pchr, int action, bool_t action_ready, bool_t override_action );
-    static egoboo_rv set_anim( ego_chr * pchr, int action, int frame, bool_t action_ready, bool_t override_action );
-    static egoboo_rv start_anim( ego_chr * pchr, int action, bool_t action_ready, bool_t override_action );
+    static egoboo_rv set_action( ego_chr * pchr, int next_action, bool_t next_ready = bfalse, bool_t override_action = bfalse );
+    static egoboo_rv start_anim( ego_chr * pchr, int next_action, bool_t next_ready = bfalse, bool_t override_action = bfalse );
+    static egoboo_rv play_action( ego_chr * pchr, int next_action, bool_t next_ready = bfalse );
+    static egoboo_rv set_anim( ego_chr * pchr, int next_action, int frame = 0, int lip = 0 );
+    static egoboo_rv set_frame( ego_chr * pchr, int frame, int lip = 0 );
     static egoboo_rv increment_action( ego_chr * pchr );
     static egoboo_rv increment_frame( ego_chr * pchr );
-    static egoboo_rv play_action( ego_chr * pchr, int action, bool_t action_ready );
+    static BIT_FIELD get_framefx( ego_chr * pchr );
 
     // functions related to stored positions
     static bool_t  update_breadcrumb_raw( ego_chr * pchr );
@@ -611,6 +611,7 @@ public:
     static bool_t  update_safe_raw( ego_chr * pchr );
     static bool_t  update_safe( ego_chr * pchr, bool_t force );
     static bool_t  get_safe( ego_chr * pchr, fvec3_base_t pos );
+    static bool_t set_mad( ego_chr * pchr, const MAD_REF & imad );
 
     // INLINE functions
 
@@ -631,7 +632,7 @@ public:
     static INLINE ego_team         * get_pteam( const CHR_REF & ichr );
     static INLINE ego_team         * get_pteam_base( const CHR_REF & ichr );
     static INLINE ego_ai_state     * get_pai( const CHR_REF & ichr );
-    static INLINE ego_chr_instance * get_pinstance( const CHR_REF & ichr );
+    static INLINE gfx_mad_instance * get_pinstance( const CHR_REF & ichr );
 
     static INLINE IDSZ       get_idsz( const CHR_REF & ichr, int type );
     static INLINE latch_2d_t convert_latch_2d( const ego_chr * pchr, const latch_2d_t & src );
@@ -692,7 +693,7 @@ protected:
 
     static int change_skin( const CHR_REF & character, Uint32 skin );
 
-    static egoboo_rv matrix_cache_needs_update( ego_chr * pchr, ego_matrix_cache * pmc );
+    static egoboo_rv matrix_data_needs_update( ego_chr * pchr, gfx_mad_matrix_data & pmc );
 
 private:
 
@@ -848,6 +849,8 @@ struct ego_bundle_chr
     CAP_REF   cap_ref;
     ego_cap * cap_ptr;
 
+    ego_bundle_chr( ego_chr * pchr = NULL ) { ctor_this( this ); if ( NULL != pchr ) set( this, pchr );  }
+
     static ego_bundle_chr * ctor_this( ego_bundle_chr * pbundle );
     static ego_bundle_chr * validate( ego_bundle_chr * pbundle );
     static ego_bundle_chr * set( ego_bundle_chr * pbundle, ego_chr * pchr );
@@ -889,7 +892,7 @@ bool_t release_one_cap( const CAP_REF & icap );
 
 void reset_teams();
 
-bool_t apply_reflection_matrix( ego_chr_instance * pinst, float grid_level );
+bool_t apply_reflection_matrix( gfx_mad_instance * pinst, float grid_level );
 
 // generic helper functions
 bool_t  chr_teleport( const CHR_REF & ichr, float x, float y, float z, FACING_T facing_z );
@@ -908,7 +911,7 @@ const char * describe_damage( float value, float maxval, int * rank_ptr );
 const char * describe_wounds( float max, float current );
 
 // physics function
-void   character_physics_initialize();
+void   character_physics_initialize_all();
 void   character_physics_finalize_all( float dt );
 bool_t character_physics_get_mass_pair( ego_chr * pchr_a, ego_chr * pchr_b, float * wta, float * wtb );
 
@@ -917,5 +920,10 @@ bool_t chr_is_over_water( ego_chr *pchr );
 float calc_dismount_lerp( const ego_chr * pchr_a, const ego_chr * pchr_b );
 
 bool_t chr_copy_enviro( ego_chr * chr_psrc, ego_chr * chr_pdst );
+
+//---- helper functions
+int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset );
+int convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_t dst_point[] );
+int convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
 
 #define _char_h

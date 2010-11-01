@@ -26,10 +26,12 @@
 /// caution, and bring one of those canaries with you to make sure you
 /// don't run out of oxygen.
 
+#include "egoboo_defs.h"
+
 #include "egoboo_config.h"       /* configure for this platform */
-#include "egoboo_typedef.h"      /* Typedefs for various platforms */
 #include "egoboo_math.h"         /* vector and matrix math */
 #include "egoboo_setup.h"
+#include "egoboo_process.h"
 
 #include "file_common.h"
 
@@ -44,139 +46,107 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 
-// The following magic allows this include to work in multiple files
-#if defined(DECLARE_GLOBALS)
-#    define EXTERN
-#    define EQ(x) = x
-#else
-#    define EXTERN extern
-#    define EQ(x)
-#endif
-
-#define VERSION "2.8.1"                            ///< Version of the game
-
-#define SPELLBOOK           127                     ///< The spellbook model
-
-#define DAMAGERAISE         25                  ///< Tolerance for damage tiles
-
-/* SDL_GetTicks() always returns milli seconds */
-#define TICKS_PER_SEC                   1000.0f
-
-#define TARGET_FPS                      30.0f
-#define FRAME_SKIP                      (TICKS_PER_SEC/TARGET_FPS)    ///< 1000 tics per sec / 50 fps = 20 ticks per frame
-
-#define EMULATE_UPS                     50.0f
-#define TARGET_UPS                      50.0f
-#define UPDATE_SCALE                    (EMULATE_UPS/(stabilized_ups_sum/stabilized_ups_weight))
-#define UPDATE_SKIP                     (TICKS_PER_SEC/TARGET_UPS)    ///< 1000 tics per sec / 50 fps = 20 ticks per frame
-#define ONESECOND                       (TICKS_PER_SEC/UPDATE_SKIP)    ///< 1000 tics per sec / 20 ticks per frame = 50 fps
-
-//------------------------------------
-// Timers
-//------------------------------------
-// Display
-EXTERN bool_t          timeron     EQ( bfalse );          ///< Game timer displayed?
-EXTERN Uint32          timervalue  EQ( 0 );           ///< Timer time ( 50ths of a second )
-
-// fps stuff
-EXTERN Sint32          fps_clock             EQ( 0 );             ///< The number of ticks this second
-EXTERN Uint32          fps_loops             EQ( 0 );             ///< The number of frames drawn this second
-EXTERN float           stabilized_fps        EQ( TARGET_FPS );
-EXTERN float           stabilized_fps_sum    EQ( 0 );
-EXTERN float           stabilized_fps_weight EQ( 0 );
-
-EXTERN float           est_max_fps           EQ( TARGET_FPS );
-EXTERN float           est_render_time       EQ( 1.0f / TARGET_FPS );
-
-EXTERN float           est_update_time       EQ( 1.0f / TARGET_UPS );
-EXTERN float           est_max_ups           EQ( TARGET_UPS );
-
-EXTERN float           est_gfx_time          EQ( 1.0f / TARGET_FPS );
-EXTERN float           est_max_gfx           EQ( TARGET_FPS );
-
-EXTERN float           est_single_update_time  EQ( 1.0f / TARGET_UPS );
-EXTERN float           est_single_ups          EQ( TARGET_UPS );
-
-EXTERN float           est_update_game_time  EQ( 1.0f / TARGET_UPS );
-EXTERN float           est_max_game_ups      EQ( TARGET_UPS );
-
-EXTERN Sint32          ups_clock             EQ( 0 );             ///< The number of ticks this second
-EXTERN Uint32          ups_loops             EQ( 0 );             ///< The number of frames drawn this second
-EXTERN float           stabilized_ups        EQ( TARGET_UPS );
-EXTERN float           stabilized_ups_sum    EQ( 0 );
-EXTERN float           stabilized_ups_weight EQ( 0 );
-
-// Timers
-EXTERN signed          ticks_last  EQ( 0 );
-EXTERN signed          ticks_now   EQ( 0 );
-EXTERN signed          clock_stt   EQ( 0 );             ///< GetTickCount at start
-EXTERN signed          clock_all   EQ( 0 );             ///< The total number of ticks so far
-EXTERN signed          clock_lst   EQ( 0 );             ///< The last total of ticks so far
-EXTERN signed          clock_wld   EQ( 0 );             ///< The sync clock
-EXTERN signed          clock_fps   EQ( 0 );             ///< The number of ticks this second
-EXTERN unsigned        update_wld  EQ( 0 );             ///< The number of times the game has been updated
-EXTERN unsigned        frame_all   EQ( 0 );             ///< The total number of frames drawn so far
-EXTERN unsigned        frame_fps   EQ( 0 );             ///< The number of frames drawn this second
-EXTERN Uint32          clock_enc_stat  EQ( 0 );         ///< For character stat regeneration
-EXTERN Uint32          clock_chr_stat  EQ( 0 );         ///< For enchant stat regeneration
-EXTERN Uint32          clock_shared_stat  EQ( 0 );      ///< For shared abilities and local_players_dead
-EXTERN Uint32          clock_pit   EQ( 0 );             ///< For pit kills
-EXTERN bool_t          outofsync   EQ( 0 );
-EXTERN unsigned        true_update EQ( 0 );
-EXTERN unsigned        true_frame  EQ( 0 );
-EXTERN signed          update_lag  EQ( 0 );
-EXTERN bool_t          soundon  EQ( btrue );              ///< Is the sound alive?
-
-EXTERN bool_t          pickedmodule_ready EQ( bfalse ); ///< Is there a new picked module?
-EXTERN int             pickedmodule_index EQ( -1 );     ///< The module index number
-EXTERN STRING          pickedmodule_path;               ///< The picked module's full path name
-EXTERN STRING          pickedmodule_name;               ///< The picked module's short name
-EXTERN STRING          pickedmodule_write_path;         ///< The picked module's path name relative to the userdata directory
-
-// Respawning
-EXTERN int                      revivetimer EQ( 0 );
-
-// Imports
-EXTERN int                     local_import_count;                     ///< Number of imports from this machine
-EXTERN BIT_FIELD               local_import_control[16];             ///< Input bits for each imported player
-EXTERN int                     local_import_slot[16];                ///< For local imports
-
-// EWWWW. GLOBALS ARE EVIL.
-
-// KEYBOARD
-EXTERN bool_t console_mode EQ( bfalse );                   ///< Input text from keyboard?
-EXTERN bool_t console_done EQ( bfalse );                   ///< Input text from keyboard finished?
-
-#define INVISIBLE           20                      ///< The character can't be detected
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// Shared stats
-struct ego_local_shared_stats
+
+/// an in-game clock that tracks elapsed time, elapsed frames, and elapsed updates
+struct ego_clock
 {
-    int        seeinvis_level;
-    int     seedark_level;
-    int        grog_level;
-    int        daze_level;
-    int     seekurse_level;
-    int     listen_level;                  ///< Players with listen skill?
+    bool_t   initialized;
 
-    bool_t  allpladead;                      ///< Has everyone died?
+    unsigned update_old;
+    unsigned update_new;
+    signed   update_cnt;
+    signed   update_dif;
 
-    // ESP ability
-    TEAM_REF sense_enemy_team;
-    IDSZ     sense_enemy_ID;
+    unsigned frame_old;
+    unsigned frame_new;
+    signed   frame_cnt;
+    signed   frame_dif;
 
-    /// @todo ZF@> Dont think this one is supposed to be in here
-    bool_t  noplayers;                    ///< Are there any local players?
+    Uint32 tick_old;
+    Uint32 tick_new;
+    Uint32 tick_cnt;
+    Sint32 tick_dif;
+
+    ego_clock() { clear(); }
+
+    void update_counters()
+    {
+        update_old  = update_new;
+        update_new  = update_wld;
+        update_dif  = signed( update_new ) - signed( update_old );
+        update_cnt += update_dif;
+
+        frame_old  = frame_new;
+        frame_new  = frame_all;
+        frame_dif  = signed( frame_new ) - signed( frame_old );
+        frame_cnt += frame_dif;
+    }
+
+    void update_ticks()
+    {
+        tick_old  = tick_new;
+        tick_new  = egoboo_get_ticks();
+        tick_dif  = tick_new - tick_old;
+        tick_cnt += tick_dif;
+    }
+
+    void update_ticks( Sint32 dif )
+    {
+        tick_old  = tick_new;
+        tick_new += dif;
+        tick_dif  = dif;
+        tick_cnt += dif;
+    }
+
+    /// try to prevent overflow in these registers
+    void blank()
+    {
+        update_cnt = 0;
+        frame_cnt  = 0;
+        tick_cnt   = 0;
+    }
+
+    void init() { clear(); initialized = btrue; }
+
+    void clear()
+    {
+        update_new = update_wld;
+        update_old = update_wld;
+        update_cnt = 0;
+        update_dif = 0;
+
+        frame_new = frame_all;
+        frame_old = frame_all;
+        frame_cnt = 0;
+        frame_dif = 0;
+
+        tick_new = egoboo_get_ticks();
+        tick_old = tick_new;
+        tick_cnt = 0;
+        tick_dif = 0;
+    }
+
 };
 
-extern ego_local_shared_stats local_stats;
+struct picked_module_info
+{
+    bool_t          ready;              ///< Is there a new picked module?
+    int             index;              ///< The module index number
+    STRING          path;               ///< The picked module's full path name
+    STRING          name;               ///< The picked module's short name
+    STRING          write_path;         ///< The picked module's path name relative to the userdata directory
+
+    picked_module_info( int idx = -1 ) { init( idx ); }
+
+    void init( int idx = -1 );
+};
+
+extern picked_module_info pickedmodule;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-
-#include "egoboo_process.h"
 
 /// a process that controls the master loop of the program
 
@@ -204,7 +174,7 @@ private:
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         ptr->screenshot_keyready = btrue;
 
@@ -265,21 +235,17 @@ extern ego_config_data ego_cfg;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
+/// the main process
 extern ego_main_process * EProc;
 
+// the clock for tracking the frames-per-second
+extern ego_clock fps_clk;
+
+// the clock for tracking updates-per-second
+extern ego_clock ups_clk;
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-void ego_init_SDL_base( void );
+#define  _egoboo_h
 
-EXTERN bool_t single_frame_mode EQ( bfalse );
-EXTERN bool_t single_frame_keyready EQ( btrue );
-EXTERN bool_t single_frame_requested EQ( bfalse );
-EXTERN bool_t single_update_requested EQ( bfalse );
-
-void egoboo_clear_vfs_paths( void );
-void egoboo_setup_vfs_paths( void );
-
-Uint32 egoboo_get_ticks( void );
-
-#define  _EGOBOO_H

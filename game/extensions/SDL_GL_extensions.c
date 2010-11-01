@@ -235,7 +235,7 @@ SDLX_video_parameters_t * SDL_GL_set_mode( SDLX_video_parameters_t * v_old, SDLX
         }
         else
         {
-            memcpy( &param_old, v_old, sizeof( SDLX_video_parameters_t ) );
+            SDL_memcpy( &param_old, v_old, sizeof( SDLX_video_parameters_t ) );
         }
     }
     else
@@ -327,7 +327,7 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
 
     screen  = SDL_GetVideoSurface();
     pformat = screen->format;
-    memcpy( &tmpformat, screen->format, sizeof( SDL_PixelFormat ) );   // make a copy of the format
+    SDL_memcpy( &tmpformat, screen->format, sizeof( SDL_PixelFormat ) );   // make a copy of the format
 
     // if( ogl_caps.alpha_bits > 0 )
     {

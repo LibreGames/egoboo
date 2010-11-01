@@ -68,8 +68,8 @@ IDSZ fget_idsz( vfs_FILE* fileread )
 
         for ( i = 0; i < 4; i++ )
         {
-            cTmp = toupper( vfs_getc( fileread ) );
-            if ( !isalpha( cTmp ) && !isdigit( cTmp ) && ( '_' != cTmp ) ) break;
+            cTmp = SDL_toupper( vfs_getc( fileread ) );
+            if ( !isalpha( cTmp ) && !SDL_isdigit( cTmp ) && ( '_' != cTmp ) ) break;
 
             idsz_str[i] = cTmp;
         }
@@ -105,7 +105,7 @@ bool_t fcopy_line( vfs_FILE * fileread, vfs_FILE * filewrite )
 
     vfs_gets( linebuffer, SDL_arraysize( linebuffer ), fileread );
     vfs_puts( linebuffer, filewrite );
-    while ( strlen( linebuffer ) == SDL_arraysize( linebuffer ) )
+    while ( SDL_strlen( linebuffer ) == SDL_arraysize( linebuffer ) )
     {
         vfs_gets( linebuffer, SDL_arraysize( linebuffer ), fileread );
         vfs_puts( linebuffer, filewrite );
@@ -170,7 +170,7 @@ char goto_delimiter_list( char * buffer, vfs_FILE* fileread, const char * delim_
     if ( vfs_eof( fileread ) || vfs_error( fileread ) ) return bfalse;
 
     // use a simpler function if it is easier
-    if ( 1 == strlen( delim_list ) )
+    if ( 1 == SDL_strlen( delim_list ) )
     {
         bool_t rv = goto_delimiter( buffer, fileread, delim_list[0], optional );
         retval = rv ? delim_list[0] : retval;
@@ -183,7 +183,7 @@ char goto_delimiter_list( char * buffer, vfs_FILE* fileread, const char * delim_
     cTmp = vfs_getc( fileread );
     while ( !vfs_eof( fileread ) && !vfs_error( fileread ) )
     {
-        is_delim = ( NULL != strchr( delim_list, cTmp ) );
+        is_delim = ( NULL != SDL_strchr( delim_list, cTmp ) );
 
         if ( is_delim )
         {
@@ -268,7 +268,7 @@ char fget_first_letter( vfs_FILE* fileread )
     /// @details ZZ@> This function returns the next non-whitespace character
     char cTmp;
     vfs_scanf( fileread, "%c", &cTmp );
-    while ( isspace( cTmp ) )
+    while ( SDL_isspace( cTmp ) )
     {
         vfs_scanf( fileread, "%c", &cTmp );
     }
@@ -294,7 +294,7 @@ bool_t fget_name( vfs_FILE* fileread,  char *szName, size_t max_len )
 
     // limit the max length of the string!
     // return value if the number of fields fields, not amount fields from file
-    snprintf( format, SDL_arraysize( format ), "%%%ds", max_len - 1 );
+    SDL_snprintf( format, SDL_arraysize( format ), "%%%ds", max_len - 1 );
 
     szName[0] = CSTR_END;
     fields = vfs_scanf( fileread, format, szName );
@@ -549,8 +549,8 @@ bool_t fget_range( vfs_FILE* fileread, FRange * prange )
 
     if ( NULL != prange )
     {
-        prange->from = MIN( fFrom, fTo );
-        prange->to   = MAX( fFrom, fTo );
+        prange->from = SDL_min( fFrom, fTo );
+        prange->to   = SDL_max( fFrom, fTo );
     }
 
     return btrue;
@@ -642,7 +642,7 @@ int fget_version( vfs_FILE* fileread )
         if ( 0x0A == ch || 0x0D == ch ) { newline = btrue; iscomment = bfalse; continue; }
 
         // ignore whitespace
-        if ( isspace( ch ) ) continue;
+        if ( SDL_isspace( ch ) ) continue;
 
         // possible comment
         if ( '/' == ch )
@@ -797,7 +797,7 @@ bool_t fget_string( vfs_FILE * fileread, char * str, size_t str_len )
 
     if ( NULL == str || 0 == str_len ) return bfalse;
 
-    snprintf( format_str, SDL_arraysize( format_str ), "%%%ds", str_len - 1 );
+    SDL_snprintf( format_str, SDL_arraysize( format_str ), "%%%ds", str_len - 1 );
 
     str[0] = CSTR_END;
     fields = vfs_scanf( fileread, format_str, str );
@@ -865,7 +865,7 @@ int fget_damage_type( vfs_FILE * fileread )
 
     cTmp = fget_first_letter( fileread );
 
-    switch ( toupper( cTmp ) )
+    switch ( SDL_toupper( cTmp ) )
     {
         case 'S': type = DAMAGE_SLASH; break;
         case 'C': type = DAMAGE_CRUSH; break;
@@ -893,7 +893,7 @@ bool_t fget_bool( vfs_FILE * fileread )
 {
     char cTmp = fget_first_letter( fileread );
 
-    return ( 'T' == toupper( cTmp ) );
+    return ( 'T' == SDL_toupper( cTmp ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -917,25 +917,25 @@ void GLSetup_SupportedFormats()
     // support transparency are first
     if ( cfg.sdl_image_allowed )
     {
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".png" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".tif" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".tiff" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".gif" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".pcx" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".ppm" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".jpg" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".jpeg" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".xpm" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".pnm" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".lbm" ); type++;
-        snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".tga" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".png" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".tif" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".tiff" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".gif" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".pcx" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".ppm" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".jpg" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".jpeg" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".xpm" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".pnm" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".lbm" ); type++;
+        SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".tga" ); type++;
     }
 
     // These typed are natively supported with SDL
     // Place them *after* the SDL_image types, so that if both are present,
     // the other types will be preferred over bmp
-    snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".bmp" ); type++;
-    snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".BMP" ); type++;
+    SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".bmp" ); type++;
+    SDL_snprintf( TxFormatSupported[type], SDL_arraysize( TxFormatSupported[type] ), ".BMP" ); type++;
 
     // Save the amount of format types we have in store
     maxformattypes = type;
@@ -969,7 +969,7 @@ Uint32  ego_texture_load_vfs( oglx_texture_t *texture, const char *filename, Uin
         // try all different formats
         for ( type = 0; type < maxformattypes; type++ )
         {
-            snprintf( fullname, SDL_arraysize( fullname ), "%s%s", filename, TxFormatSupported[type] );
+            SDL_snprintf( fullname, SDL_arraysize( fullname ), "%s%s", filename, TxFormatSupported[type] );
             retval = oglx_texture_Load( texture, vfs_resolveReadFilename( fullname ), key );
             if ( INVALID_GL_ID != retval ) break;
         }
@@ -979,7 +979,7 @@ Uint32  ego_texture_load_vfs( oglx_texture_t *texture, const char *filename, Uin
         image = NULL;
 
         // normal SDL only supports bmp
-        snprintf( fullname, SDL_arraysize( fullname ), "%s.bmp", filename );
+        SDL_snprintf( fullname, SDL_arraysize( fullname ), "%s.bmp", filename );
         image = SDL_LoadBMP( vfs_resolveReadFilename( fullname ) );
 
         // We could not load the image
@@ -1009,7 +1009,7 @@ Uint32 fget_damage_modifier( vfs_FILE * fileread )
 
     cTmp = fget_first_letter( fileread );
 
-    switch ( toupper( cTmp ) )
+    switch ( SDL_toupper( cTmp ) )
     {
         case 'T': iTmp = DAMAGEINVERT;        break;
         case 'C': iTmp = DAMAGECHARGE;        break;

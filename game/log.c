@@ -47,7 +47,7 @@ static void writeLogMessage( const char *prefix, const char *format, va_list arg
 {
     if ( NULL != logFile )
     {
-        vsnprintf( logBuffer, MAX_LOG_MESSAGE - 1, format, args );
+        SDL_vsnprintf( logBuffer, MAX_LOG_MESSAGE - 1, format, args );
         fputs( prefix, logFile );
         fputs( logBuffer, logFile );
 

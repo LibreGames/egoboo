@@ -541,7 +541,7 @@ void insert_space( int position )
     ///    there already
 
     char cTmp, cSwap;
-    if ( !isspace( cLineBuffer[position] ) )
+    if ( !SDL_isspace( cLineBuffer[position] ) )
     {
         cTmp = cLineBuffer[position];
         cLineBuffer[position] = ' ';
@@ -607,7 +607,7 @@ int load_one_line( int read )
             cTmp = ' ';
         }
 
-        if ( !isspace( cTmp ) )
+        if ( !SDL_isspace( cTmp ) )
         {
             break;
         }
@@ -641,7 +641,7 @@ int load_one_line( int read )
             cTmp = ' ';
         }
 
-        if ( !isspace( cTmp ) )
+        if ( !SDL_isspace( cTmp ) )
         {
             foundtext = btrue;
 
@@ -694,7 +694,7 @@ void surround_space( int position )
     insert_space( position + 1 );
     if ( position > 0 )
     {
-        if ( !isspace( cLineBuffer[position-1] ) )
+        if ( !SDL_isspace( cLineBuffer[position-1] ) )
         {
             insert_space( position );
         }
@@ -711,7 +711,7 @@ int get_indentation()
 
     cnt = 0;
     cTmp = cLineBuffer[cnt];
-    while ( isspace( cTmp ) )
+    while ( SDL_isspace( cTmp ) )
     {
         cnt++;
         cTmp = cLineBuffer[cnt];
@@ -782,7 +782,7 @@ int parse_token( int read )
 
     // Skip spaces
     cTmp = cLineBuffer[read];
-    while ( isspace( cTmp ) && read < iLineSize )
+    while ( SDL_isspace( cTmp ) && read < iLineSize )
     {
         read++;
         cTmp = cLineBuffer[read];
@@ -791,7 +791,7 @@ int parse_token( int read )
 
     // Load the word into the other buffer
     wordsize = 0;
-    while ( !isspace( cTmp ) && CSTR_END != cTmp )
+    while ( !SDL_isspace( cTmp ) && CSTR_END != cTmp )
     {
         Token.cWord[wordsize] = cTmp;  wordsize++;
         read++;
@@ -800,9 +800,9 @@ int parse_token( int read )
     Token.cWord[wordsize] = CSTR_END;
 
     // Check for numeric constant
-    if ( 0 != isdigit( Token.cWord[0] ) )
+    if ( 0 != SDL_isdigit( Token.cWord[0] ) )
     {
-        sscanf( Token.cWord, "%d", &Token.iValue );
+        SDL_sscanf( Token.cWord, "%d", &Token.iValue );
         Token.cType  = 'C';
         Token.iIndex = MAX_OPCODE;
         { print_token();  return read; }
@@ -1060,7 +1060,7 @@ Uint32 jump_goto( int index, int index_end )
         }
     }
 
-    return MIN( index, index_end );
+    return SDL_min( index, index_end );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1126,10 +1126,10 @@ void get_code( int read )
     int iTmp;
     STRING sTmp;
 
-    sscanf(( char* )( cLoadBuffer + read ), "%c%d%255s", &cTmp, &iTmp, sTmp );
+    SDL_sscanf(( char* )( cLoadBuffer + read ), "%c%d%255s", &cTmp, &iTmp, sTmp );
 
     strncpy( OpList.ary[OpList.count].cName, sTmp, SDL_arraysize( OpList.ary[OpList.count].cName ) );
-    OpList.ary[OpList.count].cType  = toupper( cTmp );
+    OpList.ary[OpList.count].cType  = SDL_toupper( cTmp );
     OpList.ary[OpList.count].iValue = iTmp;
 }
 

@@ -131,10 +131,10 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 // BIT FIELDS
     typedef Uint32 BIT_FIELD;                                ///< A big string supporting 32 bits
-#define FULL_BIT_FIELD        ((BIT_FIELD)(~0))            ///< A bit string where all bits are flagged as 1
+#define FULL_BIT_FIELD        BIT_FIELD(~0)            ///< A bit string where all bits are flagged as 1
 #define EMPTY_BIT_FIELD         0                            ///< A bit string where all bits are flagged as 0
 #define FILL_BIT_FIELD(XX)    (XX) = FULL_BIT_FIELD        ///< Fills up all bits in a bit pattern
-#define CLEAR_BIT_FIELD(XX) (XX) = 0                    ///< Resets all bits in a BIT_FIELD to 0
+#define CLEAR_BIT_FIELD(XX)   (XX) = EMPTY_BIT_FIELD                    ///< Resets all bits in a BIT_FIELD to 0
 
 #if !defined(ADD_BITS)
 #define ADD_BITS(XX, YY) (XX) |= (YY)

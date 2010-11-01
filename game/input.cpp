@@ -71,7 +71,7 @@ void input_device_init( ego_input_device * pdevice )
 {
     if ( NULL == pdevice ) return;
 
-    memset( pdevice, 0, sizeof( *pdevice ) );
+    SDL_memset( pdevice, 0, sizeof( *pdevice ) );
 
     pdevice->sustain = 0.58f;
     pdevice->cover   = 1.0f - pdevice->sustain;
@@ -81,7 +81,7 @@ void input_device_init( ego_input_device * pdevice )
 void input_init_keyboard()
 {
     // set up the keyboard
-    memset( &keyb, 0, sizeof( keyb ) );
+    SDL_memset( &keyb, 0, sizeof( keyb ) );
     init_scancodes();
     keyb.on        = btrue;
     keyb.count     = 0;
@@ -92,7 +92,7 @@ void input_init_keyboard()
 void input_init_mouse()
 {
     /// @details BB@> set up the mouse
-    memset( &mous, 0, sizeof( mous ) );
+    SDL_memset( &mous, 0, sizeof( mous ) );
     mous.on      = btrue;
     mous.sense   = 24;
 }
@@ -106,7 +106,7 @@ void input_init_joysticks()
 
     for ( i = 0; i < MAXJOYSTICK; i++ )
     {
-        memset( joy + i, 0, sizeof( ego_device_joystick ) );
+        SDL_memset( joy + i, 0, sizeof( ego_device_joystick ) );
 
         if ( i < SDL_NumJoysticks() )
         {
@@ -197,7 +197,7 @@ void input_read_joystick( int which )
 
     // get buttons
     button_count = SDL_JoystickNumButtons( pjoy->sdl_ptr );
-    button_count = MIN( JOYBUTTON, button_count );
+    button_count = SDL_min( JOYBUTTON, button_count );
     for ( i = 0; i < button_count; i++ )
     {
         pjoy->button[i] = SDL_JoystickGetButton( pjoy->sdl_ptr, i );

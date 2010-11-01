@@ -71,7 +71,7 @@ void fs_removeDirectoryAndContents( const char *dirname, int recursive )
         // Ignore files that start with a ., like .svn for example.
         if ( '.' != fileName[0] )
         {
-            snprintf( filePath, MAX_PATH, "%s" SLASH_STR "%s", dirname, fileName );
+            SDL_snprintf( filePath, MAX_PATH, "%s" SLASH_STR "%s", dirname, fileName );
             if ( fs_fileIsDirectory( filePath ) )
             {
                 if ( recursive )
@@ -116,8 +116,8 @@ void fs_copyDirectory( const char *sourceDir, const char *destDir )
             // Ignore files that begin with a .
             if ( '.' != fileName[0] )
             {
-                snprintf( srcPath, MAX_PATH, "%s" SLASH_STR "%s", sourceDir, fileName );
-                snprintf( destPath, MAX_PATH, "%s" SLASH_STR "%s", destDir, fileName );
+                SDL_snprintf( srcPath, MAX_PATH, "%s" SLASH_STR "%s", sourceDir, fileName );
+                SDL_snprintf( destPath, MAX_PATH, "%s" SLASH_STR "%s", destDir, fileName );
                 fs_copyFile( srcPath, destPath );
             }
 
@@ -161,11 +161,11 @@ const char * fs_createBinaryDirectoryFilename( const char * relative_pathname )
 
     if ( VALID_CSTR( dir_name_ptr ) )
     {
-        snprintf( path, SDL_arraysize( path ), "%s" SLASH_STR "%s", dir_name_ptr, relative_pathname );
+        SDL_snprintf( path, SDL_arraysize( path ), "%s" SLASH_STR "%s", dir_name_ptr, relative_pathname );
     }
     else
     {
-        snprintf( path, SDL_arraysize( path ), "." SLASH_STR "%s", relative_pathname );
+        SDL_snprintf( path, SDL_arraysize( path ), "." SLASH_STR "%s", relative_pathname );
     }
 
     return path;
@@ -184,11 +184,11 @@ const char * fs_createDataDirectoryFilename( const char * relative_pathname )
 
     if ( VALID_CSTR( dir_name_ptr ) )
     {
-        snprintf( path, SDL_arraysize( path ), "%s" SLASH_STR "%s", dir_name_ptr, relative_pathname );
+        SDL_snprintf( path, SDL_arraysize( path ), "%s" SLASH_STR "%s", dir_name_ptr, relative_pathname );
     }
     else
     {
-        snprintf( path, SDL_arraysize( path ), "." SLASH_STR "%s", relative_pathname );
+        SDL_snprintf( path, SDL_arraysize( path ), "." SLASH_STR "%s", relative_pathname );
     }
 
     return path;
@@ -207,11 +207,11 @@ const char * fs_createUserDirectoryFilename( const char * relative_pathname )
 
     if ( VALID_CSTR( dir_name_ptr ) )
     {
-        snprintf( path, SDL_arraysize( path ), "%s" SLASH_STR "%s", dir_name_ptr, relative_pathname );
+        SDL_snprintf( path, SDL_arraysize( path ), "%s" SLASH_STR "%s", dir_name_ptr, relative_pathname );
     }
     else
     {
-        snprintf( path, SDL_arraysize( path ), "." SLASH_STR "%s", relative_pathname );
+        SDL_snprintf( path, SDL_arraysize( path ), "." SLASH_STR "%s", relative_pathname );
     }
 
     return path;
@@ -230,11 +230,11 @@ const char * fs_createConfigDirectoryFilename( const char * relative_pathname )
 
     if ( VALID_CSTR( dir_name_ptr ) )
     {
-        snprintf( path, SDL_arraysize( path ), "%s" SLASH_STR "%s", dir_name_ptr, relative_pathname );
+        SDL_snprintf( path, SDL_arraysize( path ), "%s" SLASH_STR "%s", dir_name_ptr, relative_pathname );
     }
     else
     {
-        snprintf( path, SDL_arraysize( path ), "." SLASH_STR "%s", relative_pathname );
+        SDL_snprintf( path, SDL_arraysize( path ), "." SLASH_STR "%s", relative_pathname );
     }
 
     return path;
@@ -343,7 +343,7 @@ bool_t fs_ensureUserFile( const char * relative_filename, bool_t required )
     STRING path_str;
     bool_t found;
 
-    snprintf( path_str, SDL_arraysize( path_str ), "%s" SLASH_STR "%s", fs_getUserDirectory(), relative_filename );
+    SDL_snprintf( path_str, SDL_arraysize( path_str ), "%s" SLASH_STR "%s", fs_getUserDirectory(), relative_filename );
     str_convert_slash_sys( path_str, SDL_arraysize( path_str ) );
 
     // see if the file already exists
@@ -356,7 +356,7 @@ bool_t fs_ensureUserFile( const char * relative_filename, bool_t required )
 
         // copy the file from the Data Directory to the User Directory
 
-        snprintf( src_path_str, SDL_arraysize( src_path_str ), "%s" SLASH_STR "%s", fs_getConfigDirectory(), relative_filename );
+        SDL_snprintf( src_path_str, SDL_arraysize( src_path_str ), "%s" SLASH_STR "%s", fs_getConfigDirectory(), relative_filename );
 
         fs_copyFile( src_path_str, path_str );
         found = fs_fileExists( path_str );
@@ -369,7 +369,7 @@ bool_t fs_ensureUserFile( const char * relative_filename, bool_t required )
 
         // copy the file from the Data Directory to the User Directory
 
-        snprintf( src_path_str, SDL_arraysize( src_path_str ), "%s" SLASH_STR "%s", fs_getDataDirectory(), relative_filename );
+        SDL_snprintf( src_path_str, SDL_arraysize( src_path_str ), "%s" SLASH_STR "%s", fs_getDataDirectory(), relative_filename );
 
         fs_copyFile( src_path_str, path_str );
         found = fs_fileExists( path_str );

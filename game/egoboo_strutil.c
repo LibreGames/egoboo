@@ -38,7 +38,7 @@ void str_trim( char *pStr )
 
     // look for the first character in string
     DebPos = 0;
-    while ( isspace( pStr[DebPos] ) && CSTR_END != pStr[DebPos] )
+    while ( SDL_isspace( pStr[DebPos] ) && CSTR_END != pStr[DebPos] )
     {
         DebPos++;
     }
@@ -47,7 +47,7 @@ void str_trim( char *pStr )
     CurPos = DebPos;
     while ( pStr[CurPos] != 0 )
     {
-        if ( !isspace( pStr[CurPos] ) )
+        if ( !SDL_isspace( pStr[CurPos] ) )
         {
             EndPos = CurPos;
         }
@@ -102,9 +102,9 @@ char * str_encode( char *strout, size_t insize, const char * strin )
     if ( NULL == strin || NULL == strout || 0 == insize ) return NULL;
     while ( pout < plast && CSTR_END != *pin )
     {
-        if ( !isspace( *pin ) && isprint( *pin ) )
+        if ( !SDL_isspace( *pin ) && isprint( *pin ) )
         {
-            chrlast = *pout = tolower( *pin );
+            chrlast = *pout = SDL_tolower( *pin );
             pin++;
             pout++;
         }
@@ -120,7 +120,7 @@ char * str_encode( char *strout, size_t insize, const char * strin )
             pin++;
             pout++;
         }
-        else if ( isspace( *pin ) )
+        else if ( SDL_isspace( *pin ) )
         {
             chrlast = *pout = '_';
             pin++;
@@ -248,7 +248,7 @@ char * str_append_slash_net( char * str, size_t size )
 
     if ( INVALID_CSTR( str ) ) return str;
 
-    len = strlen( str );
+    len = SDL_strlen( str );
     if ( '/' != str[len-1] && '\\' != str[len-1] )
     {
         strncat( str, NET_SLASH_STR, size );
@@ -266,7 +266,7 @@ char * str_append_slash( char * str, size_t size )
 
     if ( INVALID_CSTR( str ) ) return NULL;
 
-    len = strlen( str );
+    len = SDL_strlen( str );
     if ( '/' != str[len-1] && '\\' != str[len-1] )
     {
         strncat( str, SLASH_STR, size );
@@ -294,9 +294,9 @@ char * str_encode_path( const char *szName )
     ppath_end = szPathname + SDL_arraysize( szPathname ) - 5;
     while ( CSTR_END != *pname && pname < pname_end && ppath < ppath_end )
     {
-        letter = tolower( *pname );
+        letter = SDL_tolower( *pname );
 
-        if ( isspace( letter ) || !( isalpha( letter ) || isdigit( letter ) ) ) letter = '_';
+        if ( SDL_isspace( letter ) || !( isalpha( letter ) || SDL_isdigit( letter ) ) ) letter = '_';
 
         *ppath = letter;
 
@@ -305,7 +305,7 @@ char * str_encode_path( const char *szName )
     }
     *ppath = CSTR_END;
 
-    strncat( szPathname, ".obj", SDL_arraysize( szPathname ) - strlen( szPathname ) );
+    strncat( szPathname, ".obj", SDL_arraysize( szPathname ) - SDL_strlen( szPathname ) );
 
     return szPathname;
 }

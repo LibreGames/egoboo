@@ -72,9 +72,9 @@ PRT_REF ego_particle_list::allocate_find()
             // if the particle has been "terminated" but is still waiting around, bump it to the
             // front of the list
 
-            size_t min_time  = MIN( pprt->lifetime_remaining, pprt->frames_remaining );
+            size_t min_time  = SDL_min( pprt->lifetime_remaining, pprt->frames_remaining );
 
-            if ( min_time < MAX( min_life, min_display ) )
+            if ( min_time < SDL_max( min_life, min_display ) )
             {
                 min_life     = pprt->lifetime_remaining;
                 min_life_idx = iprt;
@@ -167,7 +167,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
     PRT_REF iprt( MAX_PRT );
 
     // we might need to tread carefully here, since the "allocated" size of the PrtObjList could
-    // change "dynamically" and wind up negative
+    // change on-demand and wind up negative
     fake_free_count = PrtObjList.free_count();
     real_free_count = fake_free_count <= 0 ? 0 : fake_free_count;
 
@@ -184,7 +184,7 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
     else if ( force || ( real_free_count > get_size() / 4 ) )
     {
         // just use the allocate function from the parent class
-        iprt = t_ego_obj_lst<ego_obj_prt, MAX_PRT>::allocate( override );
+        iprt = t_obj_lst_deque<ego_obj_prt, MAX_PRT>::allocate( override );
     }
 
     return iprt;

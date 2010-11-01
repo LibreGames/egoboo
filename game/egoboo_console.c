@@ -108,7 +108,7 @@ void egoboo_console_write( egoboo_console_t * pcon, const char *format, va_list 
 
     if ( NULL != pcon )
     {
-        vsnprintf( buffer, EGOBOO_CONSOLE_WRITE_LEN - 1, format, args );
+        SDL_vsnprintf( buffer, EGOBOO_CONSOLE_WRITE_LEN - 1, format, args );
 
         egoboo_console_add_output( pcon, buffer );
     }
@@ -133,7 +133,7 @@ void egoboo_console_add_output( egoboo_console_t * pcon, char * szNew )
     if ( NULL == pcon ) return;
 
     // how many characters are we adding?
-    out_len = strlen( szNew );
+    out_len = SDL_strlen( szNew );
 
     // initialize the pointers for the copy operation
     src      = szNew;
@@ -160,14 +160,14 @@ void egoboo_console_add_output( egoboo_console_t * pcon, char * szNew )
         size_t offset = ( pcon->output_carat + out_len ) - EGOBOO_CONSOLE_OUTPUT - 1;
 
         // move the memory so that we create some space
-        memmove( pcon->output_buffer, pcon->output_buffer + offset, pcon->output_carat - offset );
+        SDL_memmove( pcon->output_buffer, pcon->output_buffer + offset, pcon->output_carat - offset );
 
         // update the copy parameters
         pcon->output_carat -= offset;
         dst = pcon->output_buffer - pcon->output_carat;
     }
 
-    pcon->output_carat += snprintf( dst, EGOBOO_CONSOLE_OUTPUT - pcon->output_carat, "%s", src );
+    pcon->output_carat += SDL_snprintf( dst, EGOBOO_CONSOLE_OUTPUT - pcon->output_carat, "%s", src );
     pcon->output_buffer[EGOBOO_CONSOLE_OUTPUT-1] = CSTR_END;
 }
 
@@ -177,7 +177,7 @@ egoboo_console_t * egoboo_console_ctor( egoboo_console_t * pcon, SDL_Rect Con_re
     if ( NULL == pcon ) return NULL;
 
     // reset all the console data
-    memset( pcon, 0, sizeof( *pcon ) );
+    SDL_memset( pcon, 0, sizeof( *pcon ) );
 
     // set the console's font
     pcon->pfont = fnt_loadFont( vfs_resolveReadFilename( "mp_data/pc8x8.fon" ), 12 );
@@ -386,7 +386,7 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
             // this must be iterated with a signed variable or it fails horribly
             for ( rcnt = (( signed )console_line_count ) - 1; rcnt >= 0 && height > 0 ; rcnt-- )
             {
-                size_t len = MIN( 1023, console_line_lengths[rcnt] );
+                size_t len = SDL_min( 1023, console_line_lengths[rcnt] );
 
                 strncpy( buffer, pcon->output_buffer + console_line_offsets[rcnt], len );
                 buffer[len] = CSTR_END;
@@ -582,7 +582,7 @@ SDL_Event * egoboo_console_handle_events( SDL_Event * pevt )
                 if ( pcon->save_count > 0 )
                 {
                     strncpy( pcon->buffer, pcon->save_buffer[pcon->save_index], SDL_arraysize( pcon->buffer ) );
-                    pcon->buffer_carat = strlen( pcon->buffer );
+                    pcon->buffer_carat = SDL_strlen( pcon->buffer );
                     pcon->buffer_carat = (( signed )pcon->buffer_carat ) - 1;
                 }
             }
@@ -607,7 +607,7 @@ SDL_Event * egoboo_console_handle_events( SDL_Event * pevt )
                 if ( pcon->save_count > 0 )
                 {
                     strncpy( pcon->buffer, pcon->save_buffer[pcon->save_index], EGOBOO_CONSOLE_LENGTH - 1 );
-                    pcon->buffer_carat = strlen( pcon->buffer );
+                    pcon->buffer_carat = SDL_strlen( pcon->buffer );
                     pcon->buffer_carat = (( signed )pcon->buffer_carat ) - 1;
                 }
             }
@@ -687,7 +687,7 @@ void init_scancodes()
         scancode_to_ascii[i] = i;
         if ( i < 255 )
         {
-            scancode_to_ascii_shift[i] = toupper( i );
+            scancode_to_ascii_shift[i] = SDL_toupper( i );
         }
         else
         {

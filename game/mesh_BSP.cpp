@@ -42,17 +42,17 @@ mpd_BSP * mpd_BSP::ctor_this( mpd_BSP * pbsp, ego_mpd   * pmesh )
 
     if ( NULL == pbsp ) return NULL;
 
-    memset( pbsp, 0, sizeof( *pbsp ) );
+    SDL_memset( pbsp, 0, sizeof( *pbsp ) );
 
     if ( NULL == pmesh ) return pbsp;
     size_x = pmesh->gmem.grids_x;
     size_y = pmesh->gmem.grids_y;
 
     // determine the number of bifurcations necessary to get cells the size of the "blocks"
-    depth = ceil( log( 0.5f * MAX( size_x, size_y ) ) / log( 2.0f ) );
+    depth = ceil( log( 0.5f * SDL_max( size_x, size_y ) ) / log( 2.0f ) );
 
     // make a 2D BSP tree with "max depth" depth
-    ego_BSP_tree::ctor_this( &( pbsp->tree ), 2, depth );
+    ego_BSP_tree::init( &( pbsp->tree ), 2, depth );
 
     mpd_BSP::alloc( pbsp, pmesh );
 
@@ -99,7 +99,7 @@ bool_t mpd_BSP::alloc( mpd_BSP * pbsp, ego_mpd * pmesh )
         ego_oct_bb::do_union( pbsp->volume, ptile->oct, &( pbsp->volume ) );
 
         // let data type 1 stand for a tile, -1 is uninitialized
-        ego_BSP_leaf::ctor_this( pleaf, 2, pmesh->tmem.tile_list + i, 1 );
+        ego_BSP_leaf::init( pleaf, 2, pmesh->tmem.tile_list + i, 1 );
         pleaf->index = i;
     }
 

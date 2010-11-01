@@ -316,7 +316,7 @@ Mix_Chunk * sound_load_chunk_vfs( const char * szFileName )
     tmp_chunk = NULL;
 
     // try an ogg file
-    snprintf( full_file_name, SDL_arraysize( full_file_name ), "%s.%s", szFileName, "ogg" );
+    SDL_snprintf( full_file_name, SDL_arraysize( full_file_name ), "%s.%s", szFileName, "ogg" );
     if ( vfs_exists( full_file_name ) )
     {
         file_exists = btrue;
@@ -326,7 +326,7 @@ Mix_Chunk * sound_load_chunk_vfs( const char * szFileName )
     if ( NULL == tmp_chunk )
     {
         // try a wav file
-        snprintf( full_file_name, SDL_arraysize( full_file_name ), "%s.%s", szFileName, "wav" );
+        SDL_snprintf( full_file_name, SDL_arraysize( full_file_name ), "%s.%s", szFileName, "wav" );
         if ( vfs_exists( full_file_name ) )
         {
             file_exists = btrue;
@@ -357,7 +357,7 @@ Mix_Music * sound_load_music( const char * szFileName )
     tmp_music = NULL;
 
     // try a wav file
-    snprintf( full_file_name, SDL_arraysize( full_file_name ), "%s.%s", szFileName, "wav" );
+    SDL_snprintf( full_file_name, SDL_arraysize( full_file_name ), "%s.%s", szFileName, "wav" );
     if ( vfs_exists( full_file_name ) )
     {
         file_exists = btrue;
@@ -368,7 +368,7 @@ Mix_Music * sound_load_music( const char * szFileName )
     {
         // try an ogg file
         tmp_music = NULL;
-        snprintf( full_file_name, SDL_arraysize( full_file_name ), "%s.%s", szFileName, "ogg" );
+        SDL_snprintf( full_file_name, SDL_arraysize( full_file_name ), "%s.%s", szFileName, "ogg" );
         if ( vfs_exists( full_file_name ) )
         {
             file_exists = btrue;
@@ -721,22 +721,22 @@ void load_global_waves()
     int cnt;
 
     // Grab these sounds from the basicdat dir
-    snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_GETCOIN] );
+    SDL_snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_GETCOIN] );
     g_wavelist[GSND_GETCOIN] = sound_load_chunk_vfs( wavename );
 
-    snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_DEFEND] );
+    SDL_snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_DEFEND] );
     g_wavelist[GSND_DEFEND] = sound_load_chunk_vfs( wavename );
 
-    snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_COINFALL] );
+    SDL_snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_COINFALL] );
     g_wavelist[GSND_COINFALL] = sound_load_chunk_vfs( wavename );
 
-    snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_LEVELUP] );
+    SDL_snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_LEVELUP] );
     g_wavelist[GSND_LEVELUP] = sound_load_chunk_vfs( wavename );
 
-    snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_PITFALL] );
+    SDL_snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_PITFALL] );
     g_wavelist[GSND_PITFALL] = sound_load_chunk_vfs( wavename );
 
-    snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_SHIELDBLOCK] );
+    SDL_snprintf( wavename, SDL_arraysize( wavename ), "mp_data/%s", wavenames[GSND_SHIELDBLOCK] );
     g_wavelist[GSND_SHIELDBLOCK] = sound_load_chunk_vfs( wavename );
 
     /*
@@ -749,7 +749,7 @@ void load_global_waves()
     {
         Mix_Chunk * ptmp;
 
-        snprintf( wavename, SDL_arraysize( wavename ), "mp_data/sound%d", cnt );
+        SDL_snprintf( wavename, SDL_arraysize( wavename ), "mp_data/sound%d", cnt );
         ptmp = sound_load_chunk_vfs( wavename );
 
         // only overwrite with a valid sound file
@@ -772,7 +772,7 @@ void load_all_music_sounds_vfs()
     if ( musicinmemory || !snd.musicvalid ) return;
 
     // Open the playlist listing all music files
-    snprintf( loadpath, SDL_arraysize( loadpath ), "mp_data/music/playlist.txt" );
+    SDL_snprintf( loadpath, SDL_arraysize( loadpath ), "mp_data/music/playlist.txt" );
     playlist = vfs_openRead( loadpath );
     if ( NULL == playlist )
     {
@@ -787,7 +787,7 @@ void load_all_music_sounds_vfs()
         {
             fget_string( playlist, songname, SDL_arraysize( songname ) );
 
-            snprintf( loadpath, SDL_arraysize( loadpath ), ( "mp_data/music/%s" ), songname );
+            SDL_snprintf( loadpath, SDL_arraysize( loadpath ), ( "mp_data/music/%s" ), songname );
             musictracksloaded[cnt] = Mix_LoadMUS( vfs_resolveReadFilename( loadpath ) );
         }
     }
@@ -878,7 +878,7 @@ void   LoopedList_init()
     for ( cnt = 0; cnt < LOOPED_COUNT; cnt++ )
     {
         // clear out all of the data
-        memset( LoopedList.lst + cnt, 0, sizeof( snd_looped_sound_data ) );
+        SDL_memset( LoopedList.lst + cnt, 0, sizeof( snd_looped_sound_data ) );
 
         LoopedList.lst[cnt].channel = INVALID_SOUND_CHANNEL;
         LoopedList.lst[cnt].chunk   = NULL;

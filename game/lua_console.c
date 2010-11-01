@@ -117,7 +117,7 @@ lua_console_t * lua_console_ctor( lua_console_t * pcon, SDL_Rect Con_rect )
     if ( NULL == pcon ) return NULL;
 
     // reset all the console data
-    memset( pcon, 0, sizeof( *pcon ) );
+    SDL_memset( pcon, 0, sizeof( *pcon ) );
 
     // call the new function for the "base class"
     egoboo_console_create( &( pcon->base ), Con_rect, lua_console_run, pcon );
@@ -220,7 +220,7 @@ SDL_bool lua_console_run( egoboo_console_t * ego_con, void * data )
 
     lua_con = ( lua_console_t * )data;
 
-    status = luaL_loadbuffer( lua_con->L, ego_con->buffer, strlen( ego_con->buffer ), "lua_console" );
+    status = luaL_loadbuffer( lua_con->L, ego_con->buffer, SDL_strlen( ego_con->buffer ), "lua_console" );
 
     if ( status )
     {

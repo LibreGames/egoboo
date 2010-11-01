@@ -43,36 +43,28 @@
 
 t_cpp_stack< ego_mad, MAX_MAD  > MadStack;
 
-static STRING  szModelName     = EMPTY_CSTR;      ///< MD2 Model name
+mad_loader MadLoader;
+
+/// the flip tolerance is the default flip increment / 2
+const float pose_data::flip_tolerance = 0.25f * 0.5f;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
 static char    cActionName[ACTION_COUNT][2];      ///< Two letter name code
 static STRING  cActionComent[ACTION_COUNT];       ///< Strings explaining the action codes
 
-static int    action_number( const char * cFrameName );
-static void   action_check_copy_vfs( const char* loadname, const MAD_REF & imad );
-static void   action_copy_correct( const MAD_REF & imad, int actiona, int actionb );
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 
-static void   mad_get_framefx( const char * cFrameName, const MAD_REF & model, int frame );
-static void   mad_get_walk_frame( const MAD_REF & imad, int lip, int action );
-static void   mad_make_framelip( const MAD_REF & imad, int action );
-static void   mad_rip_actions( const MAD_REF & imad );
-
-static void mad_finalize( const MAD_REF & imad );
-static void mad_heal_actions( const MAD_REF & imad, const char * loadname );
+static int mad_get_action( const ego_mad * pmad, const int action );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//static void md2_fix_normals( const MAD_REF & imad );
-//static void md2_get_transvertices( const MAD_REF & imad );
-//static int  vertexconnected( md2_ogl_commandlist_t * pclist, int vertex );
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-void MadList_init()
+void MadStack_init()
 {
-    MAD_REF cnt;
-
     // initialize all ego_mad
-    for ( cnt = 0; cnt < MAX_MAD; cnt++ )
+    for ( MAD_REF cnt( 0 ); cnt < MAX_MAD; cnt++ )
     {
         ego_mad * pmad = MadStack + cnt;
 
@@ -84,56 +76,577 @@ void MadList_init()
 }
 
 //--------------------------------------------------------------------------------------------
-void MadList_dtor()
+void MadStack_dtor()
 {
-    MAD_REF cnt;
-
-    for ( cnt = 0; cnt < MAX_MAD; cnt++ )
+    for ( MAD_REF cnt( 0 ); cnt < MAX_MAD; cnt++ )
     {
         ego_mad::dtor_this( MadStack + cnt );
     }
 }
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-int action_number( const char * cFrameName )
+void MadStack_reconstruct_all()
 {
-    /// @details ZZ@> This function returns the number of the action in cFrameName, or
-    ///    it returns NOACTION if it could not find a match
+    MAD_REF cnt;
 
-    int cnt;
-    char tmp_str[16];
-    char first, second;
-
-    sscanf( cFrameName, " %15s", tmp_str );
-
-    first  = tmp_str[0];
-    second = tmp_str[1];
-
-    for ( cnt = 0; cnt < ACTION_COUNT; cnt++ )
+    for ( cnt = 0; cnt < MAX_MAD; cnt++ )
     {
-        if ( first == cActionName[cnt][0] && second == cActionName[cnt][1] )
-        {
-            return cnt;
-        }
+        ego_mad::reconstruct( MadStack + cnt );
     }
+}
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void MadStack_release_all()
+{
+    MAD_REF cnt;
 
-    return NOACTION;
+    for ( cnt = 0; cnt < MAX_MAD; cnt++ )
+    {
+        MadStack_release_one( cnt );
+    }
 }
 
 //--------------------------------------------------------------------------------------------
-void action_copy_correct( const MAD_REF & imad, int actiona, int actionb )
+bool_t MadStack_release_one( const MAD_REF & imad )
+{
+    ego_mad * pmad;
+
+    if ( !MadStack.in_range_ref( imad ) ) return bfalse;
+    pmad = MadStack + imad;
+
+    if ( !pmad->loaded ) return btrue;
+
+    // free any md2 data
+    ego_mad::reconstruct( pmad );
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_mad * ego_mad::clear( ego_mad * pmad )
+{
+    if ( NULL == pmad ) return pmad;
+
+    SDL_memset( pmad, 0, sizeof( *pmad ) );
+
+    return pmad;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_mad::dealloc( ego_mad * pmad )
+{
+    /// Free all allocated memory
+
+    if ( NULL == pmad || !pmad->loaded ) return bfalse;
+
+    ego_MD2_Model::destroy( &( pmad->md2_ptr ) );
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_mad * ego_mad::reconstruct( ego_mad * pmad )
+{
+    /// @details BB@> initialize the character data to safe values
+    ///     since we use SDL_memset(..., 0, ...), all = 0, = false, and = 0.0f
+    ///     statements are redundant
+
+    int action;
+
+    if ( NULL == pmad ) return NULL;
+
+    ego_mad::dealloc( pmad );
+
+    pmad = ego_mad::clear( pmad );
+
+    strncpy( pmad->name, "*NONE*", SDL_arraysize( pmad->name ) );
+
+    // Clear out all actions and reset to invalid
+    for ( action = 0; action < ACTION_COUNT; action++ )
+    {
+        pmad->action_map[action]   = ACTION_COUNT;
+    }
+
+    return pmad;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_mad * ego_mad::ctor_this( ego_mad * pmad )
+{
+    if ( NULL == ego_mad::reconstruct( pmad ) ) return NULL;
+
+    // nothing to do yet
+
+    return pmad;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_mad * ego_mad::dtor_this( ego_mad * pmad )
+{
+    /// @details BB@> deinitialize the character data
+
+    if ( NULL == pmad || !pmad->loaded ) return NULL;
+
+    // deinitialize the object
+    ego_mad::reconstruct( pmad );
+
+    // "destruct" the base object
+    pmad->loaded = bfalse;
+
+    return pmad;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+egoboo_rv mad_instance::set_action( mad_instance * pmad_inst, int next_action, bool_t next_ready, bool_t override_action )
+{
+    ego_mad * pmad;
+
+    // did we get a bad pointer?
+    if ( NULL == pmad_inst ) return rv_error;
+
+    // is the action in the valid range?
+    if ( next_action < 0 || next_action > ACTION_COUNT ) return rv_error;
+
+    // do we have a valid model?
+    if ( !LOADED_MAD( pmad_inst->imad ) ) return rv_error;
+    pmad = MadStack + pmad_inst->imad;
+
+    // is the chosen action valid?
+    if ( !pmad->action_valid[ next_action ] ) return rv_fail;
+
+    // are we going to check action.ready?
+    if ( !override_action && !pmad_inst->action.ready ) return rv_fail;
+
+    // set up the action
+    pmad_inst->action.which     = next_action;
+    pmad_inst->action.next      = ACTION_DA;
+    pmad_inst->action.ready     = next_ready;
+    pmad_inst->action.frame_stt = pmad->action_stt[next_action];
+    pmad_inst->action.frame_end = pmad->action_end[next_action];
+
+    return rv_success;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv mad_instance::begin_action( mad_instance * pmad_inst )
+{
+    int frame_nxt;
+    bool_t updated = bfalse;
+
+    // did we get a bad pointer?
+    if ( NULL == pmad_inst ) return rv_error;
+
+    frame_nxt = pmad_inst->action.frame_stt;
+
+    if ( pmad_inst->state.frame_nxt != frame_nxt )
+    {
+        pmad_inst->state.frame_nxt = frame_nxt;
+        updated = btrue;
+    }
+
+    //---- don't mess with the frame inbetweening
+
+    return updated ? rv_success : rv_fail;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv mad_instance::set_frame( mad_instance * pmad_inst, int frame, int ilip )
+{
+    int frame_stt, frame_nxt;
+    bool_t updated = bfalse;
+
+    // did we get a bad pointer?
+    if ( NULL == pmad_inst ) return rv_error;
+
+    // is the action in the valid range?
+    if ( /* pmad_inst->action.which < 0 || */ pmad_inst->action.which > ACTION_COUNT ) return rv_error;
+
+    // is the frame within the valid range for this action?
+    if ( frame <  0 ) return rv_fail;
+    if ( frame >= pmad_inst->action.frame_end - pmad_inst->action.frame_stt ) return rv_fail;
+
+    frame_stt = pmad_inst->action.frame_stt + frame;
+    frame_stt = SDL_min( frame_stt, pmad_inst->action.frame_end );
+
+    frame_nxt = frame_stt + 1;
+    frame_nxt = SDL_min( frame_nxt, pmad_inst->action.frame_end );
+
+    if ( pmad_inst->state.frame_lst != frame_stt )
+    {
+        pmad_inst->state.frame_lst  = frame_stt;
+        updated = btrue;
+    }
+
+    if ( pmad_inst->state.frame_nxt != frame_nxt )
+    {
+        pmad_inst->state.frame_nxt  = frame_nxt;
+        updated = btrue;
+    }
+
+    if ( ilip != pmad_inst->state.ilip )
+    {
+        pmad_inst->state.ilip = ilip;
+        updated = btrue;
+    }
+
+    pmad_inst->state.flip = ilip / 4.0f;
+
+    return updated ? rv_success : rv_fail;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv mad_instance::start_anim( mad_instance * pmad_inst, int next_action, bool_t next_ready, bool_t override_action )
+{
+    egoboo_rv retval = rv_fail;
+
+    if ( NULL == pmad_inst ) return rv_error;
+
+    if ( rv_success == set_action( pmad_inst, next_action, next_ready, override_action ) )
+    {
+        retval = begin_action( pmad_inst );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv mad_instance::increment_action( mad_instance * pmad_inst )
+{
+    /// @details BB@> This function starts the next action for a character
+
+    egoboo_rv retval;
+    ego_mad * pmad;
+    int     action;
+    bool_t  next_ready;
+
+    if ( NULL == pmad_inst ) return rv_error;
+
+    if ( !LOADED_MAD( pmad_inst->imad ) ) return rv_error;
+    pmad = MadStack + pmad_inst->imad;
+
+    // get the correct action
+    action = mad_get_action( pmad, pmad_inst->action.next );
+
+    // determine if the action is one of the types that can be broken at any time
+    // D == "dance" and "W" == walk
+    next_ready = ACTION_IS_TYPE( action, D ) || ACTION_IS_TYPE( action, W );
+
+    retval = mad_instance::set_action( pmad_inst, action, next_ready, btrue );
+    if ( rv_success != retval ) return retval;
+
+    // just update the next frame directly. this will leave the
+    // old frame at the end of the last action and the new frame at the beginning of the new action
+    pmad_inst->state.frame_nxt = pmad_inst->action.frame_stt;
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv mad_instance::increment_frame( mad_instance * pmad_inst, bool_t mounted )
+{
+    /// @details BB@> all the code necessary to move on to the next frame of the animation
+
+    int tmp_action;
+    ego_mad * pmad;
+
+    if ( NULL == pmad_inst ) return rv_error;
+
+    if ( !LOADED_MAD( pmad_inst->imad ) ) return rv_error;
+    pmad = MadStack + pmad_inst->imad;
+
+    // Change frames
+    pmad_inst->state.frame_lst = pmad_inst->state.frame_nxt;
+    pmad_inst->state.frame_nxt++;
+
+    // detect the end of the animation and handle special end conditions
+    if ( pmad_inst->state.frame_nxt > pmad_inst->action.frame_end )
+    {
+        // make sure that the frame_nxt points to a valid frame in this action
+        pmad_inst->state.frame_nxt = pmad_inst->action.frame_end;
+
+        if ( pmad_inst->action.keep )
+        {
+            // Freeze that animation at the last frame
+            pmad_inst->state.frame_nxt = pmad_inst->state.frame_lst;
+
+            // Break a kept action at any time
+            pmad_inst->action.ready = btrue;
+        }
+        else if ( pmad_inst->action.loop )
+        {
+            // Convert the action into a riding action if the character is mounted
+            if ( mounted )
+            {
+                tmp_action = mad_get_action( pmad, ACTION_MI );
+                mad_instance::start_anim( pmad_inst, tmp_action, btrue, btrue );
+            }
+
+            // set the frame to the beginning of the action
+            pmad_inst->state.frame_nxt = pmad_inst->action.frame_stt;
+
+            // Break a looped action at any time
+            pmad_inst->action.ready = btrue;
+        }
+        else
+        {
+            // Go on to the next action. don't let just anything interrupt it?
+            mad_instance::increment_action( pmad_inst );
+        }
+    }
+
+    return rv_success;
+}
+
+//--------------------------------------------------------------------------------------------
+egoboo_rv mad_instance::play_action( mad_instance * pmad_inst, int next_action, bool_t next_ready )
+{
+    /// @details ZZ@> This function starts a generic action for a character
+    ego_mad * pmad;
+
+    if ( NULL == pmad_inst ) return rv_error;
+
+    if ( !LOADED_MAD( pmad_inst->imad ) ) return rv_error;
+    pmad = MadStack + pmad_inst->imad;
+
+    next_action = mad_get_action( pmad, next_action );
+
+    return mad_instance::start_anim( pmad_inst, next_action, next_ready, btrue );
+}
+
+//--------------------------------------------------------------------------------------------
+BIT_FIELD mad_instance::get_framefx( mad_instance * pmad_inst )
+{
+    int             frame_count;
+    ego_MD2_Frame * frame_list, * pframe_nxt;
+    ego_mad       * pmad;
+    ego_MD2_Model * pmd2;
+
+    if ( NULL == pmad_inst ) return EMPTY_BIT_FIELD;
+
+    if ( !LOADED_MAD( pmad_inst->imad ) ) return EMPTY_BIT_FIELD;
+    pmad = MadStack + pmad_inst->imad;
+
+    pmd2 = pmad->md2_ptr;
+    if ( NULL == pmd2 ) return 0;
+
+    frame_count = md2_get_numFrames( pmd2 );
+    EGOBOO_ASSERT( pmad_inst->state.frame_nxt < frame_count );
+
+    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
+    pframe_nxt  = frame_list + pmad_inst->state.frame_nxt;
+
+    return pframe_nxt->framefx;
+}
+
+//--------------------------------------------------------------------------------------------
+BIT_FIELD mad_instance::update_frame( mad_instance * pmad_inst )
+{
+    BIT_FIELD fx = EMPTY_BIT_FIELD;
+
+    if ( rv_success == mad_instance::increment_frame( pmad_inst ) )
+    {
+        pmad_inst->state.flip  = fmod( pmad_inst->state.flip, 1.0f );
+        pmad_inst->state.ilip %= 4;
+
+        fx = get_framefx( pmad_inst );
+    }
+    else
+    {
+        log_warning( "mad_instance::update_animation() did not succeed" );
+    }
+
+    return fx;
+}
+
+//--------------------------------------------------------------------------------------------
+BIT_FIELD mad_instance::update_animation_one( mad_instance * pmad_inst )
+{
+    BIT_FIELD fx = EMPTY_BIT_FIELD;
+
+    if ( NULL == pmad_inst ) return 0;
+
+    // do the basic frame update
+    pmad_inst->state.ilip += 1;
+    pmad_inst->state.flip += 0.25f;
+
+    // make them wrap around properly
+    if ( pmad_inst->state.ilip >= 4 )
+    {
+        pmad_inst->state.flip = fmod( pmad_inst->state.flip, 1.0f );
+        pmad_inst->state.ilip %= 4;
+    }
+
+    pmad_inst->state.id++;
+
+    // increment the frame, if necessary
+    if ( 0 == pmad_inst->state.ilip )
+    {
+        fx = mad_instance::update_frame( pmad_inst );
+    }
+
+    return fx;
+}
+
+//--------------------------------------------------------------------------------------------
+BIT_FIELD mad_instance::update_animation( mad_instance * pmad_inst, float dt )
+{
+    // this is a bit more complicated than the version that updates one frame at a time
+    // beause of keeping the floating point flip and the integer ilip in synch.
+
+    bool_t new_ilip = bfalse;
+
+    BIT_FIELD fx = EMPTY_BIT_FIELD;
+
+    if ( NULL == pmad_inst || 0.0f == dt ) return 0;
+
+    int ilip_old = pmad_inst->state.ilip;
+
+    // do the basic frame update
+    pmad_inst->state.flip += dt;
+    pmad_inst->state.ilip  = floorf( pmad_inst->state.flip * 4.0f );
+
+    // did we transition to a new ilip
+    new_ilip = ( ilip_old !=  pmad_inst->state.ilip );
+
+    // make them wrap around properly
+    if ( pmad_inst->state.ilip >= 4 )
+    {
+        pmad_inst->state.flip = fmod( pmad_inst->state.flip, 1.0f );
+        pmad_inst->state.ilip %= 4;
+        new_ilip = btrue;
+    }
+
+    // don't update the id unless there is a significant change in the parameters
+    if ( dt > pose_data::flip_tolerance || new_ilip )
+    {
+        pmad_inst->state.id++;
+    }
+
+    // increment the frame, if necessary
+    if ( 0 == pmad_inst->state.ilip && new_ilip )
+    {
+        fx = mad_instance::update_frame( pmad_inst );
+    }
+
+    return fx;
+}
+
+//--------------------------------------------------------------------------------------------
+mad_instance * mad_instance::clear( mad_instance * ptr )
+{
+    if ( NULL == ptr ) return ptr;
+
+    // model info
+    ptr->imad = MAX_MAD;
+
+    // animation info
+    ptr->state.init();
+
+    // action info
+    ptr->action.init();
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t mad_instance::spawn( mad_instance * pmad_inst, const PRO_REF & profile )
+{
+    ego_pro * pobj;
+
+    if ( NULL == pmad_inst ) return bfalse;
+
+    // clear the instance
+    mad_instance::ctor_this( pmad_inst );
+
+    if ( !LOADED_PRO( profile ) ) return bfalse;
+    pobj = ProList.lst + profile;
+
+    // model parameters
+    mad_instance::set_mad( pmad_inst, pro_get_imad( profile ) );
+
+    // set the initial action, all actions override it
+    mad_instance::play_action( pmad_inst, ACTION_DA, btrue );
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+mad_instance * mad_instance::ctor_this( mad_instance * pmad_inst )
+{
+    if ( NULL == pmad_inst ) return pmad_inst;
+
+    // model parameters
+    pmad_inst->imad = MAX_MAD;
+
+    // set the action state
+    pmad_inst->action.init();
+
+    // set the animation state
+    pmad_inst->state.init();
+
+    return pmad_inst;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+MAD_REF mad_loader::load_vfs( const char* tmploadname, const MAD_REF & imad )
+{
+    ego_mad * pmad;
+    STRING  newloadname;
+
+    if ( !MadStack.in_range_ref( imad ) ) return MAD_REF( MAX_MAD );
+    pmad = MadStack + imad;
+
+    // clear out the mad
+    ego_mad::reconstruct( pmad );
+
+    // mark it as used
+    pmad->loaded = btrue;
+
+    // Make up a name for the model...  IMPORT\TEMP0000.OBJ
+    strncpy( pmad->name, tmploadname, SDL_arraysize( pmad->name ) );
+    pmad->name[ SDL_arraysize( pmad->name ) - 1 ] = CSTR_END;
+
+    // Load the imad model
+    make_newloadname( tmploadname, "/tris.md2", newloadname );
+
+    // load the model from the file
+    pmad->md2_ptr = ego_MD2_Model::load( vfs_resolveReadFilename( newloadname ), NULL );
+
+    // set the model's file name
+    szModelName[0] = CSTR_END;
+    if ( NULL != pmad->md2_ptr )
+    {
+        strncpy( szModelName, vfs_resolveReadFilename( newloadname ), SDL_arraysize( szModelName ) );
+
+        /// @details BB@> Egoboo md2 models were designed with 1 tile = 32x32 units, but internally Egoboo uses
+        ///      1 tile = 128x128 units. Previously, this was handled by sprinkling a bunch of
+        ///      commands that multiplied various quantities by 4 or by 4.125 throughout the code.
+        ///      It was very counter-intuitive, and caused me no end of headaches...  Of course the
+        ///      solution is to scale the model!
+        ego_MD2_Model::scale( pmad->md2_ptr, -3.5, 3.5, 3.5 );
+    }
+
+    // Create the actions table for this imad
+    pmad = make_actions( pmad );
+    pmad = heal_actions( pmad, tmploadname );
+    pmad = finalize( pmad );
+
+    return imad;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_mad * mad_loader::copy_action_correct( ego_mad * pmad, int actiona, int actionb )
 {
     /// @details ZZ@> This function makes sure both actions are valid if either of them
     ///    are valid.  It will copy start and ends to mirror the valid action.
 
-    ego_mad * pmad;
+    if ( NULL == pmad ) return pmad;
 
-    if ( actiona < 0 || actiona >= ACTION_COUNT ) return;
-    if ( actionb < 0 || actionb >= ACTION_COUNT ) return;
-
-    if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack + imad;
+    if ( actiona < 0 || actiona >= ACTION_COUNT ) return pmad;
+    if ( actionb < 0 || actionb >= ACTION_COUNT ) return pmad;
 
     // With the new system using the action_map, this is all that is really necessary
     if ( ACTION_COUNT == pmad->action_map[actiona] )
@@ -182,95 +695,12 @@ void action_copy_correct( const MAD_REF & imad, int actiona, int actionb )
     //        pmad->action_end[actionb]   = pmad->action_end[actiona];
     //    }
     //}
+
+    return pmad;
 }
 
 //--------------------------------------------------------------------------------------------
-int mad_get_action( const MAD_REF & imad, int action )
-{
-    /// @detaills BB@> translate the action that was given into a valid action for the model
-    ///
-    /// returns ACTION_COUNT on a complete failure, or the default ACTION_DA if it exists
-
-    int     retval;
-    ego_mad * pmad;
-
-    if ( !LOADED_MAD( imad ) ) return ACTION_COUNT;
-    pmad = MadStack + imad;
-
-    // you are pretty much guaranteed that ACTION_DA will be valid for a model,
-    // I guess it could be invalid if the model had no frames or something
-    retval = ACTION_DA;
-    if ( !pmad->action_valid[ACTION_DA] )
-    {
-        retval = ACTION_COUNT;
-    }
-
-    // check for a valid action range
-    if ( action < 0 || action > ACTION_COUNT ) return retval;
-
-    // track down a valid value
-    if ( pmad->action_valid[action] )
-    {
-        retval = action;
-    }
-    else if ( ACTION_COUNT != pmad->action_map[action] )
-    {
-        int cnt, tnc;
-
-        // do a "recursive" search for a valid action
-        // we should never really have to check more than once if the map is prepared
-        // properly BUT you never can tell. Make sure we do not get a runaway loop by
-        // you never go farther than ACTION_COUNT steps and that you never see the
-        // original action again
-
-        tnc = pmad->action_map[action];
-        for ( cnt = 0; cnt < ACTION_COUNT; cnt++ )
-        {
-            if ( tnc >= ACTION_COUNT || tnc < 0 || tnc == action ) break;
-
-            if ( pmad->action_valid[tnc] )
-            {
-                retval = tnc;
-                break;
-            }
-        }
-    }
-
-    return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-BIT_FIELD mad_get_actionfx( const MAD_REF & imad, int action )
-{
-    BIT_FIELD retval = EMPTY_BIT_FIELD;
-    int cnt;
-    ego_mad * pmad;
-    ego_MD2_Model * md2;
-    ego_MD2_Frame * frame_lst, * pframe;
-
-    if ( !LOADED_MAD( imad ) ) return 0;
-    pmad = MadStack + imad;
-
-    md2 = MadStack[imad].md2_ptr;
-    if ( NULL == md2 ) return 0;
-
-    if ( action < 0 || action >= ACTION_COUNT ) return 0;
-
-    if ( !pmad->action_valid[action] ) return 0;
-
-    frame_lst = ( ego_MD2_Frame * )md2_get_Frames( md2 );
-    for ( cnt = pmad->action_stt[action]; cnt <= pmad->action_end[action]; cnt++ )
-    {
-        pframe = frame_lst + cnt;
-
-        ADD_BITS( retval, pframe->framefx );
-    }
-
-    return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-void action_check_copy_vfs( const char* loadname, const MAD_REF & imad )
+ego_mad * mad_loader::apply_copy_file_vfs( ego_mad * pmad, const char* loadname )
 {
     /// @details ZZ@> This function copies a model's actions
 
@@ -279,10 +709,10 @@ void action_check_copy_vfs( const char* loadname, const MAD_REF & imad )
     char szOne[16] = EMPTY_CSTR;
     char szTwo[16] = EMPTY_CSTR;
 
-    if ( !LOADED_MAD( imad ) ) return;
+    if ( NULL == pmad ) return pmad;
 
     fileread = vfs_openRead( loadname );
-    if ( NULL == fileread ) return;
+    if ( NULL == fileread ) return pmad;
 
     while ( goto_colon( NULL, fileread, btrue ) )
     {
@@ -292,66 +722,38 @@ void action_check_copy_vfs( const char* loadname, const MAD_REF & imad )
         fget_string( fileread, szTwo, SDL_arraysize( szTwo ) );
         actionb = action_which( szTwo[0] );
 
-        action_copy_correct( imad, actiona + 0, actionb + 0 );
-        action_copy_correct( imad, actiona + 1, actionb + 1 );
-        action_copy_correct( imad, actiona + 2, actionb + 2 );
-        action_copy_correct( imad, actiona + 3, actionb + 3 );
+        pmad = copy_action_correct( pmad, actiona + 0, actionb + 0 );
+        pmad = copy_action_correct( pmad, actiona + 1, actionb + 1 );
+        pmad = copy_action_correct( pmad, actiona + 2, actionb + 2 );
+        pmad = copy_action_correct( pmad, actiona + 3, actionb + 3 );
     }
 
     vfs_close( fileread );
+
+    return pmad;
 }
 
 //--------------------------------------------------------------------------------------------
-int action_which( char cTmp )
-{
-    /// @details ZZ@> This function changes a letter into an action code
-    int action;
-
-    switch ( toupper( cTmp ) )
-    {
-            /// @note ZF@> Attack animation WALK is used for doing nothing (for example charging spells)
-            ///            Make it default to ACTION_DA in this case.
-        case 'W': action = ACTION_DA; break;
-        case 'D': action = ACTION_DA; break;
-        case 'U': action = ACTION_UA; break;
-        case 'T': action = ACTION_TA; break;
-        case 'C': action = ACTION_CA; break;
-        case 'S': action = ACTION_SA; break;
-        case 'B': action = ACTION_BA; break;
-        case 'L': action = ACTION_LA; break;
-        case 'X': action = ACTION_XA; break;
-        case 'F': action = ACTION_FA; break;
-        case 'P': action = ACTION_PA; break;
-        case 'Z': action = ACTION_ZA; break;
-        case 'H': action = ACTION_HA; break;
-        case 'K': action = ACTION_KA; break;
-        default:  action = ACTION_DA; break;
-    }
-
-    return action;
-}
-
-//--------------------------------------------------------------------------------------------
-void mad_get_walk_frame( const MAD_REF & imad, int lip, int action )
+ego_mad * mad_loader::make_walk_lip( ego_mad * pmad, const int lip, const int action )
 {
     /// @details ZZ@> This helps make walking look right
+
     int frame = 0;
     int framesinaction, action_stt;
-    ego_mad * pmad;
+    int new_action = ACTION_DA;
 
-    if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack + imad;
+    if ( NULL == pmad ) return pmad;
 
-    action = mad_get_action( imad, action );
-    if ( ACTION_COUNT == action )
+    new_action = mad_get_action( pmad, action );
+    if ( ACTION_COUNT == new_action )
     {
         framesinaction = 1;
         action_stt     = pmad->action_stt[ACTION_DA];
     }
     else
     {
-        framesinaction = pmad->action_end[action] - pmad->action_stt[action];
-        action_stt     = pmad->action_stt[action];
+        framesinaction = pmad->action_end[new_action] - pmad->action_stt[new_action];
+        action_stt     = pmad->action_stt[new_action];
     }
 
     for ( frame = 0; frame < 16; frame++ )
@@ -365,10 +767,12 @@ void mad_get_walk_frame( const MAD_REF & imad, int lip, int action )
 
         pmad->frameliptowalkframe[lip][frame] = action_stt + framealong;
     }
+
+    return pmad;
 }
 
 //--------------------------------------------------------------------------------------------
-void mad_get_framefx( const char * cFrameName, const MAD_REF & imad, int frame )
+ego_mad * mad_loader::make_framefx( ego_mad * pmad, const char * cFrameName, int frame )
 {
     /// @details ZZ@> This function figures out the IFrame invulnerability, and Attack, Grab, and
     ///               Drop timings
@@ -393,18 +797,13 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF & imad, int frame )
     const char * ptmp, * ptmp_end;
     char *paction, *paction_end;
 
-    ego_MD2_Model * md2;
     ego_MD2_Frame * pframe;
 
-    if ( !MadStack.in_range_ref( imad ) ) return;
-
-    md2 = MadStack[imad].md2_ptr;
-    if ( NULL == md2 ) return;
+    if ( NULL == pmad || NULL == pmad->md2_ptr ) return pmad;
 
     // check for a valid frame number
-    if ( frame >= md2_get_numFrames( md2 ) ) return;
-    pframe = ( ego_MD2_Frame * )md2_get_Frames( md2 );
-    pframe = pframe + frame;
+    if ( frame >= md2_get_numFrames( pmad->md2_ptr ) ) return pmad;
+    pframe = ( ego_MD2_Frame * )( md2_get_Frames( pmad->md2_ptr ) + frame );
 
     // this should only be initialized the first time through
     if ( token_count < 0 )
@@ -418,30 +817,30 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF & imad, int frame )
     pframe->framefx = fx;
 
     // check for a non-trivial frame name
-    if ( !VALID_CSTR( cFrameName ) ) return;
+    if ( !VALID_CSTR( cFrameName ) ) return pmad;
 
     // skip over whitespace
     ptmp     = cFrameName;
     ptmp_end = cFrameName + 16;
-    for ( /* nothing */; ptmp < ptmp_end && isspace( *ptmp ); ptmp++ ) {};
+    for ( /* nothing */; ptmp < ptmp_end && SDL_isspace( *ptmp ); ptmp++ ) {};
 
     // copy non-numerical text
     paction     = name_action;
     paction_end = name_action + 16;
-    for ( /* nothing */; ptmp < ptmp_end && paction < paction_end && !isspace( *ptmp ); ptmp++, paction++ )
+    for ( /* nothing */; ptmp < ptmp_end && paction < paction_end && !SDL_isspace( *ptmp ); ptmp++, paction++ )
     {
-        if ( isdigit( *ptmp ) ) break;
+        if ( SDL_isdigit( *ptmp ) ) break;
         *paction = *ptmp;
     }
     if ( paction < paction_end ) *paction = CSTR_END;
 
     name_fx[0] = CSTR_END;
-    fields = sscanf( ptmp, "%d %15s", &name_count, name_fx );
+    fields = SDL_sscanf( ptmp, "%d %15s", &name_count, name_fx );
     name_action[15] = CSTR_END;
     name_fx[15] = CSTR_END;
 
     // check for a non-trivial fx command
-    if ( !VALID_CSTR( name_fx ) ) return;
+    if ( !VALID_CSTR( name_fx ) ) return pmad;
 
     // scan the fx string for valid commands
     ptmp     = name_fx;
@@ -452,7 +851,7 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF & imad, int frame )
         int token_index = -1;
         for ( cnt = 0; cnt < token_count; cnt++ )
         {
-            len = strlen( tokens[cnt] );
+            len = SDL_strlen( tokens[cnt] );
             if ( 0 == strncmp( tokens[cnt], ptmp, len ) )
             {
                 ptmp += len;
@@ -580,29 +979,29 @@ void mad_get_framefx( const char * cFrameName, const MAD_REF & imad, int frame )
     }
 
     pframe->framefx = fx;
+
+    return pmad;
 }
 
 //--------------------------------------------------------------------------------------------
-void mad_make_framelip( const MAD_REF & imad, int action )
+ego_mad * mad_loader::make_frame_lip( ego_mad * pmad, int action )
 {
     /// @details ZZ@> This helps make walking look right
 
     int frame_count, frame, framesinaction;
 
-    ego_mad       * pmad;
     ego_MD2_Model * md2;
     ego_MD2_Frame * frame_list, * pframe;
 
-    if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack + imad;
+    if ( NULL == pmad ) return pmad;
 
     md2 = pmad->md2_ptr;
-    if ( NULL == md2 ) return;
+    if ( NULL == md2 ) return pmad;
 
-    action = mad_get_action( imad, action );
-    if ( ACTION_COUNT == action || ACTION_DA == action ) return;
+    action = mad_get_action( pmad, action );
+    if ( ACTION_COUNT == action || ACTION_DA == action ) return pmad;
 
-    if ( !pmad->action_valid[action] ) return;
+    if ( !pmad->action_valid[action] ) return pmad;
 
     frame_count = md2_get_numFrames( md2 );
     frame_list  = ( ego_MD2_Frame * )md2_get_Frames( md2 );
@@ -617,6 +1016,329 @@ void mad_make_framelip( const MAD_REF & imad, int action )
         pframe->framelip = ( frame - pmad->action_stt[action] ) * 15 / framesinaction;
         pframe->framelip = ( pframe->framelip ) & 15;
     }
+
+    return pmad;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_mad * mad_loader::heal_actions( ego_mad * pmad, const char * tmploadname )
+{
+    STRING newloadname;
+
+    if ( NULL == pmad ) return pmad;
+
+    // Make sure actions are made valid if a similar one exists
+    pmad = copy_action_correct( pmad, ACTION_DA, ACTION_DB );  // All dances should be safe
+    pmad = copy_action_correct( pmad, ACTION_DB, ACTION_DC );
+    pmad = copy_action_correct( pmad, ACTION_DC, ACTION_DD );
+    pmad = copy_action_correct( pmad, ACTION_DB, ACTION_DC );
+    pmad = copy_action_correct( pmad, ACTION_DA, ACTION_DB );
+    pmad = copy_action_correct( pmad, ACTION_UA, ACTION_UB );
+    pmad = copy_action_correct( pmad, ACTION_UB, ACTION_UC );
+    pmad = copy_action_correct( pmad, ACTION_UC, ACTION_UD );
+    pmad = copy_action_correct( pmad, ACTION_TA, ACTION_TB );
+    pmad = copy_action_correct( pmad, ACTION_TC, ACTION_TD );
+    pmad = copy_action_correct( pmad, ACTION_CA, ACTION_CB );
+    pmad = copy_action_correct( pmad, ACTION_CC, ACTION_CD );
+    pmad = copy_action_correct( pmad, ACTION_SA, ACTION_SB );
+    pmad = copy_action_correct( pmad, ACTION_SC, ACTION_SD );
+    pmad = copy_action_correct( pmad, ACTION_BA, ACTION_BB );
+    pmad = copy_action_correct( pmad, ACTION_BC, ACTION_BD );
+    pmad = copy_action_correct( pmad, ACTION_LA, ACTION_LB );
+    pmad = copy_action_correct( pmad, ACTION_LC, ACTION_LD );
+    pmad = copy_action_correct( pmad, ACTION_XA, ACTION_XB );
+    pmad = copy_action_correct( pmad, ACTION_XC, ACTION_XD );
+    pmad = copy_action_correct( pmad, ACTION_FA, ACTION_FB );
+    pmad = copy_action_correct( pmad, ACTION_FC, ACTION_FD );
+    pmad = copy_action_correct( pmad, ACTION_PA, ACTION_PB );
+    pmad = copy_action_correct( pmad, ACTION_PC, ACTION_PD );
+    pmad = copy_action_correct( pmad, ACTION_ZA, ACTION_ZB );
+    pmad = copy_action_correct( pmad, ACTION_ZC, ACTION_ZD );
+    pmad = copy_action_correct( pmad, ACTION_WA, ACTION_WB );
+    pmad = copy_action_correct( pmad, ACTION_WB, ACTION_WC );
+    pmad = copy_action_correct( pmad, ACTION_WC, ACTION_WD );
+    pmad = copy_action_correct( pmad, ACTION_DA, ACTION_WD );  // All walks should be safe
+    pmad = copy_action_correct( pmad, ACTION_WC, ACTION_WD );
+    pmad = copy_action_correct( pmad, ACTION_WB, ACTION_WC );
+    pmad = copy_action_correct( pmad, ACTION_WA, ACTION_WB );
+    pmad = copy_action_correct( pmad, ACTION_JA, ACTION_JB );
+    pmad = copy_action_correct( pmad, ACTION_JB, ACTION_JC );
+    pmad = copy_action_correct( pmad, ACTION_DA, ACTION_JC );  // All jumps should be safe
+    pmad = copy_action_correct( pmad, ACTION_JB, ACTION_JC );
+    pmad = copy_action_correct( pmad, ACTION_JA, ACTION_JB );
+    pmad = copy_action_correct( pmad, ACTION_HA, ACTION_HB );
+    pmad = copy_action_correct( pmad, ACTION_HB, ACTION_HC );
+    pmad = copy_action_correct( pmad, ACTION_HC, ACTION_HD );
+    pmad = copy_action_correct( pmad, ACTION_HB, ACTION_HC );
+    pmad = copy_action_correct( pmad, ACTION_HA, ACTION_HB );
+    pmad = copy_action_correct( pmad, ACTION_KA, ACTION_KB );
+    pmad = copy_action_correct( pmad, ACTION_KB, ACTION_KC );
+    pmad = copy_action_correct( pmad, ACTION_KC, ACTION_KD );
+    pmad = copy_action_correct( pmad, ACTION_KB, ACTION_KC );
+    pmad = copy_action_correct( pmad, ACTION_KA, ACTION_KB );
+    pmad = copy_action_correct( pmad, ACTION_MH, ACTION_MI );
+    pmad = copy_action_correct( pmad, ACTION_DA, ACTION_MM );
+    pmad = copy_action_correct( pmad, ACTION_MM, ACTION_MN );
+
+    // Copy entire actions to save frame space COPY.TXT
+    make_newloadname( tmploadname, "/copy.txt", newloadname );
+    apply_copy_file_vfs( pmad, newloadname );
+
+    return pmad;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_mad * mad_loader::finalize( ego_mad * pmad )
+{
+    int frame, frame_count;
+
+    ego_MD2_Model * pmd2;
+    ego_MD2_Frame * frame_list;
+
+    if ( NULL == pmad ) return pmad;
+
+    pmd2 = pmad->md2_ptr;
+    if ( NULL == pmd2 ) return pmad;
+
+    frame_count = md2_get_numFrames( pmd2 );
+    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
+
+    // Create table for doing transition from one type of walk to another...
+    // Clear 'em all to start
+    for ( frame = 0; frame < frame_count; frame++ )
+    {
+        frame_list[frame].framelip = 0;
+    }
+
+    // Need to figure out how far into action each frame is
+    pmad = make_frame_lip( pmad, ACTION_WA );
+    pmad = make_frame_lip( pmad, ACTION_WB );
+    pmad = make_frame_lip( pmad, ACTION_WC );
+
+    // Now do the same, in reverse, for walking animations
+    pmad = make_walk_lip( pmad, LIPDA, ACTION_DA );
+    pmad = make_walk_lip( pmad, LIPWA, ACTION_WA );
+    pmad = make_walk_lip( pmad, LIPWB, ACTION_WB );
+    pmad = make_walk_lip( pmad, LIPWC, ACTION_WC );
+
+    return pmad;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_mad * mad_loader::make_actions( ego_mad * pmad )
+{
+    /// @details ZZ@> This function creates the iframe lists for each this_action based on the
+    ///    name of each md2 iframe in the model
+
+    int frame_count, iframe;
+    int this_action, last_action;
+
+    ego_MD2_Model    * pmd2;
+    ego_MD2_Frame    * frame_list;
+
+    if ( NULL == pmad ) return pmad;
+
+    pmd2 = pmad->md2_ptr;
+    if ( NULL == pmd2 ) return pmad;
+
+    // Clear out all actions and reset to invalid
+    for ( this_action = 0; this_action < ACTION_COUNT; this_action++ )
+    {
+        pmad->action_map[this_action]   = ACTION_COUNT;
+        pmad->action_stt[this_action]   = -1;
+        pmad->action_end[this_action]   = -1;
+        pmad->action_valid[this_action] = bfalse;
+    }
+
+    // grab the frame info from the md2
+    frame_count = md2_get_numFrames( pmd2 );
+    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
+
+    // is there anything to do?
+    if ( 0 == frame_count ) return pmad;
+
+    // Make a default dance action (ACTION_DA) to be the 1st frame of the animation
+    pmad->action_map[ACTION_DA]   = ACTION_DA;
+    pmad->action_valid[ACTION_DA] = btrue;
+    pmad->action_stt[ACTION_DA]   = 0;
+    pmad->action_end[ACTION_DA]   = 0;
+
+    // Now go huntin' to see what each iframe is, look for runs of same this_action
+    last_action = ACTION_COUNT;
+    for ( iframe = 0; iframe < frame_count; iframe++ )
+    {
+        this_action = get_action_index( frame_list[iframe].name );
+
+        if ( last_action != this_action )
+        {
+            // start a new action
+            pmad->action_map[this_action]   = this_action;
+            pmad->action_stt[this_action]   = iframe;
+            pmad->action_end[this_action]   = iframe;
+            pmad->action_valid[this_action] = btrue;
+
+            last_action = this_action;
+        }
+        else
+        {
+            // keep expanding the action_end until the end of the action
+            pmad->action_end[this_action] = iframe;
+        }
+
+        make_framefx( pmad, frame_list[iframe].name, iframe );
+    }
+
+    return pmad;
+}
+
+//--------------------------------------------------------------------------------------------
+int mad_loader::get_action_index( const char * cFrameName )
+{
+    /// @details ZZ@> This function returns the number of the action in cFrameName, or
+    ///    it returns NOACTION if it could not find a match
+
+    int cnt;
+    char tmp_str[16];
+    char first, second;
+
+    SDL_sscanf( cFrameName, " %15s", tmp_str );
+
+    first  = tmp_str[0];
+    second = tmp_str[1];
+
+    for ( cnt = 0; cnt < ACTION_COUNT; cnt++ )
+    {
+        if ( first == cActionName[cnt][0] && second == cActionName[cnt][1] )
+        {
+            return cnt;
+        }
+    }
+
+    return NOACTION;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+int mad_get_action( const ego_mad * pmad, const int action )
+{
+    /// @detaills BB@> translate the action that was given into a valid action for the model
+    ///
+    /// returns ACTION_COUNT on a complete failure, or the default ACTION_DA if it exists
+
+    int     retval;
+
+    if ( NULL == pmad ) return ACTION_COUNT;
+
+    // you are pretty much guaranteed that ACTION_DA will be valid for a model,
+    // I guess it could be invalid if the model had no frames or something
+    retval = ACTION_DA;
+    if ( !pmad->action_valid[ACTION_DA] )
+    {
+        retval = ACTION_COUNT;
+    }
+
+    // check for a valid action range
+    if ( action < 0 || action > ACTION_COUNT ) return retval;
+
+    // track down a valid value
+    if ( pmad->action_valid[action] )
+    {
+        retval = action;
+    }
+    else if ( ACTION_COUNT != pmad->action_map[action] )
+    {
+        int cnt, tnc;
+
+        // do a "recursive" search for a valid action
+        // we should never really have to check more than once if the map is prepared
+        // properly BUT you never can tell. Make sure we do not get a runaway loop by
+        // you never go farther than ACTION_COUNT steps and that you never see the
+        // original action again
+
+        tnc = pmad->action_map[action];
+        for ( cnt = 0; cnt < ACTION_COUNT; cnt++ )
+        {
+            if ( tnc >= ACTION_COUNT || tnc < 0 || tnc == action ) break;
+
+            if ( pmad->action_valid[tnc] )
+            {
+                retval = tnc;
+                break;
+            }
+        }
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+int mad_get_action( const MAD_REF & imad, int action )
+{
+    /// @detaills BB@> version that accepts a reference rather than a pointer
+
+    if ( !LOADED_MAD( imad ) ) return ACTION_COUNT;
+
+    return mad_get_action( MadStack + imad, action );
+}
+
+//--------------------------------------------------------------------------------------------
+BIT_FIELD mad_get_actionfx( const MAD_REF & imad, int action )
+{
+    BIT_FIELD retval = EMPTY_BIT_FIELD;
+    int cnt;
+    ego_mad * pmad;
+    ego_MD2_Model * md2;
+    ego_MD2_Frame * frame_lst, * pframe;
+
+    if ( !LOADED_MAD( imad ) ) return 0;
+    pmad = MadStack + imad;
+
+    md2 = MadStack[imad].md2_ptr;
+    if ( NULL == md2 ) return 0;
+
+    if ( action < 0 || action >= ACTION_COUNT ) return 0;
+
+    if ( !pmad->action_valid[action] ) return 0;
+
+    frame_lst = ( ego_MD2_Frame * )md2_get_Frames( md2 );
+    for ( cnt = pmad->action_stt[action]; cnt <= pmad->action_end[action]; cnt++ )
+    {
+        pframe = frame_lst + cnt;
+
+        ADD_BITS( retval, pframe->framefx );
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+int action_which( char cTmp )
+{
+    /// @details ZZ@> This function changes a letter into an action code
+    int action;
+
+    switch ( SDL_toupper( cTmp ) )
+    {
+            /// @note ZF@> Attack animation WALK is used for doing nothing (for example charging spells)
+            ///            Make it default to ACTION_DA in this case.
+        case 'W': action = ACTION_DA; break;
+        case 'D': action = ACTION_DA; break;
+        case 'U': action = ACTION_UA; break;
+        case 'T': action = ACTION_TA; break;
+        case 'C': action = ACTION_CA; break;
+        case 'S': action = ACTION_SA; break;
+        case 'B': action = ACTION_BA; break;
+        case 'L': action = ACTION_LA; break;
+        case 'X': action = ACTION_XA; break;
+        case 'F': action = ACTION_FA; break;
+        case 'P': action = ACTION_PA; break;
+        case 'Z': action = ACTION_ZA; break;
+        case 'H': action = ACTION_HA; break;
+        case 'K': action = ACTION_KA; break;
+        default:  action = ACTION_DA; break;
+    }
+
+    return action;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -695,345 +1417,7 @@ void load_action_names_vfs( const char* loadname )
 }
 
 //--------------------------------------------------------------------------------------------
-MAD_REF load_one_model_profile_vfs( const char* tmploadname, const MAD_REF & imad )
-{
-    ego_mad * pmad;
-    STRING  newloadname;
-
-    if ( !MadStack.in_range_ref( imad ) ) return MAD_REF( MAX_MAD );
-    pmad = MadStack + imad;
-
-    // clear out the mad
-    ego_mad::reconstruct( pmad );
-
-    // mark it as used
-    pmad->loaded = btrue;
-
-    // Make up a name for the model...  IMPORT\TEMP0000.OBJ
-    strncpy( pmad->name, tmploadname, SDL_arraysize( pmad->name ) );
-    pmad->name[ SDL_arraysize( pmad->name ) - 1 ] = CSTR_END;
-
-    // Load the imad model
-    make_newloadname( tmploadname, "/tris.md2", newloadname );
-
-    // do this for now. maybe make it dynamic later...
-    //pmad->md2_ref = imad;
-
-    // load the model from the file
-    pmad->md2_ptr = ego_MD2_Model::load( vfs_resolveReadFilename( newloadname ), NULL );
-
-    // set the model's file name
-    szModelName[0] = CSTR_END;
-    if ( NULL != pmad->md2_ptr )
-    {
-        strncpy( szModelName, vfs_resolveReadFilename( newloadname ), SDL_arraysize( szModelName ) );
-
-        /// @details BB@> Egoboo md2 models were designed with 1 tile = 32x32 units, but internally Egoboo uses
-        ///      1 tile = 128x128 units. Previously, this was handled by sprinkling a bunch of
-        ///      commands that multiplied various quantities by 4 or by 4.125 throughout the code.
-        ///      It was very counter-intuitive, and caused me no end of headaches...  Of course the
-        ///      solution is to scale the model!
-        ego_MD2_Model::scale( pmad->md2_ptr, -3.5, 3.5, 3.5 );
-    }
-
-    // Create the actions table for this imad
-    mad_rip_actions( imad );
-    mad_heal_actions( imad, tmploadname );
-    mad_finalize( imad );
-
-    return imad;
-}
-
-//--------------------------------------------------------------------------------------------
-void mad_heal_actions( const MAD_REF & imad, const char * tmploadname )
-{
-    STRING newloadname;
-
-    if ( !LOADED_MAD( imad ) ) return;
-
-    // Make sure actions are made valid if a similar one exists
-    action_copy_correct( imad, ACTION_DA, ACTION_DB );  // All dances should be safe
-    action_copy_correct( imad, ACTION_DB, ACTION_DC );
-    action_copy_correct( imad, ACTION_DC, ACTION_DD );
-    action_copy_correct( imad, ACTION_DB, ACTION_DC );
-    action_copy_correct( imad, ACTION_DA, ACTION_DB );
-    action_copy_correct( imad, ACTION_UA, ACTION_UB );
-    action_copy_correct( imad, ACTION_UB, ACTION_UC );
-    action_copy_correct( imad, ACTION_UC, ACTION_UD );
-    action_copy_correct( imad, ACTION_TA, ACTION_TB );
-    action_copy_correct( imad, ACTION_TC, ACTION_TD );
-    action_copy_correct( imad, ACTION_CA, ACTION_CB );
-    action_copy_correct( imad, ACTION_CC, ACTION_CD );
-    action_copy_correct( imad, ACTION_SA, ACTION_SB );
-    action_copy_correct( imad, ACTION_SC, ACTION_SD );
-    action_copy_correct( imad, ACTION_BA, ACTION_BB );
-    action_copy_correct( imad, ACTION_BC, ACTION_BD );
-    action_copy_correct( imad, ACTION_LA, ACTION_LB );
-    action_copy_correct( imad, ACTION_LC, ACTION_LD );
-    action_copy_correct( imad, ACTION_XA, ACTION_XB );
-    action_copy_correct( imad, ACTION_XC, ACTION_XD );
-    action_copy_correct( imad, ACTION_FA, ACTION_FB );
-    action_copy_correct( imad, ACTION_FC, ACTION_FD );
-    action_copy_correct( imad, ACTION_PA, ACTION_PB );
-    action_copy_correct( imad, ACTION_PC, ACTION_PD );
-    action_copy_correct( imad, ACTION_ZA, ACTION_ZB );
-    action_copy_correct( imad, ACTION_ZC, ACTION_ZD );
-    action_copy_correct( imad, ACTION_WA, ACTION_WB );
-    action_copy_correct( imad, ACTION_WB, ACTION_WC );
-    action_copy_correct( imad, ACTION_WC, ACTION_WD );
-    action_copy_correct( imad, ACTION_DA, ACTION_WD );  // All walks should be safe
-    action_copy_correct( imad, ACTION_WC, ACTION_WD );
-    action_copy_correct( imad, ACTION_WB, ACTION_WC );
-    action_copy_correct( imad, ACTION_WA, ACTION_WB );
-    action_copy_correct( imad, ACTION_JA, ACTION_JB );
-    action_copy_correct( imad, ACTION_JB, ACTION_JC );
-    action_copy_correct( imad, ACTION_DA, ACTION_JC );  // All jumps should be safe
-    action_copy_correct( imad, ACTION_JB, ACTION_JC );
-    action_copy_correct( imad, ACTION_JA, ACTION_JB );
-    action_copy_correct( imad, ACTION_HA, ACTION_HB );
-    action_copy_correct( imad, ACTION_HB, ACTION_HC );
-    action_copy_correct( imad, ACTION_HC, ACTION_HD );
-    action_copy_correct( imad, ACTION_HB, ACTION_HC );
-    action_copy_correct( imad, ACTION_HA, ACTION_HB );
-    action_copy_correct( imad, ACTION_KA, ACTION_KB );
-    action_copy_correct( imad, ACTION_KB, ACTION_KC );
-    action_copy_correct( imad, ACTION_KC, ACTION_KD );
-    action_copy_correct( imad, ACTION_KB, ACTION_KC );
-    action_copy_correct( imad, ACTION_KA, ACTION_KB );
-    action_copy_correct( imad, ACTION_MH, ACTION_MI );
-    action_copy_correct( imad, ACTION_DA, ACTION_MM );
-    action_copy_correct( imad, ACTION_MM, ACTION_MN );
-
-    // Copy entire actions to save frame space COPY.TXT
-    make_newloadname( tmploadname, "/copy.txt", newloadname );
-    action_check_copy_vfs( newloadname, imad );
-}
-
-//--------------------------------------------------------------------------------------------
-void mad_finalize( const MAD_REF & imad )
-{
-    int frame, frame_count;
-
-    ego_mad       * pmad;
-    ego_MD2_Model * pmd2;
-    ego_MD2_Frame * frame_list;
-
-    if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack + imad;
-
-    pmd2 = pmad->md2_ptr;
-    if ( NULL == pmd2 ) return;
-
-    frame_count = md2_get_numFrames( pmd2 );
-    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
-
-    // Create table for doing transition from one type of walk to another...
-    // Clear 'em all to start
-    for ( frame = 0; frame < frame_count; frame++ )
-    {
-        frame_list[frame].framelip = 0;
-    }
-
-    // Need to figure out how far into action each frame is
-    mad_make_framelip( imad, ACTION_WA );
-    mad_make_framelip( imad, ACTION_WB );
-    mad_make_framelip( imad, ACTION_WC );
-
-    // Now do the same, in reverse, for walking animations
-    mad_get_walk_frame( imad, LIPDA, ACTION_DA );
-    mad_get_walk_frame( imad, LIPWA, ACTION_WA );
-    mad_get_walk_frame( imad, LIPWB, ACTION_WB );
-    mad_get_walk_frame( imad, LIPWC, ACTION_WC );
-}
-
-//--------------------------------------------------------------------------------------------
-void mad_rip_actions( const MAD_REF & imad )
-{
-    /// @details ZZ@> This function creates the iframe lists for each action based on the
-    ///    name of each md2 iframe in the model
-
-    int frame_count, iframe, framesinaction;
-    int action, lastaction;
-
-    ego_mad          * pmad;
-    ego_MD2_Model    * pmd2;
-    ego_MD2_Frame    * frame_list;
-
-    if ( !LOADED_MAD( imad ) ) return;
-    pmad = MadStack + imad;
-
-    pmd2 = pmad->md2_ptr;
-    if ( NULL == pmd2 ) return;
-
-    // Clear out all actions and reset to invalid
-    for ( action = 0; action < ACTION_COUNT; action++ )
-    {
-        pmad->action_map[action]   = ACTION_COUNT;
-        pmad->action_valid[action] = bfalse;
-    }
-
-    // Set the primary dance action to be the first iframe, just as a default
-    pmad->action_map[ACTION_DA]   = ACTION_DA;
-    pmad->action_valid[ACTION_DA] = btrue;
-    pmad->action_stt[ACTION_DA]   = 0;
-    pmad->action_end[ACTION_DA]   = 1;
-
-    frame_count = md2_get_numFrames( pmd2 );
-    frame_list  = ( ego_MD2_Frame * )md2_get_Frames( pmd2 );
-
-    // Now go huntin' to see what each iframe is, look for runs of same action
-    lastaction     = action_number( frame_list[0].name );
-    framesinaction = 0;
-    for ( iframe = 0; iframe < frame_count; iframe++ )
-    {
-        action = action_number( frame_list[iframe].name );
-        pmad->action_map[action] = action;
-
-        if ( lastaction == action )
-        {
-            framesinaction++;
-        }
-        else
-        {
-            // Write the old action
-            if ( lastaction < ACTION_COUNT )
-            {
-                pmad->action_valid[lastaction] = btrue;
-                pmad->action_stt[lastaction]   = iframe - framesinaction;
-                pmad->action_end[lastaction]   = iframe;
-            }
-
-            framesinaction = 1;
-            lastaction = action;
-        }
-
-        mad_get_framefx( frame_list[iframe].name, imad, iframe );
-    }
-
-    // Write the old action
-    if ( lastaction < ACTION_COUNT )
-    {
-        pmad->action_valid[lastaction] = btrue;
-        pmad->action_stt[lastaction]   = iframe - framesinaction;
-        pmad->action_end[lastaction]   = iframe;
-    }
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_mad * ego_mad::clear( ego_mad * pmad )
-{
-    if ( NULL == pmad ) return pmad;
-
-    memset( pmad, 0, sizeof( *pmad ) );
-
-    return pmad;
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t ego_mad::dealloc( ego_mad * pmad )
-{
-    /// Free all allocated memory
-
-    if ( NULL == pmad || !pmad->loaded ) return bfalse;
-
-    ego_MD2_Model::destroy( &( pmad->md2_ptr ) );
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_mad * ego_mad::reconstruct( ego_mad * pmad )
-{
-    /// @details BB@> initialize the character data to safe values
-    ///     since we use memset(..., 0, ...), all = 0, = false, and = 0.0f
-    ///     statements are redundant
-
-    int action;
-
-    if ( NULL == pmad ) return NULL;
-
-    ego_mad::dealloc( pmad );
-
-    pmad = ego_mad::clear( pmad );
-
-    strncpy( pmad->name, "*NONE*", SDL_arraysize( pmad->name ) );
-
-    // Clear out all actions and reset to invalid
-    for ( action = 0; action < ACTION_COUNT; action++ )
-    {
-        pmad->action_map[action]   = ACTION_COUNT;
-    }
-
-    return pmad;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_mad * ego_mad::ctor_this( ego_mad * pmad )
-{
-    if ( NULL == ego_mad::reconstruct( pmad ) ) return NULL;
-
-    // nothing to do yet
-
-    return pmad;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_mad * ego_mad::dtor_this( ego_mad * pmad )
-{
-    /// @details BB@> deinitialize the character data
-
-    if ( NULL == pmad || !pmad->loaded ) return NULL;
-
-    // deinitialize the object
-    ego_mad::reconstruct( pmad );
-
-    // "destruct" the base object
-    pmad->loaded = bfalse;
-
-    return pmad;
-}
-
-//--------------------------------------------------------------------------------------------
-void init_all_mad()
-{
-    MAD_REF cnt;
-
-    for ( cnt = 0; cnt < MAX_MAD; cnt++ )
-    {
-        ego_mad::reconstruct( MadStack + cnt );
-    }
-}
-
-//--------------------------------------------------------------------------------------------
-void release_all_mad()
-{
-    MAD_REF cnt;
-
-    for ( cnt = 0; cnt < MAX_MAD; cnt++ )
-    {
-        release_one_mad( cnt );
-    }
-}
-
-//--------------------------------------------------------------------------------------------
-bool_t release_one_mad( const MAD_REF & imad )
-{
-    ego_mad * pmad;
-
-    if ( !MadStack.in_range_ref( imad ) ) return bfalse;
-    pmad = MadStack + imad;
-
-    if ( !pmad->loaded ) return btrue;
-
-    // free any md2 data
-    ego_mad::reconstruct( pmad );
-
-    return btrue;
-}
-
-//--------------------------------------------------------------------------------------------
-int randomize_action( int action, int slot )
+int mad_randomize_action( int action, int slot )
 {
     /// @details BB@> this function actually determines whether the action fillows the
     ///               pattern of ACTION_?A, ACTION_?B, ACTION_?C, ACTION_?D, with
@@ -1102,141 +1486,3 @@ int randomize_action( int action, int slot )
 
     return action;
 }
-
-////--------------------------------------------------------------------------------------------
-//Uint16 test_frame_name( char letter )
-//{
-//    /// @details ZZ@> This function returns btrue if the 4th, 5th, 6th, or 7th letters
-//    ///    of the frame name matches the input argument
-//
-//    if ( cFrameName[4] == letter ) return btrue;
-//    if ( cFrameName[4] == 0 ) return bfalse;
-//    if ( cFrameName[5] == letter ) return btrue;
-//    if ( cFrameName[5] == 0 ) return bfalse;
-//    if ( cFrameName[6] == letter ) return btrue;
-//    if ( cFrameName[6] == 0 ) return bfalse;
-//    if ( cFrameName[7] == letter ) return btrue;
-//
-//    return bfalse;
-//}
-
-//--------------------------------------------------------------------------------------------
-//void md2_fix_normals( const MAD_REF & imad )
-//{
-//    /// @details ZZ@> This function helps light not flicker so much
-//    int cnt, tnc;
-//    int indexofcurrent, indexofnext, indexofnextnext, indexofnextnextnext;
-//    int indexofnextnextnextnext;
-//    int frame;
-//
-//    frame = ego_md2_data[MadStack[imad].md2_ref].framestart;
-//    cnt = 0;
-//
-//    while ( cnt < ego_md2_data[MadStack[imad].md2_ref].vertex_lst )
-//    {
-//        tnc = 0;
-//
-//        while ( tnc < ego_md2_data[MadStack[imad].md2_ref].frames )
-//        {
-//            indexofcurrent = pframe->vrta[cnt];
-//            indexofnext = Md2FrameList[frame+1].vrta[cnt];
-//            indexofnextnext = Md2FrameList[frame+2].vrta[cnt];
-//            indexofnextnextnext = Md2FrameList[frame+3].vrta[cnt];
-//            indexofnextnextnextnext = Md2FrameList[frame+4].vrta[cnt];
-//            if ( indexofcurrent == indexofnextnext && indexofnext != indexofcurrent )
-//            {
-//                Md2FrameList[frame+1].vrta[cnt] = indexofcurrent;
-//            }
-//            if ( indexofcurrent == indexofnextnextnext )
-//            {
-//                if ( indexofnext != indexofcurrent )
-//                {
-//                    Md2FrameList[frame+1].vrta[cnt] = indexofcurrent;
-//                }
-//                if ( indexofnextnext != indexofcurrent )
-//                {
-//                    Md2FrameList[frame+2].vrta[cnt] = indexofcurrent;
-//                }
-//            }
-//            if ( indexofcurrent == indexofnextnextnextnext )
-//            {
-//                if ( indexofnext != indexofcurrent )
-//                {
-//                    Md2FrameList[frame+1].vrta[cnt] = indexofcurrent;
-//                }
-//                if ( indexofnextnext != indexofcurrent )
-//                {
-//                    Md2FrameList[frame+2].vrta[cnt] = indexofcurrent;
-//                }
-//                if ( indexofnextnextnext != indexofcurrent )
-//                {
-//                    Md2FrameList[frame+3].vrta[cnt] = indexofcurrent;
-//                }
-//            }
-//
-//            tnc++;
-//        }
-//
-//        cnt++;
-//    }
-//}
-
-//--------------------------------------------------------------------------------------------
-//void md2_get_transvertices( const MAD_REF & imad )
-//{
-//    /// @details ZZ@> This function gets the number of vertices to transform for a model...
-//    //    That means every one except the grip ( unconnected ) vertices
-//
-//    // if (imad == 0)
-//    // {
-//    //   for ( cnt = 0; cnt < MadStack[imad].vertex_lst; cnt++ )
-//    //   {
-//    //       printf("%d-%d\n", cnt, vertexconnected( imad, cnt ) );
-//    //   }
-//    // }
-//
-//    MadStack[imad].transvertices = ego_md2_data[MadStack[imad].md2_ref].vertex_lst;
-//}
-
-//--------------------------------------------------------------------------------------------
-/*int vertexconnected( md2_ogl_commandlist_t * pclist, int vertex )
-{
-    /// @details ZZ@> This function returns 1 if the model vertex is connected, 0 otherwise
-    int cnt, tnc, entry;
-
-    entry = 0;
-
-    for ( cnt = 0; cnt < pclist->count; cnt++ )
-    {
-        for ( tnc = 0; tnc < pclist->size[cnt]; tnc++ )
-        {
-            if ( pclist->vrt[entry] == vertex )
-            {
-                // The vertex is used
-                return 1;
-            }
-
-            entry++;
-        }
-    }
-
-    // The vertex is not used
-    return 0;
-}
-
-*/
-
-////--------------------------------------------------------------------------------------------
-//int action_frame()
-//{
-//    /// @details ZZ@> This function returns the frame number in the third and fourth characters
-//    ///    of cFrameName
-//
-//    int number;
-//    char tmp_str[16];
-//
-//    sscanf( cFrameName, " %15s%d", tmp_str, &number );
-//
-//    return number;
-//}
-

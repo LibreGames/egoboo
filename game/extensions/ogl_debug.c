@@ -349,44 +349,44 @@ void gl_grab_state( ogl_state_t * ps )
 
     if ( NULL == ps ) return;
 
-    memset( ps, 0, sizeof( *ps ) );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memset( ps, 0, sizeof( *ps ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_texturing_state( &ps->texturing );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_clipping_state( &ps->clipping );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_render_options_state( &ps->options );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_mapping_state( &ps->mapping );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_unpacking_state( &ps->unpack );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_packing_state( &ps->pack );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_matrix_state( &ps->matrix );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_attrib_state( &ps->attrib );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     gl_grab_logic_op_state( &ps->logic_op );
     gl_comp_state( &tmp_cmp, &tmp_state, ps );
-    memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
+    SDL_memcpy( &tmp_state, ps, sizeof( ogl_state_t ) );
 
     //---- zoom                    ";
     GL_DEBUG( glGetFloatv )( GL_ZOOM_X, ps->zoom_x );
@@ -403,20 +403,20 @@ void gl_grab_state( ogl_state_t * ps )
 void gl_comp_state( ogl_state_comp_t * pcomp, ogl_state_t * ps1, ogl_state_t * ps2 )
 {
     // compare the entire state
-    pcomp->state     = ( 0 != memcmp( ps1,            ps2,          sizeof( ogl_state_t ) ) );
+    pcomp->state     = ( 0 != SDL_memcmp( ps1,            ps2,          sizeof( ogl_state_t ) ) );
 
     // compare the sub states
-    pcomp->texturing = ( 0 != memcmp( &ps1->texturing, &ps2->texturing,   sizeof( gl_texturing_t ) ) );
-    pcomp->clipping  = ( 0 != memcmp( &ps1->clipping,  &ps2->clipping,    sizeof( gl_clipping_t ) ) );
-    pcomp->options   = ( 0 != memcmp( &ps1->options,  &ps2->options,      sizeof( gl_render_options_t ) ) );
-    pcomp->mapping   = ( 0 != memcmp( &ps1->mapping,  &ps2->mapping,      sizeof( gl_mapping_t ) ) );
+    pcomp->texturing = ( 0 != SDL_memcmp( &ps1->texturing, &ps2->texturing,   sizeof( gl_texturing_t ) ) );
+    pcomp->clipping  = ( 0 != SDL_memcmp( &ps1->clipping,  &ps2->clipping,    sizeof( gl_clipping_t ) ) );
+    pcomp->options   = ( 0 != SDL_memcmp( &ps1->options,  &ps2->options,      sizeof( gl_render_options_t ) ) );
+    pcomp->mapping   = ( 0 != SDL_memcmp( &ps1->mapping,  &ps2->mapping,      sizeof( gl_mapping_t ) ) );
 
-    pcomp->pack      = ( 0 != memcmp( &ps1->pack,    &ps2->pack,    sizeof( gl_packing_t ) ) );
-    pcomp->unpack    = ( 0 != memcmp( &ps1->unpack,  &ps2->unpack,  sizeof( gl_packing_t ) ) );
+    pcomp->pack      = ( 0 != SDL_memcmp( &ps1->pack,    &ps2->pack,    sizeof( gl_packing_t ) ) );
+    pcomp->unpack    = ( 0 != SDL_memcmp( &ps1->unpack,  &ps2->unpack,  sizeof( gl_packing_t ) ) );
 
-    pcomp->matrix    = ( 0 != memcmp( &ps1->matrix,  &ps2->matrix,      sizeof( gl_matrix_t ) ) );
-    pcomp->attrib    = ( 0 != memcmp( &ps1->attrib,  &ps2->attrib,      sizeof( gl_attrib_t ) ) );
-    pcomp->logic_op  = ( 0 != memcmp( &ps1->logic_op,  &ps2->logic_op,      sizeof( gl_logic_op_t ) ) );
+    pcomp->matrix    = ( 0 != SDL_memcmp( &ps1->matrix,  &ps2->matrix,      sizeof( gl_matrix_t ) ) );
+    pcomp->attrib    = ( 0 != SDL_memcmp( &ps1->attrib,  &ps2->attrib,      sizeof( gl_attrib_t ) ) );
+    pcomp->logic_op  = ( 0 != SDL_memcmp( &ps1->logic_op,  &ps2->logic_op,      sizeof( gl_logic_op_t ) ) );
 }
 
 //--------------------------------------------------------------------------------------------

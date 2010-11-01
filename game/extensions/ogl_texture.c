@@ -147,7 +147,7 @@ oglx_texture_t * oglx_texture_ctor( oglx_texture_t * ptex )
 {
     if ( NULL == ptex ) return ptex;
 
-    memset( ptex, 0, sizeof( *ptex ) );
+    SDL_memset( ptex, 0, sizeof( *ptex ) );
 
     // only need one base.binding per texture
     // do not need to ask for a new id, even if we change the texture data
@@ -461,7 +461,7 @@ GLuint oglx_bind_to_tex_params( GLuint binding, GLenum target, GLint wrap_s, GLi
         {
                 // Unfiltered
             case TX_UNFILTERED:
-                oglx_bind( target, local_binding, wrap_s, wrap_t, GL_NEAREST, GL_LINEAR, 0 );
+                oglx_bind( target, local_binding, wrap_s, wrap_t, GL_NEAREST, GL_NEAREST, 0 );
                 break;
 
                 // Linear filtered

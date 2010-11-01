@@ -132,7 +132,7 @@ ClockState_t * clk_ctor( ClockState_t * cs, const char * name, int window_size )
 
     if ( NULL == cs ) return cs;
 
-    memset( cs, 0, sizeof( *cs ) );
+    SDL_memset( cs, 0, sizeof( *cs ) );
 
     psrc = clock_getTimeSource();
     cs->sourceStartTime = psrc();
@@ -154,7 +154,7 @@ bool_t clk_dtor( ClockState_t * cs )
 
     EGOBOO_DELETE_ARY( cs->frameHistory );
 
-    memset( cs, 0, sizeof( *cs ) );
+    SDL_memset( cs, 0, sizeof( *cs ) );
 
     return btrue;
 }
@@ -190,7 +190,7 @@ void clk_setFrameHistoryWindow( ClockState_t * cs, int size )
     history = EGOBOO_NEW_ARY( double, newSize );
     if ( NULL != history )
     {
-        memset( history, 0, sizeof( double ) * newSize );
+        SDL_memset( history, 0, sizeof( double ) * newSize );
     }
 
     if ( NULL != cs->frameHistory )
@@ -200,7 +200,7 @@ void clk_setFrameHistoryWindow( ClockState_t * cs, int size )
         // Copy over the older history.  Make sure that only the size of the
         // smaller buffer is copied
         smaller = ( newSize < oldSize ) ? newSize : oldSize;
-        memcpy( history, cs->frameHistory, smaller );
+        SDL_memcpy( history, cs->frameHistory, smaller );
 
         EGOBOO_DELETE_ARY( cs->frameHistory );
     }

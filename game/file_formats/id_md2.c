@@ -56,7 +56,7 @@ id_md2_model_t * id_md2_load( const char *filename, id_md2_model_t * mdl )
 
     if ( NULL == mdl )
     {
-        mdl = ( id_md2_model_t* )calloc( 1, sizeof( id_md2_model_t ) );
+        mdl = ( id_md2_model_t* )SDL_calloc( 1, sizeof( id_md2_model_t ) );
     }
 
     if ( NULL == mdl ) return NULL;
@@ -74,11 +74,11 @@ id_md2_model_t * id_md2_load( const char *filename, id_md2_model_t * mdl )
     }
 
     /* Memory allocations */
-    mdl->skins     = ( id_md2_skin_t     * ) calloc( mdl->header.num_skins,   sizeof( id_md2_skin_t ) );
-    mdl->texcoords = ( id_md2_texcoord_t * ) calloc( mdl->header.num_st,      sizeof( id_md2_texcoord_t ) );
-    mdl->triangles = ( id_md2_triangle_t * ) calloc( mdl->header.num_tris,    sizeof( id_md2_triangle_t ) );
-    mdl->frames    = ( id_md2_frame_t    * ) calloc( mdl->header.num_frames,  sizeof( id_md2_frame_t ) );
-    mdl->glcmds    = ( int               * ) calloc( mdl->header.size_glcmds, sizeof( int ) );
+    mdl->skins     = ( id_md2_skin_t     * ) SDL_calloc( mdl->header.num_skins,   sizeof( id_md2_skin_t ) );
+    mdl->texcoords = ( id_md2_texcoord_t * ) SDL_calloc( mdl->header.num_st,      sizeof( id_md2_texcoord_t ) );
+    mdl->triangles = ( id_md2_triangle_t * ) SDL_calloc( mdl->header.num_tris,    sizeof( id_md2_triangle_t ) );
+    mdl->frames    = ( id_md2_frame_t    * ) SDL_calloc( mdl->header.num_frames,  sizeof( id_md2_frame_t ) );
+    mdl->glcmds    = ( int               * ) SDL_calloc( mdl->header.size_glcmds, sizeof( int ) );
 
     /* Read model data */
     fseek( fp, mdl->header.offset_skins, SEEK_SET );
@@ -98,7 +98,7 @@ id_md2_model_t * id_md2_load( const char *filename, id_md2_model_t * mdl )
     for ( i = 0; i < mdl->header.num_frames; ++i )
     {
         /* Memory allocation for vertices of this frame */
-        mdl->frames[i].verts = ( id_md2_vertex_t * )calloc( mdl->header.num_vertices, sizeof( id_md2_vertex_t ) );
+        mdl->frames[i].verts = ( id_md2_vertex_t * )SDL_calloc( mdl->header.num_vertices, sizeof( id_md2_vertex_t ) );
 
         /* Read frame data */
         fread( mdl->frames[i].scale, sizeof( float ), 3, fp );
@@ -120,25 +120,25 @@ void id_md2_free( id_md2_model_t * mdl )
 
     if ( mdl->skins )
     {
-        free( mdl->skins );
+        SDL_free( mdl->skins );
         mdl->skins = NULL;
     }
 
     if ( mdl->texcoords )
     {
-        free( mdl->texcoords );
+        SDL_free( mdl->texcoords );
         mdl->texcoords = NULL;
     }
 
     if ( mdl->triangles )
     {
-        free( mdl->triangles );
+        SDL_free( mdl->triangles );
         mdl->triangles = NULL;
     }
 
     if ( mdl->glcmds )
     {
-        free( mdl->glcmds );
+        SDL_free( mdl->glcmds );
         mdl->glcmds = NULL;
     }
 
@@ -146,11 +146,11 @@ void id_md2_free( id_md2_model_t * mdl )
     {
         for ( i = 0; i < mdl->header.num_frames; ++i )
         {
-            free( mdl->frames[i].verts );
+            SDL_free( mdl->frames[i].verts );
             mdl->frames[i].verts = NULL;
         }
 
-        free( mdl->frames );
+        SDL_free( mdl->frames );
         mdl->frames = NULL;
     }
 }

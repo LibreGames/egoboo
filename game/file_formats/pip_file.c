@@ -57,7 +57,7 @@ pip_data_t * pip_init( pip_data_t * ppip )
     if ( NULL == ppip ) return ppip;
 
     // clear the pip
-    memset( ppip, 0, sizeof( *ppip ) );
+    SDL_memset( ppip, 0, sizeof( *ppip ) );
 
     ppip->end_sound          = INVALID_SOUND;
     ppip->end_sound_floor = INVALID_SOUND;
@@ -104,9 +104,9 @@ pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
     ppip->force = fget_next_bool( fileread );
 
     cTmp = fget_next_char( fileread );
-    if ( 'L' == toupper( cTmp ) )  ppip->type = SPRITE_LIGHT;
-    else if ( 'S' == toupper( cTmp ) )  ppip->type = SPRITE_SOLID;
-    else if ( 'T' == toupper( cTmp ) )  ppip->type = SPRITE_ALPHA;
+    if ( 'L' == SDL_toupper( cTmp ) )  ppip->type = SPRITE_LIGHT;
+    else if ( 'S' == SDL_toupper( cTmp ) )  ppip->type = SPRITE_SOLID;
+    else if ( 'T' == SDL_toupper( cTmp ) )  ppip->type = SPRITE_ALPHA;
 
     ppip->image_base = fget_next_int( fileread );
     ppip->numframes = fget_next_int( fileread );
@@ -144,8 +144,8 @@ pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
 
     // Lighting data
     cTmp = fget_next_char( fileread );
-    if ( 'T' == toupper( cTmp ) ) ppip->dynalight.mode = DYNA_MODE_ON;
-    else if ( 'L' == toupper( cTmp ) ) ppip->dynalight.mode = DYNA_MODE_LOCAL;
+    if ( 'T' == SDL_toupper( cTmp ) ) ppip->dynalight.mode = DYNA_MODE_ON;
+    else if ( 'L' == SDL_toupper( cTmp ) ) ppip->dynalight.mode = DYNA_MODE_LOCAL;
     else                             ppip->dynalight.mode = DYNA_MODE_OFF;
 
     ppip->dynalight.level   = fget_next_float( fileread );
@@ -245,7 +245,7 @@ pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
         else if ( MAKE_IDSZ( 'O', 'R', 'N', 'T' ) == idsz )
         {
             char ornt_val = fget_first_letter( fileread );
-            switch ( toupper( ornt_val ) )
+            switch ( SDL_toupper( ornt_val ) )
             {
                 case 'X': ppip->orientation = ORIENTATION_X; break;  // put particle up along the world or body-fixed x-axis
                 case 'Y': ppip->orientation = ORIENTATION_Y; break;  // put particle up along the world or body-fixed y-axis

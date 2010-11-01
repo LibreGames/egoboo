@@ -99,7 +99,7 @@ static void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Ui
 static void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, float size, bool_t do_reflect );
 static int  cmp_prt_registry_entity( const void * vlhs, const void * vrhs );
 
-static void draw_one_attachment_point( ego_chr_instance * pinst, ego_mad * pmad, int vrt_offset );
+static void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vrt_offset );
 static void prt_draw_attached_point( ego_bundle_prt * pbdl_prt );
 
 static void render_prt_bbox( ego_bundle_prt * pbdl_prt );
@@ -180,7 +180,7 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], s
     PRT_END_LOOP();
 
     // sort the particles from close to far
-    qsort( reg, numparticle, sizeof( ego_prt_registry_entity ), cmp_prt_registry_entity );
+    SDL_qsort( reg, numparticle, sizeof( ego_prt_registry_entity ), cmp_prt_registry_entity );
 
     return numparticle;
 }
@@ -437,7 +437,7 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
     PRT_END_LOOP();
 
     // sort the particles from close to far
-    qsort( reg, numparticle, sizeof( ego_prt_registry_entity ), cmp_prt_registry_entity );
+    SDL_qsort( reg, numparticle, sizeof( ego_prt_registry_entity ), cmp_prt_registry_entity );
 
     return numparticle;
 }
@@ -673,7 +673,7 @@ void render_all_prt_bbox()
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_attachment_point( ego_chr_instance * pinst, ego_mad * pmad, int vrt_offset )
+void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vrt_offset )
 {
     /// @details BB@> a function that will draw some of the vertices of the given character.
     ///     The original idea was to use this to debug the grip for attached items.
@@ -726,7 +726,7 @@ void prt_draw_attached_point( ego_bundle_prt * pbdl_prt )
     if ( NULL == pbdl_prt ) return;
     loc_pprt = pbdl_prt->prt_ptr;
 
-    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return;
+    if ( !INGAME_PPRT( loc_pprt ) ) return;
 
     if ( !INGAME_CHR( loc_pprt->attachedto_ref ) ) return;
     pholder = ChrObjList.get_data_ptr( loc_pprt->attachedto_ref );
@@ -737,7 +737,7 @@ void prt_draw_attached_point( ego_bundle_prt * pbdl_prt )
     pholder_mad = ego_chr::get_pmad( GET_REF_PCHR( pholder ) );
     if ( NULL == pholder_mad ) return;
 
-    draw_one_attachment_point( &( pholder->inst ), pholder_mad, loc_pprt->attachedto_vrt_off );
+    draw_one_attachment_point( &( pholder->gfx_inst ), pholder_mad, loc_pprt->attachedto_vrt_off );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -796,7 +796,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
     fvec3_t   vfwd, vup, vright;
     fvec3_t   vfwd_ref, vup_ref, vright_ref;
 
-    if ( NULL == pcam || !INGAME_PPRT_BASE( pprt ) ) return;
+    if ( NULL == pcam || !INGAME_PPRT( pprt ) ) return;
 
     if ( !LOADED_PIP( pprt->pip_ref ) ) return;
     ppip = PipStack + pprt->pip_ref;
@@ -869,7 +869,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
 
         // adjust the vector so that the particle doesn't disappear if
         // you are viewing it from from the top or the bottom
-        weight = 1.0f - ABS( vup_cam.z );
+        weight = 1.0f - SDL_abs( vup_cam.z );
         if ( vup_cam.z < 0 ) weight *= -1;
 
         vup.x = vup.x + weight * vup_cam.x;
@@ -909,7 +909,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
     }
     else if ( INGAME_CHR( pprt->attachedto_ref ) )
     {
-        ego_chr_instance * cinst = ego_chr::get_pinstance( pprt->attachedto_ref );
+        gfx_mad_instance * cinst = ego_chr::get_pinstance( pprt->attachedto_ref );
 
         if ( ego_chr::matrix_valid( ChrObjList.get_data_ptr( pprt->attachedto_ref ) ) )
         {
@@ -1050,7 +1050,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
                 // since we know the only non-zero component of world_up is z
                 zdot = fvec3_dot_product( pinst->ref_right.v, world_up.v );
 
-                if ( ABS( zdot ) > 1e-6 )
+                if ( SDL_abs( zdot ) > 1e-6 )
                 {
                     factor = zdot / ( 1.0f - ndot * ndot );
 
@@ -1066,7 +1066,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
                 // since we know the only non-zero component of world_up is z
                 zdot = fvec3_dot_product( pinst->ref_up.v, world_up.v );
 
-                if ( ABS( zdot ) > 1e-6 )
+                if ( SDL_abs( zdot ) > 1e-6 )
                 {
                     factor = zdot / ( 1.0f - ndot * ndot );
 
@@ -1086,7 +1086,7 @@ void prt_instance_update_vertices( ego_camera * pcam, ego_prt_instance * pinst, 
     {
         // a useful little mod to help with debugging particles
         // will make things like the bare-handed-attack particles visible
-        pinst->size = MAX( 90, pinst->size );
+        pinst->size = SDL_max( 90, pinst->size );
     }
 
     // this instance is now completely valid
@@ -1169,7 +1169,7 @@ void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 tra
     ego_prt * pprt;
     ego_prt_instance * pinst;
 
-    if ( !INGAME_PRT_BASE( particle ) ) return;
+    if ( !INGAME_PRT( particle ) ) return;
     pprt = PrtObjList.get_data_ptr( particle );
     pinst = &( pprt->inst );
 
@@ -1191,12 +1191,12 @@ void render_prt_bbox( ego_bundle_prt * pbdl_prt )
     loc_ppip = pbdl_prt->pip_ptr;
 
     // only draw damaging particles
-    if ( 0 == ABS( loc_pprt->damage.base ) + ABS( loc_pprt->damage.rand ) ) return;
+    if ( 0 == SDL_abs( loc_pprt->damage.base ) + SDL_abs( loc_pprt->damage.rand ) ) return;
 
-    if ( !INGAME_PPRT_BASE( loc_pprt ) ) return;
+    if ( !INGAME_PPRT( loc_pprt ) ) return;
 
     // draw the object bounding box as a part of the graphics debug mode F7
-    if (( cfg.dev_mode && SDLKEYDOWN( SDLK_F7 ) ) || single_frame_mode )
+    if (( cfg.dev_mode && SDLKEYDOWN( SDLK_F7 ) ) || single_update_mode )
     {
         int cnt;
         ego_oct_bb   loc_bb, tmp_bb, exp_bb;
@@ -1207,8 +1207,8 @@ void render_prt_bbox( ego_bundle_prt * pbdl_prt )
         // make sure that it has some minimum extent
         for ( cnt = 0; cnt < OCT_COUNT; cnt++ )
         {
-            tmp_bb.mins[cnt] = MIN( tmp_bb.mins[cnt], -1 );
-            tmp_bb.maxs[cnt] = MAX( tmp_bb.maxs[cnt],  1 );
+            tmp_bb.mins[cnt] = SDL_min( tmp_bb.mins[cnt], -1 );
+            tmp_bb.maxs[cnt] = SDL_max( tmp_bb.maxs[cnt],  1 );
         }
 
         // determine the expanded collision volumes for both objects

@@ -45,7 +45,6 @@ struct s_display_item;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-
 /// An element of the do-list, an all encompassing list of all objects to be drawn by the renderer
 struct ego_do_list_data
 {
@@ -91,7 +90,7 @@ private:
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }

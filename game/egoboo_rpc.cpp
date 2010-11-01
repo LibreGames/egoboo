@@ -53,7 +53,7 @@ ego_rpc * ego_rpc::clear( ego_rpc * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    SDL_memset( ptr, 0, sizeof( *ptr ) );
 
     return ptr;
 }
@@ -100,7 +100,7 @@ ego_tx_request * ego_tx_request::clear( ego_tx_request * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    SDL_memset( ptr, 0, sizeof( *ptr ) );
 
     return ptr;
 }
@@ -129,14 +129,14 @@ ego_tx_request * ego_tx_request::dtor_this( ego_tx_request * preq )
     if ( NULL == ego_rpc::dtor_this( ego_tx_request::get_rpc( preq ) ) ) return NULL;
 
     // store the deconstructed base
-    memcpy( &save_base, ego_tx_request::get_rpc( preq ), sizeof( save_base ) );
+    SDL_memcpy( &save_base, ego_tx_request::get_rpc( preq ), sizeof( save_base ) );
 
     // zero out the memory
     preq = ego_tx_request::clear( preq );
     if ( NULL == preq ) return preq;
 
     // restore the deconstructed base
-    memcpy( &save_base, ego_tx_request::get_rpc( preq ), sizeof( save_base ) );
+    SDL_memcpy( &save_base, ego_tx_request::get_rpc( preq ), sizeof( save_base ) );
 
     return preq;
 }

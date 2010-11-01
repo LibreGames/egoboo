@@ -75,7 +75,7 @@ void sys_fs_init()
     GetCurrentDirectory( MAX_PATH, currentPath );
 
     // try to find the basicdat directory in the current directory
-    snprintf( basicdatPath, MAX_PATH, "%s" SLASH_STR "basicdat", currentPath, MAX_PATH );
+    SDL_snprintf( basicdatPath, MAX_PATH, "%s" SLASH_STR "basicdat", currentPath, MAX_PATH );
     hFile = CreateFile( basicdatPath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
 
     if ( NULL != hFile )
@@ -86,7 +86,7 @@ void sys_fs_init()
     else
     {
         // look in the binary directory
-        snprintf( basicdatPath, MAX_PATH, "%s" SLASH_STR "basicdat", win32_binaryPath, MAX_PATH );
+        SDL_snprintf( basicdatPath, MAX_PATH, "%s" SLASH_STR "basicdat", win32_binaryPath, MAX_PATH );
         hFile = CreateFile( basicdatPath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                             OPEN_EXISTING, 0, NULL );
         if ( NULL != hFile )
@@ -195,7 +195,7 @@ const char *fs_findFirstFile( const char *searchDir, const char *searchExtension
     fs_search->type = win32_find;
     fs_search->ptr.w = pcnt;
 
-    len = strlen( searchDir ) + 1;
+    len = SDL_strlen( searchDir ) + 1;
     if ( '/' != searchDir[len] || '\\' != searchDir[len] )
     {
         _snprintf( searchSpec, MAX_PATH, "%s" SLASH_STR, searchDir );
@@ -264,7 +264,7 @@ void fs_findClose( fs_find_context_t * fs_search )
 
     EGOBOO_DELETE( pcnt );
 
-    memset( fs_search, 0, sizeof( *fs_search ) );
+    SDL_memset( fs_search, 0, sizeof( *fs_search ) );
 }
 
 int DirGetAttrib( const char *fromdir )

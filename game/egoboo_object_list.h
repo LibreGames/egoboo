@@ -30,13 +30,14 @@
 struct ego_obj_lst_state;
 
 template < typename _data, size_t _sz > struct t_ego_obj_container;
-template < typename _data, size_t _sz > struct t_ego_obj_lst;
+template < typename _data, size_t _sz > struct t_obj_lst_map;
+template < typename _data, size_t _sz > struct t_obj_lst_deque;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// a kind of an "interface" that should be inherited by every object that is
-/// stored in t_ego_obj_lst
+/// stored in t_obj_lst_map
 
 struct ego_obj_lst_state
 {
@@ -52,11 +53,20 @@ struct ego_obj_lst_state
         return ptr;
     }
 
-    static const bool_t get_allocated( const ego_obj_lst_state * ptr ) { return ( NULL == ptr ) ? bfalse     : ptr->allocated; }
-    static const size_t get_index( const ego_obj_lst_state * ptr ) { return ( NULL == ptr ) ? size_t( -1 ) : ptr->index; }
-    static const bool_t in_free( const ego_obj_lst_state * ptr ) { return ( NULL == ptr ) ? bfalse     : ptr->in_free_list; }
-    static const bool_t in_used( const ego_obj_lst_state * ptr ) { return ( NULL == ptr ) ? bfalse     : ptr->in_used_list; }
-    static const Uint32 get_list_id( ego_obj_lst_state * ptr ) { return ( NULL == ptr ) ? INVALID_UPDATE_GUID     : ptr->update_guid; }
+    static const bool_t get_allocated( const ego_obj_lst_state * ptr )
+    { return ( NULL == ptr ) ? bfalse : ptr->allocated; }
+
+    static const size_t get_index( const ego_obj_lst_state * ptr, REF_T fail_value = size_t( -1 ) )
+    { return ( NULL == ptr || !ptr->allocated ) ? fail_value : ptr->index; }
+
+    static const bool_t in_free( const ego_obj_lst_state * ptr )
+    { return ( NULL == ptr ) ? bfalse     : ptr->in_free_list; }
+
+    static const bool_t in_used( const ego_obj_lst_state * ptr )
+    { return ( NULL == ptr ) ? bfalse     : ptr->in_used_list; }
+
+    static const Uint32 get_list_id( ego_obj_lst_state * ptr )
+    { return ( NULL == ptr ) ? INVALID_UPDATE_GUID     : ptr->update_guid; }
 
     static ego_obj_lst_state * set_allocated( ego_obj_lst_state *, bool_t val );
     static ego_obj_lst_state * set_used( ego_obj_lst_state *, bool_t val );
@@ -74,7 +84,7 @@ private:
     bool_t    allocated;    ///< The object has been allocated
     bool_t    in_free_list; ///< the object is currently in the free list
     bool_t    in_used_list; ///< the object is currently in the used list
-    unsigned  update_guid;  ///< the value of t_ego_obj_lst::get_list_id() the last time this object was updated
+    unsigned  update_guid;  ///< the value of t_obj_lst_map::get_list_id() the last time this object was updated
 
     static ego_obj_lst_state * clear( ego_obj_lst_state *, size_t index = size_t( ~0L ) );
 };
@@ -87,11 +97,12 @@ private:
 template< typename _data, size_t _sz >
 struct t_ego_obj_container : public ego_obj_lst_state
 {
-    friend struct t_ego_obj_lst<_data, _sz>;
+    friend struct t_obj_lst_map<_data, _sz>;
+    friend struct t_obj_lst_deque<_data, _sz>;
 
     //---- typedefs
 
-    /// a type definition so that list t_ego_obj_lst<> can automatically
+    /// a type definition so that list t_obj_lst_map<> can automatically
     // route functions to the contained data using the scope
     // resolution ouperator ( i.e. data_type:: )
     typedef _data data_type;
@@ -100,7 +111,7 @@ struct t_ego_obj_container : public ego_obj_lst_state
     typedef typename t_ego_obj_container< _data, _sz > its_type;
 
     /// gcc is very particluar about defining dependent types... will this work?
-    typedef typename t_ego_obj_lst< its_type, _sz > list_type;
+    typedef typename t_obj_lst_map< its_type, _sz > list_type;
 
     //---- constructors and destructors
 
@@ -110,10 +121,10 @@ struct t_ego_obj_container : public ego_obj_lst_state
     /// default destructor
     ~t_ego_obj_container() { dtor_this( this ); }
 
-    //---- implementation of accessors required by t_ego_obj_lst<>
+    //---- implementation of accessors required by t_obj_lst_map<>
 
     // This container "has a" data_type, so we need some way of accessing it
-    // These have to have generic names to that t_ego_obj_lst<> can access the data
+    // These have to have generic names to that t_obj_lst_map<> can access the data
     // for all container types
 
     static       data_type & get_data_ref( its_type & rcont ) { return rcont._container_data; }
@@ -124,16 +135,16 @@ protected:
 
     //---- construction and destruction
 
-    /// set/change the information about where this object is stored in t_ego_obj_lst<>.
-    /// should only be called by t_ego_obj_lst<>
+    /// set/change the information about where this object is stored in t_obj_lst_map<>.
+    /// should only be called by t_obj_lst_map<>
     static its_type * allocate( its_type * pobj, size_t index ) { if ( NULL == pobj ) return pobj; ego_obj_lst_state::retor_this( pobj, index ); return pobj; }
 
-    /// tell this object that it is no longer stored in t_ego_obj_lst<>
-    /// should only be called by t_ego_obj_lst<>
+    /// tell this object that it is no longer stored in t_obj_lst_map<>
+    /// should only be called by t_obj_lst_map<>
     static its_type * deallocate( its_type * pobj ) { ego_obj_lst_state::dtor_this( pobj, index ); }
 
     /// cause this struct to recycle its data
-    /// should only be called by t_ego_obj_lst<>
+    /// should only be called by t_obj_lst_map<>
     static its_type * retor_this( its_type * ptr, size_t idx = size_t ( ~0 ) )
     {
         dtor_this( ptr );
@@ -143,7 +154,7 @@ protected:
 
     /// cause this struct to completely deallocate and reallocate its data
     /// and the data of all its dependents
-    /// should only be called by t_ego_obj_lst<>
+    /// should only be called by t_obj_lst_map<>
     static its_type * retor_all( its_type * ptr, size_t idx = size_t ( ~0 ) )
     {
         dtor_all( ptr );
@@ -169,18 +180,18 @@ private:
 //--------------------------------------------------------------------------------------------
 
 template <typename _data, size_t _sz>
-struct t_ego_obj_lst
+struct t_obj_lst_map
 {
     /// use this typedef to make iterating through the t_cpp_map<> easier
     typedef typename t_ego_obj_container<_data, _sz>                 container_type;
     typedef typename t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
 
-    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, _sz>           map_type;
-    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, _sz>::iterator map_iterator;
+    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, REF_T>           map_type;
+    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, REF_T>::iterator map_iterator;
 
     //---- construction/destruction
-    t_ego_obj_lst( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
-    ~t_ego_obj_lst() { deinit(); }
+    t_obj_lst_map( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
+    ~t_obj_lst_map() { deinit(); }
 
     /// initialize the list from scratch
     void init();
@@ -333,11 +344,178 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+template <typename _data, size_t _sz>
+struct t_obj_lst_deque
+{
+    /// use this typedef to make iterating through the t_cpp_deque<> easier
+    typedef typename t_ego_obj_container<_data, _sz>                 container_type;
+    typedef typename t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
+
+    typedef typename t_cpp_deque< container_type, REF_T>           deque_type;
+    typedef typename t_cpp_deque< container_type, REF_T>::iterator deque_iterator;
+
+    //---- construction/destruction
+    t_obj_lst_deque( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
+    ~t_obj_lst_deque() { deinit(); }
+
+    /// initialize the list from scratch
+    void init();
+
+    /// return the list to a completely deinitialized state
+    void deinit();
+
+    //---- public list management
+
+    /// a "garbage collection" function that makes sure that there are no
+    /// bad elements in the free_list
+    void             update_used();
+
+    /// completely deallocate a used object and move it from the used_list to the free_list
+    egoboo_rv        free_one( const lst_reference & ref );
+
+    /// deallocate all used objects and reinitialize the used_list and the free_list
+    void             free_all();
+
+    /// deallocate all used objects and reinitialize the used_list and the free_list
+    lst_reference    allocate( const lst_reference & override );
+
+    //---- public accessors
+
+    /// what it the maximum length of the current list
+    size_t   get_size()   { return _max_len; }
+
+    /// how many free elements are left. might be negative if the list length was changed
+    /// while some elements outside that range were still allocated
+    signed   free_count() { return signed( _max_len ) - used_deque.size(); }
+
+    /// how many elements are allocated?
+    size_t   used_count() { return used_deque.size(); }
+
+    /// get the current number of allocations/deallocations from the list. If this does not match
+    /// with the corresponding number in a deque_iterator, the iterator is invalid
+    unsigned get_list_id() { return used_deque.get_id(); };
+
+    /// change the length of the list. this function can be called at any time and be set anywhere
+    /// between 0 and _sz
+    bool_t set_length( size_t len );
+
+    /// is a given reference within the bounds of this list?
+    INLINE bool_t in_range_ref( const lst_reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _max_len; };
+
+    //---- public iteration methods - iterate over the used deque
+
+    /// proper method of accessing the used_deque::begin() function
+    deque_iterator   used_begin()                        { return used_deque.iterator_begin(); }
+
+    /// proper method of testing for the end of the iteration.
+    /// will cause a loop to exit of the used_deque's length changes during the iteration
+    bool_t         used_end( deque_iterator & it )       { return used_deque.iterator_end( it ); }
+
+    /// proper method of accessing incrementing a deque_iterator
+    deque_iterator & used_increment( deque_iterator & it ) { return used_deque.iterator_increment( it ); }
+
+    /// how many elements are allocated?
+    int   get_loop_depth()       { return loop_depth; }
+    int   increment_loop_depth() { return ++loop_depth; }
+    int   decrement_loop_depth() { return --loop_depth; }
+
+    //---- functions to access elements of the list
+
+    // grab the container
+    INLINE typename container_type & get_ref( const lst_reference & ref );
+    INLINE typename container_type * get_ptr( const lst_reference & ref );
+    INLINE typename container_type * get_allocated_ptr( const lst_reference & ref );
+
+    // grab the container's data
+    INLINE typename container_type::data_type &  get_data_ref( const lst_reference & ref );
+    INLINE typename container_type::data_type *  get_data_ptr( const lst_reference & ref );
+    INLINE typename container_type::data_type *  get_allocated_data_ptr( const lst_reference & ref );
+
+    //---- deferred activation/termination
+
+    /// add a deferred activation
+    egoboo_rv         add_activation( const lst_reference & ref );
+
+    /// add a deferred termination
+    egoboo_rv         add_termination( const lst_reference & ref );
+
+    /// perform all deferred actions after a list iteration has ended
+    void             cleanup();
+
+protected:
+
+    /// enables structs that inherit from this list to re-initialize the index of a container
+    void allocate_container( container_type & rcont, size_t index )
+    {
+        container_type::allocate( &rcont, index );
+    }
+
+    /// how many loops are currently going on?
+    int              loop_depth;
+
+    /// reinitialize the list
+    void             reinit();
+
+    /// internal function to get a valid element from the free_list
+    /// does not allocate or initialize the element
+    lst_reference get_free();
+
+    /// a hack to get around the crash caused by calling free_queue.clear(), when the queue is empty
+    void      clear_free_list();
+
+private:
+
+    /// internal function to return an element to the free_list.
+    /// does not deallocate or deinitialize the element
+    bool_t    free_raw( const lst_reference & ref );
+
+    /// basic function to call to activate a list element
+    lst_reference activate_element( const lst_reference & pcont );
+
+    /// basic function to call to deactivate a list element
+    lst_reference deactivate_element( const lst_reference & pcont );
+
+    /// helper function to activate a given container
+    container_type * activate_container_raw( container_type *, size_t index );
+
+    /// helper function to deactivate a given container
+    container_type * deactivate_container_raw( container_type * );
+
+    /// helper function to activate a container data element
+    _data * activate_data_raw( _data *, const container_type * pcont );
+
+    /// helper function to deactivate a container data element
+    _data * deactivate_data_raw( _data * );
+
+    //---- this struct's data
+
+    /// the actual list of objects
+    container_type ary[_sz];
+
+    /// the deque of used objects
+    deque_type       used_deque;
+
+    /// the deque of free objects
+    std::queue< REF_T > free_queue;
+
+    /// a list of objects that need to be terminated outside all loops
+    std::stack< REF_T > termination_stack;
+
+    /// a list of objects that need to be activated outside all loops
+    std::stack< REF_T > activation_stack;
+
+    /// the current maximum size of the list
+    size_t _max_len;
+};
+
+//--------------------------------------------------------------------------------------------
 // CONTAINER STATE MACROS
 //--------------------------------------------------------------------------------------------
 
-/// What is the container's index?
-#define INDEX_PCONT( TYPE, PCONT )          ( TYPE::get_index(PCONT) )
+/// What is the container index?
+#define GET_INDEX_PCONT( TYPE, PCONT, FAIL_VALUE ) ( TYPE::get_index(PCONT,FAIL_VALUE) )
 
 /// Is the container allocated?
 #define FLAG_ALLOCATED_PCONT( TYPE, PCONT ) ( TYPE::get_allocated(PCONT) )
@@ -352,7 +530,43 @@ private:
 // LOOPING MACROS
 //--------------------------------------------------------------------------------------------
 
-// Macros to automate looping through a t_ego_obj_lst<>.
+//// Macros to automate looping through a t_obj_lst_map<>.
+////
+//// This looks a bit messy, but it will simplify the look of egoboo codebase by
+//// hiding the code that defers the the creation and deletion of objects until loop termination.
+////
+//// This process is necessary so that o iterators will be invalidated during the loop
+//// because of operations occurring inside the loop that increase or decrease the length of the list.
+//
+///// the most basic loop beginning. scans through the used list.
+//#define OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ)  \
+//    { \
+//        int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
+//        LIST.increment_loop_depth(); \
+//        for( LIST##_t::deque_iterator internal__##IT = LIST.used_begin(); !LIST.used_end(internal__##IT); LIST.used_increment(internal__##IT) ) \
+//        { \
+//            if( NULL == internal__##IT->second ) continue; \
+//            const OBJ_T * POBJ = LIST##_t::container_type::cget_data_ptr( internal__##IT->second ); \
+//            if( NULL == POBJ ) continue;
+//
+////--------------------------------------------------------------------------------------------
+///// A refinement OBJ_LIST_BEGIN_LOOP(), which picks out "defined"
+//#define OBJ_LIST_BEGIN_LOOP_DEFINED(OBJ_T, LIST, IT, POBJ)  OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) if( !DEFINED_PBASE(POBJ) ) continue;
+//
+////--------------------------------------------------------------------------------------------
+///// The simplest refinement OBJ_LIST_BEGIN_LOOP(). Picks "active" objects out of the used list.
+//#define OBJ_LIST_BEGIN_LOOP_ACTIVE(OBJ_T, LIST, IT, POBJ) OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) if( !PROCESSING_PBASE(POBJ) ) continue;
+//
+////--------------------------------------------------------------------------------------------
+///// The termination of all OBJ_LIST_BEGIN_LOOP()
+//#define OBJ_LIST_END_LOOP(LIST) \
+//    } \
+//    LIST.decrement_loop_depth(); \
+//    if(internal__##LIST##_start_depth != LIST.get_loop_depth()) EGOBOO_ASSERT(bfalse); \
+//    LIST.cleanup(); \
+//    }
+
+// Macros to automate looping through a t_obj_lst_map<>.
 //
 // This looks a bit messy, but it will simplify the look of egoboo codebase by
 // hiding the code that defers the the creation and deletion of objects until loop termination.
@@ -365,19 +579,25 @@ private:
     { \
         int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
         LIST.increment_loop_depth(); \
-        for( LIST##_t::map_iterator internal__##IT = LIST.used_begin(); !LIST.used_end(internal__##IT); LIST.used_increment(internal__##IT) ) \
+        for( LIST##_t::deque_iterator internal__##IT = LIST.used_begin(); !LIST.used_end(internal__##IT); LIST.used_increment(internal__##IT) ) \
         { \
-            if( NULL == internal__##IT->second ) continue; \
-            const OBJ_T * POBJ = LIST##_t::container_type::cget_data_ptr( internal__##IT->second ); \
+            LIST##_t::lst_reference IT( *internal__##IT );\
+            LIST##_t::container_type * internal__##LIST##_container_ptr = LIST.get_ptr( IT );\
+            if( !LIST##_t::container_type::get_allocated(internal__##LIST##_container_ptr) ) continue; \
+            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( internal__##LIST##_container_ptr ); \
             if( NULL == POBJ ) continue;
 
 //--------------------------------------------------------------------------------------------
 /// A refinement OBJ_LIST_BEGIN_LOOP(), which picks out "defined"
-#define OBJ_LIST_BEGIN_LOOP_DEFINED(OBJ_T, LIST, IT, POBJ)  OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) if( !DEFINED_PBASE(POBJ) ) continue;
+#define OBJ_LIST_BEGIN_LOOP_DEFINED(OBJ_T, LIST, IT, POBJ) \
+    OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) \
+    if( !DEFINED_PBASE(POBJ) ) continue;
 
 //--------------------------------------------------------------------------------------------
 /// The simplest refinement OBJ_LIST_BEGIN_LOOP(). Picks "active" objects out of the used list.
-#define OBJ_LIST_BEGIN_LOOP_ACTIVE(OBJ_T, LIST, IT, POBJ) OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) if( !ACTIVE_PBASE(POBJ) ) continue;
+#define OBJ_LIST_BEGIN_LOOP_ACTIVE(OBJ_T, LIST, IT, POBJ) \
+    OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) \
+    if( !PROCESSING_PBASE(POBJ) ) continue;
 
 //--------------------------------------------------------------------------------------------
 /// The termination of all OBJ_LIST_BEGIN_LOOP()

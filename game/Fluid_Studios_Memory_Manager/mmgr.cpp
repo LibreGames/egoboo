@@ -44,7 +44,7 @@
 // 1. If you get compiler errors having to do with set_new_handler, then go through this source and search/replace
 //    "std::set_new_handler" with "set_new_handler".
 //
-// 2. This code purposely uses no external routines that allocate RAM (other than the raw allocation routines, such as malloc). We
+// 2. This code purposely uses no external routines that allocate RAM (other than the raw allocation routines, such as SDL_malloc). We
 //    do this because we want this to be as self-contained as possible. As an example, we don't use assert, because when running
 //    under WIN32, the assert brings up a dialog box, which allocates RAM. Doing this in the middle of an allocation would be bad.
 //
@@ -109,13 +109,13 @@
 // report the name of the routine.
 //
 // Just because this memory manager crashes does not mean that there is a bug here! First, an application could inadvertantly damage
-// the heap, causing malloc(), realloc() or free() to crash. Also, an application could inadvertantly damage some of the memory used
+// the heap, causing SDL_malloc(), SDL_realloc() or SDL_free() to crash. Also, an application could inadvertantly damage some of the memory used
 // by this memory tracking software, causing it to crash in much the same way that a damaged heap would affect the standard
 // allocation routines.
 //
 // In the event of a crash within this code, the first thing you'll want to do is to locate the actual line of code that is
 // crashing. You can do this by adding log() entries throughout the routine that crashes, repeating this process until you narrow
-// in on the offending line of code. If the crash happens in a standard C allocation routine (i.e. malloc, realloc or free) don't
+// in on the offending line of code. If the crash happens in a standard C allocation routine (i.e. SDL_malloc, SDL_realloc or free) don't
 // bother contacting me, your application has damaged the heap. You can help find the culprit in your code by enabling the
 // STRESS_TEST macro (below.)
 //
@@ -196,9 +196,9 @@ static	const	unsigned int	paddingSize            = 4;
 
 #undef	new
 #undef	delete
-#undef	malloc
-#undef	calloc
-#undef	realloc
+#undef	SDL_malloc
+#undef	SDL_calloc
+#undef	SDL_realloc
 #undef	free
 
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -230,8 +230,8 @@ static		unsigned int	releasedPattern        = 0xdeadbeef; // Fill pattern for de
 
 static	const	unsigned int	hashSize               = 1 << hashBits;
 static	const	char		*allocationTypes[]     = {"Unknown",
-							  "new",     "new[]",  "malloc",   "calloc",
-							  "realloc", "delete", "delete[]", "free"};
+							  "new",     "new[]",  "SDL_malloc",   "SDL_calloc",
+							  "SDL_realloc", "delete", "delete[]", "free"};
 static		sAllocUnit	*hashTable[hashSize];
 static		sAllocUnit	*reservoir;
 static		unsigned int	currentAllocationCount = 0;
@@ -328,9 +328,9 @@ static	void	doCleanupLogOnFirstRun()
 
 static	const char	*sourceFileStripper(const char *sourceFile)
 {
-	const char	*ptr = strrchr(sourceFile, '\\');
+	const char	*ptr = SDL_strrchr(sourceFile, '\\');
 	if (ptr) return ptr + 1;
-	ptr = strrchr(sourceFile, '/');
+	ptr = SDL_strrchr(sourceFile, '/');
 	if (ptr) return ptr + 1;
 	return sourceFile;
 }
@@ -340,7 +340,7 @@ static	const char	*sourceFileStripper(const char *sourceFile)
 static	const char	*ownerString(const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc)
 {
 	static	char	str[90];
-	memset(str, 0, sizeof(str));
+	SDL_memset(str, 0, sizeof(str));
 	sprintf(str, "%s(%05d)::%s", sourceFileStripper(sourceFile), sourceLine, sourceFunc);
 	return str;
 }
@@ -350,23 +350,23 @@ static	const char	*ownerString(const char *sourceFile, const unsigned int source
 static	const char	*insertCommas(unsigned int value)
 {
 	static	char	str[30];
-	memset(str, 0, sizeof(str));
+	SDL_memset(str, 0, sizeof(str));
 
 	sprintf(str, "%u", value);
-	if (strlen(str) > 3)
+	if (SDL_strlen(str) > 3)
 	{
-		memmove(&str[strlen(str)-3], &str[strlen(str)-4], 4);
-		str[strlen(str) - 4] = ',';
+		SDL_memmove(&str[SDL_strlen(str)-3], &str[SDL_strlen(str)-4], 4);
+		str[SDL_strlen(str) - 4] = ',';
 	}
-	if (strlen(str) > 7)
+	if (SDL_strlen(str) > 7)
 	{
-		memmove(&str[strlen(str)-7], &str[strlen(str)-8], 8);
-		str[strlen(str) - 8] = ',';
+		SDL_memmove(&str[SDL_strlen(str)-7], &str[SDL_strlen(str)-8], 8);
+		str[SDL_strlen(str) - 8] = ',';
 	}
-	if (strlen(str) > 11)
+	if (SDL_strlen(str) > 11)
 	{
-		memmove(&str[strlen(str)-11], &str[strlen(str)-12], 12);
-		str[strlen(str) - 12] = ',';
+		SDL_memmove(&str[SDL_strlen(str)-11], &str[SDL_strlen(str)-12], 12);
+		str[SDL_strlen(str) - 12] = ',';
 	}
 
 	return str;
@@ -541,7 +541,7 @@ static	void	dumpLeakReport()
 	// Header
 
 	static  char    timeString[25];
-	memset(timeString, 0, sizeof(timeString));
+	SDL_memset(timeString, 0, sizeof(timeString));
 	time_t  t = time(NULL);
 	struct  tm *tme = localtime(&t);
 	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
@@ -563,9 +563,9 @@ static	void	dumpLeakReport()
 		{
 			for (unsigned int i = 0; i < reservoirBufferSize; i++)
 			{
-				free(reservoirBuffer[i]);
+				SDL_free(reservoirBuffer[i]);
 			}
-			free(reservoirBuffer);
+			SDL_free(reservoirBuffer);
 			reservoirBuffer = 0;
 			reservoirBufferSize = 0;
 			reservoir = NULL;
@@ -1059,7 +1059,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		{
 			// Allocate 256 reservoir elements
 
-			reservoir = (sAllocUnit *) malloc(sizeof(sAllocUnit) * 256);
+			reservoir = (sAllocUnit *) SDL_malloc(sizeof(sAllocUnit) * 256);
 
 			// If you hit this assert, then the memory manager failed to allocate internal memory for tracking the
 			// allocations
@@ -1071,7 +1071,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 			// Build a linked-list of the elements in our reservoir
 
-			memset(reservoir, 0, sizeof(sAllocUnit) * 256);
+			SDL_memset(reservoir, 0, sizeof(sAllocUnit) * 256);
 			for (unsigned int i = 0; i < 256 - 1; i++)
 			{
 				reservoir[i].next = &reservoir[i+1];
@@ -1079,7 +1079,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 			// Add this address to our reservoirBuffer so we can free it later
 
-			sAllocUnit	**temp = (sAllocUnit **) realloc(reservoirBuffer, (reservoirBufferSize + 1) * sizeof(sAllocUnit *));
+			sAllocUnit	**temp = (sAllocUnit **) SDL_realloc(reservoirBuffer, (reservoirBufferSize + 1) * sizeof(sAllocUnit *));
 			m_assert(temp);
 			if (temp)
 			{
@@ -1098,7 +1098,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 		// Populate it with some real data
 
-		memset(au, 0, sizeof(sAllocUnit));
+		SDL_memset(au, 0, sizeof(sAllocUnit));
 		au->actualSize        = calculateActualSize(reportedSize);
 		#ifdef RANDOM_FAILURE
 		double	a = rand();
@@ -1107,7 +1107,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		if (a >
 )
 		{
-			au->actualAddress = malloc(au->actualSize);
+			au->actualAddress = SDL_malloc(au->actualSize);
 		}
 		else
 		{
@@ -1115,7 +1115,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 			au->actualAddress = NULL;
 		}
 		#else
-		au->actualAddress     = malloc(au->actualSize);
+		au->actualAddress     = SDL_malloc(au->actualSize);
 		#endif
 		au->reportedSize      = reportedSize;
 		au->reportedAddress   = calculateReportedAddress(au->actualAddress);
@@ -1168,11 +1168,11 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 		wipeWithPattern(au, unusedPattern);
 
-		// calloc() expects the reported memory address range to be filled with 0's
+		// SDL_calloc() expects the reported memory address range to be filled with 0's
 
 		if (allocationType == m_alloc_calloc)
 		{
-			memset(au->reportedAddress, 0, au->reportedSize);
+			SDL_memset(au->reportedAddress, 0, au->reportedSize);
 		}
 
 		// Validate every single allocated unit in memory
@@ -1223,7 +1223,7 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 		log("[D] ENTER: m_reallocator()");
 		#endif
 
-		// Calling realloc with a NULL should force same operations as a malloc
+		// Calling SDL_realloc with a NULL should force same operations as a SDL_malloc
 
 		if (!reportedAddress)
 		{
@@ -1258,12 +1258,12 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 		m_assert(reallocationType != m_alloc_unknown);
 
 		// If you hit this assert, you were trying to reallocate RAM that was not allocated in a way that is compatible with
-		// realloc. In other words, you have a allocation/reallocation mismatch.
+		// SDL_realloc. In other words, you have a allocation/reallocation mismatch.
 		m_assert(au->allocationType == m_alloc_malloc ||
 			 au->allocationType == m_alloc_calloc ||
 			 au->allocationType == m_alloc_realloc);
 
-		// If you hit this assert, then the "break on realloc" flag for this allocation unit is set (and will continue to be
+		// If you hit this assert, then the "break on SDL_realloc" flag for this allocation unit is set (and will continue to be
 		// set until you specifically shut it off. Interrogate the 'au' variable to determine information about this
 		// allocation unit.
 		m_assert(au->breakOnRealloc == false);
@@ -1286,14 +1286,14 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 		if (a >
 )
 		{
-			newActualAddress = realloc(au->actualAddress, newActualSize);
+			newActualAddress = SDL_realloc(au->actualAddress, newActualSize);
 		}
 		else
 		{
 			log("[F] Random faiure");
 		}
 		#else
-		newActualAddress = realloc(au->actualAddress, newActualSize);
+		newActualAddress = SDL_realloc(au->actualAddress, newActualSize);
 		#endif
 
 		// We don't want to assert with random failures, because we want the application to deal with them.
@@ -1428,8 +1428,8 @@ void	m_freeator(const char *sourceFile, const unsigned int sourceLine, const cha
 
 		if (alwaysLogAll) log("[-] ----- %8s of addr 0x%08X           by %s", allocationTypes[deallocationType], reinterpret_cast<unsigned int>(const_cast<void *>(reportedAddress)), ownerString(sourceFile, sourceLine, sourceFunc));
 
-		// We should only ever get here with a null pointer if they try to do so with a call to free() (delete[] and delete will
-		// both bail before they get here.) So, since ANSI allows free(NULL), we'll not bother trying to actually free the allocated
+		// We should only ever get here with a null pointer if they try to do so with a call to SDL_free() (delete[] and delete will
+		// both bail before they get here.) So, since ANSI allows SDL_free(NULL), we'll not bother trying to actually free the allocated
 		// memory or track it any further.
 
 		if (reportedAddress)
@@ -1470,7 +1470,7 @@ void	m_freeator(const char *sourceFile, const unsigned int sourceLine, const cha
 
 			// Do the deallocation
 
-			free(au->actualAddress);
+			SDL_free(au->actualAddress);
 
 			// Remove this allocation unit from the hash table
 
@@ -1493,7 +1493,7 @@ void	m_freeator(const char *sourceFile, const unsigned int sourceLine, const cha
 
 			// Add this allocation unit to the front of our reservoir of unused allocation units
 
-			memset(au, 0, sizeof(sAllocUnit));
+			SDL_memset(au, 0, sizeof(sAllocUnit));
 			au->next = reservoir;
 			reservoir = au;
 		}
@@ -1695,7 +1695,7 @@ void	m_dumpMemoryReport(const char *filename, const bool overwrite)
         // Header
 
         static  char    timeString[25];
-        memset(timeString, 0, sizeof(timeString));
+        SDL_memset(timeString, 0, sizeof(timeString));
         time_t  t = time(NULL);
         struct  tm *tme = localtime(&t);
 	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");

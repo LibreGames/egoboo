@@ -99,7 +99,7 @@ private:
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         ptr->menu_depth = -1;
         ptr->pause_key_ready = btrue;
@@ -263,7 +263,6 @@ struct ego_fog_instance
 extern ego_fog_instance fog;
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 
 /// the module data that the game needs
 struct ego_game_module_data
@@ -282,6 +281,44 @@ struct ego_game_module_data
     Uint32  seed;                       ///< The module seed
     Uint32  randsave;
 };
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+#define PIT_DELAY 20
+
+/// Pitty stuff
+struct ego_pit_info
+{
+    bool_t     kill;          ///< Do they kill?
+    bool_t     teleport;      ///< Do they teleport?
+    fvec3_t    teleport_pos;
+};
+
+extern ego_pit_info pits;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+// Shared stats
+struct ego_local_stats
+{
+    int     seeinvis_level;
+    int     seedark_level;
+    int     grog_level;
+    int     daze_level;
+    int     seekurse_level;
+    int     listen_level;                  ///< Players with listen skill?
+
+    // ESP ability
+    TEAM_REF sense_enemy_team;
+    IDSZ     sense_enemy_ID;
+
+    ego_local_stats() { init(); };
+
+    void init();
+};
+
+extern ego_local_stats local_stats;
 
 //--------------------------------------------------------------------------------------------
 // Status displays
@@ -307,16 +344,6 @@ extern bool_t    overrideslots;          ///< Override existing slots?
 extern struct ego_mpd         * PMesh;
 extern struct ego_camera          * PCamera;
 extern struct ego_game_module_data * PMod;
-
-/// Pitty stuff
-struct ego_pit_info
-{
-    bool_t     kill;          ///< Do they kill?
-    bool_t     teleport;      ///< Do they teleport?
-    fvec3_t    teleport_pos;
-};
-
-extern ego_pit_info pits;
 
 extern FACING_T  glo_useangle;                                        ///< actually still used
 
@@ -357,7 +384,7 @@ void statlist_move_to_top( const CHR_REF & character );
 void statlist_sort();
 
 /// Player
-void   set_one_player_latch( const PLA_REF & player );
+void   read_player_local_latch( const PLA_REF & player );
 bool_t add_player( const CHR_REF & character, const PLA_REF & player, Uint32 device );
 
 // AI targeting

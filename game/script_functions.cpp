@@ -1064,7 +1064,7 @@ Uint8 scr_DoAction( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    action = mad_get_action( pchr->inst.imad, pstate->argument );
+    action = mad_get_action( pchr->mad_inst.imad, pstate->argument );
 
     returncode = bfalse;
     if ( rv_success == ego_chr::start_anim( pchr, action, bfalse, bfalse ) )
@@ -1084,7 +1084,7 @@ Uint8 scr_KeepAction( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    pchr->inst.action_keep = btrue;
+    pchr->mad_inst.action.keep = btrue;
 
     SCRIPT_FUNCTION_END();
 }
@@ -1174,7 +1174,7 @@ Uint8 scr_TargetDoAction( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
         if ( pself_target->alive )
         {
-            int action = mad_get_action( pself_target->inst.imad, pstate->argument );
+            int action = mad_get_action( pself_target->mad_inst.imad, pstate->argument );
 
             if ( rv_success == ego_chr::start_anim( pself_target, action, bfalse, bfalse ) )
             {
@@ -1310,7 +1310,7 @@ Uint8 scr_DoActionOverride( ego_script_state * pstate, ego_ai_bundle * pbdl_self
 
     SCRIPT_FUNCTION_BEGIN();
 
-    action = mad_get_action( pchr->inst.imad, pstate->argument );
+    action = mad_get_action( pchr->mad_inst.imad, pstate->argument );
 
     returncode = bfalse;
     if ( rv_success == ego_chr::start_anim( pchr, action, bfalse, btrue ) )
@@ -1371,7 +1371,7 @@ Uint8 scr_AddIDSZ( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    if ( module_add_idsz_vfs( pickedmodule_name, pstate->argument, 0, NULL ) )
+    if ( module_add_idsz_vfs( pickedmodule.name, pstate->argument, 0, NULL ) )
     {
         // we need to invalidate the module list
         module_list_valid = bfalse;
@@ -1591,7 +1591,7 @@ Uint8 scr_UnkeepAction( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    pchr->inst.action_keep = bfalse;
+    pchr->mad_inst.action.keep = bfalse;
 
     SCRIPT_FUNCTION_END();
 }
@@ -2383,7 +2383,7 @@ Uint8 scr_BecomeSpellbook( ego_script_state * pstate, ego_ai_bundle * pbdl_self 
     if ( NULL != pmad )
     {
         // Do dropped animation
-        int tmp_action = mad_get_action( pchr->inst.imad, ACTION_JB );
+        int tmp_action = mad_get_action( pchr->mad_inst.imad, ACTION_JB );
 
         if ( rv_success == ego_chr::start_anim( pchr, tmp_action, bfalse, btrue ) )
         {
@@ -2626,7 +2626,7 @@ Uint8 scr_Invisible( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    returncode = pchr->inst.alpha <= INVISIBLE;
+    returncode = pchr->gfx_inst.alpha <= INVISIBLE;
 
     SCRIPT_FUNCTION_END();
 }
@@ -3249,7 +3249,7 @@ Uint8 scr_TargetIsDefending( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    returncode = ACTION_IS_TYPE( pself_target->inst.action_which, P );
+    returncode = ACTION_IS_TYPE( pself_target->mad_inst.action.which, P );
 
     SCRIPT_FUNCTION_END();
 }
@@ -4192,7 +4192,7 @@ Uint8 scr_set_Frame( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     sTmp = pstate->argument & 3;
     iTmp = pstate->argument >> 2;
-    ego_chr::set_frame( pself->index, ACTION_DA, iTmp, sTmp );
+    ego_chr::set_frame( pchr, iTmp, sTmp );
 
     SCRIPT_FUNCTION_END();
 }
@@ -4309,7 +4309,7 @@ Uint8 scr_ChildDoActionOverride( ego_script_state * pstate, ego_ai_bundle * pbdl
 
         ego_chr * pchild = ChrObjList.get_data_ptr( pself->child );
 
-        action = mad_get_action( pchild->inst.imad, pstate->argument );
+        action = mad_get_action( pchild->mad_inst.imad, pstate->argument );
 
         if ( rv_success == ego_chr::start_anim( pchild, action, bfalse, btrue ) )
         {
@@ -4348,7 +4348,7 @@ Uint8 scr_set_SpeedPercent( ego_script_state * pstate, ego_ai_bundle * pbdl_self
     reset_character_accel( pself->index );
 
     fvalue = pstate->argument / 100.0f;
-    fvalue = MAX( 0.0f, fvalue );
+    fvalue = SDL_max( 0.0f, fvalue );
 
     pchr->maxaccel = pchr->maxaccel_reset * fvalue;
 
@@ -5504,7 +5504,7 @@ Uint8 scr_TargetIsSneaking( ego_script_state * pstate, ego_ai_bundle * pbdl_self
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    returncode = ( pself_target->inst.action_which == ACTION_DA || pself_target->inst.action_which == ACTION_WA );
+    returncode = ( pself_target->mad_inst.action.which == ACTION_DA || pself_target->mad_inst.action.which == ACTION_WA );
 
     SCRIPT_FUNCTION_END();
 }
@@ -5556,12 +5556,12 @@ Uint8 scr_TargetDoActionSetFrame( ego_script_state * pstate, ego_ai_bundle * pbd
         int action;
         ego_chr * pself_target = ChrObjList.get_data_ptr( pself->target );
 
-        action = mad_get_action( pself_target->inst.imad, pstate->argument );
+        action = mad_get_action( pself_target->mad_inst.imad, pstate->argument );
 
         if ( rv_success == ego_chr::start_anim( pself_target, action, bfalse, btrue ) )
         {
             // remove the interpolation
-            pself_target->inst.frame_lst = pself_target->inst.frame_nxt;
+            pself_target->mad_inst.state.frame_lst = pself_target->mad_inst.state.frame_nxt;
 
             returncode = btrue;
         }
@@ -6332,7 +6332,7 @@ Uint8 scr_set_VolumeNearestTeammate( ego_script_state * pstate, ego_ai_bundle * 
     {
     if(INGAME_CHR(sTmp) && ChrObjList.get_data_ref(sTmp).alive && ChrObjList.get_data_ref(sTmp).Team == pchr->Team)
     {
-    distance = ABS(PCamera->trackx-ChrObjList.get_data_ref(sTmp).pos_old.x)+ABS(PCamera->tracky-ChrObjList.get_data_ref(sTmp).pos_old.y);
+    distance = SDL_abs(PCamera->trackx-ChrObjList.get_data_ref(sTmp).pos_old.x)+SDL_abs(PCamera->tracky-ChrObjList.get_data_ref(sTmp).pos_old.y);
     if(distance < iTmp)  iTmp = distance;
     }
     sTmp++;
@@ -6897,7 +6897,7 @@ Uint8 scr_Backstabbed( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     {
         // Who is the dirty backstabber?
         ego_chr * pattacker = ChrObjList.get_data_ptr( pself->attacklast );
-        if ( !ACTIVE_PCHR( pattacker ) ) return bfalse;
+        if ( !PROCESSING_PCHR( pattacker ) ) return bfalse;
 
         // Only if hit from behind
         if ( pself->directionlast >= ATK_BEHIND - 8192 && pself->directionlast < ATK_BEHIND + 8192 )
@@ -7643,7 +7643,7 @@ Uint8 scr_set_TargetAmmo( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    pself_target->ammo = MIN( pstate->argument, pself_target->ammo_max );
+    pself_target->ammo = SDL_min( pstate->argument, pself_target->ammo_max );
 
     SCRIPT_FUNCTION_END();
 }
@@ -7942,10 +7942,10 @@ Uint8 _append_end_text( ego_chr * pchr, const int message, ego_script_state * ps
 
         expand_escape_codes( ichr, pstate, src, src_end, dst, dst_end );
 
-        endtext_carat = strlen( endtext );
+        endtext_carat = SDL_strlen( endtext );
     }
 
-    str_add_linebreaks( endtext, strlen( endtext ), 30 );
+    str_add_linebreaks( endtext, SDL_strlen( endtext ), 30 );
 
     FUNCTION_END();
 }

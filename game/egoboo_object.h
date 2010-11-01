@@ -127,15 +127,15 @@ struct ego_object_process_state_data
     static bool_t set_valid( its_type * ptr, bool_t val );
     static bool_t set_action( its_type * ptr, ego_obj_actions_t action ) { if ( NULL == ptr ) return bfalse; bool_t rv = ( action == ptr->action ); ptr->action = action; return rv; }
 
-    static const bool_t get_valid( const its_type * ptr )       { return has_all_bits( ptr, valid_bit )        && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_initialized( const its_type * ptr ) { return has_all_bits( ptr, full_initialized ) && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_constructed( const its_type * ptr ) { return has_all_bits( ptr, full_constructed ) && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_active( const its_type * ptr )      { return has_all_bits( ptr, full_active )      && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_killed( const its_type * ptr )      { return has_all_bits( ptr, killed_bit ); }
+    static const bool_t get_valid( const its_type * ptr )       { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, valid_bit )        && has_no_bits( ptr, killed_bit ); }
+    static const bool_t get_initialized( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_initialized ) && has_no_bits( ptr, killed_bit ); }
+    static const bool_t get_constructed( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_constructed ) && has_no_bits( ptr, killed_bit ); }
+    static const bool_t get_active( const its_type * ptr )      { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_active )      && has_no_bits( ptr, killed_bit ); }
+    static const bool_t get_killed( const its_type * ptr )      { return ( NULL == ptr ) ? btrue : has_all_bits( ptr, killed_bit ); }
 
-    static const bool_t get_spawning( const its_type * ptr ) { return has_all_bits( ptr, full_spawning ) && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_on( const its_type * ptr )       { return has_all_bits( ptr, full_on ) && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_paused( const its_type * ptr )   { return has_all_bits( ptr, paused_bit ) && has_no_bits( ptr, killed_bit ); }
+    static const bool_t get_spawning( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_spawning ) && has_no_bits( ptr, killed_bit ); }
+    static const bool_t get_on( const its_type * ptr )       { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_on ) && has_no_bits( ptr, killed_bit ); }
+    static const bool_t get_paused( const its_type * ptr )   { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, paused_bit ) && has_no_bits( ptr, killed_bit ); }
 
     static const ego_obj_actions_t get_action( const its_type * ptr ) { return ( NULL == ptr ) ? ego_obj_nothing : ptr->action;   }
 
@@ -274,7 +274,7 @@ protected:
 
     /// @note MAKE SURE there are no virtual functions or any members that are constructed
     /// before you use memset like this
-    void clear() { memset( this, 0, sizeof( *this ) ); };
+    void clear() { SDL_memset( this, 0, sizeof( *this ) ); };
 
     bool_t  unpause_me;  ///< request to un-pause the object
     bool_t  pause_me;    ///< request to pause the object
@@ -512,73 +512,63 @@ extern ego_object_engine obj_engine;
      
 /// Is the object flagged as valid?
 #define FLAG_VALID_PBASE( PBASE ) ego_object_process_state_data::get_valid(PBASE)
-/// Is the object valid?
-#define VALID_PBASE( PBASE )       FLAG_VALID_PBASE(PBASE)
 
 /// Is the object flagged as constructed?
 #define FLAG_CONSTRUCTED_PBASE( PBASE ) ego_object_process_state_data::get_constructed(PBASE)
-/// Is the object constructed?
-#define CONSTRUCTED_PBASE( PBASE )       FLAG_CONSTRUCTED_PBASE(PBASE)
 
 /// Is the object flagged as initialized?
 #define FLAG_INITIALIZED_PBASE( PBASE ) ego_obj::get_initialized(PBASE)
-/// Is the object initialized?
-#define INITIALIZED_PBASE( PBASE )      FLAG_INITIALIZED_PBASE(PBASE)
 
-/// Has the object been marked as terminated? (alias for TERMINATED_PBASE)
+/// Has the object been marked as terminated? (alias for FLAG_TERMINATED_PBASE)
 #define FLAG_TERMINATED_PBASE( PBASE ) ego_obj::get_killed(PBASE)
-/// Is the object killed?
-#define TERMINATED_PBASE( PBASE )       ( (NULL == PBASE) ? btrue : FLAG_TERMINATED_PBASE(PBASE) )
 
 /// Is the object flagged as requesting termination?
 #define FLAG_ON_PBASE( PBASE )  ego_obj::get_on(PBASE)
-/// Is the object on?
-#define ON_PBASE( PBASE )       FLAG_ON_PBASE(PBASE)
 
 /// Is the object flagged as kill_me?
 #define FLAG_REQ_TERMINATION_PBASE( PBASE ) ego_obj::get_kill(PBASE)
-/// Is the object kill_me?
-#define REQ_TERMINATION_PBASE( PBASE )      ( FLAG_VALID_PBASE( PBASE ) && FLAG_REQ_TERMINATION_PBASE(PBASE) )
 
-/// Has the object been created yet?
+/// Has the object in the constructing state?
 #define STATE_CONSTRUCTING_PBASE( PBASE ) (ego_obj_constructing == ego_obj::get_action(PBASE))
-/// Has the object been created yet?
-#define CONSTRUCTING_PBASE( PBASE )       ( FLAG_VALID_PBASE( PBASE ) && STATE_CONSTRUCTING_PBASE(PBASE) )
 
 /// Is the object in the initializing state?
 #define STATE_INITIALIZING_PBASE( PBASE ) ( ego_obj_initializing == ego_obj::get_action(PBASE) )
-/// Is the object being initialized right now?
-#define INITIALIZING_PBASE( PBASE )       ( FLAG_CONSTRUCTED_PBASE( PBASE ) && STATE_INITIALIZING_PBASE(PBASE) )
 
-/// Is the object in the active state?
+/// Is the object in the processing state?
 #define STATE_PROCESSING_PBASE( PBASE ) ( ego_obj_processing == ego_obj::get_action(PBASE) )
-/// Is the object active?
-#define ACTIVE_PBASE( PBASE )           ( FLAG_ON_PBASE(PBASE) && STATE_PROCESSING_PBASE(PBASE) )
 
 /// Is the object in the deinitializing state?
 #define STATE_DEINITIALIZING_PBASE( PBASE ) ( ego_obj_deinitializing == ego_obj::get_action(PBASE) )
-/// Is the object being deinitialized right now?
-#define DEINITIALIZING_PBASE( PBASE )       ( CONSTRUCTED_PBASE( PBASE ) && STATE_DEINITIALIZING_PBASE(PBASE) )
 
 /// Is the object in the destructing state?
 #define STATE_DESTRUCTING_PBASE( PBASE )  ( ego_obj_destructing == ego_obj::get_action(PBASE) )
-/// Is the object being deinitialized right now?
-#define DESTRUCTING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_DESTRUCTING_PBASE(PBASE) )
 
 /// Is the object "waiting to die" state?
 #define STATE_WAITING_PBASE( PBASE ) ( ego_obj_waiting == ego_object_process_state_data::get_action(PBASE) )
-/// Is the object "waiting to die"?
-#define WAITING_PBASE( PBASE )       ( VALID_PBASE( PBASE ) && STATE_WAITING_PBASE(PBASE) )
 
-// Grab the index value of ego_obj pointer
-#define GET_IDX_PBASE( PBASE, FAIL_VALUE ) ( !VALID_PBASE( PBASE ) ? FAIL_VALUE : ego_obj::get_index(PBASE) )
-#define GET_REF_PBASE( PBASE, FAIL_VALUE ) ((REF_T)GET_IDX_PBASE( PBASE, FAIL_VALUE ))
+/// Is the object kill_me?
+#define REQ_TERMINATION_PBASE( PBASE )    ( FLAG_VALID_PBASE( PBASE ) && !FLAG_TERMINATED_PBASE(PBASE) && FLAG_REQ_TERMINATION_PBASE(PBASE) )
 
-/// Grab the state of object that "inherits" from ego_obj
-#define GET_STATE_POBJ( POBJ )  ( (NULL == (POBJ) || !VALID_PBASE( POBJ ) ) ? ego_obj_nothing : ego_obj::get_state(POBJ) )
+/// Has the object been created yet?
+#define CONSTRUCTING_PBASE( PBASE )       ( FLAG_VALID_PBASE( PBASE ) && !FLAG_TERMINATED_PBASE(PBASE) && STATE_CONSTRUCTING_PBASE(PBASE) )
+
+/// Is the object being initialized right now?
+#define INITIALIZING_PBASE( PBASE )       ( FLAG_CONSTRUCTED_PBASE( PBASE ) && !FLAG_TERMINATED_PBASE(PBASE) && STATE_INITIALIZING_PBASE(PBASE) )
 
 /// Is the object active?
-#define DEFINED_PBASE( PBASE )  ( FLAG_ON_PBASE(PBASE) && !FLAG_TERMINATED_PBASE( PBASE ) )
+#define PROCESSING_PBASE( PBASE )         ( FLAG_ON_PBASE(PBASE) && !FLAG_TERMINATED_PBASE(PBASE) && STATE_PROCESSING_PBASE(PBASE) )
+
+/// Is the object being deinitialized right now?
+#define DEINITIALIZING_PBASE( PBASE )     (  FLAG_CONSTRUCTED_PBASE( PBASE ) && !FLAG_TERMINATED_PBASE(PBASE) && STATE_DEINITIALIZING_PBASE(PBASE) )
+
+/// Is the object being deinitialized right now?
+#define DESTRUCTING_PBASE( PBASE )        ( FLAG_VALID_PBASE( PBASE ) && !FLAG_TERMINATED_PBASE(PBASE) && STATE_DESTRUCTING_PBASE(PBASE) )
+
+/// Is the object "waiting to die" state?
+#define WAITING_PBASE( PBASE )           ( FLAG_VALID_PBASE( PBASE ) && !FLAG_TERMINATED_PBASE(PBASE) && STATE_WAITING_PBASE( PBASE ) )
+
+/// Is the object active?
+#define DEFINED_PBASE( PBASE )  ( FLAG_VALID_PBASE(PBASE) && !FLAG_TERMINATED_PBASE( PBASE ) )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

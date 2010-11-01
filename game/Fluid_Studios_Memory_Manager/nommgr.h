@@ -39,16 +39,16 @@
 #undef	delete
 #endif
 
-#ifdef	malloc
-#undef	malloc
+#ifdef	SDL_malloc
+#undef	SDL_malloc
 #endif
 
-#ifdef	calloc
-#undef	calloc
+#ifdef	SDL_calloc
+#undef	SDL_calloc
 #endif
 
-#ifdef	realloc
-#undef	realloc
+#ifdef	SDL_realloc
+#undef	SDL_realloc
 #endif
 
 #ifdef	free

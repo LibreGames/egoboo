@@ -89,7 +89,7 @@ void scantag_read_all_vfs( const char *szFilename )
     {
         STRING str_tmp;
 
-        snprintf( str_tmp, SDL_arraysize( str_tmp ), "JOY_%d", cnt );
+        SDL_snprintf( str_tmp, SDL_arraysize( str_tmp ), "JOY_%d", cnt );
         if ( -1 != scantag_get_value( str_tmp ) ) continue;
 
         strncpy( scantag[scantag_count].name, str_tmp, SDL_arraysize( scantag[scantag_count].name ) );

@@ -53,9 +53,9 @@ struct debug_profiler
     bool_t         on;
     ClockState_t * state;
     double         count;
-    double         time;
+    double         time, dt, dt_max, dt_min;
 
-    double         rate;
+    double         rate, rate_min, rate_max;
 
     double         keep_amt, new_amt;
 
@@ -79,7 +79,9 @@ struct debug_profiler
     {
         if ( NULL != ptr )
         {
-            ptr->count = ptr->time = ptr->rate = 0.0;
+            ptr->count = ptr->time = 0.0;
+            ptr->dt = ptr->dt_max = ptr->dt_min = 0.0;
+            ptr->rate = ptr->rate_min = ptr->rate_max = 0.0;
         }
         return ptr;
     }
@@ -107,9 +109,9 @@ struct debug_profiler
 
         if ( ptr->on )
         {
-            clk_frameStep( ptr->state );
+            ptr->update();
             ptr->count = ptr->count * ptr->keep_amt + ptr->new_amt * 1.0;
-            ptr->time  = ptr->time * ptr->keep_amt + ptr->new_amt * clk_getFrameDuration( ptr->state );
+            ptr->time  = ptr->time * ptr->keep_amt + ptr->new_amt * ptr->dt;
         }
         else
         {
@@ -119,16 +121,16 @@ struct debug_profiler
         return ptr;
     }
 
-
     static debug_profiler * end2( debug_profiler * ptr )
     {
         if ( NULL == ptr ) return ptr;
 
         if ( ptr->on )
         {
-            clk_frameStep( ptr->state );
+            ptr->update();
+
             ptr->count += 1.0;
-            ptr->time += clk_getFrameDuration( ptr->state );
+            ptr->time  += ptr->dt;
         }
         else
         {
@@ -140,17 +142,50 @@ struct debug_profiler
 
 private:
 
+    void update()
+    {
+        clk_frameStep( state );
+        dt = clk_getFrameDuration( state );
+
+        if ( 0.0 == count )
+        {
+            dt_max = dt_min = dt;
+        }
+        else
+        {
+            dt_min = std::min( dt, dt_min );
+            dt_max = std::max( dt, dt_max );
+        }
+    }
+
     double calc()
     {
-        if ( NULL == this || 0.0 == count ) return 0.0;
+        double old_rate = rate;
 
-        rate = time / count;
+        if ( NULL == this || 0.0 == count )
+        {
+            rate = 0.0;
+        }
+        else
+        {
+            rate = time / count;
+        }
+
+        if ( 0.0 == old_rate && 0.0 != rate )
+        {
+            rate_min = rate;
+            rate_max = rate;
+        }
+        else
+        {
+            rate_min = std::min( rate, rate_min );
+            rate_max = std::min( rate, rate_max );
+        }
 
         return rate;
     }
 
 };
-
 
 #define PROFILE_QUERY_STRUCT(PTR)  debug_profiler::query( &((PTR)->dbg_pro) )
 #define PROFILE_BEGIN_STRUCT(PTR)  debug_profiler::begin( &((PTR)->dbg_pro) );
@@ -244,16 +279,17 @@ public:
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, typename _ity >
 struct t_cpp_map
 {
 private:
 
-    typedef typename EGOBOO_MAP< const REF_T, const _ty * > map_type;
-    typedef typename EGOBOO_MAP< const REF_T, const _ty * >::iterator map_iterator;
+    typedef typename EGOBOO_MAP< const _ity, const _ty * > map_type;
+    typedef typename map_type::iterator                    map_iterator;
+    typedef typename t_reference<_ty>                      reference_type;
 
-    unsigned                             _id;
-    EGOBOO_MAP< const REF_T, const _ty * > _map;
+    unsigned _id;
+    map_type _map;
 
 public:
 
@@ -261,22 +297,22 @@ public:
     /// t_cpp_map::_map
     struct iterator
     {
-        friend struct t_cpp_map<_ty, _sz>;
+        friend struct t_cpp_map<_ty, _ity>;
 
         explicit iterator() { _id = unsigned( -1 ); _valid = bfalse; }
 
-        typedef typename EGOBOO_MAP< const REF_T, const _ty * >           _map_t;
-        typedef typename EGOBOO_MAP< const REF_T, const _ty * >::iterator _it_t;
-        typedef typename std::pair< const REF_T, const _ty * >          _it_val_t;
+        typedef typename std::pair< const _ity, const _ty * >  _val_t;
+        typedef typename EGOBOO_MAP< const _ity, const _ty * > _map_t;
+        typedef typename _map_t::iterator                      _it_t;
 
         /// overload this operator to pass it on to the base iterator
-        const _it_val_t& operator*() const
+        const _val_t& operator*() const
         {
             return _i.operator*();
         }
 
         /// overload this operator to pass it on to the base iterator
-        const _it_val_t *operator->() const
+        const _val_t *operator->() const
         {
             return _i.operator->();
         }
@@ -296,16 +332,12 @@ private:
 
     t_cpp_map() { _id = unsigned( -1 ); }
 
-    bool_t ref_validate( const t_reference<_ty> & ref )
-    {
-        return ref < _sz;
-    }
-
     unsigned get_id() { return _id; }
-    _ty    * get_ptr( const t_reference<_ty> & ref );
-    bool_t   has_ref( const t_reference<_ty> & ref );
-    bool_t   add( const t_reference<_ty> & ref, const _ty * val );
-    bool_t   remove( const t_reference<_ty> & ref );
+
+    _ty *    get_ptr( const reference_type & ref );
+    bool_t   has_ref( const reference_type & ref );
+    bool_t   add( const reference_type & ref, const _ty * val );
+    bool_t   remove( const reference_type & ref );
 
     void     clear() { _map.clear(); _id = unsigned( -1 ); };
     size_t   size()  { return _map.size(); }
@@ -372,6 +404,141 @@ protected:
         }
 
         if ( _map.end() == it._i )
+        {
+            iterator_invalidate( it );
+            return bfalse;
+        }
+
+        return btrue;
+    }
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+template < typename _ty, typename _ity >
+struct t_cpp_deque
+{
+private:
+    typedef typename std::deque< _ity >              deque_type;
+    typedef typename std::deque< _ity >::iterator    deque_iterator;
+    typedef typename t_reference<_ty>                reference_type;
+
+    unsigned   _id;
+    deque_type _deque;
+
+public:
+
+    /// a custom iterator that tracks additions and removals to the
+    /// t_cpp_deque::_deque
+    struct iterator
+    {
+        friend struct t_cpp_deque<_ty, _ity>;
+
+        explicit iterator() { _id = unsigned( -1 ); _valid = bfalse; }
+
+        typedef typename _ity                           _val_t;
+        typedef typename std::deque< _val_t >           _deque_t;
+        typedef typename std::deque< _val_t >::iterator _it_t;
+
+        /// overload this operator to pass it on to the base iterator
+        const _val_t& operator*() const
+        {
+            return _i.operator*();
+        }
+
+        /// overload this operator to pass it on to the base iterator
+        const _val_t *operator->() const
+        {
+            return _i.operator->();
+        }
+
+private:
+        explicit iterator( _it_t it, unsigned id )
+        {
+            _i     = it;
+            _id    = id;
+            _valid = btrue;
+        }
+
+        _it_t     _i;
+        unsigned  _id;
+        bool_t    _valid;
+    };
+
+    t_cpp_deque() { _id = unsigned( -1 ); }
+
+    unsigned get_id() { return _id; }
+
+    deque_iterator find_ref( const reference_type & ref );
+    bool_t         has_ref( const reference_type & ref );
+    bool_t         add( const reference_type & ref );
+    bool_t         remove( const reference_type & ref );
+
+    void     clear() { _deque.clear(); _id = unsigned( -1 ); };
+    size_t   size()  { return _deque.size(); }
+
+    iterator iterator_begin()
+    {
+        iterator rv;
+
+        if ( !_deque.empty() )
+        {
+            rv = iterator( _deque.begin(), _id );
+        }
+
+        return rv;
+    }
+
+    bool_t iterator_end( iterator & it )
+    {
+        // if the iterator is not valid, we ARE at the end
+        // this function already tests for the
+        // it._i == _deque.end() condition, so no need to repeat ourselves
+        return !iterator_validate( it );
+    }
+
+    iterator & iterator_increment( iterator & it )
+    {
+        // if the iterator is not valid, this call will invalidate it.
+        // then just send back the invalid iterator
+        if ( !iterator_validate( it ) ) return it;
+
+        it._i++;
+
+        return it;
+    }
+
+protected:
+
+    iterator & iterator_invalidate( iterator & it )
+    {
+        it._id    = unsigned( -1 );
+        it._valid = bfalse;
+        it._i     = _deque.end();
+
+        return it;
+    }
+
+    bool_t iterator_validate( iterator & it )
+    {
+        if ( !it._valid )
+        {
+            return bfalse;
+        }
+
+        if ( _id != it._id )
+        {
+            iterator_invalidate( it );
+            return bfalse;
+        }
+
+        if ( _deque.empty() )
+        {
+            iterator_invalidate( it );
+            return bfalse;
+        }
+
+        if ( _deque.end() == it._i )
         {
             iterator_invalidate( it );
             return bfalse;

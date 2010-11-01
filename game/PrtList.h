@@ -53,33 +53,39 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 #define IPRT_GET_PCONT( IPRT )      PrtObjList.get_ptr(IPRT)
 
 // grab the index from the ego_prt
-#define GET_IDX_PPRT( PPRT )    ((NULL == PPRT) ? MAX_PRT : INDEX_PCONT(ego_prt_container, PPRT_CGET_PCONT(PPRT)))
+#define GET_IDX_PPRT( PPRT )    GET_INDEX_PCONT( ego_prt_container, PPRT_CGET_PCONT(PPRT), MAX_PRT )
 #define GET_REF_PPRT( PPRT )    PRT_REF(GET_IDX_PPRT( PPRT ))
 
 // grab the allocated flag
-#define ALLOCATED_PRT( IPRT )    ego_prt_container::get_allocated( IPRT_GET_PCONT(IPRT) )
-#define ALLOCATED_PPRT( PPRT )   ego_prt_container::get_allocated( PPRT_CGET_PCONT(PPRT) )
+#define ALLOCATED_PRT( IPRT )    FLAG_ALLOCATED_PCONT(ego_prt_container,  IPRT_GET_PCONT(IPRT) )
+#define ALLOCATED_PPRT( PPRT )   FLAG_ALLOCATED_PCONT(ego_prt_container,  PPRT_CGET_PCONT(PPRT) )
 
-#define VALID_PRT( IPRT )       ( ALLOCATED_PRT( IPRT ) && FLAG_VALID_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define DEFINED_PRT( IPRT )     ( VALID_PBASE(IPRT_GET_POBJ(IPRT) ) && !FLAG_TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define ACTIVE_PRT( IPRT )      ACTIVE_PBASE(IPRT_GET_POBJ(IPRT))
-#define WAITING_PRT( IPRT )     WAITING_PBASE(IPRT_GET_POBJ(IPRT))
-#define TERMINATED_PRT( IPRT )  TERMINATED_PBASE(IPRT_GET_POBJ(IPRT))
+#define VALID_PRT( IPRT )          ( ALLOCATED_PRT(IPRT) && FLAG_VALID_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define DEFINED_PRT( IPRT )        ( VALID_PRT(IPRT)     && !FLAG_TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define TERMINATED_PRT( IPRT )     ( VALID_PRT(IPRT)     && FLAG_TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define CONSTRUCTING_PRT( IPRT )   ( ALLOCATED_PRT(IPRT) && CONSTRUCTING_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define INITIALIZING_PRT( IPRT )   ( ALLOCATED_PRT(IPRT) && INITIALIZING_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define PROCESSING_PRT( IPRT )     ( ALLOCATED_PRT(IPRT) && PROCESSING_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define DEINITIALIZING_PRT( IPRT ) ( ALLOCATED_PRT(IPRT) && DEINITIALIZING_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define WAITING_PRT( IPRT )        ( ALLOCATED_PRT(IPRT) && WAITING_PBASE(IPRT_GET_POBJ(IPRT)) )
 
-#define VALID_PPRT( PPRT )       ( ALLOCATED_PPRT( PPRT ) && FLAG_VALID_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define DEFINED_PPRT( PPRT )     ( VALID_PBASE(PPRT_CGET_POBJ(PPRT)) && !FLAG_TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define ACTIVE_PPRT( PPRT )      ACTIVE_PBASE(PPRT_CGET_POBJ(PPRT))
-#define WAITING_PPRT( PPRT )     WAITING_PBASE(PPRT_CGET_POBJ(PPRT))
-#define TERMINATED_PPRT( PPRT )  TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT))
+#define VALID_PPRT( PPRT )          ( ALLOCATED_PPRT(PPRT) && FLAG_VALID_PBASE(PPRT_CGET_POBJ(PPRT)) )
+#define DEFINED_PPRT( PPRT )        ( VALID_PPRT(PPRT)     && !FLAG_TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
+#define TERMINATED_PPRT( PPRT )     ( VALID_PPRT(PPRT)     && FLAG_TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
+#define CONSTRUCTING_PPRT( PPRT )   ( ALLOCATED_PPRT(PPRT) && CONSTRUCTING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+#define INITIALIZING_PPRT( PPRT )   ( ALLOCATED_PPRT(PPRT) && INITIALIZING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+#define PROCESSING_PPRT( PPRT )     ( ALLOCATED_PPRT(PPRT) && PROCESSING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+#define DEINITIALIZING_PPRT( PPRT ) ( ALLOCATED_PPRT(PPRT) && DEINITIALIZING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+#define WAITING_PPRT( PPRT )        ( ALLOCATED_PPRT(PPRT) && WAITING_PBASE(PPRT_CGET_POBJ(PPRT)) )
 
 /// Is the particle flagged as being in limbo?
 #define FLAG_LIMBO_PPRT_OBJ( PPRT_OBJ )  ( (PPRT_OBJ)->obj_base_display )
 /// Is the particle object in limbo?
-#define STATE_LIMBO_PPRT_OBJ( PPRT_OBJ ) ( VALID_PBASE(PPRT_OBJ) && FLAG_LIMBO_PPRT_OBJ(PPRT_OBJ) )
+#define STATE_LIMBO_PPRT_OBJ( PPRT_OBJ ) ( FLAG_VALID_PBASE(PPRT_OBJ) && FLAG_LIMBO_PPRT_OBJ(PPRT_OBJ) )
 
 //--------------------------------------------------------------------------------------------
 // Macros to automate looping through a PrtObjList. Based on generic code for
-// looping through a t_ego_obj_lst<>
+// looping through a t_obj_lst_map<>
 //
 // This still looks a bit messy, but I think it can't be helped if we want the
 // rest of our codebase to look "pretty"...
@@ -89,7 +95,6 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
     OBJ_LIST_BEGIN_LOOP(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
     ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)static_cast<const ego_prt *>(internal__##PRT_BDL##_pobj); \
     if( NULL == internal__##PRT_BDL_pprt ) continue; \
-    PRT_REF IT(internal__##IT->first); \
     ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
 
 /// loops through PrtObjList for all "defined" particles, creating a reference, and a bundle
@@ -97,50 +102,51 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
     OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
     ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)static_cast<const ego_prt *>(internal__##PRT_BDL##_pobj); \
     if( NULL == internal__##PRT_BDL_pprt ) continue; \
-    PRT_REF IT(internal__##IT->first); \
     ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
 
 /// loops through PrtObjList for all "active" particles, creating a reference, and a bundle
 #define PRT_BEGIN_LOOP_ACTIVE(IT, PRT_BDL) \
-    /*printf( "++++ ACTIVE PrtObjList.get_loop_depth() == %d, %s\n", PrtObjList.get_loop_depth(), __FUNCTION__ );*/ OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
+    OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
     ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)static_cast<const ego_prt *>(internal__##PRT_BDL##_pobj); \
     if( NULL == internal__##PRT_BDL_pprt ) continue; \
-    PRT_REF IT(internal__##IT->first); \
     ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
 
 /// loops through PrtObjList for all "active" particles that are registered in the BSP
-#define PRT_BEGIN_LOOP_BSP(IT, PRT_BDL)     /*printf( "++++ BSP PrtObjList.get_loop_depth() == %d, %s\n", PrtObjList.get_loop_depth(), __FUNCTION__ );*/  PRT_BEGIN_LOOP_ACTIVE(IT, PPRT) if( !PPRT->bsp_leaf.inserted ) continue;
+#define PRT_BEGIN_LOOP_BSP(IT, PRT_BDL) \
+    PRT_BEGIN_LOOP_ACTIVE(IT, PPRT) \
+    if( !PPRT->bsp_leaf.inserted ) continue;
 
 /// loops through PrtObjList for all "defined" particles that are flagged as being in limbo
-#define PRT_BEGIN_LOOP_LIMBO(IT, PRT_BDL)   /*printf( "++++ LIMBO PrtObjList.get_loop_depth() == %d, %s\n", PrtObjList.get_loop_depth(), __FUNCTION__ ); */ PRT_BEGIN_LOOP_DEFINED(IT, PPRT) if( !LIMBO_PPRT(PPRT) ) continue;
+#define PRT_BEGIN_LOOP_LIMBO(IT, PRT_BDL) \
+    PRT_BEGIN_LOOP_DEFINED(IT, PPRT) \
+    if( !LIMBO_PPRT(PPRT) ) continue;
 
 /// the termination for each PrtObjList loop
-#define PRT_END_LOOP()                   OBJ_LIST_END_LOOP(PrtObjList) /*printf( "---- PrtObjList.get_loop_depth() == %d\n", PrtObjList.get_loop_depth() );*/
+#define PRT_END_LOOP() \
+    OBJ_LIST_END_LOOP(PrtObjList)
 
 //--------------------------------------------------------------------------------------------
 // Macros to determine whether the particle is in the game or not.
 // If objects are being spawned, then any object that is just "defined" is treated as "in game"
-#define INGAME_PRT_BASE(IPRT)       ( PrtObjList.in_range_ref( IPRT ) && ACTIVE_PBASE( IPRT_GET_POBJ(IPRT) ) && ON_PBASE( IPRT_GET_POBJ(IPRT) ) )
-#define INGAME_PPRT_BASE(PPRT)      ( VALID_PPRT( PPRT ) && ACTIVE_PBASE( PPRT_CGET_POBJ(PPRT) ) && ON_PBASE( PPRT_CGET_POBJ(PPRT) ) )
 
-#define INGAME_PRT(IPRT)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PRT(IPRT) : INGAME_PRT_BASE(IPRT) )
-#define INGAME_PPRT(PPRT)           ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PPRT(PPRT) : INGAME_PPRT_BASE(PPRT) )
+#define INGAME_PRT(IPRT)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PRT(IPRT) : ALLOCATED_PRT(IPRT) && PROCESSING_PBASE(IPRT_GET_POBJ(IPRT)) )
+#define INGAME_PPRT(PPRT)           ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PPRT(PPRT) : ALLOCATED_PPRT(PPRT) && PROCESSING_PBASE(PPRT_CGET_POBJ(PPRT)) )
 
 // the same as INGAME_*_BASE except that the particle does not have to be "on"
 // visible particles stick around in the active state (but off) until they have been displayed at least once
-#define LIMBO_PRT(IPRT)            ( ( (ego_obj::get_spawn_depth() > 0) ? DEFINED_PRT(IPRT) : INGAME_PRT_BASE(IPRT) ) && FLAG_LIMBO_PPRT_OBJ( IPRT_GET_PCONT(IPRT) ) )
-#define LIMBO_PPRT(PPRT)           ( ( (ego_obj::get_spawn_depth() > 0) ? DEFINED_PPRT(PPRT) : INGAME_PPRT_BASE(PPRT) ) && FLAG_LIMBO_PPRT_OBJ( PDATA_GET_POBJ(ego_prt, PPRT) ) )
+#define LIMBO_PRT(IPRT)            ( INGAME_PRT(IPRT)  && FLAG_LIMBO_PPRT_OBJ( IPRT_GET_PCONT(IPRT) ) )
+#define LIMBO_PPRT(PPRT)           ( INGAME_PPRT(PPRT) && FLAG_LIMBO_PPRT_OBJ( PDATA_GET_POBJ(ego_prt, PPRT) ) )
 
 //--------------------------------------------------------------------------------------------
 // list definition
 //--------------------------------------------------------------------------------------------
-struct ego_particle_list : public t_ego_obj_lst<ego_obj_prt, MAX_PRT>
+struct ego_particle_list : public t_obj_lst_deque<ego_obj_prt, MAX_PRT>
 {
-    typedef t_ego_obj_lst<ego_obj_prt, MAX_PRT> list_type;
+    typedef t_obj_lst_deque<ego_obj_prt, MAX_PRT> list_type;
 
     PRT_REF allocate( bool_t force, const PRT_REF & override = PRT_REF( MAX_PRT ) );
 
-    ego_particle_list( size_t len = 512 ) : t_ego_obj_lst<ego_obj_prt, MAX_PRT>( len ) {}
+    ego_particle_list( size_t len = 512 ) : t_obj_lst_deque<ego_obj_prt, MAX_PRT>( len ) {}
 
 protected:
     PRT_REF allocate_find();

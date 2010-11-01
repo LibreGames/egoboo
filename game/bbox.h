@@ -64,7 +64,7 @@ struct ego_oct_vec
 
     ego_oct_vec( ) { clear( this ); }
 
-    ego_oct_vec( oct_vec_base_t & vals ) { clear( this ); memmove( &v, &vals, sizeof( v ) ); }
+    ego_oct_vec( oct_vec_base_t & vals ) { clear( this ); SDL_memmove( &v, &vals, sizeof( v ) ); }
 
     ego_oct_vec( fvec3_t & vec ) { clear( this ); ctor_this( this, vec ); }
 
@@ -80,7 +80,7 @@ private:
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }
@@ -147,7 +147,7 @@ private:
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }
@@ -172,7 +172,7 @@ private:
     {
         if ( NULL == ptr ) return ptr;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }

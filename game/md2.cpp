@@ -52,7 +52,7 @@ ego_MD2_Frame * ego_MD2_Frame::clear( ego_MD2_Frame * pframe )
 {
     if ( NULL == pframe ) return pframe;
 
-    memset( pframe, 0, sizeof( *pframe ) );
+    SDL_memset( pframe, 0, sizeof( *pframe ) );
 
     return pframe;
 }
@@ -97,7 +97,7 @@ ego_MD2_GLCommand * ego_MD2_GLCommand::clear( ego_MD2_GLCommand * m )
 {
     if ( NULL == m ) return m;
 
-    memset( m, 0, sizeof( *m ) );
+    SDL_memset( m, 0, sizeof( *m ) );
 
     return m;
 }
@@ -184,7 +184,7 @@ ego_MD2_Model * ego_MD2_Model::clear( ego_MD2_Model * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    SDL_memset( ptr, 0, sizeof( *ptr ) );
 
     return ptr;
 }
@@ -328,8 +328,8 @@ void ego_MD2_Model::scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, f
             {
                 for ( ijk = 0; ijk < OCT_COUNT; ijk ++ )
                 {
-                    pframe->bb.mins[ijk] = MIN( pframe->bb.mins[ijk], opos[ijk] );
-                    pframe->bb.maxs[ijk] = MAX( pframe->bb.maxs[ijk], opos[ijk] );
+                    pframe->bb.mins[ijk] = SDL_min( pframe->bb.mins[ijk], opos[ijk] );
+                    pframe->bb.maxs[ijk] = SDL_max( pframe->bb.maxs[ijk], opos[ijk] );
                 }
             }
         }
@@ -500,17 +500,17 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
             }
             else
             {
-                pframe->bb.mins[OCT_X ] = MIN( pframe->bb.mins[OCT_X ], pframe->vertex_lst[v].pos.x );
-                pframe->bb.mins[OCT_Y ] = MIN( pframe->bb.mins[OCT_Y ], pframe->vertex_lst[v].pos.y );
-                pframe->bb.mins[OCT_XY] = MIN( pframe->bb.mins[OCT_XY], pframe->vertex_lst[v].pos.x + pframe->vertex_lst[v].pos.y );
-                pframe->bb.mins[OCT_YX] = MIN( pframe->bb.mins[OCT_YX], -pframe->vertex_lst[v].pos.x + pframe->vertex_lst[v].pos.y );
-                pframe->bb.mins[OCT_Z ] = MIN( pframe->bb.mins[OCT_Z ], pframe->vertex_lst[v].pos.z );
+                pframe->bb.mins[OCT_X ] = SDL_min( pframe->bb.mins[OCT_X ], pframe->vertex_lst[v].pos.x );
+                pframe->bb.mins[OCT_Y ] = SDL_min( pframe->bb.mins[OCT_Y ], pframe->vertex_lst[v].pos.y );
+                pframe->bb.mins[OCT_XY] = SDL_min( pframe->bb.mins[OCT_XY], pframe->vertex_lst[v].pos.x + pframe->vertex_lst[v].pos.y );
+                pframe->bb.mins[OCT_YX] = SDL_min( pframe->bb.mins[OCT_YX], -pframe->vertex_lst[v].pos.x + pframe->vertex_lst[v].pos.y );
+                pframe->bb.mins[OCT_Z ] = SDL_min( pframe->bb.mins[OCT_Z ], pframe->vertex_lst[v].pos.z );
 
-                pframe->bb.maxs[OCT_X ] = MAX( pframe->bb.maxs[OCT_X ], pframe->vertex_lst[v].pos.x );
-                pframe->bb.maxs[OCT_Y ] = MAX( pframe->bb.maxs[OCT_Y ], pframe->vertex_lst[v].pos.y );
-                pframe->bb.maxs[OCT_XY] = MAX( pframe->bb.maxs[OCT_XY], pframe->vertex_lst[v].pos.x + pframe->vertex_lst[v].pos.y );
-                pframe->bb.maxs[OCT_YX] = MAX( pframe->bb.maxs[OCT_YX], -pframe->vertex_lst[v].pos.x + pframe->vertex_lst[v].pos.y );
-                pframe->bb.maxs[OCT_Z ] = MAX( pframe->bb.maxs[OCT_Z ], pframe->vertex_lst[v].pos.z );
+                pframe->bb.maxs[OCT_X ] = SDL_max( pframe->bb.maxs[OCT_X ], pframe->vertex_lst[v].pos.x );
+                pframe->bb.maxs[OCT_Y ] = SDL_max( pframe->bb.maxs[OCT_Y ], pframe->vertex_lst[v].pos.y );
+                pframe->bb.maxs[OCT_XY] = SDL_max( pframe->bb.maxs[OCT_XY], pframe->vertex_lst[v].pos.x + pframe->vertex_lst[v].pos.y );
+                pframe->bb.maxs[OCT_YX] = SDL_max( pframe->bb.maxs[OCT_YX], -pframe->vertex_lst[v].pos.x + pframe->vertex_lst[v].pos.y );
+                pframe->bb.maxs[OCT_Z ] = SDL_max( pframe->bb.maxs[OCT_Z ], pframe->vertex_lst[v].pos.z );
             }
         }
 

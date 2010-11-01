@@ -49,10 +49,10 @@
 #    define EGOBOO_DELETE(PTR) if(NULL != PTR) { delete PTR; PTR = NULL; }
 #    define EGOBOO_DELETE_ARY(PTR) if(NULL != PTR) { delete [] PTR; PTR = NULL; }
 #else
-#    define EGOBOO_NEW( TYPE ) (TYPE *)calloc(1, sizeof(TYPE))
-#    define EGOBOO_NEW_ARY( TYPE, COUNT ) (TYPE *)calloc(COUNT, sizeof(TYPE))
-#    define EGOBOO_DELETE(PTR) if(NULL != PTR) { free(PTR); PTR = NULL; }
-#    define EGOBOO_DELETE_ARY(PTR) if(NULL != PTR) { free(PTR); PTR = NULL; }
+#    define EGOBOO_NEW( TYPE ) (TYPE *)SDL_calloc(1, sizeof(TYPE))
+#    define EGOBOO_NEW_ARY( TYPE, COUNT ) (TYPE *)SDL_calloc(COUNT, sizeof(TYPE))
+#    define EGOBOO_DELETE(PTR) if(NULL != PTR) { SDL_free(PTR); PTR = NULL; }
+#    define EGOBOO_DELETE_ARY(PTR) if(NULL != PTR) { SDL_free(PTR); PTR = NULL; }
 #endif
 
 //--------------------------------------------------------------------------------------------

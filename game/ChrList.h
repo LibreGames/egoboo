@@ -53,70 +53,342 @@ typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
 #define ICHR_GET_PCONT( ICHR )      ChrObjList.get_ptr(ICHR)
 
 // grab the index from the ego_chr
-#define GET_IDX_PCHR( PCHR )    ((NULL == PCHR) ? MAX_CHR : INDEX_PCONT(ego_chr_container, PCHR_CGET_PCONT(PCHR)))
-#define GET_REF_PCHR( PCHR )    CHR_REF(GET_IDX_PCHR( PCHR ))
+#define GET_IDX_PCHR( PCHR )      GET_INDEX_PCONT( ego_chr_container, PCHR_CGET_PCONT(PCHR), MAX_CHR )
+#define GET_REF_PCHR( PCHR )      CHR_REF(GET_IDX_PCHR( PCHR ))
 
-// grab the allocated flag
-#define ALLOCATED_CHR( ICHR )    ego_chr_container::get_allocated( ICHR_GET_PCONT(ICHR) )
-#define ALLOCATED_PCHR( PCHR )   ego_chr_container::get_allocated( PCHR_CGET_PCONT(PCHR) )
+//// grab the allocated flag
+#define ALLOCATED_CHR( ICHR )      FLAG_ALLOCATED_PCONT(ego_chr_container,  ICHR_GET_PCONT(ICHR) )
+#define ALLOCATED_PCHR( PCHR )     FLAG_ALLOCATED_PCONT(ego_chr_container,  PCHR_CGET_PCONT(PCHR) )
 
-#define VALID_CHR( ICHR )       ( ALLOCATED_CHR( ICHR ) && FLAG_VALID_PBASE(ICHR_GET_POBJ(ICHR)) )
-#define DEFINED_CHR( ICHR )     ( VALID_PBASE(ICHR_GET_POBJ(ICHR) ) && !FLAG_TERMINATED_PBASE(ICHR_GET_POBJ(ICHR)) )
-#define ACTIVE_CHR( ICHR )      ( ACTIVE_PBASE(ICHR_GET_POBJ(ICHR)) )
-#define WAITING_CHR( ICHR )     ( WAITING_PBASE(ICHR_GET_POBJ(ICHR)) )
-#define TERMINATED_CHR( ICHR )  ( TERMINATED_PBASE(ICHR_GET_POBJ(ICHR)) )
-
-#define VALID_PCHR( PCHR )       ( ALLOCATED_PCHR( PCHR ) && FLAG_VALID_PBASE(PCHR_CGET_POBJ(PCHR)) )
-#define DEFINED_PCHR( PCHR )     ( VALID_PBASE(PCHR_CGET_POBJ(PCHR)) && !FLAG_TERMINATED_PBASE(PCHR_CGET_POBJ(PCHR)) )
-#define ACTIVE_PCHR( PCHR )      ( ACTIVE_PBASE(PCHR_CGET_POBJ(PCHR)) )
-#define WAITING_PCHR( PCHR )     ( WAITING_PBASE(PCHR_CGET_POBJ(PCHR)) )
-#define TERMINATED_PCHR( PCHR )  ( TERMINATED_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//#define VALID_CHR( ICHR )          ( ALLOCATED_CHR(ICHR) && FLAG_VALID_PBASE(ICHR_GET_POBJ(ICHR)) )
+//#define DEFINED_CHR( ICHR )        ( VALID_CHR(ICHR)     && !FLAG_TERMINATED_PBASE(ICHR_GET_POBJ(ICHR)) )
+//#define TERMINATED_CHR( ICHR )     ( VALID_CHR(ICHR)     && FLAG_TERMINATED_PBASE(ICHR_GET_POBJ(ICHR)) )
+//#define CONSTRUCTING_CHR( ICHR )   ( ALLOCATED_CHR(ICHR) && CONSTRUCTING_PBASE(ICHR_GET_POBJ(ICHR)) )
+//#define INITIALIZING_CHR( ICHR )   ( ALLOCATED_CHR(ICHR) && INITIALIZING_PBASE(ICHR_GET_POBJ(ICHR)) )
+//#define PROCESSING_CHR( ICHR )     ( ALLOCATED_CHR(ICHR) && PROCESSING_PBASE(ICHR_GET_POBJ(ICHR)) )
+//#define DEINITIALIZING_CHR( ICHR ) ( ALLOCATED_CHR(ICHR) && DEINITIALIZING_PBASE(ICHR_GET_POBJ(ICHR)) )
+//#define WAITING_CHR( ICHR )        ( ALLOCATED_CHR(ICHR) && WAITING_PBASE(ICHR_GET_POBJ(ICHR)) )
+//
+//#define VALID_PCHR( PCHR )          ( ALLOCATED_PCHR(PCHR) && FLAG_VALID_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//#define DEFINED_PCHR( PCHR )        ( VALID_PCHR(PCHR)     && !FLAG_TERMINATED_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//#define TERMINATED_PCHR( PCHR )     ( VALID_PCHR(PCHR)     && FLAG_TERMINATED_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//#define CONSTRUCTING_PCHR( PCHR )   ( ALLOCATED_PCHR(PCHR) && CONSTRUCTING_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//#define INITIALIZING_PCHR( PCHR )   ( ALLOCATED_PCHR(PCHR) && INITIALIZING_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//#define PROCESSING_PCHR( PCHR )     ( ALLOCATED_PCHR(PCHR) && PROCESSING_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//#define DEINITIALIZING_PCHR( PCHR ) ( ALLOCATED_PCHR(PCHR) && DEINITIALIZING_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//#define WAITING_PCHR( PCHR )        ( ALLOCATED_PCHR(PCHR) && WAITING_PBASE(PCHR_CGET_POBJ(PCHR)) )
+//
+////--------------------------------------------------------------------------------------------
+//// Macros to determine whether the character is in the game or not.
+//// If objects are being spawned, then any object that is just "defined" is treated as "in game"
+//
+//#define INGAME_CHR(ICHR)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_CHR(ICHR) : ALLOCATED_CHR(ICHR) && PROCESSING_PBASE(ICHR_GET_POBJ(ICHR)) )
+//#define INGAME_PCHR(PCHR)           ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PCHR(PCHR) : ALLOCATED_PCHR(PCHR) && PROCESSING_PBASE(PCHR_CGET_POBJ(PCHR)) )
 
 //--------------------------------------------------------------------------------------------
 // Macros to automate looping through a ChrObjList. Based on generic code for
-// looping through a t_ego_obj_lst<>
+// looping through a t_obj_lst_map<>
 //
 // This still looks a bit messy, but I think it can't be helped if we want the
 // rest of our codebase to look "pretty"...
 
-/// loops through ChrObjList for all "defined" characters, creating a reference, and a pointer
+/// loops through ChrObjList for all "defined" characters, creating a referchre, and a pointer
 #define CHR_BEGIN_LOOP_DEFINED(IT, PCHR) \
-    /* printf( "++++ DEFINED ChrObjList.get_loop_depth() == %d, %s\n", ChrObjList.get_loop_depth(), __FUNCTION__ ); */ OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_chr, ChrObjList, IT, internal__##PCHR##_pobj) \
-    ego_chr * PCHR = internal__##PCHR##_pobj; if( NULL == PCHR ) continue; \
-    CHR_REF IT(internal__##IT->first);
+    OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_chr, ChrObjList, IT, internal__##PCHR##_pobj) \
+    ego_chr * PCHR = (ego_chr *)static_cast<const ego_chr *>(internal__##PCHR##_pobj); \
+    if( NULL == PCHR ) continue;
 
-/// loops through ChrObjList for all "active" characters, creating a reference, and a pointer
+/// loops through ChrObjList for all "active" characters, creating a referchre, and a pointer
 #define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR) \
-    /* printf( "++++ ACTIVE ChrObjList.get_loop_depth() == %d, %s\n", ChrObjList.get_loop_depth(), __FUNCTION__ );*/ \
     OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_chr, ChrObjList, IT, internal__##PCHR##_pobj) \
     ego_chr * PCHR = (ego_chr *)static_cast<const ego_chr *>(internal__##PCHR##_pobj); \
-    if( NULL == PCHR ) continue; \
-    CHR_REF IT(internal__##IT->first);
+    if( NULL == PCHR ) continue;
 
-/// loops through all "active" characters that are registered in the BSP
-#define CHR_BEGIN_LOOP_BSP(IT, PCHR)     /*printf( "++++ BSP ChrObjList.get_loop_depth() == %d, %s\n", ChrObjList.get_loop_depth(), __FUNCTION__ );*/  CHR_BEGIN_LOOP_ACTIVE(IT, PCHR) if( !PCHR->bsp_leaf.inserted ) continue;
+/// loops through ChrObjList for all "active" characters that are registered in the BSP
+#define CHR_BEGIN_LOOP_BSP(IT, PCHR) \
+    CHR_BEGIN_LOOP_ACTIVE(IT, PCHR) \
+    if( !PCHR->bsp_leaf.inserted ) continue;
 
 /// the termination for each ChrObjList loop
-#define CHR_END_LOOP()                   OBJ_LIST_END_LOOP(ChrObjList) /*printf( "---- ChrObjList.get_loop_depth() == %d\n", ChrObjList.get_loop_depth() ); */
-
-//--------------------------------------------------------------------------------------------
-// Macros to determine whether the character is in the game or not.
-// If objects are being spawned, then any object that is just "defined" is treated as "in game"
-#define INGAME_CHR_BASE(ICHR)       ( ChrObjList.in_range_ref( ICHR ) && ACTIVE_PBASE( ChrObjList.get_data_ptr(ICHR) ) && ON_PBASE( ChrObjList.get_data_ptr(ICHR) ) )
-#define INGAME_PCHR_BASE(PCHR)      ( VALID_PCHR( PCHR ) && ACTIVE_PBASE( PCHR_CGET_POBJ(PCHR) ) && ON_PBASE( PCHR_CGET_POBJ(PCHR) ) )
-
-#define INGAME_CHR(ICHR)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_CHR(ICHR) : INGAME_CHR_BASE(ICHR) )
-#define INGAME_PCHR(PCHR)           ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PCHR(PCHR) : INGAME_PCHR_BASE(PCHR) )
+#define CHR_END_LOOP() \
+    OBJ_LIST_END_LOOP(ChrObjList)
 
 //--------------------------------------------------------------------------------------------
 // list declaration
 //--------------------------------------------------------------------------------------------
-typedef t_ego_obj_lst<ego_obj_chr, MAX_CHR> ChrObjList_t;
+typedef t_obj_lst_deque<ego_obj_chr, MAX_CHR> ChrObjList_t;
 
 extern ChrObjList_t ChrObjList;
 
 //--------------------------------------------------------------------------------------------
 // Function prototypes
 //--------------------------------------------------------------------------------------------
+
+static INLINE bool_t VALID_CHR( const CHR_REF & ichr )
+{
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    return ego_object_process_state_data::get_valid( pobj );
+}
+
+static INLINE bool_t DEFINED_CHR( const CHR_REF & ichr )
+{
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj );
+}
+
+static INLINE bool_t TERMINATED_CHR( const CHR_REF & ichr )
+{
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && ego_obj::get_killed( pobj );
+}
+
+static INLINE bool_t CONSTRUCTING_CHR( const CHR_REF & ichr )
+{
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_constructing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t INITIALIZING_CHR( const CHR_REF & ichr )
+{
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_constructed( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_initializing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t PROCESSING_CHR( const CHR_REF & ichr )
+{
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_obj::get_on( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_processing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t DEINITIALIZING_CHR( const CHR_REF & ichr )
+{
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_constructed( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_deinitializing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t WAITING_CHR( const CHR_REF & ichr )
+{
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_waiting == ego_object_process_state_data::get_action( pobj ) );
+}
+
+static INLINE bool_t VALID_PCHR( const ego_chr * pchr )
+{
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj );
+}
+
+static INLINE bool_t DEFINED_PCHR( const ego_chr * pchr )
+{
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj );
+}
+
+static INLINE bool_t TERMINATED_PCHR( const ego_chr * pchr )
+{
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && ego_obj::get_killed( pobj );
+}
+
+static INLINE bool_t CONSTRUCTING_PCHR( const ego_chr * pchr )
+{
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_constructing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t INITIALIZING_PCHR( const ego_chr * pchr )
+{
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_constructed( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_initializing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t PROCESSING_PCHR( const ego_chr * pchr )
+{
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    return
+        ego_obj::get_on( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_processing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t DEINITIALIZING_PCHR( const ego_chr * pchr )
+{
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_constructed( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_deinitializing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t WAITING_PCHR( const ego_chr * pchr )
+{
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_waiting == ego_object_process_state_data::get_action( pobj ) );
+}
+
+static INLINE bool_t INGAME_CHR( const CHR_REF & ichr )
+{
+    bool_t retval = bfalse;
+
+    const ego_chr_container * pcont = ChrObjList.get_allocated_ptr( ichr );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_chr * pobj = ICHR_GET_POBJ( ichr );
+    if ( NULL == pobj ) return bfalse;
+
+    if ( ego_obj::get_spawn_depth() > 0 )
+    {
+        retval =
+            ego_object_process_state_data::get_valid( pobj )
+            && !ego_obj::get_killed( pobj );
+    }
+    else
+    {
+        retval = ego_obj::get_on( pobj ) &&
+                 !ego_obj::get_killed( pobj ) &&
+                 ( ego_obj_processing == ego_obj::get_action( pobj ) );
+    }
+
+    return retval;
+}
+
+static INLINE bool_t INGAME_PCHR( const ego_chr * pchr )
+{
+    bool_t retval = bfalse;
+
+    const ego_obj_chr * pobj = PCHR_CGET_POBJ( pchr );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
+    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+
+    if ( ego_obj::get_spawn_depth() > 0 )
+    {
+        retval =
+            ego_object_process_state_data::get_valid( pobj )
+            && !ego_obj::get_killed( pobj );
+    }
+    else
+    {
+        retval = ego_obj::get_on( pobj ) &&
+                 !ego_obj::get_killed( pobj ) &&
+                 ( ego_obj_processing == ego_obj::get_action( pobj ) );
+    }
+
+    return retval;
+}
 
 #define _ChrList_h

@@ -39,7 +39,7 @@ spawn_file_info_t * spawn_file_info_init( spawn_file_info_t *pinfo )
 
     if ( NULL == pinfo ) return pinfo;
 
-    memset( pinfo, 0, sizeof( *pinfo ) );
+    SDL_memset( pinfo, 0, sizeof( *pinfo ) );
 
     pinfo->attach = ATTACH_NONE;
     pinfo->team   = TEAM_NULL;
@@ -107,13 +107,13 @@ bool_t spawn_file_scan( vfs_FILE * fileread, spawn_file_info_t *pinfo )
         pinfo->facing = FACE_NORTH;
         pinfo->attach = ATTACH_NONE;
         cTmp = fget_first_letter( fileread );
-        if ( 'S' == toupper( cTmp ) )       pinfo->facing = FACE_SOUTH;
-        else if ( 'E' == toupper( cTmp ) )  pinfo->facing = FACE_EAST;
-        else if ( 'W' == toupper( cTmp ) )  pinfo->facing = FACE_WEST;
-        else if ( '?' == toupper( cTmp ) )  pinfo->facing = FACE_RANDOM;
-        else if ( 'L' == toupper( cTmp ) )  pinfo->attach = ATTACH_LEFT;
-        else if ( 'R' == toupper( cTmp ) )  pinfo->attach = ATTACH_RIGHT;
-        else if ( 'I' == toupper( cTmp ) )  pinfo->attach = ATTACH_INVENTORY;
+        if ( 'S' == SDL_toupper( cTmp ) )       pinfo->facing = FACE_SOUTH;
+        else if ( 'E' == SDL_toupper( cTmp ) )  pinfo->facing = FACE_EAST;
+        else if ( 'W' == SDL_toupper( cTmp ) )  pinfo->facing = FACE_WEST;
+        else if ( '?' == SDL_toupper( cTmp ) )  pinfo->facing = FACE_RANDOM;
+        else if ( 'L' == SDL_toupper( cTmp ) )  pinfo->attach = ATTACH_LEFT;
+        else if ( 'R' == SDL_toupper( cTmp ) )  pinfo->attach = ATTACH_RIGHT;
+        else if ( 'I' == SDL_toupper( cTmp ) )  pinfo->attach = ATTACH_INVENTORY;
 
         pinfo->money   = fget_int( fileread );
         pinfo->skin    = fget_int( fileread );

@@ -164,7 +164,7 @@ void oglx_upload_2d_mipmap( GLboolean use_alpha, GLsizei w, GLsizei h, const GLv
 void oglx_Get_Screen_Info( oglx_caps_t * pcaps )
 {
 
-    memset( pcaps, 0, sizeof( *pcaps ) );
+    SDL_memset( pcaps, 0, sizeof( *pcaps ) );
 
     // get any pure OpenGL device caps
 
@@ -222,7 +222,7 @@ void oglx_Get_Screen_Info( oglx_caps_t * pcaps )
     pcaps->anisotropic_supported = GL_FALSE;
     pcaps->maxAnisotropy  = 1.0f;
     pcaps->log2Anisotropy = 0.0f;
-    if ( NULL != pcaps->gl_extensions && NULL != strstr(( char* )pcaps->gl_extensions, "GL_EXT_texture_filter_anisotropic" ) )
+    if ( NULL != pcaps->gl_extensions && NULL != SDL_strstr(( char* )pcaps->gl_extensions, "GL_EXT_texture_filter_anisotropic" ) )
     {
         pcaps->anisotropic_supported = GL_TRUE;
         GL_DEBUG( glGetFloatv )( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &( pcaps->maxAnisotropy ) );

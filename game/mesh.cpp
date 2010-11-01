@@ -224,7 +224,7 @@ bool_t ego_mpd::remove_ambient( ego_mpd   * pmesh )
 
     for ( cnt = 0; cnt < pmesh->info.tiles_count; cnt++ )
     {
-        min_vrt_a = MIN( min_vrt_a, pmesh->gmem.grid_list[cnt].a );
+        min_vrt_a = SDL_min( min_vrt_a, pmesh->gmem.grid_list[cnt].a );
     }
 
     for ( cnt = 0; cnt < pmesh->info.tiles_count; cnt++ )
@@ -393,11 +393,11 @@ bool_t ego_mpd::convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src )
         ego_tile_info * ptile_dst = ptmem_dst->tile_list + cnt;
         ego_grid_info * pgrid_dst = pgmem_dst->grid_list + cnt;
 
-        memset( ptile_dst, 0, sizeof( *ptile_dst ) );
+        SDL_memset( ptile_dst, 0, sizeof( *ptile_dst ) );
         ptile_dst->type         = ptile_src->type;
         ptile_dst->img          = ptile_src->img;
 
-        memset( pgrid_dst, 0, sizeof( *pgrid_dst ) );
+        SDL_memset( pgrid_dst, 0, sizeof( *pgrid_dst ) );
         pgrid_dst->fx    = ptile_src->fx;
         pgrid_dst->twist = ptile_src->twist;
 
@@ -566,7 +566,7 @@ bool_t ego_grid_mem::dealloc( ego_grid_mem * pmem )
     EGOBOO_DELETE_ARY( pmem->tilestart );
 
     // reset some values to safe values
-    memset( pmem, 0, sizeof( *pmem ) );
+    SDL_memset( pmem, 0, sizeof( *pmem ) );
 
     return btrue;
 }
@@ -825,23 +825,23 @@ bool_t ego_mpd::make_bbox( ego_mpd   * pmesh )
         poct->mins[ZZ] = poct->maxs[ZZ] = ptmem->plst[mesh_vrt][ZZ];
         for ( tile_vrt = 1; tile_vrt < vertices; tile_vrt++, mesh_vrt++ )
         {
-            poct->mins[XX] = MIN( poct->mins[XX], ptmem->plst[mesh_vrt][XX] );
-            poct->mins[YY] = MIN( poct->mins[YY], ptmem->plst[mesh_vrt][YY] );
-            poct->mins[ZZ] = MIN( poct->mins[ZZ], ptmem->plst[mesh_vrt][ZZ] );
+            poct->mins[XX] = SDL_min( poct->mins[XX], ptmem->plst[mesh_vrt][XX] );
+            poct->mins[YY] = SDL_min( poct->mins[YY], ptmem->plst[mesh_vrt][YY] );
+            poct->mins[ZZ] = SDL_min( poct->mins[ZZ], ptmem->plst[mesh_vrt][ZZ] );
 
-            poct->maxs[XX] = MAX( poct->maxs[XX], ptmem->plst[mesh_vrt][XX] );
-            poct->maxs[YY] = MAX( poct->maxs[YY], ptmem->plst[mesh_vrt][YY] );
-            poct->maxs[ZZ] = MAX( poct->maxs[ZZ], ptmem->plst[mesh_vrt][ZZ] );
+            poct->maxs[XX] = SDL_max( poct->maxs[XX], ptmem->plst[mesh_vrt][XX] );
+            poct->maxs[YY] = SDL_max( poct->maxs[YY], ptmem->plst[mesh_vrt][YY] );
+            poct->maxs[ZZ] = SDL_max( poct->maxs[ZZ], ptmem->plst[mesh_vrt][ZZ] );
         }
 
         // extend the mesh bounding box
-        ptmem->bbox.mins[XX] = MIN( ptmem->bbox.mins[XX], poct->mins[XX] );
-        ptmem->bbox.mins[YY] = MIN( ptmem->bbox.mins[YY], poct->mins[YY] );
-        ptmem->bbox.mins[ZZ] = MIN( ptmem->bbox.mins[ZZ], poct->mins[ZZ] );
+        ptmem->bbox.mins[XX] = SDL_min( ptmem->bbox.mins[XX], poct->mins[XX] );
+        ptmem->bbox.mins[YY] = SDL_min( ptmem->bbox.mins[YY], poct->mins[YY] );
+        ptmem->bbox.mins[ZZ] = SDL_min( ptmem->bbox.mins[ZZ], poct->mins[ZZ] );
 
-        ptmem->bbox.maxs[XX] = MAX( ptmem->bbox.maxs[XX], poct->maxs[XX] );
-        ptmem->bbox.maxs[YY] = MAX( ptmem->bbox.maxs[YY], poct->maxs[YY] );
-        ptmem->bbox.maxs[ZZ] = MAX( ptmem->bbox.maxs[ZZ], poct->maxs[ZZ] );
+        ptmem->bbox.maxs[XX] = SDL_max( ptmem->bbox.maxs[XX], poct->maxs[XX] );
+        ptmem->bbox.maxs[YY] = SDL_max( ptmem->bbox.maxs[YY], poct->maxs[YY] );
+        ptmem->bbox.maxs[ZZ] = SDL_max( ptmem->bbox.maxs[ZZ], poct->maxs[ZZ] );
     }
 
     return btrue;
@@ -1244,10 +1244,10 @@ float ego_mpd::light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_
             *plight = light_old * mesh_lighting_keep + light_new * ( 1.0f - mesh_lighting_keep );
 
             // measure the actual delta
-            delta = ABS( light_old - *plight );
+            delta = SDL_abs( light_old - *plight );
 
             // measure the relative change of the lighting
-            light_tmp = 0.5f * ( ABS( *plight ) + ABS( light_old ) );
+            light_tmp = 0.5f * ( SDL_abs( *plight ) + SDL_abs( light_old ) );
             if ( 0.0f == light_tmp )
             {
                 delta = 10.0f;
@@ -1259,13 +1259,13 @@ float ego_mpd::light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_
             }
 
             // add in the actual change this update
-            *pdelta2 += ABS( delta );
+            *pdelta2 += SDL_abs( delta );
 
             // update the estimate to match the actual change
             *pdelta1 = *pdelta2;
         }
 
-        max_delta = MAX( max_delta, *pdelta1 );
+        max_delta = SDL_max( max_delta, *pdelta1 );
     }
 
     return max_delta;
@@ -1326,11 +1326,11 @@ float grid_get_mix( float u0, float u, float v0, float v )
     float dv = v - v0;
 
     // du *= 1.0f;
-    if ( ABS( du ) > 1.0 ) return 0;
+    if ( SDL_abs( du ) > 1.0 ) return 0;
     wt_u = ( 1.0f - du ) * ( 1.0f + du );
 
     // dv *= 1.0f;
-    if ( ABS( dv ) > 1.0 ) return 0;
+    if ( SDL_abs( dv ) > 1.0 ) return 0;
     wt_v = ( 1.0f - dv ) * ( 1.0f + dv );
 
     return wt_u * wt_v;
@@ -1380,7 +1380,7 @@ bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIE
     else
     {
         // make sure it is positive
-        radius = ABS( radius );
+        radius = SDL_abs( radius );
 
         pdata->fx_min = pos[kX] - radius;
         pdata->fx_max = pos[kX] + radius;
@@ -1414,11 +1414,11 @@ bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIE
     if ( 0 != ( pass & bits ) ) return btrue;
 
     // limit the test values to be in-bounds
-    pdata->ix_min = MAX( pdata->ix_min, 0 );
-    pdata->ix_max = MIN( pdata->ix_max, pdata->pinfo->tiles_x - 1 );
+    pdata->ix_min = SDL_max( pdata->ix_min, 0 );
+    pdata->ix_max = SDL_min( pdata->ix_max, pdata->pinfo->tiles_x - 1 );
 
-    pdata->iy_min = MAX( pdata->iy_min, 0 );
-    pdata->iy_max = MIN( pdata->iy_max, pdata->pinfo->tiles_y - 1 );
+    pdata->iy_min = SDL_max( pdata->iy_min, 0 );
+    pdata->iy_max = SDL_min( pdata->iy_max, pdata->pinfo->tiles_y - 1 );
 
     for ( iy = pdata->iy_min; iy <= pdata->iy_max; iy++ )
     {
@@ -1476,7 +1476,7 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
     else
     {
         // make sure it is positive
-        radius = ABS( radius );
+        radius = SDL_abs( radius );
 
         fx_min = pos[kX] - radius;
         fx_max = pos[kX] + radius;
@@ -1562,13 +1562,13 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
 
                     // determine the area overlap of the tile with the
                     // object's bounding box
-                    ovl_x_min = MAX( fx_min, tx_min );
-                    ovl_x_max = MIN( fx_max, tx_max );
+                    ovl_x_min = SDL_max( fx_min, tx_min );
+                    ovl_x_max = SDL_min( fx_max, tx_max );
 
-                    ovl_y_min = MAX( fy_min, ty_min );
-                    ovl_y_max = MIN( fy_max, ty_max );
+                    ovl_y_min = SDL_max( fy_min, ty_min );
+                    ovl_y_max = SDL_min( fy_max, ty_max );
 
-                    min_area = MIN( tile_area, obj_area );
+                    min_area = SDL_min( tile_area, obj_area );
 
                     area_ratio = 0.0f;
                     if ( ovl_x_min <= ovl_x_max && ovl_y_min <= ovl_y_max )
@@ -1646,7 +1646,7 @@ fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float c
 
                 diff.x += tmp.y * weight;
                 diff.y += tmp.x * weight;
-                sum_diff += ABS( weight );
+                sum_diff += SDL_abs( weight );
             }
         }
     }
@@ -1661,7 +1661,7 @@ fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float c
     // limit the maximum displacement to less than one tile
     if ( fvec2_length_abs( diff.v ) > 0.0f )
     {
-        float fmax = MAX( ABS( diff.x ), ABS( diff.y ) );
+        float fmax = SDL_max( SDL_abs( diff.x ), SDL_abs( diff.y ) );
 
         diff.x /= fmax;
         diff.y /= fmax;
@@ -1830,13 +1830,13 @@ float ego_mpd::get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y )
 
     type   = pmesh->tmem.tile_list[itile].type;
     vstart = pmesh->tmem.tile_list[itile].vrtstart;
-    vcount = MIN( 4, pmesh->tmem.vert_count );
+    vcount = SDL_min( 4, pmesh->tmem.vert_count );
 
     ivrt = vstart;
     zmax = pmesh->tmem.plst[ivrt][ZZ];
     for ( ivrt++, cnt = 1; cnt < vcount; ivrt++, cnt++ )
     {
-        zmax = MAX( zmax, pmesh->tmem.plst[ivrt][ZZ] );
+        zmax = SDL_max( zmax, pmesh->tmem.plst[ivrt][ZZ] );
     }
 
     return zmax;
@@ -1861,7 +1861,7 @@ float ego_mpd::get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, floa
 
     type   = pmesh->tmem.tile_list[itile].type;
     vstart = pmesh->tmem.tile_list[itile].vrtstart;
-    vcount = MIN( 4, pmesh->tmem.vert_count );
+    vcount = SDL_min( 4, pmesh->tmem.vert_count );
 
     zmax = -1e6;
     for ( ivrt = vstart, cnt = 0; cnt < vcount; ivrt++, cnt++ )
@@ -1875,7 +1875,7 @@ float ego_mpd::get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, floa
 
         if ( fx >= xmin && fx <= xmax && fy >= ymin && fy <= ymax )
         {
-            zmax = MAX( zmax, ( *pvert )[ZZ] );
+            zmax = SDL_max( zmax, ( *pvert )[ZZ] );
         }
     }
 
@@ -1890,7 +1890,7 @@ ego_tile_info * ego_tile_info_init( ego_tile_info * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    SDL_memset( ptr, 0, sizeof( *ptr ) );
 
     // set the non-zero, non-NULL, non-bfalse values
     ptr->fanoff             = btrue;

@@ -79,13 +79,17 @@ static bool_t _sdl_initialized_base     = bfalse;
 
 static void * _top_con = NULL;
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 ego_config_data ego_cfg( &cfg );
 
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-ego_main_process     * EProc   = &_eproc;
+ego_main_process * EProc = &_eproc;
 
-ego_local_shared_stats local_stats;
+ego_clock fps_clk;
+
+ego_clock ups_clk;
+
+picked_module_info pickedmodule;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -232,12 +236,12 @@ egoboo_rv ego_main_process::do_running()
     mod_ctrl  = SDLKEYDOWN( SDLK_LCTRL ) || SDLKEYDOWN( SDLK_RCTRL );
     mod_shift = SDLKEYDOWN( SDLK_LSHIFT ) || SDLKEYDOWN( SDLK_RSHIFT );
 
-    if ( pickedmodule_ready && ( rv_success != MProc->running() ) )
+    if ( pickedmodule.ready && ( rv_success != MProc->running() ) )
     {
         // a new module has been picked
 
         // reset the flag
-        pickedmodule_ready = bfalse;
+        pickedmodule.ready = bfalse;
 
         // start the game process
         GProc->start();
@@ -258,15 +262,13 @@ egoboo_rv ego_main_process::do_running()
         }
         else if ( single_frame_keyready && SDLKEYDOWN( SDLK_F10 ) )
         {
-            if ( !single_frame_mode )
-            {
-                single_frame_mode = btrue;
-            }
+            // start the single-update-mode
+            single_update_mode    = btrue;
+            single_frame_keyready = bfalse;
 
             // request one update and one frame
             single_frame_requested  = btrue;
             single_update_requested = btrue;
-            single_frame_keyready   = bfalse;
         }
     }
 
@@ -372,7 +374,7 @@ egoboo_rv ego_main_process::do_running()
         escape_requested = bfalse;
 
         // use the escape key to get out of single frame mode
-        single_frame_mode = bfalse;
+        single_update_mode = bfalse;
 
         if ( rv_success == GProc->running() )
         {
@@ -617,7 +619,7 @@ void memory_cleanUp( void )
     object_systems_end();
 
     // clean up any remaining models that might have dynamic data
-    MadList_dtor();
+    MadStack_dtor();
 
     log_message( "Success!\n" );
     log_info( "Exiting Egoboo " VERSION " the good way...\n" );
@@ -817,7 +819,7 @@ Uint32 egoboo_get_ticks( void )
 {
     Uint32 ticks = 0;
 
-    if ( single_frame_mode )
+    if ( single_update_mode )
     {
         ticks = UPDATE_SKIP * update_wld;
     }
@@ -852,4 +854,32 @@ int ego_config_data::upload( ego_config_data * pcfg )
     config_data_t * psrc = ( NULL == pcfg ) ? NULL : pcfg->_src;
 
     return setup_upload( psrc );
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void ego_local_stats::init()
+{
+    // Special effects
+    seeinvis_level = 0;
+    seedark_level = 0;
+    grog_level = 0;
+    daze_level = 0;
+    seekurse_level = 0;
+    listen_level = 0;
+
+    // ESP ability
+    sense_enemy_team = TEAM_REF( TEAM_MAX );
+    sense_enemy_ID   = IDSZ_NONE;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+void picked_module_info::init( int idx )
+{
+    ready         = bfalse;
+    index         = idx;
+    path[0]       = CSTR_END;
+    name[0]       = CSTR_END;
+    write_path[0] = CSTR_END;
 }

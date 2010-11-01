@@ -317,7 +317,7 @@ static INLINE float fvec2_length_abs( const fvec2_base_t A )
 {
     if ( NULL == A ) return 0.0f;
 
-    return ABS( A[kX] ) + ABS( A[kY] );
+    return SDL_abs( A[kX] ) + SDL_abs( A[kY] );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -346,7 +346,7 @@ static INLINE fvec2_t fvec2_sub( const fvec2_base_t A, const fvec2_base_t B )
 //--------------------------------------------------------------------------------------------
 static INLINE float fvec2_dist_abs( const fvec2_base_t A, const fvec2_base_t B )
 {
-    return ABS( A[kX] - B[kX] ) + ABS( A[kY] - B[kY] );
+    return SDL_abs( A[kX] - B[kX] ) + SDL_abs( A[kY] - B[kY] );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -367,7 +367,7 @@ static INLINE fvec2_t fvec2_normalize( const fvec2_base_t vec )
 {
     fvec2_t tmp = ZERO_VECT2;
 
-    if ( ABS( vec[kX] ) + ABS( vec[kY] ) > 0 )
+    if ( SDL_abs( vec[kX] ) + SDL_abs( vec[kY] ) > 0 )
     {
         float len2 = vec[kX] * vec[kX] + vec[kY] * vec[kY];
         float inv_len = 1.0f / SQRT( len2 );
@@ -461,7 +461,7 @@ static INLINE float fvec3_length_abs( const fvec3_base_t A )
 {
     if ( NULL == A ) return 0.0f;
 
-    return ABS( A[kX] ) + ABS( A[kY] ) + ABS( A[kZ] );
+    return SDL_abs( A[kX] ) + SDL_abs( A[kY] ) + SDL_abs( A[kZ] );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -685,7 +685,7 @@ static INLINE float fvec3_decompose( const fvec3_base_t A, const fvec3_base_t NR
 //--------------------------------------------------------------------------------------------
 static INLINE float fvec3_dist_abs( const fvec3_base_t A, const fvec3_base_t B )
 {
-    return ABS( A[kX] - B[kX] ) + ABS( A[kY] - B[kY] ) + ABS( A[kZ] - B[kZ] );
+    return SDL_abs( A[kX] - B[kX] ) + SDL_abs( A[kY] - B[kY] ) + SDL_abs( A[kZ] - B[kZ] );
 }
 
 //--------------------------------------------------------------------------------------------

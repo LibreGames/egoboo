@@ -41,7 +41,7 @@ ego_hash_node * ego_hash_node::ctor_this( ego_hash_node * pn, void * data )
 {
     if ( NULL == pn ) return pn;
 
-    memset( pn, 0, sizeof( *pn ) );
+    SDL_memset( pn, 0, sizeof( *pn ) );
 
     pn->data = data;
 
@@ -178,7 +178,7 @@ ego_hash_list * ego_hash_list::create( int size )
     ego_hash_list * rv = EGOBOO_NEW( ego_hash_list );
     if ( NULL == rv ) return NULL;
 
-    memset( rv, 0, sizeof( *rv ) );
+    SDL_memset( rv, 0, sizeof( *rv ) );
 
     return ego_hash_list::ctor_this( rv, size );
 }
@@ -325,7 +325,7 @@ ego_hash_list_iterator * ego_hash_list_iterator::ctor_this( ego_hash_list_iterat
 {
     if ( NULL == it ) return NULL;
 
-    memset( it, 0, sizeof( *it ) );
+    SDL_memset( it, 0, sizeof( *it ) );
 
     return it;
 }

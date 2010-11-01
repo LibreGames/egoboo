@@ -53,7 +53,7 @@ private:
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }

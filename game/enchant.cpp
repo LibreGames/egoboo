@@ -261,7 +261,7 @@ bool_t remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz )
     ego_chr *pchr;
 
     // Stop invalid pointers
-    if ( !ACTIVE_CHR( ichr ) ) return bfalse;
+    if ( !PROCESSING_CHR( ichr ) ) return bfalse;
     pchr = ChrObjList.get_data_ptr( ichr );
 
     // clean up the enchant list before doing anything
@@ -578,17 +578,17 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
                         break;
 
                     case SETLIGHTBLEND:
-                        penc->setsave[value_idx] = ptarget->inst.light;
+                        penc->setsave[value_idx] = ptarget->gfx_inst.light;
                         ego_chr::set_light( ptarget, peve->setvalue[value_idx] );
                         break;
 
                     case SETALPHABLEND:
-                        penc->setsave[value_idx] = ptarget->inst.alpha;
+                        penc->setsave[value_idx] = ptarget->gfx_inst.alpha;
                         ego_chr::set_alpha( ptarget, peve->setvalue[value_idx] );
                         break;
 
                     case SETSHEEN:
-                        penc->setsave[value_idx] = ptarget->inst.sheen;
+                        penc->setsave[value_idx] = ptarget->gfx_inst.sheen;
                         ego_chr::set_sheen( ptarget, peve->setvalue[value_idx] );
                         break;
 
@@ -720,26 +720,26 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
             break;
 
         case ADDRED:
-            newvalue = ptarget->inst.redshift;
+            newvalue = ptarget->gfx_inst.redshift;
             valuetoadd = peve->addvalue[value_idx];
             getadd( 0, newvalue, 6, &valuetoadd );
-            ego_chr::set_redshift( ptarget, ptarget->inst.redshift + valuetoadd );
+            ego_chr::set_redshift( ptarget, ptarget->gfx_inst.redshift + valuetoadd );
             fvaluetoadd = valuetoadd;
             break;
 
         case ADDGRN:
-            newvalue = ptarget->inst.grnshift;
+            newvalue = ptarget->gfx_inst.grnshift;
             valuetoadd = peve->addvalue[value_idx];
             getadd( 0, newvalue, 6, &valuetoadd );
-            ego_chr::set_grnshift( ptarget, ptarget->inst.grnshift + valuetoadd );
+            ego_chr::set_grnshift( ptarget, ptarget->gfx_inst.grnshift + valuetoadd );
             fvaluetoadd = valuetoadd;
             break;
 
         case ADDBLU:
-            newvalue = ptarget->inst.blushift;
+            newvalue = ptarget->gfx_inst.blushift;
             valuetoadd = peve->addvalue[value_idx];
             getadd( 0, newvalue, 6, &valuetoadd );
-            ego_chr::set_blushift( ptarget, ptarget->inst.blushift + valuetoadd );
+            ego_chr::set_blushift( ptarget, ptarget->gfx_inst.blushift + valuetoadd );
             fvaluetoadd = valuetoadd;
             break;
 
@@ -1138,7 +1138,7 @@ bool_t ego_obj_enc::object_allocated( void )
 {
     if ( NULL == this || NULL == _container_ptr ) return bfalse;
 
-    return container_type::get_allocated( _container_ptr );
+    return FLAG_ALLOCATED_PCONT( container_type,  _container_ptr );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1150,7 +1150,7 @@ bool_t ego_obj_enc::object_update_list_id( void )
     container_type * pcont = get_container_ptr( this );
     if ( NULL == pcont ) return bfalse;
 
-    if ( !container_type::get_allocated( pcont ) ) return bfalse;
+    if ( !FLAG_ALLOCATED_PCONT( container_type,  pcont ) ) return bfalse;
 
     // deal with the return state
     if ( !get_valid( this ) )
@@ -1507,17 +1507,17 @@ void ego_enc::remove_add( const ENC_REF & ienc, int value_idx )
 
             case ADDRED:
                 valuetoadd = penc->addsave[value_idx];
-                ego_chr::set_redshift( ptarget, ptarget->inst.redshift - valuetoadd );
+                ego_chr::set_redshift( ptarget, ptarget->gfx_inst.redshift - valuetoadd );
                 break;
 
             case ADDGRN:
                 valuetoadd = penc->addsave[value_idx];
-                ego_chr::set_grnshift( ptarget, ptarget->inst.grnshift - valuetoadd );
+                ego_chr::set_grnshift( ptarget, ptarget->gfx_inst.grnshift - valuetoadd );
                 break;
 
             case ADDBLU:
                 valuetoadd = penc->addsave[value_idx];
-                ego_chr::set_blushift( ptarget, ptarget->inst.blushift - valuetoadd );
+                ego_chr::set_blushift( ptarget, ptarget->gfx_inst.blushift - valuetoadd );
                 break;
 
             case ADDDEFENSE:
@@ -1605,16 +1605,11 @@ bool_t release_one_eve( const EVE_REF & ieve )
 //--------------------------------------------------------------------------------------------
 void update_all_enchants()
 {
-    ENC_REF ienc;
-
-    // update all enchants
-    for ( ienc = 0; ienc < MAX_ENC; ienc++ )
+    ENC_BEGIN_LOOP_DEFINED( ienc, penc )
     {
-        ego_obj_enc * penc = EncObjList.get_allocated_data_ptr( ienc );
-        if ( NULL == penc ) continue;
-
-        ego_object_engine::run( penc );
+        ego_object_engine::run( ego_enc::get_obj_ptr( penc ) );
     }
+    ENC_END_LOOP();
 
     // fix the stat timer
     if ( clock_enc_stat >= ONESECOND )
@@ -1639,7 +1634,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     if ( !EncObjList.in_range_ref( ienc ) ) return ENC_REF( MAX_ENC );
 
     // clear the list
-    memset( ego_enc_used, 0, sizeof( ego_enc_used ) );
+    SDL_memset( ego_enc_used, 0, sizeof( ego_enc_used ) );
 
     // scan the list of enchants
     ego_enc_next            = ENC_REF( MAX_ENC );
@@ -1702,18 +1697,15 @@ void cleanup_all_enchants()
     /// @details ZZ@> this function scans all the enchants and removes any dead ones.
     ///               this happens only once a loop
 
-    for ( int cnt = 0; cnt < MAX_ENC; cnt++ )
+    ENC_BEGIN_LOOP_DEFINED( ienc, penc )
     {
         ENC_REF * ego_enc_lst;
         ego_eve   * peve;
         bool_t    do_remove;
         bool_t valid_owner, valid_target;
 
-        ego_obj_enc * pobj = EncObjList.get_allocated_data_ptr( ENC_REF( cnt ) );
+        ego_obj_enc * pobj = ego_enc::get_obj_ptr( penc );
         if ( NULL == pobj ) continue;
-
-        ego_enc * penc = ego_obj_enc::get_data_ptr( pobj );
-        if ( NULL == penc ) continue;
 
         // try to determine something about the parent
         ego_enc_lst = NULL;
@@ -1770,25 +1762,24 @@ void cleanup_all_enchants()
 
         if ( do_remove )
         {
-            remove_enchant( ENC_REF( cnt ), NULL );
+            remove_enchant( ienc, NULL );
         }
     }
+    ENC_END_LOOP();
 
 }
 
 //--------------------------------------------------------------------------------------------
 void increment_all_enchant_update_counters()
 {
-    ENC_REF cnt;
-
-    for ( cnt = 0; cnt < MAX_ENC; cnt++ )
+    ENC_BEGIN_LOOP_ACTIVE( cnt, penc )
     {
-        ego_obj * pbase = EncObjList.get_allocated_data_ptr( cnt );
-
-        if ( !ACTIVE_PBASE( pbase ) ) continue;
+        ego_obj * pbase = ego_enc::get_obj_ptr( penc );
+        if ( NULL == pbase ) continue;
 
         pbase->update_count++;
     }
+    ENC_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------

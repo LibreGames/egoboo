@@ -50,12 +50,12 @@ struct blah : public ego_obj
     static blah * run_deconstruct( blah * pprt, int max_iterations );
 };
 
-t_ego_obj_lst<blah, 100> test;
+t_obj_lst_deque<blah, 100> test;
 
 void flah()
 {
-    t_ego_obj_lst<blah, 100>::iterator it;
-    t_reference<blah> ref( 5 );
+    t_obj_lst_deque<blah, 100>::deque_iterator it;
+    t_obj_lst_deque<blah, 100>::lst_reference ref( 5 );
 
     test.init();
     test.deinit();
@@ -73,9 +73,9 @@ void flah()
 
     test.get_allocated_ptr( ref );
 
-    test.get_data( ref );
+    test.get_data_ref( ref );
     test.get_data_ptr( ref );
-    test.get_valid_pdata( ref );
+    test.get_allocated_data_ptr( ref );
 
     for ( it = test.used_begin(); !test.used_end( it ); test.used_increment( it ) );
 }
@@ -100,7 +100,7 @@ ego_obj_lst_state * ego_obj_lst_state::clear( ego_obj_lst_state * ptr, size_t id
 {
     if ( NULL == ptr ) return ptr;
 
-    memset( ptr, 0, sizeof( *ptr ) );
+    SDL_memset( ptr, 0, sizeof( *ptr ) );
 
     ptr->index = idx;
 

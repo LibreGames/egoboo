@@ -117,10 +117,10 @@ static size_t ConfigFile_ReadKeyName( ConfigFilePtr_t pConfigFile, ConfigFileVal
 //--------------------------------------------------------------------------------------------
 // pseudo functions for adding C++-like new and delete to C
 
-#define CONFIG_NEW( TYPE ) (TYPE *)calloc(1, sizeof(TYPE))
-#define CONFIG_NEW_ARY( TYPE, COUNT ) (TYPE *)calloc(COUNT, sizeof(TYPE))
-#define CONFIG_DELETE(PTR) if(NULL != PTR) { free(PTR); PTR = NULL; }
-#define CONFIG_DELETE_ARY(PTR) if(NULL != PTR) { free(PTR); PTR = NULL; }
+#define CONFIG_NEW( TYPE ) (TYPE *)SDL_calloc(1, sizeof(TYPE))
+#define CONFIG_NEW_ARY( TYPE, COUNT ) (TYPE *)SDL_calloc(COUNT, sizeof(TYPE))
+#define CONFIG_DELETE(PTR) if(NULL != PTR) { SDL_free(PTR); PTR = NULL; }
+#define CONFIG_DELETE_ARY(PTR) if(NULL != PTR) { SDL_free(PTR); PTR = NULL; }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -224,11 +224,11 @@ ConfigFileValuePtr_t ConfigFile_createValue( ConfigFilePtr_t f, ConfigFileSectio
 //--------------------------------------------------------------------------------------------
 char * ConfigFileString_create( size_t len )
 {
-    /// @details BB@> must use malloc/calloc instead of new, since we have to accommodate realoc()
+    /// @details BB@> must use SDL_malloc/SDL_calloc instead of new, since we have to accommodate realoc()
 
     char * ptmp;
 
-    ptmp = ( char * )malloc( len * sizeof( char ) );
+    ptmp = ( char * )SDL_malloc( len * sizeof( char ) );
     if ( NULL != ptmp ) *ptmp = '\0';
 
     return ptmp;
@@ -246,7 +246,7 @@ ConfigFile_retval ConfigFileString_destroy( char ** ptmp )
     retval = ConfigFile_fail;
     if ( NULL != *ptmp )
     {
-        free( *ptmp );
+        SDL_free( *ptmp );
         *ptmp = NULL;
         retval = ConfigFile_succeed;
     }
@@ -257,7 +257,7 @@ ConfigFile_retval ConfigFileString_destroy( char ** ptmp )
 //--------------------------------------------------------------------------------------------
 char * ConfigFileString_resize( char * str, size_t new_len )
 {
-    size_t old_len = ( NULL == str || '\0' == *str ) ? 0 : strlen( str );
+    size_t old_len = ( NULL == str || '\0' == *str ) ? 0 : SDL_strlen( str );
 
     // if value already exists, verify if allocated memory is enough
     // if not allocate more memory
@@ -267,10 +267,10 @@ char * ConfigFileString_resize( char * str, size_t new_len )
     }
     if ( new_len > old_len )
     {
-        str = ( char * )realloc( str, new_len );
+        str = ( char * )SDL_realloc( str, new_len );
 
         // only blank the new memory, not the whole string
-        memset( str + old_len, 0, ( new_len - old_len ) * sizeof( char ) );
+        SDL_memset( str + old_len, 0, ( new_len - old_len ) * sizeof( char ) );
     }
 
     return str;
@@ -372,7 +372,7 @@ size_t ConfigFile_ReadSectionName( ConfigFilePtr_t pConfigFile, ConfigFileSectio
     char lc;
 
     lc = fgetc( pConfigFile->f );
-    memset( pSection->SectionName, 0, sizeof( pSection->SectionName ) );
+    SDL_memset( pSection->SectionName, 0, sizeof( pSection->SectionName ) );
 
     while ( '}' != lc && 0 == feof( pConfigFile->f ) )
     {
@@ -405,7 +405,7 @@ size_t ConfigFile_ReadKeyName( ConfigFilePtr_t pConfigFile, ConfigFileValuePtr_t
     char lc;
 
     lc = fgetc( pConfigFile->f );
-    memset( pValue->KeyName, 0, sizeof( pValue->KeyName ) );
+    SDL_memset( pValue->KeyName, 0, sizeof( pValue->KeyName ) );
 
     while ( ']' != lc && 0 == feof( pConfigFile->f ) )
     {
@@ -440,7 +440,7 @@ ConfigFile_retval ConfigFile_ReadValue( ConfigFilePtr_t pConfigFile, ConfigFileV
     Sint32  lState = 0;
     Sint32 lLengthName = 0;
 
-    memset( lTempStr, 0, sizeof( lTempStr ) );
+    SDL_memset( lTempStr, 0, sizeof( lTempStr ) );
 
     while ( 0 == lEndScan )
     {
@@ -528,7 +528,7 @@ ConfigFile_retval ConfigFile_ReadCommentary( ConfigFilePtr_t pConfigFile, Config
     Sint32 lLengthName = 0;
     if ( NULL == pValue ) return ConfigFile_PassOverCommentary( pConfigFile );
 
-    memset( lTempStr, 0, sizeof( lTempStr ) );
+    SDL_memset( lTempStr, 0, sizeof( lTempStr ) );
 
     while ( 0 == lEndScan )
     {
@@ -884,7 +884,7 @@ ConfigFile_retval ConfigFile_GetValue_String( ConfigFilePtr_t pConfigFile, const
     {
         return ConfigFile_fail;
     }
-    if ( strlen( pConfigFile->CurrentValue->Value ) >= ( size_t ) pValueBufferLength )
+    if ( SDL_strlen( pConfigFile->CurrentValue->Value ) >= ( size_t ) pValueBufferLength )
     {
         strncpy( pValue, pConfigFile->CurrentValue->Value, pValueBufferLength - 1 );
         pValue[pValueBufferLength] = 0;
@@ -906,7 +906,7 @@ ConfigFile_retval ConfigFile_GetValue_Boolean( ConfigFilePtr_t pConfigFile, cons
     char lBoolStr[16] = { '\0' };
     Sint32 lRet;
 
-    memset( lBoolStr, 0, sizeof( lBoolStr ) );
+    SDL_memset( lBoolStr, 0, sizeof( lBoolStr ) );
 
     lRet = ConfigFile_GetValue_String( pConfigFile, pSection, pKey, lBoolStr, 16 );
     if ( lRet != 0 )
@@ -934,13 +934,13 @@ ConfigFile_retval ConfigFile_GetValue_Int( ConfigFilePtr_t pConfigFile, const ch
     char lIntStr[24] = { '\0' };
     Sint32 lRet;
 
-    memset( lIntStr, 0, sizeof( lIntStr ) );
+    SDL_memset( lIntStr, 0, sizeof( lIntStr ) );
 
     lRet = ConfigFile_GetValue_String( pConfigFile, pSection, pKey, lIntStr, 24 );
     if ( lRet != 0 )
     {
         // convert value
-        sscanf( lIntStr, "%d", pInt );
+        SDL_sscanf( lIntStr, "%d", pInt );
     }
 
     return lRet;
@@ -1009,7 +1009,7 @@ ConfigFile_retval ConfigFile_SetValue_String( ConfigFilePtr_t pConfigFile, const
         }
     }
 
-    lLengthNewValue = ( Sint32 ) strlen( pValue );
+    lLengthNewValue = ( Sint32 ) SDL_strlen( pValue );
     if ( NULL == pConfigFile->CurrentValue->Value )
     {
         // if the stirng value doesn't exist than allocate memory for it
@@ -1047,7 +1047,7 @@ ConfigFile_retval ConfigFile_SetValue_Int( ConfigFilePtr_t pConfigFile, const ch
 {
     static char lIntStr[16] = { '\0' };
 
-    snprintf( lIntStr, SDL_arraysize( lIntStr ), "%i", pInt );
+    SDL_snprintf( lIntStr, SDL_arraysize( lIntStr ), "%i", pInt );
     return ConfigFile_SetValue_String( pConfigFile, pSection, pKey, lIntStr );
 }
 
@@ -1058,7 +1058,7 @@ ConfigFile_retval ConfigFile_SetValue_Float( ConfigFilePtr_t pConfigFile, const 
 {
     static char lFloatStr[16] = { '\0' };
 
-    snprintf( lFloatStr, SDL_arraysize( lFloatStr ), "%f", pFloat );
+    SDL_snprintf( lFloatStr, SDL_arraysize( lFloatStr ), "%f", pFloat );
     return ConfigFile_SetValue_String( pConfigFile, pSection, pKey, lFloatStr );
 }
 

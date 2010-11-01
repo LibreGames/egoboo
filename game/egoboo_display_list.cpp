@@ -56,7 +56,7 @@ struct display_item
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         ptr->texture_name = INVALID_GL_ID;
         ptr->list_name    = INVALID_GL_ID;
@@ -151,7 +151,7 @@ display_item_t * display_item_free( display_item_t * item_ptr, GLboolean owner )
     if ( !owner )
     {
         // NO. re-initialize the structure's values
-        memset( item_ptr, 0, sizeof( *item_ptr ) );
+        SDL_memset( item_ptr, 0, sizeof( *item_ptr ) );
         item_ptr->texture_name = INVALID_GL_ID;
         item_ptr->list_name    = INVALID_GL_ID;
     }
@@ -438,7 +438,7 @@ struct display_list
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }

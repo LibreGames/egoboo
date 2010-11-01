@@ -144,7 +144,7 @@ private:
     {
         if ( NULL == pmem ) return pmem;
 
-        memset( pmem, 0, sizeof( *pmem ) );
+        SDL_memset( pmem, 0, sizeof( *pmem ) );
 
         return pmem;
     }
@@ -202,7 +202,7 @@ private:
 /// The generic parameters describing an ego_mpd
 struct ego_mpd_info
 {
-    size_t          vertcount;                         ///< For malloc
+    size_t          vertcount;                         ///< For SDL_malloc
 
     int             tiles_x;                          ///< Size in tiles
     int             tiles_y;
@@ -222,7 +222,7 @@ private:
     {
         if ( NULL == ptr ) return NULL;
 
-        memset( ptr, 0, sizeof( *ptr ) );
+        SDL_memset( ptr, 0, sizeof( *ptr ) );
 
         return ptr;
     }

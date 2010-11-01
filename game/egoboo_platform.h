@@ -156,7 +156,7 @@
 
 /// This isn't needed in MSVC 2008 and causes errors
 #    if _MSC_VER < 1500
-#        define vsnprintf _vsnprintf
+#        define SDL_vsnprintf _vsnprintf
 #    endif
 
 #endif

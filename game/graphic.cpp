@@ -294,7 +294,7 @@ int _debug_vprintf( const char *format, va_list args )
     {
         STRING szTmp;
 
-        retval = vsnprintf( szTmp, SDL_arraysize( szTmp ), format, args );
+        retval = SDL_vsnprintf( szTmp, SDL_arraysize( szTmp ), format, args );
         _debug_print( szTmp );
     }
 
@@ -309,7 +309,7 @@ int _va_draw_string( float x, float y, const char *format, va_list args )
     STRING szText;
     Uint8 cTmp;
 
-    if ( vsnprintf( szText, SDL_arraysize( szText ) - 1, format, args ) <= 0 )
+    if ( SDL_vsnprintf( szText, SDL_arraysize( szText ) - 1, format, args ) <= 0 )
     {
         return y;
     }
@@ -512,7 +512,7 @@ void gfx_init_SDL_graphics()
         const char * fname = "icon.bmp";
         STRING fileload;
 
-        snprintf( fileload, SDL_arraysize( fileload ), "mp_data/%s", fname );
+        SDL_snprintf( fileload, SDL_arraysize( fileload ), "mp_data/%s", fname );
 
         theSurface = IMG_Load( vfs_resolveReadFilename( fileload ) );
         if ( NULL == theSurface )
@@ -559,7 +559,7 @@ void gfx_init_SDL_graphics()
     ogl_vparam.perspective    = cfg.use_perspective ? GL_NICEST : GL_FASTEST;
     ogl_vparam.mip_hint       = cfg.mipmap_quality ? GL_NICEST : GL_FASTEST;
     ogl_vparam.shading        = GL_SMOOTH;
-    ogl_vparam.userAnisotropy = MAX( 0.0f, cfg.texturefilter_req - TX_ANISOTROPIC ) + 1.0f;
+    ogl_vparam.userAnisotropy = SDL_max( 0.0f, cfg.texturefilter_req - TX_ANISOTROPIC ) + 1.0f;
     ogl_vparam.userAnisotropy = CLIP( ogl_vparam.userAnisotropy, 1.0f, 16.0f );
 
     log_info( "Opening SDL Video Mode...\n" );
@@ -697,13 +697,13 @@ bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * pte
     if ( !ogl_caps.anisotropic_supported || ogl_caps.maxAnisotropy < 1.0f )
     {
         ptex->userAnisotropy = 1.0f;
-        ptex->texturefilter  = ( TX_FILTERS )MIN( pcfg->texturefilter_req, TX_TRILINEAR_2 );
+        ptex->texturefilter  = ( TX_FILTERS )SDL_min( pcfg->texturefilter_req, TX_TRILINEAR_2 );
     }
     else
     {
-        ptex->userAnisotropy = MAX( 0.0f, pcfg->texturefilter_req - TX_ANISOTROPIC ) + 1.0f;
+        ptex->userAnisotropy = SDL_max( 0.0f, pcfg->texturefilter_req - TX_ANISOTROPIC ) + 1.0f;
         ptex->userAnisotropy = CLIP( ptex->userAnisotropy, 1.0f, ogl_caps.maxAnisotropy );
-        ptex->texturefilter  = ( TX_FILTERS )MIN( pcfg->texturefilter_req, TX_TRILINEAR_2 );
+        ptex->texturefilter  = ( TX_FILTERS )SDL_min( pcfg->texturefilter_req, TX_TRILINEAR_2 );
     }
 
     return GL_TRUE;
@@ -890,7 +890,7 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
     Uint8 cnt;
     ego_frect_t txrect;
 
-    ticks = MIN( ticks, NUMTICK );
+    ticks = SDL_min( ticks, NUMTICK );
 
     gfx_enable_texturing();               // Enable texture mapping
     GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -1288,7 +1288,7 @@ int draw_character_xp_bar( const CHR_REF & character, float x, float y )
         Uint32 xplastlevel = pcap->experience_forlevel[curlevel-1];
         Uint32 xpneed      = pcap->experience_forlevel[curlevel];
 
-        float fraction = ( float )MAX( pchr->experience - xplastlevel, 0 ) / ( float )MAX( xpneed - xplastlevel, 1 );
+        float fraction = ( float )SDL_max( pchr->experience - xplastlevel, 0 ) / ( float )SDL_max( xpneed - xplastlevel, 1 );
         int   numticks = fraction * NUMTICK;
 
         y = draw_one_xp_bar( x, y, numticks );
@@ -1677,8 +1677,8 @@ int draw_debug( int y )
         y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtObjList.free_count() );
         y = _draw_string_raw( 0, y, "~~FREECHR %d", chr_count_free() );
         y = _draw_string_raw( 0, y, "~~MACHINE %d", NULL == pnet ? 0 : pnet->machine_type );
-        if ( PMod->exportvalid ) snprintf( text, SDL_arraysize( text ), "~~EXPORT: TRUE" );
-        else                    snprintf( text, SDL_arraysize( text ), "~~EXPORT: FALSE" );
+        if ( PMod->exportvalid ) SDL_snprintf( text, SDL_arraysize( text ), "~~EXPORT: TRUE" );
+        else                    SDL_snprintf( text, SDL_arraysize( text ), "~~EXPORT: FALSE" );
         y = _draw_string_raw( 0, y, text, PMod->exportvalid );
         y = _draw_string_raw( 0, y, "~~PASS %d/%d", ShopStack.count, PassageStack.count );
         y = _draw_string_raw( 0, y, "~~NETPLAYERS %d", NULL == pnet ? 0 : pnet->player_count );
@@ -1728,7 +1728,7 @@ int draw_game_status( int y )
     }
     else if ( net_stats.pla_count_total > 0 )
     {
-        if ( local_stats.allpladead || PMod->respawnanytime )
+        if (( 0 == net_stats.pla_count_total_alive ) || PMod->respawnanytime )
         {
             if ( PMod->respawnvalid && cfg.difficulty < GAME_HARD )
             {
@@ -1810,7 +1810,7 @@ void draw_text()
         {
             char buffer[KEYB_BUFFER_SIZE + 128] = EMPTY_CSTR;
 
-            snprintf( buffer, SDL_arraysize( buffer ), "%s > %s%s", cfg.network_messagename, keyb.buffer, HAS_NO_BITS( update_wld, 8 ) ? "x" : "+" );
+            SDL_snprintf( buffer, SDL_arraysize( buffer ), "%s > %s%s", cfg.network_messagename, keyb.buffer, HAS_NO_BITS( update_wld, 8 ) ? "x" : "+" );
 
             y = draw_wrap_string( buffer, 0, y, sdl_scr.x - wraptolerance );
         }
@@ -1994,11 +1994,11 @@ void render_shadow( const CHR_REF & character )
     if ( TILE_IS_FANOFF( PMesh->tmem.tile_list[pchr->onwhichgrid] ) ) return;
 
     // no shadow if completely transparent
-    alpha = ( 255 == pchr->inst.light ) ? pchr->inst.alpha * INV_FF : ( pchr->inst.alpha - pchr->inst.light ) * INV_FF;
+    alpha = ( 255 == pchr->gfx_inst.light ) ? pchr->gfx_inst.alpha * INV_FF : ( pchr->gfx_inst.alpha - pchr->gfx_inst.light ) * INV_FF;
 
     /// @test ZF@> The previous test didn't work, but this one does
     //if ( alpha * 255 < 1 ) return;
-    //if ( pchr->inst.light <= INVISIBLE || pchr->inst.alpha <= INVISIBLE ) return;
+    //if ( pchr->gfx_inst.light <= INVISIBLE || pchr->gfx_inst.alpha <= INVISIBLE ) return;
     if ( alpha <= 0.0f ) return;
 
     // much reduced shadow if on a reflective tile
@@ -2021,8 +2021,8 @@ void render_shadow( const CHR_REF & character )
         float factor_penumbra = size_factor * (( pchr->bump_1.size ) / size_penumbra );
         float factor_umbra    = size_factor * (( pchr->bump_1.size ) / size_umbra );
 
-        factor_umbra    = MAX( 1.0f, factor_umbra );
-        factor_penumbra = MAX( 1.0f, factor_penumbra );
+        factor_umbra    = SDL_max( 1.0f, factor_umbra );
+        factor_penumbra = SDL_max( 1.0f, factor_penumbra );
 
         alpha_umbra    *= 1.0f / factor_umbra / factor_umbra / size_factor;
         alpha_penumbra *= 1.0f / factor_penumbra / factor_penumbra / size_factor;
@@ -2031,8 +2031,8 @@ void render_shadow( const CHR_REF & character )
         alpha_penumbra = CLIP( alpha_penumbra, 0.0f, 1.0f );
     }
 
-    x = pchr->inst.matrix.CNV( 3, 0 );
-    y = pchr->inst.matrix.CNV( 3, 1 );
+    x = pchr->gfx_inst.matrix.CNV( 3, 0 );
+    y = pchr->gfx_inst.matrix.CNV( 3, 1 );
 
     // Choose texture.
     itex = TX_PARTICLE_LIGHT;
@@ -2123,11 +2123,11 @@ void render_bad_shadow( const CHR_REF & character )
     if ( TILE_IS_FANOFF( PMesh->tmem.tile_list[pchr->onwhichgrid] ) ) return;
 
     // no shadow if completely transparent or completely glowing
-    alpha = ( 255 == pchr->inst.light ) ? pchr->inst.alpha  * INV_FF : ( pchr->inst.alpha - pchr->inst.light ) * INV_FF;
+    alpha = ( 255 == pchr->gfx_inst.light ) ? pchr->gfx_inst.alpha  * INV_FF : ( pchr->gfx_inst.alpha - pchr->gfx_inst.light ) * INV_FF;
 
     /// @test ZF@> previous test didn't work, but this one does
     //if ( alpha * 255 < 1 ) return;
-    if ( pchr->inst.light <= INVISIBLE || pchr->inst.alpha <= INVISIBLE ) return;
+    if ( pchr->gfx_inst.light <= INVISIBLE || pchr->gfx_inst.alpha <= INVISIBLE ) return;
 
     // much reduced shadow if on a reflective tile
     if ( 0 != ego_mpd::test_fx( PMesh, pchr->onwhichgrid, MPDFX_DRAWREF ) )
@@ -2139,7 +2139,7 @@ void render_bad_shadow( const CHR_REF & character )
     // Original points
     level = pchr->enviro.grid_level;
     level += SHADOWRAISE;
-    height = pchr->inst.matrix.CNV( 3, 2 ) - level;
+    height = pchr->gfx_inst.matrix.CNV( 3, 2 ) - level;
     height_factor = 1.0f - height / ( pchr->shadow_size * 5.0f );
     if ( height_factor <= 0.0f ) return;
 
@@ -2147,8 +2147,8 @@ void render_bad_shadow( const CHR_REF & character )
     alpha *= height_factor * 0.5f + 0.25f;
     if ( alpha < INV_FF ) return;
 
-    x = pchr->inst.matrix.CNV( 3, 0 );
-    y = pchr->inst.matrix.CNV( 3, 1 );
+    x = pchr->gfx_inst.matrix.CNV( 3, 0 );
+    y = pchr->gfx_inst.matrix.CNV( 3, 1 );
 
     size = pchr->shadow_size * height_factor;
 
@@ -2411,7 +2411,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                             render_one_mad_ref( ichr );
                         }
                     }
-                    else if ( MAX_CHR == dolist[rcnt].ichr && INGAME_PRT_BASE( dolist[rcnt].iprt ) )
+                    else if ( MAX_CHR == dolist[rcnt].ichr && INGAME_PRT( dolist[rcnt].iprt ) )
                     {
                         Uint32 itile;
                         PRT_REF iprt;
@@ -2559,16 +2559,16 @@ void render_scene_solid()
         if ( MAX_PRT == dolist[cnt].iprt )
         {
             GLXvector4f tint;
-            ego_chr_instance * pinst = ego_chr::get_pinstance( dolist[cnt].ichr );
+            gfx_mad_instance * pinst = ego_chr::get_pinstance( dolist[cnt].ichr );
 
             if ( NULL != pinst && pinst->alpha == 255 && pinst->light == 255 )
             {
-                ego_chr_instance::get_tint( pinst, tint, CHR_SOLID );
+                gfx_mad_instance::get_tint( pinst, tint, CHR_SOLID );
 
                 render_one_mad( dolist[cnt].ichr, tint, CHR_SOLID );
             }
         }
-        else if ( MAX_CHR == dolist[cnt].ichr && INGAME_PRT_BASE( dolist[cnt].iprt ) )
+        else if ( MAX_CHR == dolist[cnt].ichr && INGAME_PRT( dolist[cnt].iprt ) )
         {
             GL_DEBUG( glDisable )( GL_CULL_FACE );
 
@@ -2605,7 +2605,7 @@ void render_scene_trans()
         {
             CHR_REF  ichr = dolist[rcnt].ichr;
             ego_chr * pchr = ChrObjList.get_data_ptr( ichr );
-            ego_chr_instance * pinst = &( pchr->inst );
+            gfx_mad_instance * pinst = &( pchr->gfx_inst );
 
             GL_DEBUG( glEnable )( GL_CULL_FACE );         // GL_ENABLE_BIT
             GL_DEBUG( glFrontFace )( GL_CW );             // GL_POLYGON_BIT
@@ -2615,7 +2615,7 @@ void render_scene_trans()
                 GL_DEBUG( glEnable )( GL_BLEND );                                     // GL_ENABLE_BIT
                 GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );      // GL_COLOR_BUFFER_BIT
 
-                ego_chr_instance::get_tint( pinst, tint, CHR_ALPHA );
+                gfx_mad_instance::get_tint( pinst, tint, CHR_ALPHA );
 
                 render_one_mad( ichr, tint, CHR_ALPHA );
             }
@@ -2625,7 +2625,7 @@ void render_scene_trans()
                 GL_DEBUG( glEnable )( GL_BLEND );           // GL_ENABLE_BIT
                 GL_DEBUG( glBlendFunc )( GL_ONE, GL_ONE );  // GL_COLOR_BUFFER_BIT
 
-                ego_chr_instance::get_tint( pinst, tint, CHR_LIGHT );
+                gfx_mad_instance::get_tint( pinst, tint, CHR_LIGHT );
 
                 render_one_mad( ichr, tint, CHR_LIGHT );
             }
@@ -2635,12 +2635,12 @@ void render_scene_trans()
                 GL_DEBUG( glEnable )( GL_BLEND );             // GL_ENABLE_BIT
                 GL_DEBUG( glBlendFunc )( GL_ONE, GL_ONE );    // GL_COLOR_BUFFER_BIT
 
-                ego_chr_instance::get_tint( pinst, tint, CHR_PHONG );
+                gfx_mad_instance::get_tint( pinst, tint, CHR_PHONG );
 
                 render_one_mad( ichr, tint, CHR_PHONG );
             }
         }
-        else if ( MAX_CHR == dolist[rcnt].ichr && INGAME_PRT_BASE( dolist[rcnt].iprt ) )
+        else if ( MAX_CHR == dolist[rcnt].ichr && INGAME_PRT( dolist[rcnt].iprt ) )
         {
             render_one_prt_trans( dolist[rcnt].iprt );
         }
@@ -2922,7 +2922,7 @@ void render_world_overlay( const TX_REF & texture )
         size = x + y + 1;
         sinsize = turntosin[( 3*2047 ) & TRIG_TABLE_MASK] * size;
         cossize = turntocos[( 3*2047 ) & TRIG_TABLE_MASK] * size;
-        loc_foregroundrepeat = water.foregroundrepeat * MIN( x / sdl_scr.x, y / sdl_scr.x );
+        loc_foregroundrepeat = water.foregroundrepeat * SDL_min( x / sdl_scr.x, y / sdl_scr.x );
 
         vtlist[0].pos[XX] = x + cossize;
         vtlist[0].pos[YY] = y - sinsize;
@@ -2969,7 +2969,7 @@ void render_world_overlay( const TX_REF & texture )
 
             oglx_texture_Bind( ptex );
 
-            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - ABS( alpha ) );
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - SDL_abs( alpha ) );
             GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
             for ( i = 0; i < 4; i++ )
             {
@@ -3043,7 +3043,7 @@ bool_t dump_screenshot()
     i = 0;
     while ( !savefound && ( i < 100 ) )
     {
-        snprintf( szFilename, SDL_arraysize( szFilename ), "ego%02d.bmp", i );
+        SDL_snprintf( szFilename, SDL_arraysize( szFilename ), "ego%02d.bmp", i );
 
         // lame way of checking if the file already exists...
         savefound = !vfs_exists( szFilename );
@@ -3087,7 +3087,7 @@ bool_t dump_screenshot()
         {
             SDL_Rect rect;
 
-            memcpy( &rect, &( sdl_scr.pscreen->clip_rect ), sizeof( SDL_Rect ) );
+            SDL_memcpy( &rect, &( sdl_scr.pscreen->clip_rect ), sizeof( SDL_Rect ) );
             if ( 0 == rect.w && 0 == rect.h )
             {
                 rect.w = sdl_scr.x;
@@ -3304,48 +3304,75 @@ void gfx_update_timers()
 {
     /// @details ZZ@> This function updates the graphics timers
 
-    const float fold = 0.77f;
+    // the definition of the low-pass filter coefficients
+    const float fold = 0.2f;
     const float fnew = 1.0f - fold;
 
-    static int gfx_clock_last = 0;
-    static int gfx_clock      = 0;
-    static int gfx_clock_stt  = -1;
+    // state variables
+    static bool_t mnu_on_old = bfalse, game_on_old = bfalse;
 
-    int dclock;
+    // variables to store the raw number of ticks
+    static Uint32 ego_ticks_old = 0;
+    static Uint32 ego_ticks_new = 0;
+    Sint32 ego_ticks_diff = 0;
 
-    if ( gfx_clock_stt < 0 )
+    // grab the current number of ticks
+    ego_ticks_old  = ego_ticks_new;
+    ego_ticks_new  = egoboo_get_ticks();
+    ego_ticks_diff = ego_ticks_new - ego_ticks_old;
+
+    // do nothing if the there is no process running which can generate frames
+    if (( !MProc->running() && !GProc->running() ) || !EProc->running() )
     {
-        gfx_clock_stt  = egoboo_get_ticks();
-        gfx_clock_last = gfx_clock_stt;
-        gfx_clock      = gfx_clock_stt;
-    }
-
-    gfx_clock_last = gfx_clock;
-    gfx_clock      = egoboo_get_ticks() - gfx_clock_stt;
-    dclock         = gfx_clock - gfx_clock_last;
-
-    // if there has been a gap in time (the module was loading, for instance)
-    // make sure we do not count that gap
-    if ( dclock > TICKS_PER_SEC / 5 )
-    {
+        mnu_on_old  = bfalse;
+        game_on_old = bfalse;
         return;
     }
-    fps_clock += dclock;
 
-    if ( fps_loops > 0 && fps_clock > 0 )
+    // detect a transition in the game or menu state
+    if (( MProc->running() != mnu_on_old ) || ( GProc->running() != game_on_old ) )
     {
-        stabilized_fps_sum    = fold * stabilized_fps_sum    + fnew * ( float ) fps_loops / (( float ) fps_clock / TICKS_PER_SEC );
+        fps_clk.initialized = bfalse;
+    }
+
+    // save the old process states
+    mnu_on_old  = MProc->running();
+    game_on_old = GProc->running();
+
+    // determine how many frames and game updates there have been since the last time
+    fps_clk.update_counters();
+
+    // determine the amount of ticks for various conditions
+    if ( !fps_clk.initialized )
+    {
+        fps_clk.init();
+        ego_ticks_diff = 0;
+    }
+    else if ( single_update_mode )
+    {
+        ego_ticks_diff = FRAME_SKIP * fps_clk.frame_dif;
+    }
+
+    // make sure that there is at least one tick since the last function call
+    if ( 0 == ego_ticks_diff ) return;
+
+    // increment the fps_clk's ticks
+    fps_clk.update_ticks( ego_ticks_diff );
+
+    if ( fps_clk.frame_cnt > 0 && fps_clk.tick_cnt > 0 )
+    {
+        stabilized_fps_sum    = fold * stabilized_fps_sum    + fnew * ( float ) fps_clk.frame_cnt / (( float ) fps_clk.tick_cnt / TICKS_PER_SEC );
         stabilized_fps_weight = fold * stabilized_fps_weight + fnew;
 
-        // blank these every so often so that the numbers don't overflow
-        if ( fps_loops > 10 * TARGET_FPS )
+        // blank these every so often (once every 10 seconds?) so that the numbers don't overflow
+        if ( fps_clk.frame_cnt > 10 * TARGET_FPS )
         {
-            fps_loops = 0;
-            fps_clock = 0;
+
+            fps_clk.blank();
         }
     };
 
-    if ( stabilized_fps_weight > 0.5f )
+    if ( stabilized_fps_weight > 0.0f )
     {
         stabilized_fps = stabilized_fps_sum / stabilized_fps_weight;
     }
@@ -3358,7 +3385,7 @@ ego_billboard_data * ego_billboard_data::clear( ego_billboard_data * pbb )
 {
     if ( NULL == pbb ) return pbb;
 
-    memset( pbb, 0, sizeof( *pbb ) );
+    SDL_memset( pbb, 0, sizeof( *pbb ) );
 
     return pbb;
 }
@@ -3414,7 +3441,7 @@ bool_t ego_billboard_data::update( ego_billboard_data * pbb )
     ego_chr::get_MatUp( pchr, &vup );
 
     height = pchr->bump.height;
-    offset = MIN( pchr->bump_1.height * 0.5f, pchr->bump_1.size );
+    offset = SDL_min( pchr->bump_1.height * 0.5f, pchr->bump_1.size );
 
     pos_new.x = pchr->pos.x + vup.x * ( height + offset );
     pos_new.y = pchr->pos.y + vup.y * ( height + offset );
@@ -3648,7 +3675,7 @@ bool_t BillboardList_free_one( size_t ibb )
     if ( BillboardList._free_count >= BILLBOARD_COUNT )
         return bfalse;
 
-    // do not put anything below TX_LAST back onto the SDL_free stack
+    // do not put anything below TX_LAST back onto the free stack
     BillboardList.free_ref[BillboardList._free_count] = ibb;
 
     BillboardList._free_count++;
@@ -4084,13 +4111,13 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr )
     Uint32 itile;
     ego_chr * pchr;
     ego_cap * pcap;
-    ego_chr_instance * pinst;
+    gfx_mad_instance * pinst;
 
     if ( dolist_count >= DOLIST_SIZE ) return bfalse;
 
     if ( !INGAME_CHR( ichr ) ) return bfalse;
     pchr  = ChrObjList.get_data_ptr( ichr );
-    pinst = &( pchr->inst );
+    pinst = &( pchr->gfx_inst );
 
     if ( pinst->indolist ) return btrue;
 
@@ -4168,7 +4195,7 @@ void dolist_make( ego_mpd   * pmesh )
     {
         if ( MAX_PRT == dolist[cnt].iprt && MAX_CHR != dolist[cnt].ichr )
         {
-            ChrObjList.get_data_ref( dolist[cnt].ichr ).inst.indolist = bfalse;
+            ChrObjList.get_data_ref( dolist[cnt].ichr ).gfx_inst.indolist = bfalse;
         }
         else if ( MAX_CHR == dolist[cnt].ichr && MAX_PRT != dolist[cnt].iprt )
         {
@@ -4232,16 +4259,16 @@ void dolist_sort( ego_camera * pcam, bool_t do_reflect )
 
             if ( do_reflect )
             {
-                pos_tmp = mat_getTranslate( ChrObjList.get_data_ref( ichr ).inst.ref.matrix );
+                pos_tmp = mat_getTranslate( ChrObjList.get_data_ref( ichr ).gfx_inst.ref.matrix );
             }
             else
             {
-                pos_tmp = mat_getTranslate( ChrObjList.get_data_ref( ichr ).inst.matrix );
+                pos_tmp = mat_getTranslate( ChrObjList.get_data_ref( ichr ).gfx_inst.matrix );
             }
 
             vtmp = fvec3_sub( pos_tmp.v, pcam->pos.v );
         }
-        else if ( MAX_CHR == dolist[cnt].ichr && INGAME_PRT_BASE( dolist[cnt].iprt ) )
+        else if ( MAX_CHR == dolist[cnt].ichr && INGAME_PRT( dolist[cnt].iprt ) )
         {
             PRT_REF iprt = dolist[cnt].iprt;
 
@@ -4271,7 +4298,7 @@ void dolist_sort( ego_camera * pcam, bool_t do_reflect )
     dolist_count = count;
 
     // use qsort to sort the list in-place
-    qsort( dolist, dolist_count, sizeof( ego_obj_registry_entity ), obj_registry_entity_cmp );
+    SDL_qsort( dolist, dolist_count, sizeof( ego_obj_registry_entity ), obj_registry_entity_cmp );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4958,7 +4985,7 @@ void flash_character( const CHR_REF & character, Uint8 value )
 {
     /// @details ZZ@> This function sets a character's lighting
 
-    ego_chr_instance * pinst = ego_chr::get_pinstance( character );
+    gfx_mad_instance * pinst = ego_chr::get_pinstance( character );
 
     if ( NULL != pinst )
     {
@@ -5148,8 +5175,6 @@ void _flip_pages()
     egoboo_console_draw_all();
 
     frame_all++;
-    frame_fps++;
-    fps_loops++;
 
     SDL_GL_SwapBuffers();
 
@@ -5286,8 +5311,8 @@ void light_fans( ego_renderlist * prlist )
                 };
 
                 // clear out the deltas
-                memset( ptile->d1_cache, 0, sizeof( ptile->d1_cache ) );
-                memset( ptile->d2_cache, 0, sizeof( ptile->d2_cache ) );
+                SDL_memset( ptile->d1_cache, 0, sizeof( ptile->d1_cache ) );
+                SDL_memset( ptile->d2_cache, 0, sizeof( ptile->d2_cache ) );
 
                 // everything has been handled. no need to do this in another loop.
                 ptile->needs_lighting_update = bfalse;
@@ -5344,8 +5369,8 @@ void light_fans( ego_renderlist * prlist )
             };
 
             // clear out the deltas
-            memset( ptile->d1_cache, 0, sizeof( ptile->d1_cache ) );
-            memset( ptile->d2_cache, 0, sizeof( ptile->d2_cache ) );
+            SDL_memset( ptile->d1_cache, 0, sizeof( ptile->d1_cache ) );
+            SDL_memset( ptile->d2_cache, 0, sizeof( ptile->d2_cache ) );
 
             // untag this tile
             ptile->needs_lighting_update = bfalse;
@@ -5378,7 +5403,7 @@ float get_ambient_level()
         min_amb = 52.0f * light_a * ( 1 + local_stats.seedark_level );
     }
 
-    return MAX( glob_amb, min_amb );
+    return SDL_max( glob_amb, min_amb );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5558,10 +5583,10 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
         x0 = ix * GRID_SIZE;
         y0 = iy * GRID_SIZE;
 
-        mesh_bound.xmin = MIN( mesh_bound.xmin, x0 - GRID_SIZE / 2 );
-        mesh_bound.xmax = MAX( mesh_bound.xmax, x0 + GRID_SIZE / 2 );
-        mesh_bound.ymin = MIN( mesh_bound.ymin, y0 - GRID_SIZE / 2 );
-        mesh_bound.ymax = MAX( mesh_bound.ymax, y0 + GRID_SIZE / 2 );
+        mesh_bound.xmin = SDL_min( mesh_bound.xmin, x0 - GRID_SIZE / 2 );
+        mesh_bound.xmax = SDL_max( mesh_bound.xmax, x0 + GRID_SIZE / 2 );
+        mesh_bound.ymin = SDL_min( mesh_bound.ymin, y0 - GRID_SIZE / 2 );
+        mesh_bound.ymax = SDL_max( mesh_bound.ymax, y0 + GRID_SIZE / 2 );
     }
 
     if ( mesh_bound.xmin >= mesh_bound.xmax || mesh_bound.ymin >= mesh_bound.ymax ) return;
@@ -5598,10 +5623,10 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
                 reg_count++;
 
                 // determine the maximum bounding box that encloses all valid lights
-                light_bound.xmin = MIN( light_bound.xmin, ftmp.xmin );
-                light_bound.xmax = MAX( light_bound.xmax, ftmp.xmax );
-                light_bound.ymin = MIN( light_bound.ymin, ftmp.ymin );
-                light_bound.ymax = MAX( light_bound.ymax, ftmp.ymax );
+                light_bound.xmin = SDL_min( light_bound.xmin, ftmp.xmin );
+                light_bound.xmax = SDL_max( light_bound.xmax, ftmp.xmax );
+                light_bound.ymin = SDL_min( light_bound.ymin, ftmp.ymin );
+                light_bound.ymax = SDL_max( light_bound.ymax, ftmp.ymax );
             }
         }
     }
