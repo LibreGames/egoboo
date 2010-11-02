@@ -25,6 +25,7 @@
 #include "egoboo_typedef.h"
 
 #include "extensions/ogl_debug.h"
+#include "extensions/ogl_texture.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -358,11 +359,11 @@ GLboolean display_item_draw_texture( display_item_t * item_ptr )
     // by binding INVALID_GL_ID as a texture
     if ( INVALID_GL_ID == item_ptr->texture_name ) return GL_FALSE;
 
-    // bind the texture
-    GL_DEBUG( glBindTexture )( GL_TEXTURE_2D, item_ptr->texture_name );
-
+    // bind the texture to a texture consistent with the current graphics configuration
+    oglx_bind_default( item_ptr->texture_name, GL_TEXTURE_2D, GL_CLAMP, GL_CLAMP );
+    
     // And draw the darn thing
-    GL_DEBUG( glBegin )( GL_QUADS );
+    GL_DEBUG_BEGIN( GL_QUADS );
     {
         GL_DEBUG( glTexCoord2f )( item_ptr->texCoords[0], item_ptr->texCoords[1] );
         GL_DEBUG( glVertex2f )( item_ptr->bound.x, item_ptr->bound.y );

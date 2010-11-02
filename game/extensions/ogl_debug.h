@@ -24,10 +24,11 @@
 /// @file extensions/ogl_debug.h
 /// @ingroup _ogl_extensions_
 /// @brief Definitions for the debugging extensions for OpenGL
-/// @details
+/// @details This debugging scheme seems to be reporting too many errors, especially ones related to texture mapped quads.
 
 #include "ogl_include.h"
 
+/// a compiler switch to turn the OpenGL debugging on and off
 #undef USE_GL_DEBUG
 
 #if defined(__cplusplus)
@@ -520,9 +521,11 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-    extern const char * next_cmd;
-    extern int          next_line;
-    extern const char * next_file;
+    extern int          oglx_begin_depth;
+    extern const char * oglx_next_cmd;
+    extern int          oglx_next_line;
+    extern const char * oglx_next_function;
+    extern const char * oglx_next_file;
 
     /// grab a text representation of an OpenGL error
     void handle_gl_error();
@@ -536,33 +539,37 @@ extern "C"
     /// Usage: GL_DEBUG( gl* )( param1, param2, ... )
     /// @warning Wrapping glEnd() in this manner will generate a multitude of odd errors.
 #    define GL_DEBUG(XX) \
-    (glFlush(),handle_gl_error(), \
-     next_cmd = #XX, \
-     next_line = __LINE__, \
-     next_file = __FILE__, \
+    (handle_gl_error(), \
+     oglx_next_cmd = #XX, \
+     oglx_next_line = __LINE__, \
+     oglx_next_function = __FUNCTION__, \
+     oglx_next_file = __FILE__, \
      XX)
+
+#    define GL_DEBUG_BEGIN \
+     handle_gl_error(); oglx_begin_depth++; \
+     glBegin
 
     /// a special wrapper function that is the replacement for "GL_DEBUG( glEnd )()"
     /// this avoids the errors mentioned with the definition of GL_DEBUG()
 #    define GL_DEBUG_END() \
-    handle_gl_error(); \
-    next_cmd = "glEnd"; \
-    next_line = __LINE__; \
-    next_file = __FILE__; \
-    glEnd(); glFlush(); \
-    glGetError();
+    glEnd(); --oglx_begin_depth; \
+    handle_gl_error();
 
 #    define GL_DEBUG_END_LIST() \
     handle_gl_error(); \
-    next_cmd = "glEndList"; \
-    next_line = __LINE__; \
-    next_file = __FILE__; \
-    glEndList(); glFlush();
+    oglx_next_cmd = "glEndList"; \
+    oglx_next_function = __FUNCTION__; \
+    oglx_next_line = __LINE__; \
+    oglx_next_file = __FILE__; \
+    glEndList(); handle_gl_error();
 
 #else
 
     /// this macro is set to do nothing if USE_GL_DEBUG is not defined
 #    define GL_DEBUG(XX)   XX
+
+#    define GL_DEBUG_BEGIN glBegin
 
     /// this macro is set to the normal glEnd() USE_GL_DEBUG is not defined
 #    define GL_DEBUG_END() glEnd();

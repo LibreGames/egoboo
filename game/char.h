@@ -407,8 +407,8 @@ struct ego_chr_data : public ego_chr_cap_data
     Uint8          damagetime;                    ///< Invincibility timer
 
     // graphics info
-    Uint8          sparkle;         ///< Sparkle the displayed icon? 0 for off
-    bool_t         StatusList_on;   ///< Display stats?
+    Uint8          sparkle;          ///< Sparkle the displayed icon? 0 for off
+    bool_t         draw_stats;       ///< Display stats?
     float          shadow_size;      ///< Current size of shadow
     float          shadow_size_save; ///< Without size modifiers
     BBOARD_REF     ibillboard;       ///< The attached billboard

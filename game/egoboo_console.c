@@ -306,39 +306,40 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
 
     pwin = &( pcon->rect );
 
-    GL_DEBUG( glDisable )( GL_TEXTURE_2D );
-
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
-    GL_DEBUG( glLineWidth )( 5 );
-    GL_DEBUG( glBegin )( GL_LINE_LOOP );
+    ATTRIB_PUSH( "console background", GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LINE_BIT );
     {
-        GL_DEBUG( glVertex2i )( pwin->x,           pwin->y );
-        GL_DEBUG( glVertex2i )( pwin->x + pwin->w, pwin->y );
-        GL_DEBUG( glVertex2i )( pwin->x + pwin->w, pwin->y + pwin->h );
-        GL_DEBUG( glVertex2i )( pwin->x,           pwin->y + pwin->h );
+        GL_DEBUG( glDisable )( GL_TEXTURE_2D );              // GL_ENABLE_BIT
+
+        GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );     // GL_CURRENT_BIT
+        GL_DEBUG( glLineWidth )( 5 );                        // GL_LINE_BIT
+        GL_DEBUG_BEGIN( GL_LINE_LOOP );
+        {
+            GL_DEBUG( glVertex2i )( pwin->x,           pwin->y );
+            GL_DEBUG( glVertex2i )( pwin->x + pwin->w, pwin->y );
+            GL_DEBUG( glVertex2i )( pwin->x + pwin->w, pwin->y + pwin->h );
+            GL_DEBUG( glVertex2i )( pwin->x,           pwin->y + pwin->h );
+        }
+        GL_DEBUG_END();
+
+        GL_DEBUG( glLineWidth )( 1.0f );
+        GL_DEBUG( glColor4f )( 0.0f, 0.0f, 0.0f, 1.0f );
+        GL_DEBUG_BEGIN( GL_POLYGON );
+        {
+            GL_DEBUG( glVertex2i )( pwin->x,           pwin->y );
+            GL_DEBUG( glVertex2i )( pwin->x + pwin->w, pwin->y );
+            GL_DEBUG( glVertex2i )( pwin->x + pwin->w, pwin->y + pwin->h );
+            GL_DEBUG( glVertex2i )( pwin->x,           pwin->y + pwin->h );
+        }
+        GL_DEBUG_END();
     }
-    GL_DEBUG_END();
-    GL_DEBUG( glLineWidth )( 1 );
+    ATTRIB_POP( "console background" );
 
-    GL_DEBUG( glColor4f )( 0, 0, 0, 1 );
-    GL_DEBUG( glBegin )( GL_POLYGON );
-    {
-        GL_DEBUG( glVertex2i )( pwin->x,           pwin->y );
-        GL_DEBUG( glVertex2i )( pwin->x + pwin->w, pwin->y );
-        GL_DEBUG( glVertex2i )( pwin->x + pwin->w, pwin->y + pwin->h );
-        GL_DEBUG( glVertex2i )( pwin->x,           pwin->y + pwin->h );
-    }
-    GL_DEBUG_END();
-
-    GL_DEBUG( glEnable )( GL_TEXTURE_2D );
-
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
     ATTRIB_PUSH( "egoboo_console_draw", GL_SCISSOR_BIT | GL_ENABLE_BIT );
     {
         int text_w, text_h, height;
 
         // make the texture a "null" texture
-        GL_DEBUG( glBindTexture )( GL_TEXTURE_2D, INVALID_GL_ID );
+        GL_DEBUG( glEnable )( GL_TEXTURE_2D );
 
         // clip the viewport
         GL_DEBUG( glEnable )( GL_SCISSOR_TEST );
@@ -399,9 +400,9 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
             }
         }
 
-    };
-
+    }
     ATTRIB_POP( "egoboo_console_draw" );
+
     return SDL_TRUE;
 }
 

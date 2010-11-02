@@ -93,31 +93,27 @@ extern "C"
     EXTERN float           stabilized_ups_weight EQ( 0 );
 
 // Timers
-    EXTERN signed          ticks_last  EQ( 0 );
-    EXTERN signed          ticks_now   EQ( 0 );
-    EXTERN signed          clock_stt   EQ( 0 );             ///< egoboo_get_ticks() at start
-    EXTERN signed          clock_all   EQ( 0 );             ///< The total number of ticks so far
-    EXTERN signed          clock_lst   EQ( 0 );             ///< The last total of ticks so far
+    EXTERN unsigned        ticks_last  EQ( 0 );
+    EXTERN unsigned        ticks_now   EQ( 0 );
+    EXTERN unsigned        clock_stt   EQ( 0 );             ///< egoboo_get_ticks() at start
+    EXTERN unsigned        clock_all   EQ( 0 );             ///< The total number of ticks so far
+    EXTERN unsigned        clock_lst   EQ( 0 );             ///< The last total of ticks so far
     EXTERN signed          clock_wld   EQ( 0 );             ///< The sync clock
-    EXTERN unsigned        update_wld  EQ( 0 );             ///< The number of times the game has been updated
-    EXTERN unsigned        frame_all   EQ( 0 );             ///< The total number of frames drawn so far
     EXTERN Uint32          clock_enc_stat  EQ( 0 );         ///< For character stat regeneration
     EXTERN Uint32          clock_chr_stat  EQ( 0 );         ///< For enchant stat regeneration
+
+// counters
+    EXTERN unsigned        update_wld  EQ( 0 );             ///< The number of times the game has been updated
+    EXTERN unsigned        frame_all   EQ( 0 );             ///< The total number of frames drawn so far
+    EXTERN unsigned        true_update EQ( 0 );             ///< estimation of the total number of updates that should have happened in the game so far
+    EXTERN unsigned        true_frame  EQ( 0 );             ///< estimation of the total number of frames that should have happened in the game so far
+    EXTERN signed          estimated_updates  EQ( 0 );      ///< the estimation of how many times the update loop will have to be run to "catch up"
+    EXTERN signed          update_lag  EQ( 0 );             ///< the number of updated that occured the last time the update counter tried to catch up to the true_update
+
+// timers
     EXTERN signed          timer_heartbeat EQ( 0 );         ///< For game updates that happen once a second (should time ot immediately)
     EXTERN Uint32          timer_pit   EQ( 0 );             ///< For pit kills
-    EXTERN bool_t          outofsync   EQ( 0 );
-    EXTERN unsigned        true_update EQ( 0 );
-    EXTERN unsigned        true_frame  EQ( 0 );
-    EXTERN signed          update_lag  EQ( 0 );
-    EXTERN bool_t          soundon  EQ( btrue );              ///< Is the sound alive?
-
-// Respawning
-    EXTERN int                      timer_revive EQ( 0 );
-
-// Imports
-    EXTERN int                     local_import_count;                     ///< Number of imports from this machine
-    EXTERN BIT_FIELD               local_import_control[16];             ///< Input bits for each imported player
-    EXTERN int                     local_import_slot[16];                ///< For local imports
+    EXTERN int             timer_revive EQ( 0 );            ///< Respawning
 
 // KEYBOARD
     EXTERN bool_t console_mode EQ( bfalse );                   ///< Input text from keyboard?

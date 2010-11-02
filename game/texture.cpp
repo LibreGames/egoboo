@@ -231,7 +231,7 @@ oglx_texture_t * TxTexture_get_ptr( const TX_REF & itex )
     if ( itex < 0 || itex >= TX_TEXTURE_COUNT ) return NULL;
     ptex = TxTexture.lst + itex;
 
-    if ( !oglx_texture_Valid( ptex ) )
+    if ( !oglx_texture_valid( ptex ) )
         return NULL;
 
     return ptex;

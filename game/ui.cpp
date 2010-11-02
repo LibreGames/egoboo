@@ -308,8 +308,8 @@ void ui_draw_cursor_ogl()
         ui_virtual_to_screen_abs( ui_context.cursor_X,          ui_context.cursor_Y + cursor_h, &x3, &y3 );
 
         // Draw the head
-        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );                   // GL_CURRENT_BIT
-        GL_DEBUG( glBegin )( GL_POLYGON );
+        GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );                   // GL_CURRENT_BIT
+        GL_DEBUG_BEGIN( GL_POLYGON );
         {
             GL_DEBUG( glVertex2f )( x1, y1 );
             GL_DEBUG( glVertex2f )( x2, y2 );
@@ -329,7 +329,7 @@ void ui_draw_cursor_ogl()
             ui_virtual_to_screen_abs( ui_context.cursor_X + dx1 - dx2, ui_context.cursor_Y + dy1 - dy2, &x3, &y3 );
         }
 
-        GL_DEBUG( glBegin )( GL_POLYGON );
+        GL_DEBUG_BEGIN( GL_POLYGON );
         {
             GL_DEBUG( glVertex2f )( x1, y1 );
             GL_DEBUG( glVertex2f )( x2, y2 );
@@ -547,12 +547,9 @@ void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight,
 {
     float x1, x2, y1, y2;
 
-    GLXvector4f color_1 = { 0.0f, 0.0f, 0.9f, 0.6f };
-    GLXvector4f color_2 = { 0.54f, 0.0f, 0.0f, 1.0f };
-    GLXvector4f color_3 = { 0.66f, 0.0f, 0.0f, 0.6f };
-
-    // Draw the button
-    GL_DEBUG( glDisable )( GL_TEXTURE_2D );
+    static const GLXvector4f color_1 = { 0.0f, 0.0f, 0.9f, 0.6f };
+    static const GLXvector4f color_2 = { 0.54f, 0.0f, 0.0f, 1.0f };
+    static const GLXvector4f color_3 = { 0.66f, 0.0f, 0.0f, 0.6f };
 
     if ( NULL == pcolor )
     {
@@ -570,21 +567,27 @@ void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight,
         }
     }
 
+
     // convert the virtual coordinates to screen coordinates
     ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
     ui_virtual_to_screen_abs( vx + vwidth, vy + vheight, &x2, &y2 );
 
-    GL_DEBUG( glColor4fv )( pcolor );
-    GL_DEBUG( glBegin )( GL_QUADS );
+    ATTRIB_PUSH( "ui_drawButton", GL_ENABLE_BIT | GL_CURRENT_BIT );
     {
-        GL_DEBUG( glVertex2f )( x1, y1 );
-        GL_DEBUG( glVertex2f )( x1, y2 );
-        GL_DEBUG( glVertex2f )( x2, y2 );
-        GL_DEBUG( glVertex2f )( x2, y1 );
-    }
-    GL_DEBUG_END();
+        // Draw the button
+        GL_DEBUG( glDisable )( GL_TEXTURE_2D ); // GL_ENABLE_BIT
+        GL_DEBUG( glColor4fv )( pcolor );       // GL_CURRENT_BIT
 
-    GL_DEBUG( glEnable )( GL_TEXTURE_2D );
+        GL_DEBUG_BEGIN( GL_QUADS );
+        {
+            GL_DEBUG( glVertex2f )( x1, y1 );
+            GL_DEBUG( glVertex2f )( x1, y2 );
+            GL_DEBUG( glVertex2f )( x2, y2 );
+            GL_DEBUG( glVertex2f )( x2, y1 );
+        }
+        GL_DEBUG_END();
+    }
+    ATTRIB_POP( "ui_drawButton" );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -624,7 +627,7 @@ void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vw
 
         GL_DEBUG( glColor4fv )( image_tint );
 
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( 0,  0 );  GL_DEBUG( glVertex2f )( x1, y1 );
             GL_DEBUG( glTexCoord2f )( tx,  0 );  GL_DEBUG( glVertex2f )( x2, y1 );
@@ -738,7 +741,7 @@ egoboo_rv ui_Widget::drawText( ui_Widget * pw )
         return rv_success;
     }
 
-    GL_DEBUG( glColor3f )( 1, 1, 1 );
+    GL_DEBUG( glColor3f )( 1.0f, 1.0f, 1.0f );
     display_list_draw( pw->tx_lst );
 
     return rv_success;
@@ -1034,7 +1037,7 @@ ui_buttonValues ui_doButton( ui_id_t id, display_item_t * tx_ptr, const char *te
         text_x = (( x2 - x1 ) - text_w ) / 2 + x1;
         text_y = (( y2 - y1 ) - text_h ) / 2 + y1;
 
-        GL_DEBUG( glColor3f )( 1, 1, 1 );
+        GL_DEBUG( glColor3f )( 1.0f, 1.0f, 1.0f );
 
         if ( NULL == tx_ptr )
         {
@@ -1123,7 +1126,7 @@ ui_buttonValues ui_doImageButtonWithText( ui_id_t id, display_item_t * tx_ptr, o
         text_x = ( img->imgW + 10 ) * ui_context.aw + x1;
         text_y = (( y2 - y1 ) - text_h ) / 2         + y1;
 
-        GL_DEBUG( glColor3f )( 1, 1, 1 );
+        GL_DEBUG( glColor3f )( 1.0f, 1.0f, 1.0f );
 
         tx_ptr = fnt_convertText( tx_ptr, ui_getFont(), text );
         if ( NULL != tx_ptr )
@@ -1698,7 +1701,7 @@ bool_t ui_Widget::set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * 
         pw->tx_lst = display_list_ctor( pw->tx_lst, MAX_WIDGET_TEXT );
 
         // actually convert the text_ptr ( use the text_ptr returned from fnt_vgetTextBoxSize() )
-        GL_DEBUG( glColor3f )( 1, 1, 1 );
+        GL_DEBUG( glColor3f )( 1.0f, 1.0f, 1.0f );
         lines = fnt_vconvertTextBox( pw->tx_lst, ttf_ptr, x1, y1, 20, format, args );
 
         // set the justification

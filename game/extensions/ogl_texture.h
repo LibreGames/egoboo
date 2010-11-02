@@ -109,9 +109,10 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
     void      oglx_grab_texture_state( GLenum target, GLint level, oglx_texture_t * texture );
-    GLboolean oglx_texture_Valid( oglx_texture_t *ptex );
+    GLboolean oglx_texture_valid( oglx_texture_t *ptex );
 
-    GLuint    oglx_bind_to_tex_params( GLuint binding, GLenum target, GLint wrap_s, GLint wrap_t );
+    GLuint    oglx_bind_default( GLuint binding, GLenum target, GLint wrap_s, GLint wrap_t );
+    void      oglx_default_filtering( GLenum target );
 
     void      ErrorImage_bind( GLenum target, GLuint id );
     GLuint    ErrorImage_get_binding();

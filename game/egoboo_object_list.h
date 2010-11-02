@@ -251,8 +251,14 @@ struct t_obj_lst_map
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
-    int   increment_loop_depth() { return ++loop_depth; }
-    int   decrement_loop_depth() { return --loop_depth; }
+    int   increment_loop_depth() 
+    { 
+        return ++loop_depth; 
+    }
+    int   decrement_loop_depth() 
+    { 
+        return --loop_depth; 
+    }
 
     //---- functions to access elements of the list
 
@@ -418,8 +424,14 @@ struct t_obj_lst_deque
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
-    int   increment_loop_depth() { return ++loop_depth; }
-    int   decrement_loop_depth() { return --loop_depth; }
+    int   increment_loop_depth() 
+    { 
+        return ++loop_depth; 
+    }
+    int   decrement_loop_depth() 
+    { 
+        return --loop_depth; 
+    }
 
     //---- functions to access elements of the list
 
@@ -582,10 +594,11 @@ private:
         for( LIST##_t::deque_iterator internal__##IT = LIST.used_begin(); !LIST.used_end(internal__##IT); LIST.used_increment(internal__##IT) ) \
         { \
             LIST##_t::lst_reference IT( *internal__##IT );\
-            LIST##_t::container_type * internal__##LIST##_container_ptr = LIST.get_ptr( IT );\
-            if( !LIST##_t::container_type::get_allocated(internal__##LIST##_container_ptr) ) continue; \
-            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( internal__##LIST##_container_ptr ); \
-            if( NULL == POBJ ) continue;
+            LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
+            if( !LIST##_t::container_type::get_allocated(POBJ##_cont) ) continue; \
+            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
+            if( NULL == POBJ ) continue;\
+            int internal__##LIST##_internal_depth = LIST.get_loop_depth();
 
 //--------------------------------------------------------------------------------------------
 /// A refinement OBJ_LIST_BEGIN_LOOP(), which picks out "defined"
@@ -602,6 +615,7 @@ private:
 //--------------------------------------------------------------------------------------------
 /// The termination of all OBJ_LIST_BEGIN_LOOP()
 #define OBJ_LIST_END_LOOP(LIST) \
+        if(internal__##LIST##_internal_depth != LIST.get_loop_depth()) EGOBOO_ASSERT(bfalse); \
     } \
     LIST.decrement_loop_depth(); \
     if(internal__##LIST##_start_depth != LIST.get_loop_depth()) EGOBOO_ASSERT(bfalse); \

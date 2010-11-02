@@ -710,7 +710,7 @@ int mnu_state_data::run( double deltaTime )
         case MM_Running:
 
             // hang around until someone clicks the slidy button
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
             if ( mnu_draw_background )
             {
@@ -973,7 +973,7 @@ int Main_data::run( double deltaTime )
                 format();
 
                 // Background
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 if ( mnu_draw_background )
                 {
@@ -1561,7 +1561,7 @@ bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, MOD_REF valid
     }
 
     // Draw a text box
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
     ui_Widget::set_text( lab_ptr, ui_just_topleft, menuFont, buffer );
 
     return btrue;
@@ -1647,7 +1647,7 @@ int ChooseModule_data::run( double deltaTime )
             // do this here because there is so much processing in the MM_Entering
             if ( mnu_draw_background )
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 // do formatting
                 format();
@@ -1665,7 +1665,7 @@ int ChooseModule_data::run( double deltaTime )
             // since we have to do a lot with loading/reloading the module data
             // we can't do any animation here
             {
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 // do formatting
                 format();
@@ -1756,7 +1756,7 @@ int ChooseModule_data::run( double deltaTime )
                 GLXvector4f beat_tint = { 0.5f, 0.25f, 0.25f, 1.0f };
                 GLXvector4f normal_tint = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 // do formatting
                 format();
@@ -2281,38 +2281,41 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         ptr->item_ptr = display_item_free( ptr->item_ptr, btrue );
     }
 
-    // try to isolate any OpenGL errors to functions after these statements
-    glFlush();
+    // try to set the default filtering here and see if that fixes the problem
+    oglx_default_filtering( GL_TEXTURE_2D );
 
     // start capturing the ogl commands
     if ( INVALID_GL_ID != list_index )
     {
         oglx_NewList_active = GL_TRUE;
-        GL_DEBUG( glNewList )( list_index, GL_COMPILE );
+        GL_DEBUG( glNewList )( list_index, GL_COMPILE_AND_EXECUTE );
     }
 
+    ATTRIB_PUSH( __FUNCTION__, GL_CURRENT_BIT );
     {
+        GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );  // GL_CURRENT_BIT
+
         // do the actual display
         x1 = x + 25;
         y1 = y + 25;
 
         Uint8 skin = ( Uint8 )SDL_max( 0, pcap->skin_override );
 
+        //---- the background
         ui_drawButton( UI_Nothing, x, y, width, height, NULL );
 
-        // Character level and class
-        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+        //---- Character level and class
 
         // fix class name capitalization
         strncpy( classname, pcap->classname, SDL_arraysize( classname ) );
         classname[0] = SDL_toupper( classname[0] );
         y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "A level %d %s", pcap->level_override + 1, classname );
 
-        // Armor
-        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+        //---- Armor
         y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 40, "Wearing %s %s", pcap->skinname[skin], HAS_SOME_BITS( pcap->skindressy, 1 << skin ) ? "(Light)" : "(Heavy)" );
 
-        // Life and mana (can be less than maximum if not in easy mode)
+
+        //---- Life and mana (can be less than maximum if not in easy mode)
         if ( cfg.difficulty >= GAME_NORMAL )
         {
             y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
@@ -2337,7 +2340,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         }
         y1 += 20;
 
-        // SWID
+        //---- SWID
         y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Stats" );
         y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from );
         y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from );
@@ -2346,6 +2349,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
 
         y1 += 20;
 
+        //---- Inventory
         if ( ptr->objects.count > 1 )
         {
             ego_ChoosePlayer_element * pdata;
@@ -2389,6 +2393,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
             }
         }
     }
+    ATTRIB_POP( __FUNCTION__ );
 
     if ( INVALID_GL_ID != list_index )
     {
@@ -2921,17 +2926,17 @@ int ChoosePlayer_data::run( double deltaTime )
                     }
 
                     // set up the slots and the import stuff for the selected players
-                    local_import_count = mnu_selectedPlayerCount;
-                    for ( i = 0; i < local_import_count; i++ )
+                    local_import.count = mnu_selectedPlayerCount;
+                    for ( i = 0; i < local_import.count; i++ )
                     {
                         selectedPlayer = mnu_selectedPlayer[i];
 
-                        local_import_control[i] = mnu_selectedInput[i];
-                        local_import_slot[i]    = i * MAXIMPORTPERPLAYER;
+                        local_import.control[i] = mnu_selectedInput[i];
+                        local_import.slot[i]    = i * MAXIMPORTPERPLAYER;
 
                         // Copy the character to the import directory
                         strncpy( srcDir, loadplayer[selectedPlayer].dir, SDL_arraysize( srcDir ) );
-                        SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] );
+                        SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import.slot[i] );
                         if ( !vfs_copyDirectory( srcDir, destDir ) )
                         {
                             log_warning( "game_initialize_imports() - Failed to copy a import character \"%s\" to \"%s\" (%s)\n", srcDir, destDir, vfs_getError() );
@@ -2945,7 +2950,7 @@ int ChoosePlayer_data::run( double deltaTime )
                             // make sure the source directory exists
                             if ( vfs_isDirectory( srcDir ) )
                             {
-                                SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[i] + j + 1 );
+                                SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import.slot[i] + j + 1 );
                                 vfs_copyDirectory( srcDir, destDir );
                             }
                         }
@@ -3088,7 +3093,7 @@ int Options_data::run( double deltaTime )
         case MM_Running:
             // Do normal run
             // Background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
             format();
 
@@ -3661,7 +3666,7 @@ int OptionsInput_data::run( double deltaTime )
             // Do normal run
             {
                 // Background
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 // make sure to update the input
                 input_read();
@@ -4338,7 +4343,7 @@ int OptionsGame_data::run( double deltaTime )
             // Do normal run
             {
                 // Background
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 format();
 
@@ -4818,7 +4823,7 @@ int OptionsAudio_data::run( double deltaTime )
             // Do normal run
             {
                 // Background
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 format();
 
@@ -5371,7 +5376,7 @@ bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val 
                 break;
 
             case TX_LINEAR:
-                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Linear" );
+                retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Linear 1" );
                 break;
 
             case TX_MIPMAP:
@@ -5762,7 +5767,7 @@ int OptionsVideo_data::run( double deltaTime )
         case MM_Running:
             // Do normal run
             // Background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
             format();
 
@@ -6182,7 +6187,7 @@ int ShowResults_data::run( double deltaTime )
                 int text_h, text_w;
                 ui_drawButton( UI_Nothing, 30, 30, GFX_WIDTH  - 60, GFX_HEIGHT - 65, NULL );
 
-                GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+                GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 // the module name
                 menuTextureList_ptr = ui_updateTextBox( menuTextureList_ptr, menuFont, 50, 80, 20, mnu_ModList[MOD_REF( selectedModule )].base.longname );
@@ -6392,7 +6397,7 @@ int GamePaused_data::run( double deltaTime )
         case MM_Running:
             // Do normal run
             // Background
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
             // Buttons
             for ( cnt = 0; cnt < 4; cnt ++ )
@@ -6552,7 +6557,7 @@ int ShowEndgame_data::run( double deltaTime )
             break;
 
         case MM_Running:
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
             // Buttons
             for ( cnt = 0; cnt < 1; cnt ++ )
@@ -6974,7 +6979,7 @@ void tipText_set_position( TTF_Font * font, const char * text, int spacing )
     tipText_top = GFX_HEIGHT - h - spacing;
 
     // actually set the texture
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
     tipText_tx = ui_updateTextBox_literal( tipText_tx, menuFont, tipText_left, tipText_top, 20, tipText );
 }
 

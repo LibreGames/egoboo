@@ -105,12 +105,8 @@ void oglx_report_caps()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void oglx_bind( GLenum target, GLuint id, GLint wrap_s, GLint wrap_t, GLint min_f, GLint mag_f, GLfloat anisotropy )
+void oglx_set_filtering( GLenum target, GLint min_f, GLint mag_f, GLfloat anisotropy )
 {
-    GL_DEBUG( glBindTexture )( target, id );
-    GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_WRAP_S, wrap_s );
-    GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_WRAP_T, wrap_t );
-
     GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_MAG_FILTER, mag_f );
     GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_MIN_FILTER, min_f );
 
@@ -118,6 +114,13 @@ void oglx_bind( GLenum target, GLuint id, GLint wrap_s, GLint wrap_t, GLint min_
     {
         GL_DEBUG( glTexParameterf )( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy );
     }
+}
+
+//--------------------------------------------------------------------------------------------
+void oglx_set_wrapping( GLenum target, GLint wrap_s, GLint wrap_t )
+{
+    GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_WRAP_S, wrap_s );
+    GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_WRAP_T, wrap_t );
 }
 
 //--------------------------------------------------------------------------------------------

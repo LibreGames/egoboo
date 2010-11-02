@@ -160,7 +160,7 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
         entry = 0;
         for ( cnt = 0; cnt < commands; cnt++ )
         {
-            GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+            GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
             {
                 for ( tnc = 0; tnc < tile_dict[type].command_entries[cnt]; tnc++, entry++ )
                 {
@@ -175,11 +175,11 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
 
 #if defined(DEBUG_MESH_NORMALS) && EGO_DEBUG
     GL_DEBUG( glDisable )( GL_TEXTURE_2D );
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
     entry = ptile->vrtstart;
     for ( cnt = 0; cnt < 4; cnt++, entry++ )
     {
-        GL_DEBUG( glBegin )( GL_LINES );
+        GL_DEBUG_BEGIN( GL_LINES );
         {
             GL_DEBUG( glVertex3fv )( ptmem->plst[entry] );
             GL_DEBUG( glVertex3f )(
@@ -263,7 +263,7 @@ void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
     oglx_texture_Bind( NULL );
 
     // Render each command
-    GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+    GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
     {
         for ( vertex = 0; vertex < 4; vertex++ )
         {
@@ -451,7 +451,7 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
 
         // Render each command
         GL_DEBUG( glShadeModel )( GL_SMOOTH );                // GL_LIGHTING_BIT
-        GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+        GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
         {
             for ( cnt = 0; cnt < 4; cnt++ )
             {

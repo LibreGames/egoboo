@@ -117,7 +117,7 @@ extern "C"
         // {GAME}
         int                     message_count_req;
         Uint16                  message_duration;               ///< Time to keep the message alive
-        bool_t                  StatusList_on;                    ///< Draw the status bars?
+        bool_t                  draw_stat_bars;                    ///< Draw the status bars?
         Uint8                   autoturncamera;             ///< Type of camera control...
         bool_t                  fps_allowed;             ///< FPS displayed?
         FEEDBACK_TYPE           feedback;                ///< Feedback type

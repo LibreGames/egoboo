@@ -411,30 +411,13 @@ void free_one_character_in_game( const CHR_REF & character )
     if ( NULL == pcap ) return;
 
     // Remove from stat list
-    if ( pchr->StatusList_on )
+    if ( pchr->draw_stats )
     {
         bool_t stat_found;
 
-        pchr->StatusList_on = bfalse;
+        pchr->draw_stats = bfalse;
 
-        stat_found = bfalse;
-        for ( cnt = 0; cnt < StatusList_count; cnt++ )
-        {
-            if ( StatusList[cnt] == character )
-            {
-                stat_found = btrue;
-                break;
-            }
-        }
-
-        if ( stat_found )
-        {
-            for ( cnt++; cnt < StatusList_count; cnt++ )
-            {
-                SWAP( CHR_REF, StatusList[cnt-1], StatusList[cnt] );
-            }
-            StatusList_count--;
-        }
+        StatList.remove( character );
     }
 
     // Make sure everyone knows it died
@@ -723,7 +706,7 @@ void free_all_chraracters()
     net_stats.pla_count_local = 0;
 
     // free_all_stats
-    StatusList_count = 0;
+    StatList.count = 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2595,13 +2578,13 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         }
 
         // don't show feedback from random objects hitting each other
-        if ( !ChrObjList.get_data_ref( attacker ).StatusList_on )
+        if ( !ChrObjList.get_data_ref( attacker ).draw_stats )
         {
             do_feedback = bfalse;
         }
 
         // don't show damage to players since they get feedback from the status bars
-        if ( loc_pchr->StatusList_on || VALID_PLA( loc_pchr->is_which_player ) )
+        if ( loc_pchr->draw_stats || VALID_PLA( loc_pchr->is_which_player ) )
         {
             do_feedback = bfalse;
         }
@@ -3797,7 +3780,7 @@ ego_chr_data::ego_chr_data() :
 
         // graphics info
         sparkle( NOSPARKLE ),
-        StatusList_on( bfalse ),
+        draw_stats( bfalse ),
         shadow_size( 30 ),
         shadow_size_save( 30 ),
 
@@ -4024,7 +4007,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
         {
             // This character can't use this iweapon
             pweapon->reloadtime = 50;
-            if ( pchr->StatusList_on || cfg.dev_mode )
+            if ( pchr->draw_stats || cfg.dev_mode )
             {
                 // Tell the player that they can't use this iweapon
                 debug_printf( "%s can't use this item...", ego_chr::get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_CAPITAL ) );

@@ -1833,19 +1833,19 @@ void issue_order( const CHR_REF & character, Uint32 value )
 {
     /// @details ZZ@> This function issues an value for help to all teammates
 
-    CHR_REF cnt;
     int     counter;
 
-    for ( cnt = 0, counter = 0; cnt < MAX_CHR; cnt++ )
+    counter = 0;
+    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
-        if ( !INGAME_CHR( cnt ) ) continue;
-
         if ( ego_chr::get_iteam( cnt ) == ego_chr::get_iteam( character ) )
         {
             ego_ai_state::add_order( ego_chr::get_pai( cnt ), value, counter );
             counter++;
         }
     }
+    CHR_END_LOOP();
+
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1856,11 +1856,10 @@ void issue_special_order( Uint32 value, IDSZ idsz )
     CHR_REF cnt;
     int     counter;
 
-    for ( cnt = 0, counter = 0; cnt < MAX_CHR; cnt++ )
+    counter = 0;
+    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
         ego_cap * pcap;
-
-        if ( !INGAME_CHR( cnt ) ) continue;
 
         pcap = ego_chr::get_pcap( cnt );
         if ( NULL == pcap ) continue;
@@ -1871,6 +1870,8 @@ void issue_special_order( Uint32 value, IDSZ idsz )
             counter++;
         }
     }
+    CHR_END_LOOP();
+
 }
 
 //--------------------------------------------------------------------------------------------

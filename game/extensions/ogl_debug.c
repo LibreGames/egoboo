@@ -40,26 +40,74 @@ FILE * _ogl_debug_stderr = NULL;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-const char * next_cmd = NULL;
-int          next_line = -1;
-const char * next_file = "BAD FILE";
+const char * oglx_next_cmd = "UNKNOWN COMMAND";
+int          oglx_next_line = -1;
+const char * oglx_next_function = "UNKNOWN FUNCTION";
+const char * oglx_next_file = "BAD FILE";
+int          oglx_begin_depth = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void handle_gl_error()
 {
-    GLint err = glGetError();
-    if ( GL_NO_ERROR != err )
+    GLint           err         = GL_NO_ERROR;
+    const char    * err_val_str = NULL;
+    const GLubyte * err_str     = NULL;
+
+    // cannot sensably call glGetError() within a glBegin() ... glEnd() pair!!!
+    if( 1 == oglx_begin_depth ) 
     {
-        const GLubyte * err_str = gluErrorString( err );
-        fprintf( LOCAL_STDERR, "%s (\"%s\" - %d)- %s\n", next_cmd, next_file, next_line, err_str );
+        // inside a single glBegin() ... glEnd() pair
+
+        /* do nothing */
     }
+    if( oglx_begin_depth > 1 || oglx_begin_depth < 0 )
+    {
+        // handle this error
+        fprintf( LOCAL_STDERR, "Invalid number of glBegin() ... glEnd() pairs - %d\n", oglx_begin_depth );
+    }
+    else
+    {
+        // the depth must be zero. the ogl error checking will work properly
+
+        // grab all the possible error bits that have accumulated
+        err = glGetError();
+        while( GL_NO_ERROR != err )
+        {
+            switch( err )
+            {
+                case GL_INVALID_ENUM:      err_val_str = "GL_INVALID_ENUM"; break;
+                case GL_INVALID_VALUE:     err_val_str = "GL_INVALID_VALUE"; break;
+                case GL_INVALID_OPERATION: err_val_str = "GL_INVALID_OPERATION"; break;
+                case GL_STACK_OVERFLOW:    err_val_str = "GL_STACK_OVERFLOW"; break;
+                case GL_STACK_UNDERFLOW:   err_val_str = "GL_STACK_UNDERFLOW"; break;
+                case GL_OUT_OF_MEMORY:     err_val_str = "GL_OUT_OF_MEMORY"; break;
+                case GL_TABLE_TOO_LARGE:   err_val_str = "GL_TABLE_TOO_LARGE"; break;
+                default:                   err_val_str = "UNKNOWN"; break;
+            };
+
+            err_str = gluErrorString( err );
+            fprintf( LOCAL_STDERR, 
+                "GL error enum %s (glu error string \"%s\")\n"
+                "\tcommand - %s\n"
+                "\tfunction - %s\n"
+                "\tfile - %s\n"
+                "\tline - %d\n", 
+                err_val_str, err_str, oglx_next_cmd, oglx_next_function, oglx_next_file, oglx_next_line );
+
+            err = glGetError();
+        }
+    }
+
+    oglx_next_cmd = "UNKNOWN COMMAND";
+    oglx_next_line = -1;
+    oglx_next_file = "UNKNOWN FILE";
 }
 
 //--------------------------------------------------------------------------------------------
 void print_gl_command()
 {
-    fprintf( LOCAL_STDERR, "%s (\"%s\" - %d)\n", next_cmd, next_file, next_line );
+    fprintf( LOCAL_STDERR, "%s (\"%s\" - %d)\n", oglx_next_cmd, oglx_next_file, oglx_next_line );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -392,11 +440,11 @@ void gl_grab_state( ogl_state_t * ps )
     GL_DEBUG( glGetFloatv )( GL_ZOOM_X, ps->zoom_x );
     GL_DEBUG( glGetFloatv )( GL_ZOOM_Y, ps->zoom_y );
 
-    ps->error_value = GL_DEBUG( glGetError )();
-    if ( GL_NO_ERROR != ps->error_value )
-    {
-        ps->error_value_sz = gluErrorString( ps->error_value );
-    }
+    //ps->error_value = GL_DEBUG( glGetError )();
+    //if ( GL_NO_ERROR != ps->error_value )
+    //{
+    //    ps->error_value_sz = gluErrorString( ps->error_value );
+    //}
 }
 
 //--------------------------------------------------------------------------------------------

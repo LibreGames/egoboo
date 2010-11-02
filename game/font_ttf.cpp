@@ -203,6 +203,7 @@ display_item_t * fnt_print_raw( display_item_t * pitem, TTF_Font * ttf_ptr, SDL_
 
     // create the text on the temporary surface
     tmp_surface = TTF_RenderText_Blended( ttf_ptr, szText, color );
+
     if ( NULL == tmp_surface )
     {
         print_error = btrue;

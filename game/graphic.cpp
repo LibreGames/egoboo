@@ -139,7 +139,7 @@ PROFILE_DECLARE( dolist_make );
 PROFILE_DECLARE( do_grid_lighting );
 PROFILE_DECLARE( light_fans );
 PROFILE_DECLARE( update_all_chr_instance );
-PROFILE_DECLARE( prt_instance_update_all );
+PROFILE_DECLARE( update_all_prt_instance );
 
 PROFILE_DECLARE( render_scene_mesh_dolist_sort );
 PROFILE_DECLARE( render_scene_mesh_ndr );
@@ -391,7 +391,7 @@ void gfx_system_begin()
     PROFILE_INIT( do_grid_lighting );
     PROFILE_INIT( light_fans );
     PROFILE_INIT( update_all_chr_instance );
-    PROFILE_INIT( prt_instance_update_all );
+    PROFILE_INIT( update_all_prt_instance );
 
     PROFILE_INIT( render_scene_mesh_dolist_sort );
     PROFILE_INIT( render_scene_mesh_ndr );
@@ -421,7 +421,7 @@ void gfx_system_end()
     PROFILE_FREE( do_grid_lighting );
     PROFILE_FREE( light_fans );
     PROFILE_FREE( update_all_chr_instance );
-    PROFILE_FREE( prt_instance_update_all );
+    PROFILE_FREE( update_all_prt_instance );
 
     PROFILE_FREE( render_scene_mesh_dolist_sort );
     PROFILE_FREE( render_scene_mesh_ndr );
@@ -764,7 +764,7 @@ void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map
         width  *= sizeFactor;
         height *= sizeFactor;
 
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( mx - ( width / 2 ), my + ( height / 2 ) );
             GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( mx + ( width / 2 ), my + ( height / 2 ) );
@@ -784,13 +784,6 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
     float   width, height;
     ego_frect_t txrect;
 
-    oglx_texture_t * ptex = TxTexture_get_ptr( icontype );
-
-    gfx_enable_texturing();    // Enable texture mapping
-    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
-
-    oglx_texture_Bind( ptex );
-
     txrect.xmin = ( float )iconrect.xmin / ( float )ICON_SIZE;
     txrect.xmax = ( float )iconrect.xmax / ( float )ICON_SIZE;
     txrect.ymin = ( float )iconrect.ymin / ( float )ICON_SIZE;
@@ -799,14 +792,33 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
     width  = iconrect.xmax - iconrect.xmin;
     height = iconrect.ymax - iconrect.ymin;
 
-    GL_DEBUG( glBegin )( GL_QUADS );
+    oglx_texture_t * ptex = TxTexture_get_ptr( icontype );
+
+    ATTRIB_PUSH( __FUNCTION__, GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_CURRENT_BIT );
     {
-        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( x + width, y );
-        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )( x,         y );
+        GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f ); // GL_CURRENT_BIT
+
+        // an alternate way of setting a "null" texture... see if this reduces ogl errors
+        if( NULL == ptex || INVALID_GL_ID == ptex->base.binding )
+        {
+            GL_DEBUG( glDisable )( GL_TEXTURE_2D );        // GL_ENABLE_BIT
+        }
+        else
+        {
+            GL_DEBUG( glEnable )( GL_TEXTURE_2D );         // GL_ENABLE_BIT
+            oglx_texture_Bind( ptex );                     // GL_TEXTURE_BIT
+        }
+
+        GL_DEBUG_BEGIN( GL_QUADS );
+        {
+            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( x + width, y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )( x,         y );
+        }
+        GL_DEBUG_END();
     }
-    GL_DEBUG_END();
+    ATTRIB_POP(__FUNCTION__)
 
     if ( sparkle != NOSPARKLE )
     {
@@ -853,7 +865,7 @@ void draw_one_font( int fonttype, float x, float y )
     fy1 = fontrect[fonttype].y * dy + border;
     fy2 = ( fontrect[fonttype].y + fontrect[fonttype].h ) * dy - border;
 
-    GL_DEBUG( glBegin )( GL_QUADS );
+    GL_DEBUG_BEGIN( GL_QUADS );
     {
         GL_DEBUG( glTexCoord2f )( fx1, fy2 );   GL_DEBUG( glVertex2f )( x, y );
         GL_DEBUG( glTexCoord2f )( fx2, fy2 );   GL_DEBUG( glVertex2f )( x2, y );
@@ -871,7 +883,7 @@ void draw_map_texture( float x, float y )
 
     oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_MAP ) ) );
 
-    GL_DEBUG( glBegin )( GL_QUADS );
+    GL_DEBUG_BEGIN( GL_QUADS );
     {
         GL_DEBUG( glTexCoord2f )( 0.0f, 1.0f ); GL_DEBUG( glVertex2f )( x,           y + MAPSIZE );
         GL_DEBUG( glTexCoord2f )( 1.0f, 1.0f ); GL_DEBUG( glVertex2f )( x + MAPSIZE, y + MAPSIZE );
@@ -906,7 +918,7 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
     width  = 16;
     height = XPTICK;
 
-    GL_DEBUG( glBegin )( GL_QUADS );
+    GL_DEBUG_BEGIN( GL_QUADS );
     {
         GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
         GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
@@ -928,7 +940,7 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
     for ( cnt = 0; cnt < ticks; cnt++ )
     {
         oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_XP_BAR ) ) );
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x + width, y + height );
@@ -950,7 +962,7 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
     for ( /*nothing*/; cnt < NUMTICK; cnt++ )
     {
         oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_XP_BAR ) ) );
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x + width, y + height );
@@ -975,7 +987,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     if ( maxticks <= 0 || ticks < 0 || bartype > NUMBAR ) return y;
 
     gfx_enable_texturing();               // Enable texture mapping
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 
     // Draw the tab
     oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
@@ -988,7 +1000,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     width  = tabrect[bartype].xmax - tabrect[bartype].xmin;
     height = tabrect[bartype].ymax - tabrect[bartype].ymin;
 
-    GL_DEBUG( glBegin )( GL_QUADS );
+    GL_DEBUG_BEGIN( GL_QUADS );
     {
         GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
         GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
@@ -1019,7 +1031,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width  = barrect[bartype].xmax - barrect[bartype].xmin;
         height = barrect[bartype].ymax - barrect[bartype].ymin;
 
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
@@ -1047,7 +1059,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width = barrect[bartype].xmax - barrect[bartype].xmin;
         height = barrect[bartype].ymax - barrect[bartype].ymin;
 
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
@@ -1071,7 +1083,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width  = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( ticks << 3 ) + x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )(( ticks << 3 ) + x + width, y + height );
@@ -1097,7 +1109,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width  = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax );   GL_DEBUG( glVertex2f )( x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax );   GL_DEBUG( glVertex2f )( x + width, y + height );
@@ -1124,7 +1136,7 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
             GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
@@ -1389,11 +1401,11 @@ int draw_all_status( int y )
 {
     int cnt;
 
-    if ( StatusList_on )
+    if ( StatList.on )
     {
-        for ( cnt = 0; cnt < StatusList_count && y < sdl_scr.y; cnt++ )
+        for ( cnt = 0; cnt < StatList.count && y < sdl_scr.y; cnt++ )
         {
-            y = draw_status( StatusList[cnt], sdl_scr.x - BARX, y );
+            y = draw_status( StatList[cnt], sdl_scr.x - BARX, y );
         }
     }
 
@@ -1422,17 +1434,11 @@ void draw_map()
         // If one of the players can sense enemies via EMP, draw them as blips on the map
         if ( TEAM_MAX != local_stats.sense_enemy_ID )
         {
-            CHR_REF ichr;
-
-            for ( ichr = 0; ichr < MAX_CHR && blip_count < MAXBLIP; ichr++ )
+            CHR_BEGIN_LOOP_ACTIVE( ichr, pchr ) 
             {
-                ego_chr * pchr;
                 ego_cap * pcap;
 
-                pchr = ChrObjList.get_data_ptr( ichr );
-                if ( NULL == pchr ) continue;
-
-                if ( !INGAME_PCHR( pchr ) ) continue;
+                if(  blip_count >= MAXBLIP ) break;
 
                 pcap = ego_chr::get_pcap( ichr );
                 if ( NULL == pcap ) continue;
@@ -1457,7 +1463,9 @@ void draw_map()
                     }
                 }
             }
+            CHR_END_LOOP();
         }
+        
 
         // draw all the blips
         for ( cnt = 0; cnt < blip_count; cnt++ )
@@ -1500,7 +1508,7 @@ int draw_fps( int y )
 {
     // FPS text
 
-    if ( outofsync )
+    if ( net_stats.out_of_sync )
     {
         y = _draw_string_raw( 0, y, "OUT OF SYNC" );
     }
@@ -1549,7 +1557,7 @@ int draw_fps( int y )
         y = _draw_string_raw( 0, y, "init:renderlist_make %2.4f, init:dolist_make %2.4f", time_render_scene_init_renderlist_make, time_render_scene_init_dolist_make );
         y = _draw_string_raw( 0, y, "init:do_grid_lighting %2.4f, init:light_fans %2.4f", time_render_scene_init_do_grid_dynalight, time_render_scene_init_light_fans );
         y = _draw_string_raw( 0, y, "init:update_all_chr_instance %2.4f", time_render_scene_init_update_all_chr_instance );
-        y = _draw_string_raw( 0, y, "init:prt_instance_update_all %2.4f", time_render_scene_init_update_all_prt_instance );
+        y = _draw_string_raw( 0, y, "init:update_all_prt_instance %2.4f", time_render_scene_init_update_all_prt_instance );
 #        endif
 
 #    endif
@@ -1954,7 +1962,7 @@ void render_shadow_sprite( float intensity, ego_GLvertex v[] )
 
     GL_DEBUG( glColor4f )( intensity, intensity, intensity, 1.0f );
 
-    GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+    GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
     {
         for ( i = 0; i < 4; i++ )
         {
@@ -2195,12 +2203,8 @@ void update_all_chr_instance()
 {
     CHR_REF cnt;
 
-    for ( cnt = 0; cnt < MAX_CHR; cnt++ )
+    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
     {
-        ego_chr * pchr = ChrObjList.get_data_ptr( cnt );
-        if ( NULL == pchr ) continue;
-
-        if ( !INGAME_PCHR( pchr ) ) continue;
 
         if ( !ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
 
@@ -2210,6 +2214,7 @@ void update_all_chr_instance()
             ego_chr::update_collision_size( pchr, btrue );
         }
     }
+    CHR_END_LOOP()
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2290,19 +2295,19 @@ void render_scene_init( ego_mpd   * pmesh, ego_camera * pcam )
     }
     PROFILE_END( update_all_chr_instance );
 
-    PROFILE_BEGIN( prt_instance_update_all );
+    PROFILE_BEGIN( update_all_prt_instance );
     {
         // make sure the particles are ready to draw
-        prt_instance_update_all( pcam );
+        update_all_prt_instance( pcam );
     }
-    PROFILE_END( prt_instance_update_all );
+    PROFILE_END( update_all_prt_instance );
 
     time_render_scene_init_renderlist_make         = PROFILE_QUERY( renderlist_make ) * TARGET_FPS;
     time_render_scene_init_dolist_make             = PROFILE_QUERY( dolist_make ) * TARGET_FPS;
     time_render_scene_init_do_grid_dynalight       = PROFILE_QUERY( do_grid_lighting ) * TARGET_FPS;
     time_render_scene_init_light_fans              = PROFILE_QUERY( light_fans ) * TARGET_FPS;
     time_render_scene_init_update_all_chr_instance = PROFILE_QUERY( update_all_chr_instance ) * TARGET_FPS;
-    time_render_scene_init_update_all_prt_instance = PROFILE_QUERY( prt_instance_update_all ) * TARGET_FPS;
+    time_render_scene_init_update_all_prt_instance = PROFILE_QUERY( update_all_prt_instance ) * TARGET_FPS;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2407,7 +2412,7 @@ void render_scene_mesh( ego_renderlist * prlist )
 
                         if ( ego_mpd::grid_is_valid( pmesh, itile ) && ( 0 != ego_mpd::test_fx( pmesh, itile, MPDFX_DRAWREF ) ) )
                         {
-                            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );          // GL_CURRENT_BIT
+                            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );          // GL_CURRENT_BIT
                             render_one_mad_ref( ichr );
                         }
                     }
@@ -2843,7 +2848,7 @@ void render_world_background( const TX_REF & texture )
                     GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );  // GL_COLOR_BUFFER_BIT
                 }
 
-                GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+                GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
                 {
                     for ( i = 0; i < 4; i++ )
                     {
@@ -2865,7 +2870,7 @@ void render_world_background( const TX_REF & texture )
 
                 GL_DEBUG( glColor4f )( light, light, light, 1.0f );         // GL_CURRENT_BIT
 
-                GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+                GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
                 {
                     for ( i = 0; i < 4; i++ )
                     {
@@ -2970,7 +2975,7 @@ void render_world_overlay( const TX_REF & texture )
             oglx_texture_Bind( ptex );
 
             GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f - SDL_abs( alpha ) );
-            GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+            GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
             for ( i = 0; i < 4; i++ )
             {
                 GL_DEBUG( glTexCoord2fv )( vtlist[i].tex );
@@ -3098,7 +3103,7 @@ bool_t dump_screenshot()
                 int y;
                 Uint8 * pixels;
 
-                GL_DEBUG( glGetError )();
+                //GL_DEBUG( glGetError )();
 
                 //// use the allocated screen to tell OpenGL about the row length (including the lapse) in pixels
                 //// stolen from SDL ;)
@@ -3121,7 +3126,7 @@ bool_t dump_screenshot()
                     GL_DEBUG( glReadPixels )( rect.x, ( rect.h - y ) - 1, rect.w, 1, GL_RGB, GL_UNSIGNED_BYTE, pixels );
                     pixels += temp->pitch;
                 }
-                EGOBOO_ASSERT( GL_NO_ERROR == GL_DEBUG( glGetError )() );
+                //EGOBOO_ASSERT( GL_NO_ERROR == GL_DEBUG( glGetError )() );
             }
 
             SDL_UnlockSurface( temp );
@@ -3775,7 +3780,7 @@ bool_t render_billboard( ego_camera * pcam, ego_billboard_data * pbb, float scal
         }
 
         // Go on and draw it
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             GL_DEBUG( glColor4fv )( pbb->tint );
 
@@ -3882,7 +3887,7 @@ void draw_all_lines( ego_camera * pcam )
                 }
 
                 GL_DEBUG( glColor4fv )( line_list[cnt].color.v );       // GL_CURRENT_BIT
-                GL_DEBUG( glBegin )( GL_LINES );
+                GL_DEBUG_BEGIN( GL_LINES );
                 {
                     GL_DEBUG( glVertex3fv )( line_list[cnt].src.v );
                     GL_DEBUG( glVertex3fv )( line_list[cnt].dst.v );
@@ -3911,7 +3916,7 @@ bool_t render_aabb( ego_aabb * pbbox )
 
         // !!!! there must be an optimized way of doing this !!!!
 
-        GL_DEBUG( glBegin )( GL_QUADS );
+        GL_DEBUG_BEGIN( GL_QUADS );
         {
             // Front Face
             GL_DEBUG( glVertex3f )(( *pmin )[XX], ( *pmin )[YY], ( *pmax )[ZZ] );
@@ -3993,7 +3998,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             p2_x = 0.5f * ( bb->maxs[OCT_XY] - bb->mins[OCT_YX] );
             p2_y = 0.5f * ( bb->maxs[OCT_XY] + bb->mins[OCT_YX] );
 
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( p1_x, p1_y, bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( p2_x, p2_y, bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( p2_x, p2_y, bb->maxs[OCT_Z] );
@@ -4005,7 +4010,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             p2_x = 0.5f * ( bb->mins[OCT_XY] - bb->mins[OCT_YX] );
             p2_y = 0.5f * ( bb->mins[OCT_XY] + bb->mins[OCT_YX] );
 
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( p1_x, p1_y, bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( p2_x, p2_y, bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( p2_x, p2_y, bb->maxs[OCT_Z] );
@@ -4017,7 +4022,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             p2_x = 0.5f * ( bb->mins[OCT_XY] - bb->maxs[OCT_YX] );
             p2_y = 0.5f * ( bb->mins[OCT_XY] + bb->maxs[OCT_YX] );
 
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( p1_x, p1_y, bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( p2_x, p2_y, bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( p2_x, p2_y, bb->maxs[OCT_Z] );
@@ -4029,7 +4034,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             p2_x = 0.5f * ( bb->maxs[OCT_XY] - bb->maxs[OCT_YX] );
             p2_y = 0.5f * ( bb->maxs[OCT_XY] + bb->maxs[OCT_YX] );
 
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( p1_x, p1_y, bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( p2_x, p2_y, bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( p2_x, p2_y, bb->maxs[OCT_Z] );
@@ -4046,7 +4051,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             GL_DEBUG( glColor4f )( 1.0f, 0.5f, 1.0f, 0.1f );
 
             // XZ FACE, min Y
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->mins[OCT_Y], bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->mins[OCT_Y], bb->maxs[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->maxs[OCT_X], bb->mins[OCT_Y], bb->maxs[OCT_Z] );
@@ -4054,7 +4059,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             GL_DEBUG_END();
 
             // YZ FACE, min X
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->mins[OCT_Y], bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->mins[OCT_Y], bb->maxs[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->maxs[OCT_Y], bb->maxs[OCT_Z] );
@@ -4062,7 +4067,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             GL_DEBUG_END();
 
             // XZ FACE, max Y
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->maxs[OCT_Y], bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->maxs[OCT_Y], bb->maxs[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->maxs[OCT_X], bb->maxs[OCT_Y], bb->maxs[OCT_Z] );
@@ -4070,7 +4075,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             GL_DEBUG_END();
 
             // YZ FACE, max X
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( bb->maxs[OCT_X], bb->mins[OCT_Y], bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->maxs[OCT_X], bb->mins[OCT_Y], bb->maxs[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->maxs[OCT_X], bb->maxs[OCT_Y], bb->maxs[OCT_Z] );
@@ -4078,7 +4083,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             GL_DEBUG_END();
 
             // XY FACE, min Z
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->mins[OCT_Y], bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->maxs[OCT_Y], bb->mins[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->maxs[OCT_X], bb->maxs[OCT_Y], bb->mins[OCT_Z] );
@@ -4086,7 +4091,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
             GL_DEBUG_END();
 
             // XY FACE, max Z
-            GL_DEBUG( glBegin )( GL_QUADS );
+            GL_DEBUG_BEGIN( GL_QUADS );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->mins[OCT_Y], bb->maxs[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->mins[OCT_X], bb->maxs[OCT_Y], bb->maxs[OCT_Z] );
             GL_DEBUG( glVertex3f )( bb->maxs[OCT_X], bb->maxs[OCT_Y], bb->maxs[OCT_Z] );
@@ -4205,19 +4210,15 @@ void dolist_make( ego_mpd   * pmesh )
     dolist_count = 0;
 
     // Now fill it up again
-    for ( ichr = 0; ichr < MAX_CHR; ichr++ )
+    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
     {
-        ego_chr * pchr = ChrObjList.get_data_ptr( ichr );
-        if ( NULL == pchr ) continue;
-
-        if ( !INGAME_PCHR( pchr ) ) continue;
-
         if ( !pchr->pack.is_packed )
         {
             // Add the character
             dolist_add_chr( pmesh, ichr );
         }
     }
+    CHR_END_LOOP();
 
     PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
     {
@@ -4669,7 +4670,7 @@ void init_all_graphics()
     PROFILE_RESET( do_grid_lighting );
     PROFILE_RESET( light_fans );
     PROFILE_RESET( update_all_chr_instance );
-    PROFILE_RESET( prt_instance_update_all );
+    PROFILE_RESET( update_all_prt_instance );
 
     PROFILE_RESET( render_scene_mesh_dolist_sort );
     PROFILE_RESET( render_scene_mesh_ndr );
@@ -4796,7 +4797,7 @@ void load_basic_textures( /* const char *modname */ )
     PROFILE_RESET( do_grid_lighting );
     PROFILE_RESET( light_fans );
     PROFILE_RESET( update_all_chr_instance );
-    PROFILE_RESET( prt_instance_update_all );
+    PROFILE_RESET( update_all_prt_instance );
 
     PROFILE_RESET( render_scene_mesh_dolist_sort );
     PROFILE_RESET( render_scene_mesh_ndr );
@@ -5011,7 +5012,7 @@ void gfx_begin_text()
     GL_DEBUG( glDisable )( GL_DEPTH_TEST );
     GL_DEBUG( glDisable )( GL_CULL_FACE );
 
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 }
 
 //--------------------------------------------------------------------------------------------

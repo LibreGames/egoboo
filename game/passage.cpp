@@ -242,34 +242,30 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
     ShopStack[ishop].owner   = owner;
 
     // flag every item in the shop as a shop item
-    for ( ichr = 0; ichr < MAX_CHR; ichr++ )
+     CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
     {
-        ego_chr * pchr = ChrObjList.get_data_ptr( ichr );
-        if ( NULL == pchr ) continue;
+        if ( !pchr->isitem ) continue;
 
-        if ( !INGAME_PCHR( pchr ) ) continue;
-
-        if ( pchr->isitem )
+        if ( PassageStack_object_is_inside( ShopStack[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
         {
-            if ( PassageStack_object_is_inside( ShopStack[ishop].passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
+            pchr->isshopitem = btrue;               // Full value
+            pchr->iskursed   = bfalse;              // Shop items are never kursed
+
+            // Identify only cheap items in a shop
+            /// @note BB@> not all shop items should be identified.
+            /// I guess there could be a minor exploit with casters identifying a book, then
+            /// leaving the module and re-identifying the book.
+            /// An answer would be to reduce the XP based on the some quality of the book and the character's level?
+            /// Maybe give the spell books levels, and if your character's level is above the spellbook level, no XP for identifying it?
+
+            if ( ego_chr::get_price( ichr ) <= SHOP_IDENTIFY )
             {
-                pchr->isshopitem = btrue;               // Full value
-                pchr->iskursed   = bfalse;              // Shop items are never kursed
-
-                // Identify only cheap items in a shop
-                /// @note BB@> not all shop items should be identified.
-                /// I guess there could be a minor exploit with casters identifying a book, then
-                /// leaving the module and re-identifying the book.
-                /// An answer would be to reduce the XP based on the some quality of the book and the character's level?
-                /// Maybe give the spell books levels, and if your character's level is above the spellbook level, no XP for identifying it?
-
-                if ( ego_chr::get_price( ichr ) <= SHOP_IDENTIFY )
-                {
-                    pchr->nameknown  = btrue;
-                }
+                pchr->nameknown  = btrue;
             }
         }
+
     }
+    CHR_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -430,7 +426,8 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
     ///    Can also look for characters with a specific quest or item in his or her inventory
     ///    Finds living ones, then items and corpses
 
-    CHR_REF character, foundother;
+    CHR_REF foundother, found = CHR_REF( MAX_CHR );
+
     ego_chr *psrc;
 
     if ( NULL == ppass ) return CHR_REF( MAX_CHR );
@@ -441,12 +438,9 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
 
     // Look at each character
     foundother = CHR_REF( MAX_CHR );
-    for ( character = 0; character < MAX_CHR; character++ )
+    CHR_BEGIN_LOOP_ACTIVE( character, pchr )
     {
-        ego_chr * pchr = ChrObjList.get_data_ptr( character );
-        if ( NULL == pchr ) continue;
-
-        if ( !INGAME_PCHR( pchr ) ) continue;
+        if( foundother != CHR_REF( MAX_CHR ) ) break;
 
         // don't do scenery objects unless we allow items
         if ( !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) && pchr->phys.weight == INFINITE_WEIGHT ) continue;
@@ -460,7 +454,8 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
             // Found a live one, do we need to check for required items as well?
             if ( IDSZ_NONE == require_item )
             {
-                return character;
+                foundother = character;
+                break;
             }
 
             // It needs to have a specific item as well
@@ -472,14 +467,16 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
                 if ( ego_chr::is_type_idsz( pchr->holdingwhich[SLOT_LEFT], require_item ) )
                 {
                     // It has the item...
-                    return character;
+                    foundother = character;
+                    break;
                 }
 
                 // II: Check right hand
                 if ( ego_chr::is_type_idsz( pchr->holdingwhich[SLOT_RIGHT], require_item ) )
                 {
                     // It has the item...
-                    return character;
+                    foundother = character;
+                    break;
                 }
 
                 // III: Check the pack
@@ -488,13 +485,15 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
                     if ( ego_chr::is_type_idsz( item, require_item ) )
                     {
                         // It has the item in inventory...
-                        return character;
+                        foundother = character;
+                        break;
                     }
                 }
                 PACK_END_LOOP( item );
             }
         }
     }
+    CHR_END_LOOP();
 
     // No characters found
     return foundother;
@@ -550,11 +549,14 @@ bool_t ego_passage::close( ego_passage * ppass )
     int x, y;
     Uint32 fan, cnt;
     CHR_REF character;
+    bool_t is_closed = btrue;
 
     if ( NULL == ppass ) return bfalse;
 
     // don't compute all of this for nothing
     if ( 0 == ppass->mask ) return btrue;
+
+    is_closed = btrue;
 
     // check to see if a wall can close
     if ( 0 != HAS_SOME_BITS( ppass->mask, MPDFX_IMPASS | MPDFX_WALL ) )
@@ -563,13 +565,8 @@ bool_t ego_passage::close( ego_passage * ppass )
         CHR_REF crushedcharacters[MAX_CHR];
 
         // Make sure it isn't blocked
-        for ( character = 0; character < MAX_CHR; character++ )
+        CHR_BEGIN_LOOP_ACTIVE( character, pchr )
         {
-            ego_chr * pchr = ChrObjList.get_data_ptr( character );
-            if ( NULL == pchr ) continue;
-
-            if ( !INGAME_PCHR( pchr ) ) continue;
-
             // Don't do held items
             if ( IS_ATTACHED_PCHR( pchr ) ) continue;
 
@@ -580,7 +577,9 @@ bool_t ego_passage::close( ego_passage * ppass )
                     if ( !pchr->canbecrushed )
                     {
                         // Someone is blocking, stop here
-                        return bfalse;
+                        is_closed  = bfalse;
+                        numcrushed = 0;
+                        break;
                     }
                     else
                     {
@@ -590,6 +589,7 @@ bool_t ego_passage::close( ego_passage * ppass )
                 }
             }
         }
+        CHR_END_LOOP();
 
         // Crush any unfortunate characters
         for ( cnt = 0; cnt < numcrushed; cnt++ )
@@ -599,17 +599,20 @@ bool_t ego_passage::close( ego_passage * ppass )
         }
     }
 
-    // Close it off
-    ppass->open = bfalse;
-    for ( y = ppass->area.ymin; y <= ppass->area.ymax; y++ )
+    if( is_closed )
     {
-        for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
+        // Close it off
+        ppass->open = bfalse;
+        for ( y = ppass->area.ymin; y <= ppass->area.ymax; y++ )
         {
-            fan = ego_mpd::get_tile_int( PMesh, x, y );
-            ego_mpd::add_fx( PMesh, fan, ppass->mask );
+            for ( x = ppass->area.xmin; x <= ppass->area.xmax; x++ )
+            {
+                fan = ego_mpd::get_tile_int( PMesh, x, y );
+                ego_mpd::add_fx( PMesh, fan, ppass->mask );
+            }
         }
     }
 
-    return btrue;
+    return is_closed;
 }
 

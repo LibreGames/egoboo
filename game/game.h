@@ -321,13 +321,65 @@ struct ego_local_stats
 extern ego_local_stats local_stats;
 
 //--------------------------------------------------------------------------------------------
+
+#define IMPORT_MAX 16
+
+// Imports
+struct ego_import_data
+{
+    int           count;                 ///< Number of imports from this machine
+    BIT_FIELD     control[IMPORT_MAX];  ///< Input bits for each imported player
+    int           slot[IMPORT_MAX];     ///< For local imports
+
+    ego_import_data() { init(); }
+
+    void init()
+    {
+        for( int i = 0; i < IMPORT_MAX; i++ )
+        {
+            control[i] = 0;
+            slot[i]    = -1;
+        }
+        count = 0;
+    }
+};
+
+extern ego_import_data local_import;
+
+//--------------------------------------------------------------------------------------------
 // Status displays
 
 #define MAXSTAT             10                      ///< Maximum status displays
 
-extern bool_t  StatusList_on;
-extern int     StatusList_count;
-extern CHR_REF StatusList[MAXSTAT];
+struct stat_lst
+{
+    bool_t  on;
+    int     count;
+
+    stat_lst() { init(); }
+
+    void init()
+    {
+        on = btrue;
+        count = 0;
+        for( int i=0; i < MAXSTAT; i++ )
+        {
+            lst[i] = CHR_REF(MAX_CHR);
+        }
+    }
+
+    CHR_REF & operator [] ( size_t val ) { return lst[val]; }
+
+    bool_t remove( const CHR_REF & ichr );
+    bool_t add   ( const CHR_REF & ichr );
+    bool_t move_to_top( const CHR_REF & ichr );
+
+private:
+
+    CHR_REF lst[MAXSTAT];
+};
+
+extern stat_lst StatList;
 
 //--------------------------------------------------------------------------------------------
 // End text
@@ -377,11 +429,6 @@ int     spawn_bump_particles( const CHR_REF & character, const PRT_REF & particl
 void    disaffirm_attached_particles( const CHR_REF & character );
 int     reaffirm_attached_particles( const CHR_REF & character );
 ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, int vertex_offset );
-
-// Statlist
-void statlist_add( const CHR_REF & character );
-void statlist_move_to_top( const CHR_REF & character );
-void statlist_sort();
 
 /// Player
 void   read_player_local_latch( const PLA_REF & player );

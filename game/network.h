@@ -90,9 +90,12 @@ struct net_shared_stats
     int pla_count_network_dead;
     int pla_count_total_dead;
 
-    int lag_tolerance;                 ///< Lag tolerance
+    int    lag_tolerance;                 ///< Lag tolerance
+    bool_t out_of_sync;
 
-    net_shared_stats()
+    net_shared_stats() { init(); }
+
+    void init()
     {
         pla_count_local = 0;
         pla_count_network = 0;
@@ -110,6 +113,7 @@ struct net_shared_stats
         pla_count_loaded = 0;
 
         lag_tolerance     = 3;
+        out_of_sync       = bfalse;
     }
 };
 

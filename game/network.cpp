@@ -1592,18 +1592,18 @@ void net_handlePacket( ENetEvent *event )
                 if ( stamp < _gnet.next_time_stamp )
                 {
                     log_warning( "net_handlePacket: OUT OF ORDER PACKET\n" );
-                    outofsync = btrue;
+                    net_stats.out_of_sync = btrue;
                 }
                 if ( stamp <= update_wld )
                 {
                     log_warning( "net_handlePacket: LATE PACKET\n" );
-                    outofsync = btrue;
+                    net_stats.out_of_sync = btrue;
                 }
                 if ( stamp > _gnet.next_time_stamp )
                 {
                     log_warning( "net_handlePacket: MISSED PACKET\n" );
                     _gnet.next_time_stamp = stamp;  // Still use it
-                    outofsync = btrue;
+                    net_stats.out_of_sync = btrue;
                 }
                 if ( stamp == _gnet.next_time_stamp )
                 {

@@ -121,7 +121,7 @@ bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint3
         {
             int count = glcommand->command_count;
 
-            GL_DEBUG( glBegin )( glcommand->gl_mode );
+            GL_DEBUG_BEGIN( glcommand->gl_mode );
             {
                 int tnc;
 
@@ -300,7 +300,7 @@ bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, Uint32 b
         {
             int count = glcommand->command_count;
 
-            GL_DEBUG( glBegin )( glcommand->gl_mode );
+            GL_DEBUG_BEGIN( glcommand->gl_mode );
             {
                 int tnc;
 
@@ -541,7 +541,7 @@ void render_chr_bbox( ego_chr * pchr )
 
             ego_oct_bb::add_vector( pchr->chr_min_cv, pchr->pos.v, &bb );
 
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
             render_oct_bb( &bb, btrue, btrue );
         }
         GL_DEBUG( glEnable )( GL_TEXTURE_2D );
@@ -603,7 +603,7 @@ bool_t render_chr_grip_cv( ego_chr * pchr, int grip_offset )
 
     GL_DEBUG( glDisable )( GL_TEXTURE_2D );
     {
-        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+        GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
         render_oct_bb( &grip_cv, btrue, btrue );
     }
     GL_DEBUG( glEnable )( GL_TEXTURE_2D );
@@ -660,7 +660,7 @@ void draw_points( ego_chr * pchr, int vrt_offset, int verts )
     GL_DEBUG( glPushMatrix )();
     GL_DEBUG( glMultMatrixf )( pchr->gfx_inst.matrix.v );
 
-    GL_DEBUG( glBegin( GL_POINTS ) );
+    GL_DEBUG_BEGIN( GL_POINTS );
     {
         for ( cnt = vmin; cnt < vmax; cnt++ )
         {
@@ -729,7 +729,7 @@ void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, int slot )
         src.y = pinst->vrt_lst[vmin].pos[YY];
         src.z = pinst->vrt_lst[vmin].pos[ZZ];
 
-        GL_DEBUG( glBegin )( GL_LINES );
+        GL_DEBUG_BEGIN( GL_LINES );
         {
             for ( cnt = 1; cnt < GRIP_VERTS; cnt++ )
             {
@@ -750,7 +750,7 @@ void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, int slot )
         GL_DEBUG_END();
     }
 
-    GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
 }
 
 //--------------------------------------------------------------------------------------------

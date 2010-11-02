@@ -170,16 +170,15 @@ bool_t link_pop_module()
             ego_hero_spawn_data * phero = pentry->hero + i;
 
             pchr = NULL;
-            for ( j = 0; j < MAX_CHR; j++ )
+            CHR_BEGIN_LOOP_ACTIVE( j, ptmp )
             {
-                if ( !INGAME_CHR( j ) ) continue;
-
-                if ( phero->object_index == ChrObjList.get_data_ref( j ).profile_ref )
+                if ( phero->object_index == ptmp->profile_ref )
                 {
-                    pchr = ChrObjList.get_data_ptr( j );
+                    pchr = ptmp;
                     break;
                 };
             }
+            CHR_END_LOOP();
 
             // is the character is found, restore the old position
             if ( NULL != pchr )

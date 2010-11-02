@@ -141,7 +141,7 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], s
     fvec3_t vfwd, vcam;
     size_t  numparticle;
 
-    prt_instance_update_all( pcam );
+    update_all_prt_instance( pcam );
 
     vfwd = mat_getCamForward( pcam->mView );
     vcam = pcam->pos;
@@ -228,7 +228,7 @@ bool_t render_one_prt_solid( const PRT_REF & iprt )
 
         GL_DEBUG( glColor4f )( pinst->fintens, pinst->fintens, pinst->fintens, 1.0f );
 
-        GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+        GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
         {
             for ( i = 0; i < 4; i++ )
             {
@@ -345,7 +345,7 @@ bool_t render_one_prt_trans( const PRT_REF & iprt )
         }
 
         // Go on and draw it
-        GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+        GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
         {
             for ( i = 0; i < 4; i++ )
             {
@@ -401,7 +401,7 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
     fvec3_t vfwd, vcam;
     size_t  numparticle;
 
-    prt_instance_update_all( pcam );
+    update_all_prt_instance( pcam );
 
     vfwd = mat_getCamForward( pcam->mView );
     vcam = pcam->pos;
@@ -525,7 +525,7 @@ bool_t render_one_prt_ref( const PRT_REF & iprt )
                 return bfalse;
             }
 
-            GL_DEBUG( glBegin )( GL_TRIANGLE_FAN );
+            GL_DEBUG_BEGIN( GL_TRIANGLE_FAN );
             {
                 for ( i = 0; i < 4; i++ )
                 {
@@ -701,7 +701,7 @@ void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vr
     GL_DEBUG( glPushMatrix )();
     GL_DEBUG( glMultMatrixf )( pinst->matrix.v );
 
-    GL_DEBUG( glBegin( GL_POINTS ) );
+    GL_DEBUG_BEGIN( GL_POINTS );
     {
         GL_DEBUG( glVertex3fv )( pinst->vrt_lst[vrt].pos );
     }
@@ -742,7 +742,7 @@ void prt_draw_attached_point( ego_bundle_prt * pbdl_prt )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void prt_instance_update_all( ego_camera * pcam )
+void update_all_prt_instance( ego_camera * pcam )
 {
     if ( NULL == pcam ) pcam = PCamera;
     if ( NULL == pcam ) return;
@@ -1219,7 +1219,7 @@ void render_prt_bbox( ego_bundle_prt * pbdl_prt )
 
         GL_DEBUG( glDisable )( GL_TEXTURE_2D );
         {
-            GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+            GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
             render_oct_bb( &loc_bb, btrue, btrue );
         }
         GL_DEBUG( glEnable )( GL_TEXTURE_2D );

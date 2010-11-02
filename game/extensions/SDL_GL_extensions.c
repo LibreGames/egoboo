@@ -86,7 +86,7 @@ int powerOfTwo( int input )
 // - Global function stolen from Jonathan Fisher
 // - who stole it from gl_font.c test program from SDL_ttf ;)
 //--------------------------------------------------------------------------------------------
-SDL_bool SDL_GL_uploadSurface( SDL_Surface *surface, GLuint tx_id, GLfloat *texCoords )
+SDL_bool SDL_GL_uploadSurface( SDL_Surface *surface, GLuint tx_id, GLfloat texCoords[] )
 {
     int tx_w, tx_h;
 
@@ -417,7 +417,7 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
     }
 
     /* Set up some parameters for the format of the oglx_texture_t */
-    binding = oglx_bind_to_tex_params( binding, target, wrap_s, wrap_t );
+    binding = oglx_bind_default( binding, target, wrap_s, wrap_t );
 
     /* actually create the OpenGL textures */
     use_alpha = !( 8 == local_surface->format->Aloss );

@@ -61,14 +61,11 @@
 #endif
 
 #define SCRIPT_FUNCTION_BEGIN() \
-    ego_ai_state * pself; \
-    ego_chr * pchr; \
-    ego_pro * ppro; \
+    if( NULL == pstate || NULL == pbdl_self ) return bfalse; \
     Uint8 returncode = btrue; \
-    if( NULL == pstate || NULL == pbdl_self || !VALID_CHR(pbdl_self->chr_ref) ) return bfalse; \
-    pself = pbdl_self->ai_state_ptr; \
-    pchr  = pbdl_self->chr_ptr; \
-    ppro  = pbdl_self->pro_ptr;
+    ego_ai_state * pself = pbdl_self->ai_state_ptr; \
+    ego_chr      * pchr  = pbdl_self->chr_ptr; \
+    ego_pro      * ppro  = pbdl_self->pro_ptr;
 
 #define SCRIPT_FUNCTION_END() \
     return returncode;
@@ -6267,10 +6264,7 @@ Uint8 scr_AddStat( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_FUNCTION_BEGIN();
 
-    if ( !pchr->StatusList_on )
-    {
-        statlist_add( pself->index );
-    }
+    StatList.add( pself->index );
 
     SCRIPT_FUNCTION_END();
 }

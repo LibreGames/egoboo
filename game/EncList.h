@@ -87,14 +87,14 @@ typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
 
 /// loops through EncObjList for all "defined" enchants, creating a reference, and a pointer
 #define ENC_BEGIN_LOOP_DEFINED(IT, PENC) \
-    OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_enc, EncObjList, IT, internal__##PENC##_pobj) \
-    ego_enc * PENC = (ego_enc *)static_cast<const ego_enc *>(internal__##PENC##_pobj); \
+    OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_enc, EncObjList, IT, PENC##_obj) \
+    ego_enc * PENC = (ego_enc *)static_cast<const ego_enc *>(PENC##_obj); \
     if( NULL == PENC ) continue;
 
 /// loops through EncObjList for all "active" enchants, creating a reference, and a pointer
 #define ENC_BEGIN_LOOP_ACTIVE(IT, PENC) \
-    OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_enc, EncObjList, IT, internal__##PENC##_pobj) \
-    ego_enc * PENC = (ego_enc *)static_cast<const ego_enc *>(internal__##PENC##_pobj); \
+    OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_enc, EncObjList, IT, PENC##_obj) \
+    ego_enc * PENC = (ego_enc *)static_cast<const ego_enc *>(PENC##_obj); \
     if( NULL == PENC ) continue;
 
 /// the termination for each EncObjList loop

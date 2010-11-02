@@ -143,10 +143,6 @@ bool_t  overrideslots      = bfalse;
 char   endtext[MAXENDTEXT] = EMPTY_CSTR;
 size_t endtext_carat = 0;
 
-// Status displays
-bool_t  StatusList_on     = btrue;
-int     StatusList_count    = 0;
-CHR_REF StatusList[MAXSTAT];
 
 ego_mpd           * PMesh   = _mesh + 0;
 ego_camera          * PCamera = _camera + 0;
@@ -157,7 +153,7 @@ ego_pit_info pits = { bfalse, bfalse, ZERO_VECT3 };
 
 FACING_T glo_useangle = 0;                                        // actually still used
 
-Uint32                animtile_update_and = 0;
+Uint32                  animtile_update_and = 0;
 ego_animtile_instance   animtile[2];
 ego_damagetile_instance damagetile;
 ego_weather_instance    weather;
@@ -165,8 +161,9 @@ ego_water_instance      water;
 ego_fog_instance        fog;
 
 ego_local_stats local_stats;
+ego_import_data local_import;
 
-void do_weather_spawn_particles();
+stat_lst StatList;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -215,6 +212,10 @@ static void   do_game_hud();
 
 // manage the game's vfs mount points
 static void   game_clear_vfs_paths();
+
+static void do_weather_spawn_particles();
+
+static void sort_stat_list();
 
 //--------------------------------------------------------------------------------------------
 // Random Things
@@ -463,78 +464,6 @@ void log_madused_vfs( const char *savename )
         }
 
         vfs_close( hFileWrite );
-    }
-}
-
-//--------------------------------------------------------------------------------------------
-void statlist_add( const CHR_REF & character )
-{
-    /// @details ZZ@> This function adds a status display to the do list
-
-    ego_chr * pchr;
-
-    if ( StatusList_count >= MAXSTAT ) return;
-
-    pchr = ChrObjList.get_allocated_data_ptr( character );
-    if ( !INGAME_PCHR( pchr ) ) return;
-
-    if ( pchr->StatusList_on ) return;
-
-    StatusList[StatusList_count] = character;
-    pchr->StatusList_on = btrue;
-    StatusList_count++;
-}
-
-//--------------------------------------------------------------------------------------------
-void statlist_move_to_top( const CHR_REF & character )
-{
-    /// @details ZZ@> This function puts the character on top of the StatusList
-
-    int cnt, oldloc;
-
-    // Find where it is
-    oldloc = StatusList_count;
-
-    for ( cnt = 0; cnt < StatusList_count; cnt++ )
-    {
-        if ( StatusList[cnt] == character )
-        {
-            oldloc = cnt;
-            cnt = StatusList_count;
-        }
-    }
-
-    // Change position
-    if ( oldloc < StatusList_count )
-    {
-        // Move all the lower ones up
-        while ( oldloc > 0 )
-        {
-            oldloc--;
-            StatusList[oldloc+1] = StatusList[oldloc];
-        }
-
-        // Put the character in the top slot
-        StatusList[0] = character;
-    }
-}
-
-//--------------------------------------------------------------------------------------------
-void statlist_sort()
-{
-    /// @details ZZ@> This function puts all of the local players on top of the StatusList
-
-    PLA_REF ipla;
-
-    for ( ipla = 0; ipla < PlaStack.count; ipla++ )
-    {
-        ego_player * ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
-
-        if ( INPUT_BITS_NONE != ppla->device.bits )
-        {
-            statlist_move_to_top( ppla->index );
-        }
     }
 }
 
@@ -932,16 +861,25 @@ int game_update()
     update_lag = 0;
     update_loop_cnt = 0;
 
-    if ( update_wld > true_update ) return 0;
-    int estimated_iterations = ( true_update - update_wld ) / TARGET_UPS;
+    // measure the actual lag
+    update_lag = signed(true_update) - signed(update_wld);
 
+    // don't do anything if we are not behind
+    if ( update_wld > true_update + 1 ) return 0;
+
+    // throttle the number of iterations through the loop
     int max_iterations = single_update_mode ? 1 : 2 * TARGET_UPS;
+    max_iterations = SDL_min( max_iterations, estimated_updates );
+
+    if ( update_lag > max_iterations )
+    {
+        log_warning( "Local machine not keeping up with the requuired updates-per-second.\n" );
+    }
 
     /// @todo claforte@> Put that back in place once networking is functional (Jan 6th 2001)
     /// do stuff inside this loop if it might cause problems on a laggy machine
     for ( tnc = 0; update_wld < true_update && tnc < max_iterations; tnc++ )
     {
-
         PROFILE_BEGIN( game_single_update );
         {
             //---- begin the code for updating misc. game stuff
@@ -1031,12 +969,6 @@ int game_update()
         est_single_update_time = 0.9 * est_single_update_time + 0.1 * PROFILE_QUERY( game_single_update );
         est_single_ups         = 0.9 * est_single_ups         + 0.1 * ( 1.0f / PROFILE_QUERY( game_single_update ) );
     }
-    update_lag = tnc;
-
-    if ( update_lag < estimated_iterations )
-    {
-        log_warning( "Local machine not keeping up with the requested updates-per-second." );
-    }
 
     return update_loop_cnt;
 }
@@ -1111,7 +1043,8 @@ void update_game_clocks()
     //---- deal with the update/frame stabilization
 
     // update the game clock
-    clock_all +=  ego_ticks_diff;
+    clock_lst  = clock_all;
+    clock_all += ego_ticks_diff;
 
     // Use the number of updates that should have been performed up to this point (true_update)
     // to try to regulate the update speed of the game
@@ -1122,6 +1055,9 @@ void update_game_clocks()
 
     // get the number of frames that should have happened so far in a similar way
     true_frame  = clock_all / FRAME_SKIP;
+
+    // estimate the number of updates necessary next time around
+    estimated_updates = SDL_max( 0, true_update - update_wld );
 
     //---- calculate the updates-per-second
 
@@ -1154,8 +1090,8 @@ void reset_timers()
     clock_stt = ticks_now = ticks_last = egoboo_get_ticks();
 
     // all of the clocks
-    clock_all = 0;
     clock_lst = 0;
+    clock_all = 0;
     clock_wld = 0;
     clock_enc_stat  = 0;
     clock_chr_stat  = 0;
@@ -1167,11 +1103,12 @@ void reset_timers()
     // all of the counters
     update_wld  = 0;
     true_update = 0;
+    estimated_updates = 0;
     frame_all   = 0;
     true_frame  = 0;
 
     // some derived variables that must be reset
-    outofsync = bfalse;
+    net_stats.out_of_sync = bfalse;
     pits.kill = pits.teleport = bfalse;
 }
 
@@ -1423,13 +1360,6 @@ egoboo_rv ego_game_process::do_running()
                 net_send_message();
             }
 
-            // performance planning. Do it here, or only when the game is active?
-            PROFILE_BEGIN( update_game_clocks );
-            {
-                update_game_clocks();
-            }
-            PROFILE_END2( update_game_clocks );
-
             // This is what would display network chat message,
             // so that part of this function needs to be here.
             // maybe everything else belongs inside the if structure, below?
@@ -1472,6 +1402,13 @@ egoboo_rv ego_game_process::do_running()
                 est_update_game_time = 0.9 * est_update_game_time + 0.1 * est_single_update_time * update_loops;
                 est_max_game_ups     = 0.9 * est_max_game_ups     + 0.1 * 1.0 / est_update_game_time;
             }
+
+            // performance planning. Do it here, or only when the game is active?
+            PROFILE_BEGIN( update_game_clocks );
+            {
+                update_game_clocks();
+            }
+            PROFILE_END2( update_game_clocks );
         }
         PROFILE_END2( game_update_loop );
 
@@ -2579,9 +2516,9 @@ void show_stat( int statindex )
     int     level;
     char    gender[8] = EMPTY_CSTR;
 
-    if ( statindex < StatusList_count )
+    if ( statindex < StatList.count )
     {
-        character = StatusList[statindex];
+        character = StatList[statindex];
 
         if ( INGAME_CHR( character ) )
         {
@@ -2646,9 +2583,9 @@ void show_armor( int statindex )
     ego_cap * pcap;
     ego_chr * pchr;
 
-    if ( statindex >= StatusList_count ) return;
+    if ( statindex >= StatList.count ) return;
 
-    ichr = StatusList[statindex];
+    ichr = StatList[statindex];
     if ( !INGAME_CHR( ichr ) ) return;
 
     pchr = ChrObjList.get_data_ptr( ichr );
@@ -2736,9 +2673,9 @@ void show_full_status( int statindex )
     int manaregen, liferegen;
     ego_chr * pchr;
 
-    if ( statindex >= StatusList_count ) return;
+    if ( statindex >= StatList.count ) return;
 
-    character = StatusList[statindex];
+    character = StatList[statindex];
     pchr = ChrObjList.get_allocated_data_ptr( character );
     if ( !INGAME_PCHR( pchr ) ) return;
 
@@ -2776,9 +2713,9 @@ void show_magic_status( int statindex )
     const char * missile_str;
     ego_chr * pchr;
 
-    if ( statindex >= StatusList_count ) return;
+    if ( statindex >= StatList.count ) return;
 
-    character = StatusList[statindex];
+    character = StatList[statindex];
 
     pchr = ChrObjList.get_allocated_data_ptr( character );
     if ( !INGAME_PCHR( pchr ) ) return;
@@ -3150,20 +3087,20 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
                 pobject->nameknown = btrue;
             }
         }
-        else if ( PlaStack.count < PMod->importamount && PlaStack.count < PMod->playeramount && PlaStack.count < local_import_count )
+        else if ( PlaStack.count < PMod->importamount && PlaStack.count < PMod->playeramount && PlaStack.count < local_import.count )
         {
             // A multiplayer module
 
             bool_t player_added;
 
             local_index = -1;
-            for ( tnc = 0; tnc < local_import_count; tnc++ )
+            for ( tnc = 0; tnc < local_import.count; tnc++ )
             {
                 if ( pobject->profile_ref <= import_data.max_slot && pobject->profile_ref < MAX_PROFILE )
                 {
                     int islot = ( pobject->profile_ref ).get_value();
 
-                    if ( import_data.slot_lst[islot] == local_import_slot[tnc] )
+                    if ( import_data.slot_lst[islot] == local_import.slot[tnc] )
                     {
                         local_index = tnc;
                         break;
@@ -3175,7 +3112,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             if ( -1 != local_index )
             {
                 // It's a local PlaStack.count
-                player_added = add_player( new_object, PLA_REF( PlaStack.count ), local_import_control[local_index] );
+                player_added = add_player( new_object, PLA_REF( PlaStack.count ), local_import.control[local_index] );
             }
             else
             {
@@ -3197,7 +3134,10 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
         }
 
         // Turn on the stat display
-        statlist_add( new_object );
+        if( StatList.add( new_object ) )
+        {
+            pobject->draw_stats = btrue;
+        }
     }
 
 activate_spawn_file_spawn_exit:
@@ -3269,7 +3209,7 @@ void activate_spawn_file_vfs()
     clear_messages();
 
     // Make sure local players are displayed first
-    statlist_sort();
+    sort_stat_list();
 
     // Fix tilting trees problem
     tilt_characters_to_terrain();
@@ -3744,9 +3684,9 @@ egoboo_rv game_update_imports()
 
         // grab the controls from the currently loaded players
         // calculate the slot from the current player count
-        player_idx = ( player ).get_value();
-        local_import_control[player_idx] = ppla->device.bits;
-        local_import_slot[player_idx]    = ( player ).get_value() * MAXIMPORTPERPLAYER;
+        player_idx = player.get_value();
+        local_import.control[player_idx] = ppla->device.bits;
+        local_import.slot[player_idx]    = player_idx * MAXIMPORTPERPLAYER;
         player++;
 
         // Copy the character to the import directory
@@ -3759,14 +3699,14 @@ egoboo_rv game_update_imports()
             SDL_snprintf( srcPlayer, SDL_arraysize( srcPlayer ), "mp_remote/%s", str_encode_path( loadplayer[tnc].name ) );
         }
 
-        SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[tnc] );
+        SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import.slot[tnc] );
         vfs_copyDirectory( srcPlayer, destDir );
 
         // Copy all of the character's items to the import directory
         for ( j = 0; j < MAXIMPORTOBJECTS; j++ )
         {
             SDL_snprintf( srcDir, SDL_arraysize( srcDir ), "%s/%d.obj", srcPlayer, j );
-            SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import_slot[tnc] + j + 1 );
+            SDL_snprintf( destDir, SDL_arraysize( destDir ), "/import/temp%04d.obj", local_import.slot[tnc] + j + 1 );
 
             vfs_copyDirectory( srcDir, destDir );
         }
@@ -3903,43 +3843,45 @@ void let_all_characters_think()
 
     CHR_BEGIN_LOOP_ACTIVE( character, pchr )
     {
-        ego_cap * pcap;
-        ego_ai_state * pself;
-
-        ego_ai_bundle bdl_ai;
-
         bool_t is_crushed, is_cleanedup, gained_level, can_think;
 
-        if ( NULL == ego_ai_bundle::set( &bdl_ai, pchr ) ) continue;
+        ego_ai_bundle bdl;
 
-        // use some aliases to ease the notation
-        pcap  = bdl_ai.cap_ptr;
-        pself = bdl_ai.ai_state_ptr;
+        if ( NULL == ego_ai_bundle::set( &bdl, pchr ) ) continue;
 
         // check for actions that must always be handled
-        is_cleanedup = HAS_SOME_BITS( pself->alert, ALERTIF_CLEANEDUP );
-        is_crushed   = HAS_SOME_BITS( pself->alert, ALERTIF_CRUSHED );
-        gained_level = HAS_SOME_BITS( pself->alert, ALERTIF_LEVELUP );
+        is_cleanedup = HAS_SOME_BITS( bdl.ai_state_ptr->alert, ALERTIF_CLEANEDUP );
+        is_crushed   = HAS_SOME_BITS( bdl.ai_state_ptr->alert, ALERTIF_CRUSHED );
+        gained_level = HAS_SOME_BITS( bdl.ai_state_ptr->alert, ALERTIF_LEVELUP );
 
         // let the script run sometimes even if the item is in your backpack
-        can_think = !pchr->pack.is_packed || pcap->isequipment;
+        can_think = !pchr->pack.is_packed || bdl.cap_ptr->isequipment;
 
         // only let dead/destroyed things think if they have been crushed/cleanedup or gained a level
         if (( pchr->alive && can_think ) || is_crushed || is_cleanedup || gained_level )
         {
             // Figure out alerts that weren't already set
-            set_alerts( &bdl_ai );
+            set_alerts( &bdl );
 
-            // Cleaned up characters shouldn't be alert to anything else
-            if ( is_cleanedup )  pchr->ai.alert = ALERTIF_CLEANEDUP;
+            // handle special cases
+            if ( is_cleanedup )  
+            {
+                // Cleaned up characters shouldn't be alert to anything else
+                bdl.ai_state_ptr->alert = ALERTIF_CLEANEDUP;
+            }
+            else if ( is_crushed )
+            { 
+                // Crushed characters shouldn't be alert to anything else
+                bdl.ai_state_ptr->alert = ALERTIF_CRUSHED; 
+                bdl.ai_state_ptr->timer = update_wld + 1; 
+            }
+            else if ( gained_level )  
+            {
+                // Level up characters shouldn't be alert to anything else
+                bdl.ai_state_ptr->alert = ALERTIF_LEVELUP;
+            }
 
-            // Crushed characters shouldn't be alert to anything else
-            if ( is_crushed )  { pself->alert = ALERTIF_CRUSHED; pself->timer = update_wld + 1; }
-
-            // Level up characters shouldn't be alert to anything else
-            if ( is_cleanedup )  pchr->ai.alert = ALERTIF_LEVELUP;
-
-            scr_run_chr_script( &bdl_ai );
+            scr_run_chr_script( &bdl );
         }
     }
     CHR_END_LOOP();
@@ -4409,7 +4351,7 @@ void do_game_hud()
 
     if ( flip_pages_requested() && cfg.dev_mode )
     {
-        GL_DEBUG( glColor4f )( 1, 1, 1, 1 );
+        GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
         if ( fpson )
         {
             y = draw_string( 0, y, "%2.3f FPS, %2.3f UPS", stabilized_fps, stabilized_ups );
@@ -5556,4 +5498,121 @@ void cleanup_character_enchants( ego_chr * pchr )
 
     // clean up the enchant list
     pchr->firstenchant = cleanup_enchant_list( pchr->firstenchant, &( pchr->firstenchant ) );
+}
+
+//--------------------------------------------------------------------------------------------
+void sort_stat_list()
+{
+    /// @details ZZ@> This function puts all of the local players on top of the StatList
+
+    PLA_REF ipla;
+
+    for ( ipla = 0; ipla < PlaStack.count; ipla++ )
+    {
+        ego_player * ppla = PlaStack + ipla;
+        if ( !ppla->valid ) continue;
+
+        if ( INPUT_BITS_NONE != ppla->device.bits )
+        {
+            StatList.move_to_top( ppla->index );
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+bool_t stat_lst::remove( const CHR_REF & ichr )
+{
+    int cnt;
+
+    bool_t stat_found = bfalse;
+
+    for ( cnt = 0; cnt < count; cnt++ )
+    {
+        if ( lst[cnt] == ichr )
+        {
+            stat_found = btrue;
+            break;
+        }
+    }
+
+    if ( stat_found )
+    {
+        // move the entries to fill in the hole
+        for ( cnt++; cnt < count; cnt++ )
+        {
+            lst[cnt-1] = lst[cnt];
+        }
+        count--;
+    }
+
+    return stat_found;
+}
+
+
+//--------------------------------------------------------------------------------------------
+bool_t stat_lst::add( const CHR_REF & ichr )
+{
+    /// @details ZZ@> This function adds a status display to the do list
+
+    if ( count >= MAXSTAT ) return bfalse;
+
+    if( !ChrObjList.in_range_ref( ichr ) ) return bfalse;
+
+    bool_t found = bfalse;
+    for( int i = 0; i < count; i++ )
+    {
+        if( lst[i] == ichr )
+        {
+            found = btrue;
+            break;
+        }
+    }
+
+    if( !found )
+    {
+        lst[count] = ichr;
+        count++;
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t stat_lst::move_to_top( const CHR_REF & ichr )
+{
+    /// @details ZZ@> This function puts the character on top of the StatList
+
+    int cnt, oldloc;
+
+    // Find where it is
+    oldloc = count;
+
+    // scan the list
+    for ( cnt = 0; cnt < count; cnt++ )
+    {
+        if ( lst[cnt] == ichr )
+        {
+            oldloc = cnt;
+            break;
+        }
+    }
+
+    // bubble the item to the top of the list, if found
+    if ( oldloc < count )
+    {
+        int tnc = oldloc;
+
+        // Move all the lower ones up
+        while ( tnc > 0 )
+        {
+            tnc--;
+            lst[tnc+1] = lst[tnc];
+        }
+
+        // Put the ichr in the top slot
+        lst[0] = ichr;
+    }
+
+    return oldloc < count;
 }

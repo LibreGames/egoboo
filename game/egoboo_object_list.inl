@@ -874,28 +874,44 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::alloc
 template <typename _d, size_t _sz>
 void t_obj_lst_deque<_d, _sz>::cleanup()
 {
+    if( loop_depth > 0 ) return;
+
     // go through the list and activate all the characters that
     // were created while the list was iterating
-    while ( !activation_stack.empty() )
+    if( !activation_stack.empty() )
     {
-        lst_reference ref( activation_stack.top() );
-        activation_stack.pop();
+        std::stack< REF_T > tmp_stack = activation_stack;
 
-        _d * pobj = get_allocated_data_ptr( ref );
-        if ( NULL != pobj )
+        while ( !activation_stack.empty() ) activation_stack.pop();
+
+        while ( !tmp_stack.empty() )
         {
-            ego_obj::grant_on( ego_obj::get_ego_obj_ptr( pobj ) );
-        }
+            lst_reference ref( tmp_stack.top() );
+            tmp_stack.pop();
+
+            _d * pobj = get_allocated_data_ptr( ref );
+            if ( NULL != pobj )
+            {
+                ego_obj::grant_on( ego_obj::get_ego_obj_ptr( pobj ) );
+            }
+    }
     }
 
     // go through and delete any characters that were
     // supposed to be deleted while the list was iterating
-    while ( !termination_stack.empty() )
+    if( !termination_stack.empty() )
     {
-        lst_reference ref( termination_stack.top() );
-        termination_stack.pop();
+        std::stack< REF_T > tmp_stack = termination_stack;
 
-        free_one( ref );
+        while ( !termination_stack.empty() ) termination_stack.pop();
+
+        while ( !tmp_stack.empty() )
+        {
+            REF_T idx = tmp_stack.top();
+            tmp_stack.pop();
+
+            free_one( lst_reference(idx) );
+        }
     }
 }
 

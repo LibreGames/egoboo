@@ -145,7 +145,7 @@ void egoboo_config_init( config_data_t * pcfg )
     // {GAME}
     pcfg->message_count_req     = 6;
     pcfg->message_duration      = 50;                     // Time to keep the message alive
-    pcfg->StatusList_on         = btrue;               // Draw the status bars?
+    pcfg->draw_stat_bars        = btrue;               // Draw the status bars?
     pcfg->feedback              = FEEDBACK_TEXT;    // What feedback does the player want
     pcfg->difficulty            = GAME_NORMAL;      // What is the current game difficulty
     pcfg->autoturncamera        = 255;              // Type of camera control...
@@ -424,7 +424,7 @@ bool_t setup_download( config_data_t * pcfg )
     GetKey_bool( "SDL_IMAGE",   pcfg->sdl_image_allowed, cfg_default.sdl_image_allowed );
 
     // Show status bars? (Life, mana, character icons, etc.)
-    GetKey_bool( "STATUS_BAR", pcfg->StatusList_on, cfg_default.StatusList_on );
+    GetKey_bool( "STATUS_BAR", pcfg->draw_stat_bars, cfg_default.draw_stat_bars );
 
     return btrue;
 }
@@ -441,7 +441,7 @@ bool_t setup_synch( config_data_t * pcfg )
     messageon  = ( pcfg->message_count_req > 0 );
     maxmessage = CLIP( pcfg->message_count_req, 1, MAX_MESSAGE );
 
-    wraptolerance = pcfg->StatusList_on ? 90 : 32;
+    wraptolerance = pcfg->draw_stat_bars ? 90 : 32;
 
     // Get the particle limit
     maxparticles = CLIP( pcfg->particle_count_req, 0, MAX_PRT );
@@ -661,7 +661,7 @@ bool_t setup_upload( config_data_t * pcfg )
     SetKey_bool( "SDL_IMAGE",   pcfg->sdl_image_allowed );
 
     // Show status bars? (Life, mana, character icons, etc.)
-    SetKey_bool( "STATUS_BAR", pcfg->StatusList_on );
+    SetKey_bool( "STATUS_BAR", pcfg->draw_stat_bars );
 
     return btrue;
 }

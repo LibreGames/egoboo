@@ -102,5 +102,5 @@ void   render_prt_ref( struct ego_camera * pcam );
 
 void   render_all_prt_attachment();
 
-void prt_instance_update_all( struct ego_camera * pcam );
+void update_all_prt_instance( struct ego_camera * pcam );
 
