@@ -129,7 +129,7 @@ INLINE bool_t team_hates_team( const TEAM_REF & ipredator_team, const TEAM_REF &
 
     if ( ipredator_team >= TEAM_MAX || iprey_team >= TEAM_MAX ) return bfalse;
 
-    return TeamStack[ipredator_team].hatesteam[( iprey_team ).get_value()];
+    return TeamStack[ipredator_team].hatesteam[iprey_team.get_value()];
 }
 
 //--------------------------------------------------------------------------------------------

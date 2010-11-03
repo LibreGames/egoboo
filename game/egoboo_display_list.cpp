@@ -361,7 +361,7 @@ GLboolean display_item_draw_texture( display_item_t * item_ptr )
 
     // bind the texture to a texture consistent with the current graphics configuration
     oglx_bind_default( item_ptr->texture_name, GL_TEXTURE_2D, GL_CLAMP, GL_CLAMP );
-    
+
     // And draw the darn thing
     GL_DEBUG_BEGIN( GL_QUADS );
     {

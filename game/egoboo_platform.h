@@ -133,7 +133,7 @@
 //------------
 // Turn off warnings that we don't care about.
 #if defined(_MSC_VER)
-#    pragma warning(disable : 4090) // '=' : different 'const' qualifiers (totally unimportant in C)
+//#    pragma warning(disable : 4090) // '=' : different 'const' qualifiers (totally unimportant in C)
 #    pragma warning(disable : 4200) // zero-sized array in struct/union (used in the md2 loader)
 #    pragma warning(disable : 4201) // nameless struct/union (nameless unions and nameless structs used in defining the vector structs)
 #    pragma warning(disable : 4204) // non-constant aggregate initializer (used to simplify some vector initializations)

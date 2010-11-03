@@ -242,7 +242,7 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
     ShopStack[ishop].owner   = owner;
 
     // flag every item in the shop as a shop item
-     CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
     {
         if ( !pchr->isitem ) continue;
 
@@ -440,7 +440,7 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
     foundother = CHR_REF( MAX_CHR );
     CHR_BEGIN_LOOP_ACTIVE( character, pchr )
     {
-        if( foundother != CHR_REF( MAX_CHR ) ) break;
+        if ( foundother != CHR_REF( MAX_CHR ) ) break;
 
         // don't do scenery objects unless we allow items
         if ( !HAS_SOME_BITS( targeting_bits, TARGET_ITEMS ) && pchr->phys.weight == INFINITE_WEIGHT ) continue;
@@ -599,7 +599,7 @@ bool_t ego_passage::close( ego_passage * ppass )
         }
     }
 
-    if( is_closed )
+    if ( is_closed )
     {
         // Close it off
         ppass->open = bfalse;

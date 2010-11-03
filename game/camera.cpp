@@ -80,10 +80,10 @@ ego_camera * ego_camera::ctor_this( ego_camera * pcam )
     pcam->zgoto        =  800;
     pcam->turn_z_rad   = -PI / 4.0f;
     pcam->turn_z_one   = pcam->turn_z_rad / TWO_PI;
-    pcam->ori.facing_z = CLIP_TO_16BITS(( int )( pcam->turn_z_one * ( float )0x00010000 ) ) ;
+    pcam->ori.facing_z = FACING_T( pcam->turn_z_one * float( 0x00010000L ) );
     pcam->turnadd      =  0;
     pcam->sustain      =  0.60f;
-    pcam->turnupdown   = ( float )( PI / 4 );
+    pcam->turnupdown   = ( float )( PI / 4.0f );
     pcam->roll         =  0;
     pcam->motion_blur  =  0;
 
@@ -611,7 +611,7 @@ void ego_camera::reset( ego_camera * pcam, ego_mpd   * pmesh )
     pcam->zgoto        = 1500;
     pcam->turn_z_rad   = -PI / 4.0f;
     pcam->turn_z_one   = pcam->turn_z_rad / TWO_PI;
-    pcam->ori.facing_z = CLIP_TO_16BITS(( int )( pcam->turn_z_one * ( float )0x00010000 ) ) ;
+    pcam->ori.facing_z = FACING_T( pcam->turn_z_one * float( 0x00010000L ) );
     pcam->turnupdown   = PI / 4.0f;
     pcam->roll         = 0;
     pcam->motion_blur  = 0;

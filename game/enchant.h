@@ -129,7 +129,7 @@ protected:
 
     /// construct this struct, and ALL dependent structs. use placement new
     static ego_enc_data * ctor_all( ego_enc_data * ptr ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) ego_enc_data(); } return ptr; }
-    /// denstruct this struct, and ALL dependent structs. call the destructor
+    /// destruct this struct, and ALL dependent structs. call the destructor
     static ego_enc_data * dtor_all( ego_enc_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_enc_data(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
 
     //---- memory management
@@ -151,7 +151,7 @@ protected:
 /// This encapsulates all the enchant functions and some extra data
 struct ego_enc : public ego_enc_data
 {
-    friend struct t_ego_obj_container< ego_enc, MAX_ENC >;
+    friend struct t_ego_obj_container< ego_obj_enc, MAX_ENC >;
 
     typedef ego_obj_enc object_type;
 
@@ -211,7 +211,7 @@ protected:
 
     /// construct this struct, and ALL dependent structs. use placement new
     static ego_enc * ctor_all( ego_enc * ptr, ego_obj_enc * pparent ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) ego_enc( pparent ); } return ptr; }
-    /// denstruct this struct, and ALL dependent structs. call the destructor
+    /// destruct this struct, and ALL dependent structs. call the destructor
     static ego_enc * dtor_all( ego_enc * ptr )  { if ( NULL != ptr ) { ptr->~ego_enc(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
 
     //---- memory management
@@ -252,6 +252,19 @@ struct ego_obj_enc : public ego_obj, public ego_enc
     typedef ego_obj_enc       its_type;
 
     ego_obj_enc( const ego_enc_container * pcont ) : ego_enc( this ), _container_ptr( pcont ) {};
+
+    static ego_obj_enc * retor_all( ego_obj_enc * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        const container_type * pcon = ptr->_container_ptr;
+
+        // explicitly destruct this object
+        ptr->~ego_obj_enc();
+        ptr = new( ptr ) ego_obj_enc( pcon );
+
+        return ptr;
+    }
 
     // This its_type is contained by container_type. We need some way of accessing it.
 

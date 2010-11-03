@@ -218,7 +218,7 @@ protected:
 
     /// construct this struct, and ALL dependent structs. use placement new
     static ego_prt_data * ctor_all( ego_prt_data * ptr ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) ego_prt_data(); } return ptr; }
-    /// denstruct this struct, and ALL dependent structs. call the destructor
+    /// destruct this struct, and ALL dependent structs. call the destructor
     static ego_prt_data * dtor_all( ego_prt_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_prt_data(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
 
     //---- memory management
@@ -234,7 +234,7 @@ protected:
 /// The definition of the particle object
 struct ego_prt : public ego_prt_data
 {
-    friend struct t_ego_obj_container< ego_prt, MAX_PRT >;
+    friend struct t_ego_obj_container< ego_obj_prt, MAX_PRT >;
 
     typedef ego_obj_prt object_type;
 
@@ -295,7 +295,7 @@ protected:
 
     /// construct this struct, and ALL dependent structs. use placement new
     static ego_prt * ctor_all( ego_prt * ptr, object_type * pobj );
-    /// denstruct this struct, and ALL dependent structs. call the destructor
+    /// destruct this struct, and ALL dependent structs. call the destructor
     static ego_prt * dtor_all( ego_prt * ptr );
 
     //---- memory management
@@ -336,6 +336,19 @@ struct ego_obj_prt : public ego_obj, public ego_prt
     typedef ego_obj_prt       its_type;
 
     ego_obj_prt( const container_type * pcont ) : ego_prt( this ), _container_ptr( pcont ), obj_base_display( btrue ) {};
+
+    static ego_obj_prt * retor_all( ego_obj_prt * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        const container_type * pcon = ptr->_container_ptr;
+
+        // explicitly destruct this object
+        ptr->~ego_obj_prt();
+        ptr = new( ptr ) ego_obj_prt( pcon );
+
+        return ptr;
+    }
 
     //---- extra data
 

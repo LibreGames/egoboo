@@ -237,7 +237,7 @@ static INLINE bool_t VALID_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     return
         ego_object_process_state_data::get_valid( pobj );
@@ -249,7 +249,7 @@ static INLINE bool_t DEFINED_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     return
         ego_object_process_state_data::get_valid( pobj )
@@ -262,7 +262,7 @@ static INLINE bool_t TERMINATED_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     return
         ego_object_process_state_data::get_valid( pobj )
@@ -275,7 +275,7 @@ static INLINE bool_t CONSTRUCTING_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     return
         ego_object_process_state_data::get_valid( pobj )
@@ -289,7 +289,7 @@ static INLINE bool_t INITIALIZING_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     return
         ego_object_process_state_data::get_constructed( pobj )
@@ -303,7 +303,7 @@ static INLINE bool_t PROCESSING_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     return
         ego_obj::get_on( pobj )
@@ -317,7 +317,7 @@ static INLINE bool_t DEINITIALIZING_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     return
         ego_object_process_state_data::get_constructed( pobj )
@@ -331,7 +331,7 @@ static INLINE bool_t WAITING_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     return
         ego_object_process_state_data::get_valid( pobj )
@@ -373,7 +373,7 @@ static INLINE bool_t INGAME_PCHR( const ego_chr * pchr )
     if ( NULL == pobj ) return bfalse;
 
     const ego_chr_container * pcont = POBJ_CHR_CGET_PCONT( pobj );
-    if ( !ego_chr_container::get_allocated( pcont ) ) return bfalse;
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
 
     if ( ego_obj::get_spawn_depth() > 0 )
     {

@@ -386,7 +386,7 @@ void chr_log_script_time( const CHR_REF & ichr )
     if ( NULL != ftmp )
     {
         fprintf( ftmp, "update == %d\tindex == %d\tname == \"%s\"\tclassname == \"%s\"\ttotal_time == %e\ttotal_calls == %f\n",
-                 update_wld, ( ichr ).get_value(), pchr->name, pcap->classname,
+                 update_wld, ichr.get_value(), pchr->name, pcap->classname,
                  pchr->ai.dbg_pro.time, pchr->ai.dbg_pro.count );
         fflush( ftmp );
         fclose( ftmp );
@@ -400,7 +400,6 @@ void free_one_character_in_game( const CHR_REF & character )
     ///
     /// @note This should only be called by cleanup_all_characters() or free_inventory_in_game()
 
-    int     cnt;
     ego_cap * pcap;
     ego_chr * pchr;
 
@@ -2218,7 +2217,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
         }
         else if ( required && overrideslots )
         {
-            log_error( "Object slot %i used twice (%s, %s)\n", ( icap ).get_value(), pcap->name, szLoadName );
+            log_error( "Object slot %i used twice (%s, %s)\n", icap.get_value(), pcap->name, szLoadName );
         }
         else
         {
@@ -2916,7 +2915,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 
     if ( profile >= MAX_PROFILE )
     {
-        log_warning( "spawn_one_character() - profile value too large %d out of %d\n", ( profile ).get_value(), MAX_PROFILE );
+        log_warning( __FUNCTION__ " - profile value too large %d out of %d\n", profile.get_value(), MAX_PROFILE );
         return CHR_REF( MAX_CHR );
     }
 
@@ -2924,7 +2923,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     {
         if ( profile > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "spawn_one_character() - trying to spawn using invalid profile %d\n", ( profile ).get_value() );
+            log_warning( __FUNCTION__ " - trying to spawn using invalid profile %d\n", profile.get_value() );
         }
         return CHR_REF( MAX_CHR );
     }
@@ -2933,7 +2932,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     iobj = ChrObjList.allocate( override );
     if ( !DEFINED_CHR( iobj ) )
     {
-        log_warning( "spawn_one_character() - failed to spawn character (invalid index number %d?)\n", ( iobj ).get_value() );
+        log_warning( __FUNCTION__ " - failed to spawn character (invalid index number %d?)\n", iobj.get_value() );
         return CHR_REF( MAX_CHR );
     }
 
@@ -2956,7 +2955,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 #if defined(DEBUG_OBJECT_SPAWN) && EGO_DEBUG
     {
         CAP_REF icap = pro_get_icap( profile );
-        log_debug( "spawn_one_character() - slot: %i, index: %i, name: %s, class: %s\n", profile.get_value(), iobj.get_value(), name, CapStack[icap].classname );
+        log_debug( __FUNCTION__ " - slot: %i, index: %i, name: %s, class: %s\n", profile.get_value(), iobj.get_value(), name, CapStack[icap].classname );
     }
 #endif
 
@@ -3717,7 +3716,7 @@ int restock_ammo( const CHR_REF & character, IDSZ idsz )
 
 //--------------------------------------------------------------------------------------------
 /// implementation of the constructor
-/// @note all *_REF members will be automatically constructed to an invalid value of unsigned(-1)
+/// @note all *_REF members will be automatically constructed to an invalid value of unsigned( ~0L )
 /// The team and baseteam references shouold be initialized to some default team
 ego_chr_data::ego_chr_data() :
         // character stats
@@ -5710,7 +5709,7 @@ ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
                     // Face the target
                 case TURNMODE_WATCHTARGET:
                     {
-                        if ( ChrObjList.in_range_ref( loc_pai->target ) && loc_ichr != loc_pai->target )
+                        if ( ChrObjList.valid_index_range( loc_pai->target.get_value() ) && loc_ichr != loc_pai->target )
                         {
                             fvec2_t loc_diff;
 
@@ -6663,7 +6662,7 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
     if ( rv < 0 )
     {
         pchr->ibillboard = INVALID_BILLBOARD;
-        BillboardList_free_one(( ibb ).get_value() );
+        BillboardList_free_one( ibb.get_value() );
         pbb = NULL;
     }
     else
@@ -7268,11 +7267,11 @@ void reset_teams()
         // Make the team hate everyone
         for ( teamb = 0; teamb < TEAM_MAX; teamb++ )
         {
-            TeamStack[teama].hatesteam[( teamb ).get_value()] = btrue;
+            TeamStack[teama].hatesteam[teamb.get_value()] = btrue;
         }
 
         // Make the team like itself
-        TeamStack[teama].hatesteam[( teama ).get_value()] = bfalse;
+        TeamStack[teama].hatesteam[teama.get_value()] = bfalse;
 
         // Set defaults
         TeamStack[teama].leader = NOLEADER;
@@ -7284,7 +7283,7 @@ void reset_teams()
     for ( teama = 0; teama < TEAM_MAX; teama++ )
     {
         TeamStack[teama].hatesteam[TEAM_NULL] = bfalse;
-        TeamStack[TEAM_REF( TEAM_NULL )].hatesteam[( teama ).get_value()] = bfalse;
+        TeamStack[TEAM_REF( TEAM_NULL )].hatesteam[teama.get_value()] = bfalse;
     }
 }
 
@@ -10600,7 +10599,7 @@ ego_chr *  ego_chr::do_initializing( ego_chr * pchr )
 
     // Make sure the pchr->spawn_data.team is valid
     loc_team = pchr->spawn_data.team;
-    iteam = ( loc_team ).get_value();
+    iteam = loc_team.get_value();
     iteam = CLIP( iteam, 0, TEAM_MAX );
     loc_team = TEAM_REF( iteam );
 
@@ -10765,7 +10764,7 @@ ego_chr *  ego_chr::do_initializing( ego_chr * pchr )
 #if EGO_DEBUG && defined(DEBUG_WAYPOINTS)
     if ( !IS_ATTACHED_PCHR( pchr ) && INFINITE_WEIGHT != pchr->phys.weight && !pchr->safe_valid )
     {
-        log_warning( "spawn_one_character() - \n\tinitial spawn position <%f,%f> is \"inside\" a wall. Wall normal is <%f,%f>\n",
+        log_warning( __FUNCTION__ " - \n\tinitial spawn position <%f,%f> is \"inside\" a wall. Wall normal is <%f,%f>\n",
                      pchr->pos.x, pchr->pos.y, nrm.x, nrm.y );
     }
 #endif

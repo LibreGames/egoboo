@@ -75,8 +75,6 @@ bool_t ego_obj_BSP::ctor_this( ego_obj_BSP * pbsp, mpd_BSP * pmesh_bsp )
 
     if ( NULL == pbsp || NULL == pmesh_bsp ) return bfalse;
 
-    SDL_memset( pbsp, 0, sizeof( *pbsp ) );
-
     // allocate the data
     ego_obj_BSP::alloc( pbsp, pmesh_bsp->tree.depth );
 

@@ -567,7 +567,6 @@ void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight,
         }
     }
 
-
     // convert the virtual coordinates to screen coordinates
     ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
     ui_virtual_to_screen_abs( vx + vwidth, vy + vheight, &x2, &y2 );

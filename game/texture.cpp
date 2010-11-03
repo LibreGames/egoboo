@@ -189,7 +189,7 @@ bool_t TxTexture_free_one( const TX_REF & itex )
     // do not put anything below TX_LAST back onto the free stack
     if ( itex >= TX_LAST )
     {
-        TxTexture.free_ref[TxTexture._free_count] = ( itex ).get_value();
+        TxTexture.free_ref[TxTexture._free_count] = itex.get_value();
 
         TxTexture._free_count++;
         TxTexture.update_guid++;

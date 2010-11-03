@@ -133,7 +133,7 @@ PROFILE_DECLARE( initialize_all_objects );
 PROFILE_DECLARE( bump_all_objects );
 PROFILE_DECLARE( move_all_objects );
 PROFILE_DECLARE( finalize_all_objects );
-PROFILE_DECLARE( update_game_clocks );
+PROFILE_DECLARE( game_update_clocks );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -142,7 +142,6 @@ bool_t  overrideslots      = bfalse;
 // End text
 char   endtext[MAXENDTEXT] = EMPTY_CSTR;
 size_t endtext_carat = 0;
-
 
 ego_mpd           * PMesh   = _mesh + 0;
 ego_camera          * PCamera = _camera + 0;
@@ -178,7 +177,7 @@ static void game_update_local_respawn();
 static void game_update_pits();
 static void game_update_controls();
 static void game_update_network();
-static void update_game_clocks();
+static void game_update_clocks();
 static void game_update_network_stats();
 static void game_update_local_stats();
 
@@ -457,10 +456,10 @@ void log_madused_vfs( const char *savename )
                 CAP_REF icap = pro_get_icap( cnt );
                 MAD_REF imad = pro_get_imad( cnt );
 
-                vfs_printf( hFileWrite, "%3d %32s %s\n", ( cnt ).get_value(), CapStack[icap].classname, MadStack[imad].name );
+                vfs_printf( hFileWrite, "%3d %32s %s\n", cnt.get_value(), CapStack[icap].classname, MadStack[imad].name );
             }
-            else if ( cnt <= 36 )    vfs_printf( hFileWrite, "%3d  %32s.\n", ( cnt ).get_value(), "Slot reserved for import players" );
-            else                    vfs_printf( hFileWrite, "%3d  %32s.\n", ( cnt ).get_value(), "Slot Unused" );
+            else if ( cnt <= 36 )    vfs_printf( hFileWrite, "%3d  %32s.\n", cnt.get_value(), "Slot reserved for import players" );
+            else                    vfs_printf( hFileWrite, "%3d  %32s.\n", cnt.get_value(), "Slot Unused" );
         }
 
         vfs_close( hFileWrite );
@@ -486,7 +485,7 @@ void activate_alliance_file_vfs( /*const char *modname*/ )
 
             fget_string( fileread, szTemp, SDL_arraysize( szTemp ) );
             teamb = ( szTemp[0] - 'A' ) % TEAM_MAX;
-            TeamStack[teama].hatesteam[( teamb ).get_value()] = bfalse;
+            TeamStack[teama].hatesteam[teamb.get_value()] = bfalse;
         }
 
         vfs_close( fileread );
@@ -862,18 +861,18 @@ int game_update()
     update_loop_cnt = 0;
 
     // measure the actual lag
-    update_lag = signed(true_update) - signed(update_wld);
+    update_lag = signed( true_update ) - signed( update_wld );
 
     // don't do anything if we are not behind
-    if ( update_wld > true_update + 1 ) return 0;
+    if ( update_wld > true_update ) return 0;
 
     // throttle the number of iterations through the loop
     int max_iterations = single_update_mode ? 1 : 2 * TARGET_UPS;
-    max_iterations = SDL_min( max_iterations, estimated_updates );
+    max_iterations = SDL_min( max_iterations, estimated_updates + 2 );
 
     if ( update_lag > max_iterations )
     {
-        log_warning( "Local machine not keeping up with the requuired updates-per-second.\n" );
+        log_warning( "Local machine not keeping up with the required updates-per-second. %d/%d\n", max_iterations, update_lag );
     }
 
     /// @todo claforte@> Put that back in place once networking is functional (Jan 6th 2001)
@@ -967,14 +966,14 @@ int game_update()
 
         // estimate how much time the main loop is taking per second
         est_single_update_time = 0.9 * est_single_update_time + 0.1 * PROFILE_QUERY( game_single_update );
-        est_single_ups         = 0.9 * est_single_ups         + 0.1 * ( 1.0f / PROFILE_QUERY( game_single_update ) );
+        est_single_ups         = 0.9 * est_single_ups         + 0.1 * ( 1.0 / PROFILE_QUERY( game_single_update ) );
     }
 
     return update_loop_cnt;
 }
 
 //--------------------------------------------------------------------------------------------
-void update_game_clocks()
+void game_update_clocks()
 {
     /// @details ZZ@> This function updates the game timers
 
@@ -1010,31 +1009,40 @@ void update_game_clocks()
     net_on_new = network_initialized();
     net_on_change = ( net_on_old != net_on_new );
 
-    // do nothing if the there is nothing running which can generate updates
-    if ( !game_on_new && !net_on_new )
-    {
-        return;
-    }
-
-    // determine how many frames and game updates there have been since the last time
-    ups_clk.update_counters();
-
     // determine the amount of ticks for various conditions
     if ( !ups_clk.initialized )
     {
         ups_clk.init();
         ego_ticks_diff = 0;
     }
-    else if ( net_on_new )
+    else
     {
-        // there really is no pause in a networked game
+        // determine how many frames and game updates there have been since the last time
+        ups_clk.update_counters();
 
-        /* nothing */
-    }
-    else if ( single_update_mode )
-    {
-        // the correct assumption for single frame mode
-        ego_ticks_diff = UPDATE_SKIP * ups_clk.update_dif;
+        // increment the ups_clk's ticks
+        ups_clk.update_ticks();
+
+        if ( single_update_mode )
+        {
+            // the correct assumption for single frame mode
+            ego_ticks_diff = SDL_max( UPDATE_SKIP * ups_clk.update_dif, FRAME_SKIP * ups_clk.frame_dif );
+        }
+        else if ( net_on_new )
+        {
+            // no pause for network games
+            ego_ticks_diff = ups_clk.tick_dif;
+        }
+        else if ( game_on_new )
+        {
+            // normal operation
+            ego_ticks_diff = ups_clk.tick_dif;
+        }
+        else
+        {
+            // this should only happen for paused, non-network games
+            ego_ticks_diff = 0;
+        }
     }
 
     // make sure that there is at least one tick since the last function call
@@ -1060,9 +1068,6 @@ void update_game_clocks()
     estimated_updates = SDL_max( 0, true_update - update_wld );
 
     //---- calculate the updates-per-second
-
-    // increment the ups_clk's ticks
-    ups_clk.update_ticks( ego_ticks_diff );
 
     if ( ups_clk.update_cnt > 0 && ups_clk.tick_cnt > 0 )
     {
@@ -1200,11 +1205,6 @@ egoboo_rv ego_game_process::do_beginning()
     make_randie();
     make_turntosin();
 
-    // reset the fps counter
-    fps_clk.init();
-    stabilized_fps_sum    = 0.1f * TARGET_FPS;
-    stabilized_fps_weight = 0.1f;
-
     // Linking system
     log_info( "Initializing module linking... " );
     if ( link_build_vfs( "mp_data/link.txt", LinkList ) ) log_message( "Success!\n" );
@@ -1229,8 +1229,7 @@ egoboo_rv ego_game_process::do_beginning()
         MProc->resume();
     }
 
-    // Initialize the process
-    valid = btrue;
+    ego_obj_BSP::ctor_this( &ego_obj_BSP::root, &mpd_BSP::root );
 
     // initialize all the profile variables
     PROFILE_RESET( game_update_loop );
@@ -1244,11 +1243,15 @@ egoboo_rv ego_game_process::do_beginning()
     PROFILE_RESET( PassageStack_check_music );
     PROFILE_RESET( cl_talkToHost );
 
-    stabilized_ups_sum    = 0.0f;
-    stabilized_ups_weight = 0.0f;
+    // reset the fps clock
+    fps_clk.init();
+    stabilized_fps_sum    = 0.1f * TARGET_FPS;
+    stabilized_fps_weight = 0.1f;
 
-    stabilized_fps_sum    = 0.0f;
-    stabilized_fps_weight = 0.0f;
+    // reset the ups clock
+    ups_clk.init();
+    stabilized_ups_sum    = 0.1f * TARGET_UPS;
+    stabilized_ups_weight = 0.1f;
 
     // re-initialize these variables
     est_max_fps          =  TARGET_FPS;
@@ -1266,7 +1269,8 @@ egoboo_rv ego_game_process::do_beginning()
     est_update_game_time  = 1.0f / TARGET_UPS;
     est_max_game_ups      = TARGET_UPS;
 
-    ego_obj_BSP::ctor_this( &ego_obj_BSP::root, &mpd_BSP::root );
+    // Initialize the process
+    valid = btrue;
 
     // go to the next state
     result = 0;
@@ -1320,6 +1324,8 @@ void game_update_network()
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_game_process::do_running()
 {
+    static was_in_game = bfalse;
+
     int update_loops = 0;
 
     if ( NULL == this )  return rv_error;
@@ -1360,6 +1366,13 @@ egoboo_rv ego_game_process::do_running()
                 net_send_message();
             }
 
+            // performance planning
+            PROFILE_BEGIN( game_update_clocks );
+            {
+                game_update_clocks();
+            }
+            PROFILE_END2( game_update_clocks );
+
             // This is what would display network chat message,
             // so that part of this function needs to be here.
             // maybe everything else belongs inside the if structure, below?
@@ -1399,16 +1412,9 @@ egoboo_rv ego_game_process::do_running()
                     update_loops = game_update();
                 }
 
-                est_update_game_time = 0.9 * est_update_game_time + 0.1 * est_single_update_time * update_loops;
-                est_max_game_ups     = 0.9 * est_max_game_ups     + 0.1 * 1.0 / est_update_game_time;
+                est_update_game_time = 0.9f * est_update_game_time + 0.1f * est_single_update_time * update_loops;
+                est_max_game_ups     = 0.9f * est_max_game_ups     + 0.1f * 1.0f / est_update_game_time;
             }
-
-            // performance planning. Do it here, or only when the game is active?
-            PROFILE_BEGIN( update_game_clocks );
-            {
-                update_game_clocks();
-            }
-            PROFILE_END2( update_game_clocks );
         }
         PROFILE_END2( game_update_loop );
 
@@ -1423,7 +1429,7 @@ egoboo_rv ego_game_process::do_running()
         else
         {
             est_update_time = 0.9 * est_update_time + 0.1 * PROFILE_QUERY( game_update_loop );
-            est_max_ups     = 0.9 * est_max_ups     + 0.1 * ( 1.0f / PROFILE_QUERY( game_update_loop ) );
+            est_max_ups     = 0.9 * est_max_ups     + 0.1 * ( 1.0 / PROFILE_QUERY( game_update_loop ) );
         }
 
         single_update_requested = bfalse;
@@ -1447,11 +1453,11 @@ egoboo_rv ego_game_process::do_running()
 
         // estimate how much time the main loop is taking per second
         est_gfx_time = 0.9 * est_gfx_time + 0.1 * PROFILE_QUERY( gfx_loop );
-        est_max_gfx  = 0.9 * est_max_gfx  + 0.1 * ( 1.0f / PROFILE_QUERY( gfx_loop ) );
+        est_max_gfx  = 0.9 * est_max_gfx  + 0.1 * ( 1.0 / PROFILE_QUERY( gfx_loop ) );
 
         // estimate how much time the main loop is taking per second
         est_render_time = est_gfx_time * TARGET_FPS;
-        est_max_fps  = 0.9 * est_max_fps + 0.1 * ( 1.0f - est_update_time * TARGET_UPS ) / PROFILE_QUERY( gfx_loop );
+        est_max_fps     = 0.9 * est_max_fps + 0.1 * ( 1.0 - est_update_time * TARGET_UPS ) / PROFILE_QUERY( gfx_loop );
 
         single_frame_requested = bfalse;
     }
@@ -2019,7 +2025,7 @@ void do_weather_spawn_particles()
             ego_player * tmp_ppla = NULL;
             ego_chr    * tmp_pchr = NULL;
 
-            weather_ipla = PLA_REF((( weather_ipla ).get_value() + 1 ) % MAX_PLAYER );
+            weather_ipla = PLA_REF(( weather_ipla.get_value() + 1 ) % MAX_PLAYER );
 
             tmp_ppla = PlaStack + weather_ipla;
             if ( !tmp_ppla->valid ) continue;
@@ -3134,7 +3140,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
         }
 
         // Turn on the stat display
-        if( StatList.add( new_object ) )
+        if ( StatList.add( new_object ) )
         {
             pobject->draw_stats = btrue;
         }
@@ -3864,18 +3870,18 @@ void let_all_characters_think()
             set_alerts( &bdl );
 
             // handle special cases
-            if ( is_cleanedup )  
+            if ( is_cleanedup )
             {
                 // Cleaned up characters shouldn't be alert to anything else
                 bdl.ai_state_ptr->alert = ALERTIF_CLEANEDUP;
             }
             else if ( is_crushed )
-            { 
+            {
                 // Crushed characters shouldn't be alert to anything else
-                bdl.ai_state_ptr->alert = ALERTIF_CRUSHED; 
-                bdl.ai_state_ptr->timer = update_wld + 1; 
+                bdl.ai_state_ptr->alert = ALERTIF_CRUSHED;
+                bdl.ai_state_ptr->timer = update_wld + 1;
             }
-            else if ( gained_level )  
+            else if ( gained_level )
             {
                 // Level up characters shouldn't be alert to anything else
                 bdl.ai_state_ptr->alert = ALERTIF_LEVELUP;
@@ -5549,7 +5555,6 @@ bool_t stat_lst::remove( const CHR_REF & ichr )
     return stat_found;
 }
 
-
 //--------------------------------------------------------------------------------------------
 bool_t stat_lst::add( const CHR_REF & ichr )
 {
@@ -5557,19 +5562,19 @@ bool_t stat_lst::add( const CHR_REF & ichr )
 
     if ( count >= MAXSTAT ) return bfalse;
 
-    if( !ChrObjList.in_range_ref( ichr ) ) return bfalse;
+    if ( !ChrObjList.valid_index_range( ichr.get_value() ) ) return bfalse;
 
     bool_t found = bfalse;
-    for( int i = 0; i < count; i++ )
+    for ( int i = 0; i < count; i++ )
     {
-        if( lst[i] == ichr )
+        if ( lst[i] == ichr )
         {
             found = btrue;
             break;
         }
     }
 
-    if( !found )
+    if ( !found )
     {
         lst[count] = ichr;
         count++;

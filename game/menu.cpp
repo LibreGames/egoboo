@@ -1705,7 +1705,7 @@ int ChooseModule_data::run( double deltaTime )
                         if ( FILTER_HIDDEN == mnu_ModList[imod].base.moduletype )  continue;
 
                         // starter module
-                        validModules[numValidModules] = ( imod ).get_value();
+                        validModules[numValidModules] = imod.get_value();
                         numValidModules++;
                     }
                     else
@@ -1717,7 +1717,7 @@ int ChooseModule_data::run( double deltaTime )
                         if ( mnu_selectedPlayerCount > mnu_ModList[imod].base.maxplayers ) continue;
 
                         // regular module
-                        validModules[numValidModules] = ( imod ).get_value();
+                        validModules[numValidModules] = imod.get_value();
                         numValidModules++;
                     }
                 }
@@ -2313,7 +2313,6 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
 
         //---- Armor
         y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 40, "Wearing %s %s", pcap->skinname[skin], HAS_SOME_BITS( pcap->skindressy, 1 << skin ) ? "(Light)" : "(Heavy)" );
-
 
         //---- Life and mana (can be less than maximum if not in easy mode)
         if ( cfg.difficulty >= GAME_NORMAL )
@@ -5244,8 +5243,8 @@ int OptionsVideo_data::fix_fullscreen_resolution( config_data_t * pcfg, SDLX_scr
         sdl_aspect_ratio = ( float )prect->w / ( float )prect->h;
         sdl_screen_area  = prect->w * prect->h;
 
-        diff1 = log( sdl_aspect_ratio / aspect_ratio );
-        diff2 = log( sdl_screen_area / req_screen_area );
+        diff1 = LOG( sdl_aspect_ratio / aspect_ratio );
+        diff2 = LOG( sdl_screen_area / req_screen_area );
 
         diff = 2.0f * SDL_abs( diff1 ) + SDL_abs( diff2 );
 
@@ -7051,7 +7050,7 @@ void mnu_load_all_module_images_vfs()
 
             mnu_ModList[imod].tex_index = TxTitleImage_load_one_vfs( loadname );
 
-            vfs_printf( filesave, "%02d.  %s\n", ( imod ).get_value(), mnu_ModList[imod].vfs_path );
+            vfs_printf( filesave, "%02d.  %s\n", imod.get_value(), mnu_ModList[imod].vfs_path );
         }
         else
         {
@@ -7128,7 +7127,7 @@ int mnu_get_mod_number( const char *szModName )
     {
         if ( 0 == strcmp( mnu_ModList[modnum].vfs_path, szModName ) )
         {
-            retval = ( modnum ).get_value();
+            retval = modnum.get_value();
             break;
         }
     }
@@ -7337,7 +7336,7 @@ void mnu_ModList_release_images()
     for ( cnt = 0; cnt < mnu_ModList.count; cnt++ )
     {
         if ( !mnu_ModList[cnt].loaded ) continue;
-        tnc = ( cnt ).get_value();
+        tnc = cnt.get_value();
 
         TxTitleImage_release_one( mnu_ModList[cnt].tex_index );
         mnu_ModList[cnt].tex_index = INVALID_TITLE_TEXTURE;

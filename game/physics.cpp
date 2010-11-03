@@ -468,8 +468,8 @@ ego_breadcrumb * breadcrumb_init_chr( ego_breadcrumb * bc, ego_chr * pchr )
 
     bc->bits   = pchr->stoppedby;
     bc->radius = pchr->bump_1.size;
-    bc->pos.x  = ( floor( pchr->pos.x / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
-    bc->pos.y  = ( floor( pchr->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
+    bc->pos.x  = ( FLOOR( pchr->pos.x / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
+    bc->pos.y  = ( FLOOR( pchr->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
     bc->pos.z  = pchr->pos.z;
 
     bc->grid   = ego_mpd::get_tile( PMesh, bc->pos.x, bc->pos.y );
@@ -503,8 +503,8 @@ ego_breadcrumb * breadcrumb_init_prt( ego_breadcrumb * bc, ego_prt * pprt )
     bc->radius = pprt->bump_real.size;
 
     bc->pos = ego_prt::get_pos( pprt );
-    bc->pos.x  = ( floor( bc->pos.x / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
-    bc->pos.y  = ( floor( bc->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
+    bc->pos.x  = ( FLOOR( bc->pos.x / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
+    bc->pos.y  = ( FLOOR( bc->pos.y / GRID_SIZE ) + 0.5f ) * GRID_SIZE;
 
     bc->grid   = ego_mpd::get_tile( PMesh, bc->pos.x, bc->pos.y );
     bc->valid  = ( 0 == ego_mpd::test_wall( PMesh, bc->pos.v, bc->radius, bc->bits, NULL ) );

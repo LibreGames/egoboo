@@ -239,21 +239,7 @@ private:
     branch_set_t        branch_used;
     branch_stack_t      branch_free;
 
-    static ego_BSP_tree * clear( ego_BSP_tree * ptr )
-    {
-        if ( NULL == ptr ) return ptr;
-
-        ptr->dimensions = 0;
-        ptr->depth      = -1;
-        ptr->root = NULL;
-
-        if ( !ptr->infinite.empty() )
-        {
-            ptr->infinite.clear();
-        }
-
-        return ptr;
-    }
+    static ego_BSP_tree * clear( ego_BSP_tree * ptr );
 
 };
 

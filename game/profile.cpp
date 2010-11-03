@@ -275,7 +275,7 @@ bool_t ProList_push_free( const PRO_REF & iobj )
     retval = bfalse;
     if ( ProList._free_count < MAX_PROFILE )
     {
-        ProList.free_ref[ProList._free_count] = ( iobj ).get_value();
+        ProList.free_ref[ProList._free_count] = iobj.get_value();
 
         ProList._free_count++;
         ProList.update_guid++;
@@ -805,7 +805,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     iobj = ProList_get_free( iobj );
     if ( !VALID_PRO_RANGE( iobj ) )
     {
-        log_warning( "load_one_profile_vfs() - Cannot allocate object %d (\"%s\")\n", ( iobj ).get_value(), tmploadname );
+        log_warning( "load_one_profile_vfs() - Cannot allocate object %d (\"%s\")\n", iobj.get_value(), tmploadname );
         return MAX_PROFILE;
     }
 

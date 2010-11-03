@@ -445,7 +445,7 @@ bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolum
         }
 
         // record the Cartesian rotation angle relative to center
-        pd[tnc].rads = atan2( pd[cnt].pos.y - center.y, pd[cnt].pos.x - center.x );
+        pd[tnc].rads = ATAN2( pd[cnt].pos.y - center.y, pd[cnt].pos.x - center.x );
         tnc++;
     }
 

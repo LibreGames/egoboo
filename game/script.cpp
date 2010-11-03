@@ -189,7 +189,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
         FILE * scr_file = ( NULL == debug_script_file ) ? stdout : debug_script_file;
 
         fprintf( scr_file,  "\n\n--------\n%d - %s\n", script_error_index, script_error_name );
-        fprintf( scr_file,  "%d - %s\n", ( script_error_model ).get_value(), script_error_classname );
+        fprintf( scr_file,  "%d - %s\n", script_error_model.get_value(), script_error_classname );
 
         // who are we related to?
         fprintf( scr_file,  "\tindex  == %d\n", ( pai->index ).get_value() );
@@ -455,7 +455,7 @@ Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
     returncode = btrue;
     if ( MAX_OPCODE == valuecode )
     {
-        log_message( "SCRIPT ERROR: scr_run_function() - model == %d, class name == \"%s\" - Unknown opcode found!\n", ( script_error_model ).get_value(), script_error_classname );
+        log_message( "SCRIPT ERROR: scr_run_function() - model == %d, class name == \"%s\" - Unknown opcode found!\n", script_error_model.get_value(), script_error_classname );
         return bfalse;
     }
 
@@ -1501,7 +1501,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
                 break;
 
             default:
-                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Unknown variable found!\n", ( script_error_model ).get_value(), script_error_classname );
+                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Unknown variable found!\n", script_error_model.get_value(), script_error_classname );
                 break;
         }
     }
@@ -1548,7 +1548,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
             }
             else
             {
-                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Cannot divide by zero!\n", ( script_error_model ).get_value(), script_error_classname );
+                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Cannot divide by zero!\n", script_error_model.get_value(), script_error_classname );
             }
             break;
 
@@ -1560,12 +1560,12 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
             }
             else
             {
-                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Cannot modulo by zero!\n", ( script_error_model ).get_value(), script_error_classname );
+                log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - Cannot modulo by zero!\n", script_error_model.get_value(), script_error_classname );
             }
             break;
 
         default:
-            log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - unknown op\n", ( script_error_model ).get_value(), script_error_classname );
+            log_message( "SCRIPT ERROR: scr_run_operand() - model == %d, class name == \"%s\" - unknown op\n", script_error_model.get_value(), script_error_classname );
             break;
     }
 

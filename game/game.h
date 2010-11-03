@@ -335,7 +335,7 @@ struct ego_import_data
 
     void init()
     {
-        for( int i = 0; i < IMPORT_MAX; i++ )
+        for ( int i = 0; i < IMPORT_MAX; i++ )
         {
             control[i] = 0;
             slot[i]    = -1;
@@ -362,16 +362,16 @@ struct stat_lst
     {
         on = btrue;
         count = 0;
-        for( int i=0; i < MAXSTAT; i++ )
+        for ( int i = 0; i < MAXSTAT; i++ )
         {
-            lst[i] = CHR_REF(MAX_CHR);
+            lst[i] = CHR_REF( MAX_CHR );
         }
     }
 
-    CHR_REF & operator [] ( size_t val ) { return lst[val]; }
+    CHR_REF & operator []( size_t val ) { return lst[val]; }
 
     bool_t remove( const CHR_REF & ichr );
-    bool_t add   ( const CHR_REF & ichr );
+    bool_t add( const CHR_REF & ichr );
     bool_t move_to_top( const CHR_REF & ichr );
 
 private:

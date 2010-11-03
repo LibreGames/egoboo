@@ -794,19 +794,19 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
 
     oglx_texture_t * ptex = TxTexture_get_ptr( icontype );
 
-    ATTRIB_PUSH( __FUNCTION__, GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_CURRENT_BIT );
+    ATTRIB_PUSH( __FUNCTION__, GL_ENABLE_BIT | GL_CURRENT_BIT );
     {
         GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f ); // GL_CURRENT_BIT
 
         // an alternate way of setting a "null" texture... see if this reduces ogl errors
-        if( NULL == ptex || INVALID_GL_ID == ptex->base.binding )
+        if ( NULL == ptex || INVALID_GL_ID == ptex->base.binding )
         {
             GL_DEBUG( glDisable )( GL_TEXTURE_2D );        // GL_ENABLE_BIT
         }
         else
         {
             GL_DEBUG( glEnable )( GL_TEXTURE_2D );         // GL_ENABLE_BIT
-            oglx_texture_Bind( ptex );                     // GL_TEXTURE_BIT
+            oglx_texture_Bind( ptex );
         }
 
         GL_DEBUG_BEGIN( GL_QUADS );
@@ -818,7 +818,7 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
         }
         GL_DEBUG_END();
     }
-    ATTRIB_POP(__FUNCTION__)
+    ATTRIB_POP( __FUNCTION__ )
 
     if ( sparkle != NOSPARKLE )
     {
@@ -1434,11 +1434,11 @@ void draw_map()
         // If one of the players can sense enemies via EMP, draw them as blips on the map
         if ( TEAM_MAX != local_stats.sense_enemy_ID )
         {
-            CHR_BEGIN_LOOP_ACTIVE( ichr, pchr ) 
+            CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
             {
                 ego_cap * pcap;
 
-                if(  blip_count >= MAXBLIP ) break;
+                if ( blip_count >= MAXBLIP ) break;
 
                 pcap = ego_chr::get_pcap( ichr );
                 if ( NULL == pcap ) continue;
@@ -1465,7 +1465,6 @@ void draw_map()
             }
             CHR_END_LOOP();
         }
-        
 
         // draw all the blips
         for ( cnt = 0; cnt < blip_count; cnt++ )
@@ -1630,7 +1629,7 @@ int draw_debug_player( PLA_REF ipla, int y )
         CHR_REF ichr = ppla->index;
         ego_chr  *pchr = ChrObjList.get_data_ptr( ichr );
 
-        y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", ( ipla ).get_value(),
+        y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", ipla.get_value(),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_CRUSH] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_POKE ] ),
@@ -1640,7 +1639,7 @@ int draw_debug_player( PLA_REF ipla, int y )
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ICE  ] ),
                               GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ZAP  ] ) );
 
-        y = _draw_string_raw( 0, y, "~~PLA%d %5.1f %5.1f", ( ipla ).get_value(), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
+        y = _draw_string_raw( 0, y, "~~PLA%d %5.1f %5.1f", ipla.get_value(), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
     }
 
     return y;
@@ -1662,7 +1661,7 @@ int draw_debug( int y )
         {
             ego_chr * pchr = ChrObjList.get_data_ptr( ppla->index );
 
-            y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", ( ipla ).get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
+            y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", ipla.get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
         }
     }
 
@@ -2757,8 +2756,8 @@ void render_world_background( const TX_REF & texture )
     z0 = 1500;
 
     // clip the waterlayer uv offset
-    ilayer->tx.x = ilayer->tx.x - ( float )floor( ilayer->tx.x );
-    ilayer->tx.y = ilayer->tx.y - ( float )floor( ilayer->tx.y );
+    ilayer->tx.x = ilayer->tx.x - ( float )FLOOR( ilayer->tx.x );
+    ilayer->tx.y = ilayer->tx.y - ( float )FLOOR( ilayer->tx.y );
 
     // determine the constants for the x-coordinate
     xmag = water.backgroundrepeat / 4 / ( 1.0f + z0 * ilayer->dist.x ) / GRID_SIZE;
@@ -3244,8 +3243,8 @@ float grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, 
     if ( NULL == pmesh ) return bfalse;
     glist = pmesh->gmem.grid_list;
 
-    ix = floor( pos[XX] / GRID_SIZE );
-    iy = floor( pos[YY] / GRID_SIZE );
+    ix = FLOOR( pos[XX] / GRID_SIZE );
+    iy = FLOOR( pos[YY] / GRID_SIZE );
 
     fan[0] = ego_mpd::get_tile_int( pmesh, ix,     iy );
     fan[1] = ego_mpd::get_tile_int( pmesh, ix + 1, iy );
@@ -3280,8 +3279,8 @@ bool_t grid_lighting_interpolate( ego_mpd   * pmesh, ego_lighting_cache * dst, f
     if ( NULL == pmesh ) return bfalse;
     glist = pmesh->gmem.grid_list;
 
-    ix = floor( fx / GRID_SIZE );
-    iy = floor( fy / GRID_SIZE );
+    ix = FLOOR( fx / GRID_SIZE );
+    iy = FLOOR( fy / GRID_SIZE );
 
     fan[0] = ego_mpd::get_tile_int( pmesh, ix,     iy );
     fan[1] = ego_mpd::get_tile_int( pmesh, ix + 1, iy );
@@ -3341,8 +3340,8 @@ void gfx_update_timers()
     }
 
     // save the old process states
-    mnu_on_old  = MProc->running();
-    game_on_old = GProc->running();
+    mnu_on_old  = rv_success == MProc->running();
+    game_on_old = rv_success == GProc->running();
 
     // determine how many frames and game updates there have been since the last time
     fps_clk.update_counters();
@@ -3590,7 +3589,7 @@ void BillboardList_update_all()
             }
 
             // deallocate the billboard
-            BillboardList_free_one(( cnt ).get_value() );
+            BillboardList_free_one( cnt.get_value() );
         }
         else
         {
@@ -3968,7 +3967,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
 
     if ( NULL == bb ) return bfalse;
 
-    ATTRIB_PUSH( "render_oct_bb", GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT );
+    ATTRIB_PUSH( "render_oct_bb", GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT );
     {
         // don't write into the depth buffer
         GL_DEBUG( glDepthMask )( GL_FALSE );
@@ -5609,10 +5608,10 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
 
         radius = SQRT( pdyna->falloff * 765.0f / 2.0f );
 
-        ftmp.xmin = floor(( pdyna->pos.x - radius ) / GRID_SIZE ) * GRID_SIZE;
-        ftmp.xmax = ceil(( pdyna->pos.x + radius ) / GRID_SIZE ) * GRID_SIZE;
-        ftmp.ymin = floor(( pdyna->pos.y - radius ) / GRID_SIZE ) * GRID_SIZE;
-        ftmp.ymax = ceil(( pdyna->pos.y + radius ) / GRID_SIZE ) * GRID_SIZE;
+        ftmp.xmin = FLOOR(( pdyna->pos.x - radius ) / GRID_SIZE ) * GRID_SIZE;
+        ftmp.xmax = CEIL(( pdyna->pos.x + radius ) / GRID_SIZE ) * GRID_SIZE;
+        ftmp.ymin = FLOOR(( pdyna->pos.y - radius ) / GRID_SIZE ) * GRID_SIZE;
+        ftmp.ymax = CEIL(( pdyna->pos.y + radius ) / GRID_SIZE ) * GRID_SIZE;
 
         // check to see if it intersects the "frustum"
         if ( ftmp.xmin <= mesh_bound.xmax && ftmp.xmax >= mesh_bound.xmin )

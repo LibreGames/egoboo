@@ -1042,7 +1042,7 @@ void cl_talkToHost()
             // Find the local players
             if ( INPUT_BITS_NONE != ppla->device.bits )
             {
-                net_packet::add_UnsignedByte( &tmp_packet, ( player ).get_value() );                     // The player index
+                net_packet::add_UnsignedByte( &tmp_packet, player.get_value() );                     // The player index
 
                 net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
                 net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
@@ -1090,7 +1090,7 @@ void sv_talkToRemotes()
 
                 if ( !ppla->valid ) continue;
 
-                net_packet::add_UnsignedByte( &tmp_packet, ( player ).get_value() );                     // The player index
+                net_packet::add_UnsignedByte( &tmp_packet, player.get_value() );                     // The player index
 
                 net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
                 net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
@@ -1128,12 +1128,12 @@ void sv_talkToRemotes()
                 ptlatch->button = ppla->local_latch.b;
 
                 // reduce the resolution of the motion to match the network packets
-                ptlatch->raw[kX] = floor( ppla->local_latch.raw[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
-                ptlatch->raw[kY] = floor( ppla->local_latch.raw[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->raw[kX] = FLOOR( ppla->local_latch.raw[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->raw[kY] = FLOOR( ppla->local_latch.raw[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
 
-                ptlatch->dir[kX] = floor( ppla->local_latch.dir[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
-                ptlatch->dir[kY] = floor( ppla->local_latch.dir[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
-                ptlatch->dir[kZ] = floor( ppla->local_latch.dir[kZ] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kX] = FLOOR( ppla->local_latch.dir[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kY] = FLOOR( ppla->local_latch.dir[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kZ] = FLOOR( ppla->local_latch.dir[kZ] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
 
                 ptlatch->time = true_update;
 

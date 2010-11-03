@@ -377,7 +377,7 @@ ego_BSP_branch * ego_BSP_branch::alloc( ego_BSP_branch * B, size_t dim )
     EGOBOO_ASSERT( child_count == B->child_lst.size() )
 
     // initialize the elements
-    for ( int cnt = 0; cnt < child_count; cnt++ )
+    for ( size_t cnt = 0; cnt < child_count; cnt++ )
     {
         B->child_lst[cnt] = NULL;
     }
@@ -939,10 +939,7 @@ bool_t ego_BSP_tree::clear_nodes( ego_BSP_tree   * t, bool_t recursive )
     }
 
     // free the infinite nodes of the tree
-    if ( !t->infinite.empty() )
-    {
-        t->infinite.clear();
-    }
+    ego_BSP_leaf_list_clear( t->infinite );
 
     return btrue;
 }
@@ -1388,6 +1385,69 @@ int ego_BSP_tree::collide( ego_BSP_tree * tree, ego_BSP_aabb * paabb, leaf_child
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t ego_BSP_tree::generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BSP_aabb * pdst )
+{
+    size_t cnt;
+    int    tnc;
+    size_t child_lst_count;
+
+    // valid source?
+    if ( NULL == psrc || psrc->dim <= 0 ) return bfalse;
+
+    // valid destination?
+    if ( NULL == pdst ) return bfalse;
+
+    // valid index?
+    child_lst_count = ( 0 == psrc->dim ) ? 0 : 2 << ( psrc->dim - 1 );
+    if ( index < 0 || size_t( index ) >= child_lst_count ) return bfalse;
+
+    // make sure that the destination type matches the source type
+    if ( pdst->dim != psrc->dim )
+    {
+        ego_BSP_aabb::alloc( pdst, psrc->dim );
+    }
+
+    // determine the bounds
+    for ( cnt = 0; cnt < psrc->dim; cnt++ )
+    {
+        float maxval, minval;
+
+        tnc = (( signed )psrc->dim ) - 1 - cnt;
+
+        if ( 0 == ( index & ( 1 << tnc ) ) )
+        {
+            minval = psrc->mins[cnt];
+            maxval = psrc->mids[cnt];
+        }
+        else
+        {
+            minval = psrc->mids[cnt];
+            maxval = psrc->maxs[cnt];
+        }
+
+        pdst->mins[cnt] = minval;
+        pdst->maxs[cnt] = maxval;
+        pdst->mids[cnt] = 0.5f * ( minval + maxval );
+    }
+
+    return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_BSP_tree * ego_BSP_tree::clear( ego_BSP_tree * ptr )
+{
+    if ( NULL == ptr ) return ptr;
+
+    ptr->dimensions = 0;
+    ptr->depth      = -1;
+    ptr->root       = NULL;
+
+    ego_BSP_leaf_list_clear( ptr->infinite );
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_leaf_list_insert( leaf_child_list_t & lst, ego_BSP_leaf * n )
 {
@@ -1464,54 +1524,4 @@ bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb * p
     retval = btrue;
 
     return retval;
-}
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-bool_t ego_BSP_tree::generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BSP_aabb * pdst )
-{
-    size_t cnt;
-    int    tnc;
-    size_t child_lst_count;
-
-    // valid source?
-    if ( NULL == psrc || psrc->dim <= 0 ) return bfalse;
-
-    // valid destination?
-    if ( NULL == pdst ) return bfalse;
-
-    // valid index?
-    child_lst_count = ( 0 == psrc->dim ) ? 0 : 2 << ( psrc->dim - 1 );
-    if ( index < 0 || size_t( index ) >= child_lst_count ) return bfalse;
-
-    // make sure that the destination type matches the source type
-    if ( pdst->dim != psrc->dim )
-    {
-        ego_BSP_aabb::alloc( pdst, psrc->dim );
-    }
-
-    // determine the bounds
-    for ( cnt = 0; cnt < psrc->dim; cnt++ )
-    {
-        float maxval, minval;
-
-        tnc = (( signed )psrc->dim ) - 1 - cnt;
-
-        if ( 0 == ( index & ( 1 << tnc ) ) )
-        {
-            minval = psrc->mins[cnt];
-            maxval = psrc->mids[cnt];
-        }
-        else
-        {
-            minval = psrc->mids[cnt];
-            maxval = psrc->maxs[cnt];
-        }
-
-        pdst->mins[cnt] = minval;
-        pdst->maxs[cnt] = maxval;
-        pdst->mids[cnt] = 0.5f * ( minval + maxval );
-    }
-
-    return btrue;
 }

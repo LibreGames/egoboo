@@ -199,8 +199,8 @@ egoboo_rv ego_main_process::do_running()
 
     was_active  = valid;
 
-    menu_valid = MProc->validate( );
-    game_valid = GProc->validate( );
+    menu_valid = rv_success == MProc->validate( );
+    game_valid = rv_success == GProc->validate( );
     if ( !menu_valid && !game_valid )
     {
         kill( );
@@ -464,65 +464,6 @@ egoboo_rv ego_main_process::do_finishing()
 
     return rv_success;
 }
-
-//--------------------------------------------------------------------------------------------
-//int ego_main_process::Run( ego_main_process * eproc, double frameDuration )
-//{
-//    int result = 0, proc_result = 0;
-//
-//    if ( !ego_process::validate( eproc ) ) return -1;
-//    eproc->dtime = frameDuration;
-//
-//    if ( !eproc->paused ) return 0;
-//
-//    if ( eproc->killme )
-//    {
-//        eproc->state = proc_leaving;
-//    }
-//
-//    switch ( eproc->state )
-//    {
-//        case proc_beginning:
-//            proc_result = ego_main_process::do_beginning( eproc );
-//
-//            if ( 1 == proc_result )
-//            {
-//                eproc->state = proc_entering;
-//            }
-//            break;
-//
-//        case proc_entering:
-//            // proc_result = ego_main_process::do_entering( eproc );
-//
-//            eproc->state = proc_running;
-//            break;
-//
-//        case proc_running:
-//            proc_result = ego_main_process::do_running( eproc );
-//
-//            if ( 1 == proc_result )
-//            {
-//                eproc->state = proc_leaving;
-//            }
-//            break;
-//
-//        case proc_leaving:
-//            proc_result = ego_main_process::do_leaving( eproc );
-//
-//            if ( 1 == proc_result )
-//            {
-//                eproc->state  = proc_finishing;
-//                eproc->killme = bfalse;
-//            }
-//            break;
-//
-//        case proc_finishing:
-//            ego_process::terminate( eproc );
-//            break;
-//    }
-//
-//    return result;
-//}
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

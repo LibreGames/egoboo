@@ -168,10 +168,10 @@ extern "C"
 #    define MISSING_BITS(XX,YY)  (HAS_SOME_BITS(XX,YY) && !HAS_ALL_BITS(XX,YY))
 #endif
 
-#define CLIP_TO_08BITS( V1 )  ( (V1) & 0xFF       )
-#define CLIP_TO_16BITS( V1 )  ( (V1) & 0xFFFF     )
-#define CLIP_TO_24BITS( V1 )  ( (V1) & 0xFFFFFF   )
-#define CLIP_TO_32BITS( V1 )  ( (V1) & 0xFFFFFFFF )
+#define CLIP_TO_08BITS( V1 )  ( ((unsigned)(V1)) & ((unsigned)0x000000FFL) )
+#define CLIP_TO_16BITS( V1 )  ( ((unsigned)(V1)) & ((unsigned)0x0000FFFFL) )
+#define CLIP_TO_24BITS( V1 )  ( ((unsigned)(V1)) & ((unsigned)0x00FFFFFFL) )
+#define CLIP_TO_32BITS( V1 )  ( ((unsigned)(V1)) & ((unsigned)0xFFFFFFFFL) )
 
 //--------------------------------------------------------------------------------------------
 // RECTANGLE

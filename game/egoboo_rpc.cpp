@@ -210,7 +210,7 @@ void TxReqList_ctor()
         ego_tx_request::ctor_this( preq, -1 );
 
         // set the index
-        preq->index = ( ireq ).get_value();
+        preq->index = ireq.get_value();
 
         // push the characters onto the free stack
         TxReqList.free_ref[TxReqList._free_count] = TxReqList._free_count;

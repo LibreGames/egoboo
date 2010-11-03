@@ -2372,7 +2372,7 @@ Uint8 scr_BecomeSpellbook( ego_script_state * pstate, ego_ai_bundle * pbdl_self 
 
     // Reset the spellbook state so it doesn't burn up
     pself->state   = 0;
-    pself->content = ( old_profile ).get_value();
+    pself->content = old_profile.get_value();
 
     // set the spellbook animations
     pmad = ego_chr::get_pmad( pself->index );

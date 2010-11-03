@@ -1207,7 +1207,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
 
         if ( !LOADED_PRO( loc_profile ) )
         {
-            log_warning( "spawn_one_enchant() - no valid profile for the spawning character \"%s\"(%d).\n", ChrObjList.get_data_ref( spawner ).base_name, ( spawner ).get_value() );
+            log_warning( "spawn_one_enchant() - no valid profile for the spawning character \"%s\"(%d).\n", ChrObjList.get_data_ref( spawner ).base_name, spawner.get_value() );
             return ENC_REF( MAX_ENC );
         }
     }
@@ -1215,7 +1215,7 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
     eve_ref = pro_get_ieve( loc_profile );
     if ( !LOADED_EVE( eve_ref ) )
     {
-        log_warning( "spawn_one_enchant() - the object \"%s\"(%d) does not have an enchant profile.\n", ProList.lst[loc_profile].name, ( loc_profile ).get_value() );
+        log_warning( "spawn_one_enchant() - the object \"%s\"(%d) does not have an enchant profile.\n", ProList.lst[loc_profile].name, loc_profile.get_value() );
 
         return ENC_REF( MAX_ENC );
     }
@@ -1631,7 +1631,7 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
     ENC_REF first_valid_enchant;
     ENC_REF ego_enc_now, ego_enc_next;
 
-    if ( !EncObjList.in_range_ref( ienc ) ) return ENC_REF( MAX_ENC );
+    if ( !EncObjList.valid_index_range( ienc.get_value() ) ) return ENC_REF( MAX_ENC );
 
     // clear the list
     SDL_memset( ego_enc_used, 0, sizeof( ego_enc_used ) );
@@ -1644,13 +1644,13 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         ego_enc_next = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref;
 
         // coerce the list of enchants to a valid value
-        if ( !EncObjList.in_range_ref( ego_enc_next ) )
+        if ( !EncObjList.valid_index_range( ego_enc_next.get_value() ) )
         {
             ego_enc_next = EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref = MAX_ENC;
         }
 
         // fix any loops in the enchant list
-        if ( ego_enc_used[( ego_enc_next ).get_value()] )
+        if ( ego_enc_used[ego_enc_next.get_value()] )
         {
             EncObjList.get_data_ref( ego_enc_now ).nextenchant_ref = MAX_ENC;
             break;
@@ -1662,12 +1662,12 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
         if ( !INGAME_ENC( ego_enc_now ) )
         {
             remove_enchant( ego_enc_now, ego_enc_parent );
-            ego_enc_used[( ego_enc_now ).get_value()] = btrue;
+            ego_enc_used[ego_enc_now.get_value()] = btrue;
         }
         else
         {
             // store this enchant in the list of used enchants
-            ego_enc_used[( ego_enc_now ).get_value()] = btrue;
+            ego_enc_used[ego_enc_now.get_value()] = btrue;
 
             // keep track of the first valid enchant
             if ( MAX_ENC == first_valid_enchant )

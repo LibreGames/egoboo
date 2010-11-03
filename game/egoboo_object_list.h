@@ -36,57 +36,71 @@ template < typename _data, size_t _sz > struct t_obj_lst_deque;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-/// a kind of an "interface" that should be inherited by every object that is
-/// stored in t_obj_lst_map
+/// the data stored in ego_obj_lst_state, separated to make initialization easier
 
-struct ego_obj_lst_state
+struct ego_obj_lst_state_data
 {
-    friend struct ego_obj_lst_client;
+    friend struct ego_obj_lst_state;
 
-    ego_obj_lst_state( size_t idx = size_t( ~0L ) ) { ctor_this( this, idx ); }
-    ~ego_obj_lst_state() { dtor_this( this ); }
+    ego_obj_lst_state_data() { clear( this ); }
+    ~ego_obj_lst_state_data() { clear( this ); }
 
-    static ego_obj_lst_state * retor_this( ego_obj_lst_state * ptr, size_t idx )
-    {
-        ptr = dtor_this( ptr );
-        ptr = ctor_this( ptr, idx );
-        return ptr;
-    }
+    //---- accessor
 
-    static const bool_t get_allocated( const ego_obj_lst_state * ptr )
-    { return ( NULL == ptr ) ? bfalse : ptr->allocated; }
-
-    static const size_t get_index( const ego_obj_lst_state * ptr, REF_T fail_value = size_t( -1 ) )
-    { return ( NULL == ptr || !ptr->allocated ) ? fail_value : ptr->index; }
-
-    static const bool_t in_free( const ego_obj_lst_state * ptr )
-    { return ( NULL == ptr ) ? bfalse     : ptr->in_free_list; }
-
-    static const bool_t in_used( const ego_obj_lst_state * ptr )
+    static const bool_t in_used( const ego_obj_lst_state_data * ptr )
     { return ( NULL == ptr ) ? bfalse     : ptr->in_used_list; }
 
-    static const Uint32 get_list_id( ego_obj_lst_state * ptr )
+    static const Uint32 get_list_id( ego_obj_lst_state_data * ptr )
     { return ( NULL == ptr ) ? INVALID_UPDATE_GUID     : ptr->update_guid; }
 
-    static ego_obj_lst_state * set_allocated( ego_obj_lst_state *, bool_t val );
-    static ego_obj_lst_state * set_used( ego_obj_lst_state *, bool_t val );
-    static ego_obj_lst_state * set_free( ego_obj_lst_state *, bool_t val );
-    static ego_obj_lst_state * set_list_id( ego_obj_lst_state *, unsigned val );
-
-protected:
-
-    static ego_obj_lst_state * ctor_this( ego_obj_lst_state *, size_t index = size_t( ~0L ) );
-    static ego_obj_lst_state * dtor_this( ego_obj_lst_state * );
+    static ego_obj_lst_state_data * set_used( ego_obj_lst_state_data *, const bool_t val );
+    static ego_obj_lst_state_data * set_list_id( ego_obj_lst_state_data *, const unsigned val );
 
 private:
 
-    size_t    index;        ///< what is the index position in the object list?
-    bool_t    allocated;    ///< The object has been allocated
-    bool_t    in_free_list; ///< the object is currently in the free list
     bool_t    in_used_list; ///< the object is currently in the used list
     unsigned  update_guid;  ///< the value of t_obj_lst_map::get_list_id() the last time this object was updated
 
-    static ego_obj_lst_state * clear( ego_obj_lst_state *, size_t index = size_t( ~0L ) );
+    static ego_obj_lst_state_data * clear( ego_obj_lst_state_data * );
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+/// a kind of an "interface" that should be inherited by every object that is
+/// stored in t_obj_lst_*<>
+
+struct ego_obj_lst_state : public ego_obj_lst_state_data, public allocator_client
+{
+    friend struct ego_obj_lst_client;
+
+    ego_obj_lst_state( const unsigned guid = invalid_value, const unsigned index = invalid_value ) :
+            allocator_client( guid, index )
+    { ctor_this( this ); }
+
+    ~ego_obj_lst_state() { dtor_this( this ); }
+
+    static ego_obj_lst_state * retor_this( ego_obj_lst_state * ptr, unsigned guid = invalid_value, unsigned index = invalid_value )
+    {
+        if ( NULL == ptr ) return ptr;
+
+        ptr->~ego_obj_lst_state();
+        ptr = new( ptr ) ego_obj_lst_state( guid, index );
+
+        return ptr;
+    }
+
+    static const unsigned get_index( const ego_obj_lst_state * ptr, REF_T fail_value = unsigned( ~0L ) )
+    { return ( NULL == ptr || !ptr->allocator_client::has_valid_id() ) ? fail_value : ptr->allocator_client::get_index(); }
+
+    static const Uint32 get_id( ego_obj_lst_state * ptr )
+    { return ( NULL == ptr ) ? invalid_value : ptr->allocator_client::get_id(); }
+
+protected:
+
+    static ego_obj_lst_state * ctor_this( ego_obj_lst_state * );
+    static ego_obj_lst_state * dtor_this( ego_obj_lst_state * );
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -116,7 +130,10 @@ struct t_ego_obj_container : public ego_obj_lst_state
     //---- constructors and destructors
 
     /// default constructor
-    explicit t_ego_obj_container( size_t idx = size_t ( ~0 ) ) : ego_obj_lst_state( idx ), _container_data( this ) { ctor_this( this ); }
+    explicit t_ego_obj_container( const unsigned guid = invalid_value, const unsigned index = invalid_value ) :
+            ego_obj_lst_state( guid, index ),
+            _container_data( this )
+    { ctor_this( this ); }
 
     /// default destructor
     ~t_ego_obj_container() { dtor_this( this ); }
@@ -137,42 +154,46 @@ protected:
 
     /// set/change the information about where this object is stored in t_obj_lst_map<>.
     /// should only be called by t_obj_lst_map<>
-    static its_type * allocate( its_type * pobj, size_t index ) { if ( NULL == pobj ) return pobj; ego_obj_lst_state::retor_this( pobj, index ); return pobj; }
+    static its_type * allocate( its_type * pobj, unsigned index ) { if ( NULL == pobj ) return pobj; ego_obj_lst_state::retor_this( pobj, index ); return pobj; }
 
     /// tell this object that it is no longer stored in t_obj_lst_map<>
     /// should only be called by t_obj_lst_map<>
     static its_type * deallocate( its_type * pobj ) { ego_obj_lst_state::dtor_this( pobj, index ); }
 
-    /// cause this struct to recycle its data
-    /// should only be called by t_obj_lst_map<>
-    static its_type * retor_this( its_type * ptr, size_t idx = size_t ( ~0 ) )
-    {
-        dtor_this( ptr );
-        ctor_this( ptr );
-        return ptr;
-    }
-
     /// cause this struct to completely deallocate and reallocate its data
     /// and the data of all its dependents
     /// should only be called by t_obj_lst_map<>
-    static its_type * retor_all( its_type * ptr, size_t idx = size_t ( ~0 ) )
+    static its_type * retor_all( its_type * ptr, unsigned new_idx = invalid_value )
     {
+        if ( NULL == ptr ) return ptr;
+
+        // grab some info from the current allocator_client
+        allocator_client * palloc = static_cast<allocator_client>( ptr );
+        const unsigned current_id  = palloc->get_id();
+        const unsigned current_idx = palloc->get_index();
+
+        // if we are not given a new index, reuse the current one
+        if ( invalid_value == new_idx ) new_idx = current_idx;
+
         dtor_all( ptr );
-        ctor_all( ptr, idx );
+        ctor_all( ptr, current_id, new_idx );
+
         return ptr;
     }
 
-    /// construct this struct, ONLY
-    static its_type * ctor_this( its_type * pobj );
-    /// destruct this struct, ONLY
-    static its_type * dtor_this( its_type * pobj );
+private:
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static its_type * ctor_all( its_type * ptr ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) its_type(); } return ptr; }
-    /// denstruct this struct, and ALL dependent structs. call the destructor
-    static its_type * dtor_all( its_type * ptr )  { if ( NULL != ptr ) { ptr->~its_type(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
+    static its_type * ctor_all( its_type * ptr, unsigned id, unsigned index )
+    {
+        if ( NULL == ptr ) return NULL;
 
-private:
+        return new( ptr ) its_type( id, index );
+    }
+
+    /// destruct this struct, and ALL dependent structs. call the destructor
+    static its_type * dtor_all( its_type * ptr ) { if ( NULL != ptr ) { ptr->~its_type(); } return ptr; }
+
     data_type _container_data;
 };
 
@@ -180,7 +201,7 @@ private:
 //--------------------------------------------------------------------------------------------
 
 template <typename _data, size_t _sz>
-struct t_obj_lst_map
+struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _sz>, _sz >
 {
     /// use this typedef to make iterating through the t_cpp_map<> easier
     typedef typename t_ego_obj_container<_data, _sz>                 container_type;
@@ -251,13 +272,13 @@ struct t_obj_lst_map
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
-    int   increment_loop_depth() 
-    { 
-        return ++loop_depth; 
+    int   increment_loop_depth()
+    {
+        return ++loop_depth;
     }
-    int   decrement_loop_depth() 
-    { 
-        return --loop_depth; 
+    int   decrement_loop_depth()
+    {
+        return --loop_depth;
     }
 
     //---- functions to access elements of the list
@@ -302,7 +323,7 @@ protected:
     lst_reference get_free();
 
     /// a hack to get around the crash caused by calling free_queue.clear(), when the queue is empty
-    void      clear_free_list();
+    //void      clear_free_list();
 
 private:
 
@@ -330,14 +351,8 @@ private:
 
     //---- this struct's data
 
-    /// the actual list of objects
-    container_type ary[_sz];
-
     /// the map of used objects
     map_type       used_map;
-
-    /// the map of free objects
-    std::queue< REF_T > free_queue;
 
     /// a list of objects that need to be terminated outside all loops
     std::stack< REF_T > termination_stack;
@@ -353,7 +368,7 @@ private:
 //--------------------------------------------------------------------------------------------
 
 template <typename _data, size_t _sz>
-struct t_obj_lst_deque
+struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _sz>, _sz >
 {
     /// use this typedef to make iterating through the t_cpp_deque<> easier
     typedef typename t_ego_obj_container<_data, _sz>                 container_type;
@@ -361,6 +376,8 @@ struct t_obj_lst_deque
 
     typedef typename t_cpp_deque< container_type, REF_T>           deque_type;
     typedef typename t_cpp_deque< container_type, REF_T>::iterator deque_iterator;
+
+    typedef typename t_allocator_static< container_type, _sz >     allocator_type;
 
     //---- construction/destruction
     t_obj_lst_deque( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
@@ -407,9 +424,6 @@ struct t_obj_lst_deque
     /// between 0 and _sz
     bool_t set_length( size_t len );
 
-    /// is a given reference within the bounds of this list?
-    INLINE bool_t in_range_ref( const lst_reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _max_len; };
-
     //---- public iteration methods - iterate over the used deque
 
     /// proper method of accessing the used_deque::begin() function
@@ -424,13 +438,13 @@ struct t_obj_lst_deque
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
-    int   increment_loop_depth() 
-    { 
-        return ++loop_depth; 
+    int   increment_loop_depth()
+    {
+        return ++loop_depth;
     }
-    int   decrement_loop_depth() 
-    { 
-        return --loop_depth; 
+    int   decrement_loop_depth()
+    {
+        return --loop_depth;
     }
 
     //---- functions to access elements of the list
@@ -475,7 +489,7 @@ protected:
     lst_reference get_free();
 
     /// a hack to get around the crash caused by calling free_queue.clear(), when the queue is empty
-    void      clear_free_list();
+    //void      clear_free_list();
 
 private:
 
@@ -489,28 +503,10 @@ private:
     /// basic function to call to deactivate a list element
     lst_reference deactivate_element( const lst_reference & pcont );
 
-    /// helper function to activate a given container
-    container_type * activate_container_raw( container_type *, size_t index );
-
-    /// helper function to deactivate a given container
-    container_type * deactivate_container_raw( container_type * );
-
-    /// helper function to activate a container data element
-    _data * activate_data_raw( _data *, const container_type * pcont );
-
-    /// helper function to deactivate a container data element
-    _data * deactivate_data_raw( _data * );
-
     //---- this struct's data
-
-    /// the actual list of objects
-    container_type ary[_sz];
 
     /// the deque of used objects
     deque_type       used_deque;
-
-    /// the deque of free objects
-    std::queue< REF_T > free_queue;
 
     /// a list of objects that need to be terminated outside all loops
     std::stack< REF_T > termination_stack;
@@ -530,7 +526,7 @@ private:
 #define GET_INDEX_PCONT( TYPE, PCONT, FAIL_VALUE ) ( TYPE::get_index(PCONT,FAIL_VALUE) )
 
 /// Is the container allocated?
-#define FLAG_ALLOCATED_PCONT( TYPE, PCONT ) ( TYPE::get_allocated(PCONT) )
+#define FLAG_ALLOCATED_PCONT( TYPE, PCONT ) ( allocator_client::has_valid_id(PCONT) )
 
 /// Is the container marked as being in the used list?
 #define FLAG_USED_PCONT( TYPE, PCONT )      ( TYPE::in_used(PCONT) )
@@ -595,7 +591,7 @@ private:
         { \
             LIST##_t::lst_reference IT( *internal__##IT );\
             LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
-            if( !LIST##_t::container_type::get_allocated(POBJ##_cont) ) continue; \
+            if( !allocator_client::has_valid_id(POBJ##_cont) ) continue; \
             OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
             if( NULL == POBJ ) continue;\
             int internal__##LIST##_internal_depth = LIST.get_loop_depth();
@@ -615,7 +611,7 @@ private:
 //--------------------------------------------------------------------------------------------
 /// The termination of all OBJ_LIST_BEGIN_LOOP()
 #define OBJ_LIST_END_LOOP(LIST) \
-        if(internal__##LIST##_internal_depth != LIST.get_loop_depth()) EGOBOO_ASSERT(bfalse); \
+    if(internal__##LIST##_internal_depth != LIST.get_loop_depth()) EGOBOO_ASSERT(bfalse); \
     } \
     LIST.decrement_loop_depth(); \
     if(internal__##LIST##_start_depth != LIST.get_loop_depth()) EGOBOO_ASSERT(bfalse); \

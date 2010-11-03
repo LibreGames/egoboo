@@ -79,7 +79,7 @@ struct ego_breadcrumb
     fvec3_t        pos;                      ///< A stored safe position
     Uint32         grid;                     ///< the grid index of this position
     float          radius;                   ///< the size of the object at this position
-    float          bits;                     ///< the collision buts of the object at this position
+    BIT_FIELD      bits;                     ///< the collision bits of the object at this position
     Uint32         time;                     ///< the time when the breadcrumb was created
     Uint32         id;                       ///< an id for differentiating the timing of several events at the same "time"
 };

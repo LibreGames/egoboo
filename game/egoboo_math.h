@@ -107,6 +107,14 @@ extern "C"
 #    define LOG(A) ((float)log((float)(A)))
 #endif
 
+#if !defined(FLOOR)
+#    define FLOOR(A) ((float)floor((float)(A)))
+#endif
+
+#if !defined(CEIL)
+#    define CEIL(A) ((float)ceil((float)(A)))
+#endif
+
 #if !defined(SIN)
 #    define SIN(A) ((float)sin((float)(A)))
 #endif

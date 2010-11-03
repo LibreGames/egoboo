@@ -1389,11 +1389,11 @@ bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIE
         pdata->fy_max = pos[kY] + radius;
     }
 
-    pdata->ix_min = floor( pdata->fx_min / GRID_SIZE );
-    pdata->ix_max = floor( pdata->fx_max / GRID_SIZE );
+    pdata->ix_min = FLOOR( pdata->fx_min / GRID_SIZE );
+    pdata->ix_max = FLOOR( pdata->fx_max / GRID_SIZE );
 
-    pdata->iy_min = floor( pdata->fy_min / GRID_SIZE );
-    pdata->iy_max = floor( pdata->fy_max / GRID_SIZE );
+    pdata->iy_min = FLOOR( pdata->fy_min / GRID_SIZE );
+    pdata->iy_max = FLOOR( pdata->fy_max / GRID_SIZE );
 
     pass = 0;
 
@@ -1487,11 +1487,11 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
         obj_area = ( fx_max - fx_min ) * ( fy_max - fy_min );
     }
 
-    ix_min = floor( fx_min / GRID_SIZE );
-    ix_max = floor( fx_max / GRID_SIZE );
+    ix_min = FLOOR( fx_min / GRID_SIZE );
+    ix_max = FLOOR( fx_max / GRID_SIZE );
 
-    iy_min = floor( fy_min / GRID_SIZE );
-    iy_max = floor( fy_max / GRID_SIZE );
+    iy_min = FLOOR( fy_min / GRID_SIZE );
+    iy_max = FLOOR( fy_max / GRID_SIZE );
 
     for ( iy = iy_min; iy <= iy_max; iy++ )
     {

@@ -412,7 +412,7 @@ void oglx_texture_Bind( oglx_texture_t *texture )
 //--------------------------------------------------------------------------------------------
 GLboolean oglx_texture_valid( oglx_texture_t *ptex )
 {
-    return VALID_TEXTURE( ptex );
+    return VALID_TEXTURE( ptex ) ? GL_TRUE : GL_FALSE;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -429,12 +429,10 @@ void oglx_grab_texture_state( GLenum target, GLint level, oglx_texture_t * textu
 //--------------------------------------------------------------------------------------------
 GLuint oglx_bind_default( GLuint binding, GLenum target, GLint wrap_s, GLint wrap_t )
 {
-    int    filt_type, anisotropy;
-
     GLuint local_binding;
 
     // make sure that the texture mapping is turned on
-    GL_DEBUG( glEnable ) ( target );
+    GL_DEBUG( glEnable )( target );
 
     // make sure the error texture exists
     if ( !ErrorImage_defined ) ErrorImage_create();
@@ -445,8 +443,7 @@ GLuint oglx_bind_default( GLuint binding, GLenum target, GLint wrap_s, GLint wra
     if ( wrap_s < 0 ) wrap_s = GL_REPEAT;
     if ( wrap_t < 0 ) wrap_t = GL_REPEAT;
 
-
-    ATTRIB_PUSH( __FUNCTION__, GL_ENABLE_BIT, GL_TEXTURE_BIT )
+    ATTRIB_PUSH( __FUNCTION__, GL_ENABLE_BIT )
     {
         // enable textre mapping
         GL_DEBUG( glEnable )( target );
@@ -471,7 +468,7 @@ void oglx_default_filtering( GLenum target )
     int    filt_type, anisotropy;
 
     // make sure that the texture mapping is turned on
-    GL_DEBUG( glEnable ) ( target );
+    GL_DEBUG( glEnable )( target );
 
     // grab the filter parameters from tex_params
     filt_type  = tex_params.texturefilter;
@@ -487,35 +484,35 @@ void oglx_default_filtering( GLenum target )
     {
         switch ( filt_type )
         {
-            // Unfiltered
-        case TX_UNFILTERED:
-            oglx_set_filtering( target, GL_NEAREST, GL_NEAREST, 0 );
-            break;
+                // Unfiltered
+            case TX_UNFILTERED:
+                oglx_set_filtering( target, GL_NEAREST, GL_NEAREST, 0 );
+                break;
 
-            // Linear filtered
-        case TX_LINEAR:
-            oglx_set_filtering( target, GL_LINEAR, GL_LINEAR, 0 );
-            break;
+                // Linear filtered
+            case TX_LINEAR:
+                oglx_set_filtering( target, GL_LINEAR, GL_LINEAR, 0 );
+                break;
 
-            // Bilinear interpolation
-        case TX_MIPMAP:
-            oglx_set_filtering( target, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR, 0 );
-            break;
+                // Bilinear interpolation
+            case TX_MIPMAP:
+                oglx_set_filtering( target, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR, 0 );
+                break;
 
-            // Bilinear interpolation
-        case TX_BILINEAR:
-            oglx_set_filtering( target, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0 );
-            break;
+                // Bilinear interpolation
+            case TX_BILINEAR:
+                oglx_set_filtering( target, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0 );
+                break;
 
-            // Trilinear filtered (quality 1)
-        case TX_TRILINEAR_1:
-            oglx_set_filtering( target, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR, 0 );
-            break;
+                // Trilinear filtered (quality 1)
+            case TX_TRILINEAR_1:
+                oglx_set_filtering( target, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR, 0 );
+                break;
 
-            // Trilinear filtered (quality 2)
-        case TX_TRILINEAR_2:
-            oglx_set_filtering( target, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0 );
-            break;
+                // Trilinear filtered (quality 2)
+            case TX_TRILINEAR_2:
+                oglx_set_filtering( target, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0 );
+                break;
         };
     }
 }

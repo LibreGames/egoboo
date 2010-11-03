@@ -942,8 +942,8 @@ egoboo_rv gfx_mad_instance::update_bbox( gfx_mad_instance * pinst )
 //--------------------------------------------------------------------------------------------
 egoboo_rv gfx_mad_instance::test_pose( const pose_data & p_old, const pose_data & p_new )
 {
-    if ( unsigned( -1 ) == p_old.id ) return rv_fail;
-    if ( unsigned( -1 ) == p_new.id ) return rv_fail;
+    if ( unsigned( ~0L ) == p_old.id ) return rv_fail;
+    if ( unsigned( ~0L ) == p_new.id ) return rv_fail;
 
     return ( p_old == p_new ) ? rv_success : rv_fail;
 }
@@ -1403,8 +1403,8 @@ gfx_mad_instance * gfx_mad_instance::clear( gfx_mad_instance * ptr )
     ptr->color_amb           = ~0;
     ptr->max_light           = 0;
     ptr->min_light           = 0;
-    ptr->lighting_update_wld = unsigned( -1 );
-    ptr->lighting_frame_all  = unsigned( -1 );
+    ptr->lighting_update_wld = unsigned( ~0L );
+    ptr->lighting_frame_all  = unsigned( ~0L );
 
     ptr->vrt_count = 0;
     ptr->vrt_lst   = NULL;

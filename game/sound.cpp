@@ -537,13 +537,13 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff )
 
     // determine the angle away from "forward"
     pan = ATAN2( diff.y, diff.x ) - PCamera->turn_z_rad;
-    volume *= ( 2.0f + cos( pan ) ) / 3.0f;
+    volume *= ( 2.0f + COS( pan ) ) / 3.0f;
 
     // determine the angle from the left ear
     pan += 1.5f * PI;
 
     // determine the panning
-    cosval = cos( pan );
+    cosval = COS( pan );
     cosval *= cosval;
 
     leftvol  = cosval * 128;
@@ -884,7 +884,7 @@ void   LoopedList_init()
         LoopedList.lst[cnt].chunk   = NULL;
         LoopedList.lst[cnt].object  = CHR_REF( MAX_CHR );
 
-        tnc = ( cnt ).get_value();
+        tnc = cnt.get_value();
         LoopedList.used_ref[tnc] = LOOPED_COUNT;
         LoopedList.free_ref[tnc] = tnc;
     }

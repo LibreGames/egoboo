@@ -67,7 +67,7 @@ INLINE t_ego_obj_container<_d, _sz> * t_obj_lst_map<_d, _sz>::get_allocated_ptr(
     t_ego_obj_container<_d, _sz> * pobj = get_ptr( ref );
     if ( NULL == pobj ) return NULL;
 
-    return !ego_obj_lst_state::get_allocated( pobj ) ? NULL : pobj;
+    return !allocator_client::has_valid_id( pobj ) ? NULL : pobj;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -102,11 +102,11 @@ INLINE typename t_ego_obj_container<_d, _sz>::data_type * t_obj_lst_map<_d, _sz>
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
-void t_obj_lst_map<_d, _sz>::clear_free_list()
-{
-    while ( !free_queue.empty() ) free_queue.pop();
-}
+//template <typename _d, size_t _sz>
+//void t_obj_lst_map<_d, _sz>::clear_free_list()
+//{
+//    while ( !free_queue.empty() ) free_queue.pop();
+//}
 
 //--------------------------------------------------------------------------------------------
 template <typename _d, size_t _sz>
@@ -116,7 +116,7 @@ void t_obj_lst_map<_d, _sz>::reinit()
     // will be allocated
 
     // clear the free list, but do nothing to the used list
-    clear_free_list();
+    //clear_free_list();
 
     for ( size_t cnt = 0; cnt < _max_len; cnt++ )
     {
@@ -131,7 +131,7 @@ void t_obj_lst_map<_d, _sz>::reinit()
 template <typename _d, size_t _sz>
 void t_obj_lst_map<_d, _sz>::init()
 {
-    clear_free_list();
+    //clear_free_list();
     used_map.clear();
 
     for ( size_t cnt = 0; cnt < _max_len; cnt++ )
@@ -152,7 +152,7 @@ void t_obj_lst_map<_d, _sz>::deinit()
     size_t cnt;
 
     used_map.clear();
-    clear_free_list();
+    //clear_free_list();
 
     for ( cnt = 0; cnt < _sz; cnt++ )
     {
@@ -323,7 +323,7 @@ typename t_obj_lst_map<_d, _sz>::lst_reference t_obj_lst_map<_d, _sz>::allocate(
     if ( !in_range_ref( ref ) )
     {
         // we didn't get a valid lst_reference
-        log_warning( "t_obj_lst_map<>::allocate() - failed to override a object? Object at index %d already spawned? \n", ( override ).get_value() );
+        log_warning( "t_obj_lst_map<>::allocate() - failed to override a object? Object at index %d already spawned? \n", override.get_value() );
     }
     else
     {
@@ -470,7 +470,7 @@ typename t_obj_lst_map<_d, _sz>::lst_reference t_obj_lst_map<_d, _sz>::activate_
     }
 
     // handle the actual activation(s)
-    pcont = activate_container_raw( pcont, ref.get_value() );
+    pcont = contriner_type::set_list_id( pcont, get_list_id() );
     pdata = activate_data_raw( pdata, pcont );
 
     return ref;
@@ -565,32 +565,27 @@ _d * t_obj_lst_map<_d, _sz>::deactivate_data_raw( _d * pdata )
 template < typename _d, size_t _sz >
 INLINE t_ego_obj_container<_d, _sz> & t_obj_lst_deque<_d, _sz>::get_ref( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
-    if ( !in_range_ref( ref ) )
+    if ( !valid_index_range( ref.get_value() ) )
     {
         // there is no coming back from this error
         EGOBOO_ASSERT( bfalse );
     }
 
-    return ary[ref.get_value()];
+    return *get_element_ptr_raw( ref.get_value() );
 }
 
 //--------------------------------------------------------------------------------------------
 template < typename _d, size_t _sz >
 INLINE t_ego_obj_container<_d, _sz> * t_obj_lst_deque<_d, _sz>::get_ptr( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
-    if ( !in_range_ref( ref ) ) return NULL;
-
-    return ary + ref.get_value();
+    return get_element_ptr_raw( ref.get_value() );
 }
 
 //--------------------------------------------------------------------------------------------
 template < typename _d, size_t _sz >
 INLINE t_ego_obj_container<_d, _sz> * t_obj_lst_deque<_d, _sz>::get_allocated_ptr( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
-    t_ego_obj_container<_d, _sz> * pobj = get_ptr( ref );
-    if ( NULL == pobj ) return NULL;
-
-    return !ego_obj_lst_state::get_allocated( pobj ) ? NULL : pobj;
+    return get_element_ptr( ref.get_value() );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -624,48 +619,26 @@ INLINE typename t_ego_obj_container<_d, _sz>::data_type * t_obj_lst_deque<_d, _s
 }
 
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
-void t_obj_lst_deque<_d, _sz>::clear_free_list()
-{
-    while ( !free_queue.empty() ) free_queue.pop();
-}
-
-//--------------------------------------------------------------------------------------------
 template <typename _d, size_t _sz>
 void t_obj_lst_deque<_d, _sz>::reinit()
 {
     // reinitialize the free list so that no more objects beyond _max_len
     // will be allocated
 
-    // clear the free list, but do nothing to the used list
-    clear_free_list();
+    //clear out the alist of allocated objects
+    used_deque.clear();
 
-    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
-    {
-        if ( !FLAG_ALLOCATED_PCONT( container_type,  ary + cnt ) )
-        {
-            free_queue.push( cnt );
-        }
-    }
+    // re-initialize the allocator data
+    allocator_type::init();
 }
 
 //--------------------------------------------------------------------------------------------
 template <typename _d, size_t _sz>
 void t_obj_lst_deque<_d, _sz>::init()
 {
-    clear_free_list();
     used_deque.clear();
 
-    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
-    {
-        container_type * pobj = ary + cnt;
-
-        // create/re-create the link to this list
-        ego_obj_lst_state::retor_this( pobj, cnt );
-
-        free_queue.push( cnt );
-    }
+    allocator_type::init();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -674,9 +647,10 @@ void t_obj_lst_deque<_d, _sz>::deinit()
 {
     size_t cnt;
 
+    // get rid of any used data
     used_deque.clear();
-    clear_free_list();
 
+    // deconstructs all the elements
     for ( cnt = 0; cnt < _sz; cnt++ )
     {
         _d * pobj = get_data_ptr( lst_reference( cnt ) );
@@ -684,6 +658,9 @@ void t_obj_lst_deque<_d, _sz>::deinit()
 
         ego_object_engine::run_deconstruct( pobj, 100 );
     }
+
+    // actually runs the destructors on all the elements
+    allocator_type::deinit();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -691,22 +668,23 @@ template <typename _d, size_t _sz>
 bool_t t_obj_lst_deque<_d, _sz>::free_raw( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     // grab a pointer to the container, if the reference is in a valid range
-    container_type * pcont = get_ptr( ref );
+    container_type * pcont = get_element_ptr( ref.get_value() );
     if ( NULL == pcont ) return bfalse;
 
-    // move the element from the used_deque...
+    // remove it from the used list
     used_deque.remove( ref );
+
+    // give the object a bad list id
+    ego_obj_lst_state::set_list_id( pcont, deque_type::invalid_id );
+
+    // fix the used and free flags
+    // not really so important, since the destruction below will erase them...
     ego_obj_lst_state::set_used( pcont, bfalse );
 
-    // ...to the free_queue
-    if ( ref.get_value() < _max_len )
-    {
-        // but only if the index is less than out current limit
-        free_queue.push( ref.get_value() );
-    }
-    ego_obj_lst_state::set_free( pcont, btrue );
+    // actually "destroy" it
+    pcont = allocator_type::destroy( pcont );
 
-    return btrue;
+    return ( NULL == pcont );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -735,25 +713,25 @@ void t_obj_lst_deque<_d, _sz>::update_used()
         tmp_stack.pop();
     }
 
-#if defined(DEBUG_LIST) && EGO_DEBUG
-    // go through the object array and see if (God forbid) there is an
-    // object that is marked as allocated, but is not in the used deque
-    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
-    {
-        container_type * pcont = ary + cnt;
-
-        if ( !FLAG_ALLOCATED_PCONT( container_type,  pcont ) ) continue;
-
-        if ( !ego_obj_lst_state::in_used( pcont ) ) continue;
-
-        // add it to the used deque
-        used_deque.add( ref, pcont );
-
-        // tell the object that it is definitely in the used list
-        ego_obj_lst_state::set_used( pcont, btrue );
-        ego_obj_lst_state::set_free( pcont, bfalse );
-    }
-#endif
+//#if defined(DEBUG_LIST) && EGO_DEBUG
+//    // go through the object array and see if (God forbid) there is an
+//    // object that is marked as allocated, but is not in the used deque
+//    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
+//    {
+//        container_type * pcont = ary + cnt;
+//
+//        if ( !FLAG_ALLOCATED_PCONT( container_type,  pcont ) ) continue;
+//
+//        if ( !ego_obj_lst_state::in_used( pcont ) ) continue;
+//
+//        // add it to the used deque
+//        used_deque.add( ref, pcont );
+//
+//        // tell the object that it is definitely in the used list
+//        ego_obj_lst_state::set_used( pcont, btrue );
+//        ego_obj_lst_state::set_free( pcont, bfalse );
+//    }
+//#endif
 }
 
 //--------------------------------------------------------------------------------------------
@@ -767,7 +745,7 @@ egoboo_rv t_obj_lst_deque<_d, _sz>::free_one( const typename t_obj_lst_deque<_d,
 
     egoboo_rv retval = rv_fail;
 
-    container_type * pcont = ary + ref.get_value();
+    container_type * pcont = get_element_ptr( ref.get_value() );
     if ( !FLAG_ALLOCATED_PCONT( container_type,  pcont ) ) return rv_fail;
 
     _d * pdata = container_type::get_data_ptr( pcont );
@@ -799,30 +777,38 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::get_f
     /// @details BB@> This function returns a lst_reference to the next free object.
     ///               On failure, the lst_reference will be blank/invalid.
 
-    lst_reference retval( _sz );
+    container_type * ptr = allocator_type::create();
+    if ( NULL == ptr ) return lst_reference( _sz );
 
-    while ( !free_queue.empty() )
-    {
-        // pop the top value off the stack
-        retval = free_queue.front();
-        free_queue.pop();
-
-        // have we found a valid lst_reference?
-        if ( in_range_ref( retval ) && !used_deque.has_ref( retval ) ) break;
-    }
-
-    return retval;
+    return lst_reference( ptr->allocator_client::get_index() );
 }
 
 //--------------------------------------------------------------------------------------------
 template <typename _d, size_t _sz>
 void t_obj_lst_deque<_d, _sz>::free_all()
 {
-    typename t_obj_lst_deque<_d, _sz>::lst_reference cnt;
+    lst_reference ref;
+    std::stack< REF_T > tmp_stack;
 
-    for ( cnt = 0; cnt < _sz; cnt++ )
+    // iterate through the used_deque do determine if any of them need to be removed
+    // DO NOT delete an element from the list while you're looping through it
+    for ( deque_iterator it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
     {
-        free_one( cnt );
+        const container_type * pcont = get_element_ptr( *it );
+
+        if ( FLAG_ALLOCATED_PCONT( container_type,  pcont ) ) continue;
+
+        tmp_stack.push( *it );
+    }
+
+    // stop paying attention to the allocated elements
+    used_deque.clear();
+
+    // now iterate through our stack and free the elements
+    while ( !tmp_stack.empty() )
+    {
+        free_one( lst_reference( tmp_stack.top() ) );
+        tmp_stack.pop();
     }
 }
 
@@ -832,7 +818,7 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::alloc
 {
     lst_reference ref( _sz );
 
-    if ( !in_range_ref( override ) )
+    if ( !valid_index_range( override.get_value() ) )
     {
         // override is not a valid lst_reference, so just get the next free value
         ref = get_free();
@@ -843,26 +829,28 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::alloc
         ref = override;
     }
 
-    if ( !in_range_ref( ref ) )
+    if ( !valid_index_range( ref.get_value() ) )
     {
         // we didn't get a valid lst_reference
-        log_warning( "t_obj_lst_deque<>::allocate() - failed to override a object? Object at index %d already spawned? \n", ( override ).get_value() );
+        log_warning( __FUNCTION__ " - failed to override a object? Object at index %d already spawned? \n", override.get_value() );
     }
     else
     {
-        container_type * pobj = ary + ref.get_value();
+        container_type * pobj = get_element_ptr( ref.get_value() );
 
         // the lst_reference is valid, so activate the object
         ref = activate_element( ref );
 
-        if ( in_range_ref( ref ) )
+        if ( valid_index_range( ref.get_value() ) )
         {
             // add the value to the used deque
             used_deque.add( ref );
 
             // tell the object that it is definitely in the used list
             ego_obj_lst_state::set_used( pobj, btrue );
-            ego_obj_lst_state::set_free( pobj, bfalse );
+
+            // give the object the correct list id
+            ego_obj_lst_state::set_list_id( pobj, get_list_id() );
         }
     }
 
@@ -874,11 +862,11 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::alloc
 template <typename _d, size_t _sz>
 void t_obj_lst_deque<_d, _sz>::cleanup()
 {
-    if( loop_depth > 0 ) return;
+    if ( loop_depth > 0 ) return;
 
     // go through the list and activate all the characters that
     // were created while the list was iterating
-    if( !activation_stack.empty() )
+    if ( !activation_stack.empty() )
     {
         std::stack< REF_T > tmp_stack = activation_stack;
 
@@ -894,12 +882,12 @@ void t_obj_lst_deque<_d, _sz>::cleanup()
             {
                 ego_obj::grant_on( ego_obj::get_ego_obj_ptr( pobj ) );
             }
-    }
+        }
     }
 
     // go through and delete any characters that were
     // supposed to be deleted while the list was iterating
-    if( !termination_stack.empty() )
+    if ( !termination_stack.empty() )
     {
         std::stack< REF_T > tmp_stack = termination_stack;
 
@@ -910,7 +898,7 @@ void t_obj_lst_deque<_d, _sz>::cleanup()
             REF_T idx = tmp_stack.top();
             tmp_stack.pop();
 
-            free_one( lst_reference(idx) );
+            free_one( lst_reference( idx ) );
         }
     }
 }
@@ -922,7 +910,7 @@ egoboo_rv t_obj_lst_deque<_d, _sz>::add_activation( const typename t_obj_lst_deq
     // put this object into the activation list so that it can be activated right after
     // the t_obj_lst_deque<> loop is completed
 
-    if ( !in_range_ref( ref ) ) return rv_error;
+    if ( !valid_index_range( ref.get_value() ) ) return rv_error;
 
     activation_stack.push( ref.get_value() );
 
@@ -941,7 +929,7 @@ egoboo_rv t_obj_lst_deque<_d, _sz>::add_termination( const typename t_obj_lst_de
 {
     egoboo_rv retval = rv_fail;
 
-    if ( !in_range_ref( ref ) ) return rv_fail;
+    if ( !valid_index_range( ref.get_value() ) ) return rv_fail;
 
     termination_stack.push( ref.get_value() );
 
@@ -987,12 +975,6 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::activ
     container_type * pcont = get_ptr( ref );
     if ( NULL == pcont ) return lst_reference( _sz );
 
-    // if it is already allocated, there we need to get rid of the old data
-    if ( FLAG_ALLOCATED_PCONT( container_type,  pcont ) )
-    {
-        needs_free = btrue;
-    }
-
     _d * pdata = container_type::get_data_ptr( pcont );
 
     // if it is already initialized, we need to deinitialize it
@@ -1004,13 +986,18 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::activ
     // if the object is already being used, make sure to destroy the old one
     if ( needs_free )
     {
-        free_one( ref );
+        _d::retor_all( pdata );
         needs_free = bfalse;
     }
 
-    // handle the actual activation(s)
-    pcont = activate_container_raw( pcont, ref.get_value() );
-    pdata = activate_data_raw( pdata, pcont );
+    // tell the process that it is valid, otherwise it will ignore all other commands
+    ego_object_process::set_valid( pdata, btrue );
+
+    // let the ego_object_process know that the data is constructed
+    pdata->end_constructing();
+
+    // give the object a bad id for the moment
+    ego_obj_lst_state::set_list_id( pcont, get_list_id() );
 
     return ref;
 }
@@ -1026,76 +1013,18 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::deact
     _d * pdata = container_type::get_data_ptr( pcont );
     if ( NULL == pcont ) return lst_reference( _sz );
 
-    // "free" the container
-    pcont = deactivate_container_raw( pcont );
+    // let the process try to finish itself
+    if ( NULL == ego_object_engine::run_deconstruct( pdata, 100 ) )
+    {
+        return lst_reference( _sz );
+    }
 
-    // "free" the data
-    pdata = deactivate_data_raw( pdata );
-
-    return ref;
-}
-
-//--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
-_d * t_obj_lst_deque<_d, _sz>::activate_data_raw( _d * pdata, const typename t_obj_lst_deque<_d, _sz>::container_type * pcont )
-{
-    if ( NULL == pdata ) return pdata;
-
-    // use the placement new operator to make the object construct itself
-    pdata = new( pdata ) _d( pcont );
-
-    // tell the object process that it is valid
-    ego_object_process::set_valid( pdata, btrue );
-
-    // construct the object
-    ego_object_engine::run_construct( pdata, 100 );
-
-    return pdata;
-}
-
-//--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
-typename t_obj_lst_deque<_d, _sz>::container_type * t_obj_lst_deque<_d, _sz>::activate_container_raw( typename t_obj_lst_deque<_d, _sz>::container_type * pcont, size_t index )
-{
-    if ( NULL == pcont ) return pcont;
-
-    // reset the container's list state to match the given value
-    ego_obj_lst_state::retor_this( pcont, index );
-
-    // tell the state that it is allocated
-    ego_obj_lst_state::set_allocated( pcont, btrue );
-
-    return pcont;
-}
-
-//--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
-typename t_obj_lst_deque<_d, _sz>::container_type * t_obj_lst_deque<_d, _sz>::deactivate_container_raw( typename t_obj_lst_deque<_d, _sz>::container_type * pcont )
-{
-    if ( NULL == pcont ) return pcont;
-
-    // turn off the allocation bit
-    ego_obj_lst_state::set_allocated( pcont, bfalse );
-
-    return pcont;
-}
-
-//--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
-_d * t_obj_lst_deque<_d, _sz>::deactivate_data_raw( _d * pdata )
-{
-    if ( NULL == pdata ) return pdata;
-
-    // deallocate any dynamically allocated memory
-    if ( NULL == ego_object_engine::run_deconstruct( pdata, 100 ) ) return pdata;
-
-    // let the object process know that it is invalidated
+    // we are going to use the allocator to free the data,
+    // so whatever we do here is likely to get deleted,
+    // but just for completeness...
     pdata->end_invalidating();
 
-    // call the destructor directly
-    pdata->~_d();
-
-    return pdata;
+    return ref;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1105,37 +1034,37 @@ _d * t_obj_lst_deque<_d, _sz>::deactivate_data_raw( _d * pdata )
 //--------------------------------------------------------------------------------------------
 // struct ego_obj_chr - memory management
 //--------------------------------------------------------------------------------------------
-template< typename _d, size_t _sz >
-t_ego_obj_container<_d, _sz> * t_ego_obj_container<_d, _sz>::ctor_this( t_ego_obj_container<_d, _sz> * pobj )
-{
-    // construct this struct, ONLY
-
-    if ( NULL == pobj ) return NULL;
-
-    /* puts( "\t\t" __FUNCTION__ ); */
-
-    //pobj = dealloc( pobj );
-    // pobj = alloc( pobj );
-
-    return pobj;
-}
-
-//--------------------------------------------------------------------------------------------
-template< typename _d, size_t _sz >
-t_ego_obj_container<_d, _sz> * t_ego_obj_container<_d, _sz>::dtor_this( t_ego_obj_container<_d, _sz> * pcont )
-{
-    // destruct this struct, ONLY
-
-    if ( NULL == pcont || !get_allocated( pcont ) ) return pcont;
-
-    //data_type * pobj = get_data_ptr(pcont);
-
-    /* puts( "\t\t" __FUNCTION__ ); */
-
-    //pcont = dealloc( pcont );
-
-    return pcont;
-}
+//template< typename _d, size_t _sz >
+//t_ego_obj_container<_d, _sz> * t_ego_obj_container<_d, _sz>::ctor_this( t_ego_obj_container<_d, _sz> * pobj )
+//{
+//    // construct this struct, ONLY
+//
+//    if ( NULL == pobj ) return NULL;
+//
+//    /* puts( "\t\t" __FUNCTION__ ); */
+//
+//    //pobj = dealloc( pobj );
+//    // pobj = alloc( pobj );
+//
+//    return pobj;
+//}
+//
+////--------------------------------------------------------------------------------------------
+//template< typename _d, size_t _sz >
+//t_ego_obj_container<_d, _sz> * t_ego_obj_container<_d, _sz>::dtor_this( t_ego_obj_container<_d, _sz> * pcont )
+//{
+//    // destruct this struct, ONLY
+//
+//    if ( !allocator_client::is_valid( pcont ) ) return pcont;
+//
+//    //data_type * pobj = get_data_ptr(pcont);
+//
+//    /* puts( "\t\t" __FUNCTION__ ); */
+//
+//    //pcont = dealloc( pcont );
+//
+//    return pcont;
+//}
 
 ////--------------------------------------------------------------------------------------------
 //template< typename _d, size_t _sz >

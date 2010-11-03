@@ -738,8 +738,8 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
     if ( !LOADED_PIP( ipip ) )
     {
         log_debug( "spawn_one_particle() - cannot spawn particle with invalid pip == %d (owner == %d(\"%s\"), profile == %d(\"%s\"))\n",
-                   ( ipip ).get_value(), ( chr_origin ).get_value(), INGAME_CHR( chr_origin ) ? ChrObjList.get_data_ref( chr_origin ).name : "INVALID",
-                   ( iprofile ).get_value(), LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
+                   ipip.get_value(), chr_origin.get_value(), INGAME_CHR( chr_origin ) ? ChrObjList.get_data_ref( chr_origin ).name : "INVALID",
+                   iprofile.get_value(), LOADED_PRO( iprofile ) ? ProList.lst[iprofile].name : "INVALID" );
 
         return PRT_REF( MAX_PRT );
     }
@@ -954,7 +954,7 @@ void ego_prt::set_level( ego_prt * pprt, float level )
 
     pprt->enviro.floor_level = level;
 
-    loc_height = ego_prt::get_scale( pprt ) * SDL_max( UFP8_TO_FLOAT( pprt->size ), pprt->offset.z * 0.5 );
+    loc_height = ego_prt::get_scale( pprt ) * SDL_max( UFP8_TO_FLOAT( pprt->size ), pprt->offset.z * 0.5f );
 
     pprt->enviro.grid_adj  = pprt->enviro.grid_level;
     pprt->enviro.floor_adj = pprt->enviro.floor_level;
@@ -1050,7 +1050,7 @@ ego_bundle_prt * move_one_particle_get_environment( ego_bundle_prt * pbdl_prt, e
         ego_chr::get_MatUp( ChrObjList.get_data_ptr( loc_pprt->onwhichplatform_ref ), &platform_up );
         fvec3_self_normalize( platform_up.v );
 
-        penviro->traction = SDL_abs( platform_up.z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
+        penviro->traction = SDL_abs( platform_up.z ) * ( 1.0f - penviro->floor_lerp ) + 0.25f * penviro->floor_lerp;
 
         if ( penviro->is_slippy )
         {
@@ -1059,7 +1059,7 @@ ego_bundle_prt * move_one_particle_get_environment( ego_bundle_prt * pbdl_prt, e
     }
     else if ( ego_mpd::grid_is_valid( PMesh, loc_pprt->onwhichgrid ) )
     {
-        penviro->traction = SDL_abs( map_twist_nrm[penviro->grid_twist].z ) * ( 1.0f - penviro->floor_lerp ) + 0.25 * penviro->floor_lerp;
+        penviro->traction = SDL_abs( map_twist_nrm[penviro->grid_twist].z ) * ( 1.0f - penviro->floor_lerp ) + 0.25f * penviro->floor_lerp;
 
         if ( penviro->is_slippy )
         {
@@ -1901,7 +1901,7 @@ void release_all_pip()
                 if ( LOADED_PIP( cnt ) )
                 {
                     ego_pip * ppip = PipStack + cnt;
-                    fprintf( ftmp, "index == %d\tname == \"%s\"\tcreate_count == %d\trequest_count == %d\n", ( cnt ).get_value(), ppip->name, ppip->prt_create_count, ppip->prt_request_count );
+                    fprintf( ftmp, "index == %d\tname == \"%s\"\tcreate_count == %d\trequest_count == %d\n", cnt.get_value(), ppip->name, ppip->prt_create_count, ppip->prt_request_count );
                 }
             }
 

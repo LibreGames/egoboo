@@ -498,7 +498,7 @@ protected:
 
     /// construct this struct, and ALL dependent structs. use placement new
     static ego_chr_data * ctor_all( ego_chr_data * ptr ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) ego_chr_data(); } return ptr; }
-    /// denstruct this struct, and ALL dependent structs. call the destructor
+    /// destruct this struct, and ALL dependent structs. call the destructor
     static ego_chr_data * dtor_all( ego_chr_data * ptr )  { if ( NULL != ptr ) { ptr->~ego_chr_data(); /* puts( "\t" __FUNCTION__ ); */ } return ptr; }
 
     //---- memory management
@@ -514,7 +514,7 @@ protected:
 /// This encapsulates all the character functions and some extra data
 struct ego_chr : public ego_chr_data
 {
-    friend struct t_ego_obj_container< ego_chr, MAX_CHR >;
+    friend struct t_ego_obj_container< ego_obj_chr, MAX_CHR >;
 
     typedef ego_obj_chr object_type;
 
@@ -668,7 +668,7 @@ protected:
 
     /// construct this struct, and ALL dependent structs. use placement new
     static ego_chr * ctor_all( ego_chr * ptr, ego_obj_chr * pparent ) { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ new( ptr ) ego_chr( pparent ); } return ptr; }
-    /// denstruct this struct, and ALL dependent structs. call the destructor
+    /// destruct this struct, and ALL dependent structs. call the destructor
     static ego_chr * dtor_all( ego_chr * ptr )  { if ( NULL != ptr ) { /* puts( "\t" __FUNCTION__ ); */ ptr->~ego_chr(); } return ptr; }
 
     //---- memory management
@@ -712,7 +712,22 @@ struct ego_obj_chr : public ego_obj, public ego_chr
     typedef CHR_REF           reference_type;
     typedef ego_obj_chr       its_type;
 
+    //---- construction/destruction
+
     ego_obj_chr( const container_type * pcont ) : ego_chr( this ), _container_ptr( pcont ) {};
+
+    static ego_obj_chr * retor_all( ego_obj_chr * ptr )
+    {
+        if ( NULL == ptr ) return NULL;
+
+        const container_type * pcon = ptr->_container_ptr;
+
+        // explicitly destruct this object
+        ptr->~ego_obj_chr();
+        ptr = new( ptr ) ego_obj_chr( pcon );
+
+        return ptr;
+    }
 
     // This its_type is contained by container_type. We need some way of accessing it.
 

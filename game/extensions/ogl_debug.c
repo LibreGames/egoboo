@@ -55,13 +55,13 @@ void handle_gl_error()
     const GLubyte * err_str     = NULL;
 
     // cannot sensably call glGetError() within a glBegin() ... glEnd() pair!!!
-    if( 1 == oglx_begin_depth ) 
+    if ( 1 == oglx_begin_depth )
     {
         // inside a single glBegin() ... glEnd() pair
 
         /* do nothing */
     }
-    if( oglx_begin_depth > 1 || oglx_begin_depth < 0 )
+    if ( oglx_begin_depth > 1 || oglx_begin_depth < 0 )
     {
         // handle this error
         fprintf( LOCAL_STDERR, "Invalid number of glBegin() ... glEnd() pairs - %d\n", oglx_begin_depth );
@@ -72,9 +72,9 @@ void handle_gl_error()
 
         // grab all the possible error bits that have accumulated
         err = glGetError();
-        while( GL_NO_ERROR != err )
+        while ( GL_NO_ERROR != err )
         {
-            switch( err )
+            switch ( err )
             {
                 case GL_INVALID_ENUM:      err_val_str = "GL_INVALID_ENUM"; break;
                 case GL_INVALID_VALUE:     err_val_str = "GL_INVALID_VALUE"; break;
@@ -87,13 +87,13 @@ void handle_gl_error()
             };
 
             err_str = gluErrorString( err );
-            fprintf( LOCAL_STDERR, 
-                "GL error enum %s (glu error string \"%s\")\n"
-                "\tcommand - %s\n"
-                "\tfunction - %s\n"
-                "\tfile - %s\n"
-                "\tline - %d\n", 
-                err_val_str, err_str, oglx_next_cmd, oglx_next_function, oglx_next_file, oglx_next_line );
+            fprintf( LOCAL_STDERR,
+                     "GL error enum %s (glu error string \"%s\")\n"
+                     "\tcommand - %s\n"
+                     "\tfunction - %s\n"
+                     "\tfile - %s\n"
+                     "\tline - %d\n",
+                     err_val_str, err_str, oglx_next_cmd, oglx_next_function, oglx_next_file, oglx_next_line );
 
             err = glGetError();
         }

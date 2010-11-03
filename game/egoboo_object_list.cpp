@@ -27,6 +27,10 @@
 
 #if defined(TEST_COMPILE_EGOBOO_OBJECT_LIST)
 
+struct blah;
+
+typedef t_ego_obj_container< blah, 100 > blah_cont;
+
 struct blah : public ego_obj
 {
     typedef int data_type;
@@ -35,6 +39,8 @@ struct blah : public ego_obj
 
     int & get_data() { return val; }
     int * get_data_ptr() { return &val; }
+
+    blah( const blah_cont *q );
 
     /// External handle for iterating the "egoboo object process" state machine
     static blah * run( blah * pchr );
@@ -49,6 +55,8 @@ struct blah : public ego_obj
     /// External handle for getting an "egoboo object process" into the deconstructed state
     static blah * run_deconstruct( blah * pprt, int max_iterations );
 };
+
+typedef t_ego_obj_container< blah, 100 > blah_cont;
 
 t_obj_lst_deque<blah, 100> test;
 
@@ -82,43 +90,30 @@ void flah()
 #endif
 
 //--------------------------------------------------------------------------------------------
-// ego_obj_lst_state -
+// ego_obj_lst_state_data -
 //--------------------------------------------------------------------------------------------
-ego_obj_lst_state * ego_obj_lst_state::ctor_this( ego_obj_lst_state * ptr, size_t idx )
-{
-    return ego_obj_lst_state::clear( ptr, idx );
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_lst_state * ego_obj_lst_state::dtor_this( ego_obj_lst_state * ptr )
-{
-    return ego_obj_lst_state::clear( ptr );
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_lst_state * ego_obj_lst_state::clear( ego_obj_lst_state * ptr, size_t idx )
+ego_obj_lst_state_data * ego_obj_lst_state_data::clear( ego_obj_lst_state_data * ptr )
 {
     if ( NULL == ptr ) return ptr;
 
-    SDL_memset( ptr, 0, sizeof( *ptr ) );
-
-    ptr->index = idx;
+    ptr->in_used_list = bfalse;
+    ptr->update_guid  = unsigned( ~0L );
 
     return ptr;
 }
 
+////--------------------------------------------------------------------------------------------
+//ego_obj_lst_state_data * ego_obj_lst_state_data::set_allocated( ego_obj_lst_state_data * ptr, bool_t val )
+//{
+//    if ( NULL == ptr ) return ptr;
+//
+//    ptr->allocated = val;
+//
+//    return ptr;
+//}
+
 //--------------------------------------------------------------------------------------------
-ego_obj_lst_state * ego_obj_lst_state::set_allocated( ego_obj_lst_state * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr->allocated = val;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_lst_state * ego_obj_lst_state::set_used( ego_obj_lst_state * ptr, bool_t val )
+ego_obj_lst_state_data * ego_obj_lst_state_data::set_used( ego_obj_lst_state_data * ptr, const bool_t val )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -128,17 +123,7 @@ ego_obj_lst_state * ego_obj_lst_state::set_used( ego_obj_lst_state * ptr, bool_t
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_lst_state * ego_obj_lst_state::set_free( ego_obj_lst_state * ptr, bool_t val )
-{
-    if ( NULL == ptr ) return ptr;
-
-    ptr->in_free_list = val;
-
-    return ptr;
-}
-
-//--------------------------------------------------------------------------------------------
-ego_obj_lst_state * ego_obj_lst_state::set_list_id( ego_obj_lst_state * ptr, unsigned val )
+ego_obj_lst_state_data * ego_obj_lst_state_data::set_list_id( ego_obj_lst_state_data * ptr, const unsigned val )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -146,3 +131,22 @@ ego_obj_lst_state * ego_obj_lst_state::set_list_id( ego_obj_lst_state * ptr, uns
 
     return ptr;
 }
+
+//--------------------------------------------------------------------------------------------
+// ego_obj_lst_state -
+//--------------------------------------------------------------------------------------------
+ego_obj_lst_state * ego_obj_lst_state::ctor_this( ego_obj_lst_state * ptr )
+{
+    ego_obj_lst_state_data::clear( ptr );
+
+    return ptr;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_lst_state * ego_obj_lst_state::dtor_this( ego_obj_lst_state * ptr )
+{
+    ego_obj_lst_state_data::clear( ptr );
+
+    return ptr;
+}
+

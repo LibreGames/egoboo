@@ -51,7 +51,7 @@ int get_prt_texture_style( const TX_REF & itex )
     int index;
 
     index = -1;
-    switch (( itex ).get_value() )
+    switch ( itex.get_value() )
     {
         case TX_PARTICLE_TRANS:
             index = 0;
@@ -428,7 +428,7 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
 
             if ( dist > 0 )
             {
-                reg[numparticle].index = ( iprt ).get_value();
+                reg[numparticle].index = iprt.get_value();
                 reg[numparticle].dist  = dist;
                 numparticle++;
             }

@@ -498,7 +498,7 @@ bool_t t_cpp_map<_ty, _ity>::add( const t_reference<_ty> & ref, const _ty * val 
 
         // add the value
         _map[ ref.get_value()] = val;
-        _id++;
+        increment_id();
     }
 
     return btrue;
@@ -512,7 +512,7 @@ bool_t t_cpp_map<_ty, _ity>::remove( const t_reference<_ty> & ref )
     bool_t rv = bfalse;
     if ( 0 != _map.erase( ref.get_value() ) )
     {
-        _id++;
+        increment_id();
         rv = btrue;
     }
 
@@ -555,7 +555,7 @@ bool_t t_cpp_deque<_ty, _ity>::add( const t_reference<_ty> & ref )
 
     // add the value
     _deque.push_back( ref.get_value() );
-    _id++;
+    increment_id();
 
     return btrue;
 }
@@ -570,7 +570,7 @@ bool_t t_cpp_deque<_ty, _ity>::remove( const t_reference<_ty> & ref )
     if ( it != _deque.end() )
     {
         _deque.erase( it );
-        _id++;
+        increment_id();
         rv = btrue;
     }
 

@@ -547,8 +547,8 @@ extern "C"
      XX)
 
 #    define GL_DEBUG_BEGIN \
-     handle_gl_error(); oglx_begin_depth++; \
-     glBegin
+    handle_gl_error(); oglx_begin_depth++; \
+    glBegin
 
     /// a special wrapper function that is the replacement for "GL_DEBUG( glEnd )()"
     /// this avoids the errors mentioned with the definition of GL_DEBUG()

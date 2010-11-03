@@ -214,7 +214,7 @@ struct gfx_vlst_range : public gfx_range
     void init()
     {
         valid = bfalse;
-        pose_id = unsigned( -1 );
+        pose_id = unsigned( ~0L );
         gfx_range::init();
     };
 

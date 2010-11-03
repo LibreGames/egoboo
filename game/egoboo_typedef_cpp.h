@@ -279,6 +279,628 @@ public:
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+/// this struct must be inherited by any class that wants to use t_allocator_dynamic<>.
+///
+/// @note The compiler will complain that it could not generate an assignment operator,
+/// but this is to be expected, since we want no two objects that interact with the
+/// allocator to have the same id
+
+struct allocator_client
+{
+    static const size_t invalid_value = unsigned( ~0L );
+
+    explicit allocator_client( const unsigned guid = invalid_value, const unsigned index = invalid_value ) :
+            _id( guid ),
+            _ix( index )
+    {};
+
+    ~allocator_client()
+    {
+        // set the _id to a special value on deletion so we could verify that
+        // an element of the "free store" has been deleted
+        *(( unsigned* )( &_id ) ) = invalid_value;
+        *(( unsigned* )( &_ix ) ) = invalid_value;
+    };
+
+    const unsigned get_id()          const { return _id; };
+    const bool     has_valid_id()    const { return _id != invalid_value; };
+
+    const unsigned get_index()       const { return _ix; };
+    const bool     has_valid_index( const unsigned max_index = unsigned( ~0L ) ) const { return _ix < max_index; };
+
+    //---- static accessors
+    // make these functions static so we can don't have to worry whether the pointer is NULL
+
+    static const bool has_valid_id( const allocator_client * ptr )
+    {
+        return NULL == ptr ? bfalse : ptr->has_valid_id();
+    }
+
+    static const bool has_valid_index( const allocator_client * ptr, const unsigned max_index = unsigned( ~0L ) )
+    {
+        return NULL == ptr ? bfalse : ptr->has_valid_index( max_index );
+    }
+
+    static const bool is_valid( const allocator_client * ptr, const unsigned max_index = unsigned( ~0L ) )
+    {
+        return NULL == ptr ? bfalse : ptr->has_valid_id() && ptr->has_valid_index( max_index );
+    }
+
+private:
+    const unsigned _id;
+    const unsigned _ix;
+};
+
+//--------------------------------------------------------------------------------------------
+
+/// an allocator that will buffer element creation and deletion using
+/// a private heap
+
+template < typename _ty >
+struct t_allocator_dynamic
+{
+    typedef typename EGOBOO_SET<_ty *>                heap_type;
+    typedef typename EGOBOO_SET<_ty *>::iterator      heap_iterator;
+    typedef typename std::pair< heap_iterator, bool > heap_pair;
+
+    //---- construction and destruction
+
+    t_allocator_dynamic( size_t creation_size, size_t heap_size ) :
+            creation_limit( creation_size ),
+            heap_limit( heap_size )
+    {
+        creation_count = 0;
+        guid           = 0;
+    }
+
+    ~t_allocator_dynamic() { garbage_collect( 0 ); }
+
+    //---- create and destroy elements of type _ty
+
+    /// Generate a _ty.
+    /// Returns NULL if the creation_limit has been met or exceeded.
+    _ty * create( _ty * ptr = NULL )
+    {
+        return heap_new( ptr );
+    }
+
+    /// destroy or recycle a _ty
+    /// returns NULL if it was successfully dealt with
+    _ty * destroy( _ty * delete_ptr )
+    {
+        if ( NULL == delete_ptr ) return delete_ptr;
+
+        return heap_delete( delete_ptr );
+    }
+
+    //---- accessors
+
+    /// do not store more than this amount of element on the heap
+    void set_heap_limit( size_t limit )
+    {
+        garbage_collect( limit );
+        heap_limit = limit;
+    }
+
+    /// do not create more than this number of elements
+    void set_creation_limit( size_t limit )
+    {
+        creation_limit = limit;
+    }
+
+    /// How many elements can we create at this time?
+    /// This value could be negative if set_creaton_limit() was used
+    /// to reduce the limit below the number of already allocated units
+    int get_free_count()
+    {
+        return creation_limit - creation_count;
+    }
+
+    /// How many elements have been created?
+    size_t get_used_count()
+    {
+        return creation_count;
+    }
+
+private:
+
+    /// a specialization of the new command
+    _ty * heap_new( _ty * new_ptr = NULL )
+    {
+
+        if ( NULL != new_ptr )
+        {
+            // a specialzation of placement-new
+            new_ptr = new( new_ptr ) _ty( guid, guid );
+        }
+        else
+        {
+            // try to allocate a pointer from the heap
+            if ( NULL == new_ptr )
+            {
+                new_ptr = heap_allocate();
+
+                if ( NULL != new_ptr )
+                {
+                    // we have an pre-existing pointer
+                    // call its constructor using placement-new
+                    new_ptr = new( new_ptr ) _ty( guid, guid );
+                    creation_count++;
+                }
+            }
+
+            if ( NULL == new_ptr )
+            {
+                // there is no cached pointer,
+                // create a new element in the normal way
+                new_ptr = new _ty( guid, guid );
+
+                if ( NULL != new_ptr )
+                {
+                    creation_count++;
+                }
+            }
+        }
+
+        // update the guid for any non-NULL pointer
+        if ( NULL != new_ptr )
+        {
+            guid++;
+        }
+
+        return new_ptr;
+    }
+
+    /// a specialization of the delete command
+    _ty * heap_delete( _ty * delete_ptr )
+    {
+        // NULL pointers can't be deleted
+        if ( NULL == delete_ptr ) return NULL;
+
+        if ( heap_free( delete_ptr ) )
+        {
+            // call the destructor (if it exists) directly
+            delete_ptr->~_ty();
+            delete_ptr = NULL;
+        }
+        else
+        {
+            // delete the pointer directly
+            delete delete_ptr;
+            delete_ptr = NULL;
+        }
+
+        if (( NULL == delete_ptr ) && ( creation_count > 0 ) )
+        {
+            creation_count--;
+        }
+
+        return delete_ptr;
+    }
+
+    /// return a free element from the heap
+    _ty * heap_allocate()
+    {
+        _ty * element_ptr = NULL;
+        heap_iterator it;
+
+        if ( creation_count >= creation_limit ) return NULL;
+
+        // just in case there is a NULL pointer in the EGOBOO_SET
+        while ( !_heap.empty() && NULL == element_ptr )
+        {
+            it = _heap.begin();
+            element_ptr = *it;
+            _heap.erase( it );
+        }
+
+        return element_ptr;
+    }
+
+    /// try to place an element onto the heap
+    bool_t heap_free( _ty * element_ptr )
+    {
+        // if there is a duplicate of this pointer in the _heap, remove it
+        heap_remove( element_ptr );
+
+        // this is OK to put here. allow kill_element() to remove a NULL pointer
+        if ( NULL == element_ptr ) return bfalse;
+
+        // if there is too much element, don't add it
+        if ( _heap.size() + 1 > heap_limit ) return bfalse;
+
+        // try to insert the pointer
+        heap_pair rv = _heap.insert( element_ptr );
+
+        return rv.second;
+    }
+
+    /// remove an element from the heap
+    bool_t  heap_remove( _ty * element_ptr )
+    {
+        bool_t found = bfalse;
+
+        // remove the goven pointer from the _heap
+        if ( !_heap.empty() )
+        {
+            EGOBOO_SET<_ty*>::iterator it = _heap.find( element_ptr );
+            if ( it != _heap.end() )
+            {
+                _heap.erase( it );
+                found = btrue;
+            }
+        }
+
+        return found;
+    }
+
+    /// get rid of "useless" data
+    void garbage_collect( size_t size )
+    {
+        heap_iterator it;
+        _ty * tmp_ptr = NULL;
+
+        // erase all excess elements from the heap
+        // and delete them
+        while ( _heap.size() > size )
+        {
+            // erase
+            it = _heap.begin();
+            tmp_ptr = *it;
+            _heap.erase( it );
+
+            if ( NULL != tmp_ptr ) { delete tmp_ptr; tmp_ptr = NULL; }
+        }
+    }
+
+    unsigned creation_count;
+    unsigned creation_limit;
+
+    unsigned heap_limit;
+
+    unsigned guid;
+
+    EGOBOO_SET<_ty *> _heap;
+};
+
+//--------------------------------------------------------------------------------------------
+
+/// an allocator that will simulate buffered creation and deletion using
+/// a statically allocated array
+
+template < typename _ty, size_t _sz >
+struct t_allocator_static
+{
+    typedef typename EGOBOO_SET<_ty *>                heap_type;
+    typedef typename EGOBOO_SET<_ty *>::iterator      heap_iterator;
+    typedef typename std::pair< heap_iterator, bool > heap_pair;
+
+    static const size_t invalid_index = size_t( -1 );
+
+    //---- construction and destruction
+
+    t_allocator_static( size_t creation_size = _sz ) :
+            creation_limit( creation_size )
+    { init(); }
+
+    ~t_allocator_static() { deinit(); }
+
+    void deinit()
+    {
+        // eliminate the _heap
+        garbage_collect( 0 );
+
+        // destroy any other elements that haven't been destroyed
+        for ( int cnt = 0; cnt < _sz; cnt++ )
+        {
+            if ( _static_ary[cnt].allocator_client::get_id() != unsigned( ~0L ) )
+            {
+                _static_ary[cnt].~_ty();
+            }
+        }
+
+        creation_count = 0;
+        guid           = 0;
+    }
+
+    void init()
+    {
+        deinit();
+
+        for ( int cnt = 0; cnt < _sz; cnt++ )
+        {
+            _heap.insert( _static_ary + cnt );
+        }
+    }
+
+    //---- create and destroy elements of type _ty
+
+    /// Generate a _ty.
+    /// Returns NULL if the creation_limit has been met or exceeded.
+    _ty * create( _ty * ptr = NULL )
+    {
+        return heap_new( ptr );
+    }
+
+    /// destroy or recycle a _ty
+    /// returns NULL if it was successfully dealt with
+    _ty * destroy( _ty * delete_ptr )
+    {
+        if ( NULL == delete_ptr ) return delete_ptr;
+
+        return heap_delete( delete_ptr );
+    }
+
+    //---- accessors
+
+    /// do not create more than this number of elements
+    void set_creation_limit( size_t limit )
+    {
+        limit = std::min( _sz, limit );
+        creation_limit = limit;
+    }
+
+    /// How many elements can we create at this time?
+    /// This value could be negative if set_creaton_limit() was used
+    /// to reduce the limit below the number of already allocated units
+    int get_free_count()
+    {
+        return creation_limit - creation_count;
+    }
+
+    /// How many elements have been created?
+    size_t get_used_count()
+    {
+        return creation_count;
+    }
+
+    _ty * get_element_ptr_raw( const size_t index )
+    {
+        if ( !valid_index_range( index ) ) return NULL;
+
+        return _static_ary + index;
+    }
+
+    const _ty * get_element_ptr_raw( const size_t index ) const
+    {
+        if ( !valid_index_range( index ) ) return NULL;
+
+        return _static_ary + index;
+    }
+
+    _ty * get_element_ptr( const size_t index )
+    {
+        _ty * ptr = get_element_ptr_raw( index );
+
+        return !element_allocated( ptr ) ? NULL : ptr;
+    }
+
+    const _ty * get_element_ptr( const size_t index ) const
+    {
+        const _ty * ptr = get_element_ptr_raw( index );
+
+        return !element_allocated( ptr ) ? NULL : ptr;
+    }
+
+    const size_t get_element_idx( const _ty * pelement )
+    {
+        if ( !element_allocated( ptr ) ) return allocator_client::invalid_value;
+
+        return static_cast<const allocator_client*>( ptr )->get_index();
+    }
+
+    const size_t get_element_idx( const _ty * pelement ) const
+    {
+        if ( !element_allocated( ptr ) ) return allocator_client::invalid_value;
+
+        return static_cast<const allocator_client*>( ptr )->get_index();
+    }
+
+    bool_t valid_index_range( const size_t index ) const { return index < _sz; }
+    bool_t element_allocated( const _ty * pelement ) const
+    {
+        return NULL == pelement ? bfalse : allocator_client::is_valid( pelement, _sz );
+    }
+
+private:
+
+    /// a kludge to get the "index" to _static_ary of the pointer, ptr
+    const size_t find_element_index( const _ty * ptr ) const
+    {
+        if ( ptr < _static_ary ) return invalid_index;
+
+        const char * test_ptr = ( const char * )ptr;
+        const char * base_ptr = ( const char * )_static_ary;
+
+        // determine the offset in bytes
+        size_t offset = test_ptr - base_ptr;
+
+        // determine the nearest index of the value
+        size_t index = offset / sizeof( _ty );
+
+        // alignmet error
+        signed err = signed( test_ptr ) - signed(( const char * )( _static_ary + index ) );
+
+        return ( 0 == err ) ? index : invalid_index;
+    }
+
+    const bool_t valid_element_ptr( const _ty * ptr ) const
+    {
+        return invalid_index != find_element_index( ptr );
+    }
+
+    /// a specialization of the new command
+    ///
+    /// @note using both find_element_index() and valid_element_ptr() calls the
+    /// function find_element_index() twice
+    _ty * heap_new( _ty * new_ptr = NULL )
+    {
+        // assume that the optional new_ptr does not have a valid index
+        size_t index = invalid_index;
+
+        // handle optional parameters
+        if ( NULL != new_ptr )
+        {
+            // verify that any element pointer we are passed is a inside of,
+            // and properly aligned with, our heap
+
+            // grab the element's index, if it exists
+            index = find_element_index( new_ptr );
+
+            // if not, blank out the pointer
+            if ( invalid_index == index ) new_ptr = NULL;
+        }
+
+        if ( invalid_index != index )
+        {
+            // re-initialize the old element using
+            // a specialzation of placement-new
+            new_ptr = new( new_ptr ) _ty( guid, index );
+        }
+        else
+        {
+            // allocate a new element from teh haep
+            new_ptr = heap_allocate();
+
+            // find its index
+            index = find_element_index( new_ptr );
+
+            // if the element pointer is valid, construct it using placement-new
+            if ( invalid_index != index )
+            {
+                new_ptr = new( new_ptr ) _ty( guid, index );
+                creation_count++;
+            }
+        }
+
+        // update the guid for any non-NULL pointer
+        if ( NULL != new_ptr )
+        {
+            guid++;
+        }
+
+        return new_ptr;
+    }
+
+    /// a specialization of the delete command
+    _ty * heap_delete( _ty * delete_ptr )
+    {
+        // NULL pointers can't be deleted
+        if ( !valid_element_ptr( delete_ptr ) ) return delete_ptr;
+
+        if ( heap_free( delete_ptr ) )
+        {
+            // call the destructor (if it exists) directly
+            delete_ptr->~_ty();
+            delete_ptr = NULL;
+        }
+
+        if (( NULL == delete_ptr ) && ( creation_count > 0 ) )
+        {
+            creation_count--;
+        }
+
+        return delete_ptr;
+    }
+
+    /// return a free element from the heap
+    _ty * heap_allocate()
+    {
+        _ty * element_ptr = NULL;
+        heap_iterator it;
+
+        if ( creation_count >= creation_limit ) return NULL;
+
+        // just in case there is a NULL pointer in the EGOBOO_SET
+        while ( !_heap.empty() && NULL == element_ptr )
+        {
+            it = _heap.begin();
+
+            element_ptr = *it;
+
+            _heap.erase( it );
+        }
+
+        return element_ptr;
+    }
+
+    /// try to place an element onto the heap
+    bool_t heap_free( _ty * element_ptr )
+    {
+        if ( !valid_element_ptr( element_ptr ) ) return bfalse;
+
+        // if there is a duplicate of this pointer in the _heap, remove it
+        heap_remove( element_ptr );
+
+        // this is OK to put here. allow kill_element() to remove a NULL pointer
+        if ( NULL == element_ptr ) return bfalse;
+
+        // if there is too much element, don't add it
+        if ( _heap.size() + 1 > _sz ) return bfalse;
+
+        // try to insert the pointer
+        heap_pair rv = _heap.insert( element_ptr );
+
+        return rv.second;
+    }
+
+    /// remove an element from the heap
+    bool_t  heap_remove( _ty * element_ptr )
+    {
+        bool_t found = bfalse;
+
+        if ( !valid_element_ptr( element_ptr ) ) return bfalse;
+
+        // remove the given pointer from the _heap
+        if ( !_heap.empty() )
+        {
+            EGOBOO_SET<_ty*>::iterator it = _heap.find( element_ptr );
+            if ( it != _heap.end() )
+            {
+                _heap.erase( it );
+                found = btrue;
+            }
+        }
+
+        return found;
+    }
+
+    /// get rid of "useless" data
+    void garbage_collect( size_t size )
+    {
+        heap_iterator it;
+        _ty *         tmp_ptr = NULL;
+
+        // erase all excess elements from the heap
+        // and delete them
+        while ( _heap.size() > size )
+        {
+            it = _heap.begin();
+
+            tmp_ptr = *it;
+
+            _heap.erase( it );
+
+            if ( NULL != tmp_ptr )
+            {
+                tmp_ptr;
+                tmp_ptr = NULL;
+            }
+        }
+    }
+
+    unsigned creation_count;
+    unsigned creation_limit;
+
+    unsigned guid;
+
+    _ty       _static_ary[_sz];
+    heap_type _heap;
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
 struct t_cpp_map
 {
@@ -299,7 +921,7 @@ public:
     {
         friend struct t_cpp_map<_ty, _ity>;
 
-        explicit iterator() { _id = unsigned( -1 ); _valid = bfalse; }
+        explicit iterator() { _id = unsigned( ~0L ); _valid = bfalse; }
 
         typedef typename std::pair< const _ity, const _ty * >  _val_t;
         typedef typename EGOBOO_MAP< const _ity, const _ty * > _map_t;
@@ -330,7 +952,7 @@ private:
         bool_t    _valid;
     };
 
-    t_cpp_map() { _id = unsigned( -1 ); }
+    t_cpp_map() { _id = unsigned( ~0L ); }
 
     unsigned get_id() { return _id; }
 
@@ -339,7 +961,7 @@ private:
     bool_t   add( const reference_type & ref, const _ty * val );
     bool_t   remove( const reference_type & ref );
 
-    void     clear() { _map.clear(); _id = unsigned( -1 ); };
+    void     clear() { _map.clear(); _id = unsigned( ~0L ); };
     size_t   size()  { return _map.size(); }
 
     iterator iterator_begin()
@@ -377,7 +999,7 @@ protected:
 
     iterator & iterator_invalidate( iterator & it )
     {
-        it._id    = unsigned( -1 );
+        it._id    = unsigned( ~0L );
         it._valid = bfalse;
         it._i     = _map.end();
 
@@ -419,14 +1041,14 @@ template < typename _ty, typename _ity >
 struct t_cpp_deque
 {
 private:
+
     typedef typename std::deque< _ity >              deque_type;
     typedef typename std::deque< _ity >::iterator    deque_iterator;
     typedef typename t_reference<_ty>                reference_type;
 
-    unsigned   _id;
-    deque_type _deque;
-
 public:
+
+    static const unsigned invalid_id = unsigned( ~0L );
 
     /// a custom iterator that tracks additions and removals to the
     /// t_cpp_deque::_deque
@@ -434,7 +1056,7 @@ public:
     {
         friend struct t_cpp_deque<_ty, _ity>;
 
-        explicit iterator() { _id = unsigned( -1 ); _valid = bfalse; }
+        explicit iterator() { _id = invalid_id; _valid = bfalse; }
 
         typedef typename _ity                           _val_t;
         typedef typename std::deque< _val_t >           _deque_t;
@@ -465,7 +1087,7 @@ private:
         bool_t    _valid;
     };
 
-    t_cpp_deque() { _id = unsigned( -1 ); }
+    t_cpp_deque() : _id( invalid_id ) {}
 
     unsigned get_id() { return _id; }
 
@@ -474,7 +1096,7 @@ private:
     bool_t         add( const reference_type & ref );
     bool_t         remove( const reference_type & ref );
 
-    void     clear() { _deque.clear(); _id = unsigned( -1 ); };
+    void     clear() { _deque.clear(); _id = invalid_id; };
     size_t   size()  { return _deque.size(); }
 
     iterator iterator_begin()
@@ -512,7 +1134,7 @@ protected:
 
     iterator & iterator_invalidate( iterator & it )
     {
-        it._id    = unsigned( -1 );
+        it._id    = invalid_id;
         it._valid = bfalse;
         it._i     = _deque.end();
 
@@ -545,6 +1167,23 @@ protected:
         }
 
         return btrue;
+    }
+
+private:
+
+    unsigned   _id;
+    deque_type _deque;
+
+    void increment_id()
+    {
+        if ( invalid_id == _id )
+        {
+            _id = 1;
+        }
+        else
+        {
+            _id++;
+        }
     }
 };
 

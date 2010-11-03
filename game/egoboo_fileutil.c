@@ -411,7 +411,7 @@ void fput_range_raw( vfs_FILE* filewrite, FRange val )
 {
     if ( val.from == val.to )
     {
-        if ( val.from == floor( val.from ) )
+        if ( val.from == FLOOR( val.from ) )
         {
             vfs_printf( filewrite, "%d", ( int )val.from );
         }
@@ -422,7 +422,7 @@ void fput_range_raw( vfs_FILE* filewrite, FRange val )
     }
     else
     {
-        if ( val.from != floor( val.from ) || val.to != floor( val.to ) )
+        if ( val.from != FLOOR( val.from ) || val.to != FLOOR( val.to ) )
         {
             vfs_printf( filewrite, "%4.2f-%4.2f", val.from, val.to );
         }

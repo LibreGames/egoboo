@@ -40,16 +40,13 @@ mpd_BSP * mpd_BSP::ctor_this( mpd_BSP * pbsp, ego_mpd   * pmesh )
     int size_x, size_y;
     int depth;
 
-    if ( NULL == pbsp ) return NULL;
+    if ( NULL == pbsp || NULL == pmesh ) return pbsp;
 
-    SDL_memset( pbsp, 0, sizeof( *pbsp ) );
-
-    if ( NULL == pmesh ) return pbsp;
     size_x = pmesh->gmem.grids_x;
     size_y = pmesh->gmem.grids_y;
 
     // determine the number of bifurcations necessary to get cells the size of the "blocks"
-    depth = ceil( log( 0.5f * SDL_max( size_x, size_y ) ) / log( 2.0f ) );
+    depth = CEIL( LOG( 0.5f * SDL_max( size_x, size_y ) ) / LOG( 2.0f ) );
 
     // make a 2D BSP tree with "max depth" depth
     ego_BSP_tree::init( &( pbsp->tree ), 2, depth );
