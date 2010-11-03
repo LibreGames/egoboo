@@ -371,7 +371,7 @@ void render_all_prt_trans( ego_camera * pcam, ego_prt_registry_entity reg[], siz
     {
         // apply transparent particles from far to near
         // this must be iterated with a signed variable or it fails horribly
-        for ( rcnt = ego_sint(numparticle ) - 1; rcnt >= 0; rcnt-- )
+        for ( rcnt = ego_sint( numparticle ) - 1; rcnt >= 0; rcnt-- )
         {
             // Get the index from the color slot
             render_one_prt_trans( PRT_REF( reg[rcnt].index ) );
@@ -683,7 +683,7 @@ void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vr
 
     if ( NULL == pinst || NULL == pmad ) return;
 
-    vrt = ego_sint(pinst->vrt_count) - ego_sint(vrt_offset);
+    vrt = ego_sint( pinst->vrt_count ) - ego_sint( vrt_offset );
 
     if ( vrt < 0 || vrt >= pinst->vrt_count ) return;
 

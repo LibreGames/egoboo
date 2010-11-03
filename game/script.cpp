@@ -1836,7 +1836,7 @@ void issue_order( const CHR_REF & character, Uint32 value )
     int     counter;
 
     counter = 0;
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         if ( ego_chr::get_iteam( cnt ) == ego_chr::get_iteam( character ) )
         {
@@ -1857,7 +1857,7 @@ void issue_special_order( Uint32 value, IDSZ idsz )
     int     counter;
 
     counter = 0;
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         ego_cap * pcap;
 

@@ -92,17 +92,17 @@ extern "C"
 #ifdef COMPILE_64BIT
 
 #   if SDL_HAS_64BIT_TYPE
-        typedef Uint64 ego_uint;
-        typedef Sint64 ego_sint;
+    typedef Uint64 ego_uint;
+    typedef Sint64 ego_sint;
 #   else
     // this may only work for visual studio / win32
-        typedef unsigned long long ego_uint;
-        typedef signed   long long ego_sint;
+    typedef unsigned long long ego_uint;
+    typedef signed   long long ego_sint;
 #   endif
 
 #else
-        typedef unsigned ego_uint;
-        typedef signed   ego_sint;
+    typedef unsigned ego_uint;
+    typedef signed   ego_sint;
 #endif
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

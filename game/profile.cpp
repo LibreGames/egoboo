@@ -1063,7 +1063,7 @@ bool_t chop_load_vfs( ego_chop_data * pdata, const char *szLoadname, ego_chop_de
             {
                 int itmp;
                 pdefinition->section[which_section].size  = section_count;
-                itmp = ego_sint(pdata->chop_count) - ego_sint(section_count);
+                itmp = ego_sint( pdata->chop_count ) - ego_sint( section_count );
                 pdefinition->section[which_section].start = SDL_max( 0, itmp );
             }
 
@@ -1092,7 +1092,7 @@ bool_t chop_load_vfs( ego_chop_data * pdata, const char *szLoadname, ego_chop_de
     {
         int itmp;
         pdefinition->section[which_section].size  = section_count;
-        itmp = ego_sint(pdata->chop_count) - ego_sint(section_count);
+        itmp = ego_sint( pdata->chop_count ) - ego_sint( section_count );
         pdefinition->section[which_section].start = SDL_max( 0, itmp );
     }
 

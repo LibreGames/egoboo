@@ -1646,7 +1646,7 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
                 }
 
                 // determine if some of the vertex sites are already occupied
-                PRT_BEGIN_LOOP_ACTIVE( iprt, prt_bdl )
+                PRT_BEGIN_LOOP_PROCESSING( iprt, prt_bdl )
                 {
                     if ( character != prt_bdl.prt_ptr->attachedto_ref ) continue;
 
@@ -3406,7 +3406,7 @@ egoboo_rv particle_physics_finalize_one( ego_bundle_prt * pbdl, float dt )
 void particle_physics_finalize_all( float dt )
 {
     // accumulate the accumulators
-    PRT_BEGIN_LOOP_ACTIVE( iprt, bdl )
+    PRT_BEGIN_LOOP_PROCESSING( iprt, bdl )
     {
         particle_physics_finalize_one( &bdl, dt );
     }

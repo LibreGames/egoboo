@@ -284,22 +284,22 @@ int CoNode_cmp( const void * vleft, const void * vright )
     if ( ftmp <= 0.0f ) return -1;
     else if ( ftmp >= 0.0f ) return 1;
 
-    itmp = ego_sint(pleft->chra.get_value()) - ego_sint(pright->chra.get_value());
+    itmp = ego_sint( pleft->chra.get_value() ) - ego_sint( pright->chra.get_value() );
     if ( 0 != itmp ) return itmp;
 
-    itmp = ego_sint(pleft->prta.get_value()) - ego_sint(pright->prta.get_value());
+    itmp = ego_sint( pleft->prta.get_value() ) - ego_sint( pright->prta.get_value() );
     if ( 0 != itmp ) return itmp;
 
-    itmp = ego_sint(pleft->chra.get_value()) - ego_sint(pright->chra.get_value());
+    itmp = ego_sint( pleft->chra.get_value() ) - ego_sint( pright->chra.get_value() );
     if ( 0 != itmp ) return itmp;
 
-    itmp = ego_sint(pleft->prtb.get_value()) - ego_sint(pright->prtb.get_value());
+    itmp = ego_sint( pleft->prtb.get_value() ) - ego_sint( pright->prtb.get_value() );
     if ( 0 != itmp ) return itmp;
 
-    itmp = ego_sint(pleft->chrb.get_value()) - ego_sint(pright->chrb.get_value());
+    itmp = ego_sint( pleft->chrb.get_value() ) - ego_sint( pright->chrb.get_value() );
     if ( 0 != itmp ) return itmp;
 
-    itmp = ego_sint(pleft->tileb) - ego_sint(pright->tileb);
+    itmp = ego_sint( pleft->tileb ) - ego_sint( pright->tileb );
     if ( 0 != itmp ) return itmp;
 
     return 0;
@@ -1374,7 +1374,7 @@ bool_t bump_all_platforms( CoNode_ary * pcn_ary )
 
     //---- remove any bad platforms
 
-    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
     {
         if ( MAX_CHR != pchr->onwhichplatform_ref && pchr->onwhichplatform_update < update_wld )
         {
@@ -1455,7 +1455,7 @@ egoboo_rv bump_prepare( ego_obj_BSP * pbsp )
 void bump_begin()
 {
     // blank the accumulators
-    //CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    //CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     //{
     //    phys_data_blank_accumulators( &(pchr->phys) );
     //}
@@ -3174,7 +3174,7 @@ bool_t update_chr_platform_attachment( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 void update_all_chr_platform_attachments()
 {
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         update_chr_platform_attachment( pchr );
     }
@@ -3258,7 +3258,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
     tmp_cv.maxs[OCT_YX] *= SQRT_TWO;
 
     // do the automatic vertex update
-    vertex = ego_sint(pmount_inst->vrt_count) - ego_sint(grip_offset);
+    vertex = ego_sint( pmount_inst->vrt_count ) - ego_sint( grip_offset );
     vertex = SDL_max( 0, vertex );
     gfx_mad_instance::update_vertices( pmount_inst, pmount->mad_inst.state, gfx_range( vertex, vertex + grip_offset ), bfalse );
 
@@ -3351,22 +3351,22 @@ bool CoNode_greater::operator()
     if ( ftmp <= 0.0f ) return false;
     else if ( ftmp >= 0.0f ) return true;
 
-    itmp = ego_sint(_Left.chra.get_value()) - ego_sint(_Right.chra.get_value());
+    itmp = ego_sint( _Left.chra.get_value() ) - ego_sint( _Right.chra.get_value() );
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ego_sint(_Left.prta.get_value()) - ego_sint(_Right.prta.get_value());
+    itmp = ego_sint( _Left.prta.get_value() ) - ego_sint( _Right.prta.get_value() );
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ego_sint(_Left.chra.get_value()) - ego_sint(_Right.chra.get_value());
+    itmp = ego_sint( _Left.chra.get_value() ) - ego_sint( _Right.chra.get_value() );
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ego_sint(_Left.prtb.get_value()) - ego_sint(_Right.prtb.get_value());
+    itmp = ego_sint( _Left.prtb.get_value() ) - ego_sint( _Right.prtb.get_value() );
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ego_sint(_Left.chrb.get_value()) - ego_sint(_Right.chrb.get_value());
+    itmp = ego_sint( _Left.chrb.get_value() ) - ego_sint( _Right.chrb.get_value() );
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ego_sint(_Left.tileb) - ego_sint(_Right.tileb);
+    itmp = ego_sint( _Left.tileb ) - ego_sint( _Right.tileb );
     if ( 0 != itmp ) return itmp > 0;
 
     return false;

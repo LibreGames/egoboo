@@ -99,14 +99,21 @@ typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
     if( NULL == PCHR ) continue;
 
 /// loops through ChrObjList for all "active" characters, creating a referchre, and a pointer
-#define CHR_BEGIN_LOOP_ACTIVE(IT, PCHR) \
-    OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_chr, ChrObjList, IT, PCHR##_obj) \
+#define CHR_BEGIN_LOOP_PROCESSING(IT, PCHR) \
+    OBJ_LIST_BEGIN_LOOP_PROCESSING(ego_obj_chr, ChrObjList, IT, PCHR##_obj) \
+    ego_chr * PCHR = (ego_chr *)static_cast<const ego_chr *>(PCHR##_obj); \
+    if( NULL == PCHR ) continue;
+
+
+/// loops through ChrObjList for all in-game characters, creating a referchre, and a pointer
+#define CHR_BEGIN_LOOP_INGAME(IT, PCHR) \
+    OBJ_LIST_BEGIN_LOOP_INGAME(ego_obj_chr, ChrObjList, IT, PCHR##_obj) \
     ego_chr * PCHR = (ego_chr *)static_cast<const ego_chr *>(PCHR##_obj); \
     if( NULL == PCHR ) continue;
 
 /// loops through ChrObjList for all "active" characters that are registered in the BSP
 #define CHR_BEGIN_LOOP_BSP(IT, PCHR) \
-    CHR_BEGIN_LOOP_ACTIVE(IT, PCHR) \
+    CHR_BEGIN_LOOP_PROCESSING(IT, PCHR) \
     if( !PCHR->bsp_leaf.inserted ) continue;
 
 /// the termination for each ChrObjList loop

@@ -148,6 +148,11 @@ struct t_ego_obj_container : public ego_obj_lst_state
     static       data_type * get_data_ptr( its_type * pcont ) { return NULL == pcont ? NULL : &( pcont->_container_data ); }
     static const data_type * cget_data_ptr( const its_type * pcont ) { return NULL == pcont ? NULL : &( pcont->_container_data ); }
 
+    //---- automatic type conversions
+    operator data_type & () { return _container_data; }
+    operator const data_type & () const { return _container_data; }
+
+
 protected:
 
     //---- construction and destruction
@@ -242,7 +247,7 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
 
     /// how many free elements are left. might be negative if the list length was changed
     /// while some elements outside that range were still allocated
-    ego_sint free_count() { return ego_sint( _max_len ) - ego_sint(used_map.size()); }
+    ego_sint free_count() { return ego_sint( _max_len ) - ego_sint( used_map.size() ); }
 
     /// how many elements are allocated?
     size_t   used_count() { return used_map.size(); }
@@ -268,7 +273,7 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
     bool_t         iterator_finished( iterator_type & it )       { return used_map.iterator_end( it ); }
 
     /// proper method of accessing incrementing a iterator_type
-    iterator_type & iterator_increment( iterator_type & it ) { return used_map.iterator_increment( it ); }
+    iterator_type & iterator_increment_allocated( iterator_type & it ) { return used_map.iterator_increment( it ); }
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
@@ -433,8 +438,25 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
     /// will cause a loop to exit of the used_deque's length changes during the iteration
     bool_t         iterator_finished( iterator_type & it )       { return used_deque.iterator_end( it ); }
 
-    /// proper method of accessing incrementing a iterator_type
-    iterator_type & iterator_increment( iterator_type & it ) { return used_deque.iterator_increment( it ); }
+    /// increments the iterator through all ALLOCATED data
+    iterator_type & iterator_increment_allocated( iterator_type & it ) { return used_deque.iterator_increment( it ); }
+
+    /// increments the iterator through all DEFINED data == (ALLOCATED and VALID)
+    iterator_type & iterator_increment_defined( iterator_type & it );
+
+    /// increments the iterator through all PROCESSING data == (ALLOCATED and VALID and state is processing)
+    iterator_type & iterator_increment_processing( iterator_type & it );
+
+    /// increments the iterator through all INGAME data
+    iterator_type & iterator_increment_ingame( iterator_type & it );
+
+    // increments the iterator through all BSP data
+    // must be implemented in the list whose container has bsp data
+    //iterator_type & iterator_increment_bsp( iterator_type & it ) { return used_deque.iterator_increment( it ); }
+
+    // increments the iterator through all LIMBO data
+    // implemented for particles
+    //iterator_type & iterator_increment_limbo( iterator_type & it ) { return used_deque.iterator_increment( it ); }
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
@@ -538,42 +560,6 @@ private:
 // LOOPING MACROS
 //--------------------------------------------------------------------------------------------
 
-//// Macros to automate looping through a t_obj_lst_map<>.
-////
-//// This looks a bit messy, but it will simplify the look of egoboo codebase by
-//// hiding the code that defers the the creation and deletion of objects until loop termination.
-////
-//// This process is necessary so that o iterators will be invalidated during the loop
-//// because of operations occurring inside the loop that increase or decrease the length of the list.
-//
-///// the most basic loop beginning. scans through the used list.
-//#define OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ)  \
-//    { \
-//        int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
-//        LIST.increment_loop_depth(); \
-//        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment(internal__##IT) ) \
-//        { \
-//            if( NULL == internal__##IT->second ) continue; \
-//            const OBJ_T * POBJ = LIST##_t::container_type::cget_data_ptr( internal__##IT->second ); \
-//            if( NULL == POBJ ) continue;
-//
-////--------------------------------------------------------------------------------------------
-///// A refinement OBJ_LIST_BEGIN_LOOP(), which picks out "defined"
-//#define OBJ_LIST_BEGIN_LOOP_DEFINED(OBJ_T, LIST, IT, POBJ)  OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) if( !DEFINED_PBASE(POBJ) ) continue;
-//
-////--------------------------------------------------------------------------------------------
-///// The simplest refinement OBJ_LIST_BEGIN_LOOP(). Picks "active" objects out of the used list.
-//#define OBJ_LIST_BEGIN_LOOP_ACTIVE(OBJ_T, LIST, IT, POBJ) OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) if( !PROCESSING_PBASE(POBJ) ) continue;
-//
-////--------------------------------------------------------------------------------------------
-///// The termination of all OBJ_LIST_BEGIN_LOOP()
-//#define OBJ_LIST_END_LOOP(LIST) \
-//    } \
-//    LIST.decrement_loop_depth(); \
-//    if(internal__##LIST##_start_depth != LIST.get_loop_depth()) EGOBOO_ASSERT(bfalse); \
-//    LIST.cleanup(); \
-//    }
-
 // Macros to automate looping through a t_obj_lst_map<>.
 //
 // This looks a bit messy, but it will simplify the look of egoboo codebase by
@@ -582,34 +568,60 @@ private:
 // This process is necessary so that o iterators will be invalidated during the loop
 // because of operations occurring inside the loop that increase or decrease the length of the list.
 
-/// the most basic loop beginning. scans through the used list.
-#define OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ)  \
+#define OBJ_LIST_BEGIN_LOOP_ALLOCATED(OBJ_T, LIST, IT, POBJ)  \
     { \
         int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
         LIST.increment_loop_depth(); \
-        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment(internal__##IT) ) \
+        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_allocated(internal__##IT) ) \
         { \
             LIST##_t::lst_reference IT( *internal__##IT );\
             LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
-            if( !allocator_client::has_valid_id(POBJ##_cont) ) continue; \
+            if( NULL == POBJ##_cont ) continue;\
+            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
+            if( NULL == POBJ ) continue;\
+            int internal__##LIST##_internal_depth = LIST.get_loop_depth();
+
+#define OBJ_LIST_BEGIN_LOOP_DEFINED(OBJ_T, LIST, IT, POBJ) \
+    { \
+        int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
+        LIST.increment_loop_depth(); \
+        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_defined(internal__##IT) ) \
+        { \
+            LIST##_t::lst_reference IT( *internal__##IT );\
+            LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
+            if( NULL == POBJ##_cont ) continue;\
+            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
+            if( NULL == POBJ ) continue;\
+            int internal__##LIST##_internal_depth = LIST.get_loop_depth();
+
+#define OBJ_LIST_BEGIN_LOOP_PROCESSING(OBJ_T, LIST, IT, POBJ) \
+    { \
+        int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
+        LIST.increment_loop_depth(); \
+        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_processing(internal__##IT) ) \
+        { \
+            LIST##_t::lst_reference IT( *internal__##IT );\
+            LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
+            if( NULL == POBJ##_cont ) continue;\
+            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
+            if( NULL == POBJ ) continue;\
+            int internal__##LIST##_internal_depth = LIST.get_loop_depth();
+
+#define OBJ_LIST_BEGIN_LOOP_INGAME(OBJ_T, LIST, IT, POBJ) \
+    { \
+        int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
+        LIST.increment_loop_depth(); \
+        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_ingame(internal__##IT) ) \
+        { \
+            LIST##_t::lst_reference IT( *internal__##IT );\
+            LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
+            if( NULL == POBJ##_cont ) continue;\
             OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
             if( NULL == POBJ ) continue;\
             int internal__##LIST##_internal_depth = LIST.get_loop_depth();
 
 //--------------------------------------------------------------------------------------------
-/// A refinement OBJ_LIST_BEGIN_LOOP(), which picks out "defined"
-#define OBJ_LIST_BEGIN_LOOP_DEFINED(OBJ_T, LIST, IT, POBJ) \
-    OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) \
-    if( !DEFINED_PBASE(POBJ) ) continue;
-
-//--------------------------------------------------------------------------------------------
-/// The simplest refinement OBJ_LIST_BEGIN_LOOP(). Picks "active" objects out of the used list.
-#define OBJ_LIST_BEGIN_LOOP_ACTIVE(OBJ_T, LIST, IT, POBJ) \
-    OBJ_LIST_BEGIN_LOOP(OBJ_T, LIST, IT, POBJ) \
-    if( !PROCESSING_PBASE(POBJ) ) continue;
-
-//--------------------------------------------------------------------------------------------
-/// The termination of all OBJ_LIST_BEGIN_LOOP()
+/// The termination of all OBJ_LIST_BEGIN_LOOP_ALLOCATED()
 #define OBJ_LIST_END_LOOP(LIST) \
     if(internal__##LIST##_internal_depth != LIST.get_loop_depth()) EGOBOO_ASSERT(bfalse); \
     } \

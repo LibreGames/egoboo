@@ -4845,7 +4845,7 @@ Uint8 scr_MakeSimilarNamesKnown( ego_script_state * pstate, ego_ai_bundle * pbdl
     pcap_chr = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap_chr ) return bfalse;
 
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr_test )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr_test )
     {
         ego_cap * pcap_test;
 
@@ -7848,7 +7848,7 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
     endtile = CLIP( endtile, 0, 255 );
 
     useful = bfalse;
-    CHR_BEGIN_LOOP_ACTIVE( character, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( character, pchr )
     {
         float lerp_z;
 

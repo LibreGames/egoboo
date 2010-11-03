@@ -385,7 +385,7 @@ SDL_bool egoboo_console_draw( egoboo_console_t * pcon )
 
             // draw the last output line and work backwards
             // this must be iterated with a signed variable or it fails horribly
-            for ( rcnt = (ego_sint)console_line_count - 1; rcnt >= 0 && height > 0 ; rcnt-- )
+            for ( rcnt = ( ego_sint )console_line_count - 1; rcnt >= 0 && height > 0 ; rcnt-- )
             {
                 size_t len = SDL_min( 1023, console_line_lengths[rcnt] );
 
@@ -584,7 +584,7 @@ SDL_Event * egoboo_console_handle_events( SDL_Event * pevt )
                 {
                     strncpy( pcon->buffer, pcon->save_buffer[pcon->save_index], SDL_arraysize( pcon->buffer ) );
                     pcon->buffer_carat = SDL_strlen( pcon->buffer );
-                    pcon->buffer_carat = (ego_sint)pcon->buffer_carat - 1;
+                    pcon->buffer_carat = ( ego_sint )pcon->buffer_carat - 1;
                 }
             }
 
@@ -609,7 +609,7 @@ SDL_Event * egoboo_console_handle_events( SDL_Event * pevt )
                 {
                     strncpy( pcon->buffer, pcon->save_buffer[pcon->save_index], EGOBOO_CONSOLE_LENGTH - 1 );
                     pcon->buffer_carat = SDL_strlen( pcon->buffer );
-                    pcon->buffer_carat = (ego_sint)pcon->buffer_carat - 1;
+                    pcon->buffer_carat = ( ego_sint )pcon->buffer_carat - 1;
                 }
             }
 

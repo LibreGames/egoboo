@@ -170,7 +170,7 @@ bool_t link_pop_module()
             ego_hero_spawn_data * phero = pentry->hero + i;
 
             pchr = NULL;
-            CHR_BEGIN_LOOP_ACTIVE( j, ptmp )
+            CHR_BEGIN_LOOP_PROCESSING( j, ptmp )
             {
                 if ( phero->object_index == ptmp->profile_ref )
                 {

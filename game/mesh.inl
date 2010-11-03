@@ -136,8 +136,8 @@ INLINE Uint32 ego_mpd::get_tile_int( ego_mpd   * pmesh, int grid_x,  int grid_y 
 {
     if ( NULL == pmesh ) return INVALID_TILE;
 
-    if ( grid_x < 0 || (size_t)grid_x >= pmesh->info.tiles_x )  return INVALID_TILE;
-    if ( grid_y < 0 || (size_t)grid_y >= pmesh->info.tiles_y )  return INVALID_TILE;
+    if ( grid_x < 0 || ( size_t )grid_x >= pmesh->info.tiles_x )  return INVALID_TILE;
+    if ( grid_y < 0 || ( size_t )grid_y >= pmesh->info.tiles_y )  return INVALID_TILE;
 
     return grid_x + pmesh->gmem.tilestart[grid_y];
 }

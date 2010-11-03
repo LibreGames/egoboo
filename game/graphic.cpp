@@ -1434,7 +1434,7 @@ void draw_map()
         // If one of the players can sense enemies via EMP, draw them as blips on the map
         if ( TEAM_MAX != local_stats.sense_enemy_ID )
         {
-            CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+            CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
             {
                 ego_cap * pcap;
 
@@ -2202,9 +2202,8 @@ void update_all_chr_instance()
 {
     CHR_REF cnt;
 
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
-
         if ( !ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) ) continue;
 
         if ( rv_success == ego_chr::update_instance( pchr ) )
@@ -2393,7 +2392,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                 GL_DEBUG( glDepthFunc )( GL_LEQUAL );     // GL_DEPTH_BUFFER_BIT - surfaces must be closer to the camera to be drawn
 
                 // this must be done with a signed iterator or it will fail horribly
-                for ( rcnt = ego_sint(dolist_count) - 1; rcnt >= 0; rcnt-- )
+                for ( rcnt = ego_sint( dolist_count ) - 1; rcnt >= 0; rcnt-- )
                 {
                     if ( MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
                     {
@@ -2603,7 +2602,7 @@ void render_scene_trans()
 
     // Now render all transparent and light objects
     // this must be iterated with a signed variable or it fails horribly
-    for ( rcnt = ego_sint(dolist_count ) - 1; rcnt >= 0; rcnt-- )
+    for ( rcnt = ego_sint( dolist_count ) - 1; rcnt >= 0; rcnt-- )
     {
         if ( MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
         {
@@ -4209,7 +4208,7 @@ void dolist_make( ego_mpd   * pmesh )
     dolist_count = 0;
 
     // Now fill it up again
-    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
     {
         if ( !pchr->pack.is_packed )
         {
@@ -4453,11 +4452,11 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
         run = corner_y[to] >> TILE_BITS;
         while ( grid_y < run )
         {
-            if ( grid_y >= 0 && size_t(grid_y) < pmesh->info.tiles_y )
+            if ( grid_y >= 0 && size_t( grid_y ) < pmesh->info.tiles_y )
             {
                 grid_x = x >> TILE_BITS;
                 if ( grid_x < 0 )  grid_x = 0;
-                else if ( size_t(grid_x) >= pmesh->info.tiles_x )  grid_x = ego_sint(pmesh->info.tiles_x) - 1;
+                else if ( size_t( grid_x ) >= pmesh->info.tiles_x )  grid_x = ego_sint( pmesh->info.tiles_x ) - 1;
 
                 rowstt[row] = grid_x;
                 row++;
@@ -4488,11 +4487,11 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
 
         while ( grid_y < run )
         {
-            if ( grid_y >= 0 && size_t(grid_y) < pmesh->info.tiles_y )
+            if ( grid_y >= 0 && size_t( grid_y ) < pmesh->info.tiles_y )
             {
                 grid_x = x >> TILE_BITS;
                 if ( grid_x < 0 )  grid_x = 0;
-                else if ( size_t(grid_x) >= pmesh->info.tiles_x - 1 )  grid_x = ego_sint(pmesh->info.tiles_x) - 1;// -2
+                else if ( size_t( grid_x ) >= pmesh->info.tiles_x - 1 )  grid_x = ego_sint( pmesh->info.tiles_x ) - 1;// -2
 
                 rowend[row] = grid_x;
                 row++;
@@ -4510,7 +4509,7 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
 
     // fill the renderlist from the projected view
     grid_y = corner_y[0] / TILE_ISIZE;
-    grid_y = CLIP( grid_y, 0, pmesh->info.tiles_y - 1 );
+    grid_y = CLIP( grid_y, 0, ego_sint( pmesh->info.tiles_y ) - 1 );
     for ( row = 0; row < numrow; row++, grid_y++ )
     {
         for ( grid_x = rowstt[row]; grid_x <= rowend[row] && renderlist.all_count < MAXMESHRENDER; grid_x++ )
@@ -4521,7 +4520,7 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
             tlist[cnt].inrenderlist       = btrue;
 
             // if the tile was not in the renderlist last frame, then we need to force a lighting update of this tile
-            if ( tlist[cnt].inrenderlist_frame < ego_sint(frame_all) - 1 )
+            if ( tlist[cnt].inrenderlist_frame < ego_sint( frame_all ) - 1 )
             {
                 tlist[cnt].needs_lighting_update = btrue;
             }

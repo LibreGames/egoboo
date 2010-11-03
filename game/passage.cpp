@@ -242,7 +242,7 @@ void ShopStack_add_one( const CHR_REF & owner, const PASS_REF & passage )
     ShopStack[ishop].owner   = owner;
 
     // flag every item in the shop as a shop item
-    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
     {
         if ( !pchr->isitem ) continue;
 
@@ -308,11 +308,11 @@ ego_passage * ego_passage::init( ego_passage * ppass, passage_data_t * pdata )
 
     if ( NULL != pdata )
     {
-        ppass->area.xmin  = CLIP( pdata->area.xmin, 0, (ego_sint)PMesh->info.tiles_x - 1 );
-        ppass->area.ymin  = CLIP( pdata->area.ymin, 0, (ego_sint)PMesh->info.tiles_y - 1 );
+        ppass->area.xmin  = CLIP( pdata->area.xmin, 0, ( ego_sint )PMesh->info.tiles_x - 1 );
+        ppass->area.ymin  = CLIP( pdata->area.ymin, 0, ( ego_sint )PMesh->info.tiles_y - 1 );
 
-        ppass->area.xmax  = CLIP( pdata->area.xmax, 0, (ego_sint)PMesh->info.tiles_x - 1 );
-        ppass->area.ymax  = CLIP( pdata->area.ymax, 0, (ego_sint)PMesh->info.tiles_y - 1 );
+        ppass->area.xmax  = CLIP( pdata->area.xmax, 0, ( ego_sint )PMesh->info.tiles_x - 1 );
+        ppass->area.ymax  = CLIP( pdata->area.ymax, 0, ( ego_sint )PMesh->info.tiles_y - 1 );
 
         ppass->mask       = pdata->mask;
         ppass->music      = pdata->music;
@@ -438,7 +438,7 @@ CHR_REF ego_passage::who_is_blocking( ego_passage * ppass, const CHR_REF & isrc,
 
     // Look at each character
     foundother = CHR_REF( MAX_CHR );
-    CHR_BEGIN_LOOP_ACTIVE( character, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( character, pchr )
     {
         if ( foundother != CHR_REF( MAX_CHR ) ) break;
 
@@ -565,7 +565,7 @@ bool_t ego_passage::close( ego_passage * ppass )
         CHR_REF crushedcharacters[MAX_CHR];
 
         // Make sure it isn't blocked
-        CHR_BEGIN_LOOP_ACTIVE( character, pchr )
+        CHR_BEGIN_LOOP_PROCESSING( character, pchr )
         {
             // Don't do held items
             if ( IS_ATTACHED_PCHR( pchr ) ) continue;

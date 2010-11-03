@@ -337,7 +337,7 @@ egoboo_rv ego_main_process::do_running()
             //PMod->beat        = btrue;
             //PMod->exportvalid = btrue;
 
-            CHR_BEGIN_LOOP_ACTIVE( itarget, ptarget )
+            CHR_BEGIN_LOOP_PROCESSING( itarget, ptarget )
             {
                 // don't kill players
                 if ( !VALID_PLA( ptarget->is_which_player ) )

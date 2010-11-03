@@ -1772,7 +1772,7 @@ void cleanup_all_enchants()
 //--------------------------------------------------------------------------------------------
 void increment_all_enchant_update_counters()
 {
-    ENC_BEGIN_LOOP_ACTIVE( cnt, penc )
+    ENC_BEGIN_LOOP_PROCESSING( cnt, penc )
     {
         ego_obj * pbase = ego_enc::get_obj_ptr( penc );
         if ( NULL == pbase ) continue;

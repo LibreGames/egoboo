@@ -1028,66 +1028,103 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::deact
 }
 
 //--------------------------------------------------------------------------------------------
-// t_ego_obj_container<> -
+// t_obj_lst_deque<> - special iterator methods
 //--------------------------------------------------------------------------------------------
+template <typename _data, size_t _sz>
+typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz>::iterator_increment_defined( typename t_obj_lst_deque<_data, _sz>::iterator_type & it )
+{
+    // increments the iterator through all DEFINED data == (ALLOCATED and VALID)
+
+    // iterate until you get a valid iterator
+    while ( !used_deque.iterator_end( it ) )
+    {
+        it = used_deque.iterator_increment( it );
+
+        const container_type * pcont = get_ptr( lst_reference( *it ) );
+        if ( NULL == pcont ) continue;
+
+        const _data * pdata = container_type::cget_data_ptr( pcont );
+        if ( NULL == pdata ) continue;
+
+        // get the pointer directly and bypass multiple NULL pointer checks in the
+        // ego_object_process_state_data::get*(pdata) static function calls
+        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( pdata );
+
+        if ( pstate->get_valid() )
+        {
+            break;
+        }
+    }
+
+    return it;
+}
 
 //--------------------------------------------------------------------------------------------
-// struct ego_obj_chr - memory management
+template <typename _data, size_t _sz>
+typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz>::iterator_increment_processing( typename t_obj_lst_deque<_data, _sz>::iterator_type & it )
+{
+    // increments the iterator through all PROCESSING data == (ALLOCATED and VALID and state is processing)
+
+    while ( !used_deque.iterator_end( it ) )
+    {
+        it = used_deque.iterator_increment( it );
+
+        const container_type * pcont = get_ptr( lst_reference( *it ) );
+        if ( NULL == pcont ) continue;
+
+        const _data * pdata = container_type::cget_data_ptr( pcont );
+        if ( NULL == pdata ) continue;
+
+        // get the pointer directly and bypass multiple NULL pointer checks in the
+        // ego_object_process_state_data::get*(pdata) static function calls
+        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( pdata );
+
+        if ( pstate->get_on() && ( ego_obj_processing == pstate->get_action() ) )
+        {
+            break;
+        }
+    }
+
+    return it;
+}
+
 //--------------------------------------------------------------------------------------------
-//template< typename _d, size_t _sz >
-//t_ego_obj_container<_d, _sz> * t_ego_obj_container<_d, _sz>::ctor_this( t_ego_obj_container<_d, _sz> * pobj )
-//{
-//    // construct this struct, ONLY
-//
-//    if ( NULL == pobj ) return NULL;
-//
-//    /* puts( "\t\t" __FUNCTION__ ); */
-//
-//    //pobj = dealloc( pobj );
-//    // pobj = alloc( pobj );
-//
-//    return pobj;
-//}
-//
-////--------------------------------------------------------------------------------------------
-//template< typename _d, size_t _sz >
-//t_ego_obj_container<_d, _sz> * t_ego_obj_container<_d, _sz>::dtor_this( t_ego_obj_container<_d, _sz> * pcont )
-//{
-//    // destruct this struct, ONLY
-//
-//    if ( !allocator_client::is_valid( pcont ) ) return pcont;
-//
-//    //data_type * pobj = get_data_ptr(pcont);
-//
-//    /* puts( "\t\t" __FUNCTION__ ); */
-//
-//    //pcont = dealloc( pcont );
-//
-//    return pcont;
-//}
+template <typename _data, size_t _sz>
+typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz>::iterator_increment_ingame( typename t_obj_lst_deque<_data, _sz>::iterator_type & it )
+{
+    // increments the iterator through all INGAME data
 
-////--------------------------------------------------------------------------------------------
-//template< typename _d, size_t _sz >
-//bool_t t_ego_obj_container<_d,_sz>::request_terminate( t_ego_obj_container<_d,_sz> * pcont )
-//{
-//    /// @details BB@> Mark this data for deletion
-//
-//    if ( !ALLOCATED_PBASE( pcont ) ) return bfalse;
-//
-//    POBJ_REQUEST_TERMINATE( pcont->get_data_ptr() );
-//
-//    return btrue;
-//}
+    while ( !used_deque.iterator_end( it ) )
+    {
+        it = used_deque.iterator_increment( it );
 
-////--------------------------------------------------------------------------------------------
-//template< typename _d, size_t _sz >
-//bool_t t_ego_obj_container<_d,_sz>::request_terminate( _d * pdata )
-//{
-//    /// @details BB@> Mark this data for deletion
-//
-//    if ( !DEFINED_PBASE( _d::get_obj_ptr(pdata)  ) ) return bfalse;
-//
-//    POBJ_REQUEST_TERMINATE( _d::get_obj_ptr(pdata)  );
-//
-//    return btrue;
-//}
+        const container_type * pcont = get_ptr( lst_reference( *it ) );
+        if ( NULL == pcont ) continue;
+
+        const _data * pdata = container_type::cget_data_ptr( pcont );
+        if ( NULL == pdata ) continue;
+
+        // get the pointer directly and bypass multiple NULL pointer checks in the
+        // ego_object_process_state_data::get*(pdata) static function calls
+        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( pdata );
+
+        if ( _data::get_spawn_depth() > 0 )
+        {
+            // ?? can it get here if the data is invalid ??
+            if ( pstate->get_valid() )
+            {
+                break;
+            }
+        }
+        else
+        {
+            if ( pstate->get_on() && ( ego_obj_processing == pstate->get_action() ) )
+            {
+                break;
+            }
+        }
+    }
+
+    return it;
+}
+

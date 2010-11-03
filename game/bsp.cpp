@@ -786,7 +786,7 @@ bool_t ego_BSP_tree::alloc( ego_BSP_tree * t, Sint32 dim, Sint32 depth )
     fake_node_count = ego_BSP_tree::count_nodes( dim, depth );
     if ( fake_node_count < 0 ) return bfalse;
 
-    size_t node_count = size_t(fake_node_count);
+    size_t node_count = size_t( fake_node_count );
 
     // re-initialize the variables
     t->dimensions = 0;
@@ -1068,7 +1068,7 @@ ego_BSP_branch * ego_BSP_tree::ensure_branch( ego_BSP_tree   * t, ego_BSP_branch
     ego_BSP_branch * pbranch;
 
     if (( NULL == t ) || ( NULL == B ) ) return NULL;
-    if ( index < 0 || ego_sint(index) > ego_sint(B->child_lst.size()) ) return NULL;
+    if ( index < 0 || ego_sint( index ) > ego_sint( B->child_lst.size() ) ) return NULL;
 
     // grab any existing value
     pbranch = B->child_lst[index];
@@ -1102,7 +1102,7 @@ bool_t ego_BSP_tree::insert( ego_BSP_tree   * t, ego_BSP_branch * B, ego_BSP_lea
     bool_t retval;
 
     if (( NULL == t ) || ( NULL == B ) || ( NULL == n ) ) return bfalse;
-    if (ego_sint(index) > ego_sint(B->child_lst.size()) ) return bfalse;
+    if ( ego_sint( index ) > ego_sint( B->child_lst.size() ) ) return bfalse;
 
     if ( index >= 0 && NULL != B->child_lst[index] )
     {
@@ -1414,7 +1414,7 @@ bool_t ego_BSP_tree::generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BS
     {
         float maxval, minval;
 
-        tnc = ego_sint(psrc->dim) - 1 - cnt;
+        tnc = ego_sint( psrc->dim ) - 1 - cnt;
 
         if ( 0 == ( index & ( 1 << tnc ) ) )
         {

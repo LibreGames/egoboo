@@ -208,7 +208,7 @@ void keep_weapons_with_holders()
 {
     /// @details ZZ@> This function keeps weapons near their holders
 
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         CHR_REF iattached = pchr->attachedto;
         ego_chr * pattached = ChrObjList.get_allocated_data_ptr( iattached );
@@ -420,11 +420,11 @@ void free_one_character_in_game( const CHR_REF & character )
     }
 
     // Make sure everyone knows it died
-    CHR_BEGIN_LOOP_ACTIVE( ichr_listener, pchr_listener )
+    CHR_BEGIN_LOOP_INGAME( ichr_listener, pchr_listener )
     {
         ego_ai_state * pai;
 
-        if ( !INGAME_CHR( ichr_listener ) || ichr_listener == character ) continue;
+        if ( ichr_listener == character ) continue;
         pai = ego_chr::get_pai( ichr_listener );
 
         if ( pai->target == character )
@@ -529,7 +529,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
         vertex = 0;
         if ( NULL != pmad )
         {
-            vertex = ego_sint(pchr->gfx_inst.vrt_count ) - vertex_offset;
+            vertex = ego_sint( pchr->gfx_inst.vrt_count ) - vertex_offset;
 
             // do the automatic update
             gfx_mad_instance::update_vertices( &( pchr->gfx_inst ), pchr->mad_inst.state, gfx_range( vertex, vertex ), bfalse );
@@ -593,7 +593,7 @@ void make_all_character_matrices( bool_t do_physics )
     //}
 
     // just call ego_chr::update_matrix on every character
-    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
     {
         ego_chr::update_matrix( pchr, btrue );
     }
@@ -1451,7 +1451,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
     }
 
     // Go through all characters to find the best match
-    CHR_BEGIN_LOOP_ACTIVE( ichr_grab, pchr_grab )
+    CHR_BEGIN_LOOP_PROCESSING( ichr_grab, pchr_grab )
     {
         fvec3_t   pos_b;
         float     dx, dy, dz, dxy;
@@ -1844,7 +1844,7 @@ void call_for_help( const CHR_REF & character )
     team = ego_chr::get_iteam( character );
     TeamStack[team].sissy = character;
 
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         if ( cnt != character && !team_hates_team( pchr->team, team ) )
         {
@@ -2018,7 +2018,7 @@ void give_team_experience( const TEAM_REF & team, int amount, xp_type xptype )
 {
     /// @details ZZ@> This function gives every character on a team experience
 
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         if ( pchr->team == team )
         {
@@ -2434,7 +2434,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
     // and distribute experience to whoever needs it
     ADD_BITS( pchr->ai.alert, ALERTIF_KILLED );
 
-    CHR_BEGIN_LOOP_ACTIVE( tnc, plistener )
+    CHR_BEGIN_LOOP_PROCESSING( tnc, plistener )
     {
         if ( !plistener->alive ) continue;
 
@@ -3673,7 +3673,7 @@ void issue_clean( const CHR_REF & character )
 
     team = ego_chr::get_iteam( character );
 
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         if ( team != ego_chr::get_iteam( cnt ) ) continue;
 
@@ -5306,7 +5306,7 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
     else
     {
         // non-sneak mode
-        loc_pchr->movement_bits = ego_uint ( ~CHR_MOVEMENT_BITS_SNEAK );
+        loc_pchr->movement_bits = ego_uint( ~CHR_MOVEMENT_BITS_SNEAK );
         loc_pchr->maxaccel      = loc_pchr->maxaccel_reset;
     }
 
@@ -6345,7 +6345,7 @@ void move_all_characters( void )
     ego_chr::stoppedby_tests = 0;
 
     // Move every character
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         PROFILE_BEGIN( move_one_character );
 
@@ -6405,7 +6405,7 @@ void cleanup_all_characters()
 //--------------------------------------------------------------------------------------------
 void increment_all_character_update_counters()
 {
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         ego_obj * pbase = ego_chr::get_obj_ptr( pchr );
         if ( NULL == pbase ) continue;
@@ -8300,7 +8300,7 @@ ego_bundle_chr * ego_bundle_chr::set( ego_bundle_chr * pbundle, ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 void character_physics_initialize_all()
 {
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         phys_data_blank_accumulators( &( pchr->phys ) );
     }
@@ -8743,7 +8743,7 @@ void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
 void character_physics_finalize_all( float dt )
 {
     // accumulate the accumulators
-    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
     {
         ego_bundle_chr bdl( pchr );
         character_physics_finalize_one( &bdl, dt );
@@ -11127,7 +11127,7 @@ int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset 
     if ( 0 == pmount->gfx_inst.vrt_count ) return 0;
 
     //---- set the proper weapongrip vertices
-    tnc = ego_sint(pmount->gfx_inst.vrt_count) - ego_sint(vrt_offset);
+    tnc = ego_sint( pmount->gfx_inst.vrt_count ) - ego_sint( vrt_offset );
 
     // if the starting vertex is less than 0, just take the first vertex
     if ( tnc < 0 )

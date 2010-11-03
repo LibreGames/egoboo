@@ -2317,7 +2317,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         //---- Life and mana (can be less than maximum if not in easy mode)
         if ( cfg.difficulty >= GAME_NORMAL )
         {
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min((int)UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min(( int )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
             y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
 
             if ( pcap->mana_stat.val.from > 0 )

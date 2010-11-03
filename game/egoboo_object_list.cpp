@@ -85,7 +85,7 @@ void flah()
     test.get_data_ptr( ref );
     test.get_allocated_data_ptr( ref );
 
-    for ( it = test.iterator_begin(); !test.iterator_finished( it ); test.iterator_increment( it ) );
+    for ( it = test.iterator_begin(); !test.iterator_finished( it ); test.iterator_increment_allocated( it ) );
 }
 #endif
 
@@ -149,4 +149,3 @@ ego_obj_lst_state * ego_obj_lst_state::dtor_this( ego_obj_lst_state * ptr )
 
     return ptr;
 }
-

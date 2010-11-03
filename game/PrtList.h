@@ -92,7 +92,7 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 
 /// loops through PrtObjList for all "used" particles, creating a reference, and a bundle
 #define PRT_BEGIN_LOOP_USED(IT, PRT_BDL) \
-    OBJ_LIST_BEGIN_LOOP(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
+    OBJ_LIST_BEGIN_LOOP_ALLOCATED(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
     ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)static_cast<const ego_prt *>(internal__##PRT_BDL##_pobj); \
     if( NULL == internal__##PRT_BDL_pprt ) continue; \
     ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
@@ -105,15 +105,15 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
     ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
 
 /// loops through PrtObjList for all "active" particles, creating a reference, and a bundle
-#define PRT_BEGIN_LOOP_ACTIVE(IT, PRT_BDL) \
-    OBJ_LIST_BEGIN_LOOP_ACTIVE(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
+#define PRT_BEGIN_LOOP_PROCESSING(IT, PRT_BDL) \
+    OBJ_LIST_BEGIN_LOOP_PROCESSING(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
     ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)static_cast<const ego_prt *>(internal__##PRT_BDL##_pobj); \
     if( NULL == internal__##PRT_BDL_pprt ) continue; \
     ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
 
 /// loops through PrtObjList for all "active" particles that are registered in the BSP
 #define PRT_BEGIN_LOOP_BSP(IT, PRT_BDL) \
-    PRT_BEGIN_LOOP_ACTIVE(IT, PPRT) \
+    PRT_BEGIN_LOOP_PROCESSING(IT, PPRT) \
     if( !PPRT->bsp_leaf.inserted ) continue;
 
 /// loops through PrtObjList for all "defined" particles that are flagged as being in limbo

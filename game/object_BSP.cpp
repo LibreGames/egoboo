@@ -280,7 +280,7 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
 
     // insert the characters
     ego_obj_BSP::chr_count = 0;
-    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
     {
         // reset a couple of things here
         pchr->holdingweight             = 0;

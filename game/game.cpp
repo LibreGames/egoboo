@@ -1587,7 +1587,7 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
     if ( !LOADED_PIP( particletype ) ) return CHR_REF( MAX_CHR );
     ppip = PipStack + particletype;
 
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
         bool_t target_friend, target_enemy;
 
@@ -1770,7 +1770,7 @@ CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD ta
     }
     else
     {
-        CHR_BEGIN_LOOP_ACTIVE( tnc, pchr )
+        CHR_BEGIN_LOOP_PROCESSING( tnc, pchr )
         {
             search_list[search_list_size] = tnc;
             search_list_size++;
@@ -1831,11 +1831,9 @@ void do_damage_tiles()
 {
     // do the damage tile stuff
 
-    CHR_BEGIN_LOOP_ACTIVE( character, pchr )
+    CHR_BEGIN_LOOP_INGAME( character, pchr )
     {
         ego_cap * pcap;
-
-        if ( !INGAME_CHR( character ) ) continue;
 
         pcap = pro_get_pcap( pchr->profile_ref );
         if ( NULL == pcap ) continue;
@@ -1916,7 +1914,7 @@ void game_update_pits()
             timer_pit = PIT_DELAY;
 
             // Kill any particles that fell in a pit, if they die in water...
-            PRT_BEGIN_LOOP_ACTIVE( iprt, prt_bdl )
+            PRT_BEGIN_LOOP_PROCESSING( iprt, prt_bdl )
             {
                 if ( prt_bdl.prt_ptr->pos.z < PITDEPTH && prt_bdl.pip_ptr->end_water )
                 {
@@ -1926,7 +1924,7 @@ void game_update_pits()
             PRT_END_LOOP();
 
             // Kill or teleport any characters that fell in a pit...
-            CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+            CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
             {
                 // Is it a valid character?
                 if ( IS_INVICTUS_PCHR_RAW( pchr ) || !pchr->alive ) continue;
@@ -2651,7 +2649,7 @@ bool_t get_chr_regeneration( ego_chr * pchr, int * pliferegen, int * pmanaregen 
     ( *pliferegen ) = pchr->life_return;
 
     // Don't forget to add gains and costs from enchants
-    ENC_BEGIN_LOOP_ACTIVE( enchant, penc )
+    ENC_BEGIN_LOOP_PROCESSING( enchant, penc )
     {
         if ( penc->target_ref == ichr )
         {
@@ -2761,10 +2759,8 @@ void tilt_characters_to_terrain()
 
     Uint8 twist;
 
-    CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+    CHR_BEGIN_LOOP_INGAME( cnt, pchr )
     {
-        if ( !INGAME_CHR( cnt ) ) continue;
-
         if ( pchr->stickybutt && ego_mpd::grid_is_valid( PMesh, pchr->onwhichgrid ) )
         {
             twist = PMesh->gmem.grid_list[pchr->onwhichgrid].twist;
@@ -3380,7 +3376,7 @@ void disaffirm_attached_particles( const CHR_REF & character )
 {
     /// @details ZZ@> This function makes sure a character has no attached particles
 
-    PRT_BEGIN_LOOP_ACTIVE( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_PROCESSING( iprt, prt_bdl )
     {
         if ( prt_bdl.prt_ptr->attachedto_ref == character )
         {
@@ -3403,7 +3399,7 @@ int number_of_attached_particles( const CHR_REF & character )
 
     int     cnt = 0;
 
-    PRT_BEGIN_LOOP_ACTIVE( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_PROCESSING( iprt, prt_bdl )
     {
         if ( prt_bdl.prt_ptr->attachedto_ref == character )
         {
@@ -3847,7 +3843,7 @@ void let_all_characters_think()
 
     blip_count = 0;
 
-    CHR_BEGIN_LOOP_ACTIVE( character, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( character, pchr )
     {
         bool_t is_crushed, is_cleanedup, gained_level, can_think;
 
@@ -4503,7 +4499,7 @@ bool_t collide_ray_with_characters( ego_line_of_sight_info * plos )
 
     if ( NULL == plos ) return bfalse;
 
-    CHR_BEGIN_LOOP_ACTIVE( ichr, pchr )
+    CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
     {
         // do line/character intersection
     }
@@ -5398,11 +5394,11 @@ float get_chr_level( ego_mpd   * pmesh, ego_chr * pchr )
     bump.maxs[OCT_Y]  = pchr->chr_min_cv.maxs[OCT_Y]  + pchr->pos.y;
 
     // determine the size of this object in tiles
-    ixmin = bump.mins[OCT_X] / GRID_SIZE; ixmin = CLIP( ixmin, 0, ego_sint(pmesh->info.tiles_x) - 1 );
-    ixmax = bump.maxs[OCT_X] / GRID_SIZE; ixmax = CLIP( ixmax, 0, ego_sint(pmesh->info.tiles_x) - 1 );
+    ixmin = bump.mins[OCT_X] / GRID_SIZE; ixmin = CLIP( ixmin, 0, ego_sint( pmesh->info.tiles_x ) - 1 );
+    ixmax = bump.maxs[OCT_X] / GRID_SIZE; ixmax = CLIP( ixmax, 0, ego_sint( pmesh->info.tiles_x ) - 1 );
 
-    iymin = bump.mins[OCT_Y] / GRID_SIZE; iymin = CLIP( iymin, 0, ego_sint(pmesh->info.tiles_y) - 1 );
-    iymax = bump.maxs[OCT_Y] / GRID_SIZE; iymax = CLIP( iymax, 0, ego_sint(pmesh->info.tiles_y) - 1 );
+    iymin = bump.mins[OCT_Y] / GRID_SIZE; iymin = CLIP( iymin, 0, ego_sint( pmesh->info.tiles_y ) - 1 );
+    iymax = bump.maxs[OCT_Y] / GRID_SIZE; iymax = CLIP( iymax, 0, ego_sint( pmesh->info.tiles_y ) - 1 );
 
     // do the simplest thing if the object is just on one tile
     if ( ixmax == ixmin && iymax == iymin )

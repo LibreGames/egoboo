@@ -807,7 +807,7 @@ private:
         _ty * element_ptr = NULL;
         heap_iterator it;
 
-        if ( size_t(std::max(0,creation_count)) >= creation_limit ) return NULL;
+        if ( size_t( std::max( 0, creation_count ) ) >= creation_limit ) return NULL;
 
         // just in case there is a NULL pointer in the EGOBOO_SET
         while ( !_heap.empty() && NULL == element_ptr )
