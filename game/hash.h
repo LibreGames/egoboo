@@ -47,7 +47,7 @@ struct ego_hash_node
 struct ego_hash_list
 {
     int              allocated;
-    int            * subcount;
+    size_t         * subcount;
     ego_hash_node ** sublist;
 
     ego_hash_list() { clear( this ); }
@@ -67,7 +67,7 @@ struct ego_hash_list
     static ego_hash_node * get_node( ego_hash_list *plst, int i );
 
     static bool_t          set_allocd( ego_hash_list *plst,        int );
-    static bool_t          set_count( ego_hash_list *plst, int i, int );
+    static bool_t          set_count( ego_hash_list *plst, int i, size_t );
     static bool_t          set_node( ego_hash_list *plst, int i, ego_hash_node * );
 
     static bool_t          insert_unique( ego_hash_list * phash, ego_hash_node * pnode );

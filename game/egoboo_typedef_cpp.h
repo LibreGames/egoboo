@@ -218,8 +218,6 @@ struct t_reference
 {
 protected:
     REF_T    ref;          ///< the reference
-    //_ty    * ptr;          ///< not yet used, needed to allow for template specilization?
-    //unsigned update_guid;  ///< the list guid at the time the reference was generated
 
 public:
 
@@ -228,7 +226,6 @@ public:
     t_reference<_ty> & operator = ( const REF_T & rhs )
     {
         ref = rhs;
-        //ptr = NULL;
         return *this;
     }
 
@@ -288,9 +285,9 @@ public:
 
 struct allocator_client
 {
-    static const size_t invalid_value = unsigned( ~0L );
+    static const ego_uint invalid_value = ego_uint( ~0L );
 
-    explicit allocator_client( const unsigned guid = invalid_value, const unsigned index = invalid_value ) :
+    explicit allocator_client( const ego_uint guid = invalid_value, const ego_uint index = invalid_value ) :
             _id( guid ),
             _ix( index )
     {};
@@ -299,15 +296,15 @@ struct allocator_client
     {
         // set the _id to a special value on deletion so we could verify that
         // an element of the "free store" has been deleted
-        *(( unsigned* )( &_id ) ) = invalid_value;
-        *(( unsigned* )( &_ix ) ) = invalid_value;
+        *(( ego_uint* )( &_id ) ) = invalid_value;
+        *(( ego_uint* )( &_ix ) ) = invalid_value;
     };
 
-    const unsigned get_id()          const { return _id; };
+    const ego_uint get_id()          const { return _id; };
     const bool     has_valid_id()    const { return _id != invalid_value; };
 
-    const unsigned get_index()       const { return _ix; };
-    const bool     has_valid_index( const unsigned max_index = unsigned( ~0L ) ) const { return _ix < max_index; };
+    const ego_uint get_index()       const { return _ix; };
+    const bool     has_valid_index( const ego_uint max_index = ego_uint( ~0L ) ) const { return _ix < max_index; };
 
     //---- static accessors
     // make these functions static so we can don't have to worry whether the pointer is NULL
@@ -317,19 +314,19 @@ struct allocator_client
         return NULL == ptr ? bfalse : ptr->has_valid_id();
     }
 
-    static const bool has_valid_index( const allocator_client * ptr, const unsigned max_index = unsigned( ~0L ) )
+    static const bool has_valid_index( const allocator_client * ptr, const ego_uint max_index = invalid_value )
     {
         return NULL == ptr ? bfalse : ptr->has_valid_index( max_index );
     }
 
-    static const bool is_valid( const allocator_client * ptr, const unsigned max_index = unsigned( ~0L ) )
+    static const bool is_valid( const allocator_client * ptr, const ego_uint max_index = invalid_value )
     {
         return NULL == ptr ? bfalse : ptr->has_valid_id() && ptr->has_valid_index( max_index );
     }
 
 private:
-    const unsigned _id;
-    const unsigned _ix;
+    const ego_uint _id;
+    const ego_uint _ix;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -554,12 +551,12 @@ private:
         }
     }
 
-    unsigned creation_count;
-    unsigned creation_limit;
+    ego_sint creation_count;
 
-    unsigned heap_limit;
+    size_t   creation_limit;
+    size_t   heap_limit;
 
-    unsigned guid;
+    ego_uint guid;
 
     EGOBOO_SET<_ty *> _heap;
 };
@@ -594,7 +591,7 @@ struct t_allocator_static
         // destroy any other elements that haven't been destroyed
         for ( int cnt = 0; cnt < _sz; cnt++ )
         {
-            if ( _static_ary[cnt].allocator_client::get_id() != unsigned( ~0L ) )
+            if ( _static_ary[cnt].allocator_client::get_id() != ego_uint( ~0L ) )
             {
                 _static_ary[cnt].~_ty();
             }
@@ -720,7 +717,7 @@ private:
         size_t index = offset / sizeof( _ty );
 
         // alignmet error
-        signed err = signed( test_ptr ) - signed(( const char * )( _static_ary + index ) );
+        ego_sint err = ego_sint( test_ptr ) - ego_sint(( const char * )( _static_ary + index ) );
 
         return ( 0 == err ) ? index : invalid_index;
     }
@@ -810,7 +807,7 @@ private:
         _ty * element_ptr = NULL;
         heap_iterator it;
 
-        if ( creation_count >= creation_limit ) return NULL;
+        if ( size_t(std::max(0,creation_count)) >= creation_limit ) return NULL;
 
         // just in case there is a NULL pointer in the EGOBOO_SET
         while ( !_heap.empty() && NULL == element_ptr )
@@ -890,10 +887,11 @@ private:
         }
     }
 
-    unsigned creation_count;
-    unsigned creation_limit;
+    ego_sint creation_count;
 
-    unsigned guid;
+    size_t  creation_limit;
+
+    ego_uint guid;
 
     _ty       _static_ary[_sz];
     heap_type _heap;
@@ -906,12 +904,12 @@ struct t_cpp_map
 {
 private:
 
-    typedef typename EGOBOO_MAP< const _ity, const _ty * > map_type;
-    typedef typename map_type::iterator                    map_iterator;
+    typedef typename EGOBOO_MAP< const _ity, const _ty * > cache_type;
+    typedef typename cache_type::iterator                    iterator_type;
     typedef typename t_reference<_ty>                      reference_type;
 
-    unsigned _id;
-    map_type _map;
+    ego_uint   _id;
+    cache_type _map;
 
 public:
 
@@ -921,7 +919,7 @@ public:
     {
         friend struct t_cpp_map<_ty, _ity>;
 
-        explicit iterator() { _id = unsigned( ~0L ); _valid = bfalse; }
+        explicit iterator() { _id = ego_uint( ~0L ); _valid = bfalse; }
 
         typedef typename std::pair< const _ity, const _ty * >  _val_t;
         typedef typename EGOBOO_MAP< const _ity, const _ty * > _map_t;
@@ -940,7 +938,7 @@ public:
         }
 
 private:
-        explicit iterator( _it_t it, unsigned id )
+        explicit iterator( _it_t it, ego_uint id )
         {
             _i     = it;
             _id    = id;
@@ -948,20 +946,20 @@ private:
         }
 
         _it_t     _i;
-        unsigned  _id;
+        ego_uint  _id;
         bool_t    _valid;
     };
 
-    t_cpp_map() { _id = unsigned( ~0L ); }
+    t_cpp_map() { _id = ego_uint( ~0L ); }
 
-    unsigned get_id() { return _id; }
+    ego_uint get_id() { return _id; }
 
     _ty *    get_ptr( const reference_type & ref );
     bool_t   has_ref( const reference_type & ref );
     bool_t   add( const reference_type & ref, const _ty * val );
     bool_t   remove( const reference_type & ref );
 
-    void     clear() { _map.clear(); _id = unsigned( ~0L ); };
+    void     clear() { _map.clear(); _id = ego_uint( ~0L ); };
     size_t   size()  { return _map.size(); }
 
     iterator iterator_begin()
@@ -999,7 +997,7 @@ protected:
 
     iterator & iterator_invalidate( iterator & it )
     {
-        it._id    = unsigned( ~0L );
+        it._id    = ego_uint( ~0L );
         it._valid = bfalse;
         it._i     = _map.end();
 
@@ -1042,13 +1040,13 @@ struct t_cpp_deque
 {
 private:
 
-    typedef typename std::deque< _ity >              deque_type;
-    typedef typename std::deque< _ity >::iterator    deque_iterator;
+    typedef typename std::deque< _ity >              cache_type;
+    typedef typename std::deque< _ity >::iterator    iterator_type;
     typedef typename t_reference<_ty>                reference_type;
 
 public:
 
-    static const unsigned invalid_id = unsigned( ~0L );
+    static const ego_uint invalid_id = ego_uint( ~0L );
 
     /// a custom iterator that tracks additions and removals to the
     /// t_cpp_deque::_deque
@@ -1075,7 +1073,7 @@ public:
         }
 
 private:
-        explicit iterator( _it_t it, unsigned id )
+        explicit iterator( _it_t it, ego_uint id )
         {
             _i     = it;
             _id    = id;
@@ -1083,15 +1081,15 @@ private:
         }
 
         _it_t     _i;
-        unsigned  _id;
+        ego_uint  _id;
         bool_t    _valid;
     };
 
     t_cpp_deque() : _id( invalid_id ) {}
 
-    unsigned get_id() { return _id; }
+    ego_uint get_id() { return _id; }
 
-    deque_iterator find_ref( const reference_type & ref );
+    iterator_type find_ref( const reference_type & ref );
     bool_t         has_ref( const reference_type & ref );
     bool_t         add( const reference_type & ref );
     bool_t         remove( const reference_type & ref );
@@ -1171,8 +1169,8 @@ protected:
 
 private:
 
-    unsigned   _id;
-    deque_type _deque;
+    ego_uint   _id;
+    cache_type _deque;
 
     void increment_id()
     {
@@ -1193,7 +1191,7 @@ private:
 template < typename _ty, size_t _sz >
 struct t_cpp_list
 {
-    unsigned update_guid;
+    ego_uint update_guid;
 
     size_t   _used_count;
     size_t   _free_count;
@@ -1247,10 +1245,10 @@ protected:
 template < typename _ty, size_t _sz >
 struct t_cpp_stack
 {
-    unsigned update_guid;
-    int      count;
+    ego_uint update_guid;
+    ego_sint count;
 
-    bool_t valid_idx( const signed index ) const { return index > 0 && index < _sz; }
+    bool_t valid_idx( const ego_sint index ) const { return index > 0 && index < _sz; }
     bool_t in_range_ref( const t_reference<_ty> & ref ) const { return ref.get_value() < _sz; }
 
     t_cpp_stack() { count = 0; update_guid = 0; }

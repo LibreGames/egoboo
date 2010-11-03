@@ -284,22 +284,22 @@ int CoNode_cmp( const void * vleft, const void * vright )
     if ( ftmp <= 0.0f ) return -1;
     else if ( ftmp >= 0.0f ) return 1;
 
-    itmp = ( signed )( pleft->chra ).get_value() - ( signed )( pright->chra ).get_value();
+    itmp = ego_sint(pleft->chra.get_value()) - ego_sint(pright->chra.get_value());
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )( pleft->prta ).get_value() - ( signed )( pright->prta ).get_value();
+    itmp = ego_sint(pleft->prta.get_value()) - ego_sint(pright->prta.get_value());
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )( pleft->chra ).get_value() - ( signed )( pright->chra ).get_value();
+    itmp = ego_sint(pleft->chra.get_value()) - ego_sint(pright->chra.get_value());
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )( pleft->prtb ).get_value() - ( signed )( pright->prtb ).get_value();
+    itmp = ego_sint(pleft->prtb.get_value()) - ego_sint(pright->prtb.get_value());
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )( pleft->chrb ).get_value() - ( signed )( pright->chrb ).get_value();
+    itmp = ego_sint(pleft->chrb.get_value()) - ego_sint(pright->chrb.get_value());
     if ( 0 != itmp ) return itmp;
 
-    itmp = ( signed )pleft->tileb - ( signed )pright->tileb;
+    itmp = ego_sint(pleft->tileb) - ego_sint(pright->tileb);
     if ( 0 != itmp ) return itmp;
 
     return 0;
@@ -3258,7 +3258,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
     tmp_cv.maxs[OCT_YX] *= SQRT_TWO;
 
     // do the automatic vertex update
-    vertex = ( signed )( pmount_inst->vrt_count ) - ( signed )grip_offset;
+    vertex = ego_sint(pmount_inst->vrt_count) - ego_sint(grip_offset);
     vertex = SDL_max( 0, vertex );
     gfx_mad_instance::update_vertices( pmount_inst, pmount->mad_inst.state, gfx_range( vertex, vertex + grip_offset ), bfalse );
 
@@ -3351,22 +3351,22 @@ bool CoNode_greater::operator()
     if ( ftmp <= 0.0f ) return false;
     else if ( ftmp >= 0.0f ) return true;
 
-    itmp = ( signed )( _Left.chra ).get_value() - ( signed )( _Right.chra ).get_value();
+    itmp = ego_sint(_Left.chra.get_value()) - ego_sint(_Right.chra.get_value());
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ( signed )( _Left.prta ).get_value() - ( signed )( _Right.prta ).get_value();
+    itmp = ego_sint(_Left.prta.get_value()) - ego_sint(_Right.prta.get_value());
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ( signed )( _Left.chra ).get_value() - ( signed )( _Right.chra ).get_value();
+    itmp = ego_sint(_Left.chra.get_value()) - ego_sint(_Right.chra.get_value());
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ( signed )( _Left.prtb ).get_value() - ( signed )( _Right.prtb ).get_value();
+    itmp = ego_sint(_Left.prtb.get_value()) - ego_sint(_Right.prtb.get_value());
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ( signed )( _Left.chrb ).get_value() - ( signed )( _Right.chrb ).get_value();
+    itmp = ego_sint(_Left.chrb.get_value()) - ego_sint(_Right.chrb.get_value());
     if ( 0 != itmp ) return itmp > 0;
 
-    itmp = ( signed )_Left.tileb - ( signed )_Right.tileb;
+    itmp = ego_sint(_Left.tileb) - ego_sint(_Right.tileb);
     if ( 0 != itmp ) return itmp > 0;
 
     return false;
@@ -3556,7 +3556,7 @@ bool CoNode_greater::operator()
 //            int vertex;
 //            gfx_mad_instance * pinst = &( pchr_b->inst );
 //
-//            vertex = (( signed )pinst->vrt_count ) - GRIP_LEFT;
+//            vertex = ego_sint(pinst->vrt_count ) - ego_sint(GRIP_LEFT);
 //
 //            // do the automatic update
 //            gfx_mad_instance::update_vertices( pinst, vertex, vertex, bfalse );
@@ -3602,7 +3602,7 @@ bool CoNode_greater::operator()
 //            int vertex;
 //            gfx_mad_instance * pinst = &( pchr_a->inst );
 //
-//            vertex = (( signed )pinst->vrt_count ) - GRIP_LEFT;
+//            vertex = ego_sint(pinst->vrt_count ) - ego_sint(GRIP_LEFT);
 //
 //            // do the automatic update
 //            gfx_mad_instance::update_vertices( pinst, vertex, vertex, bfalse );

@@ -119,7 +119,7 @@ struct ego_MD2_GLCommand
     ego_MD2_GLCommand * next;
 
     GLenum              gl_mode;
-    signed int          command_count;
+    ego_sint            command_count;
     id_glcmd_packed_t * data;
 
     ego_MD2_GLCommand();

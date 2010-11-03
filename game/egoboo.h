@@ -54,15 +54,15 @@ struct ego_clock
 {
     bool_t   initialized;
 
-    unsigned update_old;
-    unsigned update_new;
-    signed   update_cnt;
-    signed   update_dif;
+    ego_uint update_old;
+    ego_uint update_new;
+    ego_sint update_cnt;
+    ego_sint update_dif;
 
-    unsigned frame_old;
-    unsigned frame_new;
-    signed   frame_cnt;
-    signed   frame_dif;
+    ego_uint frame_old;
+    ego_uint frame_new;
+    ego_sint frame_cnt;
+    ego_sint frame_dif;
 
     Uint32 tick_old;
     Uint32 tick_new;
@@ -75,12 +75,12 @@ struct ego_clock
     {
         update_old  = update_new;
         update_new  = update_wld;
-        update_dif  = signed( update_new ) - signed( update_old );
+        update_dif  = ego_sint( update_new ) - ego_sint( update_old );
         update_cnt += update_dif;
 
         frame_old  = frame_new;
         frame_new  = frame_all;
-        frame_dif  = signed( frame_new ) - signed( frame_old );
+        frame_dif  = ego_sint( frame_new ) - ego_sint( frame_old );
         frame_cnt += frame_dif;
     }
 

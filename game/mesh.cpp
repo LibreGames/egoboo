@@ -1415,10 +1415,10 @@ bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIE
 
     // limit the test values to be in-bounds
     pdata->ix_min = SDL_max( pdata->ix_min, 0 );
-    pdata->ix_max = SDL_min( pdata->ix_max, pdata->pinfo->tiles_x - 1 );
+    pdata->ix_max = SDL_min( pdata->ix_max, ego_sint(pdata->pinfo->tiles_x) - 1 );
 
     pdata->iy_min = SDL_max( pdata->iy_min, 0 );
-    pdata->iy_max = SDL_min( pdata->iy_max, pdata->pinfo->tiles_y - 1 );
+    pdata->iy_max = SDL_min( pdata->iy_max, ego_sint(pdata->pinfo->tiles_y) - 1 );
 
     for ( iy = pdata->iy_min; iy <= pdata->iy_max; iy++ )
     {
@@ -1502,7 +1502,7 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
         ty_min = ( iy + 0 ) * GRID_SIZE;
         ty_max = ( iy + 1 ) * GRID_SIZE;
 
-        if ( iy < 0 || iy >= pinfo->tiles_y )
+        if ( iy < 0 || size_t(iy) >= pinfo->tiles_y )
         {
             tile_valid = bfalse;
         }
@@ -1519,7 +1519,7 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
             tx_min = ( ix + 0 ) * GRID_SIZE;
             tx_max = ( ix + 1 ) * GRID_SIZE;
 
-            if ( ix < 0 || ix >= pinfo->tiles_x )
+            if ( ix < 0 || size_t(ix) >= pinfo->tiles_x )
             {
                 tile_valid = bfalse;
             }
@@ -1595,7 +1595,7 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
 }
 
 //--------------------------------------------------------------------------------------------
-fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, Uint32 bits )
+fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, BIT_FIELD bits )
 {
     /// @details BB@> determine the shortest "way out", but creating an array of "pressures"
     /// with each element representing the pressure when the object is moved in different directions
@@ -1711,7 +1711,7 @@ BIT_FIELD ego_mpd::hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_F
         ty_min = ( iy + 0 ) * GRID_SIZE;
         ty_max = ( iy + 1 ) * GRID_SIZE;
 
-        if ( iy < 0 || iy >= data.pinfo->tiles_y )
+        if ( iy < 0 || size_t(iy) >= data.pinfo->tiles_y )
         {
             loc_pass |= ( MPDFX_IMPASS | MPDFX_WALL );
 
@@ -1731,7 +1731,7 @@ BIT_FIELD ego_mpd::hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_F
             tx_min = ( ix + 0 ) * GRID_SIZE;
             tx_max = ( ix + 1 ) * GRID_SIZE;
 
-            if ( ix < 0 || ix >= data.pinfo->tiles_x )
+            if ( ix < 0 || size_t(ix) >= data.pinfo->tiles_x )
             {
                 loc_pass |=  MPDFX_IMPASS | MPDFX_WALL;
 

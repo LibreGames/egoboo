@@ -54,12 +54,12 @@ struct ego_obj_lst_state_data
     { return ( NULL == ptr ) ? INVALID_UPDATE_GUID     : ptr->update_guid; }
 
     static ego_obj_lst_state_data * set_used( ego_obj_lst_state_data *, const bool_t val );
-    static ego_obj_lst_state_data * set_list_id( ego_obj_lst_state_data *, const unsigned val );
+    static ego_obj_lst_state_data * set_list_id( ego_obj_lst_state_data *, const ego_uint val );
 
 private:
 
     bool_t    in_used_list; ///< the object is currently in the used list
-    unsigned  update_guid;  ///< the value of t_obj_lst_map::get_list_id() the last time this object was updated
+    ego_uint  update_guid;  ///< the value of t_obj_lst_map::get_list_id() the last time this object was updated
 
     static ego_obj_lst_state_data * clear( ego_obj_lst_state_data * );
 };
@@ -74,13 +74,13 @@ struct ego_obj_lst_state : public ego_obj_lst_state_data, public allocator_clien
 {
     friend struct ego_obj_lst_client;
 
-    ego_obj_lst_state( const unsigned guid = invalid_value, const unsigned index = invalid_value ) :
+    ego_obj_lst_state( const ego_uint guid = invalid_value, const ego_uint index = invalid_value ) :
             allocator_client( guid, index )
     { ctor_this( this ); }
 
     ~ego_obj_lst_state() { dtor_this( this ); }
 
-    static ego_obj_lst_state * retor_this( ego_obj_lst_state * ptr, unsigned guid = invalid_value, unsigned index = invalid_value )
+    static ego_obj_lst_state * retor_this( ego_obj_lst_state * ptr, ego_uint guid = invalid_value, ego_uint index = invalid_value )
     {
         if ( NULL == ptr ) return ptr;
 
@@ -90,7 +90,7 @@ struct ego_obj_lst_state : public ego_obj_lst_state_data, public allocator_clien
         return ptr;
     }
 
-    static const unsigned get_index( const ego_obj_lst_state * ptr, REF_T fail_value = unsigned( ~0L ) )
+    static const ego_uint get_index( const ego_obj_lst_state * ptr, REF_T fail_value = ego_uint( ~0L ) )
     { return ( NULL == ptr || !ptr->allocator_client::has_valid_id() ) ? fail_value : ptr->allocator_client::get_index(); }
 
     static const Uint32 get_id( ego_obj_lst_state * ptr )
@@ -130,7 +130,7 @@ struct t_ego_obj_container : public ego_obj_lst_state
     //---- constructors and destructors
 
     /// default constructor
-    explicit t_ego_obj_container( const unsigned guid = invalid_value, const unsigned index = invalid_value ) :
+    explicit t_ego_obj_container( const ego_uint guid = invalid_value, const ego_uint index = invalid_value ) :
             ego_obj_lst_state( guid, index ),
             _container_data( this )
     { ctor_this( this ); }
@@ -154,7 +154,7 @@ protected:
 
     /// set/change the information about where this object is stored in t_obj_lst_map<>.
     /// should only be called by t_obj_lst_map<>
-    static its_type * allocate( its_type * pobj, unsigned index ) { if ( NULL == pobj ) return pobj; ego_obj_lst_state::retor_this( pobj, index ); return pobj; }
+    static its_type * allocate( its_type * pobj, ego_uint index ) { if ( NULL == pobj ) return pobj; ego_obj_lst_state::retor_this( pobj, index ); return pobj; }
 
     /// tell this object that it is no longer stored in t_obj_lst_map<>
     /// should only be called by t_obj_lst_map<>
@@ -163,14 +163,14 @@ protected:
     /// cause this struct to completely deallocate and reallocate its data
     /// and the data of all its dependents
     /// should only be called by t_obj_lst_map<>
-    static its_type * retor_all( its_type * ptr, unsigned new_idx = invalid_value )
+    static its_type * retor_all( its_type * ptr, ego_uint new_idx = invalid_value )
     {
         if ( NULL == ptr ) return ptr;
 
         // grab some info from the current allocator_client
         allocator_client * palloc = static_cast<allocator_client>( ptr );
-        const unsigned current_id  = palloc->get_id();
-        const unsigned current_idx = palloc->get_index();
+        const ego_uint current_id  = palloc->get_id();
+        const ego_uint current_idx = palloc->get_index();
 
         // if we are not given a new index, reuse the current one
         if ( invalid_value == new_idx ) new_idx = current_idx;
@@ -184,7 +184,7 @@ protected:
 private:
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static its_type * ctor_all( its_type * ptr, unsigned id, unsigned index )
+    static its_type * ctor_all( its_type * ptr, ego_uint id, ego_uint index )
     {
         if ( NULL == ptr ) return NULL;
 
@@ -207,8 +207,8 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
     typedef typename t_ego_obj_container<_data, _sz>                 container_type;
     typedef typename t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
 
-    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, REF_T>           map_type;
-    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, REF_T>::iterator map_iterator;
+    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, REF_T>           cache_type;
+    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, REF_T>::iterator iterator_type;
 
     //---- construction/destruction
     t_obj_lst_map( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
@@ -242,14 +242,14 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
 
     /// how many free elements are left. might be negative if the list length was changed
     /// while some elements outside that range were still allocated
-    signed   free_count() { return signed( _max_len ) - used_map.size(); }
+    ego_sint free_count() { return ego_sint( _max_len ) - ego_sint(used_map.size()); }
 
     /// how many elements are allocated?
     size_t   used_count() { return used_map.size(); }
 
     /// get the current number of allocations/deallocations from the list. If this does not match
-    /// with the corresponding number in a map_iterator, the iterator is invalid
-    unsigned get_list_id() { return used_map.get_id(); };
+    /// with the corresponding number in a iterator_type, the iterator is invalid
+    ego_uint get_list_id() { return used_map.get_id(); };
 
     /// change the length of the list. this function can be called at any time and be set anywhere
     /// between 0 and _sz
@@ -261,14 +261,14 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
     //---- public iteration methods - iterate over the used map
 
     /// proper method of accessing the used_map::begin() function
-    map_iterator   used_begin()                        { return used_map.iterator_begin(); }
+    iterator_type   iterator_begin()                        { return used_map.iterator_begin(); }
 
     /// proper method of testing for the end of the iteration.
     /// will cause a loop to exit of the used_map's length changes during the iteration
-    bool_t         used_end( map_iterator & it )       { return used_map.iterator_end( it ); }
+    bool_t         iterator_finished( iterator_type & it )       { return used_map.iterator_end( it ); }
 
-    /// proper method of accessing incrementing a map_iterator
-    map_iterator & used_increment( map_iterator & it ) { return used_map.iterator_increment( it ); }
+    /// proper method of accessing incrementing a iterator_type
+    iterator_type & iterator_increment( iterator_type & it ) { return used_map.iterator_increment( it ); }
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
@@ -352,7 +352,7 @@ private:
     //---- this struct's data
 
     /// the map of used objects
-    map_type       used_map;
+    cache_type       used_map;
 
     /// a list of objects that need to be terminated outside all loops
     std::stack< REF_T > termination_stack;
@@ -374,8 +374,8 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
     typedef typename t_ego_obj_container<_data, _sz>                 container_type;
     typedef typename t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
 
-    typedef typename t_cpp_deque< container_type, REF_T>           deque_type;
-    typedef typename t_cpp_deque< container_type, REF_T>::iterator deque_iterator;
+    typedef typename t_cpp_deque< container_type, REF_T>           cache_type;
+    typedef typename t_cpp_deque< container_type, REF_T>::iterator iterator_type;
 
     typedef typename t_allocator_static< container_type, _sz >     allocator_type;
 
@@ -411,14 +411,14 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
 
     /// how many free elements are left. might be negative if the list length was changed
     /// while some elements outside that range were still allocated
-    signed   free_count() { return signed( _max_len ) - used_deque.size(); }
+    ego_sint free_count() { return ego_sint( _max_len ) - ego_sint( used_deque.size() ); }
 
     /// how many elements are allocated?
     size_t   used_count() { return used_deque.size(); }
 
     /// get the current number of allocations/deallocations from the list. If this does not match
-    /// with the corresponding number in a deque_iterator, the iterator is invalid
-    unsigned get_list_id() { return used_deque.get_id(); };
+    /// with the corresponding number in a iterator_type, the iterator is invalid
+    ego_uint get_list_id() { return used_deque.get_id(); };
 
     /// change the length of the list. this function can be called at any time and be set anywhere
     /// between 0 and _sz
@@ -427,14 +427,14 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
     //---- public iteration methods - iterate over the used deque
 
     /// proper method of accessing the used_deque::begin() function
-    deque_iterator   used_begin()                        { return used_deque.iterator_begin(); }
+    iterator_type   iterator_begin()                        { return used_deque.iterator_begin(); }
 
     /// proper method of testing for the end of the iteration.
     /// will cause a loop to exit of the used_deque's length changes during the iteration
-    bool_t         used_end( deque_iterator & it )       { return used_deque.iterator_end( it ); }
+    bool_t         iterator_finished( iterator_type & it )       { return used_deque.iterator_end( it ); }
 
-    /// proper method of accessing incrementing a deque_iterator
-    deque_iterator & used_increment( deque_iterator & it ) { return used_deque.iterator_increment( it ); }
+    /// proper method of accessing incrementing a iterator_type
+    iterator_type & iterator_increment( iterator_type & it ) { return used_deque.iterator_increment( it ); }
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
@@ -506,7 +506,7 @@ private:
     //---- this struct's data
 
     /// the deque of used objects
-    deque_type       used_deque;
+    cache_type       used_deque;
 
     /// a list of objects that need to be terminated outside all loops
     std::stack< REF_T > termination_stack;
@@ -551,7 +551,7 @@ private:
 //    { \
 //        int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
 //        LIST.increment_loop_depth(); \
-//        for( LIST##_t::deque_iterator internal__##IT = LIST.used_begin(); !LIST.used_end(internal__##IT); LIST.used_increment(internal__##IT) ) \
+//        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment(internal__##IT) ) \
 //        { \
 //            if( NULL == internal__##IT->second ) continue; \
 //            const OBJ_T * POBJ = LIST##_t::container_type::cget_data_ptr( internal__##IT->second ); \
@@ -587,7 +587,7 @@ private:
     { \
         int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
         LIST.increment_loop_depth(); \
-        for( LIST##_t::deque_iterator internal__##IT = LIST.used_begin(); !LIST.used_end(internal__##IT); LIST.used_increment(internal__##IT) ) \
+        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment(internal__##IT) ) \
         { \
             LIST##_t::lst_reference IT( *internal__##IT );\
             LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\

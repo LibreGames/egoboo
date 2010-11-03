@@ -288,8 +288,8 @@ ego_load_player_info loadplayer[MAXLOADPLAYER];
 static bool_t  mnu_Selected_check_loadplayer( int loadplayer_idx );
 static bool_t  mnu_Selected_add( int loadplayer_idx );
 static bool_t  mnu_Selected_remove( int loadplayer_idx );
-static bool_t  mnu_Selected_add_input( int loadplayer_idx, Uint32 input_bits );
-static bool_t  mnu_Selected_remove_input( int loadplayer_idx, Uint32 input_bits );
+static bool_t  mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits );
+static bool_t  mnu_Selected_remove_input( int loadplayer_idx, BIT_FIELD input_bits );
 static int     mnu_Selected_get_loadplayer( int loadplayer_idx );
 
 // implementation of "private" TxTitleImage functions
@@ -2317,13 +2317,13 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         //---- Life and mana (can be less than maximum if not in easy mode)
         if ( cfg.difficulty >= GAME_NORMAL )
         {
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min(( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
-            y1 = draw_one_bar( pcap->life_color, x1, y1, ( signed )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min((int)UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
+            y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
 
             if ( pcap->mana_stat.val.from > 0 )
             {
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", SDL_min(( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
-                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( signed )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", SDL_min(( int )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
+                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( int )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
             }
         }
         else
@@ -7786,7 +7786,7 @@ bool_t mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_Selected_remove_input( int loadplayer_idx, Uint32 input_bits )
+bool_t mnu_Selected_remove_input( int loadplayer_idx, BIT_FIELD input_bits )
 {
     int i;
     bool_t retval = bfalse;

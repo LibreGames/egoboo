@@ -196,7 +196,7 @@ void t_obj_lst_map<_d, _sz>::update_used()
 
     // iterate through the used_map do determine if any of them need to be removed
     // DO NOT delete an element from the list while you're looping through it
-    for ( map_iterator it = used_map.iterator_begin(); !used_map.iterator_end( it ); used_map.iterator_increment( it ) )
+    for ( iterator_type it = used_map.iterator_begin(); !used_map.iterator_end( it ); used_map.iterator_increment( it ) )
     {
         const container_type * pcont = it->second;
 
@@ -675,7 +675,7 @@ bool_t t_obj_lst_deque<_d, _sz>::free_raw( const typename t_obj_lst_deque<_d, _s
     used_deque.remove( ref );
 
     // give the object a bad list id
-    ego_obj_lst_state::set_list_id( pcont, deque_type::invalid_id );
+    ego_obj_lst_state::set_list_id( pcont, cache_type::invalid_id );
 
     // fix the used and free flags
     // not really so important, since the destruction below will erase them...
@@ -697,7 +697,7 @@ void t_obj_lst_deque<_d, _sz>::update_used()
 
     // iterate through the used_deque do determine if any of them need to be removed
     // DO NOT delete an element from the list while you're looping through it
-    for ( deque_iterator it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
+    for ( iterator_type it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
     {
         container_type * pcont = get_ptr( lst_reference( *it ) );
 
@@ -792,7 +792,7 @@ void t_obj_lst_deque<_d, _sz>::free_all()
 
     // iterate through the used_deque do determine if any of them need to be removed
     // DO NOT delete an element from the list while you're looping through it
-    for ( deque_iterator it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
+    for ( iterator_type it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
     {
         const container_type * pcont = get_element_ptr( *it );
 

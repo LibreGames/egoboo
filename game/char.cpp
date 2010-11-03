@@ -529,7 +529,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
         vertex = 0;
         if ( NULL != pmad )
         {
-            vertex = (( signed )pchr->gfx_inst.vrt_count ) - vertex_offset;
+            vertex = ego_sint(pchr->gfx_inst.vrt_count ) - vertex_offset;
 
             // do the automatic update
             gfx_mad_instance::update_vertices( &( pchr->gfx_inst ), pchr->mad_inst.state, gfx_range( vertex, vertex ), bfalse );
@@ -3716,7 +3716,7 @@ int restock_ammo( const CHR_REF & character, IDSZ idsz )
 
 //--------------------------------------------------------------------------------------------
 /// implementation of the constructor
-/// @note all *_REF members will be automatically constructed to an invalid value of unsigned( ~0L )
+/// @note all *_REF members will be automatically constructed to an invalid value of ego_uint( ~0L )
 /// The team and baseteam references shouold be initialized to some default team
 ego_chr_data::ego_chr_data() :
         // character stats
@@ -5306,7 +5306,7 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
     else
     {
         // non-sneak mode
-        loc_pchr->movement_bits = ( unsigned )( ~CHR_MOVEMENT_BITS_SNEAK );
+        loc_pchr->movement_bits = ego_uint ( ~CHR_MOVEMENT_BITS_SNEAK );
         loc_pchr->maxaccel      = loc_pchr->maxaccel_reset;
     }
 
@@ -5830,7 +5830,7 @@ ego_bundle_chr * move_one_character_do_animation( ego_bundle_chr * pbdl )
     gfx_mad_instance * loc_pgfx_inst;
     mad_instance     * loc_pmad_inst;
     CHR_REF            loc_ichr;
-    unsigned           old_id;
+    ego_uint           old_id;
 
     if ( NULL == pbdl || !INGAME_PCHR( pbdl->chr_ptr ) ) return pbdl;
 
@@ -9733,7 +9733,7 @@ ego_chr_data * ego_chr_data::init( ego_chr_data * pdata )
     pdata->attachedto             = CHR_REF( MAX_CHR );
 
     // all movements valid
-    pdata->movement_bits   = ( unsigned )( ~0 );
+    pdata->movement_bits   = ego_uint( ~0 );
 
     // not a player
     pdata->is_which_player = MAX_PLAYER;
@@ -11127,7 +11127,7 @@ int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset 
     if ( 0 == pmount->gfx_inst.vrt_count ) return 0;
 
     //---- set the proper weapongrip vertices
-    tnc = ( signed )pmount->gfx_inst.vrt_count - ( signed )vrt_offset;
+    tnc = ego_sint(pmount->gfx_inst.vrt_count) - ego_sint(vrt_offset);
 
     // if the starting vertex is less than 0, just take the first vertex
     if ( tnc < 0 )

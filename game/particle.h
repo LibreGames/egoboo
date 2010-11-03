@@ -169,11 +169,11 @@ struct ego_prt_data
     Uint16  image_max;                       ///< End of image loop
     Uint16  image_stt;                       ///< Start of image loop
 
-    bool_t  is_eternal;                      ///< Does the particle ever time-out?
-    size_t  lifetime;                        ///< Total particle lifetime in updates
-    size_t  lifetime_remaining;              ///< How many updates does the particle have left?
-    size_t  frames_remaining;                ///< How many frames does the particle have left?
-    int     contspawn_delay;                 ///< Time until spawn
+    bool_t   is_eternal;                      ///< Does the particle ever time-out?
+    unsigned lifetime;                        ///< Total particle lifetime in updates
+    unsigned lifetime_remaining;              ///< How many updates does the particle have left?
+    unsigned frames_remaining;                ///< How many frames does the particle have left?
+    int      contspawn_delay;                 ///< Time until spawn
 
     Uint32            bump_size_stt;                   ///< the starting size of the particle (8.8-bit fixed point)
     ego_bumper          bump_real;                       ///< Actual size of the particle

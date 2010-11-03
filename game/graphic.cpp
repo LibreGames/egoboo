@@ -2315,7 +2315,7 @@ void render_scene_mesh( ego_renderlist * prlist )
     /// @details BB@> draw the mesh and any reflected objects
 
     size_t      cnt;
-    signed      rcnt;
+    ego_sint    rcnt;
     ego_mpd   * pmesh;
 
     if ( NULL == prlist ) return;
@@ -2393,7 +2393,7 @@ void render_scene_mesh( ego_renderlist * prlist )
                 GL_DEBUG( glDepthFunc )( GL_LEQUAL );     // GL_DEPTH_BUFFER_BIT - surfaces must be closer to the camera to be drawn
 
                 // this must be done with a signed iterator or it will fail horribly
-                for ( rcnt = (( signed )dolist_count ) - 1; rcnt >= 0; rcnt-- )
+                for ( rcnt = ego_sint(dolist_count) - 1; rcnt >= 0; rcnt-- )
                 {
                     if ( MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
                     {
@@ -2592,7 +2592,7 @@ void render_scene_trans()
 {
     /// @details BB@> draw transparent objects
 
-    signed rcnt;
+    ego_sint    rcnt;
     GLXvector4f tint;
 
     // set the the transparency parameters
@@ -2603,7 +2603,7 @@ void render_scene_trans()
 
     // Now render all transparent and light objects
     // this must be iterated with a signed variable or it fails horribly
-    for ( rcnt = (( signed )dolist_count ) - 1; rcnt >= 0; rcnt-- )
+    for ( rcnt = ego_sint(dolist_count ) - 1; rcnt >= 0; rcnt-- )
     {
         if ( MAX_PRT == dolist[rcnt].iprt && INGAME_CHR( dolist[rcnt].ichr ) )
         {
@@ -4453,11 +4453,11 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
         run = corner_y[to] >> TILE_BITS;
         while ( grid_y < run )
         {
-            if ( grid_y >= 0 && grid_y < pmesh->info.tiles_y )
+            if ( grid_y >= 0 && size_t(grid_y) < pmesh->info.tiles_y )
             {
                 grid_x = x >> TILE_BITS;
                 if ( grid_x < 0 )  grid_x = 0;
-                if ( grid_x >= pmesh->info.tiles_x )  grid_x = pmesh->info.tiles_x - 1;
+                else if ( size_t(grid_x) >= pmesh->info.tiles_x )  grid_x = ego_sint(pmesh->info.tiles_x) - 1;
 
                 rowstt[row] = grid_x;
                 row++;
@@ -4488,11 +4488,11 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
 
         while ( grid_y < run )
         {
-            if ( grid_y >= 0 && grid_y < pmesh->info.tiles_y )
+            if ( grid_y >= 0 && size_t(grid_y) < pmesh->info.tiles_y )
             {
                 grid_x = x >> TILE_BITS;
                 if ( grid_x < 0 )  grid_x = 0;
-                if ( grid_x >= pmesh->info.tiles_x - 1 )  grid_x = pmesh->info.tiles_x - 1;// -2
+                else if ( size_t(grid_x) >= pmesh->info.tiles_x - 1 )  grid_x = ego_sint(pmesh->info.tiles_x) - 1;// -2
 
                 rowend[row] = grid_x;
                 row++;
@@ -4521,7 +4521,7 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
             tlist[cnt].inrenderlist       = btrue;
 
             // if the tile was not in the renderlist last frame, then we need to force a lighting update of this tile
-            if ( tlist[cnt].inrenderlist_frame < ( signed )frame_all - 1 )
+            if ( tlist[cnt].inrenderlist_frame < ego_sint(frame_all) - 1 )
             {
                 tlist[cnt].needs_lighting_update = btrue;
             }

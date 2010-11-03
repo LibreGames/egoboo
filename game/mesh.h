@@ -70,10 +70,10 @@ struct ego_tile_info
     Uint16  img;                               ///< Get texture from this
     size_t  vrtstart;                          ///< Which vertex to start at
 
-    bool_t  fanoff;                            ///< display this tile?
-    bool_t  inrenderlist;                      ///< Is the tile going to be rendered this frame?
-    signed  inrenderlist_frame;                ///< What was the frame number the last time this tile was rendered?
-    bool_t  needs_lighting_update;             ///< Has this tile been tagged for a lighting update?
+    bool_t   fanoff;                            ///< display this tile?
+    bool_t   inrenderlist;                      ///< Is the tile going to be rendered this frame?
+    ego_sint inrenderlist_frame;                ///< What was the frame number the last time this tile was rendered?
+    bool_t   needs_lighting_update;             ///< Has this tile been tagged for a lighting update?
 
     ego_oct_bb         oct;                        ///< the octagonal bounding box for this tile
     normal_cache_t ncache;                     ///< the normals at the corners of this tile
@@ -204,8 +204,8 @@ struct ego_mpd_info
 {
     size_t          vertcount;                         ///< For SDL_malloc
 
-    int             tiles_x;                          ///< Size in tiles
-    int             tiles_y;
+    size_t          tiles_x;                          ///< Size in tiles
+    size_t          tiles_y;
     Uint32          tiles_count;                      ///< Number of tiles
 
     ego_mpd_info() { clear( this ); ctor_this( this ); }
@@ -258,8 +258,8 @@ struct ego_mpd
     static ego_mpd * finalize( ego_mpd   * pmesh );
 
     //---- wall interaction
-    static BIT_FIELD hit_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, float nrm[], float * pressure );
-    static bool_t    test_wall( ego_mpd   * pmesh, float pos[], float radius, Uint32 bits, mesh_wall_data * private_data );
+    static BIT_FIELD hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, float nrm[], float * pressure );
+    static bool_t    test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, mesh_wall_data * private_data );
     static fvec2_t   get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, BIT_FIELD bits );
     static float     get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits );
 

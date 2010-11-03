@@ -1654,7 +1654,7 @@ vfs_search_context_t * _vfs_search( vfs_search_context_t ** pctxt )
             string_length = SDL_strlen( sztest );
 
             // grab the last bit of the test string
-            if ((( signed )string_length - ( signed )extension_length ) >= 0 )
+            if ( string_length >= extension_length )
             {
                 sztest += ( string_length - extension_length );
             }
@@ -2378,7 +2378,7 @@ int _vfs_mount_info_search( const char * some_path )
 
     for ( cnt = 0; cnt < _vfs_mount_info_count; cnt++ )
     {
-        int len;
+        size_t len;
 
         if ( 0 == strcmp( _vfs_mount_info[cnt].mount, some_path ) )
         {

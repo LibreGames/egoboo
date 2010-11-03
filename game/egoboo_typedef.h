@@ -72,15 +72,38 @@ extern "C"
 #define C_EGOBOO_ASSERT(X) assert(X)
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 // BOOLEAN
 
 // we must have the same definition in c and c++ otherwise,
 // structs with items of type bool will be different sizes
 // in different modules!
     typedef unsigned char bool_t;
-#define btrue  1
-#define bfalse 0
+#   define btrue  1
+#   define bfalse 0
 
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// define a large (64-bits on 64-bit machines) integer type to hold special offset values
+
+// caught a lot of the 64-bit incompatabilities, but not all
+#undef COMPILE_64BIT
+
+#ifdef COMPILE_64BIT
+
+#   if SDL_HAS_64BIT_TYPE
+        typedef Uint64 ego_uint;
+        typedef Sint64 ego_sint;
+#   else
+    // this may only work for visual studio / win32
+        typedef unsigned long long ego_uint;
+        typedef signed   long long ego_sint;
+#   endif
+
+#else
+        typedef unsigned ego_uint;
+        typedef signed   ego_sint;
+#endif
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -100,16 +123,16 @@ extern "C"
     typedef Sint32 SFP8_T;
 
 // unsigned versions
-#define UFP8_TO_FLOAT(V1)  ( ((float)((unsigned)(V1))) * INV_0100 )
-#define FLOAT_TO_UFP8(V1)  ( (unsigned)( ((unsigned)(V1)) * (float)(0x0100) ) )
-#define UFP8_TO_UINT(V1)   ( ((unsigned)(V1)) >> 8 )                           ///< fast version of V1 / 256
-#define UINT_TO_UFP8(V1)   ( ((unsigned)(V1)) << 8 )                           ///< fast version of V1 * 256
+#define UFP8_TO_FLOAT(V1)  ( ((float)((ego_uint)(V1))) * INV_0100 )
+#define FLOAT_TO_UFP8(V1)  ( (ego_uint)( ((ego_uint)(V1)) * (ego_uint)(0x0100) ) )
+#define UFP8_TO_UINT(V1)   ( ((ego_uint)(V1)) >> 8 )                           ///< fast version of V1 / 256
+#define UINT_TO_UFP8(V1)   ( ((ego_uint)(V1)) << 8 )                           ///< fast version of V1 * 256
 
 // signed versions
-#define SFP8_TO_FLOAT(V1)  ( ((float)((signed)(V1))) * INV_0100 )
-#define FLOAT_TO_SFP8(V1)  ( (signed)( ((signed)(V1)) * (float)(0x0100) ) )
-#define SFP8_TO_SINT(V1)   ( (V1) < 0 ? -((signed)UFP8_TO_UINT(-V1)) : (signed)UFP8_TO_UINT(V1) )
-#define SINT_TO_SFP8(V1)   ( (V1) < 0 ? -((signed)UINT_TO_UFP8(-V1)) : (signed)UINT_TO_UFP8(V1) )
+#define SFP8_TO_FLOAT(V1)  ( ((float)((ego_sint)(V1))) * INV_0100 )
+#define FLOAT_TO_SFP8(V1)  ( (ego_sint)( ((ego_sint)(V1)) * (float)(0x0100) ) )
+#define SFP8_TO_SINT(V1)   ( (V1) < 0 ? -((ego_sint)UFP8_TO_UINT(-V1)) : (ego_sint)UFP8_TO_UINT(V1) )
+#define SINT_TO_SFP8(V1)   ( (V1) < 0 ? -((ego_sint)UINT_TO_UFP8(-V1)) : (ego_sint)UINT_TO_UFP8(V1) )
 
 //--------------------------------------------------------------------------------------------
 // the type for the 16-bit value used to stor angles
@@ -130,7 +153,8 @@ extern "C"
 
 //--------------------------------------------------------------------------------------------
 // BIT FIELDS
-    typedef Uint32 BIT_FIELD;                                ///< A big string supporting 32 bits
+    typedef ego_uint BIT_FIELD;                                ///< A big string supporting 32 bits
+
 #define FULL_BIT_FIELD        BIT_FIELD(~0)            ///< A bit string where all bits are flagged as 1
 #define EMPTY_BIT_FIELD         0                            ///< A bit string where all bits are flagged as 0
 #define FILL_BIT_FIELD(XX)    (XX) = FULL_BIT_FIELD        ///< Fills up all bits in a bit pattern
@@ -168,10 +192,10 @@ extern "C"
 #    define MISSING_BITS(XX,YY)  (HAS_SOME_BITS(XX,YY) && !HAS_ALL_BITS(XX,YY))
 #endif
 
-#define CLIP_TO_08BITS( V1 )  ( ((unsigned)(V1)) & ((unsigned)0x000000FFL) )
-#define CLIP_TO_16BITS( V1 )  ( ((unsigned)(V1)) & ((unsigned)0x0000FFFFL) )
-#define CLIP_TO_24BITS( V1 )  ( ((unsigned)(V1)) & ((unsigned)0x00FFFFFFL) )
-#define CLIP_TO_32BITS( V1 )  ( ((unsigned)(V1)) & ((unsigned)0xFFFFFFFFL) )
+#define CLIP_TO_08BITS( V1 )  ( ((ego_uint)(V1)) & ((ego_uint)0x000000FFL) )
+#define CLIP_TO_16BITS( V1 )  ( ((ego_uint)(V1)) & ((ego_uint)0x0000FFFFL) )
+#define CLIP_TO_24BITS( V1 )  ( ((ego_uint)(V1)) & ((ego_uint)0x00FFFFFFL) )
+#define CLIP_TO_32BITS( V1 )  ( ((ego_uint)(V1)) & ((ego_uint)0xFFFFFFFFL) )
 
 //--------------------------------------------------------------------------------------------
 // RECTANGLE
@@ -312,13 +336,13 @@ extern "C"
 // References
 
 /// base reference type
-    typedef unsigned REF_T;
+    typedef ego_uint REF_T;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // a simple list structure that tracks free elements
 
-#define INVALID_UPDATE_GUID unsigned(~unsigned(0))
+#define INVALID_UPDATE_GUID ((ego_uint)(~0L))
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

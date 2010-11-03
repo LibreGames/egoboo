@@ -4357,7 +4357,7 @@ Uint8 scr_set_SpeedPercent( ego_script_state * pstate, ego_ai_bundle * pbdl_self
     else
     {
         // everything but sneak
-        pchr->movement_bits = ( unsigned )( ~CHR_MOVEMENT_BITS_SNEAK );
+        pchr->movement_bits = ego_uint( ~CHR_MOVEMENT_BITS_SNEAK );
     }
 
     SCRIPT_FUNCTION_END();
@@ -7994,7 +7994,6 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
 
             if ( ego_mpd::grid_is_valid( PMesh, fan ) )
             {
-
                 if ( CLIP_TO_08BITS( PMesh->tmem.tile_list[fan].img ) == tiletype )
                 {
                     *px1 = ( x << TILE_BITS ) + 64;

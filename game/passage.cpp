@@ -308,11 +308,11 @@ ego_passage * ego_passage::init( ego_passage * ppass, passage_data_t * pdata )
 
     if ( NULL != pdata )
     {
-        ppass->area.xmin  = CLIP( pdata->area.xmin, 0, PMesh->info.tiles_x - 1 );
-        ppass->area.ymin  = CLIP( pdata->area.ymin, 0, PMesh->info.tiles_y - 1 );
+        ppass->area.xmin  = CLIP( pdata->area.xmin, 0, (ego_sint)PMesh->info.tiles_x - 1 );
+        ppass->area.ymin  = CLIP( pdata->area.ymin, 0, (ego_sint)PMesh->info.tiles_y - 1 );
 
-        ppass->area.xmax  = CLIP( pdata->area.xmax, 0, PMesh->info.tiles_x - 1 );
-        ppass->area.ymax  = CLIP( pdata->area.ymax, 0, PMesh->info.tiles_y - 1 );
+        ppass->area.xmax  = CLIP( pdata->area.xmax, 0, (ego_sint)PMesh->info.tiles_x - 1 );
+        ppass->area.ymax  = CLIP( pdata->area.ymax, 0, (ego_sint)PMesh->info.tiles_y - 1 );
 
         ppass->mask       = pdata->mask;
         ppass->music      = pdata->music;

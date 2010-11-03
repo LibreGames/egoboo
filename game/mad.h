@@ -108,7 +108,7 @@ struct pose_data
 {
     static const float flip_tolerance;
 
-    unsigned       id;              ///< the current number of updates
+    ego_uint       id;              ///< the current number of updates
 
     // animation info
 
@@ -169,7 +169,7 @@ struct pose_data
 /// what to do at the end of the current animation, etc.
 struct anim_data
 {
-    unsigned       id;       ///< the current number of updates
+    ego_uint       id;       ///< the current number of updates
 
     // action info
     Uint8          ready;    ///< ready to play a new one
@@ -248,6 +248,6 @@ void   load_action_names_vfs( const char* loadname );
 
 void   mad_make_equally_lit( const MAD_REF & imad );
 
-int    mad_get_action( const MAD_REF & imad, int action );
-Uint32 mad_get_actionfx( const MAD_REF & imad, int action );
-int    mad_randomize_action( int action, int slot );
+int       mad_get_action( const MAD_REF & imad, int action );
+BIT_FIELD mad_get_actionfx( const MAD_REF & imad, int action );
+int       mad_randomize_action( int action, int slot );

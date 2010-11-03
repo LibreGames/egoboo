@@ -93,25 +93,25 @@ extern "C"
     EXTERN float           stabilized_ups_weight EQ( 0 );
 
 // Timers
-    EXTERN unsigned        ticks_last  EQ( 0 );
-    EXTERN unsigned        ticks_now   EQ( 0 );
-    EXTERN unsigned        clock_stt   EQ( 0 );             ///< egoboo_get_ticks() at start
-    EXTERN unsigned        clock_all   EQ( 0 );             ///< The total number of ticks so far
-    EXTERN unsigned        clock_lst   EQ( 0 );             ///< The last total of ticks so far
-    EXTERN signed          clock_wld   EQ( 0 );             ///< The sync clock
+    EXTERN ego_uint        ticks_last  EQ( 0 );
+    EXTERN ego_uint        ticks_now   EQ( 0 );
+    EXTERN ego_uint        clock_stt   EQ( 0 );             ///< egoboo_get_ticks() at start
+    EXTERN ego_uint        clock_all   EQ( 0 );             ///< The total number of ticks so far
+    EXTERN ego_uint        clock_lst   EQ( 0 );             ///< The last total of ticks so far
+    EXTERN ego_sint        clock_wld   EQ( 0 );             ///< The sync clock
     EXTERN Uint32          clock_enc_stat  EQ( 0 );         ///< For character stat regeneration
     EXTERN Uint32          clock_chr_stat  EQ( 0 );         ///< For enchant stat regeneration
 
 // counters
-    EXTERN unsigned        update_wld  EQ( 0 );             ///< The number of times the game has been updated
-    EXTERN unsigned        frame_all   EQ( 0 );             ///< The total number of frames drawn so far
-    EXTERN unsigned        true_update EQ( 0 );             ///< estimation of the total number of updates that should have happened in the game so far
-    EXTERN unsigned        true_frame  EQ( 0 );             ///< estimation of the total number of frames that should have happened in the game so far
-    EXTERN signed          estimated_updates  EQ( 0 );      ///< the estimation of how many times the update loop will have to be run to "catch up"
-    EXTERN signed          update_lag  EQ( 0 );             ///< the number of updated that occured the last time the update counter tried to catch up to the true_update
+    EXTERN ego_uint        update_wld  EQ( 0 );             ///< The number of times the game has been updated
+    EXTERN ego_uint        frame_all   EQ( 0 );             ///< The total number of frames drawn so far
+    EXTERN ego_uint        true_update EQ( 0 );             ///< estimation of the total number of updates that should have happened in the game so far
+    EXTERN ego_uint        true_frame  EQ( 0 );             ///< estimation of the total number of frames that should have happened in the game so far
+    EXTERN ego_sint        estimated_updates  EQ( 0 );      ///< the estimation of how many times the update loop will have to be run to "catch up"
+    EXTERN ego_sint        update_lag  EQ( 0 );             ///< the number of updated that occured the last time the update counter tried to catch up to the true_update
 
 // timers
-    EXTERN signed          timer_heartbeat EQ( 0 );         ///< For game updates that happen once a second (should time ot immediately)
+    EXTERN ego_sint        timer_heartbeat EQ( 0 );         ///< For game updates that happen once a second (should time ot immediately)
     EXTERN Uint32          timer_pit   EQ( 0 );             ///< For pit kills
     EXTERN int             timer_revive EQ( 0 );            ///< Respawning
 

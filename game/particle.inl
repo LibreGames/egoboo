@@ -132,7 +132,7 @@ INLINE CHR_REF ego_prt::get_iowner( const PRT_REF & iprt, int depth )
     ego_prt * pprt;
 
     // be careful because this can be recursive
-    if ( depth > ( signed )maxparticles - ( signed )PrtObjList.free_count() ) return CHR_REF( MAX_CHR );
+    if ( depth > ego_sint(maxparticles) - ego_sint(PrtObjList.free_count()) ) return CHR_REF( MAX_CHR );
 
     if ( !DEFINED_PRT( iprt ) ) return CHR_REF( MAX_CHR );
     pprt = PrtObjList.get_data_ptr( iprt );

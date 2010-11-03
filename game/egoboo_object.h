@@ -172,36 +172,36 @@ protected:
         return ptr;
     }
 
-    static bool_t has_all_bits( const its_type* ptr, const unsigned flags )
+    static bool_t has_all_bits( const its_type* ptr, const ego_uint flags )
     {
         if ( NULL == ptr ) return bfalse;
 
         return flags == ( flags & ptr->state_flags );
     }
 
-    static bool_t has_no_bits( const its_type* ptr, const unsigned flags )
+    static bool_t has_no_bits( const its_type* ptr, const ego_uint flags )
     {
         if ( NULL == ptr ) return bfalse;
 
         return 0 == ( flags & ptr->state_flags );
     }
 
-    static bool_t add_bits( its_type* ptr, const unsigned flags )
+    static bool_t add_bits( its_type* ptr, const ego_uint flags )
     {
         if ( NULL == ptr ) return bfalse;
 
-        unsigned old = ptr->state_flags;
+        ego_uint old = ptr->state_flags;
 
         ptr->state_flags |= flags;
 
         return old != ptr->state_flags;
     }
 
-    static bool_t remove_bits( its_type* ptr, const unsigned flags )
+    static bool_t remove_bits( its_type* ptr, const ego_uint flags )
     {
         if ( NULL == ptr ) return bfalse;
 
-        unsigned old = ptr->state_flags;
+        ego_uint old = ptr->state_flags;
 
         ptr->state_flags &= ~flags;
 
@@ -227,7 +227,7 @@ protected:
 private:
     ego_obj_actions_t    action;      ///< What action is it performing?
 
-    unsigned             state_flags;
+    BIT_FIELD            state_flags;
 };
 
 //--------------------------------------------------------------------------------------------

@@ -232,7 +232,7 @@ bool_t ego_hash_list::set_allocd( ego_hash_list *plst, int ival )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::set_count( ego_hash_list *plst, int i, int count )
+bool_t ego_hash_list::set_count( ego_hash_list *plst, int i, size_t count )
 {
     if ( NULL == plst || NULL == plst->subcount ) return bfalse;
 
@@ -275,7 +275,7 @@ bool_t ego_hash_list::alloc( ego_hash_list * lst, int size )
 
     ego_hash_list::dealloc( lst );
 
-    lst->subcount = EGOBOO_NEW_ARY( int, size );
+    lst->subcount = EGOBOO_NEW_ARY( size_t, size );
     if ( NULL == lst->subcount )
     {
         return bfalse;

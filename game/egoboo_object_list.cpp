@@ -62,7 +62,7 @@ t_obj_lst_deque<blah, 100> test;
 
 void flah()
 {
-    t_obj_lst_deque<blah, 100>::deque_iterator it;
+    t_obj_lst_deque<blah, 100>::iterator_type it;
     t_obj_lst_deque<blah, 100>::lst_reference ref( 5 );
 
     test.init();
@@ -85,7 +85,7 @@ void flah()
     test.get_data_ptr( ref );
     test.get_allocated_data_ptr( ref );
 
-    for ( it = test.used_begin(); !test.used_end( it ); test.used_increment( it ) );
+    for ( it = test.iterator_begin(); !test.iterator_finished( it ); test.iterator_increment( it ) );
 }
 #endif
 
@@ -97,7 +97,7 @@ ego_obj_lst_state_data * ego_obj_lst_state_data::clear( ego_obj_lst_state_data *
     if ( NULL == ptr ) return ptr;
 
     ptr->in_used_list = bfalse;
-    ptr->update_guid  = unsigned( ~0L );
+    ptr->update_guid  = ego_uint( ~0L );
 
     return ptr;
 }
@@ -123,7 +123,7 @@ ego_obj_lst_state_data * ego_obj_lst_state_data::set_used( ego_obj_lst_state_dat
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_lst_state_data * ego_obj_lst_state_data::set_list_id( ego_obj_lst_state_data * ptr, const unsigned val )
+ego_obj_lst_state_data * ego_obj_lst_state_data::set_list_id( ego_obj_lst_state_data * ptr, const ego_uint val )
 {
     if ( NULL == ptr ) return ptr;
 

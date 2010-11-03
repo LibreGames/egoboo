@@ -861,7 +861,7 @@ int game_update()
     update_loop_cnt = 0;
 
     // measure the actual lag
-    update_lag = signed( true_update ) - signed( update_wld );
+    update_lag = ego_sint( true_update ) - ego_sint( update_wld );
 
     // don't do anything if we are not behind
     if ( update_wld > true_update ) return 0;
@@ -2934,7 +2934,7 @@ bool_t chr_setup_apply( const CHR_REF & ichr, spawn_file_info_t *pinfo )
     // Set the starting pinfo->level
     if ( pinfo->level > 0 )
     {
-        while ( signed( pchr->experience_level ) < pinfo->level && pchr->experience < MAX_XP )
+        while ( ego_sint( pchr->experience_level ) < pinfo->level && pchr->experience < MAX_XP )
         {
             give_experience( ichr, 25, XP_DIRECT, btrue );
             do_level_up( ichr );
@@ -5398,11 +5398,11 @@ float get_chr_level( ego_mpd   * pmesh, ego_chr * pchr )
     bump.maxs[OCT_Y]  = pchr->chr_min_cv.maxs[OCT_Y]  + pchr->pos.y;
 
     // determine the size of this object in tiles
-    ixmin = bump.mins[OCT_X] / GRID_SIZE; ixmin = CLIP( ixmin, 0, pmesh->info.tiles_x - 1 );
-    ixmax = bump.maxs[OCT_X] / GRID_SIZE; ixmax = CLIP( ixmax, 0, pmesh->info.tiles_x - 1 );
+    ixmin = bump.mins[OCT_X] / GRID_SIZE; ixmin = CLIP( ixmin, 0, ego_sint(pmesh->info.tiles_x) - 1 );
+    ixmax = bump.maxs[OCT_X] / GRID_SIZE; ixmax = CLIP( ixmax, 0, ego_sint(pmesh->info.tiles_x) - 1 );
 
-    iymin = bump.mins[OCT_Y] / GRID_SIZE; iymin = CLIP( iymin, 0, pmesh->info.tiles_y - 1 );
-    iymax = bump.maxs[OCT_Y] / GRID_SIZE; iymax = CLIP( iymax, 0, pmesh->info.tiles_y - 1 );
+    iymin = bump.mins[OCT_Y] / GRID_SIZE; iymin = CLIP( iymin, 0, ego_sint(pmesh->info.tiles_y) - 1 );
+    iymax = bump.maxs[OCT_Y] / GRID_SIZE; iymax = CLIP( iymax, 0, ego_sint(pmesh->info.tiles_y) - 1 );
 
     // do the simplest thing if the object is just on one tile
     if ( ixmax == ixmin && iymax == iymin )

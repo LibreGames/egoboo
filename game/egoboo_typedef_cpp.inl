@@ -466,7 +466,7 @@ _ty * t_cpp_map<_ty, _ity>::get_ptr( const t_reference<_ty> & ref )
 {
     if ( !ref_validate( ref ) ) return NULL;
 
-    t_cpp_map<_ty, _ity>::map_iterator it = _map.find( ref.get_value() );
+    t_cpp_map<_ty, _ity>::iterator_type it = _map.find( ref.get_value() );
     if ( it == _map.end() ) return NULL;
 
     return it->second;
@@ -522,13 +522,13 @@ bool_t t_cpp_map<_ty, _ity>::remove( const t_reference<_ty> & ref )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-typename t_cpp_deque<_ty, _ity>::deque_iterator t_cpp_deque<_ty, _ity>::find_ref( const t_reference<_ty> & ref )
+typename t_cpp_deque<_ty, _ity>::iterator_type t_cpp_deque<_ty, _ity>::find_ref( const t_reference<_ty> & ref )
 {
     const _ity ref_val = ref.get_value();
 
     if ( _deque.empty() ) return _deque.end();
 
-    for ( deque_iterator it = _deque.begin(); it != _deque.end(); it++ )
+    for ( iterator_type it = _deque.begin(); it != _deque.end(); it++ )
     {
         if ( *it == ref_val )
         {
@@ -564,7 +564,7 @@ bool_t t_cpp_deque<_ty, _ity>::add( const t_reference<_ty> & ref )
 template < typename _ty, typename _ity >
 bool_t t_cpp_deque<_ty, _ity>::remove( const t_reference<_ty> & ref )
 {
-    deque_iterator it = find_ref( ref );
+    iterator_type it = find_ref( ref );
 
     bool_t rv = bfalse;
     if ( it != _deque.end() )

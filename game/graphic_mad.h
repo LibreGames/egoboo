@@ -205,16 +205,16 @@ struct gfx_range
 struct gfx_vlst_range : public gfx_range
 {
     bool_t   valid;             ///< has the range been declared invalid?
-    unsigned pose_id;           ///< the id value of the pose that this range was last calculated for
-    unsigned frame_wld;         ///< the last FRAME  where the vertices were calculated
-    unsigned update_wld;        ///< the last UPDATE where the vertices were calculated
+    ego_uint pose_id;           ///< the id value of the pose that this range was last calculated for
+    ego_uint frame_wld;         ///< the last FRAME  where the vertices were calculated
+    ego_uint update_wld;        ///< the last UPDATE where the vertices were calculated
 
     gfx_vlst_range() { init(); };
 
     void init()
     {
         valid = bfalse;
-        pose_id = unsigned( ~0L );
+        pose_id = ego_uint( ~0L );
         gfx_range::init();
     };
 
@@ -262,8 +262,8 @@ struct gfx_mad_instance
     Sint32         color_amb;
     fvec4_t        col_amb;
     int            max_light, min_light;
-    unsigned       lighting_update_wld;            ///< update some lighting info no more than once an update
-    unsigned       lighting_frame_all;             ///< update some lighting info no more than once a frame
+    ego_uint       lighting_update_wld;            ///< update some lighting info no more than once an update
+    ego_uint       lighting_frame_all;             ///< update some lighting info no more than once a frame
 
     // linear interpolated frame vertices
     size_t         vrt_count;
@@ -290,7 +290,7 @@ struct gfx_mad_instance
     static egoboo_rv update_vertices( gfx_mad_instance * pgfx_inst, const pose_data & p_new, const gfx_range & r_new, const bool_t force = bfalse );
     static egoboo_rv update_grip_verts( gfx_mad_instance * pinst, Uint16 vrt_lst[], const size_t vrt_count );
 
-    static void      get_tint( gfx_mad_instance * pinst, GLfloat tint[], Uint32 bits );
+    static void      get_tint( gfx_mad_instance * pinst, GLfloat tint[], BIT_FIELD bits );
 
     static void      clear_cache( gfx_mad_instance * pinst );
 
@@ -318,9 +318,9 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint32 bits );
-bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, Uint32 bits );
-bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, Uint32 bits );
+bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits );
+bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits );
+bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits );
 bool_t render_one_mad_ref( const CHR_REF & tnc );
 
 void      update_all_chr_instance();

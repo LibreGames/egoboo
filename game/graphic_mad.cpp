@@ -45,7 +45,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void draw_points( ego_chr * pchr, int vrt_offset, int verts );
+static void draw_points( ego_chr * pchr, int vrt_offset, size_t verts );
 static void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, int slot );
 static void draw_one_grip( gfx_mad_instance * pinst, ego_mad * pmad, int slot );
 static void chr_draw_grips( ego_chr * pchr );
@@ -58,7 +58,7 @@ static bool_t render_chr_grip_cv( ego_chr * pchr, int grip_offset );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, Uint32 bits )
+bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
 {
     /// @details ZZ@> This function draws an environment mapped model
 
@@ -234,7 +234,7 @@ else
 */
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, Uint32 bits )
+bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
 {
     /// @details ZZ@> This function draws a model
 
@@ -627,7 +627,7 @@ void render_chr_points( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_points( ego_chr * pchr, int vrt_offset, int verts )
+void draw_points( ego_chr * pchr, int vrt_offset, size_t verts )
 {
     /// @details BB@> a function that will draw some of the vertices of the given character.
     ///     The original idea was to use this to debug the grip for attached items.
@@ -718,7 +718,7 @@ void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, int slot )
 
     if ( NULL == pinst || NULL == pmad ) return;
 
-    vmin = ( signed )pinst->vrt_count - ( signed )slot_to_grip_offset(( slot_t )slot );
+    vmin = ego_sint(pinst->vrt_count) - ego_sint(slot_to_grip_offset(( slot_t )slot ));
     vmax = vmin + GRIP_VERTS;
 
     if ( vmin >= 0 && vmax >= 0 && ( size_t )vmax <= pinst->vrt_count )
@@ -942,8 +942,8 @@ egoboo_rv gfx_mad_instance::update_bbox( gfx_mad_instance * pinst )
 //--------------------------------------------------------------------------------------------
 egoboo_rv gfx_mad_instance::test_pose( const pose_data & p_old, const pose_data & p_new )
 {
-    if ( unsigned( ~0L ) == p_old.id ) return rv_fail;
-    if ( unsigned( ~0L ) == p_new.id ) return rv_fail;
+    if ( ego_uint( ~0L ) == p_old.id ) return rv_fail;
+    if ( ego_uint( ~0L ) == p_new.id ) return rv_fail;
 
     return ( p_old == p_new ) ? rv_success : rv_fail;
 }
@@ -1017,7 +1017,7 @@ egoboo_rv gfx_mad_instance::validate_vertices( gfx_mad_instance * pinst, const g
     gfx_range rtmp_new = r_new;
 
     // get the last valid vertex from the chr_instance
-    int maxvert = (( signed )pinst->vrt_count ) - 1;
+    int maxvert = ego_sint(pinst->vrt_count ) - 1;
 
     // a null range on rtmp_new means testing the full range
     if ( rtmp_new.is_null() )
@@ -1118,7 +1118,7 @@ egoboo_rv gfx_mad_instance::update_vertices( gfx_mad_instance * pgfx_inst, const
     }
 
     // get the vertex list size from the chr_instance
-    maxvert = (( signed )pgfx_inst->vrt_count ) - 1;
+    maxvert = ego_sint(pgfx_inst->vrt_count ) - 1;
 
     // handle the default parameters
     if ( rtmp_new.vmin < 0 ) rtmp_new.vmin = 0;
@@ -1244,7 +1244,7 @@ egoboo_rv gfx_mad_instance::update_vlst_cache( gfx_mad_instance * pgfx_inst, con
     int    maxvert;
 
     if ( NULL == pgfx_inst ) return rv_error;
-    maxvert = (( signed )pgfx_inst->vrt_count ) - 1;
+    maxvert = ego_sint(pgfx_inst->vrt_count ) - 1;
     gfx_vlst_range & r_old = pgfx_inst->vrange;
     pose_data      & p_old = pgfx_inst->pose;
 
@@ -1403,8 +1403,8 @@ gfx_mad_instance * gfx_mad_instance::clear( gfx_mad_instance * ptr )
     ptr->color_amb           = ~0;
     ptr->max_light           = 0;
     ptr->min_light           = 0;
-    ptr->lighting_update_wld = unsigned( ~0L );
-    ptr->lighting_frame_all  = unsigned( ~0L );
+    ptr->lighting_update_wld = ego_uint( ~0L );
+    ptr->lighting_frame_all  = ego_uint( ~0L );
 
     ptr->vrt_count = 0;
     ptr->vrt_lst   = NULL;
@@ -2094,15 +2094,15 @@ int cmp_matrix_data( const void * vlhs, const void * vrhs )
     //---- check for differences in the MAT_WEAPON data
     if ( HAS_SOME_BITS( plhs->type_bits, MAT_WEAPON ) )
     {
-        itmp = ( signed )( plhs->grip_chr ).get_value() - ( signed )( prhs->grip_chr ).get_value();
+        itmp = ego_sint( plhs->grip_chr.get_value() ) - ego_sint( prhs->grip_chr.get_value() );
         if ( 0 != itmp ) goto cmp_matrix_data_end;
 
-        itmp = ( signed )plhs->grip_slot - ( signed )prhs->grip_slot;
+        itmp = ego_sint(plhs->grip_slot) - ego_sint(prhs->grip_slot);
         if ( 0 != itmp ) goto cmp_matrix_data_end;
 
         for ( cnt = 0; cnt < GRIP_VERTS; cnt++ )
         {
-            itmp = ( signed )plhs->grip_verts[cnt] - ( signed )prhs->grip_verts[cnt];
+            itmp = ego_sint( plhs->grip_verts[cnt]) - ego_sint(prhs->grip_verts[cnt]);
             if ( 0 != itmp ) goto cmp_matrix_data_end;
         }
 

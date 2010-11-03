@@ -28,7 +28,7 @@
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
-INLINE Uint32 ego_mpd::has_some_mpdfx( BIT_FIELD MPDFX, BIT_FIELD TEST )
+INLINE BIT_FIELD ego_mpd::has_some_mpdfx( BIT_FIELD MPDFX, BIT_FIELD TEST )
 {
     ego_mpd::mpdfx_tests++;
     return HAS_SOME_BITS( MPDFX, TEST );
@@ -136,8 +136,8 @@ INLINE Uint32 ego_mpd::get_tile_int( ego_mpd   * pmesh, int grid_x,  int grid_y 
 {
     if ( NULL == pmesh ) return INVALID_TILE;
 
-    if ( grid_x < 0 || grid_x >= pmesh->info.tiles_x )  return INVALID_TILE;
-    if ( grid_y < 0 || grid_y >= pmesh->info.tiles_y )  return INVALID_TILE;
+    if ( grid_x < 0 || (size_t)grid_x >= pmesh->info.tiles_x )  return INVALID_TILE;
+    if ( grid_y < 0 || (size_t)grid_y >= pmesh->info.tiles_y )  return INVALID_TILE;
 
     return grid_x + pmesh->gmem.tilestart[grid_y];
 }
@@ -187,7 +187,7 @@ INLINE bool_t ego_mpd::add_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Uint32 ego_mpd::test_fx( ego_mpd   * pmesh, Uint32 itile, BIT_FIELD flags )
+INLINE BIT_FIELD ego_mpd::test_fx( ego_mpd * pmesh, Uint32 itile, BIT_FIELD flags )
 {
     // test for mesh
     if ( NULL == pmesh ) return 0;
