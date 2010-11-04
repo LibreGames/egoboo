@@ -278,7 +278,7 @@ bool_t TxReqList_free_one( int ireq )
     // destruct the request
     ego_tx_request::dtor_this( preq );
 
-#if EGO_DEBUG
+#if EGO_DEBUG && defined(DEBUG_LIST)
     {
         size_t cnt;
         // determine whether this character is already in the list of free textures

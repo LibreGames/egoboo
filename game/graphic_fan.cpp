@@ -173,7 +173,7 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
     }
     GL_DEBUG( glPopClientAttrib )();
 
-#if defined(DEBUG_MESH_NORMALS) && EGO_DEBUG
+#if EGO_DEBUG && defined(DEBUG_MESH_NORMALS) 
     GL_DEBUG( glDisable )( GL_TEXTURE_2D );
     GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
     entry = ptile->vrtstart;

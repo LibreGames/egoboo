@@ -265,7 +265,7 @@ bool_t ProList_push_free( const PRO_REF & iobj )
 
     bool_t retval;
 
-#if EGO_DEBUG
+#if EGO_DEBUG && defined(DEBUG_LIST)
     // determine whether this character is already in the list of free objects
     // that is an error
     if ( -1 != ProList_search_free( iobj ) ) return bfalse;

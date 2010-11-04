@@ -170,7 +170,7 @@ bool_t TxTexture_free_one( const TX_REF & itex )
     // release the texture
     oglx_texture_Release( TxTexture.lst + itex );
 
-#if EGO_DEBUG
+#if EGO_DEBUG && defined(DEBUG_LIST)
     {
         size_t cnt;
 

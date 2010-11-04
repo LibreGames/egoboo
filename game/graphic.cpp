@@ -3662,7 +3662,7 @@ bool_t BillboardList_free_one( size_t ibb )
 
     ego_billboard_data::dealloc( pbb );
 
-#if EGO_DEBUG
+#if EGO_DEBUG && defined(DEBUG_LIST)
     {
         size_t cnt;
 

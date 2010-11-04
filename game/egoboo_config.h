@@ -69,9 +69,9 @@
 #undef  DEBUG_MESH_NORMALS    ///< render the mesh normals
 #define LOG_TO_CONSOLE        ///< dump all log info to file and to the console. Only useful if your compiler generates console for program output. Otherwise the results will end up in a file called stdout.txt
 
-#define  DEBUG_BSP             ///< Print debugging info about the BSP/octree state
+#undef  DEBUG_BSP             ///< Print debugging info about the BSP/octree state
 
-#define  DEBUG_RENDERLIST      ///< Print debugging info for the currently rendered mesh
+#undef  DEBUG_RENDERLIST      ///< Print debugging info for the currently rendered mesh
 
 #define DEBUG_PROFILE         ///< Switch the profiling functions on and off
 #undef  DEBUG_PROFILE_DISPLAY ///< Display the results for the performance profiling
@@ -97,7 +97,7 @@
 
 #undef DEBUG_CPP_LISTS
 
-#define DEBUG_CHR_BBOX        ///< display the all character bounding boxes
+#undef  DEBUG_CHR_BBOX        ///< display the all character bounding boxes
 #undef  DEBUG_PRT_BBOX        ///< display the all particle bounding boxes
 
 #define USE_HASH              ///< use stdext::hash_map and stdext::hash_set instead of std::map and std::set
