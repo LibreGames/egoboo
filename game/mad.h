@@ -62,7 +62,7 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------
-extern t_cpp_stack< ego_mad, MAX_MAD > MadStack;
+extern t_stack< ego_mad, MAX_MAD > MadStack;
 
 void MadStack_init();
 void MadStack_dtor();

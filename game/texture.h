@@ -61,7 +61,7 @@ enum e_global_tx_type
 #define INVALID_TX_TEXTURE TX_TEXTURE_COUNT
 
 // declare special arrays of textures
-extern t_cpp_list< oglx_texture_t, TX_TEXTURE_COUNT  > TxTexture;
+extern t_list< oglx_texture_t, TX_TEXTURE_COUNT  > TxTexture;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

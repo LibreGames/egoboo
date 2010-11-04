@@ -164,7 +164,7 @@ struct mnu_module
 #define VALID_MOD( IMOD )       ( VALID_MOD_RANGE( IMOD ) && IMOD < mnu_ModList.count && mnu_ModList[IMOD].loaded )
 #define INVALID_MOD( IMOD )     ( !VALID_MOD_RANGE( IMOD ) || IMOD >= mnu_ModList.count || !mnu_ModList[IMOD].loaded )
 
-static t_cpp_stack< mnu_module, MAX_MODULE  > mnu_ModList;
+static t_stack< mnu_module, MAX_MODULE  > mnu_ModList;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -263,7 +263,7 @@ static ego_GameTips mnu_GameTip = { 0 };
 #define TITLE_TEXTURE_COUNT   MAX_MODULE
 #define INVALID_TITLE_TEXTURE TITLE_TEXTURE_COUNT
 
-static t_cpp_stack< oglx_texture_t, TITLE_TEXTURE_COUNT  > TxTitleImage; // OpenGL title image surfaces
+static t_stack< oglx_texture_t, TITLE_TEXTURE_COUNT  > TxTitleImage; // OpenGL title image surfaces
 
 ego_menu_process * MProc             = &_mproc;
 bool_t           start_new_player  = bfalse;

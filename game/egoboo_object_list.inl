@@ -196,7 +196,7 @@ void t_obj_lst_map<_d, _sz>::update_used()
 
     // iterate through the used_map do determine if any of them need to be removed
     // DO NOT delete an element from the list while you're looping through it
-    for ( iterator_type it = used_map.iterator_begin(); !used_map.iterator_end( it ); used_map.iterator_increment( it ) )
+    for ( iterator it = used_map.iterator_begin(); !used_map.iterator_end( it ); used_map.iterator_increment( it ) )
     {
         const container_type * pcont = it->second;
 
@@ -697,7 +697,7 @@ void t_obj_lst_deque<_d, _sz>::update_used()
 
     // iterate through the used_deque do determine if any of them need to be removed
     // DO NOT delete an element from the list while you're looping through it
-    for ( iterator_type it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
+    for ( iterator it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
     {
         container_type * pcont = get_ptr( lst_reference( *it ) );
 
@@ -792,7 +792,7 @@ void t_obj_lst_deque<_d, _sz>::free_all()
 
     // iterate through the used_deque do determine if any of them need to be removed
     // DO NOT delete an element from the list while you're looping through it
-    for ( iterator_type it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
+    for ( iterator it = used_deque.iterator_begin(); !used_deque.iterator_end( it ); used_deque.iterator_increment( it ) )
     {
         const container_type * pcont = get_element_ptr( *it );
 
@@ -1031,24 +1031,164 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::deact
 // t_obj_lst_deque<> - special iterator methods
 //--------------------------------------------------------------------------------------------
 template <typename _data, size_t _sz>
-typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz>::iterator_increment_defined( typename t_obj_lst_deque<_data, _sz>::iterator_type & it )
+typename  t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iterator_begin_allocated()
+{
+    /// proper method of accessing the used_deque::begin() function
+    iterator tmp( used_deque.iterator_begin() );
+
+    if ( !iterator_finished( tmp ) )
+    {
+        tmp.pcont = get_ptr( lst_reference( *tmp ) );
+        tmp.pdata = container_type::get_data_ptr( tmp.pcont );
+    }
+
+    return tmp;
+}
+
+//--------------------------------------------------------------------------------------------
+template <typename _data, size_t _sz>
+typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iterator_begin_defined()
+{
+    const ego_object_process_state_data * pstate;
+
+    iterator tmp = iterator_begin_allocated();
+
+    // find the first valid iterator
+    while ( !iterator_finished( tmp ) )
+    {
+        pstate = static_cast<const ego_object_process_state_data *>( tmp.pdata );
+
+        if ( NULL != pstate )
+        {
+            if ( pstate->get_valid() )
+            {
+                break;
+            }
+        }
+
+        iterator_increment_allocated( tmp );
+    }
+
+    return tmp;
+}
+
+//--------------------------------------------------------------------------------------------
+template <typename _data, size_t _sz>
+typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iterator_begin_processing()
+{
+    const ego_object_process_state_data * pstate;
+
+    iterator tmp = iterator_begin_allocated();
+
+    // find the first valid iterator
+    while ( !iterator_finished( tmp ) )
+    {
+        pstate = static_cast<const ego_object_process_state_data *>( tmp.pdata );
+
+        if ( NULL != pstate )
+        {
+            if ( pstate->get_on() && ( ego_obj_processing == pstate->get_action() ) )
+            {
+                break;
+            }
+        }
+
+        iterator_increment_allocated( tmp );
+    }
+
+    return tmp;
+
+}
+
+//--------------------------------------------------------------------------------------------
+template <typename _data, size_t _sz>
+typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iterator_begin_ingame()
+{
+    const ego_object_process_state_data * pstate;
+
+    iterator tmp = iterator_begin_allocated();
+
+    // find the first valid iterator
+    while ( !iterator_finished( tmp ) )
+    {
+        pstate = static_cast<const ego_object_process_state_data *>( tmp.pdata );
+
+        if ( NULL != pstate )
+        {
+            if ( _data::get_spawn_depth() > 0 )
+            {
+                // ?? can it get here if the data is invalid ??
+                if ( pstate->get_valid() )
+                {
+                    break;
+                }
+            }
+            else
+            {
+                if ( pstate->get_on() && ( ego_obj_processing == pstate->get_action() ) )
+                {
+                    break;
+                }
+            }
+
+        }
+        iterator_increment_allocated( tmp );
+    }
+
+    return tmp;
+}
+
+//--------------------------------------------------------------------------------------------
+template <typename _data, size_t _sz>
+bool_t t_obj_lst_deque<_data, _sz>::iterator_finished( typename t_obj_lst_deque<_data, _sz>::iterator & it )
+{
+    bool_t retval = used_deque.iterator_end( it.deque_iterator() );
+
+    if ( retval )
+    {
+        it.pcont = NULL;
+        it.pdata = NULL;
+    }
+
+    return retval;
+}
+
+//--------------------------------------------------------------------------------------------
+template <typename _data, size_t _sz>
+typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::iterator_increment_allocated( typename t_obj_lst_deque<_data, _sz>::iterator & it )
+{
+    // blank out the old data
+    it.pcont = NULL;
+    it.pdata = NULL;
+
+    // increment the base iterator
+    used_deque.iterator_increment( it.deque_iterator() );
+
+    // fill in the extra data for the iterator
+    if ( !iterator_finished( it ) )
+    {
+        it.pcont = get_ptr( lst_reference( *it ) );
+        it.pdata = container_type::get_data_ptr( it.pcont );
+    }
+
+    return it;
+}
+
+//--------------------------------------------------------------------------------------------
+template <typename _data, size_t _sz>
+typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::iterator_increment_defined( typename t_obj_lst_deque<_data, _sz>::iterator & it )
 {
     // increments the iterator through all DEFINED data == (ALLOCATED and VALID)
 
     // iterate until you get a valid iterator
-    while ( !used_deque.iterator_end( it ) )
+    while ( !iterator_finished( it ) )
     {
-        it = used_deque.iterator_increment( it );
-
-        const container_type * pcont = get_ptr( lst_reference( *it ) );
-        if ( NULL == pcont ) continue;
-
-        const _data * pdata = container_type::cget_data_ptr( pcont );
-        if ( NULL == pdata ) continue;
+        it = iterator_increment_allocated( it );
 
         // get the pointer directly and bypass multiple NULL pointer checks in the
         // ego_object_process_state_data::get*(pdata) static function calls
-        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( pdata );
+        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( it.pdata );
+        if ( NULL == pstate ) continue;
 
         if ( pstate->get_valid() )
         {
@@ -1061,23 +1201,18 @@ typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz
 
 //--------------------------------------------------------------------------------------------
 template <typename _data, size_t _sz>
-typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz>::iterator_increment_processing( typename t_obj_lst_deque<_data, _sz>::iterator_type & it )
+typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::iterator_increment_processing( typename t_obj_lst_deque<_data, _sz>::iterator & it )
 {
     // increments the iterator through all PROCESSING data == (ALLOCATED and VALID and state is processing)
 
-    while ( !used_deque.iterator_end( it ) )
+    while ( !iterator_finished( it ) )
     {
-        it = used_deque.iterator_increment( it );
-
-        const container_type * pcont = get_ptr( lst_reference( *it ) );
-        if ( NULL == pcont ) continue;
-
-        const _data * pdata = container_type::cget_data_ptr( pcont );
-        if ( NULL == pdata ) continue;
+        it = iterator_increment_allocated( it );
 
         // get the pointer directly and bypass multiple NULL pointer checks in the
         // ego_object_process_state_data::get*(pdata) static function calls
-        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( pdata );
+        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( it.pdata );
+        if ( NULL == pstate ) continue;
 
         if ( pstate->get_on() && ( ego_obj_processing == pstate->get_action() ) )
         {
@@ -1090,23 +1225,18 @@ typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz
 
 //--------------------------------------------------------------------------------------------
 template <typename _data, size_t _sz>
-typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz>::iterator_increment_ingame( typename t_obj_lst_deque<_data, _sz>::iterator_type & it )
+typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::iterator_increment_ingame( typename t_obj_lst_deque<_data, _sz>::iterator & it )
 {
     // increments the iterator through all INGAME data
 
-    while ( !used_deque.iterator_end( it ) )
+    while ( !iterator_finished( it ) )
     {
-        it = used_deque.iterator_increment( it );
-
-        const container_type * pcont = get_ptr( lst_reference( *it ) );
-        if ( NULL == pcont ) continue;
-
-        const _data * pdata = container_type::cget_data_ptr( pcont );
-        if ( NULL == pdata ) continue;
+        it = iterator_increment_allocated( it );
 
         // get the pointer directly and bypass multiple NULL pointer checks in the
         // ego_object_process_state_data::get*(pdata) static function calls
-        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( pdata );
+        const ego_object_process_state_data * pstate = static_cast<const ego_object_process_state_data *>( it.pdata );
+        if ( NULL == pstate ) continue;
 
         if ( _data::get_spawn_depth() > 0 )
         {
@@ -1127,4 +1257,3 @@ typename t_obj_lst_deque<_data, _sz>::iterator_type & t_obj_lst_deque<_data, _sz
 
     return it;
 }
-

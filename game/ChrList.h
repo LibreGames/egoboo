@@ -104,7 +104,6 @@ typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
     ego_chr * PCHR = (ego_chr *)static_cast<const ego_chr *>(PCHR##_obj); \
     if( NULL == PCHR ) continue;
 
-
 /// loops through ChrObjList for all in-game characters, creating a referchre, and a pointer
 #define CHR_BEGIN_LOOP_INGAME(IT, PCHR) \
     OBJ_LIST_BEGIN_LOOP_INGAME(ego_obj_chr, ChrObjList, IT, PCHR##_obj) \

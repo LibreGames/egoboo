@@ -160,7 +160,6 @@ struct ego_object_process_state_data
 
     its_type * invalidate() { return dtor_this( this ); }
 
-
 protected:
 
     explicit ego_object_process_state_data( ego_obj_actions_t state = ego_obj_nothing ) { ctor_this( this, state ); }

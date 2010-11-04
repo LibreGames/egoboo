@@ -703,7 +703,7 @@ private:
 
 //--------------------------------------------------------------------------------------------
 
-/// The actual container that will be stored in the t_cpp_list<>
+/// The actual container that will be stored in the t_list<>
 
 struct ego_obj_chr : public ego_obj, public ego_chr
 {
@@ -766,9 +766,9 @@ private:
 // list definitions
 //--------------------------------------------------------------------------------------------
 
-extern t_cpp_stack< ego_team, TEAM_MAX > TeamStack;
+extern t_stack< ego_team, TEAM_MAX > TeamStack;
 
-extern t_cpp_stack< ego_cap, MAX_CAP > CapStack;
+extern t_stack< ego_cap, MAX_CAP > CapStack;
 
 #define LOADED_CAP( ICAP )       ( CapStack.in_range_ref( ICAP ) && CapStack[ICAP].loaded )
 

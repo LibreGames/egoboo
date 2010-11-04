@@ -85,7 +85,7 @@ void flah()
     test.get_data_ptr( ref );
     test.get_allocated_data_ptr( ref );
 
-    for ( it = test.iterator_begin(); !test.iterator_finished( it ); test.iterator_increment_allocated( it ) );
+    for ( it = test.iterator_begin_allocated(); !test.iterator_finished( it ); test.iterator_increment_allocated( it ) );
 }
 #endif
 

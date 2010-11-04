@@ -190,7 +190,7 @@ struct ego_player
     static latch_2d_t   convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src );
 };
 
-extern t_cpp_stack< ego_player, MAX_PLAYER > PlaStack;                         ///< Stack for keeping track of players
+extern t_stack< ego_player, MAX_PLAYER > PlaStack;                         ///< Stack for keeping track of players
 
 #define VALID_PLA(IPLA)       ( PlaStack.in_range_ref(IPLA) && ((IPLA) < PlaStack.count) && PlaStack[IPLA].valid )
 #define INVALID_PLA(IPLA)     ( !PlaStack.in_range_ref(IPLA) || ((IPLA) >= PlaStack.count)|| !PlaStack[IPLA].valid )

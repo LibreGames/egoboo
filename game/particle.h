@@ -48,7 +48,7 @@ struct ego_pip_data : public s_pip_data {};
 
 struct ego_pip : public ego_pip_data {};
 
-extern t_cpp_stack< ego_pip, MAX_PIP > PipStack;
+extern t_stack< ego_pip, MAX_PIP > PipStack;
 
 #define LOADED_PIP( IPIP )       ( PipStack.in_range_ref( IPIP ) && PipStack[IPIP].loaded )
 
@@ -326,7 +326,7 @@ private:
 
 //--------------------------------------------------------------------------------------------
 
-/// The actual container that will be stored in the t_cpp_list<>
+/// The actual container that will be stored in the t_list<>
 
 struct ego_obj_prt : public ego_obj, public ego_prt
 {

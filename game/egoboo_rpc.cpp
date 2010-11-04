@@ -32,7 +32,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static t_cpp_list< ego_tx_request, MAX_TX_TEXTURE_REQ  > TxReqList;
+static t_list< ego_tx_request, MAX_TX_TEXTURE_REQ  > TxReqList;
 
 static bool_t _rpc_system_initialized = bfalse;
 static int    _rpc_system_guid;

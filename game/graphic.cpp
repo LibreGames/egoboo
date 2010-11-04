@@ -126,7 +126,7 @@ static bool_t             gfx_page_clear_requested = btrue;
 
 static float dynalight_keep = 0.9f;
 
-t_cpp_list< ego_billboard_data, BILLBOARD_COUNT  > BillboardList;
+t_list< ego_billboard_data, BILLBOARD_COUNT  > BillboardList;
 
 PROFILE_DECLARE( render_scene_init );
 PROFILE_DECLARE( render_scene_mesh );

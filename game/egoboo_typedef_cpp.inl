@@ -31,10 +31,10 @@
 #endif
 
 //--------------------------------------------------------------------------------------------
-// template t_cpp_list<>
+// template t_list<>
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-_ty * t_cpp_list< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
+_ty * t_list< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
 {
     if ( !in_range_ref( ref ) ) return NULL;
 
@@ -43,7 +43,7 @@ _ty * t_cpp_list< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
-size_t t_cpp_list< _ty, _sz >::get_free()
+size_t t_list< _ty, _sz >::get_free()
 {
     /// @details ZZ@> This function returns the next free object or _sz if there are none
 
@@ -75,7 +75,7 @@ size_t t_cpp_list< _ty, _sz >::get_free()
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-egoboo_rv t_cpp_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
+egoboo_rv t_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
 {
     if ( !in_range_ref( ref ) ) return rv_error;
     _ty * ptr   = lst + ref;
@@ -125,7 +125,7 @@ egoboo_rv t_cpp_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-int t_cpp_list< _ty, _sz >::get_free_list_index( const t_reference<_ty> & ref )
+int t_list< _ty, _sz >::get_free_list_index( const t_reference<_ty> & ref )
 {
     int    retval = -1;
     size_t cnt;
@@ -151,7 +151,7 @@ int t_cpp_list< _ty, _sz >::get_free_list_index( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-bool_t t_cpp_list< _ty, _sz >::remove_free_index( int idx )
+bool_t t_list< _ty, _sz >::remove_free_index( int idx )
 {
     t_reference<_ty> ref;
 
@@ -194,7 +194,7 @@ bool_t t_cpp_list< _ty, _sz >::remove_free_index( int idx )
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-bool_t    t_cpp_list< _ty, _sz >::remove_free( const t_reference<_ty> & ref )
+bool_t    t_list< _ty, _sz >::remove_free( const t_reference<_ty> & ref )
 {
     // find the object in the free list
     int index = get_free_list_index( ref );
@@ -205,7 +205,7 @@ bool_t    t_cpp_list< _ty, _sz >::remove_free( const t_reference<_ty> & ref )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-egoboo_rv t_cpp_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
+egoboo_rv t_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
 {
     egoboo_rv retval;
     _ty * ptr;
@@ -260,7 +260,7 @@ egoboo_rv t_cpp_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-int t_cpp_list< _ty, _sz >::get_used_list_index( const t_reference<_ty> & ref )
+int t_list< _ty, _sz >::get_used_list_index( const t_reference<_ty> & ref )
 {
     int    retval = -1;
     size_t cnt;
@@ -286,7 +286,7 @@ int t_cpp_list< _ty, _sz >::get_used_list_index( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-bool_t t_cpp_list< _ty, _sz >::remove_used_index( int index )
+bool_t t_list< _ty, _sz >::remove_used_index( int index )
 {
     t_reference<_ty> ref;
 
@@ -329,7 +329,7 @@ bool_t t_cpp_list< _ty, _sz >::remove_used_index( int index )
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-bool_t    t_cpp_list< _ty, _sz >::remove_used( const t_reference<_ty> & ref )
+bool_t    t_list< _ty, _sz >::remove_used( const t_reference<_ty> & ref )
 {
     // find the object in the used list
     int index = get_used_list_index( ref );
@@ -340,7 +340,7 @@ bool_t    t_cpp_list< _ty, _sz >::remove_used( const t_reference<_ty> & ref )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template < typename _ty, size_t _sz >
-egoboo_rv t_cpp_list< _ty, _sz >::free_one( const t_reference<_ty> & ref )
+egoboo_rv t_list< _ty, _sz >::free_one( const t_reference<_ty> & ref )
 {
     egoboo_rv retval = rv_error;
     _ty     * ptr;
@@ -368,7 +368,7 @@ egoboo_rv t_cpp_list< _ty, _sz >::free_one( const t_reference<_ty> & ref )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
-void t_cpp_list< _ty, _sz >::shrink_used()
+void t_list< _ty, _sz >::shrink_used()
 {
     t_reference<_ty> ref;
 
@@ -389,7 +389,7 @@ void t_cpp_list< _ty, _sz >::shrink_used()
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
-void t_cpp_list< _ty, _sz >::shrink_free()
+void t_list< _ty, _sz >::shrink_free()
 {
     t_reference<_ty> ref;
 
@@ -411,7 +411,7 @@ void t_cpp_list< _ty, _sz >::shrink_free()
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
-void t_cpp_list< _ty, _sz >::compact_used()
+void t_list< _ty, _sz >::compact_used()
 {
     t_reference<_ty> ref;
     size_t           src, dst;
@@ -436,7 +436,7 @@ void t_cpp_list< _ty, _sz >::compact_used()
 
 //--------------------------------------------------------------------------------------------
 template <typename _ty, size_t _sz>
-void t_cpp_list< _ty, _sz >::compact_free()
+void t_list< _ty, _sz >::compact_free()
 {
     t_reference<_ty> ref;
     size_t           src, dst;
@@ -462,26 +462,26 @@ void t_cpp_list< _ty, _sz >::compact_free()
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-_ty * t_cpp_map<_ty, _ity>::get_ptr( const t_reference<_ty> & ref )
+_ty * t_map<_ty, _ity>::get_ptr( const t_reference<_ty> & ref )
 {
     if ( !ref_validate( ref ) ) return NULL;
 
-    t_cpp_map<_ty, _ity>::iterator_type it = _map.find( ref.get_value() );
-    if ( it == _map.end() ) return NULL;
+    t_map<_ty, _ity>::iterator it = _cache.find( ref.get_value() );
+    if ( it == _cache.end() ) return NULL;
 
     return it->second;
 }
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-bool_t t_cpp_map<_ty, _ity>::has_ref( const t_reference<_ty> & ref )
+bool_t t_map<_ty, _ity>::has_ref( const t_reference<_ty> & ref )
 {
-    return _map.end() != _map.find( ref.get_value() );
+    return _cache.end() != _cache.find( ref.get_value() );
 }
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-bool_t t_cpp_map<_ty, _ity>::add( const t_reference<_ty> & ref, const _ty * val )
+bool_t t_map<_ty, _ity>::add( const t_reference<_ty> & ref, const _ty * val )
 {
     // is it a valid pointer?
     if ( NULL == val )
@@ -497,7 +497,7 @@ bool_t t_cpp_map<_ty, _ity>::add( const t_reference<_ty> & ref, const _ty * val 
 #endif
 
         // add the value
-        _map[ ref.get_value()] = val;
+        _cache[ ref.get_value()] = val;
         increment_id();
     }
 
@@ -506,11 +506,11 @@ bool_t t_cpp_map<_ty, _ity>::add( const t_reference<_ty> & ref, const _ty * val 
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-bool_t t_cpp_map<_ty, _ity>::remove( const t_reference<_ty> & ref )
+bool_t t_map<_ty, _ity>::remove( const t_reference<_ty> & ref )
 {
     // add the value
     bool_t rv = bfalse;
-    if ( 0 != _map.erase( ref.get_value() ) )
+    if ( 0 != _cache.erase( ref.get_value() ) )
     {
         increment_id();
         rv = btrue;
@@ -522,13 +522,13 @@ bool_t t_cpp_map<_ty, _ity>::remove( const t_reference<_ty> & ref )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-typename t_cpp_deque<_ty, _ity>::iterator_type t_cpp_deque<_ty, _ity>::find_ref( const t_reference<_ty> & ref )
+typename t_deque<_ty, _ity>::cache_iterator t_deque<_ty, _ity>::find_ref( const t_reference<_ty> & ref )
 {
     const _ity ref_val = ref.get_value();
 
-    if ( _deque.empty() ) return _deque.end();
+    if ( _cache.empty() ) return _cache.end();
 
-    for ( iterator_type it = _deque.begin(); it != _deque.end(); it++ )
+    for ( cache_iterator it = _cache.begin(); it != _cache.end(); it++ )
     {
         if ( *it == ref_val )
         {
@@ -541,20 +541,20 @@ typename t_cpp_deque<_ty, _ity>::iterator_type t_cpp_deque<_ty, _ity>::find_ref(
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-bool_t t_cpp_deque<_ty, _ity>::has_ref( const t_reference<_ty> & ref )
+bool_t t_deque<_ty, _ity>::has_ref( const t_reference<_ty> & ref )
 {
-    return find_ref( ref ) != _deque.end();
+    return find_ref( ref ) != _cache.end();
 }
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-bool_t t_cpp_deque<_ty, _ity>::add( const t_reference<_ty> & ref )
+bool_t t_deque<_ty, _ity>::add( const t_reference<_ty> & ref )
 {
     // is it in the valid range?
     if ( has_ref( ref ) ) return bfalse;
 
     // add the value
-    _deque.push_back( ref.get_value() );
+    _cache.push_back( ref.get_value() );
     increment_id();
 
     return btrue;
@@ -562,14 +562,14 @@ bool_t t_cpp_deque<_ty, _ity>::add( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-bool_t t_cpp_deque<_ty, _ity>::remove( const t_reference<_ty> & ref )
+bool_t t_deque<_ty, _ity>::remove( const t_reference<_ty> & ref )
 {
-    iterator_type it = find_ref( ref );
+    cache_iterator it = find_ref( ref );
 
     bool_t rv = bfalse;
-    if ( it != _deque.end() )
+    if ( it != _cache.end() )
     {
-        _deque.erase( it );
+        _cache.erase( it );
         increment_id();
         rv = btrue;
     }

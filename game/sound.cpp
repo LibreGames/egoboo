@@ -51,7 +51,7 @@ struct snd_looped_sound_data
     CHR_REF     object;
 };
 
-static t_cpp_list< snd_looped_sound_data, LOOPED_COUNT  > LoopedList;
+static t_list< snd_looped_sound_data, LOOPED_COUNT  > LoopedList;
 
 static void   LoopedList_init();
 static void   LoopedList_clear();

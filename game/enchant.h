@@ -59,7 +59,7 @@ struct ego_eve : public ego_eve_data
 };
 
 /// Enchantment template
-extern t_cpp_stack< ego_eve, MAX_EVE > EveStack;
+extern t_stack< ego_eve, MAX_EVE > EveStack;
 
 #define LOADED_EVE( IEVE )      ( EveStack.in_range_ref( IEVE ) && EveStack[IEVE].loaded )
 
@@ -242,7 +242,7 @@ private:
 
 //--------------------------------------------------------------------------------------------
 
-/// The actual container that will be stored in the t_cpp_list<>
+/// The actual container that will be stored in the t_list<>
 
 struct ego_obj_enc : public ego_obj, public ego_enc
 {

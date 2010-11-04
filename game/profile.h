@@ -134,7 +134,7 @@ struct ego_pro
 //--------------------------------------------------------------------------------------------
 // the profile list
 
-extern t_cpp_list< ego_pro, MAX_PROFILE  > ProList;
+extern t_list< ego_pro, MAX_PROFILE  > ProList;
 
 int          pro_get_slot_vfs( const char * tmploadname, int slot_override );
 const char * pro_create_chop( const PRO_REF & profile_ref );

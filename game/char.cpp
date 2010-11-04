@@ -92,8 +92,8 @@ PROFILE_DECLARE( move_one_character_do_flying );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-t_cpp_stack< ego_cap, MAX_PROFILE  > CapStack;
-t_cpp_stack< ego_team, TEAM_MAX  > TeamStack;
+t_stack< ego_cap, MAX_PROFILE  > CapStack;
+t_stack< ego_team, TEAM_MAX  > TeamStack;
 
 int ego_chr::stoppedby_tests = 0;
 int ego_chr::pressure_tests = 0;

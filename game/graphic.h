@@ -235,7 +235,7 @@ private:
 
 typedef ego_billboard_data ego_billboard_data_t;
 
-extern t_cpp_list< ego_billboard_data, BILLBOARD_COUNT  > BillboardList;
+extern t_list< ego_billboard_data, BILLBOARD_COUNT  > BillboardList;
 
 void               BillboardList_init_all();
 void               BillboardList_update_all();

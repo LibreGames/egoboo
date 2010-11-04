@@ -55,7 +55,7 @@ const float buoyancy_friction = 0.2f;          // how fast does a "cloud-like" o
 int ego_prt::stoppedby_tests = 0;
 int ego_prt::pressure_tests = 0;
 
-t_cpp_stack< ego_pip, MAX_PIP  > PipStack;
+t_stack< ego_pip, MAX_PIP  > PipStack;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

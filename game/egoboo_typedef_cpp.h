@@ -30,6 +30,12 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+template < typename _ty, typename _ity > struct t_map;
+template < typename _ty, typename _ity > struct t_deque;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 // fix for the fact that assert is technically not supported in c++
 class egoboo_exception : public std::exception
 {
@@ -264,14 +270,14 @@ public:
 // a simple array template
 
 template < typename _ty, size_t _sz >
-struct t_cpp_ary
+struct t_ary
 {
 private:
     _ty    lst[_sz];
 
 public:
-    _ty & operator []( const t_reference<_ty> & ref ) { const REF_T val = ref.get_value(); /* if ( val > _sz ) CPP_EGOBOO_ASSERT( NULL == "t_cpp_ary::operator[] - index out of range" ); */ return lst[val]; }
-    _ty * operator + ( const t_reference<_ty> & ref ) { const REF_T val = ref.get_value(); /* if ( val > _sz ) CPP_EGOBOO_ASSERT( NULL == "t_cpp_ary::operator + - index out of range" ); */ return lst + val; }
+    _ty & operator []( const t_reference<_ty> & ref ) { const REF_T val = ref.get_value(); /* if ( val > _sz ) CPP_EGOBOO_ASSERT( NULL == "t_ary::operator[] - index out of range" ); */ return lst[val]; }
+    _ty * operator + ( const t_reference<_ty> & ref ) { const REF_T val = ref.get_value(); /* if ( val > _sz ) CPP_EGOBOO_ASSERT( NULL == "t_ary::operator + - index out of range" ); */ return lst + val; }
 };
 
 //--------------------------------------------------------------------------------------------
@@ -900,30 +906,24 @@ private:
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-struct t_cpp_map
+struct t_map
 {
-private:
-
-    typedef typename EGOBOO_MAP< const _ity, const _ty * > cache_type;
-    typedef typename cache_type::iterator                    iterator_type;
-    typedef typename t_reference<_ty>                      reference_type;
-
-    ego_uint   _id;
-    cache_type _map;
-
-public:
-
     /// a custom iterator that tracks additions and removals to the
-    /// t_cpp_map::_map
+    /// t_map::_map
     struct iterator
     {
-        friend struct t_cpp_map<_ty, _ity>;
+        friend struct t_map<_ty, _ity>;
 
-        explicit iterator() { _id = ego_uint( ~0L ); _valid = bfalse; }
+private:
 
+        // some internal typedefs
         typedef typename std::pair< const _ity, const _ty * >  _val_t;
         typedef typename EGOBOO_MAP< const _ity, const _ty * > _map_t;
         typedef typename _map_t::iterator                      _it_t;
+
+public:
+
+        explicit iterator() { _id = ego_uint( ~0L ); _valid = bfalse; }
 
         /// overload this operator to pass it on to the base iterator
         const _val_t& operator*() const
@@ -936,6 +936,9 @@ public:
         {
             return _i.operator->();
         }
+
+        iterator & get_map_iterator() { return *this; }
+        const iterator & get_map_iterator() const { return *this; }
 
 private:
         explicit iterator( _it_t it, ego_uint id )
@@ -950,7 +953,15 @@ private:
         bool_t    _valid;
     };
 
-    t_cpp_map() { _id = ego_uint( ~0L ); }
+private:
+
+    // some private typedefs
+    typedef typename EGOBOO_MAP< const _ity, const _ty * > cache_type;
+    typedef typename t_reference<_ty>                      reference_type;
+
+public:
+
+    t_map() { _id = ego_uint( ~0L ); }
 
     ego_uint get_id() { return _id; }
 
@@ -959,16 +970,16 @@ private:
     bool_t   add( const reference_type & ref, const _ty * val );
     bool_t   remove( const reference_type & ref );
 
-    void     clear() { _map.clear(); _id = ego_uint( ~0L ); };
-    size_t   size()  { return _map.size(); }
+    void     clear() { _cache.clear(); _id = ego_uint( ~0L ); };
+    size_t   size()  { return _cache.size(); }
 
     iterator iterator_begin()
     {
         iterator rv;
 
-        if ( !_map.empty() )
+        if ( !_cache.empty() )
         {
-            rv = iterator( _map.begin(), _id );
+            rv = iterator( _cache.begin(), _id );
         }
 
         return rv;
@@ -978,7 +989,7 @@ private:
     {
         // if the iterator is not valid, we ARE at the end
         // this function already tests for the
-        // it._i == _map.end() condition, so no need to repeat ourselves
+        // it._i == _cache.end() condition, so no need to repeat ourselves
         return !iterator_validate( it );
     }
 
@@ -999,7 +1010,7 @@ protected:
     {
         it._id    = ego_uint( ~0L );
         it._valid = bfalse;
-        it._i     = _map.end();
+        it._i     = _cache.end();
 
         return it;
     }
@@ -1017,13 +1028,13 @@ protected:
             return bfalse;
         }
 
-        if ( _map.empty() )
+        if ( _cache.empty() )
         {
             iterator_invalidate( it );
             return bfalse;
         }
 
-        if ( _map.end() == it._i )
+        if ( _cache.end() == it._i )
         {
             iterator_invalidate( it );
             return bfalse;
@@ -1031,34 +1042,35 @@ protected:
 
         return btrue;
     }
+
+private:
+    ego_uint   _id;
+    cache_type _cache;
 };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template < typename _ty, typename _ity >
-struct t_cpp_deque
+struct t_deque
 {
-private:
-
-    typedef typename std::deque< _ity >              cache_type;
-    typedef typename std::deque< _ity >::iterator    iterator_type;
-    typedef typename t_reference<_ty>                reference_type;
-
-public:
-
     static const ego_uint invalid_id = ego_uint( ~0L );
 
     /// a custom iterator that tracks additions and removals to the
-    /// t_cpp_deque::_deque
+    /// t_deque::_deque
     struct iterator
     {
-        friend struct t_cpp_deque<_ty, _ity>;
+        friend struct t_deque<_ty, _ity>;
 
-        explicit iterator() { _id = invalid_id; _valid = bfalse; }
+private:
 
+        // internal typedefs
         typedef typename _ity                           _val_t;
         typedef typename std::deque< _val_t >           _deque_t;
         typedef typename std::deque< _val_t >::iterator _it_t;
+
+public:
+
+        explicit iterator() { _id = invalid_id; _valid = bfalse; }
 
         /// overload this operator to pass it on to the base iterator
         const _val_t& operator*() const
@@ -1071,6 +1083,9 @@ public:
         {
             return _i.operator->();
         }
+
+        iterator & deque_iterator() { return *this; }
+        const iterator & deque_iterator() const { return *this; }
 
 private:
         explicit iterator( _it_t it, ego_uint id )
@@ -1085,25 +1100,34 @@ private:
         bool_t    _valid;
     };
 
-    t_cpp_deque() : _id( invalid_id ) {}
+private:
+
+    // internal typedefs
+    typedef typename std::deque< _ity >              cache_type;
+    typedef typename std::deque< _ity >::iterator    cache_iterator;
+    typedef typename t_reference<_ty>                reference_type;
+
+public:
+
+    t_deque() : _id( invalid_id ) {}
 
     ego_uint get_id() { return _id; }
 
-    iterator_type find_ref( const reference_type & ref );
+    cache_iterator find_ref( const reference_type & ref );
     bool_t         has_ref( const reference_type & ref );
     bool_t         add( const reference_type & ref );
     bool_t         remove( const reference_type & ref );
 
-    void     clear() { _deque.clear(); _id = invalid_id; };
-    size_t   size()  { return _deque.size(); }
+    void     clear() { _cache.clear(); _id = invalid_id; };
+    size_t   size()  { return _cache.size(); }
 
     iterator iterator_begin()
     {
         iterator rv;
 
-        if ( !_deque.empty() )
+        if ( !_cache.empty() )
         {
-            rv = iterator( _deque.begin(), _id );
+            rv = iterator( _cache.begin(), _id );
         }
 
         return rv;
@@ -1113,7 +1137,7 @@ private:
     {
         // if the iterator is not valid, we ARE at the end
         // this function already tests for the
-        // it._i == _deque.end() condition, so no need to repeat ourselves
+        // it._i == _cache.end() condition, so no need to repeat ourselves
         return !iterator_validate( it );
     }
 
@@ -1134,7 +1158,7 @@ protected:
     {
         it._id    = invalid_id;
         it._valid = bfalse;
-        it._i     = _deque.end();
+        it._i     = _cache.end();
 
         return it;
     }
@@ -1152,13 +1176,13 @@ protected:
             return bfalse;
         }
 
-        if ( _deque.empty() )
+        if ( _cache.empty() )
         {
             iterator_invalidate( it );
             return bfalse;
         }
 
-        if ( _deque.end() == it._i )
+        if ( _cache.end() == it._i )
         {
             iterator_invalidate( it );
             return bfalse;
@@ -1170,7 +1194,7 @@ protected:
 private:
 
     ego_uint   _id;
-    cache_type _deque;
+    cache_type _cache;
 
     void increment_id()
     {
@@ -1189,7 +1213,7 @@ private:
 //--------------------------------------------------------------------------------------------
 
 template < typename _ty, size_t _sz >
-struct t_cpp_list
+struct t_list
 {
     ego_uint update_guid;
 
@@ -1198,12 +1222,12 @@ struct t_cpp_list
     size_t   used_ref[_sz];
     size_t   free_ref[_sz];
 
-    t_cpp_ary<_ty, _sz> lst;
+    t_ary<_ty, _sz> lst;
 
     size_t   used_count() { return _used_count; }
     size_t   free_count() { return _free_count; }
 
-    t_cpp_list() { _used_count = _free_count = 0; update_guid = 0; }
+    t_list() { _used_count = _free_count = 0; update_guid = 0; }
 
     _ty * get_ptr( const t_reference<_ty> & ref );
 
@@ -1243,7 +1267,7 @@ protected:
 // a simple stack template
 
 template < typename _ty, size_t _sz >
-struct t_cpp_stack
+struct t_stack
 {
     ego_uint update_guid;
     ego_sint count;
@@ -1251,7 +1275,7 @@ struct t_cpp_stack
     bool_t valid_idx( const ego_sint index ) const { return index > 0 && index < _sz; }
     bool_t in_range_ref( const t_reference<_ty> & ref ) const { return ref.get_value() < _sz; }
 
-    t_cpp_stack() { count = 0; update_guid = 0; }
+    t_stack() { count = 0; update_guid = 0; }
 
     _ty & operator []( const t_reference<_ty> & ref )
     {
@@ -1278,7 +1302,7 @@ struct t_cpp_stack
     }
 
 private:
-    t_cpp_ary<_ty, _sz> lst;
+    t_ary<_ty, _sz> lst;
 
 };
 

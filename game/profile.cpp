@@ -50,7 +50,7 @@ ego_pro_import import_data;
 size_t bookicon_count   = 0;
 TX_REF bookicon_ref[MAX_SKIN];                      // The first book icon
 
-t_cpp_list< ego_pro, MAX_PROFILE  > ProList;
+t_list< ego_pro, MAX_PROFILE  > ProList;
 MessageOffsetAry_t  MessageOffset;
 
 Uint32  message_buffer_carat = 0;                           // Where to put letter

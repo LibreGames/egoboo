@@ -63,7 +63,7 @@ static void net_shutDown();
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-t_cpp_stack< ego_player, MAX_PLAYER  > PlaStack;
+t_stack< ego_player, MAX_PLAYER  > PlaStack;
 
 FILE *      globalnetworkerr = NULL;
 

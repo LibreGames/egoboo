@@ -106,7 +106,7 @@ protected:
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-/// The actual container that will be stored in the t_cpp_list<>
+/// The actual container that will be stored in the t_list<>
 
 template< typename _data, size_t _sz >
 struct t_ego_obj_container : public ego_obj_lst_state
@@ -151,7 +151,6 @@ struct t_ego_obj_container : public ego_obj_lst_state
     //---- automatic type conversions
     operator data_type & () { return _container_data; }
     operator const data_type & () const { return _container_data; }
-
 
 protected:
 
@@ -208,12 +207,12 @@ private:
 template <typename _data, size_t _sz>
 struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _sz>, _sz >
 {
-    /// use this typedef to make iterating through the t_cpp_map<> easier
+    /// use this typedef to make iterating through the t_map<> easier
     typedef typename t_ego_obj_container<_data, _sz>                 container_type;
     typedef typename t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
 
-    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, REF_T>           cache_type;
-    typedef typename t_cpp_map< t_ego_obj_container<_data, _sz>, REF_T>::iterator iterator_type;
+    typedef typename t_map< t_ego_obj_container<_data, _sz>, REF_T>           cache_type;
+    typedef typename t_map< t_ego_obj_container<_data, _sz>, REF_T>::iterator iterator;
 
     //---- construction/destruction
     t_obj_lst_map( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
@@ -266,14 +265,14 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
     //---- public iteration methods - iterate over the used map
 
     /// proper method of accessing the used_map::begin() function
-    iterator_type   iterator_begin()                        { return used_map.iterator_begin(); }
+    iterator       iterator_begin_allocated()                        { return used_map.iterator_begin(); }
 
     /// proper method of testing for the end of the iteration.
     /// will cause a loop to exit of the used_map's length changes during the iteration
-    bool_t         iterator_finished( iterator_type & it )       { return used_map.iterator_end( it ); }
+    bool_t         iterator_finished( iterator & it )       { return used_map.iterator_end( it ); }
 
     /// proper method of accessing incrementing a iterator_type
-    iterator_type & iterator_increment_allocated( iterator_type & it ) { return used_map.iterator_increment( it ); }
+    iterator & iterator_increment_allocated( iterator & it ) { return used_map.iterator_increment( it ); }
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
@@ -375,14 +374,22 @@ private:
 template <typename _data, size_t _sz>
 struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _sz>, _sz >
 {
-    /// use this typedef to make iterating through the t_cpp_deque<> easier
     typedef typename t_ego_obj_container<_data, _sz>                 container_type;
     typedef typename t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
+    typedef typename t_allocator_static< container_type, _sz >       allocator_type;
+    typedef typename t_deque< container_type, REF_T >                cache_type;
 
-    typedef typename t_cpp_deque< container_type, REF_T>           cache_type;
-    typedef typename t_cpp_deque< container_type, REF_T>::iterator iterator_type;
+    /// make a specialization to the t_deque<>::iterator that will allow us to
+    /// cache some pointers, which should save time later
+    struct iterator : public cache_type::iterator
+    {
+        container_type * pcont;
+        _data          * pdata;
 
-    typedef typename t_allocator_static< container_type, _sz >     allocator_type;
+        iterator( typename cache_type::iterator it ) : pcont( NULL ), pdata( NULL ) { this->deque_iterator() = it; };
+
+        void invalidate() { cache_type::iterator::invalidate(); pcont = NULL; pdata = NULL; }
+    };
 
     //---- construction/destruction
     t_obj_lst_deque( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
@@ -422,7 +429,7 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
     size_t   used_count() { return used_deque.size(); }
 
     /// get the current number of allocations/deallocations from the list. If this does not match
-    /// with the corresponding number in a iterator_type, the iterator is invalid
+    /// with the corresponding number in a iterator, the iterator is invalid
     ego_uint get_list_id() { return used_deque.get_id(); };
 
     /// change the length of the list. this function can be called at any time and be set anywhere
@@ -431,32 +438,49 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
 
     //---- public iteration methods - iterate over the used deque
 
-    /// proper method of accessing the used_deque::begin() function
-    iterator_type   iterator_begin()                        { return used_deque.iterator_begin(); }
+    /// begins the iterator through all ALLOCATED data
+    iterator iterator_begin_allocated();
+
+    /// begins the iterator through all DEFINED data == (ALLOCATED and VALID)
+    iterator iterator_begin_defined();
+
+    /// begins the iterator through all PROCESSING data == (ALLOCATED and VALID and state is processing)
+    iterator iterator_begin_processing();
+
+    /// begins the iterator through all INGAME data
+    iterator iterator_begin_ingame();
+
+    // begins the iterator through all BSP data
+    // must be implemented in the list whose container has bsp data
+    //iterator iterator_begin_bsp() { return used_deque.iterator_begin( it ); }
+
+    // begins the iterator through all LIMBO data
+    // implemented for particles
+    //iterator iterator_begin_limbo() { return used_deque.iterator_begin( it ); }
 
     /// proper method of testing for the end of the iteration.
     /// will cause a loop to exit of the used_deque's length changes during the iteration
-    bool_t         iterator_finished( iterator_type & it )       { return used_deque.iterator_end( it ); }
+    bool_t         iterator_finished( iterator & it );
 
     /// increments the iterator through all ALLOCATED data
-    iterator_type & iterator_increment_allocated( iterator_type & it ) { return used_deque.iterator_increment( it ); }
+    iterator & iterator_increment_allocated( iterator & it );
 
     /// increments the iterator through all DEFINED data == (ALLOCATED and VALID)
-    iterator_type & iterator_increment_defined( iterator_type & it );
+    iterator & iterator_increment_defined( iterator & it );
 
     /// increments the iterator through all PROCESSING data == (ALLOCATED and VALID and state is processing)
-    iterator_type & iterator_increment_processing( iterator_type & it );
+    iterator & iterator_increment_processing( iterator & it );
 
     /// increments the iterator through all INGAME data
-    iterator_type & iterator_increment_ingame( iterator_type & it );
+    iterator & iterator_increment_ingame( iterator & it );
 
     // increments the iterator through all BSP data
     // must be implemented in the list whose container has bsp data
-    //iterator_type & iterator_increment_bsp( iterator_type & it ) { return used_deque.iterator_increment( it ); }
+    //iterator & iterator_increment_bsp( iterator & it ) { return used_deque.iterator_increment( it ); }
 
     // increments the iterator through all LIMBO data
     // implemented for particles
-    //iterator_type & iterator_increment_limbo( iterator_type & it ) { return used_deque.iterator_increment( it ); }
+    //iterator & iterator_increment_limbo( iterator & it ) { return used_deque.iterator_increment( it ); }
 
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
@@ -572,7 +596,7 @@ private:
     { \
         int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
         LIST.increment_loop_depth(); \
-        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_allocated(internal__##IT) ) \
+        for( LIST##_t::iterator internal__##IT = LIST.iterator_begin_allocated(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_allocated(internal__##IT) ) \
         { \
             LIST##_t::lst_reference IT( *internal__##IT );\
             LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
@@ -585,39 +609,39 @@ private:
     { \
         int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
         LIST.increment_loop_depth(); \
-        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_defined(internal__##IT) ) \
+        for( LIST##_t::iterator internal__##IT = LIST.iterator_begin_defined(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_defined(internal__##IT) ) \
         { \
-            LIST##_t::lst_reference IT( *internal__##IT );\
-            LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
+            LIST##_t::container_type * POBJ##_cont = internal__##IT.pcont;\
             if( NULL == POBJ##_cont ) continue;\
-            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
+            OBJ_T * POBJ = internal__##IT.pdata; \
             if( NULL == POBJ ) continue;\
+            LIST##_t::lst_reference IT( *internal__##IT );\
             int internal__##LIST##_internal_depth = LIST.get_loop_depth();
 
 #define OBJ_LIST_BEGIN_LOOP_PROCESSING(OBJ_T, LIST, IT, POBJ) \
     { \
         int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
         LIST.increment_loop_depth(); \
-        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_processing(internal__##IT) ) \
+        for( LIST##_t::iterator internal__##IT = LIST.iterator_begin_processing(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_processing(internal__##IT) ) \
         { \
-            LIST##_t::lst_reference IT( *internal__##IT );\
-            LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
+            LIST##_t::container_type * POBJ##_cont = internal__##IT.pcont;\
             if( NULL == POBJ##_cont ) continue;\
-            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
+            OBJ_T * POBJ = internal__##IT.pdata; \
             if( NULL == POBJ ) continue;\
+            LIST##_t::lst_reference IT( *internal__##IT );\
             int internal__##LIST##_internal_depth = LIST.get_loop_depth();
 
 #define OBJ_LIST_BEGIN_LOOP_INGAME(OBJ_T, LIST, IT, POBJ) \
     { \
         int internal__##LIST##_start_depth = LIST.get_loop_depth(); \
         LIST.increment_loop_depth(); \
-        for( LIST##_t::iterator_type internal__##IT = LIST.iterator_begin(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_ingame(internal__##IT) ) \
+        for( LIST##_t::iterator internal__##IT = LIST.iterator_begin_ingame(); !LIST.iterator_finished(internal__##IT); LIST.iterator_increment_ingame(internal__##IT) ) \
         { \
-            LIST##_t::lst_reference IT( *internal__##IT );\
-            LIST##_t::container_type * POBJ##_cont = LIST.get_ptr( IT );\
+            LIST##_t::container_type * POBJ##_cont = internal__##IT.pcont;\
             if( NULL == POBJ##_cont ) continue;\
-            OBJ_T * POBJ = LIST##_t::container_type::get_data_ptr( POBJ##_cont ); \
+            OBJ_T * POBJ = internal__##IT.pdata; \
             if( NULL == POBJ ) continue;\
+            LIST##_t::lst_reference IT( *internal__##IT );\
             int internal__##LIST##_internal_depth = LIST.get_loop_depth();
 
 //--------------------------------------------------------------------------------------------
