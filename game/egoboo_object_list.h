@@ -48,10 +48,10 @@ struct ego_obj_lst_state_data
 
     //---- accessor
 
-    static const bool_t in_used( const ego_obj_lst_state_data * ptr )
+    static bool_t in_used( const ego_obj_lst_state_data * ptr )
     { return ( NULL == ptr ) ? bfalse     : ptr->in_used_list; }
 
-    static const Uint32 get_list_id( ego_obj_lst_state_data * ptr )
+    static Uint32 get_list_id( ego_obj_lst_state_data * ptr )
     { return ( NULL == ptr ) ? INVALID_UPDATE_GUID     : ptr->update_guid; }
 
     static ego_obj_lst_state_data * set_used( ego_obj_lst_state_data *, const bool_t val );
@@ -91,10 +91,10 @@ struct ego_obj_lst_state : public ego_obj_lst_state_data, public allocator_clien
         return ptr;
     }
 
-    static const ego_uint get_index( const ego_obj_lst_state * ptr, REF_T fail_value = ego_uint( ~0L ) )
+    static ego_uint get_index( const ego_obj_lst_state * ptr, REF_T fail_value = ego_uint( ~0L ) )
     { return ( NULL == ptr || !ptr->allocator_client::has_valid_id() ) ? fail_value : ptr->allocator_client::get_index(); }
 
-    static const Uint32 get_id( ego_obj_lst_state * ptr )
+    static Uint32 get_id( ego_obj_lst_state * ptr )
     { return ( NULL == ptr ) ? invalid_value : ptr->allocator_client::get_id(); }
 
 protected:

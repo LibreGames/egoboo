@@ -213,7 +213,7 @@ struct ego_player : public ego_player_data
         return *this;
     }
 
-    const ego_uint get_id() const { return _id; }
+    ego_uint get_id() const { return _id; }
 
 private:
 

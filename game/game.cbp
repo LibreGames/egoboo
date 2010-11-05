@@ -334,6 +334,7 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-fpermissive" />
 			<Add directory="." />
 			<Add directory="../enet/include" />
 		</Compiler>

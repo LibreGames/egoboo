@@ -918,8 +918,6 @@ bool_t  chr_can_see_object( const CHR_REF & ichr, const CHR_REF & iobj );
 bool_t  chr_can_mount( const CHR_REF & ichr_a, const CHR_REF & ichr_b );
 bool_t  chr_is_attacking( ego_chr *pchr );
 bool_t  chr_calc_environment( ego_chr * pchr );
-int     convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
-int     convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[], fvec4_t   dst_point[] );
 
 const char * describe_value( float value, float maxval, int * rank_ptr );
 const char * describe_damage( float value, float maxval, int * rank_ptr );
@@ -936,7 +934,7 @@ float calc_dismount_lerp( const ego_chr * pchr_a, const ego_chr * pchr_b );
 
 bool_t chr_copy_enviro( ego_chr * chr_psrc, ego_chr * chr_pdst );
 
-//---- helper functions
+//---- grip helper functions
 int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset );
 int convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_t dst_point[] );
 int convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[], fvec4_t   dst_point[] );

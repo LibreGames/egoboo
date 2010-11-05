@@ -33,37 +33,37 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-INLINE const ego_MD2_SkinName  *md2_get_Skin( ego_MD2_Model * m, int index );
-INLINE const ego_MD2_Frame     *md2_get_Frame( ego_MD2_Model * m, int index );
-INLINE const ego_MD2_Triangle  *md2_get_Triangle( ego_MD2_Model * m, int index );
+static INLINE const ego_MD2_SkinName  *md2_get_Skin( ego_MD2_Model * m, int index );
+static INLINE const ego_MD2_Frame     *md2_get_Frame( ego_MD2_Model * m, int index );
+static INLINE const ego_MD2_Triangle  *md2_get_Triangle( ego_MD2_Model * m, int index );
 
-INLINE const int md2_get_numVertices( ego_MD2_Model * m );
-INLINE const int md2_get_numTexCoords( ego_MD2_Model * m );
-INLINE const int md2_get_numTriangles( ego_MD2_Model * m );
-INLINE const int md2_get_numSkins( ego_MD2_Model * m );
-INLINE const int md2_get_numFrames( ego_MD2_Model * m );
-INLINE const int md2_get_numCommands( ego_MD2_Model * m );
+static INLINE int md2_get_numVertices( ego_MD2_Model * m );
+static INLINE int md2_get_numTexCoords( ego_MD2_Model * m );
+static INLINE int md2_get_numTriangles( ego_MD2_Model * m );
+static INLINE int md2_get_numSkins( ego_MD2_Model * m );
+static INLINE int md2_get_numFrames( ego_MD2_Model * m );
+static INLINE int md2_get_numCommands( ego_MD2_Model * m );
 
-INLINE const ego_MD2_SkinName  *md2_get_SkinNames( ego_MD2_Model * m );
-INLINE const ego_MD2_TexCoord  *md2_get_TexCoords( ego_MD2_Model * m );
-INLINE const ego_MD2_Triangle  *md2_get_Triangles( ego_MD2_Model * m );
-INLINE const ego_MD2_Frame     *md2_get_Frames( ego_MD2_Model * m );
-INLINE const ego_MD2_GLCommand *md2_get_Commands( ego_MD2_Model * m );
+static INLINE ego_MD2_SkinName  *md2_get_SkinNames( ego_MD2_Model * m );
+static INLINE ego_MD2_TexCoord  *md2_get_TexCoords( ego_MD2_Model * m );
+static INLINE ego_MD2_Triangle  *md2_get_Triangles( ego_MD2_Model * m );
+static INLINE ego_MD2_Frame     *md2_get_Frames( ego_MD2_Model * m );
+static INLINE ego_MD2_GLCommand *md2_get_Commands( ego_MD2_Model * m );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const int md2_get_numVertices( ego_MD2_Model * m )  { return m->m_numVertices;  }
-INLINE const int md2_get_numTexCoords( ego_MD2_Model * m ) { return m->m_numTexCoords; }
-INLINE const int md2_get_numTriangles( ego_MD2_Model * m ) { return m->m_numTriangles; }
-INLINE const int md2_get_numSkins( ego_MD2_Model * m )     { return m->m_numSkins;     }
-INLINE const int md2_get_numFrames( ego_MD2_Model * m )    { return m->m_numFrames;    }
-INLINE const int md2_get_numCommands( ego_MD2_Model * m )  { return m->m_numCommands;  }
+INLINE int md2_get_numVertices( ego_MD2_Model * m )  { return m->m_numVertices;  }
+INLINE int md2_get_numTexCoords( ego_MD2_Model * m ) { return m->m_numTexCoords; }
+INLINE int md2_get_numTriangles( ego_MD2_Model * m ) { return m->m_numTriangles; }
+INLINE int md2_get_numSkins( ego_MD2_Model * m )     { return m->m_numSkins;     }
+INLINE int md2_get_numFrames( ego_MD2_Model * m )    { return m->m_numFrames;    }
+INLINE int md2_get_numCommands( ego_MD2_Model * m )  { return m->m_numCommands;  }
 
-INLINE const ego_MD2_SkinName  *md2_get_SkinNames( ego_MD2_Model * m ) { return m->m_skins;     }
-INLINE const ego_MD2_TexCoord  *md2_get_TexCoords( ego_MD2_Model * m ) { return m->m_texCoords; }
-INLINE const ego_MD2_Triangle  *md2_get_Triangles( ego_MD2_Model * m ) { return m->m_triangles; }
-INLINE const ego_MD2_Frame     *md2_get_Frames( ego_MD2_Model * m ) { return m->m_frames;    }
-INLINE const ego_MD2_GLCommand *md2_get_Commands( ego_MD2_Model * m ) { return m->m_commands;  }
+INLINE ego_MD2_SkinName  *md2_get_SkinNames( ego_MD2_Model * m ) { return m->m_skins;     }
+INLINE ego_MD2_TexCoord  *md2_get_TexCoords( ego_MD2_Model * m ) { return m->m_texCoords; }
+INLINE ego_MD2_Triangle  *md2_get_Triangles( ego_MD2_Model * m ) { return m->m_triangles; }
+INLINE ego_MD2_Frame     *md2_get_Frames( ego_MD2_Model * m ) { return m->m_frames;    }
+INLINE ego_MD2_GLCommand *md2_get_Commands( ego_MD2_Model * m ) { return m->m_commands;  }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

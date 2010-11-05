@@ -30,6 +30,10 @@
 #   error this file should not be included directly. Access it through egoboo_object.h
 #endif
 
+#include "char.inl"
+#include "enchant.inl"
+#include "particle.inl"
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
@@ -62,9 +66,9 @@ _ty * ego_object_engine::run_construct( _ty * pdata, int max_iterations )
 template<typename _ty>
 _ty * ego_object_engine::run_initialize( _ty * pdata, int max_iterations )
 {
-    int                 iterations;
+    int iterations;
 
-    _ty::object_type * pobj = _ty::get_obj_ptr( pdata );
+    typename _ty::object_type * pobj = _ty::get_obj_ptr( pdata );
     if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
@@ -117,7 +121,7 @@ _ty * ego_object_engine::run_deinitialize( _ty * pdata, int max_iterations )
 {
     int iterations;
 
-    _ty::object_type * pobj = _ty::get_obj_ptr( pdata );
+    typename _ty::object_type * pobj = _ty::get_obj_ptr( pdata );
     if ( !FLAG_VALID_PBASE( pobj ) ) return NULL;
 
     // if the character is already beyond this stage, deinitialize it

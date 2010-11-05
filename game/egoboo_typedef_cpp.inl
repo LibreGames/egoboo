@@ -117,7 +117,7 @@ egoboo_rv t_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
 
     ego_obj_lst_state * plst = ptr->get_plist();
 
-    ego_obj_lst_state::set_free( plst, btrue );
+    //ego_obj_lst_state::set_free( plst, btrue );
     ego_obj_lst_state::set_used( plst, bfalse );
 
     return rv_success;
@@ -174,10 +174,10 @@ bool_t t_list< _ty, _sz >::remove_free_index( int idx )
     free_ref[idx] = _sz;
 
     // let the object know it is not in the list anymore
-    if ( in_range_ref( ref ) )
-    {
-        ego_obj_lst_state::set_free( lst[ref].get_plist(), bfalse );
-    }
+//    if ( in_range_ref( ref ) )
+//    {
+//        ego_obj_lst_state::set_free( lst[ref].get_plist(), bfalse );
+//    }
 
     // shorten the list
     free_count--;
@@ -252,7 +252,7 @@ egoboo_rv t_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
 
     ego_obj_lst_state * plst = ptr->get_plist();
 
-    ego_obj_lst_state::set_free( plst, bfalse );
+    //ego_obj_lst_state::set_free( plst, bfalse );
     ego_obj_lst_state::set_used( plst, btrue );
 
     return rv_success;

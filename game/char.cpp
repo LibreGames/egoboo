@@ -2915,7 +2915,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 
     if ( profile >= MAX_PROFILE )
     {
-        log_warning( __FUNCTION__ " - profile value too large %d out of %d\n", profile.get_value(), MAX_PROFILE );
+        log_warning( "%s - profile value too large %d out of %d\n", __FUNCTION__, profile.get_value(), MAX_PROFILE );
         return CHR_REF( MAX_CHR );
     }
 
@@ -2923,7 +2923,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     {
         if ( profile > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( __FUNCTION__ " - trying to spawn using invalid profile %d\n", profile.get_value() );
+            log_warning( "%s - trying to spawn using invalid profile %d\n", __FUNCTION__, profile.get_value() );
         }
         return CHR_REF( MAX_CHR );
     }
@@ -2932,7 +2932,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     iobj = ChrObjList.allocate( override );
     if ( !DEFINED_CHR( iobj ) )
     {
-        log_warning( __FUNCTION__ " - failed to spawn character (invalid index number %d?)\n", iobj.get_value() );
+        log_warning( "%s - failed to spawn character (invalid index number %d?)\n", __FUNCTION__, iobj.get_value() );
         return CHR_REF( MAX_CHR );
     }
 
@@ -2955,7 +2955,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
 #if defined(DEBUG_OBJECT_SPAWN) && EGO_DEBUG
     {
         CAP_REF icap = pro_get_icap( profile );
-        log_debug( __FUNCTION__ " - slot: %i, index: %i, name: %s, class: %s\n", profile.get_value(), iobj.get_value(), name, CapStack[icap].classname );
+        log_debug( "%s - slot: %i, index: %i, name: %s, class: %s\n", __FUNCTION__, profile.get_value(), iobj.get_value(), name, CapStack[icap].classname );
     }
 #endif
 
@@ -10763,7 +10763,8 @@ ego_chr *  ego_chr::do_initializing( ego_chr * pchr )
 #if EGO_DEBUG && defined(DEBUG_WAYPOINTS)
     if ( !IS_ATTACHED_PCHR( pchr ) && INFINITE_WEIGHT != pchr->phys.weight && !pchr->safe_valid )
     {
-        log_warning( __FUNCTION__ " - \n\tinitial spawn position <%f,%f> is \"inside\" a wall. Wall normal is <%f,%f>\n",
+        log_warning( "%s - \n\tinitial spawn position <%f,%f> is \"inside\" a wall. Wall normal is <%f,%f>\n",
+                    __FUNCTION__ ,
                      pchr->pos.x, pchr->pos.y, nrm.x, nrm.y );
     }
 #endif

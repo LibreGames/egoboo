@@ -40,6 +40,20 @@
 #       if defined(__GNUC__)
 #           include <backward/hash_map>
 #           include <backward/hash_set>
+
+            // this is getting bloody ugly
+            template< typename _ty >
+            class LargeIntHasher {
+            public:
+              size_t operator()(_ty * ptr ) const
+              {
+                return h( (size_t) ptr);
+              };
+
+            private:
+              __gnu_cxx::hash<size_t> h;
+            };
+
 #           define EGOBOO_MAP __gnu_cxx::hash_map
 #           define EGOBOO_SET __gnu_cxx::hash_set
 #       elif defined(_MSC_VER)
@@ -305,7 +319,7 @@ public:
         return *this;
     }
 
-    const REF_T get_value() const { return ref; }
+    REF_T get_value() const { return ref; }
 
     friend bool operator == ( const t_reference<_ty> & lhs, REF_T rhs )  { return lhs.ref == rhs; }
     friend bool operator != ( const t_reference<_ty> & lhs, REF_T rhs )  { return lhs.ref != rhs; }
@@ -376,26 +390,26 @@ struct allocator_client
         *(( ego_uint* )( &_ix ) ) = invalid_value;
     };
 
-    const ego_uint get_id()          const { return _id; };
-    const bool     has_valid_id()    const { return _id != invalid_value; };
+    ego_uint get_id()          const { return _id; };
+    bool     has_valid_id()    const { return _id != invalid_value; };
 
-    const ego_uint get_index()       const { return _ix; };
-    const bool     has_valid_index( const ego_uint max_index = ego_uint( ~0L ) ) const { return _ix < max_index; };
+    ego_uint get_index()       const { return _ix; };
+    bool     has_valid_index( const ego_uint max_index = ego_uint( ~0L ) ) const { return _ix < max_index; };
 
     //---- static accessors
     // make these functions static so we can don't have to worry whether the pointer is NULL
 
-    static const bool has_valid_id( const allocator_client * ptr )
+    static bool has_valid_id( const allocator_client * ptr )
     {
         return NULL == ptr ? bfalse : ptr->has_valid_id();
     }
 
-    static const bool has_valid_index( const allocator_client * ptr, const ego_uint max_index = invalid_value )
+    static bool has_valid_index( const allocator_client * ptr, const ego_uint max_index = invalid_value )
     {
         return NULL == ptr ? bfalse : ptr->has_valid_index( max_index );
     }
 
-    static const bool is_valid( const allocator_client * ptr, const ego_uint max_index = invalid_value )
+    static bool is_valid( const allocator_client * ptr, const ego_uint max_index = invalid_value )
     {
         return NULL == ptr ? bfalse : ptr->has_valid_id() && ptr->has_valid_index( max_index );
     }
@@ -413,8 +427,14 @@ private:
 template < typename _ty >
 struct t_allocator_dynamic
 {
+#if defined(USE_HASH) && defined(__GNUC__)
+    typedef typename EGOBOO_SET<_ty *, LargeIntHasher<_ty> >                heap_type;
+    typedef typename EGOBOO_SET<_ty *, LargeIntHasher<_ty> >::iterator      heap_iterator;
+#else
     typedef typename EGOBOO_SET<_ty *>                heap_type;
     typedef typename EGOBOO_SET<_ty *>::iterator      heap_iterator;
+#endif
+
     typedef typename std::pair< heap_iterator, bool > heap_pair;
 
     //---- construction and destruction
@@ -597,7 +617,7 @@ private:
         // remove the goven pointer from the _heap
         if ( !_heap.empty() )
         {
-            typename EGOBOO_SET<_ty*>::iterator it = _heap.find( element_ptr );
+            typename heap_type::iterator it = _heap.find( element_ptr );
             if ( it != _heap.end() )
             {
                 _heap.erase( it );
@@ -634,7 +654,7 @@ private:
 
     ego_uint guid;
 
-    EGOBOO_SET<_ty *> _heap;
+    heap_type _heap;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -645,8 +665,14 @@ private:
 template < typename _ty, size_t _sz >
 struct t_allocator_static
 {
+#if defined(USE_HASH) && defined(__GNUC__)
+    typedef typename EGOBOO_SET<_ty *, LargeIntHasher<_ty> >                heap_type;
+    typedef typename EGOBOO_SET<_ty *, LargeIntHasher<_ty> >::iterator      heap_iterator;
+#else
     typedef typename EGOBOO_SET<_ty *>                heap_type;
     typedef typename EGOBOO_SET<_ty *>::iterator      heap_iterator;
+#endif
+
     typedef typename std::pair< heap_iterator, bool > heap_pair;
 
     static const size_t invalid_index = size_t( -1 );
@@ -683,7 +709,8 @@ struct t_allocator_static
 
         for ( int cnt = 0; cnt < _sz; cnt++ )
         {
-            _heap.insert( _static_ary + cnt );
+            const typename heap_type::value_type dummy_ptr = _static_ary + cnt;
+            _heap.insert( dummy_ptr );
         }
     }
 
@@ -756,14 +783,14 @@ struct t_allocator_static
         return !element_allocated( ptr ) ? NULL : ptr;
     }
 
-    const size_t get_element_idx( const _ty * pelement )
+    size_t get_element_idx( const _ty * pelement )
     {
         if ( !element_allocated( pelement ) ) return allocator_client::invalid_value;
 
         return static_cast<const allocator_client*>( pelement )->get_index();
     }
 
-    const size_t get_element_idx( const _ty * pelement ) const
+    size_t get_element_idx( const _ty * pelement ) const
     {
         if ( !element_allocated( pelement ) ) return allocator_client::invalid_value;
 
@@ -779,7 +806,7 @@ struct t_allocator_static
 private:
 
     /// a kludge to get the "index" to _static_ary of the pointer, ptr
-    const size_t find_element_index( const _ty * ptr ) const
+    size_t find_element_index( const _ty * ptr ) const
     {
         if ( ptr < _static_ary ) return invalid_index;
 
@@ -798,7 +825,7 @@ private:
         return ( 0 == err ) ? index : invalid_index;
     }
 
-    const bool_t valid_element_ptr( const _ty * ptr ) const
+    bool_t valid_element_ptr( const _ty * ptr ) const
     {
         return invalid_index != find_element_index( ptr );
     }
@@ -928,7 +955,7 @@ private:
         // remove the given pointer from the _heap
         if ( !_heap.empty() )
         {
-            typename EGOBOO_SET<_ty*>::iterator it = _heap.find( element_ptr );
+            typename heap_type::iterator it = _heap.find( element_ptr );
             if ( it != _heap.end() )
             {
                 _heap.erase( it );
@@ -957,7 +984,6 @@ private:
 
             if ( NULL != tmp_ptr )
             {
-                tmp_ptr;
                 tmp_ptr = NULL;
             }
         }
@@ -988,7 +1014,13 @@ private:
 
         // some internal typedefs
         typedef typename std::pair< const _ity, const _ty * >  _val_t;
+
+#if defined(USE_HASH) && defined(__GNUC__)
+        typedef typename EGOBOO_MAP< const _ity, const _ty *, LargeIntHasher<const _ity> > _map_t;
+#else
         typedef typename EGOBOO_MAP< const _ity, const _ty * > _map_t;
+#endif
+
         typedef typename _map_t::iterator                      _it_t;
 
 public:
@@ -1026,7 +1058,12 @@ private:
 private:
 
     // some private typedefs
+#if defined(USE_HASH) && defined(__GNUC__)
+        typedef typename EGOBOO_MAP< const _ity, const _ty *, LargeIntHasher<_ity> > cache_type;
+#else
     typedef typename EGOBOO_MAP< const _ity, const _ty * > cache_type;
+#endif
+
     typedef t_reference<_ty>                               reference_type;
 
 public:

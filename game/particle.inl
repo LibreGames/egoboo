@@ -23,6 +23,7 @@
 
 #include "particle.h"
 #include "PrtList.h"
+#include "ChrList.h"
 
 #include "char.inl"
 #include "egoboo_object_list.inl"

@@ -59,9 +59,6 @@
 
 #include "extensions/SDL_extensions.h"
 
-#include <windows.h>
-#include <excpt.h>
-
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -2241,6 +2238,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
     CAP_REF icap( MAX_CAP );
     STRING  classname = EMPTY_CSTR;
     bool_t  local_item = bfalse;
+    ego_cap * pcap = NULL;
 
     if ( NULL == ptr )
     {
@@ -2260,7 +2258,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
     {
         goto ChoosePlayer_data__render_stats_fail;
     }
-    ego_cap * pcap = CapStack + icap;
+    pcap = CapStack + icap;
 
     // make sure we have a valid display_item
     local_item = bfalse;

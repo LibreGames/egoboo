@@ -21,12 +21,13 @@
 /// @brief Implementation of Egoboo "object" control routines
 /// @details
 
-#include "egoboo_object.h"
 #include "egoboo_strutil.h"
 
 #include "ChrList.h"
 #include "EncList.h"
 #include "PrtList.h"
+
+#include "egoboo_object.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

@@ -27,10 +27,11 @@
 #    error egoboo_typedef_cpp.inl should only be included if you are compling as c++
 #endif
 
+#include "egoboo_object_list.h"
+
 #include "log.h"
 
-#include "egoboo_object_list.h"
-#include "egoboo_object.h"
+#include "egoboo_object.inl"
 
 //--------------------------------------------------------------------------------------------
 // grab a container
@@ -828,7 +829,7 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::alloc
     if ( !valid_index_range( ref.get_value() ) )
     {
         // we didn't get a valid lst_reference
-        log_warning( __FUNCTION__ " - failed to override a object? Object at index %d already spawned? \n", override.get_value() );
+        log_warning( "%s - failed to override a object? Object at index %d already spawned? \n", __FUNCTION__, override.get_value() );
     }
     else
     {

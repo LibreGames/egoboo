@@ -132,17 +132,17 @@ struct ego_object_process_state_data
     static bool_t set_valid( its_type * ptr, bool_t val );
     static bool_t set_action( its_type * ptr, ego_obj_actions_t action ) { if ( NULL == ptr ) return bfalse; bool_t rv = ( action != ptr->action ); ptr->action = action; return rv; }
 
-    static const bool_t get_valid( const its_type * ptr )       { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, valid_bit )        && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_initialized( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_initialized ) && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_constructed( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_constructed ) && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_active( const its_type * ptr )      { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_active )      && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_killed( const its_type * ptr )      { return ( NULL == ptr ) ? btrue : has_all_bits( ptr, killed_bit ); }
+    static bool_t get_valid( const its_type * ptr )       { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, valid_bit )        && has_no_bits( ptr, killed_bit ); }
+    static bool_t get_initialized( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_initialized ) && has_no_bits( ptr, killed_bit ); }
+    static bool_t get_constructed( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_constructed ) && has_no_bits( ptr, killed_bit ); }
+    static bool_t get_active( const its_type * ptr )      { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_active )      && has_no_bits( ptr, killed_bit ); }
+    static bool_t get_killed( const its_type * ptr )      { return ( NULL == ptr ) ? btrue : has_all_bits( ptr, killed_bit ); }
 
-    static const bool_t get_spawning( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_spawning ) && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_on( const its_type * ptr )       { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_on ) && has_no_bits( ptr, killed_bit ); }
-    static const bool_t get_paused( const its_type * ptr )   { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, paused_bit ) && has_no_bits( ptr, killed_bit ); }
+    static bool_t get_spawning( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_spawning ) && has_no_bits( ptr, killed_bit ); }
+    static bool_t get_on( const its_type * ptr )       { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_on ) && has_no_bits( ptr, killed_bit ); }
+    static bool_t get_paused( const its_type * ptr )   { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, paused_bit ) && has_no_bits( ptr, killed_bit ); }
 
-    static const ego_obj_actions_t get_action( const its_type * ptr ) { return ( NULL == ptr ) ? ego_obj_nothing : ptr->action;   }
+    static ego_obj_actions_t get_action( const its_type * ptr ) { return ( NULL == ptr ) ? ego_obj_nothing : ptr->action;   }
 
     static its_type * invalidate( its_type * ptr ) { return dtor_this( ptr ); }
 
@@ -151,17 +151,17 @@ struct ego_object_process_state_data
     bool_t set_valid( bool_t val );
     bool_t set_action( ego_obj_actions_t act ) { bool_t rv = ( action != act ); action = act; return rv; }
 
-    const bool_t get_valid()       const { return has_all_bits( this, valid_bit )        && has_no_bits( this, killed_bit ); }
-    const bool_t get_initialized() const { return has_all_bits( this, full_initialized ) && has_no_bits( this, killed_bit ); }
-    const bool_t get_constructed() const { return has_all_bits( this, full_constructed ) && has_no_bits( this, killed_bit ); }
-    const bool_t get_active()      const { return has_all_bits( this, full_active )      && has_no_bits( this, killed_bit ); }
-    const bool_t get_killed()      const { return has_all_bits( this, killed_bit ); }
+    bool_t get_valid()       const { return has_all_bits( this, valid_bit )        && has_no_bits( this, killed_bit ); }
+    bool_t get_initialized() const { return has_all_bits( this, full_initialized ) && has_no_bits( this, killed_bit ); }
+    bool_t get_constructed() const { return has_all_bits( this, full_constructed ) && has_no_bits( this, killed_bit ); }
+    bool_t get_active()      const { return has_all_bits( this, full_active )      && has_no_bits( this, killed_bit ); }
+    bool_t get_killed()      const { return has_all_bits( this, killed_bit ); }
 
-    const bool_t get_spawning()    const { return has_all_bits( this, full_spawning ) && has_no_bits( this, killed_bit ); }
-    const bool_t get_on()          const { return has_all_bits( this, full_on ) && has_no_bits( this, killed_bit ); }
-    const bool_t get_paused()      const { return has_all_bits( this, paused_bit ) && has_no_bits( this, killed_bit ); }
+    bool_t get_spawning()    const { return has_all_bits( this, full_spawning ) && has_no_bits( this, killed_bit ); }
+    bool_t get_on()          const { return has_all_bits( this, full_on ) && has_no_bits( this, killed_bit ); }
+    bool_t get_paused()      const { return has_all_bits( this, paused_bit ) && has_no_bits( this, killed_bit ); }
 
-    const ego_obj_actions_t get_action() const { return action; }
+    ego_obj_actions_t get_action() const { return action; }
 
     its_type * invalidate() { return dtor_this( this ); }
 
@@ -232,7 +232,7 @@ protected:
         return old != ptr->state_flags;
     }
 
-    static const bool_t set_on( its_type * ptr, bool_t val )
+    static bool_t set_on( its_type * ptr, bool_t val )
     {
         bool_t rv = bfalse;
 
@@ -285,11 +285,11 @@ struct ego_object_request_data
     //---- ACCESSORS
     // use static functions as accessors so the program won't crash on am accidental NULL pointer
 
-    static const bool_t  get_pause_off( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->unpause_me;  };
-    static const bool_t  get_pause_on( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->pause_me;    };
-    static const bool_t  get_turn_on( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_on;  };
-    static const bool_t  get_turn_off( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_off; };
-    static const bool_t  get_kill( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->kill_me;     };
+    static bool_t  get_pause_off( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->unpause_me;  };
+    static bool_t  get_pause_on( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->pause_me;    };
+    static bool_t  get_turn_on( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_on;  };
+    static bool_t  get_turn_off( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->turn_me_off; };
+    static bool_t  get_kill( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : ptr->kill_me;     };
 
 protected:
 
@@ -597,8 +597,3 @@ extern ego_object_engine obj_engine;
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 #define _egoboo_object_h
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-#include "egoboo_object.inl"
