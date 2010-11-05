@@ -27,7 +27,7 @@
 /// to do things like loading modules in a worker thread. All graphics functions must be
 /// called from the main thread...
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

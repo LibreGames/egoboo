@@ -29,10 +29,12 @@
 #include "extensions/ogl_debug.h"
 #include "extensions/SDL_GL_extensions.h"
 
-#include "egoboo_typedef.h"
 #include "egoboo_strutil.h"
 #include "egoboo_math.h"
 #include "egoboo_display_list.h"
+
+
+#include "egoboo_typedef_cpp.inl"
 
 #include <stdlib.h>
 #include <stddef.h>

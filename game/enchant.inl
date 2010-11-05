@@ -21,11 +21,14 @@
 
 /// @file enchant.inl
 
+#include "enchant.h"
+
 #include "EncList.h"
 #include "ChrList.h"
 
 #include "char.inl"
 #include "profile.inl"
+#include "egoboo_object_list.inl"
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION

@@ -22,13 +22,13 @@
 /// @file egoboo_typedef_cpp.inl
 /// @details cpp-only inline and template implementations
 
+#include "egoboo_typedef_cpp.h"
+
 #if !defined(__cplusplus)
 #    error egoboo_typedef_cpp.inl should only be included if you are compling as c++
 #endif
 
-#if !defined(_egoboo_typedef_cpp_h)
-#   error this file should not be included directly. Access it through egoboo_typedef.h
-#endif
+#include "egoboo_object_list.inl"
 
 //--------------------------------------------------------------------------------------------
 // template t_list<>
@@ -524,11 +524,12 @@ bool_t t_map<_ty, _ity>::remove( const t_reference<_ty> & ref )
 template < typename _ty, typename _ity >
 typename t_deque<_ty, _ity>::cache_iterator t_deque<_ty, _ity>::find_ref( const t_reference<_ty> & ref )
 {
+    cache_iterator it;
     const _ity ref_val = ref.get_value();
 
     if ( _cache.empty() ) return _cache.end();
 
-    for ( cache_iterator it = _cache.begin(); it != _cache.end(); it++ )
+    for ( it = _cache.begin(); it != _cache.end(); it++ )
     {
         if ( *it == ref_val )
         {

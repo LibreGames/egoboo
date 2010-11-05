@@ -22,7 +22,7 @@
 /// @file script_functions.h
 /// @details functions called by scr_run_function()
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

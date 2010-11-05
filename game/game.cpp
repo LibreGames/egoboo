@@ -61,7 +61,6 @@
 #include "script.h"
 
 #include "egoboo_vfs.h"
-#include "egoboo_typedef.h"
 #include "egoboo_setup.h"
 #include "egoboo_strutil.h"
 #include "egoboo_fileutil.h"
@@ -75,6 +74,7 @@
 #include "lua_console.h"
 #endif
 
+#include "egoboo_typedef_cpp.inl"
 #include "char.inl"
 #include "particle.inl"
 #include "enchant.inl"
@@ -1668,7 +1668,7 @@ bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_F
     if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && NULL != ppla )
     {
         int quest_level = QUEST_NONE;
-        
+
         quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), idsz );
 
         // find only active quests?

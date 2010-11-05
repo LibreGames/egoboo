@@ -22,7 +22,7 @@
 /// @file egoboo_process.h
 /// @details A rudimentary implementation of "non-preemptive multitasking" in Egoboo.
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 #include "egoboo_state_machine.h"
 
 //--------------------------------------------------------------------------------------------

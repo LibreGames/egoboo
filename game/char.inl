@@ -27,12 +27,13 @@
 
 #include "enchant.inl"
 #include "particle.inl"
+#include "egoboo_math.inl"
+#include "egoboo_object_list.inl"
+
 
 /// @note include "profile.inl" here.
 ///  Do not include "char.inl" in "profile.inl", otherwise there is a bootstrapping problem.
 #include "profile.inl"
-
-#include "egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 // FORWARD DECLARARIONS
@@ -662,7 +663,7 @@ INLINE latch_2d_t ego_chr::convert_latch_2d( const ego_chr * pchr, const latch_2
 }
 
 //--------------------------------------------------------------------------------------------
-static INLINE bool_t IS_INVICTUS_PCHR_RAW( ego_chr * pchr ) 
+static INLINE bool_t IS_INVICTUS_PCHR_RAW( ego_chr * pchr )
 {
     if( NULL == pchr ) return btrue;
 
@@ -678,7 +679,7 @@ static INLINE bool_t IS_INVICTUS_PCHR_RAW( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-static INLINE bool_t IS_PLAYER_PCHR( ego_chr * pchr ) 
+static INLINE bool_t IS_PLAYER_PCHR( ego_chr * pchr )
 {
     if( !DEFINED_PCHR(pchr) ) return bfalse;
 

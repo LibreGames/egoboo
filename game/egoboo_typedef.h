@@ -26,37 +26,6 @@
 
 #include <SDL_types.h>
 
-// include these before the memory stuff because the Fluid Studios Memory manager
-// redefines the new operator in a way that ther STL doesn't like.
-// And we do not want mmgr to be tracking internal allocation inside the STL, anyway!
-#if defined(__cplusplus)
-
-#if defined(_H_MMGR_INCLUDED)
-#error If mmgr.h is included before this point, the remapping of new and delete will cause problems
-#endif
-
-#   if defined(USE_HASH)
-#       include <hash_map>
-#       define EGOBOO_MAP stdext::hash_map
-#       include <hash_set>
-#       define EGOBOO_SET stdext::hash_set
-#   else
-#       include <map>
-#       define EGOBOO_MAP std::map
-#       include <set>
-#       define EGOBOO_SET std::set
-#   endif
-
-#   include <deque>
-#   include <stack>
-#   include <queue>
-#   include <exception>
-#   include <algorithm>
-#   include <functional>
-#   include <vector>
-
-#endif
-
 #include "egoboo_mem.h"
 
 #if defined(__cplusplus)
@@ -346,18 +315,6 @@ extern "C"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// place this include here so that the REF_T is defined for egoboo_typedef_cpp.h
-
-#if defined(__cplusplus)
-}
-#include "egoboo_typedef_cpp.h"
-
-extern "C"
-{
-#endif
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 // definitions for the compiler environment
 
 #if defined(__cplusplus)
@@ -376,83 +333,9 @@ extern "C"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-// forward declaration of standard dynamic array types
-#if defined(__cplusplus)
-
-    typedef t_dary<  char >  char_ary;
-    typedef t_dary< short >  short_ary;
-    typedef t_dary<   int >  int_ary;
-    typedef t_dary< float >  float_ary;
-    typedef t_dary<double >  double_ary;
-
-#endif
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 
 #if defined(__cplusplus)
 }
-#endif
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-// forward declaration of references
-// do not give these "C" linkage
-
-#if defined(__cplusplus)
-
-typedef struct s_oglx_texture oglx_texture_t;
-
-struct ego_cap;
-struct ego_obj_chr;
-struct ego_team;
-struct ego_eve;
-struct ego_obj_enc;
-struct ego_mad;
-struct ego_player;
-struct ego_pip;
-struct ego_obj_prt;
-struct ego_passage;
-struct ego_shop;
-struct ego_pro;
-struct s_oglx_texture;
-struct ego_billboard_data;
-struct snd_looped_sound_data;
-struct mnu_module;
-struct ego_tx_request;
-
-// forward declaration of the template
-template< typename _data, size_t _sz > struct t_ego_obj_container;
-
-struct ego_obj_chr;
-struct ego_obj_enc;
-struct ego_obj_prt;
-
-// forward declaration of the containers
-typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
-typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
-typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
-
-typedef t_reference< ego_chr_container >   CHR_REF;
-typedef t_reference< ego_enc_container >   ENC_REF;
-typedef t_reference< ego_prt_container >   PRT_REF;
-
-typedef t_reference<ego_cap>               CAP_REF;
-typedef t_reference<ego_team>              TEAM_REF;
-typedef t_reference<ego_eve>               EVE_REF;
-typedef t_reference<ego_mad>               MAD_REF;
-typedef t_reference<ego_player>            PLA_REF;
-typedef t_reference<ego_pip>               PIP_REF;
-typedef t_reference<ego_passage>           PASS_REF;
-typedef t_reference<ego_shop>              SHOP_REF;
-typedef t_reference<ego_pro>               PRO_REF;
-typedef t_reference<oglx_texture_t>        TX_REF;
-typedef t_reference<ego_billboard_data>    BBOARD_REF;
-typedef t_reference<snd_looped_sound_data> LOOP_REF;
-typedef t_reference<mnu_module>            MOD_REF;
-typedef t_reference<MOD_REF>               MOD_REF_REF;
-typedef t_reference<ego_tx_request>        TREQ_REF;
 #endif
 
 //--------------------------------------------------------------------------------------------

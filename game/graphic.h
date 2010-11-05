@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 #include "graphic_defs.h"
 #include "egoboo_setup.h"
 

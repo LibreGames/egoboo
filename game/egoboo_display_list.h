@@ -25,7 +25,7 @@
 
 #include <SDL_ttf.h>
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 #include "extensions/ogl_include.h"
 
 #if defined(__cplusplus)

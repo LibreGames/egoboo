@@ -21,7 +21,11 @@
 /// @brief
 /// @details
 
-#include "egoboo_object_list.h"
+#include "egoboo_object_list.inl"
+
+//--------------------------------------------------------------------------------------------
+// a some code to test the instantiation of the structs in egoboo-object_list.h
+//--------------------------------------------------------------------------------------------
 
 #undef TEST_COMPILE_EGOBOO_OBJECT_LIST
 

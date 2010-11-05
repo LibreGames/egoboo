@@ -25,7 +25,7 @@
 
 #include "font_ttf.h"
 #include "extensions/ogl_texture.h"
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 
 #include <SDL.h>
 

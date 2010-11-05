@@ -22,10 +22,11 @@
 /// @file network.h
 /// @brief Skeleton for Egoboo networking
 
+#include "egoboo_typedef_cpp.h"
+
 #include "IDSZ_map.h"
 #include "file_formats/configfile.h"
 
-#include "egoboo_typedef.h"
 #include "egoboo_setup.h"
 #include "egoboo.h"
 

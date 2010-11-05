@@ -22,16 +22,21 @@
 /// @file egoboo_object.h
 /// @details Definitions of data that all Egoboo objects should "inherit"
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 #include "egoboo_state_machine.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 struct ego_obj;
+
 struct ego_chr;
 struct ego_enc;
 struct ego_prt;
+
+struct ego_obj_chr;
+struct ego_obj_enc;
+struct ego_obj_prt;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -518,7 +523,7 @@ extern ego_object_engine obj_engine;
             ego_obj::increment_spawn_depth();\
         }\
     }\
-     
+
 #define POBJ_END_SPAWN( POBJ ) \
     if( (NULL != (POBJ)) && FLAG_VALID_PBASE(POBJ) ) \
     {\
@@ -528,7 +533,7 @@ extern ego_object_engine obj_engine;
             ego_obj::decrement_spawn_depth();\
         }\
     }\
-     
+
 /// Is the object flagged as valid?
 #define FLAG_VALID_PBASE( PBASE ) ego_object_process_state_data::get_valid(PBASE)
 

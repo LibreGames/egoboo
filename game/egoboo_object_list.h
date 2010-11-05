@@ -23,6 +23,7 @@
 /// @brief Routines for character list management
 
 #include "egoboo_object.h"
+#include "egoboo_typedef_cpp.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -122,10 +123,10 @@ struct t_ego_obj_container : public ego_obj_lst_state
     typedef _data data_type;
 
     /// gcc is very particluar about defining dependent types... will this work?
-    typedef typename t_ego_obj_container< _data, _sz > its_type;
+    typedef t_ego_obj_container< _data, _sz > its_type;
 
     /// gcc is very particluar about defining dependent types... will this work?
-    typedef typename t_obj_lst_map< its_type, _sz > list_type;
+    typedef t_obj_lst_map< its_type, _sz > list_type;
 
     //---- constructors and destructors
 
@@ -208,11 +209,11 @@ template <typename _data, size_t _sz>
 struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _sz>, _sz >
 {
     /// use this typedef to make iterating through the t_map<> easier
-    typedef typename t_ego_obj_container<_data, _sz>                 container_type;
-    typedef typename t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
+    typedef t_ego_obj_container<_data, _sz>                 container_type;
+    typedef t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
 
-    typedef typename t_map< t_ego_obj_container<_data, _sz>, REF_T>           cache_type;
-    typedef typename t_map< t_ego_obj_container<_data, _sz>, REF_T>::iterator iterator;
+    typedef t_map< t_ego_obj_container<_data, _sz>, REF_T>  cache_type;
+    typedef typename cache_type::iterator                   iterator;
 
     //---- construction/destruction
     t_obj_lst_map( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
@@ -288,9 +289,9 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
     //---- functions to access elements of the list
 
     // grab the container
-    INLINE typename container_type & get_ref( const lst_reference & ref );
-    INLINE typename container_type * get_ptr( const lst_reference & ref );
-    INLINE typename container_type * get_allocated_ptr( const lst_reference & ref );
+    INLINE container_type & get_ref( const lst_reference & ref );
+    INLINE container_type * get_ptr( const lst_reference & ref );
+    INLINE container_type * get_allocated_ptr( const lst_reference & ref );
 
     // grab the container's data
     INLINE typename container_type::data_type &  get_data_ref( const lst_reference & ref );
@@ -374,10 +375,10 @@ private:
 template <typename _data, size_t _sz>
 struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _sz>, _sz >
 {
-    typedef typename t_ego_obj_container<_data, _sz>                 container_type;
-    typedef typename t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
-    typedef typename t_allocator_static< container_type, _sz >       allocator_type;
-    typedef typename t_deque< container_type, REF_T >                cache_type;
+    typedef t_ego_obj_container<_data, _sz>                 container_type;
+    typedef t_reference< t_ego_obj_container<_data, _sz> >  lst_reference;
+    typedef t_allocator_static< container_type, _sz >       allocator_type;
+    typedef t_deque< container_type, REF_T >                cache_type;
 
     /// make a specialization to the t_deque<>::iterator that will allow us to
     /// cache some pointers, which should save time later
@@ -496,9 +497,9 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
     //---- functions to access elements of the list
 
     // grab the container
-    INLINE typename container_type & get_ref( const lst_reference & ref );
-    INLINE typename container_type * get_ptr( const lst_reference & ref );
-    INLINE typename container_type * get_allocated_ptr( const lst_reference & ref );
+    INLINE container_type & get_ref( const lst_reference & ref );
+    INLINE container_type * get_ptr( const lst_reference & ref );
+    INLINE container_type * get_allocated_ptr( const lst_reference & ref );
 
     // grab the container's data
     INLINE typename container_type::data_type &  get_data_ref( const lst_reference & ref );
@@ -655,8 +656,3 @@ private:
     }
 
 #define _egoboo_object_list_h
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-#include "egoboo_object_list.inl"

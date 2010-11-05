@@ -21,7 +21,7 @@
 /// @brief Implementation of the support functions for Egoboo's special datatypes
 /// @details
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.inl"
 
 #include "egoboo_math.inl"
 

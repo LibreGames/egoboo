@@ -30,7 +30,7 @@
 
 #include "file_formats/id_md2.h"
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 #include "physics.h"
 
 //--------------------------------------------------------------------------------------------

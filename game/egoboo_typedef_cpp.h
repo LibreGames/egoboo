@@ -22,17 +22,121 @@
 /// @file egoboo_typedef_cpp.h
 /// @details cpp-only definitions
 
+#include "egoboo_typedef.h"
+
 #include "clock.h"
 
-#if !defined(__cplusplus)
-#    error egoboo_typedef_cpp.h should only be included if you are compling as c++
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// include these before the memory stuff because the Fluid Studios Memory manager
+// redefines the new operator in a way that ther STL doesn't like.
+// And we do not want mmgr to be tracking internal allocation inside the STL, anyway!
+
+#if defined(_H_MMGR_INCLUDED)
+#error If mmgr.h is included before this point, the remapping of new and delete will cause problems
 #endif
+
+#   if defined(USE_HASH)
+#       if defined(__GNUC__)
+#           include <backward/hash_map>
+#           include <backward/hash_set>
+#           define EGOBOO_MAP __gnu_cxx::hash_map
+#           define EGOBOO_SET __gnu_cxx::hash_set
+#       elif defined(_MSC_VER)
+#           include <hash_map>
+#           include <hash_set>
+#           define EGOBOO_MAP stdext::hash_map
+#           define EGOBOO_SET stdext::hash_set
+#       else
+#           error I do not know the namespace containing hash_map and hash_set...
+#       endif
+#   else
+#       include <map>
+#       define EGOBOO_MAP std::map
+#       include <set>
+#       define EGOBOO_SET std::set
+#   endif
+
+#   include <deque>
+#   include <stack>
+#   include <queue>
+#   include <exception>
+#   include <algorithm>
+#   include <functional>
+#   include <vector>
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 template < typename _ty, typename _ity > struct t_map;
 template < typename _ty, typename _ity > struct t_deque;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+// forward declaration of references
+
+typedef struct s_oglx_texture oglx_texture_t;
+
+struct ego_cap;
+struct ego_obj_chr;
+struct ego_team;
+struct ego_eve;
+struct ego_obj_enc;
+struct ego_mad;
+struct ego_player;
+struct ego_pip;
+struct ego_obj_prt;
+struct ego_passage;
+struct ego_shop;
+struct ego_pro;
+struct s_oglx_texture;
+struct ego_billboard_data;
+struct snd_looped_sound_data;
+struct mnu_module;
+struct ego_tx_request;
+
+// forward declaration of the template
+template< typename _data, size_t _sz > struct t_ego_obj_container;
+
+struct ego_obj_chr;
+struct ego_obj_enc;
+struct ego_obj_prt;
+
+// forward declaration of the containers
+typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
+typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
+typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
+
+typedef t_reference< ego_chr_container >   CHR_REF;
+typedef t_reference< ego_enc_container >   ENC_REF;
+typedef t_reference< ego_prt_container >   PRT_REF;
+
+typedef t_reference<ego_cap>               CAP_REF;
+typedef t_reference<ego_team>              TEAM_REF;
+typedef t_reference<ego_eve>               EVE_REF;
+typedef t_reference<ego_mad>               MAD_REF;
+typedef t_reference<ego_player>            PLA_REF;
+typedef t_reference<ego_pip>               PIP_REF;
+typedef t_reference<ego_passage>           PASS_REF;
+typedef t_reference<ego_shop>              SHOP_REF;
+typedef t_reference<ego_pro>               PRO_REF;
+typedef t_reference<oglx_texture_t>        TX_REF;
+typedef t_reference<ego_billboard_data>    BBOARD_REF;
+typedef t_reference<snd_looped_sound_data> LOOP_REF;
+typedef t_reference<mnu_module>            MOD_REF;
+typedef t_reference<MOD_REF>               MOD_REF_REF;
+typedef t_reference<ego_tx_request>        TREQ_REF;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// forward declaration of dynamic arrays of common types
+
+typedef t_dary<  char >  char_ary;
+typedef t_dary< short >  short_ary;
+typedef t_dary<   int >  int_ary;
+typedef t_dary< float >  float_ary;
+typedef t_dary<double >  double_ary;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -527,7 +631,7 @@ private:
         // remove the goven pointer from the _heap
         if ( !_heap.empty() )
         {
-            EGOBOO_SET<_ty*>::iterator it = _heap.find( element_ptr );
+            typename EGOBOO_SET<_ty*>::iterator it = _heap.find( element_ptr );
             if ( it != _heap.end() )
             {
                 _heap.erase( it );
@@ -688,16 +792,16 @@ struct t_allocator_static
 
     const size_t get_element_idx( const _ty * pelement )
     {
-        if ( !element_allocated( ptr ) ) return allocator_client::invalid_value;
+        if ( !element_allocated( pelement ) ) return allocator_client::invalid_value;
 
-        return static_cast<const allocator_client*>( ptr )->get_index();
+        return static_cast<const allocator_client*>( pelement )->get_index();
     }
 
     const size_t get_element_idx( const _ty * pelement ) const
     {
-        if ( !element_allocated( ptr ) ) return allocator_client::invalid_value;
+        if ( !element_allocated( pelement ) ) return allocator_client::invalid_value;
 
-        return static_cast<const allocator_client*>( ptr )->get_index();
+        return static_cast<const allocator_client*>( pelement )->get_index();
     }
 
     bool_t valid_index_range( const size_t index ) const { return index < _sz; }
@@ -858,7 +962,7 @@ private:
         // remove the given pointer from the _heap
         if ( !_heap.empty() )
         {
-            EGOBOO_SET<_ty*>::iterator it = _heap.find( element_ptr );
+            typename EGOBOO_SET<_ty*>::iterator it = _heap.find( element_ptr );
             if ( it != _heap.end() )
             {
                 _heap.erase( it );
@@ -957,7 +1061,7 @@ private:
 
     // some private typedefs
     typedef typename EGOBOO_MAP< const _ity, const _ty * > cache_type;
-    typedef typename t_reference<_ty>                      reference_type;
+    typedef t_reference<_ty>                               reference_type;
 
 public:
 
@@ -1064,7 +1168,7 @@ struct t_deque
 private:
 
         // internal typedefs
-        typedef typename _ity                           _val_t;
+        typedef          _ity                           _val_t;
         typedef typename std::deque< _val_t >           _deque_t;
         typedef typename std::deque< _val_t >::iterator _it_t;
 
@@ -1105,7 +1209,7 @@ private:
     // internal typedefs
     typedef typename std::deque< _ity >              cache_type;
     typedef typename std::deque< _ity >::iterator    cache_iterator;
-    typedef typename t_reference<_ty>                reference_type;
+    typedef          t_reference<_ty>                reference_type;
 
 public:
 

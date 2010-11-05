@@ -22,7 +22,7 @@
 /// @file passage.h
 /// @Passages and doors and whatnot.  Things that impede your progress!
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 
 #include "file_formats/passage_file.h"
 

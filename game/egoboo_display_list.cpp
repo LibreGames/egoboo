@@ -22,10 +22,11 @@
 /// @details
 
 #include "egoboo_display_list.h"
-#include "egoboo_typedef.h"
 
 #include "extensions/ogl_debug.h"
 #include "extensions/ogl_texture.h"
+
+#include "egoboo_typedef_cpp.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

@@ -21,7 +21,7 @@
 
 /// @file texture.h
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 #include "extensions/ogl_texture.h"
 
 //--------------------------------------------------------------------------------------------

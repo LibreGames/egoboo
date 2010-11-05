@@ -22,7 +22,8 @@
 /// @file quest.h
 /// @brief read/write/modify the quest.txt file
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
+
 #include "file_formats/configfile.h"
 
 //--------------------------------------------------------------------------------------------

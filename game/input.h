@@ -22,7 +22,7 @@
 /// @file input.h
 /// @details Keyboard, mouse, and joystick handling code.
 
-#include "egoboo_typedef.h"
+#include "egoboo_typedef_cpp.h"
 
 #include "input_defs.h"
 

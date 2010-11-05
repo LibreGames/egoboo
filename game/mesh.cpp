@@ -29,11 +29,11 @@
 #include "mesh_BSP.h"
 
 #include "egoboo_math.inl"
-#include "egoboo_typedef.h"
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
 #include "egoboo.h"
 
+#include "egoboo_typedef_cpp.inl"
 #include "egoboo_math.inl"
 
 #include "egoboo_mem.h"
