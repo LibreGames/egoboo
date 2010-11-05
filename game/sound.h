@@ -22,8 +22,9 @@
 /// @file sound.h
 /// @Sound handling using SDL_mixer
 
-#include "sound_defs.h"
+#include "egoboo_typedef_cpp.h"
 
+#include "sound_defs.h"
 #include "egoboo_math.h"
 
 //--------------------------------------------------------------------------------------------

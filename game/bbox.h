@@ -23,6 +23,8 @@
 /// @file bbox.h
 /// @brief A small "library" for dealing with various bounding boxes
 
+#include "egoboo_typedef_cpp.h"
+
 #include "egoboo_math.h"
 
 //--------------------------------------------------------------------------------------------

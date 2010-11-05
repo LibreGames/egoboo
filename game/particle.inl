@@ -19,6 +19,8 @@
 //*
 //********************************************************************************************
 
+#include "egoboo_typedef_cpp.inl"
+
 #include "particle.h"
 #include "PrtList.h"
 

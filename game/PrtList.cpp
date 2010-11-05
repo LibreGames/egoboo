@@ -21,10 +21,13 @@
 /// @brief Implementation of the PrtList_* functions
 /// @details
 
+#include "egoboo_typedef_cpp.inl"
+
 #include "PrtList.h"
 #include "egoboo_setup.h"
 
 #include "particle.inl"
+
 #include "egoboo_object_list.inl"
 
 //--------------------------------------------------------------------------------------------

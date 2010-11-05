@@ -22,18 +22,20 @@
 /// @file char.inl
 /// @note You will routinely include "char.inl" in all *.inl files or *.c/*.cpp files, instead of "char.h"
 
+#include "egoboo_typedef_cpp.inl"
+
 #include "char.h"
 #include "network.h"
 
 #include "enchant.inl"
 #include "particle.inl"
-#include "egoboo_math.inl"
-#include "egoboo_object_list.inl"
-
 
 /// @note include "profile.inl" here.
 ///  Do not include "char.inl" in "profile.inl", otherwise there is a bootstrapping problem.
 #include "profile.inl"
+
+#include "egoboo_math.inl"
+#include "egoboo_object_list.inl"
 
 //--------------------------------------------------------------------------------------------
 // FORWARD DECLARARIONS

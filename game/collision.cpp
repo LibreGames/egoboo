@@ -21,6 +21,8 @@
 /// @brief The code that handles collisions between in-game objects
 /// @details
 
+#include "egoboo_typedef_cpp.inl"
+
 #include "collision.h"
 
 #include "mesh_BSP.h"

@@ -21,6 +21,8 @@
 
 /// @file enchant.inl
 
+#include "egoboo_typedef_cpp.inl"
+
 #include "enchant.h"
 
 #include "EncList.h"

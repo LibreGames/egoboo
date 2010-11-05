@@ -21,6 +21,8 @@
 
 /// @file mesh.inl
 
+#include "egoboo_typedef_cpp.inl"
+
 #include "mesh.h"
 
 #include "egoboo_math.inl"

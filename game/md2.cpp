@@ -26,7 +26,6 @@
 
 #include "log.h"
 
-#include "egoboo_typedef_cpp.inl"
 #include "egoboo_math.inl"
 
 #include "egoboo_mem.h"

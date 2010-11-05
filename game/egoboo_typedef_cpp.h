@@ -103,40 +103,6 @@ struct ego_obj_chr;
 struct ego_obj_enc;
 struct ego_obj_prt;
 
-// forward declaration of the containers
-typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
-typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
-typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
-
-typedef t_reference< ego_chr_container >   CHR_REF;
-typedef t_reference< ego_enc_container >   ENC_REF;
-typedef t_reference< ego_prt_container >   PRT_REF;
-
-typedef t_reference<ego_cap>               CAP_REF;
-typedef t_reference<ego_team>              TEAM_REF;
-typedef t_reference<ego_eve>               EVE_REF;
-typedef t_reference<ego_mad>               MAD_REF;
-typedef t_reference<ego_player>            PLA_REF;
-typedef t_reference<ego_pip>               PIP_REF;
-typedef t_reference<ego_passage>           PASS_REF;
-typedef t_reference<ego_shop>              SHOP_REF;
-typedef t_reference<ego_pro>               PRO_REF;
-typedef t_reference<oglx_texture_t>        TX_REF;
-typedef t_reference<ego_billboard_data>    BBOARD_REF;
-typedef t_reference<snd_looped_sound_data> LOOP_REF;
-typedef t_reference<mnu_module>            MOD_REF;
-typedef t_reference<MOD_REF>               MOD_REF_REF;
-typedef t_reference<ego_tx_request>        TREQ_REF;
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-// forward declaration of dynamic arrays of common types
-
-typedef t_dary<  char >  char_ary;
-typedef t_dary< short >  short_ary;
-typedef t_dary<   int >  int_ary;
-typedef t_dary< float >  float_ary;
-typedef t_dary<double >  double_ary;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1465,10 +1431,42 @@ struct t_sary
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+
+// forward declaration of the containers
+typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
+typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
+typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
+
+typedef t_reference< ego_chr_container >   CHR_REF;
+typedef t_reference< ego_enc_container >   ENC_REF;
+typedef t_reference< ego_prt_container >   PRT_REF;
+
+typedef t_reference<ego_cap>               CAP_REF;
+typedef t_reference<ego_team>              TEAM_REF;
+typedef t_reference<ego_eve>               EVE_REF;
+typedef t_reference<ego_mad>               MAD_REF;
+typedef t_reference<ego_player>            PLA_REF;
+typedef t_reference<ego_pip>               PIP_REF;
+typedef t_reference<ego_passage>           PASS_REF;
+typedef t_reference<ego_shop>              SHOP_REF;
+typedef t_reference<ego_pro>               PRO_REF;
+typedef t_reference<oglx_texture_t>        TX_REF;
+typedef t_reference<ego_billboard_data>    BBOARD_REF;
+typedef t_reference<snd_looped_sound_data> LOOP_REF;
+typedef t_reference<mnu_module>            MOD_REF;
+typedef t_reference<MOD_REF>               MOD_REF_REF;
+typedef t_reference<ego_tx_request>        TREQ_REF;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+// forward declaration of dynamic arrays of common types
+
+typedef t_dary<  char >  char_ary;
+typedef t_dary< short >  short_ary;
+typedef t_dary<   int >  int_ary;
+typedef t_dary< float >  float_ary;
+typedef t_dary<double >  double_ary;
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 #define _egoboo_typedef_cpp_h
-
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-
-#include "egoboo_typedef_cpp.inl"
-

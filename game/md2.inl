@@ -25,6 +25,8 @@
 /// @details functions that will be declared inside the base class
 /// @note You will routinely include "md2.inl" in all *.inl files or *.c/*.cpp files, instead of "md2.h"
 
+#include "egoboo_typedef_cpp.inl"
+
 #include "md2.h"
 #include "file_formats/id_md2.h"
 
