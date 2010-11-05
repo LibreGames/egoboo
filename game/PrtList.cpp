@@ -160,9 +160,6 @@ PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
     ego_sint fake_free_count;
     ego_uint real_free_count = 0;
 
-    // turn off particle allocation for the moment
-    return PRT_REF( MAX_PRT );
-
     // Return MAX_PRT if we can't find one
     PRT_REF iprt( MAX_PRT );
 

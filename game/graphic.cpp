@@ -246,6 +246,8 @@ static void render_water( ego_renderlist * prlist );
 
 static void gfx_make_dynalist( ego_camera * pcam );
 
+static void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const ego_frect_t & tx_rect, bool_t use_alpha = bfalse );
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -325,7 +327,7 @@ int _va_draw_string( float x, float y, const char *format, va_list args )
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                x = ((( int )x ) & TABAND ) + TABADD;
+                x = ((int( x ) ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
@@ -982,39 +984,32 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
 
     int     noticks;
     float   width, height;
-    ego_frect_t txrect;
+    ego_frect_t tx_rect, sc_rect;
+    oglx_texture_t * ptex;
 
     if ( maxticks <= 0 || ticks < 0 || bartype > NUMBAR ) return y;
 
-    gfx_enable_texturing();               // Enable texture mapping
-    GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
+    ptex = TxTexture_get_ptr( TX_REF( TX_BARS ) );
 
     // Draw the tab
-    oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
-
-    txrect.xmin = tabrect[bartype].xmin / 128.0f;
-    txrect.xmax = tabrect[bartype].xmax / 128.0f;
-    txrect.ymin = tabrect[bartype].ymin / 128.0f;
-    txrect.ymax = tabrect[bartype].ymax / 128.0f;
+    tx_rect.xmin = tabrect[bartype].xmin / 128.0f;
+    tx_rect.xmax = tabrect[bartype].xmax / 128.0f;
+    tx_rect.ymin = tabrect[bartype].ymin / 128.0f;
+    tx_rect.ymax = tabrect[bartype].ymax / 128.0f;
 
     width  = tabrect[bartype].xmax - tabrect[bartype].xmin;
     height = tabrect[bartype].ymax - tabrect[bartype].ymin;
 
-    GL_DEBUG_BEGIN( GL_QUADS );
-    {
-        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( x + width, y );
-        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )( x,         y );
-    }
-    GL_DEBUG_END();
+    sc_rect.xmin = x;
+    sc_rect.xmax = x + width;
+    sc_rect.ymin = y;
+    sc_rect.ymax = y + height;
+
+    draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
     // Error check
     if ( maxticks > MAXTICK ) maxticks = MAXTICK;
     if ( ticks > maxticks ) ticks = maxticks;
-
-    // use the bars texture
-    oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
 
     // Draw the full rows of ticks
     x += TABX;
@@ -1023,22 +1018,20 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     {
         barrect[bartype].xmax = BARX;
 
-        txrect.xmin = barrect[bartype].xmin / 128.0f;
-        txrect.xmax = barrect[bartype].xmax / 128.0f;
-        txrect.ymin = barrect[bartype].ymin / 128.0f;
-        txrect.ymax = barrect[bartype].ymax / 128.0f;
+        tx_rect.xmin = barrect[bartype].xmin / 128.0f;
+        tx_rect.xmax = barrect[bartype].xmax / 128.0f;
+        tx_rect.ymin = barrect[bartype].ymin / 128.0f;
+        tx_rect.ymax = barrect[bartype].ymax / 128.0f;
 
         width  = barrect[bartype].xmax - barrect[bartype].xmin;
         height = barrect[bartype].ymax - barrect[bartype].ymin;
 
-        GL_DEBUG_BEGIN( GL_QUADS );
-        {
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )( x,         y );
-        }
-        GL_DEBUG_END();
+        sc_rect.xmin = x;
+        sc_rect.xmax = x + width;
+        sc_rect.ymin = y;
+        sc_rect.ymax = y + height;
+
+        draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
         y += BARY;
         ticks -= NUMTICK;
@@ -1051,22 +1044,20 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         // Draw the filled ones
         barrect[bartype].xmax = ( ticks << 3 ) + TABX;
 
-        txrect.xmin   = barrect[bartype].xmin   / 128.0f;
-        txrect.xmax  = barrect[bartype].xmax  / 128.0f;
-        txrect.ymin    = barrect[bartype].ymin    / 128.0f;
-        txrect.ymax = barrect[bartype].ymax / 128.0f;
+        tx_rect.xmin   = barrect[bartype].xmin   / 128.0f;
+        tx_rect.xmax  = barrect[bartype].xmax  / 128.0f;
+        tx_rect.ymin    = barrect[bartype].ymin    / 128.0f;
+        tx_rect.ymax = barrect[bartype].ymax / 128.0f;
 
         width = barrect[bartype].xmax - barrect[bartype].xmin;
         height = barrect[bartype].ymax - barrect[bartype].ymin;
 
-        GL_DEBUG_BEGIN( GL_QUADS );
-        {
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )( x,         y );
-        }
-        GL_DEBUG_END();
+        sc_rect.xmin = x;
+        sc_rect.xmax = x + width;
+        sc_rect.ymin = y;
+        sc_rect.ymax = y + height;
+
+        draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
         // Draw the empty ones
         noticks = maxticks - ticks;
@@ -1075,22 +1066,20 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         barrect[0].xmax = ( noticks << 3 ) + TABX;
         oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
 
-        txrect.xmin = barrect[0].xmin / 128.0f;
-        txrect.xmax = barrect[0].xmax / 128.0f;
-        txrect.ymin = barrect[0].ymin / 128.0f;
-        txrect.ymax = barrect[0].ymax / 128.0f;
+        tx_rect.xmin = barrect[0].xmin / 128.0f;
+        tx_rect.xmax = barrect[0].xmax / 128.0f;
+        tx_rect.ymin = barrect[0].ymin / 128.0f;
+        tx_rect.ymax = barrect[0].ymax / 128.0f;
 
         width  = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        GL_DEBUG_BEGIN( GL_QUADS );
-        {
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( ticks << 3 ) + x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )(( ticks << 3 ) + x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )(( ticks << 3 ) + x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )(( ticks << 3 ) + x,         y );
-        }
-        GL_DEBUG_END();
+        sc_rect.xmin = x;
+        sc_rect.xmax = x + width;
+        sc_rect.ymin = y;
+        sc_rect.ymax = y + height;
+
+        draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
         maxticks -= NUMTICK;
         y += BARY;
@@ -1101,22 +1090,20 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     {
         barrect[0].xmax = BARX;
 
-        txrect.xmin = barrect[0].xmin / 128.0f;
-        txrect.xmax = barrect[0].xmax / 128.0f;
-        txrect.ymin = barrect[0].ymin / 128.0f;
-        txrect.ymax = barrect[0].ymax / 128.0f;
+        tx_rect.xmin = barrect[0].xmin / 128.0f;
+        tx_rect.xmax = barrect[0].xmax / 128.0f;
+        tx_rect.ymin = barrect[0].ymin / 128.0f;
+        tx_rect.ymax = barrect[0].ymax / 128.0f;
 
         width  = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        GL_DEBUG_BEGIN( GL_QUADS );
-        {
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax );   GL_DEBUG( glVertex2f )( x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax );   GL_DEBUG( glVertex2f )( x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin );   GL_DEBUG( glVertex2f )( x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin );   GL_DEBUG( glVertex2f )( x,         y );
-        }
-        GL_DEBUG_END();
+        sc_rect.xmin = x;
+        sc_rect.xmax = x + width;
+        sc_rect.ymin = y;
+        sc_rect.ymax = y + height;
+
+        draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
         y += BARY;
         maxticks -= NUMTICK;
@@ -1128,22 +1115,20 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         barrect[0].xmax = ( maxticks << 3 ) + TABX;
         oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
 
-        txrect.xmin   = barrect[0].xmin   / 128.0f;
-        txrect.xmax  = barrect[0].xmax  / 128.0f;
-        txrect.ymin    = barrect[0].ymin    / 128.0f;
-        txrect.ymax = barrect[0].ymax / 128.0f;
+        tx_rect.xmin   = barrect[0].xmin   / 128.0f;
+        tx_rect.xmax  = barrect[0].xmax  / 128.0f;
+        tx_rect.ymin    = barrect[0].ymin    / 128.0f;
+        tx_rect.ymax = barrect[0].ymax / 128.0f;
 
         width = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        GL_DEBUG_BEGIN( GL_QUADS );
-        {
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )( x,         y );
-        }
-        GL_DEBUG_END();
+        sc_rect.xmin = x;
+        sc_rect.xmax = x + width;
+        sc_rect.ymin = y;
+        sc_rect.ymax = y + height;
+
+        draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
         maxticks -= NUMTICK;
         y += BARY;
@@ -1217,7 +1202,7 @@ int draw_wrap_string( const char *szText, float x, float y, int maxx )
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                x = ((( int )x ) & TABAND ) + TABADD;
+                x = ((int( x ) ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
@@ -1326,7 +1311,7 @@ int draw_status( const CHR_REF & character, float x, float y )
     ego_cap * pcap;
 
     pchr = ChrObjList.get_allocated_data_ptr( character );
-    if ( !INGAME_PCHR( pchr ) ) return y;
+    if ( !INGAME_PCHR( pchr ) || !pchr->draw_stats ) return y;
 
     pcap = ego_chr::get_pcap( character );
     if ( NULL == pcap ) return y;
@@ -1476,15 +1461,13 @@ void draw_map()
         // Show local player position(s)
         if ( youarehereon && ( update_wld & 8 ) )
         {
-            PLA_REF iplayer;
-            for ( iplayer = 0; iplayer < MAX_PLAYER; iplayer++ )
+            for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
             {
-                ego_player * ppla = PlaStack + iplayer;
-                if ( !ppla->valid ) continue;
+                if ( !ipla->valid ) continue;
 
-                if ( INPUT_BITS_NONE != ppla->device.bits && INGAME_CHR( ppla->index ) )
+                if ( INPUT_BITS_NONE != ipla->device.bits && INGAME_CHR( ipla->index ) )
                 {
-                    ego_chr * pchr = ChrObjList.get_data_ptr( ppla->index );
+                    ego_chr * pchr = ChrObjList.get_data_ptr( ipla->index );
                     if ( pchr->alive )
                     {
                         draw_blip( 0.75f, COLOR_WHITE, pchr->pos.x, pchr->pos.y, btrue );
@@ -1619,10 +1602,8 @@ int draw_debug_character( CHR_REF ichr, int y )
 //--------------------------------------------------------------------------------------------
 int draw_debug_player( PLA_REF ipla, int y )
 {
-    ego_player * ppla;
-
-    if ( !VALID_PLA( ipla ) ) return y;
-    ppla = PlaStack + ipla;
+    ego_player * ppla = PlaDeque.find_by_ref(ipla);
+    if ( NULL == ppla || !ppla->valid ) return y;
 
     if ( DEFINED_CHR( ppla->index ) )
     {
@@ -1649,18 +1630,17 @@ int draw_debug_player( PLA_REF ipla, int y )
 int draw_debug( int y )
 {
     PLA_REF ipla;
+    ego_player * ppla;
 
     if ( !cfg.dev_mode ) return y;
 
     // draw the character's speed
-    ipla = PLA_REF( 0 );
-    if ( VALID_PLA( ipla ) )
+    ppla = PlaDeque.find_by_ref( PLA_REF( 0 ) );
+    if ( NULL != ppla && ppla->valid ) return y;
     {
-        ego_player * ppla = PlaStack + ipla;
-        if ( DEFINED_CHR( ppla->index ) )
+        ego_chr * pchr = ChrObjList.get_allocated_data_ptr( ppla->index );
+        if ( DEFINED_PCHR( pchr ) )
         {
-            ego_chr * pchr = ChrObjList.get_data_ptr( ppla->index );
-
             y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", ipla.get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
         }
     }
@@ -1676,36 +1656,29 @@ int draw_debug( int y )
     if ( SDLKEYDOWN( SDLK_F6 ) )
     {
         // More debug information
-        STRING text;
-
-        const net_instance * pnet = network_get_instance();
-
+        
         y = _draw_string_raw( 0, y, "!!!DEBUG MODE-6!!!" );
-        y = _draw_string_raw( 0, y, "~~FREEPRT %d", PrtObjList.free_count() );
-        y = _draw_string_raw( 0, y, "~~FREECHR %d", chr_count_free() );
-        y = _draw_string_raw( 0, y, "~~MACHINE %d", NULL == pnet ? 0 : pnet->machine_type );
-        if ( PMod->exportvalid ) SDL_snprintf( text, SDL_arraysize( text ), "~~EXPORT: TRUE" );
-        else                    SDL_snprintf( text, SDL_arraysize( text ), "~~EXPORT: FALSE" );
-        y = _draw_string_raw( 0, y, text, PMod->exportvalid );
-        y = _draw_string_raw( 0, y, "~~PASS %d/%d", ShopStack.count, PassageStack.count );
-        y = _draw_string_raw( 0, y, "~~NETPLAYERS %d", NULL == pnet ? 0 : pnet->player_count );
-        y = _draw_string_raw( 0, y, "~~DAMAGEPART %d", damagetile.parttype );
+        y = _draw_string_raw( 0, y, "~~FREE CHR : %d", ChrObjList.free_count() );
+        y = _draw_string_raw( 0, y, "~~FREE ENC : %d", EncObjList.free_count() );
+        y = _draw_string_raw( 0, y, "~~FREE PRT : %d", PrtObjList.free_count() );
+        y = _draw_string_raw( 0, y, "~~PASS CNT : %d/%d", ShopStack.count, PassageStack.count );
 
+        const net_instance * pnet = net_get_instance();
+        if( NULL != pnet )
+        {
+            STRING sz_machine_type;
+
+            if( 0 == pnet->machine_type ) strncpy( sz_machine_type, "HOST ID=0", SDL_arraysize(sz_machine_type) );
+            else SDL_snprintf( sz_machine_type, SDL_arraysize(sz_machine_type), "REMOTE ID=%d", pnet->machine_type );  
+
+            y = _draw_string_raw( 0, y, "~~MACHINE : %s", sz_machine_type );
+            y = _draw_string_raw( 0, y, "~~NET PLA : %d", pnet->player_count );
+        }
+
+        y = _draw_string_raw( 0, y, "~~DAMAGE   : %d", damagetile.parttype );
+        y = _draw_string_raw( 0, y, "~~EXPORT   : %s", PMod->exportvalid ? "TRUE" : "FALSE" );
         // y = _draw_string_raw( 0, y, "~~FOGAFF %d", fog_data.affects_water );
     }
-
-    //if ( SDLKEYDOWN( SDLK_F7 ) )
-    //{
-    //    // White debug mode
-    //    y = _draw_string_raw( 0, y, "!!!DEBUG MODE-7!!!" );
-    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f>", PCamera->pos.x, PCamera->pos.y, PCamera->pos.z );
-    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 0 ), PCamera->mView.CNV( 1, 0 ), PCamera->mView.CNV( 2, 0 ), PCamera->mView.CNV( 3, 0 ) );
-    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 1 ), PCamera->mView.CNV( 1, 1 ), PCamera->mView.CNV( 2, 1 ), PCamera->mView.CNV( 3, 1 ) );
-    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 2 ), PCamera->mView.CNV( 1, 2 ), PCamera->mView.CNV( 2, 2 ), PCamera->mView.CNV( 3, 2 ) );
-    //    y = _draw_string_raw( 0, y, "CAM <%f, %f, %f, %f>", PCamera->mView.CNV( 0, 3 ), PCamera->mView.CNV( 1, 3 ), PCamera->mView.CNV( 2, 3 ), PCamera->mView.CNV( 3, 3 ) );
-    //    y = _draw_string_raw( 0, y, "CAM center <%f, %f>", PCamera->center.x, PCamera->center.y );
-    //    y = _draw_string_raw( 0, y, "CAM turn %d %d", PCamera->turn_mode, PCamera->turn_time );
-    //}
 
     return y;
 }
@@ -1729,7 +1702,7 @@ int draw_timer( int y )
 //--------------------------------------------------------------------------------------------
 int draw_game_status( int y )
 {
-    if ( network_waiting_for_players() )
+    if ( net_waiting_for_players() )
     {
         y = _draw_string_raw( 0, y, "Waiting for players... " );
     }
@@ -2225,7 +2198,7 @@ bool_t render_fans_by_list( ego_mpd   * pmesh, Uint32 list[], size_t list_size )
 
     if ( meshnotexture )
     {
-        meshlasttexture = ( Uint16 )( ~0 );
+        meshlasttexture = Uint16( ~0 );
         oglx_texture_Bind( NULL );
 
         for ( cnt = 0; cnt < list_size; cnt++ )
@@ -4218,7 +4191,7 @@ void dolist_make( ego_mpd   * pmesh )
     }
     CHR_END_LOOP();
 
-    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
         if ( ego_mpd::grid_is_valid( pmesh, prt_bdl.prt_ptr->onwhichgrid ) )
         {
@@ -5468,7 +5441,7 @@ void gfx_make_dynalist( ego_camera * pcam )
     // Don't really make a list, just set to visible or not
     dyna_list_count = 0;
     dyna_distancetobeat = 1e12;
-    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
         prt_bdl.prt_ptr->inview = bfalse;
 
@@ -5769,5 +5742,43 @@ void gfx_reload_all_textures()
 {
     TxTitleImage_reload_all();
     TxTexture_reload_all();
+}
+
+//--------------------------------------------------------------------------------------------
+void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const ego_frect_t & tx_rect, bool_t use_alpha )
+{
+    ATTRIB_PUSH( __FUNCTION__, GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT )
+    {
+        if( NULL == ptex || INVALID_GL_ID == ptex->base.binding )
+        {
+            GL_DEBUG( glDisable )( GL_TEXTURE_1D );                               // GL_ENABLE_BIT
+            GL_DEBUG( glDisable )( GL_TEXTURE_2D );                               // GL_ENABLE_BIT
+        }
+        else
+        {
+            GL_DEBUG( glEnable )( ptex->base.target );                               // GL_ENABLE_BIT
+            oglx_texture_Bind( ptex );
+        }
+
+        if( use_alpha )
+        {
+            GL_DEBUG( glEnable )( GL_BLEND );                                 // GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT
+            GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );  // GL_COLOR_BUFFER_BIT
+        }
+        else
+        {
+            GL_DEBUG( glDisable )( GL_BLEND );                                 // GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT
+        }
+
+        GL_DEBUG_BEGIN( GL_QUADS );
+        {
+            GL_DEBUG( glTexCoord2f )( tx_rect.xmin, tx_rect.ymax ); GL_DEBUG( glVertex2f )( scr_rect.xmin, scr_rect.ymax );
+            GL_DEBUG( glTexCoord2f )( tx_rect.xmax, tx_rect.ymax ); GL_DEBUG( glVertex2f )( scr_rect.xmax, scr_rect.ymax );
+            GL_DEBUG( glTexCoord2f )( tx_rect.xmax, tx_rect.ymin ); GL_DEBUG( glVertex2f )( scr_rect.xmax, scr_rect.ymin );
+            GL_DEBUG( glTexCoord2f )( tx_rect.xmin, tx_rect.ymin ); GL_DEBUG( glVertex2f )( scr_rect.xmin, scr_rect.ymin );
+        }
+        GL_DEBUG_END();
+    }
+    ATTRIB_POP(__FUNCTION__);
 }
 

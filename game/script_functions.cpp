@@ -1244,7 +1244,7 @@ Uint8 scr_GoPoof( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = bfalse;
-    if ( !VALID_PLA( pchr->is_which_player ) )
+    if ( !IS_PLAYER_PCHR( pchr ) )
     {
         returncode = btrue;
         pself->poof_time = update_wld;
@@ -2068,7 +2068,7 @@ Uint8 scr_TargetIsAPlayer( ego_script_state * pstate, ego_ai_bundle * pbdl_self 
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    returncode = VALID_PLA( pself_target->is_which_player );
+    returncode = IS_PLAYER_PCHR( pself_target );
 
     SCRIPT_FUNCTION_END();
 }
@@ -4267,7 +4267,7 @@ Uint8 scr_PoofTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-    if ( INVALID_PLA( pself_target->is_which_player ) )                // Do not poof players
+    if ( !IS_PLAYER_PCHR( pself_target ) )                // Do not poof players
     {
         returncode = btrue;
         if ( pself->target == pself->index )
@@ -6940,11 +6940,9 @@ Uint8 scr_AddQuest( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
 
     SCRIPT_REQUIRE_TARGET( pself_target );
 
-    ipla = pself_target->is_which_player;
-    if ( VALID_PLA( ipla ) )
+    ego_player * ppla = PlaDeque.find_by_ref( pself_target->is_which_player );
+    if ( NULL != ppla && ppla->valid )
     {
-        ego_player * ppla = PlaStack + ipla;
-
         quest_level = quest_add( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, 0 );
     }
 
@@ -6960,22 +6958,19 @@ Uint8 scr_BeatQuestAllPlayers( ego_script_state * pstate, ego_ai_bundle * pbdl_s
     /// @details ZF@> This function marks a IDSZ in the targets quest.txt as beaten
     ///               returns true if at least one quest got marked as beaten.
 
-    PLA_REF ipla;
-
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = bfalse;
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         CHR_REF ichr;
-        ego_player * ppla = PlaStack + ipla;
 
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
-        ichr = ppla->index;
+        ichr = ipla->index;
         if ( !INGAME_CHR( ichr ) ) continue;
 
-        if ( QUEST_BEATEN == quest_adjust_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), ( IDSZ )pstate->argument, QUEST_MAXVAL ) )
+        if ( QUEST_BEATEN == quest_adjust_level( ipla->quest_log, SDL_arraysize( ipla->quest_log ), ( IDSZ )pstate->argument, QUEST_MAXVAL ) )
         {
             returncode = btrue;
         }
@@ -7000,11 +6995,10 @@ Uint8 scr_TargetHasQuest( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-    ipla = pchr->is_which_player;
-    if ( VALID_PLA( ipla ) )
-    {
-        ego_player * ppla = PlaStack + ipla;
 
+    ego_player * ppla = PlaDeque.find_by_ref( pself_target->is_which_player );
+    if ( NULL != ppla && ppla->valid )
+    {
         quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument );
     }
 
@@ -7033,11 +7027,11 @@ Uint8 scr_set_QuestLevel( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     SCRIPT_REQUIRE_TARGET( pself_target );
 
     returncode = bfalse;
-    ipla = pself_target->is_which_player;
-    if ( VALID_PLA( ipla ) && pstate->distance != 0 )
+
+    ego_player * ppla = PlaDeque.find_by_ref( pself_target->is_which_player );
+    if ( NULL != ppla && ppla->valid && pstate->distance != 0 )
     {
         int        quest_level = QUEST_NONE;
-        ego_player * ppla        = PlaStack + ipla;
 
         quest_level = quest_adjust_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, pstate->distance );
 
@@ -7054,22 +7048,21 @@ Uint8 scr_AddQuestAllPlayers( ego_script_state * pstate, ego_ai_bundle * pbdl_se
     /// @details ZF@> This function adds a quest idsz set in tmpargument into all local player's quest logs
     /// The quest level Is set to tmpdistance if the level Is not already higher
 
-    PLA_REF ipla;
-    int success_count, player_count;
-
     SCRIPT_FUNCTION_BEGIN();
 
     returncode = bfalse;
-    for ( player_count = 0, success_count = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
+
+    int success_count = 0;
+    int player_count = 0;
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         int quest_level;
-        ego_player * ppla = PlaStack + ipla;
 
-        if ( !ppla->valid || !INGAME_CHR( ppla->index ) ) continue;
+        if ( !ipla->valid || !INGAME_CHR( ipla->index ) ) continue;
         player_count++;
 
         // Try to add it or replace it if this one is higher
-        quest_level = quest_add( ppla->quest_log, SDL_arraysize( ppla->quest_log ), pstate->argument, pstate->distance );
+        quest_level = quest_add( ipla->quest_log, SDL_arraysize( ipla->quest_log ), pstate->argument, pstate->distance );
         if ( QUEST_NONE != quest_level ) success_count++;
     }
 
@@ -7178,7 +7171,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
     {
         ego_chr * pchild = ChrObjList.get_data_ptr( ichr );
 
-        Uint8 grip = ( Uint8 )CLIP( pstate->distance, ATTACH_INVENTORY, ATTACH_RIGHT );
+        Uint8 grip = Uint8(CLIP( pstate->distance, ATTACH_INVENTORY, ATTACH_RIGHT ));
 
         if ( grip == ATTACH_INVENTORY )
         {

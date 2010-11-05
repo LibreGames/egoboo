@@ -85,17 +85,51 @@ typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
 // This still looks a bit messy, but I think it can't be helped if we want the
 // rest of our codebase to look "pretty"...
 
+#define ENC_LOOP_WRAP_PTR( PENC, POBJ ) \
+    ego_enc * PENC = (ego_enc *)static_cast<const ego_enc *>(POBJ); \
+
+#define ENC_LOOP_WRAP_BDL( BDL, PENC ) \
+    ego_bundle_enc BDL( PENC );
+
+/// loops through EncObjList for all allocated enchants, creating a reference, and a pointer
+#define ENC_BEGIN_LOOP_ALLOCATED(IT, PENC) \
+    OBJ_LIST_BEGIN_LOOP_ALLOCATED(ego_obj_enc, EncObjList, IT, PENC##_obj) \
+    ENC_LOOP_WRAP_PTR( PENC, PENC##_obj )
+
 /// loops through EncObjList for all "defined" enchants, creating a reference, and a pointer
 #define ENC_BEGIN_LOOP_DEFINED(IT, PENC) \
     OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_enc, EncObjList, IT, PENC##_obj) \
-    ego_enc * PENC = (ego_enc *)static_cast<const ego_enc *>(PENC##_obj); \
-    if( NULL == PENC ) continue;
+    ENC_LOOP_WRAP_PTR( PENC, PENC##_obj )
 
 /// loops through EncObjList for all "active" enchants, creating a reference, and a pointer
 #define ENC_BEGIN_LOOP_PROCESSING(IT, PENC) \
     OBJ_LIST_BEGIN_LOOP_PROCESSING(ego_obj_enc, EncObjList, IT, PENC##_obj) \
-    ego_enc * PENC = (ego_enc *)static_cast<const ego_enc *>(PENC##_obj); \
-    if( NULL == PENC ) continue;
+    ENC_LOOP_WRAP_PTR( PENC, PENC##_obj )
+
+/// loops through EncObjList for all in-game enchants, creating a reference, and a pointer
+#define ENC_BEGIN_LOOP_INGAME(IT, PENC) \
+    OBJ_LIST_BEGIN_LOOP_INGAME(ego_obj_enc, EncObjList, IT, PENC##_obj) \
+    ENC_LOOP_WRAP_PTR( PENC, PENC##_obj )
+
+/// loops through EncObjList for all "defined" enchants, creating a reference, and a pointer
+#define ENC_BEGIN_LOOP_ALLOCATED_BDL(IT, ENC_BDL) \
+    ENC_BEGIN_LOOP_ALLOCATED( IT, ENC_BDL##_ptr ) \
+    ENC_LOOP_WRAP_BDL( ENC_BDL, ENC_BDL##_ptr )
+
+/// loops through EncObjList for all "defined" enchants, creating a reference, and a pointer
+#define ENC_BEGIN_LOOP_DEFINED_BDL(IT, ENC_BDL) \
+    ENC_BEGIN_LOOP_DEFINED( IT, ENC_BDL##_ptr ) \
+    ENC_LOOP_WRAP_BDL( ENC_BDL, ENC_BDL##_ptr )
+
+/// loops through EncObjList for all "active" enchants, creating a reference, and a pointer
+#define ENC_BEGIN_LOOP_PROCESSING_BDL(IT, ENC_BDL) \
+    ENC_BEGIN_LOOP_PROCESSING( IT, ENC_BDL##_ptr ) \
+    ENC_LOOP_WRAP_BDL( ENC_BDL, ENC_BDL##_ptr )
+
+/// loops through EncObjList for all in-game enchants, creating a reference, and a pointer
+#define ENC_BEGIN_LOOP_INGAME_BDL(IT, ENC_BDL) \
+    ENC_BEGIN_LOOP_INGAME( IT, ENC_BDL##_ptr ) \
+    ENC_LOOP_WRAP_BDL( ENC_BDL, ENC_BDL##_ptr )
 
 /// the termination for each EncObjList loop
 #define ENC_END_LOOP() \

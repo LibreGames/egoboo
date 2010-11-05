@@ -506,8 +506,6 @@ bool_t ego_passage::check_music( ego_passage * ppass )
     CHR_REF character = CHR_REF( MAX_CHR );
     PASS_REF passage;
 
-    PLA_REF ipla;
-
     if ( NULL == ppass ) return bfalse;
 
     if ( ppass->music == NO_MUSIC || ppass->music == get_current_song_playing() )
@@ -517,17 +515,16 @@ bool_t ego_passage::check_music( ego_passage * ppass )
 
     // Look at each player
     retval = bfalse;
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         ego_chr * pchr;
-        ego_player * ppla = PlaStack + ipla;
 
-        character = ppla->index;
+        character = ipla->index;
 
         pchr = ChrObjList.get_allocated_data_ptr( character );
         if ( !INGAME_PCHR( pchr ) ) continue;
 
-        if ( !VALID_PLA( pchr->is_which_player ) || !pchr->alive || pchr->pack.is_packed ) continue;
+        if ( !IS_PLAYER_PCHR( pchr ) || !pchr->alive || pchr->pack.is_packed ) continue;
 
         // Is it in the passage?
         if ( PassageStack_object_is_inside( passage, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )

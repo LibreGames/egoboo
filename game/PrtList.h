@@ -48,7 +48,7 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 #define POBJ_PRT_GET_PCONT( POBJ )  ego_obj_prt::get_container_ptr( POBJ )
 #define PPRT_GET_PCONT( PPRT )      POBJ_PRT_GET_PCONT( PPRT_GET_POBJ(PPRT) )
 
-// referprte conversion
+// reference conversion
 #define IPRT_GET_POBJ( IPRT )       PrtObjList.get_data_ptr(IPRT)
 #define IPRT_GET_PCONT( IPRT )      PrtObjList.get_ptr(IPRT)
 
@@ -90,36 +90,71 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 // This still looks a bit messy, but I think it can't be helped if we want the
 // rest of our codebase to look "pretty"...
 
-/// loops through PrtObjList for all "used" particles, creating a reference, and a bundle
-#define PRT_BEGIN_LOOP_USED(IT, PRT_BDL) \
-    OBJ_LIST_BEGIN_LOOP_ALLOCATED(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
-    ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)static_cast<const ego_prt *>(internal__##PRT_BDL##_pobj); \
-    if( NULL == internal__##PRT_BDL_pprt ) continue; \
-    ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
+#define PRT_LOOP_WRAP_PTR( PPRT, POBJ ) \
+    ego_prt * PPRT = (ego_prt *)static_cast<const ego_prt *>(POBJ); \
 
-/// loops through PrtObjList for all "defined" particles, creating a reference, and a bundle
-#define PRT_BEGIN_LOOP_DEFINED(IT, PRT_BDL) \
-    OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
-    ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)static_cast<const ego_prt *>(internal__##PRT_BDL##_pobj); \
-    if( NULL == internal__##PRT_BDL_pprt ) continue; \
-    ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
+#define PRT_LOOP_WRAP_BDL( BDL, PPRT ) \
+    ego_bundle_prt BDL( PPRT );
 
-/// loops through PrtObjList for all "active" particles, creating a reference, and a bundle
-#define PRT_BEGIN_LOOP_PROCESSING(IT, PRT_BDL) \
-    OBJ_LIST_BEGIN_LOOP_PROCESSING(ego_obj_prt, PrtObjList, IT, internal__##PRT_BDL##_pobj) \
-    ego_prt * internal__##PRT_BDL_pprt = (ego_prt *)static_cast<const ego_prt *>(internal__##PRT_BDL##_pobj); \
-    if( NULL == internal__##PRT_BDL_pprt ) continue; \
-    ego_bundle_prt PRT_BDL( internal__##PRT_BDL_pprt );
+/// loops through PrtObjList for all allocated particles, creating a reference, and a pointer
+#define PRT_BEGIN_LOOP_ALLOCATED(IT, PPRT) \
+    OBJ_LIST_BEGIN_LOOP_ALLOCATED(ego_obj_prt, PrtObjList, IT, PPRT##_obj) \
+    PRT_LOOP_WRAP_PTR( PPRT, PPRT##_obj )
 
-/// loops through PrtObjList for all "active" particles that are registered in the BSP
-#define PRT_BEGIN_LOOP_BSP(IT, PRT_BDL) \
-    PRT_BEGIN_LOOP_PROCESSING(IT, PPRT) \
+/// loops through PrtObjList for all "defined" particles, creating a reference, and a pointer
+#define PRT_BEGIN_LOOP_DEFINED(IT, PPRT) \
+    OBJ_LIST_BEGIN_LOOP_DEFINED(ego_obj_prt, PrtObjList, IT, PPRT##_obj) \
+    PRT_LOOP_WRAP_PTR( PPRT, PPRT##_obj )
+
+/// loops through PrtObjList for all "active" particles, creating a reference, and a pointer
+#define PRT_BEGIN_LOOP_PROCESSING(IT, PPRT) \
+    OBJ_LIST_BEGIN_LOOP_PROCESSING(ego_obj_prt, PrtObjList, IT, PPRT##_obj) \
+    PRT_LOOP_WRAP_PTR( PPRT, PPRT##_obj )
+
+/// loops through PrtObjList for all in-game particles, creating a reference, and a pointer
+#define PRT_BEGIN_LOOP_INGAME(IT, PPRT) \
+    OBJ_LIST_BEGIN_LOOP_INGAME(ego_obj_prt, PrtObjList, IT, PPRT##_obj) \
+    PRT_LOOP_WRAP_PTR( PPRT, PPRT##_obj )
+
+/// loops through PrtObjList for all in-game particles that are registered in the BSP
+#define PRT_BEGIN_LOOP_BSP(IT, PPRT) \
+    PRT_BEGIN_LOOP_INGAME(IT, PPRT) \
     if( !PPRT->bsp_leaf.inserted ) continue;
 
 /// loops through PrtObjList for all "defined" particles that are flagged as being in limbo
-#define PRT_BEGIN_LOOP_LIMBO(IT, PRT_BDL) \
+#define PRT_BEGIN_LOOP_LIMBO(IT, PPRT) \
     PRT_BEGIN_LOOP_DEFINED(IT, PPRT) \
     if( !LIMBO_PPRT(PPRT) ) continue;
+
+/// loops through PrtObjList for all "defined" particles, creating a reference, and a pointer
+#define PRT_BEGIN_LOOP_ALLOCATED_BDL(IT, PRT_BDL) \
+    PRT_BEGIN_LOOP_ALLOCATED( IT, PRT_BDL##_ptr ) \
+    PRT_LOOP_WRAP_BDL( PRT_BDL, PRT_BDL##_ptr )
+
+/// loops through PrtObjList for all "defined" particles, creating a reference, and a pointer
+#define PRT_BEGIN_LOOP_DEFINED_BDL(IT, PRT_BDL) \
+    PRT_BEGIN_LOOP_DEFINED( IT, PRT_BDL##_ptr ) \
+    PRT_LOOP_WRAP_BDL( PRT_BDL, PRT_BDL##_ptr )
+
+/// loops through PrtObjList for all "active" particles, creating a reference, and a pointer
+#define PRT_BEGIN_LOOP_PROCESSING_BDL(IT, PRT_BDL) \
+    PRT_BEGIN_LOOP_PROCESSING( IT, PRT_BDL##_ptr ) \
+    PRT_LOOP_WRAP_BDL( PRT_BDL, PRT_BDL##_ptr )
+
+/// loops through PrtObjList for all in-game particles, creating a reference, and a pointer
+#define PRT_BEGIN_LOOP_INGAME_BDL(IT, PRT_BDL) \
+    PRT_BEGIN_LOOP_INGAME( IT, PRT_BDL##_ptr ) \
+    PRT_LOOP_WRAP_BDL( PRT_BDL, PRT_BDL##_ptr )
+
+/// loops through PrtObjList for all "active" particles that are registered in the BSP
+#define PRT_BEGIN_LOOP_BSP_BDL(IT, PRT_BDL) \
+    PRT_BEGIN_LOOP_BSP( IT, PRT_BDL##_ptr ) \
+    PRT_LOOP_WRAP_BDL( PRT_BDL, PRT_BDL##_ptr )
+
+/// loops through PrtObjList for all "defined" particles that are flagged as being in limbo
+#define PRT_BEGIN_LOOP_LIMBO_BDL(IT, PRT_BDL) \
+    PRT_BEGIN_LOOP_LIMBO( IT, PRT_BDL##_ptr ) \
+    PRT_LOOP_WRAP_BDL( PRT_BDL, PRT_BDL##_ptr )
 
 /// the termination for each PrtObjList loop
 #define PRT_END_LOOP() \

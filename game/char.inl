@@ -23,6 +23,7 @@
 /// @note You will routinely include "char.inl" in all *.inl files or *.c/*.cpp files, instead of "char.h"
 
 #include "char.h"
+#include "network.h"
 
 #include "enchant.inl"
 #include "particle.inl"
@@ -37,15 +38,19 @@
 // FORWARD DECLARARIONS
 //--------------------------------------------------------------------------------------------
 // ego_cap accessor functions
-INLINE bool_t cap_is_type_idsz( const CAP_REF & icap, IDSZ test_idsz );
-INLINE bool_t cap_has_idsz( const CAP_REF & icap, IDSZ idsz );
+static INLINE bool_t cap_is_type_idsz( const CAP_REF & icap, IDSZ test_idsz );
+static INLINE bool_t cap_has_idsz( const CAP_REF & icap, IDSZ idsz );
 
 //--------------------------------------------------------------------------------------------
 // ego_team accessor functions
-INLINE CHR_REF  team_get_ileader( const TEAM_REF & iteam );
-INLINE ego_chr  * team_get_pleader( const TEAM_REF & iteam );
 
-INLINE bool_t team_hates_team( const TEAM_REF & ipredator_team, const TEAM_REF & iprey_team );
+static INLINE CHR_REF   team_get_ileader( const TEAM_REF & iteam );
+static INLINE ego_chr * team_get_pleader( const TEAM_REF & iteam );
+
+static INLINE bool_t team_hates_team( const TEAM_REF & ipredator_team, const TEAM_REF & iprey_team );
+
+static INLINE bool_t IS_INVICTUS_PCHR_RAW( ego_chr * pchr );
+static INLINE bool_t IS_PLAYER_PCHR( ego_chr * pchr );
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
@@ -654,4 +659,30 @@ INLINE latch_2d_t ego_chr::convert_latch_2d( const ego_chr * pchr, const latch_2
     }
 
     return dst;
+}
+
+//--------------------------------------------------------------------------------------------
+static INLINE bool_t IS_INVICTUS_PCHR_RAW( ego_chr * pchr ) 
+{
+    if( NULL == pchr ) return btrue;
+
+    bool_t invictus = pchr->invictus;
+
+    ego_player * ppla = PlaDeque.find_by_ref( pchr->is_which_player );
+    if( NULL != ppla && ppla->valid )
+    {
+        if( ppla->wizard_mode ) invictus = btrue;
+    }
+
+    return invictus;
+}
+
+//--------------------------------------------------------------------------------------------
+static INLINE bool_t IS_PLAYER_PCHR( ego_chr * pchr ) 
+{
+    if( !DEFINED_PCHR(pchr) ) return bfalse;
+
+    ego_player * ppla = PlaDeque.find_by_ref( pchr->is_which_player );
+
+    return NULL != ppla && ppla->valid;
 }

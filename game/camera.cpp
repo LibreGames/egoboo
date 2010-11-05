@@ -289,11 +289,11 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
         sum_level = 0.0f;
         fvec3_self_clear( sum_pos.v );
 
-        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
         {
-            ego_chr * pchr;
+            if( !ipla->valid ) continue;
 
-            pchr = pla_get_pchr( ipla );
+            ego_chr * pchr = pla_get_pchr( *ipla );
             if ( NULL == pchr || !pchr->alive ) continue;
 
             sum_pos.x += pchr->pos.x;
@@ -323,11 +323,11 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
 
         // count the number of local players, first
         local_chr_count = 0;
-        for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+        for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
         {
-            ego_chr * pchr;
+            if( !ipla->valid ) continue;
 
-            pchr = pla_get_pchr( ipla );
+            ego_chr * pchr = pla_get_pchr( *ipla );
             if ( NULL == pchr || !pchr->alive ) continue;
 
             local_chr_ptrs[local_chr_count] = pchr;

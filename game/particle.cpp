@@ -371,7 +371,7 @@ ego_prt * ego_prt::do_initializing( ego_prt * pprt )
     pprt->team        = pdata->team;
     pprt->owner_ref   = loc_chr_origin;
     pprt->parent_ref  = pdata->prt_origin;
-    pprt->parent_guid = VALID_PRT( pdata->prt_origin ) ? PrtObjList.get_data_ref( pdata->prt_origin ).guid : (( Uint32 )( ~0 ) );
+    pprt->parent_guid = VALID_PRT( pdata->prt_origin ) ? PrtObjList.get_data_ref( pdata->prt_origin ).guid : (Uint32( ~0 ) );
     pprt->damagetype  = ppip->damagetype;
     pprt->lifedrain   = ppip->lifedrain;
     pprt->manadrain   = ppip->manadrain;
@@ -938,7 +938,7 @@ void update_all_particles()
     ///               Converted all the update functions to the ego_obj_prt::run() paradigm.
 
     // activate any particles might have been generated last update in an in-active state
-    PRT_BEGIN_LOOP_USED( iprt, bdl )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, bdl )
     {
         prt_update( &bdl );
     }
@@ -1500,7 +1500,7 @@ void move_all_particles( void )
     ego_prt::stoppedby_tests = 0;
 
     // move every particle
-    PRT_BEGIN_LOOP_USED( cnt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, prt_bdl )
     {
         // prime the environment
         prt_bdl.prt_ptr->enviro.air_friction = air_friction;
@@ -1608,7 +1608,7 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
                 grip_verts = GRIP_VERTS * slot_count;
             }
 
-            vertices = ( int )pchr->gfx_inst.vrt_count - ( int )grip_verts;
+            vertices = int(pchr->gfx_inst.vrt_count) - int( grip_verts );
             vertices = SDL_max( 0, vertices );
 
             if ( vertices != 0 )
@@ -1646,7 +1646,7 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
                 }
 
                 // determine if some of the vertex sites are already occupied
-                PRT_BEGIN_LOOP_PROCESSING( iprt, prt_bdl )
+                PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
                 {
                     if ( character != prt_bdl.prt_ptr->attachedto_ref ) continue;
 
@@ -2015,7 +2015,7 @@ void cleanup_all_particles()
     // do end-of-life care for particles. Must iterate over all particles since the
     // number of particles could change inside this list
 
-    PRT_BEGIN_LOOP_DEFINED( iprt, bdl )
+    PRT_BEGIN_LOOP_DEFINED_BDL( iprt, bdl )
     {
         bool_t time_out;
 
@@ -2047,7 +2047,7 @@ void cleanup_all_particles()
 //--------------------------------------------------------------------------------------------
 void increment_all_particle_update_counters()
 {
-    PRT_BEGIN_LOOP_DEFINED( cnt, bdl )
+    PRT_BEGIN_LOOP_DEFINED_BDL( cnt, bdl )
     {
         ego_obj * pbase = ego_prt::get_obj_ptr( bdl.prt_ptr );
         if ( NULL == pbase ) continue;
@@ -2760,7 +2760,7 @@ ego_bundle_prt * ego_bundle_prt::set( ego_bundle_prt * pbundle, ego_prt * pprt )
 //--------------------------------------------------------------------------------------------
 void particle_physics_initialize_all()
 {
-    PRT_BEGIN_LOOP_USED( cnt, bdl_prt )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, bdl_prt )
     {
         phys_data_blank_accumulators( &( bdl_prt.prt_ptr->phys ) );
     }
@@ -3406,7 +3406,7 @@ egoboo_rv particle_physics_finalize_one( ego_bundle_prt * pbdl, float dt )
 void particle_physics_finalize_all( float dt )
 {
     // accumulate the accumulators
-    PRT_BEGIN_LOOP_PROCESSING( iprt, bdl )
+    PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, bdl )
     {
         particle_physics_finalize_one( &bdl, dt );
     }

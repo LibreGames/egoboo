@@ -213,20 +213,18 @@ bool_t link_push_module()
 
     // find all of the exportable characters
     pentry->hero_count = 0;
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         CHR_REF ichr;
         ego_chr * pchr;
 
         ego_hero_spawn_data * phero;
 
-        ego_player * ppla = PlaStack + ipla;
-
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
         // Is it alive?
-        if ( !INGAME_CHR( ppla->index ) ) continue;
-        ichr = ppla->index;
+        if ( !INGAME_CHR( ipla->index ) ) continue;
+        ichr = ipla->index;
         pchr = ChrObjList.get_data_ptr( ichr );
 
         if ( pentry->hero_count < LINK_HEROES_MAX )

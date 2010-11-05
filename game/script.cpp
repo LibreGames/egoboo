@@ -49,7 +49,7 @@
 static const char *  script_error_classname = "UNKNOWN";
 static PRO_REF       script_error_model     = PRO_REF( MAX_PROFILE );
 static const char *  script_error_name      = "UNKNOWN";
-static REF_T         script_error_index     = ( Uint16 )( ~0 );
+static REF_T         script_error_index     = Uint16( ~0 );
 
 static bool_t scr_increment_exe( ego_ai_state * pself );
 static bool_t scr_set_exe( ego_ai_state * pself, size_t offset );
@@ -151,7 +151,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
     fvec3_self_clear( pchr->latch.trans.dir );
 
     // has the time for this pbdl_ai->chr_ref to die come and gone?
-    if ( pai->poof_time >= 0 && pai->poof_time <= ( Sint32 )update_wld ) return;
+    if ( pai->poof_time >= 0 && Uint32(pai->poof_time) <= update_wld ) return;
 
     // grab the "changed" value from the last time the script was run
     if ( pai->changed )
@@ -171,7 +171,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
     // Make life easier
     script_error_classname = "UNKNOWN";
     script_error_model     = pchr->profile_ref;
-    script_error_index     = ( Uint16 )( ~0 );
+    script_error_index     = Uint16( ~0 );
     script_error_name      = "UNKNOWN";
     if ( script_error_model < MAX_PROFILE )
     {
@@ -223,7 +223,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
     }
 
     // Clear the button latches
-    if ( !VALID_PLA( pchr->is_which_player ) )
+    if ( !IS_PLAYER_PCHR( pchr ) )
     {
         CLEAR_BIT_FIELD( pchr->latch.trans.b );
     }
@@ -270,7 +270,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
     }
 
     // Set the oject's latches, but only if it is "alive"
-    if ( pchr->alive && !VALID_PLA( pchr->is_which_player ) )
+    if ( pchr->alive && !IS_PLAYER_PCHR( pchr ) )
     {
         float scale;
         CHR_REF rider_ref = pchr->holdingwhich[SLOT_LEFT];

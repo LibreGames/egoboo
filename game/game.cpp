@@ -375,7 +375,6 @@ void export_all_players( bool_t require_local )
     ///    PLAYERS directory
 
     bool_t is_local;
-    PLA_REF ipla;
     int number;
     CHR_REF character, item;
 
@@ -388,16 +387,15 @@ void export_all_players( bool_t require_local )
     log_info( "export_all_players() - Exporting all player characters.\n" );
 
     // Check each player
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
-        ego_player * ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
+        if( !ipla->valid ) continue;
 
-        is_local = ( 0 != ppla->device.bits );
+        is_local = ( 0 != ipla->device.bits );
         if ( require_local && !is_local ) continue;
 
         // Is it alive?
-        character = ppla->index;
+        character = ipla->index;
         ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( character );
         if ( !INGAME_PCHR( pchr ) || !pchr->alive ) continue;
 
@@ -583,8 +581,6 @@ void finalize_all_objects()
 //--------------------------------------------------------------------------------------------
 void game_update_network_stats()
 {
-    PLA_REF ipla;
-
     net_stats.pla_count_local   = 0;
     net_stats.pla_count_network = 0;
     net_stats.pla_count_total   = 0;
@@ -597,36 +593,34 @@ void game_update_network_stats()
     net_stats.pla_count_network_dead = 0;
     net_stats.pla_count_total_dead   = 0;
 
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         CHR_REF ichr;
         ego_chr * pchr;
-        ego_player * ppla;
         bool_t net_player = bfalse;
 
         // ignore ivalid players
-        ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
         // fix bad players
-        if ( !VALID_CHR( ppla->index ) )
+        if ( !VALID_CHR( ipla->index ) )
         {
-            ego_player::dtor( ppla );
+            ego_player::dtor( &(*ipla) );
             continue;
         }
 
         // don't worry about players that aren't in the game
-        if ( !INGAME_CHR( ppla->index ) )
+        if ( !INGAME_CHR( ipla->index ) )
         {
             continue;
         }
 
         // alias some variables
-        ichr = ppla->index;
+        ichr = ipla->index;
         pchr = ChrObjList.get_data_ptr( ichr );
 
         // no input bits means that the player is remote.
-        net_player = ( INPUT_BITS_NONE == ppla->device.bits );
+        net_player = ( INPUT_BITS_NONE == ipla->device.bits );
 
         // who is alive
         if ( net_player )
@@ -714,40 +708,36 @@ void game_update_network_stats()
 //--------------------------------------------------------------------------------------------
 void game_update_local_stats()
 {
-    PLA_REF ipla;
-
     if ( 0 == net_stats.pla_count_local_alive ) return;
 
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         CHR_REF ichr;
         ego_chr * pchr;
-        ego_player * ppla;
         bool_t net_player = bfalse;
 
         // ignore ivalid players
-        ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
         // fix bad players
-        if ( !VALID_CHR( ppla->index ) )
+        if ( !VALID_CHR( ipla->index ) )
         {
-            ego_player::dtor( ppla );
+            ego_player::dtor( &(*ipla) );
             continue;
         }
 
         // don't worry about players that aren't in the game
-        if ( !INGAME_CHR( ppla->index ) )
+        if ( !INGAME_CHR( ipla->index ) )
         {
             continue;
         }
 
         // alias some variables
-        ichr = ppla->index;
+        ichr = ipla->index;
         pchr = ChrObjList.get_data_ptr( ichr );
 
         // no input bits means that the player is remote.
-        net_player = ( INPUT_BITS_NONE == ppla->device.bits );
+        net_player = ( INPUT_BITS_NONE == ipla->device.bits );
         if ( net_player ) continue;
 
         // let the status of local players modify local game experience (sound, camera, ...)
@@ -796,20 +786,17 @@ void game_update_local_stats()
 //--------------------------------------------------------------------------------------------
 void game_update_local_respawn()
 {
-    PLA_REF ipla;
-
     // check for autorespawn
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         CHR_REF ichr;
         ego_chr * pchr;
 
-        ego_player * ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
-        if ( !INGAME_CHR( ppla->index ) ) continue;
+        if ( !INGAME_CHR( ipla->index ) ) continue;
 
-        ichr = ppla->index;
+        ichr = ipla->index;
         pchr = ChrObjList.get_data_ptr( ichr );
 
         if ( !pchr->alive )
@@ -1006,7 +993,7 @@ void game_update_clocks()
 
     // track changes in the network state
     net_on_old = net_on_new;
-    net_on_new = network_initialized();
+    net_on_new = net_initialized();
     net_on_change = ( net_on_old != net_on_new );
 
     // determine the amount of ticks for various conditions
@@ -1361,7 +1348,7 @@ egoboo_rv ego_game_process::do_running()
             }
 
             // This is the control loop
-            if ( network_initialized() && console_done )
+            if ( net_initialized() && console_done )
             {
                 net_send_message();
             }
@@ -1390,13 +1377,13 @@ egoboo_rv ego_game_process::do_running()
             PROFILE_END2( PassageStack_check_music );
 
             // do the updates
-            if ( mod_paused && !network_initialized() )
+            if ( mod_paused && !net_initialized() )
             {
                 clock_wld = clock_all;
             }
             else
             {
-                if ( network_waiting_for_players() )
+                if ( net_waiting_for_players() )
                 {
                     // do all the network io
                     game_update_network();
@@ -1656,7 +1643,7 @@ bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_F
     if ( ptst->is_hidden ) return bfalse;
 
     // Players only?
-    if (( HAS_SOME_BITS( targeting_bits, TARGET_PLAYERS ) || HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) ) && !VALID_PLA( ptst->is_which_player ) ) return bfalse;
+    if (( HAS_SOME_BITS( targeting_bits, TARGET_PLAYERS ) || HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) ) && !IS_PLAYER_PCHR( ptst ) ) return bfalse;
 
     // Skip held objects
     if ( IS_ATTACHED_PCHR( ptst ) ) return bfalse;
@@ -1677,11 +1664,11 @@ bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_F
     if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != ego_chr_data::get_skill( ptst, idsz ) ) return bfalse;
 
     // Require player to have specific quest?
-    if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && VALID_PLA( ptst->is_which_player ) )
+    ego_player * ppla = PlaDeque.find_by_ref( ptst->is_which_player );
+    if ( HAS_SOME_BITS( targeting_bits, TARGET_QUEST ) && NULL != ppla )
     {
         int quest_level = QUEST_NONE;
-        ego_player * ppla = PlaStack + ptst->is_which_player;
-
+        
         quest_level = quest_get_level( ppla->quest_log, SDL_arraysize( ppla->quest_log ), idsz );
 
         // find only active quests?
@@ -1755,16 +1742,14 @@ CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD ta
 
     if ( HAS_SOME_BITS( targeting_bits, TARGET_PLAYERS ) )
     {
-        PLA_REF ipla;
-        for ( ipla = 0; ipla < MAX_PLAYER; ipla ++ )
+        for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
         {
-            ego_player * ppla = PlaStack + ipla;
 
-            if ( !ppla->valid ) continue;
+            if ( !ipla->valid ) continue;
 
-            if ( !INGAME_CHR( ppla->index ) ) continue;
+            if ( !INGAME_CHR( ipla->index ) ) continue;
 
-            search_list[search_list_size] = ppla->index;
+            search_list[search_list_size] = ipla->index;
             search_list_size++;
         }
     }
@@ -1914,7 +1899,7 @@ void game_update_pits()
             timer_pit = PIT_DELAY;
 
             // Kill any particles that fell in a pit, if they die in water...
-            PRT_BEGIN_LOOP_PROCESSING( iprt, prt_bdl )
+            PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
             {
                 if ( prt_bdl.prt_ptr->pos.z < PITDEPTH && prt_bdl.pip_ptr->end_water )
                 {
@@ -1965,7 +1950,7 @@ void game_update_pits()
                         pchr->vel.y = 0;
 
                         // Play sound effect
-                        if ( VALID_PLA( pchr->is_which_player ) )
+                        if ( IS_PLAYER_PCHR( pchr ) )
                         {
                             sound_play_chunk_full( g_wavelist[GSND_PITFALL] );
                         }
@@ -2003,33 +1988,33 @@ void do_weather_spawn_particles()
 
     if ( spawn_one )
     {
-        int          cnt;
         PLA_REF      weather_ipla( MAX_PLAYER );
         ego_player * weather_ppla = NULL;
         ego_chr    * weather_pchr = NULL;
         PRT_REF      weather_iprt( MAX_PRT );
 
-        if ( !VALID_PLA( weather.iplayer ) )
+        weather_ppla = PlaDeque.find_by_ref( weather.iplayer );
+        if ( NULL == weather_ppla || !weather_ppla->valid )
         {
             weather.iplayer = MAX_PLAYER;
+            weather_ppla = NULL;
         }
 
         // Find a valid player
         weather_ipla = weather.iplayer;
-        weather_ppla = NULL;
         weather_pchr = NULL;
-        for ( cnt = 0; cnt < MAX_PLAYER; cnt++ )
+        for ( player_deque::iterator pla_it = PlaDeque.begin(); pla_it != PlaDeque.end(); pla_it++ )
         {
             ego_player * tmp_ppla = NULL;
             ego_chr    * tmp_pchr = NULL;
 
             weather_ipla = PLA_REF(( weather_ipla.get_value() + 1 ) % MAX_PLAYER );
 
-            tmp_ppla = PlaStack + weather_ipla;
-            if ( !tmp_ppla->valid ) continue;
+            tmp_ppla = PlaDeque.find_by_ref( weather_ipla );
+            if ( !pla_it->valid ) continue;
 
-            if ( !INGAME_CHR( tmp_ppla->index ) ) continue;
-            tmp_pchr = ChrObjList.get_data_ptr( tmp_ppla->index );
+            if ( !INGAME_CHR( pla_it->index ) ) continue;
+            tmp_pchr = ChrObjList.get_data_ptr( pla_it->index );
 
             // no weather if in a pack
             if ( tmp_pchr->pack.is_packed ) continue;
@@ -2089,7 +2074,7 @@ void do_weather_spawn_particles()
 }
 
 //--------------------------------------------------------------------------------------------
-void read_player_local_latch( const PLA_REF & player )
+void read_player_local_latch( ego_player & rpla )
 {
     /// @details ZZ@> This function converts input readings to latch settings, so players can
     ///    move around
@@ -2100,16 +2085,14 @@ void read_player_local_latch( const PLA_REF & player )
     latch_input_t sum;
 
     ego_chr          * pchr;
-    ego_player       * ppla;
     ego_input_device * pdevice;
 
-    if ( INVALID_PLA( player ) ) return;
-    ppla = PlaStack + player;
+    if ( !rpla.valid ) return;
 
-    pdevice = &( ppla->device );
+    pdevice = &( rpla.device );
 
-    if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrObjList.get_data_ptr( ppla->index );
+    if ( !INGAME_CHR( rpla.index ) ) return;
+    pchr = ChrObjList.get_data_ptr( rpla.index );
 
     // is the device a local device or an internet device?
     if ( pdevice->bits == EMPTY_BIT_FIELD ) return;
@@ -2362,8 +2345,8 @@ void read_player_local_latch( const PLA_REF & player )
     input_device_add_latch( pdevice, sum );
 
     // copy the latch
-    ppla->local_latch   = pdevice->latch;
-    ppla->local_latch.b = sum.b;
+    rpla.local_latch   = pdevice->latch;
+    rpla.local_latch.b = sum.b;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2371,11 +2354,9 @@ void read_local_latches( void )
 {
     /// @details ZZ@> This function emulates AI thinkin' by setting latches from input devices
 
-    PLA_REF cnt;
-
-    for ( cnt = 0; cnt < MAX_PLAYER; cnt++ )
+    for ( player_deque::iterator pla_it = PlaDeque.begin(); pla_it != PlaDeque.end(); pla_it++ )
     {
-        read_player_local_latch( cnt );
+        read_player_local_latch( *pla_it );
     }
 }
 
@@ -2417,20 +2398,17 @@ void check_stats()
         else if ( SDLKEYDOWN( SDLK_4 ) )  docheat = 3;
 
         // Apply the cheat if valid
-        if ( VALID_PLA( docheat ) )
+        ego_player * ppla = PlaDeque.find_by_ref( docheat );
+        if ( NULL != ppla && ppla->valid && INGAME_CHR( ppla->index ) )
         {
-            ego_player * ppla = PlaStack + docheat;
-            if ( INGAME_CHR( ppla->index ) )
-            {
-                Uint32  xpgain;
-                ego_chr * pchr = ChrObjList.get_data_ptr( ppla->index );
-                ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
+            Uint32  xpgain;
+            ego_chr * pchr = ChrObjList.get_data_ptr( ppla->index );
+            ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
-                // Give 10% of XP needed for next level
-                xpgain = 0.1f * ( pcap->experience_forlevel[SDL_min( pchr->experience_level+1, MAXLEVEL )] - pcap->experience_forlevel[pchr->experience_level] );
-                give_experience( pchr->ai.index, xpgain, XP_DIRECT, btrue );
-                stat_check_delay = 1;
-            }
+            // Give 10% of XP needed for next level
+            xpgain = 0.1f * ( pcap->experience_forlevel[SDL_min( pchr->experience_level+1, MAXLEVEL )] - pcap->experience_forlevel[pchr->experience_level] );
+            give_experience( pchr->ai.index, xpgain, XP_DIRECT, btrue );
+            stat_check_delay = 1;
         }
     }
 
@@ -2445,16 +2423,12 @@ void check_stats()
         else if ( SDLKEYDOWN( SDLK_4 ) )  docheat = 3;
 
         // Apply the cheat if valid
-        if ( VALID_PLA( docheat ) )
+        ego_player * ppla = PlaDeque.find_by_ref( docheat );
+        if ( NULL != ppla && ppla->valid && INGAME_CHR( ppla->index ) )
         {
-            ego_player * ppla = PlaStack + docheat;
-
-            if ( INGAME_CHR( ppla->index ) )
-            {
-                // Heal 1 life
-                heal_character( ppla->index, ppla->index, 256, btrue );
-                stat_check_delay = 1;
-            }
+            // Heal 1 life
+            heal_character( ppla->index, ppla->index, 256, btrue );
+            stat_check_delay = 1;
         }
     }
 
@@ -2938,7 +2912,7 @@ bool_t chr_setup_apply( const CHR_REF & ichr, spawn_file_info_t *pinfo )
     }
 
     // automatically identify and unkurse all player starting equipment? I think yes.
-    if ( start_new_player && NULL != pparent && VALID_PLA( pparent->is_which_player ) )
+    if ( start_new_player && NULL != pparent && IS_PLAYER_PCHR( pparent ) )
     {
         ego_chr *pitem;
         pchr->nameknown = btrue;
@@ -3052,11 +3026,11 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
     // apply the setup information
     activated = chr_setup_apply( new_object, psp_info );
 
-    // Turn on PlaStack.count input devices
+    // Turn on PlaDeque.size() input devices
     if ( psp_info->stat )
     {
         // what we do depends on what kind of module we're loading
-        if ( 0 == PMod->importamount && PlaStack.count < PMod->playeramount )
+        if ( 0 == PMod->importamount && PlaDeque.size() < PMod->playeramount )
         {
             // a single player module
 
@@ -3066,21 +3040,20 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             if ( 0 == net_stats.pla_count_local )
             {
                 // the first player gets everything
-                player_added = add_player( new_object, PLA_REF( PlaStack.count ), ( Uint32 )( ~0 ) );
+                player_added = add_player( new_object, Uint32( ~0 ) );
             }
             else
             {
-                PLA_REF ipla;
                 BIT_FIELD bits;
 
                 // each new player steals an input device from the 1st player
                 bits = 1 << net_stats.pla_count_local;
-                for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+                for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
                 {
-                    REMOVE_BITS( PlaStack[ipla].device.bits, bits );
+                    REMOVE_BITS( ipla->device.bits, bits );
                 }
 
-                player_added = add_player( new_object, PLA_REF( PlaStack.count ), bits );
+                player_added = add_player( new_object, bits );
             }
 
             if ( start_new_player && player_added )
@@ -3089,7 +3062,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
                 pobject->nameknown = btrue;
             }
         }
-        else if ( PlaStack.count < PMod->importamount && PlaStack.count < PMod->playeramount && PlaStack.count < local_import.count )
+        else if ( PlaDeque.size() < PMod->importamount && PlaDeque.size() < PMod->playeramount && PlaDeque.size() < local_import.count )
         {
             // A multiplayer module
 
@@ -3113,13 +3086,13 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             player_added = bfalse;
             if ( -1 != local_index )
             {
-                // It's a local PlaStack.count
-                player_added = add_player( new_object, PLA_REF( PlaStack.count ), local_import.control[local_index] );
+                // It's a local PlaDeque.size()
+                player_added = add_player( new_object, local_import.control[local_index] );
             }
             else
             {
-                // It's a remote PlaStack.count
-                player_added = add_player( new_object, PLA_REF( PlaStack.count ), INPUT_BITS_NONE );
+                // It's a remote PlaDeque.size()
+                player_added = add_player( new_object, INPUT_BITS_NONE );
             }
 
             // if for SOME REASON your player is not identified, give him
@@ -3163,7 +3136,7 @@ void activate_spawn_file_vfs()
     newloadname = "mp_data/spawn.txt";
     fileread = vfs_openRead( newloadname );
 
-    PlaStack.count = 0;
+    PlaDeque.reinit();
     sp_info.parent = MAX_CHR;
     if ( NULL == fileread )
     {
@@ -3376,7 +3349,7 @@ void disaffirm_attached_particles( const CHR_REF & character )
 {
     /// @details ZZ@> This function makes sure a character has no attached particles
 
-    PRT_BEGIN_LOOP_PROCESSING( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
     {
         if ( prt_bdl.prt_ptr->attachedto_ref == character )
         {
@@ -3399,7 +3372,7 @@ int number_of_attached_particles( const CHR_REF & character )
 
     int     cnt = 0;
 
-    PRT_BEGIN_LOOP_PROCESSING( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
     {
         if ( prt_bdl.prt_ptr->attachedto_ref == character )
         {
@@ -3468,7 +3441,7 @@ void game_quit_module()
     game_release_module_data();
 
     // turn off networking
-    close_session();
+    net_close_session();
 
     // reset the "ui" mouse state
     load_cursor();
@@ -3585,7 +3558,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
 {
     /// @details BB@> all of the initialization code before the module actually starts
 
-    if ((( Uint32 )( ~0 ) ) == seed ) seed = time( NULL );
+    if ((Uint32( ~0 ) ) == seed ) seed = time( NULL );
 
     // make sure the old game has been quit
     game_quit_module();
@@ -3639,7 +3612,7 @@ egoboo_rv game_update_imports()
     bool_t is_local;
     int tnc, j;
     CHR_REF character;
-    PLA_REF player, ipla;
+    PLA_REF player;
     STRING srcPlayer, srcDir, destDir;
     egoboo_rv retval = rv_success;
 
@@ -3655,18 +3628,18 @@ egoboo_rv game_update_imports()
     }
 
     // export all of the players directly from memory straight to the "import" dir
-    for ( player = 0, ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    player = 0;
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         size_t     player_idx = MAX_PLAYER;
-        ego_player * ppla       = PlaStack + ipla;
 
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
         // Is it alive?
-        character = ppla->index;
+        character = ipla->index;
         if ( !INGAME_CHR( character ) ) continue;
 
-        is_local = ( INPUT_BITS_NONE != ppla->device.bits );
+        is_local = ( INPUT_BITS_NONE != ipla->device.bits );
 
         // find the saved copy of the players that are in memory right now
         for ( tnc = 0; tnc < loadplayer_count; tnc++ )
@@ -3687,7 +3660,7 @@ egoboo_rv game_update_imports()
         // grab the controls from the currently loaded players
         // calculate the slot from the current player count
         player_idx = player.get_value();
-        local_import.control[player_idx] = ppla->device.bits;
+        local_import.control[player_idx] = ipla->device.bits;
         local_import.slot[player_idx]    = player_idx * MAXIMPORTPERPLAYER;
         player++;
 
@@ -3776,7 +3749,7 @@ void attach_all_particles()
     /// @details ZZ@> This function attaches particles to their characters so everything gets
     ///    drawn right
 
-    PRT_BEGIN_LOOP_USED( cnt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, prt_bdl )
     {
         attach_one_particle( &prt_bdl );
     }
@@ -3784,27 +3757,22 @@ void attach_all_particles()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t add_player( const CHR_REF & character, const PLA_REF & player, BIT_FIELD device_bits )
+bool_t add_player( const CHR_REF & character, BIT_FIELD device_bits )
 {
     /// @details ZZ@> This function adds a player, returning bfalse if it fails, btrue otherwise
 
     ego_player * ppla = NULL;
     ego_chr    * pchr = NULL;
 
-    if ( !PlaStack.in_range_ref( player ) ) return bfalse;
-    ppla = PlaStack + player;
-
-    // does the player already exist?
-    if ( ppla->valid ) return bfalse;
-
-    // re-construct the players
-    ego_player::reinit( ppla );
-
+    // does the character exist
     pchr = ChrObjList.get_allocated_data_ptr( character );
     if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
+    // "create" a player
+    ppla = PlaDeque.create();
+
     // set the reference to the player
-    pchr->is_which_player = player;
+    pchr->is_which_player = ppla->get_id();
 
     // download the quest info
     quest_log_download_vfs( ppla->quest_log, SDL_arraysize( ppla->quest_log ), ego_chr::get_dir_name( character ) );
@@ -3825,8 +3793,6 @@ bool_t add_player( const CHR_REF & character, const PLA_REF & player, BIT_FIELD 
         ego_camera::reset_target( PCamera, PMesh );
     }
 
-    PlaStack.count++;
-
     return btrue;
 }
 
@@ -3835,7 +3801,7 @@ void let_all_characters_think()
 {
     /// @details ZZ@> This function runs the ai scripts for all eligible objects
 
-    static Uint32 last_update = ( Uint32 )( ~0 );
+    static Uint32 last_update = Uint32( ~0 );
 
     // make sure there is only one script update per game update
     if ( update_wld == last_update ) return;
@@ -4053,13 +4019,13 @@ void reset_end_text()
     endtext_carat = SDL_snprintf( endtext, SDL_arraysize( endtext ), "The game has ended..." );
 
     /*
-    if ( PlaStack.count > 1 )
+    if ( PlaDeque.size() > 1 )
     {
         endtext_carat = SDL_snprintf( endtext, SDL_arraysize( endtext), "Sadly, they were never heard from again..." );
     }
     else
     {
-        if ( PlaStack.count == 0 )
+        if ( PlaDeque.size() == 0 )
         {
             // No players???
             endtext_carat = SDL_snprintf( endtext, SDL_arraysize( endtext), "The game has ended..." );
@@ -4907,7 +4873,7 @@ bool_t game_module_start( ego_game_module_data * pinst )
     pinst->randsave = rand();
     randindex = rand() % RANDIE_COUNT;
 
-    network_set_host_active( btrue ); // very important or the input will not work
+    net_set_host_active( btrue ); // very important or the input will not work
 
     return btrue;
 }
@@ -4922,7 +4888,7 @@ bool_t game_module_stop( ego_game_module_data * pinst )
     pinst->active      = bfalse;
 
     // network stuff
-    network_set_host_active( bfalse );
+    net_set_host_active( bfalse );
 
     return btrue;
 }
@@ -5102,7 +5068,7 @@ bool_t do_shop_drop( const CHR_REF & idropper, const CHR_REF & iitem )
             // Are they are trying to sell junk or quest items?
             if ( 0 == price )
             {
-                ego_ai_state::add_order( &( powner->ai ), ( Uint32 ) price, SHOP_BUY );
+                ego_ai_state::add_order( &( powner->ai ), Uint32( price ), SHOP_BUY );
             }
             else
             {
@@ -5112,7 +5078,7 @@ bool_t do_shop_drop( const CHR_REF & idropper, const CHR_REF & iitem )
                 powner->money -= price;
                 powner->money  = CLIP( powner->money, 0, MAXMONEY );
 
-                ego_ai_state::add_order( &( powner->ai ), ( Uint32 ) price, SHOP_BUY );
+                ego_ai_state::add_order( &( powner->ai ), Uint32( price ), SHOP_BUY );
             }
         }
     }
@@ -5156,7 +5122,7 @@ bool_t do_shop_buy( const CHR_REF & ipicker, const CHR_REF & iitem )
             if ( ppicker->money >= price )
             {
                 // Okay to sell
-                ego_ai_state::add_order( &( powner->ai ), ( Uint32 ) price, SHOP_SELL );
+                ego_ai_state::add_order( &( powner->ai ), Uint32( price ), SHOP_SELL );
 
                 ppicker->money -= price;
                 ppicker->money  = CLIP( ppicker->money, 0, MAXMONEY );
@@ -5507,16 +5473,13 @@ void sort_stat_list()
 {
     /// @details ZZ@> This function puts all of the local players on top of the StatList
 
-    PLA_REF ipla;
-
-    for ( ipla = 0; ipla < PlaStack.count; ipla++ )
+    for ( player_deque::iterator it = PlaDeque.begin(); it != PlaDeque.end(); it++ )
     {
-        ego_player * ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
+        if ( !it->valid ) continue;
 
-        if ( INPUT_BITS_NONE != ppla->device.bits )
+        if ( INPUT_BITS_NONE != it->device.bits )
         {
-            StatList.move_to_top( ppla->index );
+            StatList.move_to_top( it->index );
         }
     }
 }

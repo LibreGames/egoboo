@@ -432,7 +432,7 @@ ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, i
 
 /// Player
 void   read_player_local_latch( const PLA_REF & player );
-bool_t add_player( const CHR_REF & character, const PLA_REF & player, BIT_FIELD device );
+bool_t add_player( const CHR_REF & character, BIT_FIELD device );
 
 // AI targeting
 CHR_REF chr_find_target( struct ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits );

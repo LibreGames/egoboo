@@ -520,9 +520,9 @@ void render_chr_bbox( ego_chr * pchr )
     if ( !PROCESSING_PCHR( pchr ) ) return;
 
     render_player_platforms = bfalse; // pchr->platform;
-    //for( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    //for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     //{
-    //    ego_chr * pplayer_chr = pla_get_pchr(ipla);
+    //    ego_chr * pplayer_chr = pla_get_pchr(*ipla);
     //    if( NULL == pplayer_chr ) continue;
 
     //    if( pchr->get_ego_obj().index == pplayer_chr->onwhichplatform_ref )
@@ -1530,7 +1530,7 @@ bool_t gfx_mad_instance::update_ref( gfx_mad_instance * pgfx_inst, float grid_le
         pos_z = grid_level - pgfx_inst->ref.matrix.CNV( 3, 2 );
         if ( pos_z < 0 ) pos_z = 0;
 
-        trans_temp -= (( int )pos_z ) >> 1;
+        trans_temp -= (int( pos_z ) ) >> 1;
         if ( trans_temp < 0 ) trans_temp = 0;
 
         trans_temp |= gfx.reffadeor;  // Fix for Riva owners

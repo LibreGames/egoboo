@@ -322,7 +322,7 @@ bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1
         if ( *tmin > 1.0f || *tmax < 0.0f ) return bfalse;
 
         // limit the negative values of time to the start of the module
-        if (( *tmin ) + update_wld < 0 ) *tmin = -(( Sint32 )update_wld );
+        if (( *tmin ) + update_wld < 0 ) *tmin = - Sint32(update_wld) ;
     }
 
     if ( NULL != pdst )

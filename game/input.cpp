@@ -173,7 +173,7 @@ void input_read_joystick( int which )
     int dead_zone = 0x8000 / 10;
     int i, button_count, x, y;
     ego_device_joystick * pjoy;
-    if ( which < 0 || ( Uint32 )( which + INPUT_DEVICE_JOY ) > input_device_count ) return;
+    if ( which < 0 || Uint32( which + INPUT_DEVICE_JOY ) > input_device_count ) return;
     if ( !joy[which].on ) return;
 
     pjoy = joy + which;

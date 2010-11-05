@@ -1302,7 +1302,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
     }
 
     // if they are beaten, float them to the end of the list
-    retval = ( int )mnu_ModList[*pref1].base.beaten - ( int )mnu_ModList[*pref2].base.beaten;
+    retval = int(mnu_ModList[*pref1].base.beaten) - int(mnu_ModList[*pref2].base.beaten);
 
     if ( 0 == retval )
     {
@@ -2299,7 +2299,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         x1 = x + 25;
         y1 = y + 25;
 
-        Uint8 skin = ( Uint8 )SDL_max( 0, pcap->skin_override );
+        Uint8 skin = Uint8(SDL_max( 0, pcap->skin_override ));
 
         //---- the background
         ui_drawButton( UI_Nothing, x, y, width, height, NULL );
@@ -2317,34 +2317,34 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         //---- Life and mana (can be less than maximum if not in easy mode)
         if ( cfg.difficulty >= GAME_NORMAL )
         {
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min(( int )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from ), ( int )pcap->life_stat.val.from );
-            y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )UFP8_TO_UINT( pcap->life_spawn ), ( int )pcap->life_stat.val.from );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min(( int )UFP8_TO_UINT( pcap->life_spawn ), int( pcap->life_stat.val.from ) ), int( pcap->life_stat.val.from ) );
+            y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )UFP8_TO_UINT( pcap->life_spawn ), int( pcap->life_stat.val.from ) );
 
             if ( pcap->mana_stat.val.from > 0 )
             {
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", SDL_min(( int )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from ), ( int )pcap->mana_stat.val.from );
-                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( int )UFP8_TO_UINT( pcap->mana_spawn ), ( int )pcap->mana_stat.val.from );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", SDL_min(( int )UFP8_TO_UINT( pcap->mana_spawn ), int( pcap->mana_stat.val.from ) ), int( pcap->mana_stat.val.from ) );
+                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( int )UFP8_TO_UINT( pcap->mana_spawn ), int( pcap->mana_stat.val.from ) );
             }
         }
         else
         {
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d", ( int )pcap->life_stat.val.from );
-            y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )pcap->life_stat.val.from, ( int )pcap->life_stat.val.from );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d", int( pcap->life_stat.val.from ) );
+            y1 = draw_one_bar( pcap->life_color, x1, y1, int( pcap->life_stat.val.from ), int( pcap->life_stat.val.from ) );
 
             if ( pcap->mana_stat.val.from > 0 )
             {
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d", ( int )pcap->mana_stat.val.from );
-                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( int )pcap->mana_stat.val.from, ( int )pcap->mana_stat.val.from );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d", int( pcap->mana_stat.val.from ) );
+                y1 = draw_one_bar( pcap->mana_color, x1, y1, int( pcap->mana_stat.val.from ), int( pcap->mana_stat.val.from ) );
             }
         }
         y1 += 20;
 
         //---- SWID
         y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Stats" );
-        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), ( int )pcap->strength_stat.val.from );
-        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), ( int )pcap->wisdom_stat.val.from );
-        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Int: %s (%d)", describe_value( pcap->intelligence_stat.val.from, 60, NULL ), ( int )pcap->intelligence_stat.val.from );
-        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Dex: %s (%d)", describe_value( pcap->dexterity_stat.val.from,    60, NULL ), ( int )pcap->dexterity_stat.val.from );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Str: %s (%d)", describe_value( pcap->strength_stat.val.from,     60, NULL ), int( pcap->strength_stat.val.from ) );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Wis: %s (%d)", describe_value( pcap->wisdom_stat.val.from,       60, NULL ), int( pcap->wisdom_stat.val.from ) );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Int: %s (%d)", describe_value( pcap->intelligence_stat.val.from, 60, NULL ), int( pcap->intelligence_stat.val.from ) );
+        y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "  Dex: %s (%d)", describe_value( pcap->dexterity_stat.val.from,    60, NULL ), int( pcap->dexterity_stat.val.from ) );
 
         y1 += 20;
 
@@ -3435,7 +3435,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
     int                 retval = which;
 
     // valid device?
-    if ( idevice < 0 || ( Uint32 )idevice >= input_device_count ) return -1;
+    if ( idevice < 0 || Uint32(idevice) >= input_device_count ) return -1;
     pdevice = controls + idevice;
 
     // waiting for any spicific control?
@@ -3454,9 +3454,9 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
             // is a joy button combo activated?
             for ( tag = 0; tag < scantag_count && -1 != retval; tag++ )
             {
-                if ( 0 != scantag[tag].value && ( Uint32 )scantag[tag].value == joy[ijoy].b )
+                if ( 0 != scantag[tag].value && Uint32(scantag[tag].value) == joy[ijoy].b )
                 {
-                    pcontrol->tag    = ( Uint32 )scantag[tag].value;
+                    pcontrol->tag    = Uint32( scantag[tag].value );
                     pcontrol->is_key = bfalse;
                     retval           = -1;
                 }
@@ -3467,7 +3467,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
             {
                 if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
+                if ( SDLKEYDOWN(Uint32( scantag[tag].value ) ) )
                 {
                     pcontrol->tag    = scantag[tag].value;
                     pcontrol->is_key = btrue;
@@ -3487,7 +3487,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
                     {
                         if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                        if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
+                        if ( SDLKEYDOWN(Uint32( scantag[tag].value ) ) )
                         {
                             pcontrol->tag    = scantag[tag].value;
                             pcontrol->is_key = btrue;
@@ -3502,7 +3502,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
                     // is a mouse button combo activated?
                     for ( tag = 0; tag < scantag_count && -1 != retval; tag++ )
                     {
-                        if ( 0 != scantag[tag].value && ( Uint32 )scantag[tag].value == mous.b )
+                        if ( 0 != scantag[tag].value && Uint32( scantag[tag].value ) == mous.b )
                         {
                             pcontrol->tag    = scantag[tag].value;
                             pcontrol->is_key = bfalse;
@@ -3515,7 +3515,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
                     {
                         if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                        if ( SDLKEYDOWN(( Uint32 )scantag[tag].value ) )
+                        if ( SDLKEYDOWN(Uint32( scantag[tag].value ) ) )
                         {
                             pcontrol->tag    = scantag[tag].value;
                             pcontrol->is_key = btrue;
@@ -3545,7 +3545,7 @@ bool_t OptionsInput_data::update_player( ui_Widget * but_ptr, int player )
     if ( NULL == but_ptr ) return bfalse;
 
     pdevice = NULL;
-    if ( player >= 0 && ( Uint32 )player < input_device_count )
+    if ( player >= 0 && Uint32( player ) < input_device_count )
     {
         pdevice = controls + player;
     };
@@ -3603,7 +3603,7 @@ int OptionsInput_data::run( double deltaTime )
     device_controls_t * pdevice;
 
     pdevice = NULL;
-    if ( player >= 0 && ( Uint32 )player < input_device_count )
+    if ( player >= 0 && Uint32( player ) < input_device_count )
     {
         pdevice = controls + player;
     }
@@ -3918,17 +3918,17 @@ int OptionsInput_data::run( double deltaTime )
                 if ( BUTTON_UP == ui_Widget::Run( w_buttons + but_player ) )
                 {
                     int new_player;
-                    new_player = CLIP( player, -1, SDL_max( 0, ( int )input_device_count - 1 ) );
+                    new_player = CLIP( player, -1, SDL_max( 0, int( input_device_count ) - 1 ) );
                     new_player++;
 
-                    if ( new_player >= 0 && ( Uint32 )new_player >= input_device_count ) new_player = 0;
+                    if ( new_player >= 0 && Uint32(new_player) >= input_device_count ) new_player = 0;
 
                     if ( new_player != player )
                     {
                         player = new_player;
 
                         pdevice = NULL;
-                        if ( player >= 0 && ( Uint32 )player < input_device_count )
+                        if ( player >= 0 && Uint32(new_player) < input_device_count )
                         {
                             pdevice = controls + player;
                         }
@@ -5364,7 +5364,7 @@ bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val 
         aniso = SDL_max( 0.0f, aniso ) + 1.0f;
         aniso = SDL_min( aniso, ogl_caps.maxAnisotropy );
 
-        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Anisotropic %i", ( int )aniso );
+        retval = ui_Widget::set_text( but_ptr, ui_just_centerleft, NULL, "Anisotropic %i", int( aniso ) );
     }
     else
     {

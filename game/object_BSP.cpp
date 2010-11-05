@@ -264,7 +264,7 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
 
     // unlink all used particle nodes
     ego_obj_BSP::prt_count = 0;
-    PRT_BEGIN_LOOP_DEFINED( iprt, bdl )
+    PRT_BEGIN_LOOP_DEFINED_BDL( iprt, bdl )
     {
         bdl.prt_ptr->bsp_leaf.inserted = bfalse;
     }
@@ -299,7 +299,7 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
 
     // insert the particles
     ego_obj_BSP::prt_count = 0;
-    PRT_BEGIN_LOOP_USED( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
         // reset a couple of things here
         prt_bdl.prt_ptr->targetplatform_ref     = CHR_REF( MAX_CHR );

@@ -117,7 +117,7 @@ void font_bmp_load_vfs( const char* szBitmap, const char* szSpacing )
     {
         vfs_scanf( fileread, "%c", &cTmp );
         xspacing = fget_int( fileread );
-        if ( asciitofont[( Uint8 )cTmp] == 255 ) asciitofont[( Uint8 )cTmp] = ( Uint8 ) cnt;
+        if ( asciitofont[Uint8(cTmp)] == 255 ) asciitofont[Uint8(cTmp)] = Uint8(cnt);
         if ( stt_x + xspacing + 1 > 255 )
         {
             stt_x = 0;

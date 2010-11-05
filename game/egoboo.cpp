@@ -296,7 +296,7 @@ egoboo_rv ego_main_process::do_running()
         {
             _explore_mode_keyready = bfalse;
 
-            PlaStack_toggle_all_explore();
+            PlaDeque.toggle_all_explore();
 
             log_info( "Toggling explore mode\n" );
         }
@@ -315,14 +315,14 @@ egoboo_rv ego_main_process::do_running()
         {
             _wizard_mode_keyready = bfalse;
 
-            PlaStack_toggle_all_wizard();
+            PlaDeque.toggle_all_wizard();
 
             log_info( "Toggling wizard mode\n" );
         }
     }
 
     // handle the "i win"
-    if ( PlaStack_has_wizard() && keyb.on && NULL != PMod && PMod->active )
+    if ( PlaDeque.has_wizard() && keyb.on && NULL != PMod && PMod->active )
     {
         bool_t i_win_key = SDLKEYDOWN( SDLK_F9 ) && !mod_shift && !mod_ctrl;
 
@@ -340,16 +340,14 @@ egoboo_rv ego_main_process::do_running()
             CHR_BEGIN_LOOP_PROCESSING( itarget, ptarget )
             {
                 // don't kill players
-                if ( !VALID_PLA( ptarget->is_which_player ) )
+                if ( !IS_PLAYER_PCHR( ptarget ) )
                 {
-                    PLA_REF ipla;
-
                     // only kill characters that the players hate
-                    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+                    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
                     {
-                        ego_chr    * pchr = NULL;
+                        if( !ipla->valid ) continue;
 
-                        pchr = pla_get_pchr( ipla );
+                        ego_chr * pchr = pla_get_pchr( *ipla );
                         if ( NULL == pchr ) continue;
 
                         if ( team_hates_team( pchr->baseteam, ptarget->team ) )
@@ -632,7 +630,7 @@ void console_begin()
     ///     otherwise sdl_scr.x == sdl_scr.y == 0 and the screen will be defined to
     ///     have no area...
 
-    SDL_Rect blah = {0, 0, ( Uint16 )sdl_scr.x, ( Uint16 )( sdl_scr.y / 4 )};
+    SDL_Rect blah = {0, 0, Uint16 (sdl_scr.x), Uint16( sdl_scr.y / 4 )};
 
 #if defined(USE_LUA_CONSOLE)
     _top_con = lua_console_create( NULL, blah );

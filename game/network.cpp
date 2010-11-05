@@ -53,17 +53,13 @@ static net_instance _gnet;
 
 static bool_t net_instance_init( net_instance * pnet );
 
-static void PlaStack_init();
-static void PlaStack_reinit();
-static void PlaStack_dtor();
-
 static void net_initialize( ego_config_data * pcfg );
 static void net_shutDown();
 //static void net_logf( const char *format, ... );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-t_stack< ego_player, MAX_PLAYER  > PlaStack;
+player_deque PlaDeque;
 
 FILE *      globalnetworkerr = NULL;
 
@@ -171,7 +167,7 @@ void network_system_begin( ego_config_data * pcfg )
 {
     if ( !_network_system_init )
     {
-        PlaStack_init();
+        PlaDeque.reinit();
         net_initialize( pcfg );
 
         _network_system_init = btrue;
@@ -185,7 +181,7 @@ void network_system_end( void )
 {
     if ( _network_system_init )
     {
-        PlaStack_dtor();
+        PlaDeque.reinit();
         net_shutDown();
 
         _network_system_init = bfalse;
@@ -194,7 +190,7 @@ void network_system_end( void )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-const net_instance * network_get_instance()
+const net_instance * net_get_instance()
 {
     net_instance * retval = NULL;
 
@@ -215,7 +211,7 @@ const net_instance * network_get_instance()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t network_initialized()
+bool_t net_initialized()
 {
     if ( !_network_system_init ) return bfalse;
 
@@ -223,7 +219,7 @@ bool_t network_initialized()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t network_get_host_active()
+bool_t net_get_host_active()
 {
     if ( !_network_system_init ) return bfalse;
 
@@ -231,7 +227,7 @@ bool_t network_get_host_active()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t network_set_host_active( bool_t state )
+bool_t net_set_host_active( bool_t state )
 {
     if ( !_network_system_init ) return bfalse;
 
@@ -241,7 +237,7 @@ bool_t network_set_host_active( bool_t state )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t network_waiting_for_players()
+bool_t net_waiting_for_players()
 {
     if ( !_network_system_init || !_gnet.initialized ) return bfalse;
 
@@ -250,7 +246,7 @@ bool_t network_waiting_for_players()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void close_session()
+void net_close_session()
 {
     size_t i, numPeers;
     ENetEvent event;
@@ -283,7 +279,7 @@ void close_session()
                         break;
 
                     case ENET_EVENT_TYPE_DISCONNECT:
-                        log_info( "close_session: Peer id %d disconnected gracefully.\n", event.peer->address.host );
+                        log_info( "net_close_session: Peer id %d disconnected gracefully.\n", event.peer->address.host );
                         numPeers--;
                         break;
 
@@ -299,7 +295,7 @@ void close_session()
             }
         }
 
-        log_info( "close_session: Disconnecting from network.\n" );
+        log_info( "net_close_session: Disconnecting from network.\n" );
         enet_host_destroy( _gnet.my_host );
         _gnet.my_host = NULL;
         _gnet.game_host = NULL;
@@ -461,7 +457,7 @@ Uint8 packet_readUnsignedByte( enet_pkt & pkt )
 
     Uint8 uc;
 
-    uc = ( Uint8 )pkt.packet->data[pkt.location];
+    uc = Uint8(pkt.packet->data[pkt.location]);
     pkt.location++;
 
     return uc;
@@ -1016,14 +1012,13 @@ void cl_talkToHost()
          && cfg.difficulty < GAME_HARD
          && !console_mode )
     {
-        for ( player = 0; player < MAX_PLAYER; player++ )
+        for ( player_deque::iterator it = PlaDeque.begin(); it != PlaDeque.end(); it++ )
         {
-            ego_player * ppla = PlaStack + player;
-            if ( !ppla->valid ) continue;
+            if ( !it->valid ) continue;
 
-            if ( INPUT_BITS_NONE != ppla->device.bits )
+            if ( INPUT_BITS_NONE != it->device.bits )
             {
-                ADD_BITS( ppla->local_latch.b, LATCHBUTTON_RESPAWN );  // Press the respawn button...
+                ADD_BITS( it->local_latch.b, LATCHBUTTON_RESPAWN );  // Press the respawn button...
             }
         }
     }
@@ -1034,24 +1029,23 @@ void cl_talkToHost()
         net_packet::start_new( &tmp_packet );
         net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_LATCH );        // The message header
 
-        for ( player = 0; player < MAX_PLAYER; player++ )
+        for ( player_deque::iterator it = PlaDeque.begin(); it != PlaDeque.end(); it++ )
         {
-            ego_player * ppla = PlaStack + player;
-            if ( !ppla->valid ) continue;
+            if ( !it->valid ) continue;
 
             // Find the local players
-            if ( INPUT_BITS_NONE != ppla->device.bits )
+            if ( INPUT_BITS_NONE != it->device.bits )
             {
-                net_packet::add_UnsignedByte( &tmp_packet, player.get_value() );                     // The player index
+                net_packet::add_UnsignedByte( &tmp_packet, it->get_id() );                     // The player index
 
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.raw[kX]*LATCH_TO_FFFF );  // Raw control value
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.raw[kY]*LATCH_TO_FFFF );  // Raw control value
 
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
 
-                net_packet::add_UnsignedInt( &tmp_packet, ppla->local_latch.b );             // Player button states
+                net_packet::add_UnsignedInt( &tmp_packet, it->local_latch.b );             // Player button states
             }
         }
 
@@ -1084,22 +1078,20 @@ void sv_talkToRemotes()
             net_packet::add_UnsignedInt( &tmp_packet, time );                                  // The stamp
 
             // Send all player latches...
-            for ( player = 0; player < MAX_PLAYER; player++ )
+            for ( player_deque::iterator it = PlaDeque.begin(); it != PlaDeque.end(); it++ )
             {
-                ego_player * ppla = PlaStack + player;
+                if ( !it->valid ) continue;
 
-                if ( !ppla->valid ) continue;
+                net_packet::add_UnsignedByte( &tmp_packet, it->get_id() );                     // The player index
 
-                net_packet::add_UnsignedByte( &tmp_packet, player.get_value() );                     // The player index
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
 
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kX]*LATCH_TO_FFFF );  // Player motion
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.raw[kY]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
+                net_packet::add_SignedShort( &tmp_packet, it->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
 
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kX]*LATCH_TO_FFFF );  // Player motion
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kY]*LATCH_TO_FFFF );  // Player motion
-                net_packet::add_SignedShort( &tmp_packet, ppla->local_latch.dir[kZ]*LATCH_TO_FFFF );  // Player motion
-
-                net_packet::add_UnsignedInt( &tmp_packet, ppla->local_latch.b );        // Player button states
+                net_packet::add_UnsignedInt( &tmp_packet, it->local_latch.b );        // Player button states
             }
 
             // Send the packet
@@ -1112,40 +1104,37 @@ void sv_talkToRemotes()
 
         // update the local timed latches with the same info
         _gnet.timed_latch_count = 0;
-        for ( player = 0; player < MAX_PLAYER; player++ )
+        for ( player_deque::iterator it = PlaDeque.begin(); it != PlaDeque.end(); it++ )
         {
             int index;
             Uint32 cnt;
-            ego_player * ppla = PlaStack + player;
 
-            if ( !ppla->valid ) continue;
-
-            index = ppla->tlatch_count;
+            index = it->tlatch_count;
             if ( index < MAXLAG )
             {
-                ego_time_latch * ptlatch = ppla->tlatch + index;
+                ego_time_latch * ptlatch = it->tlatch + index;
 
-                ptlatch->button = ppla->local_latch.b;
+                ptlatch->button = it->local_latch.b;
 
                 // reduce the resolution of the motion to match the network packets
-                ptlatch->raw[kX] = FLOOR( ppla->local_latch.raw[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
-                ptlatch->raw[kY] = FLOOR( ppla->local_latch.raw[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->raw[kX] = FLOOR( it->local_latch.raw[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->raw[kY] = FLOOR( it->local_latch.raw[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
 
-                ptlatch->dir[kX] = FLOOR( ppla->local_latch.dir[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
-                ptlatch->dir[kY] = FLOOR( ppla->local_latch.dir[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
-                ptlatch->dir[kZ] = FLOOR( ppla->local_latch.dir[kZ] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kX] = FLOOR( it->local_latch.dir[kX] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kY] = FLOOR( it->local_latch.dir[kY] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
+                ptlatch->dir[kZ] = FLOOR( it->local_latch.dir[kZ] * LATCH_TO_FFFF ) * FFFF_TO_LATCH;
 
                 ptlatch->time = true_update;
 
-                ppla->tlatch_count++;
+                it->tlatch_count++;
             }
 
             // determine the max amount of lag
-            for ( cnt = 0; cnt < ppla->tlatch_count; cnt++ )
+            for ( cnt = 0; cnt < it->tlatch_count; cnt++ )
             {
-                int loc_lag = update_wld - ppla->tlatch[index].time  + 1;
+                int loc_lag = update_wld - it->tlatch[index].time  + 1;
 
-                if ( loc_lag > 0 && ( Uint32 )loc_lag > _gnet.timed_latch_count )
+                if ( loc_lag > 0 && Uint32(loc_lag) > _gnet.timed_latch_count )
                 {
                     _gnet.timed_latch_count = loc_lag;
                 }
@@ -1155,26 +1144,23 @@ void sv_talkToRemotes()
 }
 
 //--------------------------------------------------------------------------------------------
-void pla_add_tlatch( const PLA_REF & iplayer, Uint32 time, latch_input_t net_latch )
+void pla_add_tlatch( ego_player & rpla, Uint32 time, latch_input_t net_latch )
 {
-    ego_player * ppla;
+    if ( !rpla.valid ) return;
 
-    if ( !VALID_PLA( iplayer ) ) return;
-    ppla = PlaStack + iplayer;
+    if ( rpla.tlatch_count >= MAXLAG ) return;
 
-    if ( ppla->tlatch_count >= MAXLAG ) return;
+    rpla.tlatch[ rpla.tlatch_count ].raw[kX] = net_latch.raw[kX];
+    rpla.tlatch[ rpla.tlatch_count ].raw[kY] = net_latch.raw[kY];
 
-    ppla->tlatch[ ppla->tlatch_count ].raw[kX] = net_latch.raw[kX];
-    ppla->tlatch[ ppla->tlatch_count ].raw[kY] = net_latch.raw[kY];
+    rpla.tlatch[ rpla.tlatch_count ].dir[kX] = net_latch.dir[kX];
+    rpla.tlatch[ rpla.tlatch_count ].dir[kY] = net_latch.dir[kY];
+    rpla.tlatch[ rpla.tlatch_count ].dir[kZ] = net_latch.dir[kZ];
 
-    ppla->tlatch[ ppla->tlatch_count ].dir[kX] = net_latch.dir[kX];
-    ppla->tlatch[ ppla->tlatch_count ].dir[kY] = net_latch.dir[kY];
-    ppla->tlatch[ ppla->tlatch_count ].dir[kZ] = net_latch.dir[kZ];
+    rpla.tlatch[ rpla.tlatch_count ].button  = net_latch.b;
+    rpla.tlatch[ rpla.tlatch_count ].time    = time;
 
-    ppla->tlatch[ ppla->tlatch_count ].button  = net_latch.b;
-    ppla->tlatch[ ppla->tlatch_count ].time    = time;
-
-    ppla->tlatch_count++;
+    rpla.tlatch_count++;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1235,7 +1221,12 @@ void net_handlePacket( ENetEvent *event )
 
                     tmp_latch.b       = packet_readUnsignedInt( net_read );
 
-                    pla_add_tlatch( player, time, tmp_latch );
+                    // add the latch if the player id exists
+                    ego_player * pplayer = PlaDeque.find_by_ref( player );
+                    if( NULL != pplayer )
+                    {
+                        pla_add_tlatch( *pplayer, time, tmp_latch );
+                    }
                 }
 
             }
@@ -1585,7 +1576,7 @@ void net_handlePacket( ENetEvent *event )
             {
                 stamp = packet_readUnsignedInt( net_read );
                 time = stamp & LAGAND;
-                if ((( Uint32 )( ~0 ) ) == _gnet.next_time_stamp )
+                if ( Uint32( ~0 ) == _gnet.next_time_stamp )
                 {
                     _gnet.next_time_stamp = stamp;
                 }
@@ -1614,18 +1605,18 @@ void net_handlePacket( ENetEvent *event )
                     while ( packet_remainingSize( net_read ) > 0 )
                     {
                         player = packet_readUnsignedByte( net_read );
-                        if ( VALID_PLA( player ) )
+
+                        ego_player * pplayer = PlaDeque.find_by_ref( player );
+                        if ( NULL != pplayer && pplayer->valid )
                         {
-                            ego_player * ppla = PlaStack + player;
+                            pplayer->tlatch[time].raw[kX] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                            pplayer->tlatch[time].raw[kY] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
 
-                            ppla->tlatch[time].raw[kX] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
-                            ppla->tlatch[time].raw[kY] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                            pplayer->tlatch[time].dir[kX] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                            pplayer->tlatch[time].dir[kY] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
+                            pplayer->tlatch[time].dir[kZ] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
 
-                            ppla->tlatch[time].dir[kX] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
-                            ppla->tlatch[time].dir[kY] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
-                            ppla->tlatch[time].dir[kZ] = packet_readSignedShort( net_read ) * FFFF_TO_LATCH;
-
-                            ppla->tlatch[time].button  = packet_readUnsignedInt( net_read );
+                            pplayer->tlatch[time].button  = packet_readUnsignedInt( net_read );
                         }
                         else
                         {
@@ -1681,7 +1672,7 @@ void net_dispatch_packets()
                     // from above?
                     if ( event.peer->data != 0 )
                     {
-                        NetPlayerInfo *info = ( NetPlayerInfo * )event.peer->data;
+                        net_remote_player_info *info = ( net_remote_player_info * )event.peer->data;
 
                         // uh oh, how do we handle losing a player?
                         log_warning( "net_dispatch_packets: Player %d disconnected!\n",
@@ -1697,7 +1688,7 @@ void net_dispatch_packets()
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_do_network( ego_player * ppla )
+void unbuffer_one_player_latch_do_network( ego_player & rpla )
 {
     // get the "network" latch for each valid player
 
@@ -1705,15 +1696,13 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
     latch_input_t tmp_latch;
     ego_time_latch * tlatch_list;
 
-    if ( NULL == ppla ) return;
-
-    tlatch_list = ppla->tlatch;
+    tlatch_list = rpla.tlatch;
 
     // copy the latch from last time
-    tmp_latch = ppla->net_latch;
+    tmp_latch = rpla.net_latch;
 
     // what are the minimum and maximum indices that can be applies this update?
-    for ( tnc = 0; tnc < ppla->tlatch_count; tnc++ )
+    for ( tnc = 0; tnc < rpla.tlatch_count; tnc++ )
     {
         int dt;
 
@@ -1736,7 +1725,7 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
 
         tmp_latch.b       = tlatch_list[0].button;
 
-        //log_info( "<<%1.4f, %1.4f>, 0x%x>, Just one latch for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrObjList.get_data_ref(ppla->index).name );
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, Just one latch for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrObjList.get_data_ref(rpla.index).name );
     }
     else if ( latch_count > 1 )
     {
@@ -1781,7 +1770,7 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
             tmp_latch.dir[kZ] /= ( float )weight_sum;
         }
 
-        //log_info( "<<%1.4f, %1.4f>, 0x%x>, %d, multiple latches for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, latch_count, ChrObjList.get_data_ref(ppla->index).name );
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, %d, multiple latches for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, latch_count, ChrObjList.get_data_ref(rpla.index).name );
     }
     else
     {
@@ -1789,20 +1778,20 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
         // do nothing. this lets the old value of the latch persist.
         // this might be a decent guess as to what to do if a packet was
         // dropped?
-        //log_info( "<<%1.4f, %1.4f>, 0x%x>, latch dead reckoning for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrObjList.get_data_ref(ppla->index).name );
+        //log_info( "<<%1.4f, %1.4f>, 0x%x>, latch dead reckoning for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, ChrObjList.get_data_ref(rpla.index).name );
     }
 
-    if ( latch_count >= ppla->tlatch_count )
+    if ( latch_count >= rpla.tlatch_count )
     {
         // we have emptied all of the latches
-        ppla->tlatch_count = 0;
+        rpla.tlatch_count = 0;
     }
     else if ( latch_count > 0 )
     {
         int index;
 
         // concatenate the list
-        for ( tnc = latch_count, index = 0; tnc < ppla->tlatch_count; tnc++, index++ )
+        for ( tnc = latch_count, index = 0; tnc < rpla.tlatch_count; tnc++, index++ )
         {
             tlatch_list[index].raw[kX] = tlatch_list[tnc].raw[kX];
             tlatch_list[index].raw[kY] = tlatch_list[tnc].raw[kY];
@@ -1814,51 +1803,47 @@ void unbuffer_one_player_latch_do_network( ego_player * ppla )
             tlatch_list[index].button  = tlatch_list[tnc].button;
             tlatch_list[index].time    = tlatch_list[tnc].time;
         }
-        ppla->tlatch_count = index;
+        rpla.tlatch_count = index;
     }
 
     // fix the network latch
-    ppla->net_latch = tmp_latch;
+    rpla.net_latch = tmp_latch;
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_download( ego_player * ppla )
+void unbuffer_one_player_latch_download( ego_player & rpla )
 {
     ego_chr * pchr;
 
-    if ( NULL == ppla ) return;
-
-    if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrObjList.get_data_ptr( ppla->index );
+    if ( !INGAME_CHR( rpla.index ) ) return;
+    pchr = ChrObjList.get_data_ptr( rpla.index );
 
     pchr->latch.raw_valid = btrue;
-    pchr->latch.raw.dir[kX] = ppla->net_latch.raw[kX];
-    pchr->latch.raw.dir[kY] = ppla->net_latch.raw[kY];
-    pchr->latch.raw.b       = ppla->net_latch.b;
+    pchr->latch.raw.dir[kX] = rpla.net_latch.raw[kX];
+    pchr->latch.raw.dir[kY] = rpla.net_latch.raw[kY];
+    pchr->latch.raw.b       = rpla.net_latch.b;
 
     pchr->latch.trans_valid = btrue;
-    pchr->latch.trans.dir[kX] = ppla->net_latch.dir[kX];
-    pchr->latch.trans.dir[kY] = ppla->net_latch.dir[kY];
-    pchr->latch.trans.dir[kZ] = ppla->net_latch.dir[kZ];
-    pchr->latch.trans.b       = ppla->net_latch.b;
+    pchr->latch.trans.dir[kX] = rpla.net_latch.dir[kX];
+    pchr->latch.trans.dir[kY] = rpla.net_latch.dir[kY];
+    pchr->latch.trans.dir[kZ] = rpla.net_latch.dir[kZ];
+    pchr->latch.trans.b       = rpla.net_latch.b;
 }
 
 //--------------------------------------------------------------------------------------------
-void unbuffer_one_player_latch_do_respawn( ego_player * ppla )
+void unbuffer_one_player_latch_do_respawn( ego_player & rpla )
 {
     ego_chr * pchr;
 
-    if ( NULL == ppla ) return;
-
-    if ( !INGAME_CHR( ppla->index ) ) return;
-    pchr = ChrObjList.get_data_ptr( ppla->index );
+    if ( !INGAME_CHR( rpla.index ) ) return;
+    pchr = ChrObjList.get_data_ptr( rpla.index );
 
     if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans.b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
     {
         if ( !pchr->alive && 0 == timer_revive )
         {
-            ego_chr::respawn( ppla->index );
-            TeamStack[pchr->team].leader = ppla->index;
+            ego_chr::respawn( rpla.index );
+            TeamStack[pchr->team].leader = rpla.index;
             ADD_BITS( pchr->ai.alert, ALERTIF_CLEANEDUP );
 
             // cost some experience for doing this...  never lose a level
@@ -1876,35 +1861,32 @@ void unbuffer_all_player_latches()
 {
     /// @details ZZ@> This function sets character latches based on player input to the host
 
-    PLA_REF ipla;
+    player_deque::iterator ipla;
 
     // if ( PMod->rtscontrol ) { _gnet.timed_latch_count--; return; }
 
     _gnet.timed_latch_count = 0;
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
-        ego_player * ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
-        unbuffer_one_player_latch_do_network( ppla );
+        unbuffer_one_player_latch_do_network( *ipla );
     }
 
     // set the player latch
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for (ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
-        ego_player * ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
-        unbuffer_one_player_latch_download( ppla );
+        unbuffer_one_player_latch_download( *ipla );
     }
 
     // Let players respawn
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
-        ego_player * ppla = PlaStack + ipla;
-        if ( !ppla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
-        unbuffer_one_player_latch_do_respawn( ppla );
+        unbuffer_one_player_latch_do_respawn( *ipla );
     }
 }
 
@@ -2136,13 +2118,13 @@ int sv_hostGame()
 */
 
 //--------------------------------------------------------------------------------------------
-int  net_pendingFileTransfers()
+int  net_file_pendingTransfers()
 {
     return net_numFileTransfers;
 }
 
 //--------------------------------------------------------------------------------------------
-void net_updateFileTransfers()
+void net_file_updateTransfers()
 {
     NetFileTransfer *state;
     ENetPacket *packet;
@@ -2175,7 +2157,7 @@ void net_updateFileTransfers()
                 file = vfs_openReadB( state->sourceName );
                 if ( file )
                 {
-                    log_info( "net_updateFileTransfers: Attempting to send %s to %s\n", state->sourceName, state->destName );
+                    log_info( "net_file_updateTransfers: Attempting to send %s to %s\n", state->sourceName, state->destName );
 
                     fileSize = vfs_fileLength( file );
                     vfs_seek( file, 0 );
@@ -2196,7 +2178,7 @@ void net_updateFileTransfers()
                     strcpy( p, state->destName );
                     p += nameLen;
 
-                    networkSize = ENET_HOST_TO_NET_32(( Uint32 )fileSize );
+                    networkSize = ENET_HOST_TO_NET_32( Uint32(fileSize) );
                     *( size_t* )p = networkSize;
                     p += 4;
 
@@ -2213,7 +2195,7 @@ void net_updateFileTransfers()
                 }
                 else
                 {
-                    log_warning( "net_updateFileTransfers: Could not open file %s to send it!\n", state->sourceName );
+                    log_warning( "net_file_updateTransfers: Could not open file %s to send it!\n", state->sourceName );
                 }
             }
 
@@ -2262,12 +2244,10 @@ bool_t net_instance_init( net_instance * pnet )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CHR_REF ego_player::get_ichr( const PLA_REF & iplayer )
+CHR_REF ego_player_data::get_ichr( const PLA_REF & iplayer )
 {
-    ego_player * pplayer;
-
-    if ( !VALID_PLA( iplayer ) ) return CHR_REF( MAX_CHR );
-    pplayer = PlaStack + iplayer;
+    ego_player * pplayer = PlaDeque.find_by_ref( iplayer );
+    if ( NULL == pplayer || !pplayer->valid ) return CHR_REF( MAX_CHR );
 
     if ( !INGAME_CHR( pplayer->index ) ) return CHR_REF( MAX_CHR );
 
@@ -2282,43 +2262,39 @@ ego_player* net_get_ppla( const CHR_REF & ichr )
     if ( !INGAME_CHR( ichr ) ) return NULL;
     iplayer = ChrObjList.get_data_ref( ichr ).is_which_player;
 
-    if ( !VALID_PLA( iplayer ) ) return NULL;
+    ego_player * pplayer = PlaDeque.find_by_ref( iplayer );
+    if ( NULL == pplayer || !pplayer->valid ) return NULL;
 
-    return PlaStack + iplayer;
+    return pplayer;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_chr  * pla_get_pchr( const PLA_REF & iplayer )
+ego_chr  * pla_get_pchr( const ego_player & rplayer )
 {
-    ego_player * pplayer;
+    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( rplayer.index );
 
-    if ( !VALID_PLA( iplayer ) ) return NULL;
-    pplayer = PlaStack + iplayer;
-
-    if ( !INGAME_CHR( pplayer->index ) ) return NULL;
-
-    return ChrObjList.get_data_ptr( pplayer->index );
+    return !INGAME_PCHR( pchr ) ? NULL : pchr;
 }
 
 //--------------------------------------------------------------------------------------------
-latch_2d_t ego_player::convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src )
+latch_2d_t ego_player_data::convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src )
 {
     latch_2d_t dst = LATCH_2D_INIT;
-    ego_player * ppla;
 
-    if ( !VALID_PLA( iplayer ) ) return dst;
-    ppla = PlaStack + iplayer;
+    ego_player * pplayer = PlaDeque.find_by_ref( iplayer );
+    if ( NULL == pplayer || !pplayer->valid ) return dst;
 
     // is there a valid character?
-    if ( !DEFINED_CHR( ppla->index ) ) return dst;
+    ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( pplayer->index );
+    if( NULL == pchr ) return dst;
 
-    return ego_chr::convert_latch_2d( ChrObjList.get_data_ptr( ppla->index ), src );
+    return ego_chr::convert_latch_2d( pchr, src );
 }
 
 //--------------------------------------------------------------------------------------------
 void net_reset_players()
 {
-    PlaStack_reinit();
+    PlaDeque.reinit();
 
     _gnet.next_time_stamp = ( Uint32( ~0L ) );
     _gnet.timed_latch_count   = 0;
@@ -2339,12 +2315,12 @@ void tlatch_ary_init( ego_time_latch ary[], size_t len )
         ary[cnt].dir[kY] = 0.0f;
         ary[cnt].dir[kZ] = 0.0f;
         ary[cnt].button  = 0;
-        ary[cnt].time    = ( Uint32 )( ~0 );
+        ary[cnt].time    = Uint32( ~0 );
     }
 }
 
 //--------------------------------------------------------------------------------------------
-ego_player * ego_player::reinit( ego_player * ppla )
+ego_player_data * ego_player_data::reinit( ego_player_data * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
@@ -2357,7 +2333,7 @@ ego_player * ego_player::reinit( ego_player * ppla )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_player * ego_player::dtor( ego_player * ppla )
+ego_player_data * ego_player_data::dtor( ego_player_data * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
@@ -2374,7 +2350,7 @@ ego_player * ego_player::dtor( ego_player * ppla )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_player * ego_player::ctor( ego_player * ppla )
+ego_player_data * ego_player_data::ctor( ego_player_data * ppla )
 {
     if ( NULL == ppla ) return ppla;
 
@@ -2435,90 +2411,60 @@ void input_device_add_latch( ego_input_device * pdevice, latch_input_t latch )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void PlaStack_init()
+void player_deque::init()
 {
     // construct the player stack
 
-    PLA_REF ipla;
-
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-    {
-        ego_player::ctor( PlaStack + ipla );
-    }
-    PlaStack.count = 0;
+    clear();
 }
 
 //--------------------------------------------------------------------------------------------
-void PlaStack_dtor()
+void player_deque::dtor()
 {
     // deconstruct the player stack
 
-    PLA_REF ipla;
-
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-    {
-        ego_player::dtor( PlaStack + ipla );
-    }
-    PlaStack.count = 0;
+    clear();
 }
 
 //--------------------------------------------------------------------------------------------
-void PlaStack_reinit()
+void player_deque::reinit()
 {
     // deconstruct the player stack
-
-    PLA_REF ipla;
-
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
-    {
-        ego_player::reinit( PlaStack + ipla );
-    }
-    PlaStack.count = 0;
+    resize( 0 );
 }
 
 //--------------------------------------------------------------------------------------------
-void PlaStack_toggle_all_explore()
+void player_deque::toggle_all_explore()
 {
-    PLA_REF ipla;
-
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for( iterator it = begin(); it != end(); it++ )
     {
-        ego_player * ppla = PlaStack + ipla;
+        if ( !it->valid ) continue;
 
-        if ( !ppla->valid ) continue;
-
-        ppla->explore_mode = !ppla->explore_mode;
+        it->explore_mode = !it->explore_mode;
     }
 }
 
 //--------------------------------------------------------------------------------------------
-void PlaStack_toggle_all_wizard()
+void player_deque::toggle_all_wizard()
 {
-    PLA_REF ipla;
-
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for( iterator it = begin(); it != end(); it++ )
     {
-        ego_player * ppla = PlaStack + ipla;
+        if ( !it->valid ) continue;
 
-        if ( !ppla->valid ) continue;
-
-        ppla->wizard_mode = !ppla->wizard_mode;
+        it->wizard_mode = !it->wizard_mode;
     }
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PlaStack_has_explore()
+bool_t player_deque::has_explore()
 {
     bool_t  retval = bfalse;
-    PLA_REF ipla;
 
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for( iterator it = begin(); it != end(); it++ )
     {
-        ego_player * ppla = PlaStack + ipla;
+        if ( !it->valid ) continue;
 
-        if ( !ppla->valid ) continue;
-
-        if ( ppla->explore_mode )
+        if ( it->explore_mode )
         {
             retval = btrue;
             break;
@@ -2529,18 +2475,15 @@ bool_t PlaStack_has_explore()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t PlaStack_has_wizard()
+bool_t player_deque::has_wizard()
 {
     bool_t  retval = bfalse;
-    PLA_REF ipla;
 
-    for ( ipla = 0; ipla < MAX_PLAYER; ipla++ )
+    for( iterator it = begin(); it != end(); it++ )    
     {
-        ego_player * ppla = PlaStack + ipla;
+        if ( !it->valid ) continue;
 
-        if ( !ppla->valid ) continue;
-
-        if ( ppla->wizard_mode )
+        if ( it->wizard_mode )
         {
             retval = btrue;
             break;
@@ -2555,7 +2498,7 @@ bool_t PlaStack_has_wizard()
 
 void net_synchronize_game_clock()
 {
-    if ( !network_initialized() ) return;
+    if ( !net_initialized() ) return;
 
     if ( 0 == _gnet.timed_latch_count )
     {
@@ -2564,7 +2507,7 @@ void net_synchronize_game_clock()
         clock_wld += 25;
     }
 
-    if ( _gnet.timed_latch_count > 3 && !network_get_host_active() )
+    if ( _gnet.timed_latch_count > 3 && !net_get_host_active() )
     {
         // The host has too many messages, and is probably experiencing control
         // lag...  Speed it up so it gets closer to sync

@@ -238,7 +238,7 @@ Uint8 CoNode_generate_hash( ego_CoNode * coll )
 {
     REF_T AA, BB;
 
-    AA = ( REF_T )( ~(( Uint32 )0 ) );
+    AA = ( REF_T )( Uint32( ~0 ) );
     if ( INGAME_CHR( coll->chra ) )
     {
         AA = ( coll->chra ).get_value();
@@ -248,7 +248,7 @@ Uint8 CoNode_generate_hash( ego_CoNode * coll )
         AA = ( coll->prta ).get_value();
     }
 
-    BB = ( REF_T )( ~(( Uint32 )0 ) );
+    BB = ( REF_T )( Uint32( ~0 ) );
     if ( INGAME_CHR( coll->chrb ) )
     {
         BB = ( coll->chrb ).get_value();
@@ -1383,7 +1383,7 @@ bool_t bump_all_platforms( CoNode_ary * pcn_ary )
     }
     CHR_END_LOOP();
 
-    PRT_BEGIN_LOOP_USED( iprt, bdl_prt )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, bdl_prt )
     {
         if ( MAX_CHR != bdl_prt.prt_ptr->onwhichplatform_ref && bdl_prt.prt_ptr->onwhichplatform_update < update_wld )
         {
@@ -3200,7 +3200,7 @@ ego_bundle_prt * update_prt_platform_attachment( ego_bundle_prt * pbdl )
 //--------------------------------------------------------------------------------------------
 void update_all_prt_platform_attachments()
 {
-    PRT_BEGIN_LOOP_USED( cnt, bdl )
+    PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, bdl )
     {
         update_prt_platform_attachment( &bdl );
     }

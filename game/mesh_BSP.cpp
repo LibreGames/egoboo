@@ -185,7 +185,7 @@ int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & 
 //        pbranch = ptree->root;
 //        for ( i = 0; i < depth; i++ )
 //        {
-//            index = (( Uint32 )address_x[i] ) + ((( Uint32 )address_y[i] ) << 1 );
+//            index = ( Uint32(address_x[i]) ) + ((Uint32(address_y[i]) ) << 1 );
 //
 //            pbranch_new = ego_BSP_tree::ensure_branch( ptree, pbranch, index );
 //            if ( NULL == pbranch_new ) break;

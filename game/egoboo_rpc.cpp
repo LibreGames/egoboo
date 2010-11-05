@@ -114,7 +114,7 @@ ego_tx_request * ego_tx_request::ctor_this( ego_tx_request * preq, int type )
 
     preq->filename[0] = '\0';
     preq->ret_index   = TX_REF( INVALID_TX_TEXTURE );
-    preq->key         = ( Uint32 )( ~0 );
+    preq->key         = Uint32( ~0 );
 
     return preq;
 }

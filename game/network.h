@@ -32,6 +32,10 @@
 #include "enet/enet.h"
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+struct ego_chr;
+
+//--------------------------------------------------------------------------------------------
 // Network stuff
 //--------------------------------------------------------------------------------------------
 
@@ -154,8 +158,7 @@ void input_device_add_latch( ego_input_device * pdevice, latch_input_t latch );
 //--------------------------------------------------------------------------------------------
 #define INVALID_PLAYER MAX_PLAYER
 
-/// The state of a player
-struct ego_player
+struct ego_player_data
 {
     bool_t                  valid;                    ///< Player used?
     CHR_REF                 index;                    ///< Which character?
@@ -183,26 +186,125 @@ struct ego_player
     /// Network latch, set by unbuffer_all_player_latches(), used to set the local character's latch
     latch_input_t           net_latch;
 
-    static ego_player * ctor( ego_player * ppla );
-    static ego_player * dtor( ego_player * ppla );
-    static ego_player * reinit( ego_player * ppla );
-    static CHR_REF      get_ichr( const PLA_REF & iplayer );
-    static latch_2d_t   convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src );
+    ego_player_data()  { ctor(this); }
+    ~ego_player_data() { dtor(this); }
+
+    static ego_player_data * ctor( ego_player_data * ppla );
+    static ego_player_data * dtor( ego_player_data * ppla );
+    static ego_player_data * reinit( ego_player_data * ppla );
+    static CHR_REF           get_ichr( const PLA_REF & iplayer );
+    static latch_2d_t        convert_latch_2d( const PLA_REF & iplayer, const latch_2d_t & src );
+
+    ego_player_data & get_data() { return *this; }
+    const ego_player_data & cget_data() const { return *this; }
 };
 
-extern t_stack< ego_player, MAX_PLAYER > PlaStack;                         ///< Stack for keeping track of players
+/// The state of a player
+struct ego_player : public ego_player_data
+{
+    friend class std::deque< ego_player >;
 
-#define VALID_PLA(IPLA)       ( PlaStack.in_range_ref(IPLA) && ((IPLA) < PlaStack.count) && PlaStack[IPLA].valid )
-#define INVALID_PLA(IPLA)     ( !PlaStack.in_range_ref(IPLA) || ((IPLA) >= PlaStack.count)|| !PlaStack[IPLA].valid )
+    ego_player( ego_uint id ) : _id(id) {}
 
-struct ego_chr * pla_get_pchr( const PLA_REF & iplayer );
-ego_player*      net_get_ppla( const CHR_REF & ichr );
+    ego_player & operator = (const ego_player & rhs)
+    {
+        get_data() = rhs.cget_data();
+        return *this;
+    }
+
+    const ego_uint get_id() const { return _id; }
+
+private:
+
+    /// this constructor can only be called by player_deque for the purpose
+    /// of setting up the std::deque< ego_player >
+    explicit ego_player() : _id(ego_uint(-1)) { ctor(this); }
+
+    const ego_uint _id;
+};
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+/// std::deque for keeping track of players
+struct player_deque : public std::deque< ego_player >
+{
+    player_deque() : _guid(0) { init(); }
+    ~player_deque() { dtor(); }
+
+    void   toggle_all_explore();
+    void   toggle_all_wizard();
+    bool_t has_explore();
+    bool_t has_wizard();
+
+    // wrapper function to make sure that you are indexing the PlayerDeque by the right kind of reference
+    ego_player * find_by_ref( const PLA_REF & ref ) { return find_by_id(ref.get_value()); }
+
+    /// a no-fail "creation" process
+    ego_player * create( const ego_uint id = ego_uint(-1) )
+    {
+        ego_player * ppla = NULL;
+
+        if( ego_uint(-1) != id )
+        {
+            ppla = find_by_id(id);
+
+            if( NULL == ppla )
+            {
+                push_back( ego_player(id) );
+                ppla = &(back());
+            }
+            else
+            {
+                ego_player::reinit( ppla );
+            }
+        }
+        else
+        {
+            push_back( ego_player(_guid) );
+            ppla = &(back());
+
+            _guid++;
+        }
+
+
+        return ppla;
+    }
+
+    void reinit();
+
+protected:
+    void init();
+    void dtor();
+
+private:
+
+    ego_player * find_by_id( ego_uint id )
+    {
+        if( empty() ) return NULL;
+
+        ego_player * ppla = NULL;
+        for( iterator it = begin(); it != end(); it ++ )
+        {
+            if( it->get_id() == id )
+            {
+                ppla = &(*it);
+            }
+        }
+
+        return ppla;
+    }
+
+    ego_uint _guid;
+};
+
+extern player_deque PlaDeque;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 /// Network information on connected players
-struct NetPlayerInfo
+struct net_remote_player_info
 {
     int which_slot;
 };
@@ -244,7 +346,7 @@ struct net_instance
     ENetHost      * my_host;
     ENetPeer      * game_host;
     ENetPeer      * player_peers[MAX_PLAYER];
-    NetPlayerInfo   player_info[MAXNETPLAYER];
+    net_remote_player_info   player_info[MAXNETPLAYER];
 
     net_instance()
     {
@@ -287,28 +389,29 @@ extern Uint32                  randsave;                  ///< Used in network t
 // Networking functions
 //--------------------------------------------------------------------------------------------
 
-const net_instance * network_get_instance();
-bool_t               network_initialized();
-bool_t               network_get_host_active();
-bool_t               network_set_host_active( bool_t state );
-bool_t               network_waiting_for_players();
+const net_instance * net_get_instance();
+bool_t               net_initialized();
+bool_t               net_get_host_active();
+bool_t               net_set_host_active( bool_t state );
+bool_t               net_waiting_for_players();
+void                 net_dispatch_packets();
 
 void network_system_begin( ego_config_data * pcfg );
 void network_system_end( void );
 
-void net_dispatch_packets();
 void unbuffer_all_player_latches();
-void close_session();
+void net_close_session();
 
 void net_send_message();
 
-void net_updateFileTransfers();
-int  net_pendingFileTransfers();
+void net_file_updateTransfers();
+int  net_file_pendingTransfers();
 
 void net_copyFileToAllPlayers( const char *source, const char *dest );
 void net_copyFileToHost( const char *source, const char *dest );
 void net_copyDirectoryToHost( const char *dirname, const char *todirname );
 void net_copyDirectoryToAllPlayers( const char *dirname, const char *todirname );
+
 void net_sayHello();
 void cl_talkToHost();
 void sv_talkToRemotes();
@@ -326,9 +429,8 @@ void net_reset_players();
 
 void tlatch_ary_init( ego_time_latch ary[], size_t len );
 
-void   PlaStack_toggle_all_explore();
-void   PlaStack_toggle_all_wizard();
-bool_t PlaStack_has_explore();
-bool_t PlaStack_has_wizard();
+ego_chr    * pla_get_pchr( const ego_player & rplayer );
+ego_player * net_get_ppla( const CHR_REF & ichr );
+
 
 void net_synchronize_game_clock();

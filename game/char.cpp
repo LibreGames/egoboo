@@ -234,7 +234,7 @@ void keep_weapons_with_holders()
             {
 
                 // Items become partially invisible in hands of players
-                if ( VALID_PLA( pattached->is_which_player ) && 255 != pattached->gfx_inst.alpha )
+                if ( IS_PLAYER_PCHR( pattached ) && 255 != pattached->gfx_inst.alpha )
                 {
                     ego_chr::set_alpha( pchr, SEEINVISIBLE );
                 }
@@ -252,7 +252,7 @@ void keep_weapons_with_holders()
                 }
 
                 // Do light too
-                if ( VALID_PLA( pattached->is_which_player ) && 255 != pattached->gfx_inst.light )
+                if ( IS_PLAYER_PCHR( pattached ) && 255 != pattached->gfx_inst.light )
                 {
                     ego_chr::set_light( pchr, SEEINVISIBLE );
                 }
@@ -701,7 +701,7 @@ void free_all_chraracters()
     ChrObjList.free_all();
 
     // free_all_players
-    PlaStack.count = 0;
+    PlaDeque.reinit();
     net_stats.pla_count_local = 0;
 
     // free_all_stats
@@ -1557,7 +1557,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
         fvec3_t   vforward;
 
         //---- generate billboards for things that players can interact with
-        if ( cfg.feedback != FEEDBACK_OFF && VALID_PLA( pchr_a->is_which_player ) )
+        if ( cfg.feedback != FEEDBACK_OFF && IS_PLAYER_PCHR( pchr_a ) )
         {
             GLXvector4f default_tint = { 1.00f, 1.00f, 1.00f, 1.00f };
 
@@ -1577,7 +1577,7 @@ bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, boo
         }
 
         //---- if you can't grab anything, activate something using ALERTIF_BUMPED
-        if ( VALID_PLA( pchr_a->is_which_player ) && ungrab_count > 0 )
+        if ( IS_PLAYER_PCHR( pchr_a ) && ungrab_count > 0 )
         {
             ego_chr::get_MatForward( pchr_a, &vforward );
 
@@ -1908,7 +1908,7 @@ void do_level_up( const CHR_REF & character )
             ADD_BITS( pchr->ai.alert, ALERTIF_LEVELUP );
 
             // The character is ready to advance...
-            if ( VALID_PLA( pchr->is_which_player ) )
+            if ( IS_PLAYER_PCHR( pchr ) )
             {
                 debug_printf( "%s gained a level!!!", ego_chr::get_name( GET_REF_PCHR( pchr ), CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL ) );
                 sound_play_chunk_full( g_wavelist[GSND_LEVELUP] );
@@ -2463,7 +2463,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
     cleanup_one_character( pchr );
 
     // If it's a player, let it die properly before enabling respawn
-    if ( VALID_PLA( pchr->is_which_player ) ) timer_revive = ONESECOND; // 1 second
+    if ( IS_PLAYER_PCHR( pchr ) ) timer_revive = ONESECOND; // 1 second
 
     // Let its AI script run one last time
     pchr->ai.timer = update_wld + 1;            // Prevent IfTimeOut in scr_run_chr_script()
@@ -2583,7 +2583,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         }
 
         // don't show damage to players since they get feedback from the status bars
-        if ( loc_pchr->draw_stats || VALID_PLA( loc_pchr->is_which_player ) )
+        if ( loc_pchr->draw_stats || IS_PLAYER_PCHR( loc_pchr ) )
         {
             do_feedback = bfalse;
         }
@@ -2671,7 +2671,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
     if ( actual_damage > 0 )
     {
         // Hard mode deals 25% extra actual damage to players!
-        if ( cfg.difficulty >= GAME_HARD && VALID_PLA( loc_pchr->is_which_player ) && !VALID_PLA( ChrObjList.get_data_ref( attacker ).is_which_player ) )
+        if ( cfg.difficulty >= GAME_HARD && IS_PLAYER_PCHR( loc_pchr ) && !IS_PLAYER_PCHR( ChrObjList.get_data_ptr( attacker ) ) )
         {
             actual_damage *= 1.25f;
         }
@@ -2679,12 +2679,12 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         // Easy mode deals 25% extra actual damage by players and 25% less to players
         if ( cfg.difficulty <= GAME_EASY )
         {
-            if ( VALID_PLA( ChrObjList.get_data_ref( attacker ).is_which_player ) && !VALID_PLA( loc_pchr->is_which_player ) )
+            if ( IS_PLAYER_PCHR( ChrObjList.get_data_ptr( attacker ) ) && !IS_PLAYER_PCHR( loc_pchr ) )
             {
                 actual_damage *= 1.25f;
             }
 
-            if ( !VALID_PLA( ChrObjList.get_data_ref( attacker ).is_which_player ) &&  VALID_PLA( loc_pchr->is_which_player ) )
+            if ( !IS_PLAYER_PCHR( ChrObjList.get_data_ptr( attacker ) ) &&  IS_PLAYER_PCHR( loc_pchr ) )
             {
                 actual_damage *= 0.75f;
             }
@@ -3115,7 +3115,7 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
     }
 
     // If the we are respawning a player, then the camera needs to be reset
-    if ( VALID_PLA( pchr->is_which_player ) )
+    if ( IS_PLAYER_PCHR( pchr ) )
     {
         ego_camera::reset_target( PCamera, PMesh );
     }
@@ -4042,7 +4042,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
             if ( pmount->ismount && pmount->alive )
             {
                 // can the mount be told what to do?
-                if ( !VALID_PLA( pmount->is_which_player ) && pmount->mad_inst.action.ready )
+                if ( !IS_PLAYER_PCHR( pmount ) && pmount->mad_inst.action.ready )
                 {
                     if ( !ACTION_IS_TYPE( action, P ) || !pmount_cap->ridercanattack )
                     {
@@ -4328,7 +4328,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
             {
                 // The item couldn't be put away
                 ADD_BITS( pitem->ai.alert, ALERTIF_NOTPUTAWAY );
-                if ( VALID_PLA( loc_pchr->is_which_player ) )
+                if ( IS_PLAYER_PCHR( loc_pchr ) )
                 {
                     if ( pro_get_pcap( pitem->profile_ref )->istoobig )
                     {
@@ -4369,7 +4369,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
             {
                 // The item couldn't be put away
                 ADD_BITS( pitem->ai.alert, ALERTIF_NOTPUTAWAY );
-                if ( VALID_PLA( loc_pchr->is_which_player ) )
+                if ( IS_PLAYER_PCHR( loc_pchr ) )
                 {
                     if ( pitem_cap->istoobig )
                     {
@@ -4464,7 +4464,7 @@ bool_t chr_handle_madfx( ego_chr * pchr, BIT_FIELD madfx )
         detach_character_from_mount( pchr->holdingwhich[SLOT_RIGHT], bfalse, btrue );
     }
 
-    if ( HAS_SOME_BITS( madfx, MADFX_POOF ) && !VALID_PLA( pchr->is_which_player ) )
+    if ( HAS_SOME_BITS( madfx, MADFX_POOF ) && !IS_PLAYER_PCHR( pchr ) )
     {
         pchr->ai.poof_time = update_wld;
     }
@@ -4509,7 +4509,7 @@ int cmp_chr_anim_data( void const * vp_lhs, void const * vp_rhs )
         return -1;
     }
 
-    retval = ( int )prhs->allowed - ( int )plhs->allowed;
+    retval = int(prhs->allowed) - int(plhs->allowed);
     if ( 0 != retval ) return retval;
 
     retval = SGN( plhs->speed - prhs->speed );
@@ -5269,7 +5269,7 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
     if ( !use_latch ) return pbdl;
 
     // is this character a player?
-    is_player = VALID_PLA( loc_pchr->is_which_player );
+    is_player = IS_PLAYER_PCHR( loc_pchr );
 
     // Make a copy of the character's latch
     loc_latch.x = loc_pchr->latch.trans.dir[kX];
@@ -5285,11 +5285,10 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
 
     // handle sneaking
     sneak_mode_active = bfalse;
-    if ( is_player )
+    ego_player * ppla = PlaDeque.find_by_ref( loc_pchr->is_which_player );
+    if ( is_player && NULL != ppla && ppla->valid )
     {
         // determine whether the user is hitting the "sneak button"
-        ego_player * ppla = PlaStack + loc_pchr->is_which_player;
-
         if ( HAS_SOME_BITS( ppla->device.bits, INPUT_BITS_KEYBOARD ) )
         {
             // use the shift keys to enter sneak mode
@@ -5319,10 +5318,10 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
 
         // determine how response of the character to the latch
         scale = 1.0f;
-        if ( is_player )
+        ego_player * ppla = PlaDeque.find_by_ref( loc_pchr->is_which_player );
+        if ( is_player && NULL != ppla && ppla->valid )
         {
             float dv;
-            ego_player * ppla = PlaStack + loc_pchr->is_which_player;
 
             dv = SQRT( dv2 );
             if ( dv < 1.0f )
@@ -5663,7 +5662,7 @@ ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
 
                         if ( fvec2_length_abs( tmp_vel.v ) > TURN_SPEED )
                         {
-                            if ( VALID_PLA( loc_pchr->is_which_player ) )
+                            if ( IS_PLAYER_PCHR( loc_pchr ) )
                             {
                                 // Players turn quickly
                                 loc_pchr->ori.facing_z += terp_dir( loc_pchr->ori.facing_z, vec_to_facing( tmp_vel.x , tmp_vel.y ), 2 );
@@ -6387,7 +6386,7 @@ void cleanup_all_characters()
         ego_obj_chr * pobj = ego_chr::get_obj_ptr( pchr );
         if ( NULL == pobj ) continue;
 
-        time_out = ( pchr->ai.poof_time >= 0 ) && ( pchr->ai.poof_time <= ( Sint32 )update_wld );
+        time_out = ( pchr->ai.poof_time >= 0 ) && ( Uint32(pchr->ai.poof_time) <= update_wld );
         if ( !WAITING_PBASE( pobj ) && !time_out ) continue;
 
         // detach the character from the game
@@ -6446,7 +6445,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
     {
         // I Frame
         direction -= pcap->iframefacing;
-        left       = ( FACING_T )(( int )0x00010000 - ( int )pcap->iframeangle );
+        left       = FACING_T( int(0x00010000L) - int(pcap->iframeangle) );
         right      = pcap->iframeangle;
 
         // If using shield, use the shield invictus instead
@@ -6461,7 +6460,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
                 ego_cap * pcap_tmp = ego_chr::get_pcap( pchr->holdingwhich[SLOT_LEFT] );
                 if ( NULL != pcap )
                 {
-                    left  = ( FACING_T )(( int )0x00010000 - ( int )pcap_tmp->iframeangle );
+                    left  = FACING_T( int(0x00010000L) - int(pcap_tmp->iframeangle) );
                     right = pcap_tmp->iframeangle;
                 }
             }
@@ -6471,7 +6470,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
                 ego_cap * pcap_tmp = ego_chr::get_pcap( pchr->holdingwhich[SLOT_RIGHT] );
                 if ( NULL != pcap )
                 {
-                    left  = ( FACING_T )(( int )0x00010000 - ( int )pcap_tmp->iframeangle );
+                    left  = FACING_T( int(0x00010000L) - int(pcap_tmp->iframeangle) );
                     right = pcap_tmp->iframeangle;
                 }
             }
@@ -6481,7 +6480,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
     {
         // N Frame
         direction -= pcap->nframefacing;
-        left       = ( FACING_T )(( int )0x00010000 - ( int )pcap->nframeangle );
+        left       = FACING_T( int(0x00010000L) - int(pcap->nframeangle) );
         right      = pcap->nframeangle;
     }
 
@@ -6567,7 +6566,7 @@ slot_t grip_offset_to_slot( grip_offset_t grip_off )
     }
     else
     {
-        int islot = (( int )grip_off / GRIP_VERTS ) - 1;
+        int islot = (int(grip_off) / GRIP_VERTS ) - 1;
 
         // coerce the slot number to fit within the valid range
         islot = CLIP( islot, 0, SLOT_COUNT );
@@ -7091,7 +7090,7 @@ const char* describe_damage( float value, float maxval, int * rank_ptr )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )value ) );
+        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(int( value ) ) );
         return retval;
     }
 
@@ -7134,7 +7133,7 @@ const char* describe_wounds( float max, float current )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )current ) );
+        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(int( current ) ) );
         return retval;
     }
 
@@ -7752,7 +7751,7 @@ int ego_chr::get_price( const CHR_REF & ichr )
         }
     }
 
-    return ( int )price;
+    return int( price );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -10823,7 +10822,7 @@ ego_chr * ego_chr::do_processing( ego_chr * pchr )
                 ripple_suppression = CLIP( ripple_suppression, 0, 4 );
 
                 // make more ripples if we are moving
-                ripple_suppression -= (( int )pchr->vel.x != 0 ) | (( int )pchr->vel.y != 0 );
+                ripple_suppression -= (int(pchr->vel.x) != 0 ) | (int(pchr->vel.y) != 0 );
 
                 if ( ripple_suppression > 0 )
                 {

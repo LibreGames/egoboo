@@ -62,7 +62,7 @@ typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
 #define IS_PACKED_CHR_RAW(ICHR)   ( ChrObjList.get_data_ref(ICHR).pack.is_packed )
 #define IS_ATTACHED_CHR_RAW(ICHR) ( (DEFINED_CHR(ChrObjList.get_data_ref(ICHR).attachedto) || ChrObjList.get_data_ref(ICHR).pack.is_packed) )
 
-#define IS_INVICTUS_PCHR_RAW(PCHR) ( ( VALID_PLA( (PCHR)->is_which_player ) ? PlaStack[(PCHR)->is_which_player].wizard_mode : bfalse ) || (PCHR)->invictus )
+
 #define IS_FLYING_PCHR_RAW(PCHR)   ( ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
 #define IS_PACKED_PCHR_RAW(PCHR)   ( (PCHR)->pack.is_packed )
 #define IS_ATTACHED_PCHR_RAW(PCHR) ( (DEFINED_CHR((PCHR)->attachedto) || (PCHR)->pack.is_packed) )
