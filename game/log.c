@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file log.c
-/// @brief Basic logging functionality.
-/// @details
+/// \file log.c
+/// \brief Basic logging functionality.
+/// \details
 
 #include "log.h"
 #include "system.h"

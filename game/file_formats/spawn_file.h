@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/spawn_file.h
-/// @details loading the environment definitions for a module
+/// \file file_formats/spawn_file.h
+/// \details loading the environment definitions for a module
 
 #include "egoboo_vfs.h"
 #include "egoboo_math.h"

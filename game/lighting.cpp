@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file lighting.c
-/// @brief Code for controlling the character and mesh lighting
-/// @details
+/// \file lighting.c
+/// \brief Code for controlling the character and mesh lighting
+/// \details
 
 #include "lighting.h"
 
@@ -350,7 +350,8 @@ bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache 
 //--------------------------------------------------------------------------------------------
 float lighting_cache_test( ego_lighting_cache * src[], float u, float v, float * low_delta, float * hgh_delta )
 {
-    /// @details BB@> estimate the maximum change in the lighting at this point from the
+    /// \author BB
+    /// \details  estimate the maximum change in the lighting at this point from the
     ///               measured delta values
 
     float delta, wt_sum;
@@ -563,7 +564,8 @@ float lighting_evaluate_cache( ego_lighting_cache * src, fvec3_base_t nrm, float
 //--------------------------------------------------------------------------------------------
 bool_t sum_dyna_lighting( ego_dynalight * pdyna, lighting_vector_t lighting, fvec3_base_t nrm )
 {
-    /// @details BB@> In the Aaron's lighting, the falloff function was
+    /// \author BB
+    /// \details  In the Aaron's lighting, the falloff function was
     ///                  light = (255 - r^2 / falloff) / 255.0f
     ///              this has a definite max radius for the light, rmax = sqrt(falloff*255),
     ///              which was good because we could have a definite range for a given light

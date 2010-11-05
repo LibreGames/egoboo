@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file log.h
-/// @details Basic logging functionality.
+/// \file log.h
+/// \details Basic logging functionality.
 
 #include "file_common.h"
 

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file object_BSP.cpp
-/// @brief Implementation of the BSP for objects
-/// @details
+/// \file object_BSP.cpp
+/// \brief Implementation of the BSP for objects
+/// \details
 
 #include "object_BSP.h"
 
@@ -66,7 +66,8 @@ bool_t ego_obj_BSP::dealloc( ego_obj_BSP * pbsp )
 //--------------------------------------------------------------------------------------------
 bool_t ego_obj_BSP::ctor_this( ego_obj_BSP * pbsp, mpd_BSP * pmesh_bsp )
 {
-    /// @details BB@> Create a new BSP tree for the mesh.
+    /// \author BB
+    /// \details  Create a new BSP tree for the mesh.
     //     These parameters duplicate the max resolution of the old system.
 
     int          cnt;
@@ -121,7 +122,8 @@ bool_t ego_obj_BSP::dtor_this( ego_obj_BSP * pbsp )
 //--------------------------------------------------------------------------------------------
 bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
 {
-    /// @details BB@> insert a character's ego_BSP_leaf   into the ego_BSP_tree
+    /// \author BB
+    /// \details  insert a character's ego_BSP_leaf   into the ego_BSP_tree
 
     bool_t       retval;
     ego_BSP_leaf * pleaf;
@@ -175,7 +177,8 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_bundle_prt * pbdl_prt )
 {
-    /// @details BB@> insert a particle's ego_BSP_leaf   into the ego_BSP_tree
+    /// \author BB
+    /// \details  insert a particle's ego_BSP_leaf   into the ego_BSP_tree
 
     bool_t       retval;
     ego_BSP_leaf * pleaf;
@@ -319,7 +322,8 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
 //--------------------------------------------------------------------------------------------
 int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
-    /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
+    /// \author BB
+    /// \details  fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
     if ( NULL == pbsp || NULL == paabb ) return 0;
@@ -376,8 +380,9 @@ int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_l
 ////--------------------------------------------------------------------------------------------
 //bool_t ego_obj_BSP::collide_branch( ego_BSP_branch * pbranch, ego_oct_bb   * pvbranch, ego_oct_bb   * pvobj, int_ary * colst )
 //{
-//    /// @details BB@> Recursively search the BSP tree for collisions with the pvobj
-//    //      Return bfalse if we need to break out of the recursive search for any reason.
+//    /// \author BB
+//    /// \details  Recursively search the BSP tree for collisions with the pvobj
+//    ///      Return bfalse if we need to break out of the recursive search for any reason.
 //
 //    Uint32 i;
 //    ego_oct_bb      int_ov, tmp_ov;
@@ -457,7 +462,8 @@ int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_l
 ////--------------------------------------------------------------------------------------------
 //bool_t ego_obj_BSP::collide_nodes( ego_BSP_leaf   leaf_lst[], ego_oct_bb   * pvobj, int_ary * colst )
 //{
-//    /// @details BB@> check for collisions with the given node list
+//    /// \author BB
+//    /// \details  check for collisions with the given node list
 //
 //    ego_BSP_leaf * pleaf;
 //    ego_oct_bb      int_ov, * pnodevol;

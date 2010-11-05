@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file mesh.inl
+/// \file mesh.inl
 
 #include "egoboo_typedef_cpp.inl"
 
@@ -51,7 +51,8 @@ INLINE bool_t ego_mpd::grid_is_valid( ego_mpd   * pmpd, Uint32 id )
 //--------------------------------------------------------------------------------------------
 INLINE float ego_mpd::get_level( ego_mpd   * pmesh, float x, float y )
 {
-    /// @details ZZ@> This function returns the height of a point within a mesh fan, precisely
+    /// \author ZZ
+    /// \details  This function returns the height of a point within a mesh fan, precisely
 
     Uint32 tile;
     int ix, iy;

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file sound.h
-/// @Sound handling using SDL_mixer
+/// \file sound.h
+/// \details Sound handling using SDL_mixer
 
 #include "egoboo_typedef_cpp.h"
 

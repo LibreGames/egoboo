@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file server.h
-/// @Basic skeleton for the server portion of a client-server architecture,
+/// \file server.h
+/// \details Basic skeleton for the server portion of a client-server architecture,
 /// this is totally not in use yet.
 
 /// A mockup of the struct that could be used to store the server state

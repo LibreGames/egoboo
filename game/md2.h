@@ -19,13 +19,13 @@
 //*
 //********************************************************************************************
 
-/// @file md2.h
-/// @brief Md2 Model display routines
-/// @details Adapted from "Tactics - MD2_Model.h" by Jonathan Fischer
+/// \file md2.h
+/// \brief Md2 Model display routines
+/// \details Adapted from "Tactics - MD2_Model.h" by Jonathan Fischer
 ///   A class for loading/using Quake 2 and Egoboo md2 models.
 ///   Creating/destroying objects of this class is done in the same fashion as
 ///   Textures, so see Texture.h for details.
-/// @note You will routinely include "md2.h" only in headers (*.h) files where you need to declare an
+/// \note You will routinely include "md2.h" only in headers (*.h) files where you need to declare an
 ///       struct defined in this file. In *.inl files or *.c/*.cpp files you will routinely include "md2.inl", instead.
 
 #include "file_formats/id_md2.h"

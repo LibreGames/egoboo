@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file client.h
-/// @details Basic skeleton for the client portion of a client-server architecture,
+/// \file client.h
+/// \details Basic skeleton for the client portion of a client-server architecture,
 /// this is totally not in use yet.
 
 /// A mockup of an actual client state

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file sound.c
-/// @brief Sound code in Egoboo is implemented using SDL_mixer.
-/// @details
+/// \file sound.c
+/// \brief Sound code in Egoboo is implemented using SDL_mixer.
+/// \details
 
 #include "sound.h"
 #include "camera.h"
@@ -241,7 +241,8 @@ bool_t sdl_audio_initialize()
 //--------------------------------------------------------------------------------------------
 bool_t sdl_mixer_initialize()
 {
-    /// @details ZF@> This initializes the SDL_mixer services
+    /// \author ZF
+    /// \details  This initializes the SDL_mixer services
 
     if ( !mixeron && ( snd.musicvalid || snd.soundvalid ) )
     {
@@ -508,7 +509,8 @@ void sound_restart()
 
 int _calculate_volume( fvec3_t   diff )
 {
-    /// @details BB@> This calculates the volume a sound should have depending on
+    /// \author BB
+    /// \details  This calculates the volume a sound should have depending on
     //  the distance from the camera
 
     float dist2;
@@ -561,7 +563,9 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff )
 //--------------------------------------------------------------------------------------------
 int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const CHR_REF & owner )
 {
-    /// ZF@> This function plays a specified sound and returns which channel its using
+    /// \author ZF
+    /// \details This function plays a specified sound and returns which channel its using
+
     int channel = INVALID_SOUND_CHANNEL;
     fvec3_t   diff;
     int volume;
@@ -583,7 +587,7 @@ int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const C
 
         if ( INVALID_SOUND_CHANNEL == channel )
         {
-            /// @note ZF@> disabled this warning because this happens really often
+            /// \note ZF@> disabled this warning because this happens really often
             //log_debug( "Unable to play sound. (%s)\n", Mix_GetError() );
         }
         else
@@ -605,7 +609,9 @@ int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const C
 //--------------------------------------------------------------------------------------------
 int sound_play_chunk_full( Mix_Chunk * pchunk )
 {
-    /// ZF@> This function plays a specified sound at full possible volume and returns which channel its using
+    /// \author ZF
+    /// \details This function plays a specified sound at full possible volume and returns which channel its using
+
     int channel = INVALID_SOUND_CHANNEL;
 
     if ( !snd.soundvalid || !mixeron || NULL == pchunk ) return INVALID_SOUND_CHANNEL;
@@ -625,7 +631,8 @@ int sound_play_chunk_full( Mix_Chunk * pchunk )
 //--------------------------------------------------------------------------------------------
 void sound_stop_channel( int whichchannel )
 {
-    /// @details ZF@> Stops a sound effect playing in the specified channel
+    /// \author ZF
+    /// \details  Stops a sound effect playing in the specified channel
     if ( mixeron && snd.soundvalid )
     {
         Mix_HaltChannel( whichchannel );
@@ -637,7 +644,8 @@ void sound_stop_channel( int whichchannel )
 //------------------------------------
 void sound_play_song( int songnumber, Uint16 fadetime, int loops )
 {
-    /// @details ZF@> This functions plays a specified track loaded into memory
+    /// \author ZF
+    /// \details  This functions plays a specified track loaded into memory
     if ( !snd.musicvalid || !mixeron ) return;
 
     if ( songplaying != songnumber )
@@ -704,7 +712,9 @@ void sound_finish_song( Uint16 fadetime )
 //--------------------------------------------------------------------------------------------
 void sound_stop_song()
 {
-    /// ZF@> This function sets music track to pause
+    /// \author ZF
+    /// \details This function sets music track to pause
+
     if ( mixeron && snd.musicvalid )
     {
         Mix_HaltMusic();
@@ -715,7 +725,8 @@ void sound_stop_song()
 //--------------------------------------------------------------------------------------------
 void load_global_waves()
 {
-    /// @details ZZ@> This function loads the global waves
+    /// \author ZZ
+    /// \details  This function loads the global waves
 
     STRING wavename;
     int cnt;
@@ -871,7 +882,8 @@ void fade_in_music( Mix_Music * music )
 //--------------------------------------------------------------------------------------------
 void   LoopedList_init()
 {
-    /// @details BB@> setup the looped sound list
+    /// \author BB
+    /// \details  setup the looped sound list
     LOOP_REF cnt;
     size_t tnc;
 
@@ -896,7 +908,8 @@ void   LoopedList_init()
 //--------------------------------------------------------------------------------------------
 bool_t LoopedList_validate()
 {
-    /// @details BB@> do the free and used indices have valid values?
+    /// \author BB
+    /// \details  do the free and used indices have valid values?
 
     bool_t retval;
 
@@ -914,7 +927,8 @@ bool_t LoopedList_validate()
 //--------------------------------------------------------------------------------------------
 bool_t LoopedList_free_one( size_t index )
 {
-    /// @details BB@> free a looped sound only if it is actually being used
+    /// \author BB
+    /// \details  free a looped sound only if it is actually being used
     size_t   cnt;
     LOOP_REF ref;
 
@@ -974,7 +988,8 @@ size_t LoopedList_get_free()
 //--------------------------------------------------------------------------------------------
 void LoopedList_clear()
 {
-    /// @details BB@> shut off all the looped sounds
+    /// \author BB
+    /// \details  shut off all the looped sounds
 
     LOOP_REF cnt;
 
@@ -997,7 +1012,8 @@ void LoopedList_clear()
 //--------------------------------------------------------------------------------------------
 size_t LoopedList_add( Mix_Chunk * sound, int channel, const CHR_REF &  ichr )
 {
-    /// @details BB@> add a looped sound to the list
+    /// \author BB
+    /// \details  add a looped sound to the list
 
     size_t index;
 
@@ -1023,7 +1039,8 @@ size_t LoopedList_add( Mix_Chunk * sound, int channel, const CHR_REF &  ichr )
 //--------------------------------------------------------------------------------------------
 bool_t LoopedList_remove( int channel )
 {
-    /// @details BB@> remove a looped sound from the used list
+    /// \author BB
+    /// \details  remove a looped sound from the used list
 
     size_t cnt;
     bool_t retval;
@@ -1055,7 +1072,8 @@ bool_t LoopedList_remove( int channel )
 //--------------------------------------------------------------------------------------------
 bool_t _update_stereo_channel( int channel, fvec3_t   diff )
 {
-    /// @details BB@> This updates the stereo image of a looped sound
+    /// \author BB
+    /// \details  This updates the stereo image of a looped sound
 
     int       volume;
 
@@ -1105,7 +1123,8 @@ void looped_update_all_sound()
 //--------------------------------------------------------------------------------------------
 bool_t looped_stop_object_sounds( const CHR_REF &  ichr )
 {
-    /// @details BB@> free any looped sound(s) being made by a certain character
+    /// \author BB
+    /// \details  free any looped sound(s) being made by a certain character
     int    freed;
     size_t cnt;
     bool_t found;
@@ -1167,7 +1186,8 @@ void sound_free_chunk( Mix_Chunk * pchunk )
 //--------------------------------------------------------------------------------------------
 int get_current_song_playing()
 {
-    /// @details ZF@> This gives read access to the private variable 'songplaying'
+    /// \author ZF
+    /// \details  This gives read access to the private variable 'songplaying'
     return songplaying;
 }
 

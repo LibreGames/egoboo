@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file platform/file_win.c
-/// @brief Windows-specific filesystem functions.
-/// @details
+/// \file platform/file_win.c
+/// \brief Windows-specific filesystem functions.
+/// \details
 
 #include <windows.h>
 #include <shlobj.h>
@@ -50,7 +50,8 @@ static char win32_configPath[MAX_PATH]   = EMPTY_CSTR;
 //--------------------------------------------------------------------------------------------
 void sys_fs_init()
 {
-    /// @details JF@> This function determines the temporary, import,
+    /// \author JF
+    /// \details This function determines the temporary, import,
     /// game data and save paths
 
     HANDLE hFile;
@@ -158,7 +159,8 @@ int fs_removeDirectory( const char *dirname )
 //--------------------------------------------------------------------------------------------
 void fs_deleteFile( const char *filename )
 {
-    /// @details ZZ@> This function deletes a file
+    /// \author ZZ
+    /// \details  This function deletes a file
     DeleteFile( filename );
 }
 

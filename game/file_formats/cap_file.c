@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/cap_data_file.c
-/// @brief routines for reading and writing the character profile file data.txt
-/// @details
+/// \file file_formats/cap_data_file.c
+/// \brief routines for reading and writing the character profile file data.txt
+/// \details
 
 #include "cap_file.h"
 #include "mpd_file.h"
@@ -39,7 +39,8 @@
 //--------------------------------------------------------------------------------------------
 cap_data_t * cap_data_init( cap_data_t * pcap )
 {
-    /// @details BB@> initialize the character profile data to safe values
+    /// \author BB
+    /// \details  initialize the character profile data to safe values
     ///     since we use SDL_memset(..., 0, ...), all = 0, = false, and = 0.0f
     ///     statements are redundant
 
@@ -83,7 +84,8 @@ cap_data_t * cap_data_init( cap_data_t * pcap )
 //--------------------------------------------------------------------------------------------
 cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * pcap )
 {
-    /// @details ZZ@> This function fills a character profile with data from data.txt, returning
+    /// \author ZZ
+    /// \details  This function fills a character profile with data from data.txt, returning
     ///     the icap slot that the profile was stuck into.  It may cause the program
     ///     to abort if bad things happen.
 
@@ -340,7 +342,7 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
         pcap->skincost[cnt] = fget_next_int( fileread );
     }
 
-    /// @note ZF@> Deprecated, but keep here for backwards compatability
+    /// \note ZF@> Deprecated, but keep here for backwards compatability
     pcap->str_bonus = fget_next_float( fileread );
 
     // Another memory lapse
@@ -445,7 +447,8 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
 //--------------------------------------------------------------------------------------------
 bool_t save_one_cap_data_file_vfs( const char * szSaveName, const char * szTemplateName, cap_data_t * pcap )
 {
-    /// @details BB@> export one cap_data_t struct to a "data.txt" file
+    /// \author BB
+    /// \details  export one cap_data_t struct to a "data.txt" file
     ///     converted to using the template file
 
     vfs_FILE* filewrite, * filetemp;

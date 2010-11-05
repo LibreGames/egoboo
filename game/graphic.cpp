@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file graphic.c
-/// @brief Simple Egoboo renderer
-/// @details All sorts of stuff related to drawing the game
+/// \file graphic.c
+/// \brief Simple Egoboo renderer
+/// \details All sorts of stuff related to drawing the game
 
 #include "graphic.h"
 #include "graphic_prt.h"
@@ -261,7 +261,8 @@ gfx_config_data_t * gfx_get_config()
 //--------------------------------------------------------------------------------------------
 void _debug_print( const char *text )
 {
-    /// @details ZZ@> This function sticks a message in the display queue and sets its timer
+    /// \author ZZ
+    /// \details  This function sticks a message in the display queue and sets its timer
 
     int          slot;
     const char * src;
@@ -327,7 +328,7 @@ int _va_draw_string( float x, float y, const char *format, va_list args )
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                x = ((int( x ) ) & TABAND ) + TABADD;
+                x = (( int( x ) ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
@@ -356,7 +357,8 @@ int _va_draw_string( float x, float y, const char *format, va_list args )
 //--------------------------------------------------------------------------------------------
 int _draw_string_raw( float x, float y, const char *format, ... )
 {
-    /// @details BB@> the same as draw string, but it does not use the gfx_begin_2d() ... gfx_end_2d()
+    /// \author BB
+    /// \details  the same as draw string, but it does not use the gfx_begin_2d() ... gfx_end_2d()
     ///    bookends.
 
     va_list args;
@@ -457,7 +459,7 @@ int ogl_init()
     GL_DEBUG( glEnable )( GL_ALPHA_TEST );
     GL_DEBUG( glAlphaFunc )( GL_GREATER, 0 );
 
-    /// @todo Including backface culling here prevents the mesh from getting rendered
+    /// \todo Including backface culling here prevents the mesh from getting rendered
     // backface culling
     // GL_DEBUG(glEnable)(GL_CULL_FACE);
     // GL_DEBUG(glFrontFace)(GL_CW);            // GL_POLYGON_BIT
@@ -692,7 +694,8 @@ bool_t ego_gfx_config::init( ego_gfx_config * pgfx )
 //--------------------------------------------------------------------------------------------
 bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_config_data * pcfg )
 {
-    //// @details BB@> synch the texture parameters with the video mode
+    /// \author BB
+    /// \details  synch the texture parameters with the video mode
 
     if ( NULL == ptex || NULL == pcfg ) return GL_FALSE;
 
@@ -729,7 +732,8 @@ int debug_printf( const char *format, ... )
 //--------------------------------------------------------------------------------------------
 void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map )
 {
-    /// @details ZZ@> This function draws a single blip
+    /// \author ZZ
+    /// \details  This function draws a single blip
     ego_frect_t txrect;
     float   width, height;
 
@@ -780,7 +784,8 @@ void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map
 //--------------------------------------------------------------------------------------------
 void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
 {
-    /// @details ZZ@> This function draws an icon
+    /// \author ZZ
+    /// \details  This function draws an icon
 
     int     position, blip_pos_x, blip_pos_y;
     float   width, height;
@@ -848,8 +853,9 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
 //--------------------------------------------------------------------------------------------
 void draw_one_font( int fonttype, float x, float y )
 {
-    /// @details ZZ@> This function draws a letter or number
-    /// GAC@> Very nasty version for starters.  Lots of room for improvement.
+    /// \author ZZ
+    /// \details  This function draws a letter or number
+    /// \note GAC@> Very nasty version for starters.  Lots of room for improvement.
 
     GLfloat dx, dy, fx1, fx2, fy1, fy2, border;
     GLuint x2, y2;
@@ -880,7 +886,8 @@ void draw_one_font( int fonttype, float x, float y )
 //--------------------------------------------------------------------------------------------
 void draw_map_texture( float x, float y )
 {
-    /// @details ZZ@> This function draws the map
+    /// \author ZZ
+    /// \details  This function draws the map
     gfx_enable_texturing();
 
     oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_MAP ) ) );
@@ -898,7 +905,8 @@ void draw_map_texture( float x, float y )
 //--------------------------------------------------------------------------------------------
 int draw_one_xp_bar( float x, float y, Uint8 ticks )
 {
-    /// @details ZF@> This function draws a xp bar and returns the y position for the next one
+    /// \author ZF
+    /// \details  This function draws a xp bar and returns the y position for the next one
 
     float width, height;
     Uint8 cnt;
@@ -980,7 +988,8 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
 //--------------------------------------------------------------------------------------------
 int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
 {
-    /// @details ZZ@> This function draws a bar and returns the y position for the next one
+    /// \author ZZ
+    /// \details  This function draws a bar and returns the y position for the next one
 
     int     noticks;
     float   width, height;
@@ -1140,7 +1149,8 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
 //--------------------------------------------------------------------------------------------
 int draw_string( float x, float y, const char *format, ... )
 {
-    /// @details ZZ@> This function spits a line of null terminated text onto the backbuffer
+    /// \author ZZ
+    /// \details  This function spits a line of null terminated text onto the backbuffer
     ///
     /// details BB@> Uses gfx_begin_2d() ... gfx_end_2d() so that the function can basically be called from anywhere
     ///    The way they are currently implemented, this breaks the icon drawing in draw_status() if
@@ -1162,7 +1172,8 @@ int draw_string( float x, float y, const char *format, ... )
 //--------------------------------------------------------------------------------------------
 int draw_wrap_string( const char *szText, float x, float y, int maxx )
 {
-    /// @details ZZ@> This function spits a line of null terminated text onto the backbuffer,
+    /// \author ZZ
+    /// \details  This function spits a line of null terminated text onto the backbuffer,
     ///    wrapping over the right side and returning the new y value
 
     int stt_x = x;
@@ -1202,7 +1213,7 @@ int draw_wrap_string( const char *szText, float x, float y, int maxx )
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                x = ((int( x ) ) & TABAND ) + TABADD;
+                x = (( int( x ) ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
@@ -1235,7 +1246,8 @@ int draw_wrap_string( const char *szText, float x, float y, int maxx )
 //--------------------------------------------------------------------------------------------
 void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t draw_ammo )
 {
-    /// @details BB@> Draw an icon for the given item at the position <x,y>.
+    /// \author BB
+    /// \details  Draw an icon for the given item at the position <x,y>.
     ///     If the object is invalid, draw the null icon instead of failing
 
     TX_REF icon_ref;
@@ -1297,7 +1309,8 @@ int draw_character_xp_bar( const CHR_REF & character, float x, float y )
 //--------------------------------------------------------------------------------------------
 int draw_status( const CHR_REF & character, float x, float y )
 {
-    /// @details ZZ@> This function shows a character's icon, status and inventory
+    /// \author ZZ
+    /// \details  This function shows a character's icon, status and inventory
     ///    The x,y coordinates are the top left point of the image to draw
 
     int cnt;
@@ -1602,7 +1615,7 @@ int draw_debug_character( CHR_REF ichr, int y )
 //--------------------------------------------------------------------------------------------
 int draw_debug_player( PLA_REF ipla, int y )
 {
-    ego_player * ppla = PlaDeque.find_by_ref(ipla);
+    ego_player * ppla = PlaDeque.find_by_ref( ipla );
     if ( NULL == ppla || !ppla->valid ) return y;
 
     if ( DEFINED_CHR( ppla->index ) )
@@ -1656,7 +1669,7 @@ int draw_debug( int y )
     if ( SDLKEYDOWN( SDLK_F6 ) )
     {
         // More debug information
-        
+
         y = _draw_string_raw( 0, y, "!!!DEBUG MODE-6!!!" );
         y = _draw_string_raw( 0, y, "~~FREE CHR : %d", ChrObjList.free_count() );
         y = _draw_string_raw( 0, y, "~~FREE ENC : %d", EncObjList.free_count() );
@@ -1664,12 +1677,12 @@ int draw_debug( int y )
         y = _draw_string_raw( 0, y, "~~PASS CNT : %d/%d", ShopStack.count, PassageStack.count );
 
         const net_instance * pnet = net_get_instance();
-        if( NULL != pnet )
+        if ( NULL != pnet )
         {
             STRING sz_machine_type;
 
-            if( 0 == pnet->machine_type ) strncpy( sz_machine_type, "HOST ID=0", SDL_arraysize(sz_machine_type) );
-            else SDL_snprintf( sz_machine_type, SDL_arraysize(sz_machine_type), "REMOTE ID=%d", pnet->machine_type );  
+            if ( 0 == pnet->machine_type ) strncpy( sz_machine_type, "HOST ID=0", SDL_arraysize( sz_machine_type ) );
+            else SDL_snprintf( sz_machine_type, SDL_arraysize( sz_machine_type ), "REMOTE ID=%d", pnet->machine_type );
 
             y = _draw_string_raw( 0, y, "~~MACHINE : %s", sz_machine_type );
             y = _draw_string_raw( 0, y, "~~NET PLA : %d", pnet->player_count );
@@ -1769,7 +1782,8 @@ int draw_messages( int y )
 //--------------------------------------------------------------------------------------------
 void draw_text()
 {
-    /// @details ZZ@> draw in-game heads up display
+    /// \author ZZ
+    /// \details  draw in-game heads up display
 
     int y;
 
@@ -1805,7 +1819,8 @@ void draw_text()
 //--------------------------------------------------------------------------------------------
 void project_view( ego_camera * pcam )
 {
-    /// @details ZZ@> This function figures out where the corners of the view area
+    /// \author ZZ
+    /// \details  This function figures out where the corners of the view area
     ///    go when projected onto the plane of the PMesh->  Used later for
     ///    determining which mesh fans need to be rendered
 
@@ -1948,7 +1963,8 @@ void render_shadow_sprite( float intensity, ego_GLvertex v[] )
 //--------------------------------------------------------------------------------------------
 void render_shadow( const CHR_REF & character )
 {
-    /// @details ZZ@> This function draws a NIFTY shadow
+    /// \author ZZ
+    /// \details  This function draws a NIFTY shadow
     ego_GLvertex v[4];
 
     const float size_factor = 1.5f;
@@ -1976,7 +1992,7 @@ void render_shadow( const CHR_REF & character )
     // no shadow if completely transparent
     alpha = ( 255 == pchr->gfx_inst.light ) ? pchr->gfx_inst.alpha * INV_FF : ( pchr->gfx_inst.alpha - pchr->gfx_inst.light ) * INV_FF;
 
-    /// @test ZF@> The previous test didn't work, but this one does
+    /// \test ZF@> The previous test didn't work, but this one does
     //if ( alpha * 255 < 1 ) return;
     //if ( pchr->gfx_inst.light <= INVISIBLE || pchr->gfx_inst.alpha <= INVISIBLE ) return;
     if ( alpha <= 0.0f ) return;
@@ -2080,7 +2096,8 @@ void render_shadow( const CHR_REF & character )
 //--------------------------------------------------------------------------------------------
 void render_bad_shadow( const CHR_REF & character )
 {
-    /// @details ZZ@> This function draws a sprite shadow
+    /// \author ZZ
+    /// \details  This function draws a sprite shadow
 
     ego_GLvertex v[4];
 
@@ -2105,7 +2122,7 @@ void render_bad_shadow( const CHR_REF & character )
     // no shadow if completely transparent or completely glowing
     alpha = ( 255 == pchr->gfx_inst.light ) ? pchr->gfx_inst.alpha  * INV_FF : ( pchr->gfx_inst.alpha - pchr->gfx_inst.light ) * INV_FF;
 
-    /// @test ZF@> previous test didn't work, but this one does
+    /// \test ZF@> previous test didn't work, but this one does
     //if ( alpha * 255 < 1 ) return;
     if ( pchr->gfx_inst.light <= INVISIBLE || pchr->gfx_inst.alpha <= INVISIBLE ) return;
 
@@ -2284,7 +2301,8 @@ void render_scene_init( ego_mpd   * pmesh, ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 void render_scene_mesh( ego_renderlist * prlist )
 {
-    /// @details BB@> draw the mesh and any reflected objects
+    /// \author BB
+    /// \details  draw the mesh and any reflected objects
 
     size_t      cnt;
     ego_sint    rcnt;
@@ -2562,7 +2580,8 @@ void render_scene_solid()
 //--------------------------------------------------------------------------------------------
 void render_scene_trans()
 {
-    /// @details BB@> draw transparent objects
+    /// \author BB
+    /// \details  draw transparent objects
 
     ego_sint    rcnt;
     GLXvector4f tint;
@@ -2626,7 +2645,8 @@ void render_scene_trans()
 //--------------------------------------------------------------------------------------------
 void render_scene( ego_mpd   * pmesh, ego_camera * pcam )
 {
-    /// @details ZZ@> This function draws 3D objects
+    /// \author ZZ
+    /// \details  This function draws 3D objects
 
     if ( NULL == pcam ) pcam = PCamera;
     if ( NULL == pmesh ) pmesh = PMesh;
@@ -2704,7 +2724,8 @@ void render_scene( ego_mpd   * pmesh, ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 void render_world_background( const TX_REF & texture )
 {
-    /// @details ZZ@> This function draws the large background
+    /// \author ZZ
+    /// \details  This function draws the large background
     ego_GLvertex vtlist[4];
     int i;
     float z0, Qx, Qy;
@@ -2860,7 +2881,8 @@ void render_world_background( const TX_REF & texture )
 //--------------------------------------------------------------------------------------------
 void render_world_overlay( const TX_REF & texture )
 {
-    /// @details ZZ@> This function draws the large foreground
+    /// \author ZZ
+    /// \details  This function draws the large foreground
 
     float alpha, ftmp;
     fvec3_t   vforw_wind, vforw_cam;
@@ -2991,7 +3013,8 @@ void render_world( ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 void gfx_main()
 {
-    /// @details ZZ@> This function does all the drawing stuff
+    /// \author ZZ
+    /// \details  This function does all the drawing stuff
 
     render_world( PCamera );
     draw_text();
@@ -3004,7 +3027,8 @@ void gfx_main()
 //--------------------------------------------------------------------------------------------
 bool_t dump_screenshot()
 {
-    /// @details BB@> dumps the current screen (GL context) to a new bitmap file
+    /// \author BB
+    /// \details  dumps the current screen (GL context) to a new bitmap file
     /// right now it dumps it to whatever the current directory is
 
     // returns btrue if successful, bfalse otherwise
@@ -3122,7 +3146,8 @@ bool_t dump_screenshot()
 //--------------------------------------------------------------------------------------------
 void clear_messages()
 {
-    /// @details ZZ@> This function empties the message buffer
+    /// \author ZZ
+    /// \details  This function empties the message buffer
     int cnt;
 
     cnt = 0;
@@ -3137,7 +3162,8 @@ void clear_messages()
 //--------------------------------------------------------------------------------------------
 float calc_light_rotation( int rotation, int normal )
 {
-    /// @details ZZ@> This function helps make_lighttable
+    /// \author ZZ
+    /// \details  This function helps make_lighttable
     fvec3_t   nrm, nrm2;
     float sinrot, cosrot;
 
@@ -3158,7 +3184,8 @@ float calc_light_rotation( int rotation, int normal )
 //--------------------------------------------------------------------------------------------
 float calc_light_global( int rotation, int normal, float lx, float ly, float lz )
 {
-    /// @details ZZ@> This function helps make_lighttable
+    /// \author ZZ
+    /// \details  This function helps make_lighttable
     float fTmp;
     fvec3_t   nrm, nrm2;
     float sinrot, cosrot;
@@ -3183,7 +3210,8 @@ float calc_light_global( int rotation, int normal, float lx, float ly, float lz 
 //--------------------------------------------------------------------------------------------
 void make_enviro( void )
 {
-    /// @details ZZ@> This function sets up the environment mapping table
+    /// \author ZZ
+    /// \details  This function sets up the environment mapping table
     int cnt;
     float x, y, z;
 
@@ -3278,7 +3306,8 @@ bool_t grid_lighting_interpolate( ego_mpd   * pmesh, ego_lighting_cache * dst, f
 //--------------------------------------------------------------------------------------------
 void gfx_update_timers()
 {
-    /// @details ZZ@> This function updates the graphics timers
+    /// \author ZZ
+    /// \details  This function updates the graphics timers
 
     // the definition of the low-pass filter coefficients
     const float fold = 0.2f;
@@ -3499,7 +3528,8 @@ bool_t ego_billboard_data::printf_ttf( ego_billboard_data * pbb, TTF_Font *font,
 //--------------------------------------------------------------------------------------------
 void BillboardList_clear_data()
 {
-    /// @details BB@> reset the free billboard list.
+    /// \author BB
+    /// \details  reset the free billboard list.
 
     int cnt;
 
@@ -3703,7 +3733,7 @@ bool_t render_billboard( ego_camera * pcam, ego_billboard_data * pbb, float scal
     vector_up.y    = -pcam->mView.CNV( 1, 1 ) * h * scale * pbb->size;
     vector_up.z    = -pcam->mView.CNV( 2, 1 ) * h * scale * pbb->size;
 
-    // @todo this billboard stuff needs to be implemented as a OpenGL transform
+    // \todo this billboard stuff needs to be implemented as a OpenGL transform
 
     // bottom left
     vtlist[0].pos[XX] = pbb->pos.x + ( -vector_right.x - 0 * vector_up.x );
@@ -3828,7 +3858,8 @@ int get_free_line()
 //--------------------------------------------------------------------------------------------
 void draw_all_lines( ego_camera * pcam )
 {
-    /// @details BB@> draw some lines for debugging purposes
+    /// \author BB
+    /// \details  draw some lines for debugging purposes
 
     int cnt, ticks;
 
@@ -4083,7 +4114,9 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
 //--------------------------------------------------------------------------------------------
 bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr )
 {
-    /// ZZ@> This function puts a character in the list
+    /// \author ZF
+    /// \details This function puts a character in the list
+
     Uint32 itile;
     ego_chr * pchr;
     ego_cap * pcap;
@@ -4135,7 +4168,9 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr )
 //--------------------------------------------------------------------------------------------
 bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt )
 {
-    /// ZZ@> This function puts a character in the list
+    /// \author ZF
+    /// \details This function puts a character in the list
+
     ego_prt * pprt;
     ego_prt_instance * pinst;
 
@@ -4161,7 +4196,8 @@ bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt )
 //--------------------------------------------------------------------------------------------
 void dolist_make( ego_mpd   * pmesh )
 {
-    /// @details ZZ@> This function finds the characters that need to be drawn and puts them in the list
+    /// \author ZZ
+    /// \details  This function finds the characters that need to be drawn and puts them in the list
 
     size_t cnt;
     CHR_REF ichr;
@@ -4205,7 +4241,8 @@ void dolist_make( ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 void dolist_sort( ego_camera * pcam, bool_t do_reflect )
 {
-    /// @details ZZ@> This function orders the dolist based on distance from camera,
+    /// \author ZZ
+    /// \details  This function orders the dolist based on distance from camera,
     ///    which is needed for reflections to properly clip themselves.
     ///    Order from closest to farthest
 
@@ -4303,7 +4340,8 @@ int obj_registry_entity_cmp( const void * pleft, const void * pright )
 //--------------------------------------------------------------------------------------------
 void renderlist_reset()
 {
-    /// @details BB@> Clear old render lists
+    /// \author BB
+    /// \details  Clear old render lists
 
     if ( NULL != renderlist.pmesh )
     {
@@ -4336,7 +4374,8 @@ void renderlist_reset()
 //--------------------------------------------------------------------------------------------
 void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
 {
-    /// @details ZZ@> This function figures out which mesh fans to draw
+    /// \author ZZ
+    /// \details  This function figures out which mesh fans to draw
     int cnt, grid_x, grid_y;
     int row, run, numrow;
     int corner_x[4], corner_y[4];
@@ -4541,7 +4580,8 @@ void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 int DisplayMsg_get_free()
 {
-    /// ZZ@> This function finds the best message to use
+    /// \author ZF
+    /// \details This function finds the best message to use
     /// Pick the first one
 
     int tnc = DisplayMsg.count;
@@ -4557,7 +4597,8 @@ int DisplayMsg_get_free()
 //--------------------------------------------------------------------------------------------
 void init_icon_data()
 {
-    /// @details ZZ@> This function sets the icon pointers to NULL
+    /// \author ZZ
+    /// \details  This function sets the icon pointers to NULL
 
     iconrect.xmin = 0;
     iconrect.xmax = ICON_SIZE;
@@ -4606,7 +4647,8 @@ void init_blip_data()
 //--------------------------------------------------------------------------------------------
 void init_map_data()
 {
-    /// @details ZZ@> This function releases all the map images
+    /// \author ZZ
+    /// \details  This function releases all the map images
 
     // Set up the rectangles
     maprect.xmin = 0;
@@ -4682,7 +4724,8 @@ void delete_all_graphics()
 //--------------------------------------------------------------------------------------------
 bool_t load_all_global_icons()
 {
-    /// @details ZF@> Load all the global icons used in all modules
+    /// \author ZF
+    /// \details  Load all the global icons used in all modules
 
     const char * fname = NULL;
     bool_t result = btrue;
@@ -4735,7 +4778,8 @@ bool_t load_all_global_icons()
 //--------------------------------------------------------------------------------------------
 void load_basic_textures( /* const char *modname */ )
 {
-    /// @details ZZ@> This function loads the standard textures for a module
+    /// \author ZZ
+    /// \details  This function loads the standard textures for a module
 
     // Particle sprites
     TxTexture_load_one_vfs( "mp_data/particle_trans", TX_REF( TX_PARTICLE_TRANS ), TRANSCOLOR );
@@ -4785,7 +4829,8 @@ void load_basic_textures( /* const char *modname */ )
 //--------------------------------------------------------------------------------------------
 void load_bars()
 {
-    /// @details ZZ@> This function loads the status bar bitmap
+    /// \author ZZ
+    /// \details  This function loads the status bar bitmap
 
     const char * pname;
 
@@ -4805,7 +4850,8 @@ void load_bars()
 //--------------------------------------------------------------------------------------------
 void load_map()
 {
-    /// @details ZZ@> This function loads the map bitmap
+    /// \author ZZ
+    /// \details  This function loads the map bitmap
 
     const char* szMap;
 
@@ -4830,7 +4876,8 @@ void load_map()
 //--------------------------------------------------------------------------------------------
 bool_t load_cursor()
 {
-    /// @details ZF@> Loads any cursor bitmaps
+    /// \author ZF
+    /// \details  Loads any cursor bitmaps
 
     bool_t retval = btrue;
 
@@ -4846,7 +4893,9 @@ bool_t load_cursor()
 //--------------------------------------------------------------------------------------------
 bool_t load_blips()
 {
-    /// ZZ@> This function loads the blip bitmaps
+    /// \author ZF
+    /// \details This function loads the blip bitmaps
+
     if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( "mp_data/blip", TX_REF( TX_BLIP ), INVALID_KEY ) )
     {
         log_warning( "Blip bitmap not loaded! (\"mp_data/blip\")\n" );
@@ -4859,7 +4908,8 @@ bool_t load_blips()
 //--------------------------------------------------------------------------------------------
 void load_graphics()
 {
-    /// @details ZF@> This function loads all the graphics based on the game settings
+    /// \author ZF
+    /// \details  This function loads all the graphics based on the game settings
 
     GLenum quality;
 
@@ -4955,7 +5005,8 @@ void do_chr_flashing()
 //--------------------------------------------------------------------------------------------
 void flash_character( const CHR_REF & character, Uint8 value )
 {
-    /// @details ZZ@> This function sets a character's lighting
+    /// \author ZZ
+    /// \details  This function sets a character's lighting
 
     gfx_mad_instance * pinst = ego_chr::get_pinstance( character );
 
@@ -5176,11 +5227,11 @@ void light_fans( ego_renderlist * prlist )
     int    numvertices, vertex, needs_interpolation_count;
     float  local_mesh_lighting_keep;
 
-    /// @note we are measuring the change in the intensity at the corner of a tile (the "delta") as
+    /// \note we are measuring the change in the intensity at the corner of a tile (the "delta") as
     /// a fraction of the current intensity. This is because your eye is much more sensitive to
     /// intensity differences when the intensity is low.
     ///
-    /// @note it is normally assumed that 64 colors of gray can make a smoothly colored black and white picture
+    /// \note it is normally assumed that 64 colors of gray can make a smoothly colored black and white picture
     /// which means that the threshold could be set as low as 1/64 = 0.015625.
     const float delta_threshold = 0.05f;
 
@@ -5353,7 +5404,8 @@ void light_fans( ego_renderlist * prlist )
 //--------------------------------------------------------------------------------------------
 float get_ambient_level()
 {
-    /// @details BB@> get the actual global ambient level
+    /// \author BB
+    /// \details  get the actual global ambient level
 
     float glob_amb, min_amb;
 
@@ -5381,7 +5433,8 @@ float get_ambient_level()
 //--------------------------------------------------------------------------------------------
 bool_t sum_global_lighting( lighting_vector_t lighting )
 {
-    /// @details BB@> do ambient lighting. if the module is inside, the ambient lighting
+    /// \author BB
+    /// \details  do ambient lighting. if the module is inside, the ambient lighting
     /// is reduced by up to a factor of 8. It is still kept just high enough
     /// so that ordinary objects will not be made invisible. This was breaking some of the AIs
 
@@ -5411,7 +5464,8 @@ bool_t sum_global_lighting( lighting_vector_t lighting )
 //--------------------------------------------------------------------------------------------
 //void draw_cursor()
 //{
-//    /// ZZ@> This function implements a mouse cursor
+//    /// \author ZF
+//    /// \details This function implements a mouse cursor
 //
 //    if ( cursor.x < 6 )  cursor.x = 6;
 //    if ( cursor.x > sdl_scr.x - 16 )  cursor.x = sdl_scr.x - 16;
@@ -5431,7 +5485,8 @@ bool_t sum_global_lighting( lighting_vector_t lighting )
 //--------------------------------------------------------------------------------------------
 void gfx_make_dynalist( ego_camera * pcam )
 {
-    /// @details ZZ@> This function figures out which particles are visible, and it sets up dynamic
+    /// \author ZZ
+    /// \details  This function figures out which particles are visible, and it sets up dynamic
     ///    lighting
 
     int tnc, slot;
@@ -5510,7 +5565,8 @@ void gfx_make_dynalist( ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
 {
-    /// @details ZZ@> Do all tile lighting, dynamic and global
+    /// \author ZZ
+    /// \details  Do all tile lighting, dynamic and global
 
     int   cnt, tnc, fan, entry;
     int ix, iy;
@@ -5714,7 +5770,8 @@ void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 void render_water( ego_renderlist * prlist )
 {
-    /// @details ZZ@> This function draws all of the water fans
+    /// \author ZZ
+    /// \details  This function draws all of the water fans
 
     int cnt;
 
@@ -5749,7 +5806,7 @@ void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const e
 {
     ATTRIB_PUSH( __FUNCTION__, GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT )
     {
-        if( NULL == ptex || INVALID_GL_ID == ptex->base.binding )
+        if ( NULL == ptex || INVALID_GL_ID == ptex->base.binding )
         {
             GL_DEBUG( glDisable )( GL_TEXTURE_1D );                               // GL_ENABLE_BIT
             GL_DEBUG( glDisable )( GL_TEXTURE_2D );                               // GL_ENABLE_BIT
@@ -5760,7 +5817,7 @@ void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const e
             oglx_texture_Bind( ptex );
         }
 
-        if( use_alpha )
+        if ( use_alpha )
         {
             GL_DEBUG( glEnable )( GL_BLEND );                                 // GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT
             GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );  // GL_COLOR_BUFFER_BIT
@@ -5779,6 +5836,6 @@ void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const e
         }
         GL_DEBUG_END();
     }
-    ATTRIB_POP(__FUNCTION__);
+    ATTRIB_POP( __FUNCTION__ );
 }
 

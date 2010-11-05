@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file character_defs.h
+/// \file character_defs.h
 
 #include "egoboo_typedef.h"
 

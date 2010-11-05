@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file graphic_fan.c
-/// @brief World mesh drawing.
-/// @details
+/// \file graphic_fan.c
+/// \brief World mesh drawing.
+/// \details
 
 #include "graphic_fan.h"
 #include "graphic.h"
@@ -62,7 +62,8 @@ void animate_all_tiles( ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
 {
-    /// BB@> animate a given tile
+    /// \author BB
+    /// \details animate a given tile
 
     Uint16 basetile, image;
     Uint16 base_and, frame_and, frame_add;
@@ -110,7 +111,8 @@ bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
 //--------------------------------------------------------------------------------------------
 void render_fan( ego_mpd   * pmesh, Uint32 itile )
 {
-    /// @details ZZ@> This function draws a mesh itile
+    /// \author ZZ
+    /// \details  This function draws a mesh itile
     /// Optimized to use gl*Pointer() and glArrayElement() for vertex presentation
 
     int    cnt, tnc, entry, vertex;
@@ -173,7 +175,7 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
     }
     GL_DEBUG( glPopClientAttrib )();
 
-#if EGO_DEBUG && defined(DEBUG_MESH_NORMALS) 
+#if EGO_DEBUG && defined(DEBUG_MESH_NORMALS)
     GL_DEBUG( glDisable )( GL_TEXTURE_2D );
     GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
     entry = ptile->vrtstart;
@@ -197,7 +199,8 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
 //--------------------------------------------------------------------------------------------
 void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
 {
-    /// @details ZZ@> This function draws a mesh itile
+    /// \author ZZ
+    /// \details  This function draws a mesh itile
     ego_GLvertex v[4];
 
     int cnt, vertex;
@@ -221,7 +224,8 @@ void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
     ptile = ptmem->tile_list + itile;
     pgrid = pgmem->grid_list + itile;
 
-    /// @details BB@> the water info is for TILES, not for vertices, so ignore all vertex info and just draw the water
+    /// \author BB
+    /// \details  the water info is for TILES, not for vertices, so ignore all vertex info and just draw the water
     ///     tile where it's supposed to go
 
     ix = itile % pmesh->info.tiles_x;
@@ -277,7 +281,8 @@ void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
 //--------------------------------------------------------------------------------------------
 void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
 {
-    /// @details ZZ@> This function draws a water itile
+    /// \author ZZ
+    /// \details  This function draws a water itile
 
     ego_GLvertex v[4];
 
@@ -310,7 +315,7 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
     falpha = FF_TO_FLOAT( water.layer[layer].alpha );
     falpha = CLIP( falpha, 0.0f, 1.0f );
 
-    /// @note BB@> the water info is for TILES, not for vertices, so ignore all vertex info and just draw the water
+    /// \note BB@> the water info is for TILES, not for vertices, so ignore all vertex info and just draw the water
     ///            tile where it's supposed to go
 
     ix = itile % pinfo->tiles_x;
@@ -468,7 +473,8 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
 //--------------------------------------------------------------------------------------------
 void animate_tiles()
 {
-    /// ZZ@> This function changes the animated tile frame
+    /// \author ZF
+    /// \details This function changes the animated tile frame
 
     // make sure this updates per frame
     if (( true_frame & animtile_update_and ) == 0 )

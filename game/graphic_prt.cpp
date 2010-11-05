@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file graphic_prt.c
-/// @brief Particle system drawing and management code.
-/// @details
+/// \file graphic_prt.c
+/// \brief Particle system drawing and management code.
+/// \details
 
 #include "graphic_prt.h"
 
@@ -188,7 +188,8 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], s
 //--------------------------------------------------------------------------------------------
 bool_t render_one_prt_solid( const PRT_REF & iprt )
 {
-    /// @details BB@> Render the solid version of the particle
+    /// \author BB
+    /// \details  Render the solid version of the particle
 
     ego_GLvertex vtlist[4];
     int i;
@@ -246,7 +247,8 @@ bool_t render_one_prt_solid( const PRT_REF & iprt )
 //--------------------------------------------------------------------------------------------
 void render_all_prt_solid( ego_camera * pcam, ego_prt_registry_entity reg[], size_t numparticle )
 {
-    /// @details BB@> do solid sprites first
+    /// \author BB
+    /// \details  do solid sprites first
 
     size_t cnt;
     PRT_REF prt;
@@ -268,7 +270,8 @@ void render_all_prt_solid( ego_camera * pcam, ego_prt_registry_entity reg[], siz
 //--------------------------------------------------------------------------------------------
 bool_t render_one_prt_trans( const PRT_REF & iprt )
 {
-    /// @details BB@> do all kinds of transparent sprites next
+    /// \author BB
+    /// \details  do all kinds of transparent sprites next
 
     ego_GLvertex vtlist[4];
     int i;
@@ -363,7 +366,8 @@ bool_t render_one_prt_trans( const PRT_REF & iprt )
 //--------------------------------------------------------------------------------------------
 void render_all_prt_trans( ego_camera * pcam, ego_prt_registry_entity reg[], size_t numparticle )
 {
-    /// @details BB@> do all kinds of transparent sprites next
+    /// \author BB
+    /// \details  do all kinds of transparent sprites next
 
     ego_sint rcnt;
 
@@ -383,7 +387,8 @@ void render_all_prt_trans( ego_camera * pcam, ego_prt_registry_entity reg[], siz
 //--------------------------------------------------------------------------------------------
 void render_all_particles( ego_camera * pcam )
 {
-    /// @details ZZ@> This function draws the sprites for particle systems
+    /// \author ZZ
+    /// \details  This function draws the sprites for particle systems
 
     ego_prt_registry_entity reg[MAX_PRT];
     size_t numparticle;
@@ -445,7 +450,8 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
 //--------------------------------------------------------------------------------------------
 bool_t render_one_prt_ref( const PRT_REF & iprt )
 {
-    /// @details BB@> render one particle
+    /// \author BB
+    /// \details  render one particle
 
     ego_GLvertex vtlist[4];
     int startalpha;
@@ -566,7 +572,8 @@ void render_all_prt_ref( ego_camera * pcam, ego_prt_registry_entity reg[], size_
 //--------------------------------------------------------------------------------------------
 void render_prt_ref( ego_camera * pcam )
 {
-    /// @details ZZ@> This function draws sprites reflected in the floor
+    /// \author ZZ
+    /// \details  This function draws sprites reflected in the floor
 
     ego_prt_registry_entity reg[MAX_PRT];
     size_t numparticle;
@@ -675,7 +682,8 @@ void render_all_prt_bbox()
 //--------------------------------------------------------------------------------------------
 void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vrt_offset )
 {
-    /// @details BB@> a function that will draw some of the vertices of the given character.
+    /// \author BB
+    /// \details  a function that will draw some of the vertices of the given character.
     ///     The original idea was to use this to debug the grip for attached items.
 
     Uint32 vrt;

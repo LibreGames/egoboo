@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file rpc.c
-/// @brief The implementation of the Remote Procedure Calls
-/// @details
+/// \file rpc.c
+/// \brief The implementation of the Remote Procedure Calls
+/// \details
 
 #include "egoboo_rpc.h"
 
@@ -61,7 +61,8 @@ ego_rpc * ego_rpc::clear( ego_rpc * ptr )
 //--------------------------------------------------------------------------------------------
 ego_rpc * ego_rpc::ctor_this( ego_rpc * prpc, int data_type, void * data )
 {
-    /// @details BB@> construct the sample rpc data element
+    /// \author BB
+    /// \details  construct the sample rpc data element
 
     if ( ego_rpc::get_valid( prpc ) ) return NULL;
 
@@ -82,7 +83,8 @@ ego_rpc * ego_rpc::ctor_this( ego_rpc * prpc, int data_type, void * data )
 //--------------------------------------------------------------------------------------------
 ego_rpc * ego_rpc::dtor_this( ego_rpc * prpc )
 {
-    /// @details BB@> deconstruct the sample rpc data element
+    /// \author BB
+    /// \details  deconstruct the sample rpc data element
 
     if ( NULL == prpc ) return NULL;
 
@@ -145,7 +147,8 @@ ego_tx_request * ego_tx_request::dtor_this( ego_tx_request * preq )
 //--------------------------------------------------------------------------------------------
 bool_t rpc_system_begin()
 {
-    /// @details BB@> initialize all the rpc arrays here
+    /// \author BB
+    /// \details  initialize all the rpc arrays here
 
     if ( _rpc_system_initialized ) return btrue;
 
@@ -159,7 +162,8 @@ bool_t rpc_system_begin()
 //--------------------------------------------------------------------------------------------
 void rpc_system_end()
 {
-    /// @details BB@> de-initialize all the rpc arrays here
+    /// \author BB
+    /// \details  de-initialize all the rpc arrays here
 
     if ( !_rpc_system_initialized ) return;
 
@@ -171,7 +175,8 @@ void rpc_system_end()
 //--------------------------------------------------------------------------------------------
 bool_t rpc_system_timestep()
 {
-    /// @details BB@> step through a single request of each type
+    /// \author BB
+    /// \details  step through a single request of each type
 
     if ( !rpc_system_begin() ) return bfalse;
 
@@ -244,7 +249,8 @@ void TxReqList_dtor()
 //--------------------------------------------------------------------------------------------
 size_t TxReqList_get_free( int type )
 {
-    /// @details ZZ@> This function returns the next free index or MAX_TX_TEXTURE_REQ if there are none
+    /// \author ZZ
+    /// \details  This function returns the next free index or MAX_TX_TEXTURE_REQ if there are none
 
     size_t retval = MAX_TX_TEXTURE_REQ;
 
@@ -267,7 +273,8 @@ size_t TxReqList_get_free( int type )
 //--------------------------------------------------------------------------------------------
 bool_t TxReqList_free_one( int ireq )
 {
-    /// @details ZZ@>
+    /// \author ZZ
+    /// \details
 
     bool_t         retval;
     ego_tx_request * preq;
@@ -308,7 +315,8 @@ bool_t TxReqList_free_one( int ireq )
 //--------------------------------------------------------------------------------------------
 bool_t TxReqList_timestep()
 {
-    /// @details BB@> TxReqList_timestep() is called by the main thread.
+    /// \author BB
+    /// \details  TxReqList_timestep() is called by the main thread.
     ///               Requests are submitted by worker threads
 
     // take off the back of the list
@@ -360,7 +368,8 @@ bool_t TxReqList_timestep()
 //--------------------------------------------------------------------------------------------
 ego_tx_request * ego_tx_request::load_TxTexture( const char *filename, int itex_src, Uint32 key )
 {
-    /// @details BB@> request that the main thread loads the texture
+    /// \author BB
+    /// \details  request that the main thread loads the texture
 
     ego_tx_request * preq;
     size_t index;
@@ -381,7 +390,8 @@ ego_tx_request * ego_tx_request::load_TxTexture( const char *filename, int itex_
 //--------------------------------------------------------------------------------------------
 ego_tx_request * ego_tx_request::load_TxTitleImage( const char *filename )
 {
-    /// @details BB@> request that the main thread loads the texture
+    /// \author BB
+    /// \details  request that the main thread loads the texture
 
     ego_tx_request * preq;
     size_t index;

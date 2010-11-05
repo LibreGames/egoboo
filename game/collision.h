@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file collision.h
+/// \file collision.h
 
 #include "egoboo_math.h"
 
@@ -37,7 +37,7 @@ struct ego_oct_bb  ;
 //--------------------------------------------------------------------------------------------
 
 /// element for storing pair-wise "collision" data
-/// @note this does not use the "standard" method of inheritance from ego_hash_node, where an
+/// \note this does not use the "standard" method of inheritance from ego_hash_node, where an
 /// instance of ego_hash_node is embedded inside ego_CoNode as ego_CoNode::base or something.
 /// Instead, a separate lists of free hash_nodes and free CoNodes are kept, and they are
 /// associated through the ego_hash_node::data pointer when the hash node is added to the

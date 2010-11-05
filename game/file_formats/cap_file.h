@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/cap_file.h
-/// @details routines for reading and writing the character profile file data.txt
+/// \file file_formats/cap_file.h
+/// \details routines for reading and writing the character profile file data.txt
 
 #include "egoboo_typedef.h"
 
@@ -89,8 +89,9 @@ extern "C"
     };
     typedef enum e_xp_type xp_type;
 
-/// BB@> enumerated "speech" sounds
-/// @details We COULD get the scripts to classify which
+/// \author ZZ
+/// \brief enumerated "speech" sounds
+/// \note BB@> We COULD get the scripts to classify which
 /// sound to use for the "ouch", the "too much baggage", etc.
 /// also some left-over sounds from the RTS days, but they might be useful if an NPC
 /// uses messages to control his minions.
@@ -133,7 +134,7 @@ extern "C"
     typedef enum e_slots slot_t;
 
 /// The possible extended slots that an object might be equipped in
-/// @details This system is not fully implemented yet
+/// \details This system is not fully implemented yet
     enum e_inventory
     {
         INVEN_PACK = 0,

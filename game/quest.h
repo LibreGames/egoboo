@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file quest.h
-/// @brief read/write/modify the quest.txt file
+/// \file quest.h
+/// \brief read/write/modify the quest.txt file
 
 #include "egoboo_typedef_cpp.h"
 
@@ -28,7 +28,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-/// @note BB@> use this forward declaration of the "struct s_IDSZ_node" instead of including
+/// \note BB@> use this forward declaration of the "struct s_IDSZ_node" instead of including
 /// "IDSZ_map.h" to remove possible circular dependencies
 
 struct s_IDSZ_node;

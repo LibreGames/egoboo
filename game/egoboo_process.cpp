@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_process.c
-/// @brief Implementation of Egoboo "process" control routines
-/// @details
+/// \file egoboo_process.c
+/// \brief Implementation of Egoboo "process" control routines
+/// \details
 
 #include "egoboo_process.h"
 

@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file physics.h
+/// \file physics.h
 
 #include "bbox.h"
 
@@ -60,7 +60,7 @@ struct ego_orientation
 //--------------------------------------------------------------------------------------------
 
 /// Data for doing the physics in bump_all_objects()
-/// @details should prevent you from being bumped into a wall
+/// \details should prevent you from being bumped into a wall
 struct ego_phys_data
 {
     fvec3_t        apos_plat;                     ///< The accumulator for position shifts from platform interactions

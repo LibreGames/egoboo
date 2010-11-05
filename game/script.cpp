@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file script.c
-/// @brief Implements the game's scripting language.
-/// @details
+/// \file script.c
+/// \brief Implements the game's scripting language.
+/// \details
 
 #include "script.h"
 #include "script_compile.h"
@@ -127,7 +127,8 @@ void scripting_system_end()
 //--------------------------------------------------------------------------------------------
 void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
 {
-    /// @details ZZ@> This function lets one character do AI stuff
+    /// \author ZZ
+    /// \details  This function lets one character do AI stuff
 
     ego_script_state    my_state;
 
@@ -151,7 +152,7 @@ void scr_run_chr_script( ego_ai_bundle * pbdl_ai )
     fvec3_self_clear( pchr->latch.trans.dir );
 
     // has the time for this pbdl_ai->chr_ref to die come and gone?
-    if ( pai->poof_time >= 0 && Uint32(pai->poof_time) <= update_wld ) return;
+    if ( pai->poof_time >= 0 && Uint32( pai->poof_time ) <= update_wld ) return;
 
     // grab the "changed" value from the last time the script was run
     if ( pai->changed )
@@ -437,7 +438,8 @@ bool_t scr_run_operation( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 //--------------------------------------------------------------------------------------------
 Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 {
-    /// @details BB@> This is about half-way to what is needed for Lua integration
+    /// \author BB
+    /// \details  This is about half-way to what is needed for Lua integration
 
     // Mask out the indentation
     Uint32       valuecode;
@@ -901,7 +903,8 @@ Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 //--------------------------------------------------------------------------------------------
 void scr_set_operand( ego_script_state * pstate, Uint8 variable )
 {
-    /// @details ZZ@> This function sets one of the tmp* values for scripted AI
+    /// \author ZZ
+    /// \details  This function sets one of the tmp* values for scripted AI
     switch ( variable )
     {
         case VARTMPX:
@@ -933,7 +936,8 @@ void scr_set_operand( ego_script_state * pstate, Uint8 variable )
 //--------------------------------------------------------------------------------------------
 void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 {
-    /// @details ZZ@> This function does the scripted arithmetic in OPERATOR, OPERAND pairs
+    /// \author ZZ
+    /// \details  This function does the scripted arithmetic in OPERATOR, OPERAND pairs
 
     const char * varname, * op;
 
@@ -1643,7 +1647,8 @@ bool_t ego_waypoint_list::peek( ego_waypoint_list * plst, waypoint_t wp )
 //--------------------------------------------------------------------------------------------
 bool_t ego_waypoint_list::push( ego_waypoint_list * plst, float x, float y, float z )
 {
-    /// @details BB@> Add a waypoint to the waypoint list
+    /// \author BB
+    /// \details  Add a waypoint to the waypoint list
 
     float level;
 
@@ -1670,7 +1675,8 @@ bool_t ego_waypoint_list::push( ego_waypoint_list * plst, float x, float y, floa
 //--------------------------------------------------------------------------------------------
 bool_t ego_waypoint_list::reset( ego_waypoint_list * plst )
 {
-    /// @details BB@> reset the waypoint list to the beginning
+    /// \author BB
+    /// \details  reset the waypoint list to the beginning
 
     if ( NULL == plst ) return bfalse;
 
@@ -1682,7 +1688,8 @@ bool_t ego_waypoint_list::reset( ego_waypoint_list * plst )
 //--------------------------------------------------------------------------------------------
 bool_t ego_waypoint_list::clear( ego_waypoint_list * plst )
 {
-    /// @details BB@> Clear out all waypoints
+    /// \author BB
+    /// \details  Clear out all waypoints
 
     if ( NULL == plst ) return bfalse;
 
@@ -1762,7 +1769,8 @@ bool_t ego_ai_state::ensure_wp( ego_ai_state * pself )
 //--------------------------------------------------------------------------------------------
 void set_alerts( ego_ai_bundle * pbdl_ai )
 {
-    /// @details ZZ@> This function polls some alert conditions
+    /// \author ZZ
+    /// \details  This function polls some alert conditions
 
     ego_chr           * pchr;
     ego_ai_state      * pself;
@@ -1831,7 +1839,8 @@ void set_alerts( ego_ai_bundle * pbdl_ai )
 //--------------------------------------------------------------------------------------------
 void issue_order( const CHR_REF & character, Uint32 value )
 {
-    /// @details ZZ@> This function issues an value for help to all teammates
+    /// \author ZZ
+    /// \details  This function issues an value for help to all teammates
 
     int     counter;
 
@@ -1851,7 +1860,8 @@ void issue_order( const CHR_REF & character, Uint32 value )
 //--------------------------------------------------------------------------------------------
 void issue_special_order( Uint32 value, IDSZ idsz )
 {
-    /// @details ZZ@> This function issues an order to all characters with the a matching special IDSZ
+    /// \author ZZ
+    /// \details  This function issues an order to all characters with the a matching special IDSZ
 
     CHR_REF cnt;
     int     counter;

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file quest.c
-/// @brief Handles functions that modify quest.txt files and the players quest log
-/// @details ZF@> This could be done more optimal with a proper HashMap allowing O(1) speed instead of O(n)
+/// \file quest.c
+/// \brief Handles functions that modify quest.txt files and the players quest log
+/// \note ZF@>  This could be done more optimal with a proper HashMap allowing O(1) speed instead of O(n)
 ///              I think we should also implement a similar system for skill IDSZ.
 
 #include "IDSZ_map.h"
@@ -99,7 +99,8 @@ egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export_file )
 //--------------------------------------------------------------------------------------------
 egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, const char* player_directory )
 {
-    /// @details ZF@> Reads a quest.txt for a player and turns it into a data structure
+    /// \author ZF
+    /// \details  Reads a quest.txt for a player and turns it into a data structure
     ///               we can use. If the file isn't found, the quest log will be initialized as empty.
 
     egoboo_rv retval = rv_success;
@@ -154,7 +155,8 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
 //--------------------------------------------------------------------------------------------
 egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, const char *player_directory )
 {
-    /// @details ZF@> This exports quest_log data into a quest.txt file
+    /// \author ZF
+    /// \details  This exports quest_log data into a quest.txt file
     vfs_FILE *filewrite;
     int iterator;
     IDSZ_node_t *pquest;
@@ -192,7 +194,7 @@ egoboo_rv quest_log_upload_vfs( IDSZ_node_t quest_log[], size_t quest_log_len, c
 //--------------------------------------------------------------------------------------------
 int quest_set_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz, int level )
 {
-    ///@details    ZF@> This function will set the quest level for the specified quest
+    ///\details    ZF@> This function will set the quest level for the specified quest
     ///            and return the new quest_level. It will return QUEST_NONE if the quest was
     ///            not found.
 
@@ -211,7 +213,7 @@ int quest_set_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz, i
 //--------------------------------------------------------------------------------------------
 int quest_adjust_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz, int adjustment )
 {
-    ///@details    ZF@> This function will modify the quest level for the specified quest with adjustment
+    ///\details    ZF@> This function will modify the quest level for the specified quest with adjustment
     ///            and return the new quest_level total. It will return QUEST_NONE if the quest was
     ///            not found or if it was already beaten.
 
@@ -251,7 +253,7 @@ int quest_adjust_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz
 //--------------------------------------------------------------------------------------------
 int quest_get_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz )
 {
-    ///@details ZF@> Returns the quest level for the specified quest IDSZ.
+    ///\details ZF@> Returns the quest level for the specified quest IDSZ.
     ///                 It will return QUEST_NONE if the quest was not found or if the quest was beaten.
 
     IDSZ_node_t *pquest;
@@ -265,7 +267,7 @@ int quest_get_level( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 egoboo_rv quest_add( IDSZ_node_t quest_log[], size_t quest_log_len, IDSZ idsz, int level )
 {
-    ///@details ZF@> This adds a new quest to the quest log. If the quest is already in there, the higher quest
+    ///\details ZF@> This adds a new quest to the quest log. If the quest is already in there, the higher quest
     ///                 level of either the old and new one will be kept.
 
     return idsz_map_add( quest_log, quest_log_len, idsz, level );

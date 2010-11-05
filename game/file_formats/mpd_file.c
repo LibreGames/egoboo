@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/mpd_file.c
-/// @brief Functions for raw read and write access to the .mpd file type
-/// @details
+/// \file file_formats/mpd_file.c
+/// \brief Functions for raw read and write access to the .mpd file type
+/// \details
 
 #include "mpd_file.h"
 
@@ -58,7 +58,8 @@ tile_definition_t tile_dict[MAXMESHTYPE];
 //--------------------------------------------------------------------------------------------
 void tile_dictionary_load_vfs( const char * filename, tile_definition_t dict[], size_t dict_size )
 {
-    /// @details ZZ@> This function loads fan types for the terrain
+    /// \author ZZ
+    /// \details  This function loads fan types for the terrain
 
     Uint32 cnt, entry, vertices, commandsize;
     int numfantype, fantype, bigfantype;
@@ -189,7 +190,9 @@ bool_t mpd_free( mpd_t * pmesh )
 //--------------------------------------------------------------------------------------------
 mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
 {
-    ///// @details ZZ@> This function loads the level.mpd file
+    /// \author ZZ
+    /// \details  This function loads the level.mpd file
+
     FILE* fileread;
     int itmp;
     float ftmp;

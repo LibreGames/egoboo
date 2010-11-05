@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/scancode_file.c
-/// @brief Functions to read and write Egoboo's basicdat/scantag.txt file
-/// @details
+/// \file file_formats/scancode_file.c
+/// \brief Functions to read and write Egoboo's basicdat/scantag.txt file
+/// \details
 
 #include "scancode_file.h"
 
@@ -42,14 +42,16 @@ static bool_t scantag_read_one( vfs_FILE *fileread );
 //--------------------------------------------------------------------------------------------
 void scantag_reset()
 {
-    /// @details ZZ@> This function resets the tags
+    /// \author ZZ
+    /// \details  This function resets the tags
     scantag_count = 0;
 }
 
 //--------------------------------------------------------------------------------------------
 bool_t scantag_read_one( vfs_FILE *fileread )
 {
-    /// @details ZZ@> This function finds the next tag, returning btrue if it found one
+    /// \author ZZ
+    /// \details  This function finds the next tag, returning btrue if it found one
 
     bool_t retval;
 
@@ -67,7 +69,8 @@ bool_t scantag_read_one( vfs_FILE *fileread )
 //--------------------------------------------------------------------------------------------
 void scantag_read_all_vfs( const char *szFilename )
 {
-    /// @details ZZ@> This function reads the scancode.txt file
+    /// \author ZZ
+    /// \details  This function reads the scancode.txt file
     vfs_FILE* fileread;
     int cnt;
 
@@ -101,7 +104,8 @@ void scantag_read_all_vfs( const char *szFilename )
 //--------------------------------------------------------------------------------------------
 int scantag_get_value( const char *string )
 {
-    /// @details ZZ@> This function matches the string with its tag, and returns the value...
+    /// \author ZZ
+    /// \details  This function matches the string with its tag, and returns the value...
     ///    It will return 255 if there are no matches.
 
     int cnt;
@@ -122,7 +126,8 @@ int scantag_get_value( const char *string )
 //--------------------------------------------------------------------------------------------
 const char* scantag_get_string( Sint32 device, int tag, bool_t is_key )
 {
-    /// @details ZF@> This translates a input tag value to a string
+    /// \author ZF
+    /// \details  This translates a input tag value to a string
 
     int cnt;
 

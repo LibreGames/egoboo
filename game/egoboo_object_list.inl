@@ -19,9 +19,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_object_list.inl
-/// @brief Implementation of the t_obj_lst_map< _ty, _sz >::* functions
-/// @details
+/// \file egoboo_object_list.inl
+/// \brief Implementation of the t_obj_lst_map< _ty, _sz >::* functions
+/// \details
 
 #if !defined(__cplusplus)
 #    error egoboo_typedef_cpp.inl should only be included if you are compling as c++
@@ -234,9 +234,10 @@
 //template <typename _d, size_t _sz>
 //egoboo_rv t_obj_lst_map<_d, _sz>::free_one( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
-//    /// @details ZZ@> This function sticks a object back on the free object stack
+//    /// \author ZZ
+//    /// \details  This function sticks a object back on the free object stack
 //    ///
-//    /// @note Tying ALLOCATED_*() and POBJ_TERMINATE() to t_obj_lst_map<>::free_one()
+//    /// \note Tying ALLOCATED_*() and POBJ_TERMINATE() to t_obj_lst_map<>::free_one()
 //    /// should be enough to ensure that no object is freed more than once
 //
 //    egoboo_rv retval = rv_fail;
@@ -270,7 +271,8 @@
 //template <typename _d, size_t _sz>
 //typename t_obj_lst_map<_d, _sz>::lst_reference t_obj_lst_map<_d, _sz>::get_free()
 //{
-//    /// @details BB@> This function returns a lst_reference to the next free object.
+//    /// \author BB
+//    /// \details  This function returns a lst_reference to the next free object.
 //    ///               On failure, the lst_reference will be blank/invalid.
 //
 //    lst_reference retval( _sz );
@@ -735,9 +737,10 @@ void t_obj_lst_deque<_d, _sz>::update_used()
 template <typename _d, size_t _sz>
 egoboo_rv t_obj_lst_deque<_d, _sz>::free_one( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
-    /// @details ZZ@> This function sticks a object back on the free object stack
+    /// \author ZZ
+    /// \details  This function sticks a object back on the free object stack
     ///
-    /// @note Tying ALLOCATED_*() and POBJ_TERMINATE() to t_obj_lst_deque<>::free_one()
+    /// \note Tying ALLOCATED_*() and POBJ_TERMINATE() to t_obj_lst_deque<>::free_one()
     /// should be enough to ensure that no object is freed more than once
 
     egoboo_rv retval = rv_fail;
@@ -771,7 +774,8 @@ egoboo_rv t_obj_lst_deque<_d, _sz>::free_one( const typename t_obj_lst_deque<_d,
 template <typename _d, size_t _sz>
 typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::get_free()
 {
-    /// @details BB@> This function returns a lst_reference to the next free object.
+    /// \author BB
+    /// \details  This function returns a lst_reference to the next free object.
     ///               On failure, the lst_reference will be blank/invalid.
 
     container_type * ptr = allocator_type::create();

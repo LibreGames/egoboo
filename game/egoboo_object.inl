@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_typedef_cpp.inl
-/// @details cpp-only inline and template implementations
+/// \file egoboo_typedef_cpp.inl
+/// \details cpp-only inline and template implementations
 
 #if !defined(__cplusplus)
 #    error egoboo_typedef_cpp.inl should only be included if you are compling as c++

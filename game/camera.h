@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file camera.h
+/// \file camera.h
 
 #include "egoboo_typedef_cpp.h"
 #include "egoboo_math.h"

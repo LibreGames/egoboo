@@ -19,12 +19,12 @@
 //*
 //********************************************************************************************
 
-/// @defgroup _ogl_extensions_ Extensions to OpenGL
+/// \defgroup _ogl_extensions_ Extensions to OpenGL
 
-/// @file extensions/ogl_texture.h
-/// @ingroup _ogl_extensions_
-/// @brief Definitions for OpenGL texture loading using SDL_image
-/// @details
+/// \file extensions/ogl_texture.h
+/// \ingroup _ogl_extensions_
+/// \brief Definitions for OpenGL texture loading using SDL_image
+/// \details
 
 #include "ogl_include.h"
 #include "ogl_debug.h"

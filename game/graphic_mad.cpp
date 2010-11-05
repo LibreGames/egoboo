@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file graphic_mad.c
-/// @brief Character model drawing code.
-/// @details
+/// \file graphic_mad.c
+/// \brief Character model drawing code.
+/// \details
 
 #include "graphic_mad.h"
 #include "mad.h"
@@ -60,7 +60,8 @@ static bool_t render_chr_grip_cv( ego_chr * pchr, int grip_offset );
 //--------------------------------------------------------------------------------------------
 bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
 {
-    /// @details ZZ@> This function draws an environment mapped model
+    /// \author ZZ
+    /// \details  This function draws an environment mapped model
 
     Uint16 cnt;
     Uint16 vertex;
@@ -236,7 +237,8 @@ else
 //--------------------------------------------------------------------------------------------
 bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
 {
-    /// @details ZZ@> This function draws a model
+    /// \author ZZ
+    /// \details  This function draws a model
 
     int    cmd_count;
     int    cnt;
@@ -407,7 +409,8 @@ bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, BIT_FIEL
 //--------------------------------------------------------------------------------------------
 bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
 {
-    /// @details ZZ@> This function picks the actual function to use
+    /// \author ZZ
+    /// \details  This function picks the actual function to use
 
     ego_chr * pchr;
     bool_t retval;
@@ -444,7 +447,8 @@ bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bi
 //--------------------------------------------------------------------------------------------
 bool_t render_one_mad_ref( const CHR_REF & ichr )
 {
-    /// @details ZZ@> This function draws characters reflected in the floor
+    /// \author ZZ
+    /// \details  This function draws characters reflected in the floor
 
     ego_chr * pchr;
     gfx_mad_instance * pinst;
@@ -629,7 +633,8 @@ void render_chr_points( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 void draw_points( ego_chr * pchr, int vrt_offset, size_t verts )
 {
-    /// @details BB@> a function that will draw some of the vertices of the given character.
+    /// \author BB
+    /// \details  a function that will draw some of the vertices of the given character.
     ///     The original idea was to use this to debug the grip for attached items.
 
     ego_mad * pmad;
@@ -826,7 +831,8 @@ void chr_draw_grips( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 void gfx_mad_instance::update_lighting_base( gfx_mad_instance * pinst, ego_chr * pchr, bool_t force )
 {
-    /// @details BB@> determine the basic per-vertex lighting
+    /// \author BB
+    /// \details  determine the basic per-vertex lighting
 
     Uint16 cnt;
 
@@ -951,7 +957,8 @@ egoboo_rv gfx_mad_instance::test_pose( const pose_data & p_old, const pose_data 
 //--------------------------------------------------------------------------------------------
 int gfx_mad_instance::validate_pose( gfx_mad_instance * pgfx_inst, const mad_instance * pmad_inst )
 {
-    /// @details BB@> determine whether the gfx_vlst_range has valid animation data
+    /// \author BB
+    /// \details  determine whether the gfx_vlst_range has valid animation data
     //                returns the number of items that were invalidated
 
     bool_t matches = bfalse;
@@ -985,7 +992,8 @@ int gfx_mad_instance::validate_pose( gfx_mad_instance * pgfx_inst, const mad_ins
 //--------------------------------------------------------------------------------------------
 egoboo_rv gfx_mad_instance::test_vertices( const gfx_range & r_old, const gfx_range & r_new )
 {
-    /// @details BB@> determine whether the vr_old matches r_new
+    /// \author BB
+    /// \details  determine whether the vr_old matches r_new
     //                rv_error   means that the function was passed invalid values
     //                rv_fail    means that the gfx_vlst_range is NOT valid
     //                rv_success means that the gfx_vlst_range is valid
@@ -1002,7 +1010,8 @@ egoboo_rv gfx_mad_instance::test_vertices( const gfx_range & r_old, const gfx_ra
 //--------------------------------------------------------------------------------------------
 egoboo_rv gfx_mad_instance::validate_vertices( gfx_mad_instance * pinst, const gfx_range & r_new )
 {
-    /// @details BB@> determine whether the gfx_vlst_range has valid frame data in the given range
+    /// \author BB
+    /// \details  determine whether the gfx_vlst_range has valid frame data in the given range
     //                rv_error   means that the function was passed invalid values
     //                rv_fail    means that the gfx_vlst_range is NOT valid
     //                rv_success means that the gfx_vlst_range is valid
@@ -1049,7 +1058,8 @@ egoboo_rv gfx_mad_instance::validate_vertices( gfx_mad_instance * pinst, const g
 //--------------------------------------------------------------------------------------------
 egoboo_rv gfx_mad_instance::needs_update( gfx_mad_instance * pgfx_inst, const pose_data & p_new, const gfx_range & r_new, bool_t *verts_match, bool_t *frames_match )
 {
-    /// @details BB@> determine whether some specific vertices of an instance need to be updated
+    /// \author BB
+    /// \details  determine whether some specific vertices of an instance need to be updated
     //                rv_error   means that the function was passed invalid values
     //                rv_fail    means that the instance does not need to be updated
     //                rv_success means that the instance should be updated
@@ -1417,7 +1427,8 @@ gfx_mad_instance * gfx_mad_instance::clear( gfx_mad_instance * ptr )
 //--------------------------------------------------------------------------------------------
 void gfx_mad_instance::clear_cache( gfx_mad_instance * pgfx_inst )
 {
-    /// @details BB@> force gfx_mad_instance::update_vertices() recalculate the vertices the next time
+    /// \author BB
+    /// \details  force gfx_mad_instance::update_vertices() recalculate the vertices the next time
     ///     the function is called
 
     pgfx_inst->vrange.init();
@@ -1530,7 +1541,7 @@ bool_t gfx_mad_instance::update_ref( gfx_mad_instance * pgfx_inst, float grid_le
         pos_z = grid_level - pgfx_inst->ref.matrix.CNV( 3, 2 );
         if ( pos_z < 0 ) pos_z = 0;
 
-        trans_temp -= (int( pos_z ) ) >> 1;
+        trans_temp -= ( int( pos_z ) ) >> 1;
         if ( trans_temp < 0 ) trans_temp = 0;
 
         trans_temp |= gfx.reffadeor;  // Fix for Riva owners
@@ -1708,7 +1719,8 @@ void gfx_mad_instance::get_tint( gfx_mad_instance * pgfx_inst, GLfloat * tint, B
 //--------------------------------------------------------------------------------------------
 bool_t gfx_mad_instance::set_mad( gfx_mad_instance * pgfx_inst, const MAD_REF & imad )
 {
-    /// @details BB@> try to set the model used by the character instance.
+    /// \author BB
+    /// \details  try to set the model used by the character instance.
     ///     If this fails, it leaves the old data. Just to be safe it
     ///     would be best to check whether the old modes is valid, and
     ///     if not, the data should be set to safe values...
@@ -1779,7 +1791,8 @@ gfx_chr_reflection_info * gfx_chr_reflection_info::init( gfx_chr_reflection_info
 //--------------------------------------------------------------------------------------------
 gfx_mad_matrix_data * gfx_mad_matrix_data::init( gfx_mad_matrix_data * mcache )
 {
-    /// @details BB@> clear out the matrix cache data
+    /// \author BB
+    /// \details  clear out the matrix cache data
 
     int cnt;
 
@@ -1804,7 +1817,8 @@ gfx_mad_matrix_data * gfx_mad_matrix_data::init( gfx_mad_matrix_data * mcache )
 //--------------------------------------------------------------------------------------------
 bool_t gfx_mad_matrix_data::download( gfx_mad_matrix_data & mc_tmp, ego_chr * pchr )
 {
-    /// @details BB@> grab the matrix cache data for a given character and put it into mc_tmp.
+    /// \author BB
+    /// \details  grab the matrix cache data for a given character and put it into mc_tmp.
 
     bool_t handled;
     CHR_REF itarget, ichr;
@@ -1891,7 +1905,8 @@ bool_t gfx_mad_matrix_data::download( gfx_mad_matrix_data & mc_tmp, ego_chr * pc
 
 bool_t gfx_mad_matrix_data::generate_weapon_matrix( gfx_mad_matrix_data & mc_tmp, ego_chr * pweap )
 {
-    /// @details ZZ@> Request that the data in the matrix cache be used to create a "character matrix".
+    /// \author ZZ
+    /// \details  Request that the data in the matrix cache be used to create a "character matrix".
     ///               i.e. a matrix that is not being held by anything.
 
     fvec4_t   nupoint[GRIP_VERTS];
@@ -1952,7 +1967,8 @@ bool_t gfx_mad_matrix_data::generate_weapon_matrix( gfx_mad_matrix_data & mc_tmp
 //--------------------------------------------------------------------------------------------
 bool_t gfx_mad_matrix_data::generate_character_matrix( gfx_mad_matrix_data & mc_tmp, ego_chr * pchr )
 {
-    /// @details ZZ@> Request that the matrix cache data be used to create a "weapon matrix".
+    /// \author ZZ
+    /// \details  Request that the matrix cache data be used to create a "weapon matrix".
     ///               i.e. a matrix that is attached to a specific grip.
 
     // only apply character matrices using this function
@@ -1985,7 +2001,8 @@ bool_t gfx_mad_matrix_data::generate_character_matrix( gfx_mad_matrix_data & mc_
 //--------------------------------------------------------------------------------------------
 bool_t gfx_mad_matrix_data::generate_matrix( gfx_mad_matrix_data & mc_tmp, ego_chr * pchr )
 {
-    /// @details BB@> request that the info in the matrix cache mc_tmp, be used to
+    /// \author BB
+    /// \details  request that the info in the matrix cache mc_tmp, be used to
     ///               make a matrix for the character pchr.
 
     bool_t applied = bfalse;
@@ -2044,7 +2061,8 @@ bool_t gfx_mad_matrix_data::generate_matrix( gfx_mad_matrix_data & mc_tmp, ego_c
 //--------------------------------------------------------------------------------------------
 int cmp_matrix_data( const void * vlhs, const void * vrhs )
 {
-    /// @details BB@> check for differences between the data pointed to
+    /// \author BB
+    /// \details  check for differences between the data pointed to
     ///     by vlhs and vrhs, assuming that they point to gfx_mad_matrix_data data.
     ///
     ///    The function is implemented this way so that in principle

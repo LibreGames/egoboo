@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file lua_console.c
-/// @brief Quale-like console running running Lua behing Egoboo
-/// @details
+/// \file lua_console.c
+/// \brief Quale-like console running running Lua behing Egoboo
+/// \details
 
 #if defined(__cplusplus)
 extern "C"

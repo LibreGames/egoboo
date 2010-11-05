@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/spawn_file.c
-/// @brief Implementation of a scanner for Egoboo's spawn.txt file
-/// @details
+/// \file file_formats/spawn_file.c
+/// \brief Implementation of a scanner for Egoboo's spawn.txt file
+/// \details
 
 #include "spawn_file.h"
 
@@ -35,7 +35,8 @@
 //--------------------------------------------------------------------------------------------
 spawn_file_info_t * spawn_file_info_init( spawn_file_info_t *pinfo )
 {
-    /// @details BB@> safe values for all parameters
+    /// \author BB
+    /// \details  safe values for all parameters
 
     if ( NULL == pinfo ) return pinfo;
 

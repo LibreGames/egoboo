@@ -18,9 +18,9 @@
 //********************************************************************************************
 
 ///
-/// @file md2.c
-/// @brief Raw MD2 loader
-/// @details Raw model loader for ID Software's MD2 file format
+/// \file md2.c
+/// \brief Raw MD2 loader
+/// \details Raw model loader for ID Software's MD2 file format
 
 #include "md2.inl"
 
@@ -280,7 +280,8 @@ void ego_MD2_Model::delete_vector( ego_MD2_Model * v, int n )
 //--------------------------------------------------------------------------------------------
 void ego_MD2_Model::scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, float scale_z )
 {
-    /// @details BB@> scale every vertex in the md2 by the given amount
+    /// \author BB
+    /// \details  scale every vertex in the md2 by the given amount
 
     int cnt, tnc;
     int num_frames, num_verts;

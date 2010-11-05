@@ -18,10 +18,10 @@
 //*
 //********************************************************************************************
 
-/// @file extensions/ogl_texture.c
-/// @ingroup _ogl_extensions_
-/// @brief Implements OpenGL texture loading using SDL_image
-/// @details Basic loading and managing OpenGL textures.
+/// \file extensions/ogl_texture.c
+/// \ingroup _ogl_extensions_
+/// \brief Implements OpenGL texture loading using SDL_image
+/// \details Basic loading and managing OpenGL textures.
 ///   Uses SDL_image to load .tif, .png, .bmp, .dib, .xpm, and other formats into OpenGL texures
 
 #include "ogl_texture.h"
@@ -58,7 +58,8 @@ static GLubyte ErrorImage[ErrorImage_height][ErrorImage_width][4];
 //--------------------------------------------------------------------------------------------
 void ErrorImage_create( void )
 {
-    /// @details BB@> define a default "error texture"
+    /// \author BB
+    /// \details  define a default "error texture"
 
     int i, j;
 
@@ -206,7 +207,8 @@ void oglx_texture_dtor( oglx_texture_t * ptex )
 //--------------------------------------------------------------------------------------------
 GLuint oglx_texture_Convert( oglx_texture_t *ptex, SDL_Surface * image, Uint32 key )
 {
-    /// @details BB@> an oglx_texture_t wrapper for the SDL_GL_convert_surface() function
+    /// \author BB
+    /// \details  an oglx_texture_t wrapper for the SDL_GL_convert_surface() function
 
     if ( NULL == ptex ) return INVALID_GL_ID;
 
@@ -367,7 +369,8 @@ void  oglx_texture_Release( oglx_texture_t *texture )
 //--------------------------------------------------------------------------------------------
 void oglx_texture_Bind( oglx_texture_t *texture )
 {
-    /// @details BB@> a oglx_texture_t wrapper for oglx_bind_default() function
+    /// \author BB
+    /// \details  a oglx_texture_t wrapper for oglx_bind_default() function
 
     GLenum target;
     GLuint id;

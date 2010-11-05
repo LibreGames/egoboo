@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file input_defs.h
-/// @details Keyboard, mouse, and joystick handling code.
+/// \file input_defs.h
+/// \details Keyboard, mouse, and joystick handling code.
 
 #include "egoboo_typedef.h"
 
@@ -30,7 +30,7 @@
 #define MAXJOYSTICK          2     ///<the maximum number of supported joysticks
 
 /// Which input control
-/// @details Used by the controls[] structure and the control_is_pressed() function to query the state of various controls.
+/// \details Used by the controls[] structure and the control_is_pressed() function to query the state of various controls.
 enum e_input_device
 {
     INPUT_DEVICE_KEYBOARD = 0,

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file EncList.h
-/// @brief Routines for enchant list management
+/// \file EncList.h
+/// \brief Routines for enchant list management
 
 #include "egoboo_object.h"
 #include "enchant.h"
@@ -87,7 +87,7 @@ typedef t_ego_obj_container< ego_obj_enc, MAX_ENC >  ego_enc_container;
 
 #define ENC_LOOP_WRAP_PTR( PENC, POBJ ) \
     ego_enc * PENC = (ego_enc *)static_cast<const ego_enc *>(POBJ); \
-
+     
 #define ENC_LOOP_WRAP_BDL( BDL, PENC ) \
     ego_bundle_enc BDL( PENC );
 

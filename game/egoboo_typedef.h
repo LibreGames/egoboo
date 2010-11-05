@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_typedef.h
-/// @details some basic types that are used throughout the game code.
+/// \file egoboo_typedef.h
+/// \details some basic types that are used throughout the game code.
 
 #include "egoboo_config.h"
 

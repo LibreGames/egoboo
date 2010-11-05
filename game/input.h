@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file input.h
-/// @details Keyboard, mouse, and joystick handling code.
+/// \file input.h
+/// \details Keyboard, mouse, and joystick handling code.
 
 #include "egoboo_typedef_cpp.h"
 

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file font_bmp.h
-/// @details bitmapped font stuff
+/// \file font_bmp.h
+/// \details bitmapped font stuff
 
 #include "egoboo_typedef_cpp.h"
 

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file PrtList.h
-/// @brief Routines for particle list management
+/// \file PrtList.h
+/// \brief Routines for particle list management
 
 #include "egoboo_object.h"
 #include "particle.h"
@@ -92,7 +92,7 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 
 #define PRT_LOOP_WRAP_PTR( PPRT, POBJ ) \
     ego_prt * PPRT = (ego_prt *)static_cast<const ego_prt *>(POBJ); \
-
+     
 #define PRT_LOOP_WRAP_BDL( BDL, PPRT ) \
     ego_bundle_prt BDL( PPRT );
 

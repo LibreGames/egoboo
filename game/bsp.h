@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file bsp.h
-/// @details
+/// \file bsp.h
+/// \details
 
 #include "egoboo_typedef_cpp.h"
 
@@ -38,9 +38,9 @@ typedef std::vector< ego_BSP_leaf > leaf_list_t;
 
 /// use a EGOBOO_SET to ensure only version of each node pointer gets inserted
 #if defined(USE_HASH) && defined(__GNUC__)
-    typedef EGOBOO_SET< ego_BSP_leaf * , LargeIntHasher<ego_BSP_leaf> > leaf_child_list_t;
+typedef EGOBOO_SET< ego_BSP_leaf * , LargeIntHasher<ego_BSP_leaf> > leaf_child_list_t;
 #else
-    typedef EGOBOO_SET< ego_BSP_leaf * > leaf_child_list_t;
+typedef EGOBOO_SET< ego_BSP_leaf * > leaf_child_list_t;
 #endif
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

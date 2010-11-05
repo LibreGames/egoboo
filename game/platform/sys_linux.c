@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file platform/sys_linux.c
-/// @brief System Dependent Functions
-/// @details Unix/GNU/Linux/*nix - specific code
+/// \file platform/sys_linux.c
+/// \brief System Dependent Functions
+/// \details Unix/GNU/Linux/*nix - specific code
 
 #include "log.h"
 #include "system.h"
@@ -68,7 +68,8 @@ int main( int argc, char* argv[] )
 //--------------------------------------------------------------------------------------------
 void sys_popup( const char * popup_title, const char * warning, const char * format, va_list args )
 {
-    /// @details ZF@> Basic untested implementation of error messaging in Linux
+    /// \author ZF
+    /// \details  Basic untested implementation of error messaging in Linux
 
     /*    STRING message, buffer;
         SDL_snprintf( message, SDL_arraysize( message ), warning );

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_object.c
-/// @brief Implementation of Egoboo "object" control routines
-/// @details
+/// \file egoboo_object.c
+/// \brief Implementation of Egoboo "object" control routines
+/// \details
 
 #include "egoboo_strutil.h"
 
@@ -437,7 +437,7 @@ ego_obj * ego_obj::grant_terminate( ego_obj * pobj )
         // already deconstructed. jump past deconstructing.
         pobj->end_destructing();
 
-        /// @note BB@> The ego_obj::end_invalidating() function is called in the
+        /// \note BB@> The ego_obj::end_invalidating() function is called in the
         ///            t_obj_lst_map<>::free_one() function when the object is finally
         ///            deallocated. Do not call it here.
     }

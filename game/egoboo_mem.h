@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_mem.h
-/// @details Macros to control allocation and deallocation of memory
+/// \file egoboo_mem.h
+/// \details Macros to control allocation and deallocation of memory
 
 // apparently gcc has some problems with the memory manager
 //#if defined(__cplusplus) && defined(__GNUC__)

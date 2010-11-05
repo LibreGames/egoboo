@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file enchant.c
-/// @brief handles enchantments attached to objects
-/// @details
+/// \file enchant.c
+/// \brief handles enchantments attached to objects
+/// \details
 
 #include "enchant.inl"
 
@@ -160,7 +160,8 @@ ego_enc * ego_enc::do_dealloc( ego_enc * penc )
 //--------------------------------------------------------------------------------------------
 ego_enc * ego_enc::ctor_this( ego_enc * penc )
 {
-    /// @details BB@> initialize the ego_enc
+    /// \author BB
+    /// \details  initialize the ego_enc
 
     if ( NULL == penc ) return penc;
 
@@ -251,7 +252,8 @@ bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 //--------------------------------------------------------------------------------------------
 bool_t remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz )
 {
-    /// @details ZF@> This function removes all enchants with the character that has the specified
+    /// \author ZF
+    /// \details  This function removes all enchants with the character that has the specified
     ///               IDSZ. If idsz [NONE] is specified, all enchants will be removed. Return btrue
     ///               if at least one enchant was removed.
 
@@ -288,7 +290,8 @@ bool_t remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz )
 //--------------------------------------------------------------------------------------------
 bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 {
-    /// @details ZZ@> This function removes a specific enchantment and adds it to the unused list
+    /// \author ZZ
+    /// \details  This function removes a specific enchantment and adds it to the unused list
 
     int     iwave;
     CHR_REF overlay_ref;
@@ -407,7 +410,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 
     // save this until the enchant is completely dead, since kill character can generate a
     // recursive call to this function through cleanup_one_character()
-    // @note all of the values in the penc are now invalid. we have to use previously evaluated
+    // \note all of the values in the penc are now invalid. we have to use previously evaluated
     // values of itarget and penc to kill the target (if necessary)
     if ( INGAME_CHR( itarget ) && NULL != peve && peve->killtargetonend )
     {
@@ -427,7 +430,8 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 //--------------------------------------------------------------------------------------------
 ENC_REF ego_enc::value_filled( const ENC_REF &  ienc, int value_idx )
 {
-    /// @details ZZ@> This function returns MAX_ENC if the enchantment's target has no conflicting
+    /// \author ZZ
+    /// \details  This function returns MAX_ENC if the enchantment's target has no conflicting
     ///    set values in its other enchantments.  Otherwise it returns the ienc
     ///    of the conflicting enchantment
 
@@ -464,7 +468,8 @@ ENC_REF ego_enc::value_filled( const ENC_REF &  ienc, int value_idx )
 //--------------------------------------------------------------------------------------------
 void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & profile )
 {
-    /// @details ZZ@> This function sets and saves one of the character's stats
+    /// \author ZZ
+    /// \details  This function sets and saves one of the character's stats
 
     ENC_REF conflict;
     CHR_REF character;
@@ -643,7 +648,8 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
 //--------------------------------------------------------------------------------------------
 void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ieve )
 {
-    /// @details ZZ@> This function does cumulative modification to character stats
+    /// \author ZZ
+    /// \details  This function does cumulative modification to character stats
 
     int valuetoadd, newvalue;
     float fvaluetoadd, fnewvalue;
@@ -744,7 +750,7 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
             break;
 
         case ADDDEFENSE:
-            /// @note ZF@> why limit min to 55?
+            /// \note ZF@> why limit min to 55?
             newvalue = ptarget->defense;
             valuetoadd = peve->addvalue[value_idx];
             getadd( 55, newvalue, 255, &valuetoadd );  // Don't fix again!
@@ -753,7 +759,7 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
             break;
 
         case ADDMANA:
-            /// @note ZF@> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
+            /// \note ZF@> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
             newvalue = ptarget->mana_max;
             valuetoadd = peve->addvalue[value_idx];
             getadd( 0, newvalue, PERFECTBIG, &valuetoadd );
@@ -764,7 +770,7 @@ void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ie
             break;
 
         case ADDLIFE:
-            /// @note ZF@> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
+            /// \note ZF@> bit of a problem here, we don't want players to heal or lose life by requipping magic ornaments
             newvalue = ptarget->life_max;
             valuetoadd = peve->addvalue[value_idx];
             getadd( LOWSTAT, newvalue, PERFECTBIG, &valuetoadd );
@@ -973,7 +979,8 @@ ego_enc * ego_enc::do_initializing( ego_enc * penc )
 //--------------------------------------------------------------------------------------------
 ego_enc * ego_enc::do_processing( ego_enc * penc )
 {
-    /// @details ZZ@> This function allows enchantments to update, spawn particles,
+    /// \author ZZ
+    /// \details  This function allows enchantments to update, spawn particles,
     //  do drains, stat boosts and despawn.
 
     ENC_REF  ienc;
@@ -1169,7 +1176,8 @@ bool_t ego_obj_enc::object_update_list_id( void )
 //--------------------------------------------------------------------------------------------
 ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const CHR_REF & spawner, const ENC_REF & ego_enc_override, const PRO_REF & modeloptional )
 {
-    /// @details ZZ@> This function enchants a target, returning the enchantment index or MAX_ENC
+    /// \author ZZ
+    /// \details  This function enchants a target, returning the enchantment index or MAX_ENC
     ///    if failed
 
     ENC_REF ego_enc_ref;
@@ -1311,7 +1319,8 @@ ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const 
 //--------------------------------------------------------------------------------------------
 EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF & ieve )
 {
-    /// @details ZZ@> This function loads an enchantment profile into the EveStack
+    /// \author ZZ
+    /// \details  This function loads an enchantment profile into the EveStack
 
     EVE_REF retval = EVE_REF( MAX_EVE );
 
@@ -1334,7 +1343,8 @@ EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF & ie
 //--------------------------------------------------------------------------------------------
 void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
 {
-    /// @details ZZ@> This function unsets a set value
+    /// \author ZZ
+    /// \details  This function unsets a set value
     CHR_REF character;
     ego_enc * penc;
     ego_chr * ptarget;
@@ -1453,7 +1463,8 @@ void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
 //--------------------------------------------------------------------------------------------
 void ego_enc::remove_add( const ENC_REF & ienc, int value_idx )
 {
-    /// @details ZZ@> This function undoes cumulative modification to character stats
+    /// \author ZZ
+    /// \details  This function undoes cumulative modification to character stats
 
     float fvaluetoadd;
     int valuetoadd;
@@ -1622,7 +1633,8 @@ void update_all_enchants()
 //--------------------------------------------------------------------------------------------
 ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 {
-    /// @details BB@> remove all the dead enchants from the enchant list
+    /// \author BB
+    /// \details  remove all the dead enchants from the enchant list
     ///     and report back the first non-dead enchant in the list.
 
     bool_t ego_enc_used[MAX_ENC];
@@ -1694,7 +1706,8 @@ ENC_REF cleanup_enchant_list( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 //--------------------------------------------------------------------------------------------
 void cleanup_all_enchants()
 {
-    /// @details ZZ@> this function scans all the enchants and removes any dead ones.
+    /// \author ZZ
+    /// \details  this function scans all the enchants and removes any dead ones.
     ///               this happens only once a loop
 
     ENC_BEGIN_LOOP_DEFINED( ienc, penc )
@@ -1786,10 +1799,11 @@ void increment_all_enchant_update_counters()
 //--------------------------------------------------------------------------------------------
 bool_t ego_obj_enc::request_terminate( const ENC_REF & ienc )
 {
-    /// @details BB@> Tell the game to get rid of this object and treat it
+    /// \author BB
+    /// \details  Tell the game to get rid of this object and treat it
     ///               as if it was already dead
     ///
-    /// @note ego_obj_enc::request_terminate() will force the game to
+    /// \note ego_obj_enc::request_terminate() will force the game to
     ///       (eventually) call free_one_enchant_in_game() on this enchant
 
     return request_terminate( EncObjList.get_allocated_data_ptr( ienc ) );
@@ -1798,10 +1812,11 @@ bool_t ego_obj_enc::request_terminate( const ENC_REF & ienc )
 //--------------------------------------------------------------------------------------------
 bool_t ego_obj_enc::request_terminate( ego_obj_enc * pobj )
 {
-    /// @details BB@> Tell the game to get rid of this object and treat it
+    /// \author BB
+    /// \details  Tell the game to get rid of this object and treat it
     ///               as if it was already dead
     ///
-    /// @note ego_obj_enc::request_terminate() will force the game to
+    /// \note ego_obj_enc::request_terminate() will force the game to
     ///       (eventually) call free_one_enchant_in_game() on this enchant
 
     if ( NULL == pobj || TERMINATED_PENC( pobj ) ) return bfalse;

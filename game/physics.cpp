@@ -17,7 +17,7 @@
 //*
 //********************************************************************************************
 
-/// @file physics.c
+/// \file physics.c
 
 #include "physics.inl"
 
@@ -228,7 +228,8 @@ egoboo_rv ego_oct_bb::intersect_index_close( int index, ego_oct_bb & src1, ego_o
 //--------------------------------------------------------------------------------------------
 bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2_orig, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
 {
-    /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
+    /// \author BB
+    /// \details  A test to determine whether two "fast moving" objects are interacting within a frame.
     ///               Designed to determine whether a bullet particle will interact with character.
 
     ego_oct_bb    src1, src2;
@@ -322,7 +323,7 @@ bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1
         if ( *tmin > 1.0f || *tmax < 0.0f ) return bfalse;
 
         // limit the negative values of time to the start of the module
-        if (( *tmin ) + update_wld < 0 ) *tmin = - Sint32(update_wld) ;
+        if (( *tmin ) + update_wld < 0 ) *tmin = - Sint32( update_wld ) ;
     }
 
     if ( NULL != pdst )
@@ -356,7 +357,8 @@ bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1
 //--------------------------------------------------------------------------------------------
 bool_t phys_expand_oct_bb( ego_oct_bb & src, fvec3_t vel, float tmin, float tmax, ego_oct_bb   * pdst )
 {
-    /// @details BB@> use the velocity of an object and its ego_oct_bb   to determine the
+    /// \author BB
+    /// \details  use the velocity of an object and its ego_oct_bb   to determine the
     ///               amount of territory that an object will cover in the range [tmin,tmax].
     ///               One update equals [tmin,tmax] == [0,1].
 
@@ -416,7 +418,8 @@ bool_t phys_expand_oct_bb( ego_oct_bb & src, fvec3_t vel, float tmin, float tmax
 //--------------------------------------------------------------------------------------------
 bool_t phys_expand_chr_bb( ego_chr * pchr, float tmin, float tmax, ego_oct_bb   * pdst )
 {
-    /// @details BB@> use the object velocity to figure out where the volume that the character will
+    /// \author BB
+    /// \details  use the object velocity to figure out where the volume that the character will
     ///               occupy during this update. Use the loser prt_cv and include extra height if
     ///               it is a platform.
 
@@ -438,7 +441,8 @@ bool_t phys_expand_chr_bb( ego_chr * pchr, float tmin, float tmax, ego_oct_bb   
 //--------------------------------------------------------------------------------------------
 bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   * pdst )
 {
-    /// @details BB@> use the object velocity to figure out where the volume that the particle will
+    /// \author BB
+    /// \details  use the object velocity to figure out where the volume that the particle will
     ///               occupy during this update
 
     ego_oct_bb   tmp_oct;
@@ -1015,11 +1019,12 @@ bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, ego_phy
 //--------------------------------------------------------------------------------------------
 bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc )
 {
-    /// @details BB@> break the acceleration up into parts that are parallel and perpendicular to the floor
+    /// \author BB
+    /// \details  break the acceleration up into parts that are parallel and perpendicular to the floor
     /// and partially kill the acceleration perpendicular to the ground.
     /// This takes the net effect of the ground's "normal force" into account.
 
-    /// @note BB@> don't apply this to the platform accumulator since it has some special "physics"
+    /// \note BB@> don't apply this to the platform accumulator since it has some special "physics"
     ///     like sucking an object onto the platform, which keeps object attached
     ///     when a platform starts to descend
 
@@ -1057,7 +1062,8 @@ bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, 
 
 //bool_t ego_oct_bb::intersect_close( ego_oct_bb & src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
 //{
-//    /// @details BB@> A test to determine whether two "fast moving" objects are interacting within a frame.
+//    /// \author BB
+//    /// \details  A test to determine whether two "fast moving" objects are interacting within a frame.
 //    ///               Designed to determine whether a bullet particle will interact with character.
 //
 //    ego_oct_bb   exp1, exp2;

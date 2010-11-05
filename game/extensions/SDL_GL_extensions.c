@@ -17,10 +17,10 @@
 //*
 //********************************************************************************************
 
-/// @file extensions/SDL_GL_extensions.c
-/// @ingroup _sdl_extensions_
-/// @brief Implementation of the OpenGL extensions to SDL
-/// @details
+/// \file extensions/SDL_GL_extensions.c
+/// \ingroup _sdl_extensions_
+/// \brief Implementation of the OpenGL extensions to SDL
+/// \details
 
 #include "SDL_GL_extensions.h"
 
@@ -115,7 +115,8 @@ SDL_bool SDL_GL_uploadSurface( SDL_Surface *surface, GLuint tx_id, GLfloat texCo
 //--------------------------------------------------------------------------------------------
 SDL_bool SDL_GL_set_gl_mode( struct s_oglx_video_parameters * v )
 {
-    /// @details BB@> this function applies OpenGL settings. Must have a valid SDL_Surface to do any good.
+    /// \author BB
+    /// \details  this function applies OpenGL settings. Must have a valid SDL_Surface to do any good.
 
     if ( NULL == v || !SDL_WasInit( SDL_INIT_VIDEO ) ) return SDL_FALSE;
 
@@ -220,7 +221,8 @@ void SDL_GL_report_mode( SDLX_video_parameters_t * retval )
 //--------------------------------------------------------------------------------------------
 SDLX_video_parameters_t * SDL_GL_set_mode( SDLX_video_parameters_t * v_old, SDLX_video_parameters_t * v_new, oglx_video_parameters_t * gl_new, SDL_bool has_valid_mode )
 {
-    /// @details BB@> let SDL_GL try to set a new video mode.
+    /// \author BB
+    /// \details  let SDL_GL try to set a new video mode.
 
     SDLX_video_parameters_t param_old;
     SDLX_video_parameters_t * retval = NULL;
@@ -253,8 +255,8 @@ SDLX_video_parameters_t * SDL_GL_set_mode( SDLX_video_parameters_t * v_old, SDLX
 
         // set the opengl parameters
 
-        /// @note ZF@> Multisampling is always disabled?
-        /// @note BB@> This only occurs if SDLX_set_mode() fails. We are just assuming that
+        /// \note ZF@> Multisampling is always disabled?
+        /// \note BB@> This only occurs if SDLX_set_mode() fails. We are just assuming that
         ///            multisample was the problem, since it seemed at the time to be a big
         ///            issue for lots of users
         gl_new->multisample     = GL_FALSE;

@@ -18,10 +18,10 @@
 //*
 //********************************************************************************************
 
-/// @file extensions/SDL_GL_extensions.h
-/// @ingroup _sdl_extensions_
-/// @brief Definitions for OpenGL extensions to SDL
-/// @details
+/// \file extensions/SDL_GL_extensions.h
+/// \ingroup _sdl_extensions_
+/// \brief Definitions for OpenGL extensions to SDL
+/// \details
 
 #include "ogl_extensions.h"
 #include "SDL_extensions.h"

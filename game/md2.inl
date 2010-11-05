@@ -20,10 +20,10 @@
 //********************************************************************************************
 
 ///
-/// @file md2.inl
-/// @brief Implementation Egoboo's Md2 loading and saving
-/// @details functions that will be declared inside the base class
-/// @note You will routinely include "md2.inl" in all *.inl files or *.c/*.cpp files, instead of "md2.h"
+/// \file md2.inl
+/// \brief Implementation Egoboo's Md2 loading and saving
+/// \details functions that will be declared inside the base class
+/// \note You will routinely include "md2.inl" in all *.inl files or *.c/*.cpp files, instead of "md2.h"
 
 #include "egoboo_typedef_cpp.inl"
 

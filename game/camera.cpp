@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file camera.c
-/// @brief Various functions related to how the game camera works.
-/// @details
+/// \file camera.c
+/// \brief Various functions related to how the game camera works.
+/// \details
 
 #include "camera.h"
 
@@ -59,7 +59,8 @@ void ego_camera::rotmesh_init()
 //--------------------------------------------------------------------------------------------
 ego_camera * ego_camera::ctor_this( ego_camera * pcam )
 {
-    /// @details BB@> initialize the camera structure
+    /// \author BB
+    /// \details  initialize the camera structure
 
     fvec3_t   t1 = {{0, 0, 0}};
     fvec3_t   t2 = {{0, 0, -1}};
@@ -105,7 +106,8 @@ ego_camera * ego_camera::ctor_this( ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 void dump_matrix( fmat_4x4_t a )
 {
-    /// @details ZZ@> dump a text representation of a 4x4 matrix to stdout
+    /// \author ZZ
+    /// \details  dump a text representation of a 4x4 matrix to stdout
 
     int i; int j;
 
@@ -125,7 +127,8 @@ void dump_matrix( fmat_4x4_t a )
 //--------------------------------------------------------------------------------------------
 void ego_camera::look_at( ego_camera * pcam, float x, float y )
 {
-    /// @details ZZ@> This function makes the camera turn to face the character
+    /// \author ZZ
+    /// \details  This function makes the camera turn to face the character
 
     pcam->zgoto = pcam->zadd;
     if ( pcam->turn_time != 0 )
@@ -137,7 +140,8 @@ void ego_camera::look_at( ego_camera * pcam, float x, float y )
 //--------------------------------------------------------------------------------------------
 void ego_camera::make_matrix( ego_camera * pcam )
 {
-    /// @details ZZ@> This function sets pcam->mView to the camera's location and rotation
+    /// \author ZZ
+    /// \details  This function sets pcam->mView to the camera's location and rotation
 
     float local_swingamp = pcam->swingamp;
 
@@ -206,7 +210,8 @@ void ego_camera::make_matrix( ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 void ego_camera::adjust_angle( ego_camera * pcam, float height )
 {
-    /// @details ZZ@> This function makes the camera look downwards as it is raised up
+    /// \author ZZ
+    /// \details  This function makes the camera look downwards as it is raised up
 
     float percentmin, percentmax;
     if ( height < CAM_ZADD_MIN )  height = CAM_ZADD_MIN;
@@ -221,7 +226,8 @@ void ego_camera::adjust_angle( ego_camera * pcam, float height )
 //--------------------------------------------------------------------------------------------
 void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
 {
-    /// @details ZZ@> This function moves the camera
+    /// \author ZZ
+    /// \details  This function moves the camera
 
     Uint16 cnt;
     float x, y, z, level, newx, newy, movex, movey;
@@ -291,7 +297,7 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
 
         for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
         {
-            if( !ipla->valid ) continue;
+            if ( !ipla->valid ) continue;
 
             ego_chr * pchr = pla_get_pchr( *ipla );
             if ( NULL == pchr || !pchr->alive ) continue;
@@ -325,7 +331,7 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
         local_chr_count = 0;
         for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
         {
-            if( !ipla->valid ) continue;
+            if ( !ipla->valid ) continue;
 
             ego_chr * pchr = pla_get_pchr( *ipla );
             if ( NULL == pchr || !pchr->alive ) continue;
@@ -592,7 +598,8 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 void ego_camera::reset( ego_camera * pcam, ego_mpd   * pmesh )
 {
-    /// @details ZZ@> This function makes sure the camera starts in a suitable position
+    /// \author ZZ
+    /// \details  This function makes sure the camera starts in a suitable position
 
     pcam->swing        = 0;
     pcam->pos.x        = pmesh->gmem.edge_x / 2;
@@ -623,7 +630,7 @@ void ego_camera::reset( ego_camera * pcam, ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 bool_t ego_camera::reset_target( ego_camera * pcam, ego_mpd   * pmesh )
 {
-    // @details BB@> Force the camera to focus in on the players. Should be called any time there is
+    // \details BB@> Force the camera to focus in on the players. Should be called any time there is
     //               a "change of scene". With the new velocity-tracking of the camera, this would include
     //               things like character respawns, adding new players, etc.
 

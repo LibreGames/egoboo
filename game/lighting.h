@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file lighting.h
+/// \file lighting.h
 
 #include "physics.h"
 #include "egoboo_math.h"

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_display_list.c
-/// @brief A simplistic implementation of a display list
-/// @details
+/// \file egoboo_display_list.c
+/// \brief A simplistic implementation of a display list
+/// \details
 
 #include "egoboo_display_list.h"
 
@@ -87,7 +87,8 @@ display_item::~display_item()
 //--------------------------------------------------------------------------------------------
 GLboolean _display_item_invalidate_texture( display_item_t * item_ptr )
 {
-    /// BB@> if we own a texture, get rid of it
+    /// \author BB
+    /// \details if we own a texture, get rid of it
 
     GLboolean retval = GL_FALSE;
 
@@ -111,7 +112,8 @@ GLboolean _display_item_invalidate_texture( display_item_t * item_ptr )
 //--------------------------------------------------------------------------------------------
 GLboolean _display_item_invalidate_list( display_item_t * item_ptr )
 {
-    /// BB@> if we own a display list, get rid of it
+    /// \author BB
+    /// \details if we own a display list, get rid of it
 
     GLboolean retval = GL_FALSE;
 
@@ -355,7 +357,7 @@ GLboolean display_item_draw_texture( display_item_t * item_ptr )
     if ( NULL == item_ptr ) return GL_FALSE;
 
     // If there is no valid texture return false.
-    // @note !!!! This is not egoboo's normal behavior !!!!
+    // \note !!!! This is not egoboo's normal behavior !!!!
     // Things like buttons and other "blank" textures are implemented
     // by binding INVALID_GL_ID as a texture
     if ( INVALID_GL_ID == item_ptr->texture_name ) return GL_FALSE;

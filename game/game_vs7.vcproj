@@ -364,7 +364,7 @@
 				RelativePath=".\mad.cpp">
 			</File>
 			<File
-				RelativePath=".\Md2.cpp">
+				RelativePath=".\md2.cpp">
 			</File>
 			<File
 				RelativePath=".\menu.cpp">
@@ -489,7 +489,7 @@
 				RelativePath=".\mad_defs.h">
 			</File>
 			<File
-				RelativePath=".\Md2.h">
+				RelativePath=".\md2.h">
 			</File>
 			<File
 				RelativePath=".\menu.h">
@@ -553,7 +553,7 @@
 				RelativePath=".\enchant.inl">
 			</File>
 			<File
-				RelativePath=".\Md2.inl">
+				RelativePath=".\md2.inl">
 			</File>
 			<File
 				RelativePath=".\mesh.inl">

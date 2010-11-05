@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file game.c
-/// @brief The code for controlling the game
-/// @details
+/// \file game.c
+/// \brief The code for controlling the game
+/// \details
 
 #include "game.h"
 
@@ -221,7 +221,8 @@ static void sort_stat_list();
 //--------------------------------------------------------------------------------------------
 void export_one_character( const CHR_REF & character, const CHR_REF & owner, int number, bool_t is_local )
 {
-    /// @details ZZ@> This function exports a character
+    /// \author ZZ
+    /// \details  This function exports a character
 
     int tnc = 0;
     ego_cap * pcap;
@@ -371,7 +372,8 @@ void export_one_character( const CHR_REF & character, const CHR_REF & owner, int
 //--------------------------------------------------------------------------------------------
 void export_all_players( bool_t require_local )
 {
-    /// @details ZZ@> This function saves all the local players in the
+    /// \author ZZ
+    /// \details  This function saves all the local players in the
     ///    PLAYERS directory
 
     bool_t is_local;
@@ -389,7 +391,7 @@ void export_all_players( bool_t require_local )
     // Check each player
     for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
-        if( !ipla->valid ) continue;
+        if ( !ipla->valid ) continue;
 
         is_local = ( 0 != ipla->device.bits );
         if ( require_local && !is_local ) continue;
@@ -436,7 +438,8 @@ void export_all_players( bool_t require_local )
 //--------------------------------------------------------------------------------------------
 void log_madused_vfs( const char *savename )
 {
-    /// @details ZZ@> This is a debug function for checking model loads
+    /// \author ZZ
+    /// \details  This is a debug function for checking model loads
 
     vfs_FILE* hFileWrite;
     PRO_REF cnt;
@@ -467,7 +470,8 @@ void log_madused_vfs( const char *savename )
 //--------------------------------------------------------------------------------------------
 void activate_alliance_file_vfs( /*const char *modname*/ )
 {
-    /// @details ZZ@> This function reads the alliance file
+    /// \author ZZ
+    /// \details  This function reads the alliance file
     STRING szTemp;
     TEAM_REF teama, teamb;
     vfs_FILE *fileread;
@@ -544,7 +548,8 @@ void object_physics_initialize()
 //--------------------------------------------------------------------------------------------
 void initialize_all_objects()
 {
-    /// @details BB@> begin the code for updating in-game objects
+    /// \author BB
+    /// \details  begin the code for updating in-game objects
 
     // update all object timers etc.
     update_all_objects();
@@ -566,7 +571,8 @@ void object_physics_finalize( float dt )
 //--------------------------------------------------------------------------------------------
 void finalize_all_objects()
 {
-    /// @details BB@> end the code for updating in-game objects
+    /// \author BB
+    /// \details  end the code for updating in-game objects
 
     // actually move all of the objects
     object_physics_finalize( 1.0f );
@@ -605,7 +611,7 @@ void game_update_network_stats()
         // fix bad players
         if ( !VALID_CHR( ipla->index ) )
         {
-            ego_player::dtor( &(*ipla) );
+            ego_player::dtor( &( *ipla ) );
             continue;
         }
 
@@ -722,7 +728,7 @@ void game_update_local_stats()
         // fix bad players
         if ( !VALID_CHR( ipla->index ) )
         {
-            ego_player::dtor( &(*ipla) );
+            ego_player::dtor( &( *ipla ) );
             continue;
         }
 
@@ -837,7 +843,8 @@ void game_update_heartbeat()
 //--------------------------------------------------------------------------------------------
 int game_update()
 {
-    /// @details ZZ@> This function does several iterations of character movements and such
+    /// \author ZZ
+    /// \details  This function does several iterations of character movements and such
     ///    to keep the game in sync.
 
     int tnc;
@@ -862,7 +869,7 @@ int game_update()
         log_warning( "Local machine not keeping up with the required updates-per-second. %d/%d\n", max_iterations, update_lag );
     }
 
-    /// @todo claforte@> Put that back in place once networking is functional (Jan 6th 2001)
+    /// \todo claforte@> Put that back in place once networking is functional (Jan 6th 2001)
     /// do stuff inside this loop if it might cause problems on a laggy machine
     for ( tnc = 0; update_wld < true_update && tnc < max_iterations; tnc++ )
     {
@@ -962,7 +969,8 @@ int game_update()
 //--------------------------------------------------------------------------------------------
 void game_update_clocks()
 {
-    /// @details ZZ@> This function updates the game timers
+    /// \author ZZ
+    /// \details  This function updates the game timers
 
     // the low pas filter pafameters
     const float fold = 0.77f;
@@ -1077,7 +1085,8 @@ void game_update_clocks()
 //--------------------------------------------------------------------------------------------
 void reset_timers()
 {
-    /// @details ZZ@> This function resets the timers...
+    /// \author ZZ
+    /// \details  This function resets the timers...
 
     clock_stt = ticks_now = ticks_last = egoboo_get_ticks();
 
@@ -1089,7 +1098,7 @@ void reset_timers()
     clock_chr_stat  = 0;
 
     // all of the timers
-    timer_heartbeat = 0;        /// @note ZF@> This one should timeout on module startup so start at 0
+    timer_heartbeat = 0;        /// \note ZF@> This one should timeout on module startup so start at 0
     timer_pit = PIT_DELAY;
 
     // all of the counters
@@ -1107,7 +1116,8 @@ void reset_timers()
 //--------------------------------------------------------------------------------------------
 int game_do_menu( ego_menu_process * mproc )
 {
-    /// @details BB@> do menus
+    /// \author BB
+    /// \details  do menus
 
     int menuResult;
     bool_t need_menu = bfalse;
@@ -1372,7 +1382,7 @@ egoboo_rv ego_game_process::do_running()
             // checking the music. should not have any excect except in-game?
             PROFILE_BEGIN( PassageStack_check_music );
             {
-                PassageStack_check_music();
+                PassageStack.check_music();
             }
             PROFILE_END2( PassageStack_check_music );
 
@@ -1406,7 +1416,7 @@ egoboo_rv ego_game_process::do_running()
         PROFILE_END2( game_update_loop );
 
         // estimate the main-loop update time is taking per inner-loop iteration
-        // do a kludge to average out the effects of functions like PassageStack_check_music()
+        // do a kludge to average out the effects of functions like PassageStack.check_music()
         // even when the inner loop does not execute
         if ( update_loops > 0 )
         {
@@ -1562,7 +1572,8 @@ egoboo_rv ego_game_process::do_finishing()
 CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
                          const PIP_REF & particletype, const TEAM_REF & team, const CHR_REF & donttarget, const CHR_REF & oldtarget )
 {
-    /// @details ZF@> This is the new improved targeting system for particles. Also includes distance in the Z direction.
+    /// \author ZF
+    /// \details  This is the new improved targeting system for particles. Also includes distance in the Z direction.
 
     const float max_dist2 = WIDE * WIDE;
 
@@ -1724,7 +1735,8 @@ bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_F
 //--------------------------------------------------------------------------------------------
 CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits )
 {
-    /// @details ZF@> This is the new improved AI targeting system. Also includes distance in the Z direction.
+    /// \author ZF
+    /// \details  This is the new improved AI targeting system. Also includes distance in the Z direction.
     ///     If max_dist is 0 then it searches without a max limit.
 
     ego_line_of_sight_info los_info;
@@ -1855,7 +1867,7 @@ void do_damage_tiles()
         // don't do direct damage to invulnerable objects
         if ( IS_INVICTUS_PCHR_RAW( pchr ) ) continue;
 
-        //@todo: sound of lava sizzling and such
+        //\todo: sound of lava sizzling and such
         // distance = SDL_abs( PCamera->track_pos.x - pchr->pos.x ) + SDL_abs( PCamera->track_pos.y - pchr->pos.y );
 
         //if ( distance < damagetile.min_distance )
@@ -1886,7 +1898,8 @@ void do_damage_tiles()
 //--------------------------------------------------------------------------------------------
 void game_update_pits()
 {
-    /// @details ZZ@> This function kills any character in a deep pit...
+    /// \author ZZ
+    /// \details  This function kills any character in a deep pit...
 
     if ( pits.kill || pits.teleport )
     {
@@ -1924,7 +1937,7 @@ void game_update_pits()
                     pchr->vel.x = 0;
                     pchr->vel.y = 0;
 
-                    /// @note ZF@> Disabled, the pitfall sound was intended for pits.teleport only
+                    /// \note ZF@> Disabled, the pitfall sound was intended for pits.teleport only
                     /// Play sound effect
                     /// sound_play_chunk( pchr->pos, g_wavelist[GSND_PITFALL] );
                 }
@@ -1972,7 +1985,8 @@ void game_update_pits()
 //--------------------------------------------------------------------------------------------
 void do_weather_spawn_particles()
 {
-    /// @details ZZ@> This function drops snowflakes or rain or whatever, also swings the camera
+    /// \author ZZ
+    /// \details  This function drops snowflakes or rain or whatever, also swings the camera
 
     bool_t   spawn_one    = bfalse;
 
@@ -2076,7 +2090,8 @@ void do_weather_spawn_particles()
 //--------------------------------------------------------------------------------------------
 void read_player_local_latch( ego_player & rpla )
 {
-    /// @details ZZ@> This function converts input readings to latch settings, so players can
+    /// \author ZZ
+    /// \details  This function converts input readings to latch settings, so players can
     ///    move around
 
     TURN_T        cam_turn;
@@ -2352,7 +2367,8 @@ void read_player_local_latch( ego_player & rpla )
 //--------------------------------------------------------------------------------------------
 void read_local_latches( void )
 {
-    /// @details ZZ@> This function emulates AI thinkin' by setting latches from input devices
+    /// \author ZZ
+    /// \details  This function emulates AI thinkin' by setting latches from input devices
 
     for ( player_deque::iterator pla_it = PlaDeque.begin(); pla_it != PlaDeque.end(); pla_it++ )
     {
@@ -2363,7 +2379,8 @@ void read_local_latches( void )
 //--------------------------------------------------------------------------------------------
 void check_stats()
 {
-    /// @details ZZ@> This function lets the players check character stats
+    /// \author ZZ
+    /// \details  This function lets the players check character stats
 
     static int stat_check_timer = 0;
     static int stat_check_delay = 0;
@@ -2488,7 +2505,8 @@ void check_stats()
 //--------------------------------------------------------------------------------------------
 void show_stat( int statindex )
 {
-    /// @details ZZ@> This function shows the more specific stats for a character
+    /// \author ZZ
+    /// \details  This function shows the more specific stats for a character
 
     CHR_REF character;
     int     level;
@@ -2551,7 +2569,8 @@ void show_stat( int statindex )
 //--------------------------------------------------------------------------------------------
 void show_armor( int statindex )
 {
-    /// @details ZF@> This function shows detailed armor information for the character
+    /// \author ZF
+    /// \details  This function shows detailed armor information for the character
 
     STRING tmps;
     CHR_REF ichr;
@@ -2607,7 +2626,8 @@ void show_armor( int statindex )
 //--------------------------------------------------------------------------------------------
 bool_t get_chr_regeneration( ego_chr * pchr, int * pliferegen, int * pmanaregen )
 {
-    /// @details ZF@> Get a character's life and mana regeneration, considering all sources
+    /// \author ZF
+    /// \details  Get a character's life and mana regeneration, considering all sources
 
     int local_liferegen, local_manaregen;
     CHR_REF ichr;
@@ -2645,7 +2665,8 @@ bool_t get_chr_regeneration( ego_chr * pchr, int * pliferegen, int * pmanaregen 
 //--------------------------------------------------------------------------------------------
 void show_full_status( int statindex )
 {
-    /// @details ZF@> This function shows detailed armor information for the character including magic
+    /// \author ZF
+    /// \details  This function shows detailed armor information for the character including magic
 
     CHR_REF character;
     int manaregen, liferegen;
@@ -2685,7 +2706,8 @@ void show_full_status( int statindex )
 //--------------------------------------------------------------------------------------------
 void show_magic_status( int statindex )
 {
-    /// @details ZF@> Displays special enchantment effects for the character
+    /// \author ZF
+    /// \details  Displays special enchantment effects for the character
 
     CHR_REF character;
     const char * missile_str;
@@ -2729,7 +2751,8 @@ void show_magic_status( int statindex )
 //--------------------------------------------------------------------------------------------
 void tilt_characters_to_terrain()
 {
-    /// @details ZZ@> This function sets all of the character's starting tilt values
+    /// \author ZZ
+    /// \details  This function sets all of the character's starting tilt values
 
     Uint8 twist;
 
@@ -2806,7 +2829,8 @@ void load_all_profiles_import()
 //--------------------------------------------------------------------------------------------
 void game_load_module_profiles( const char *modname )
 {
-    /// @details BB@> Search for .obj directories int the module directory and load them
+    /// \author BB
+    /// \details  Search for .obj directories int the module directory and load them
 
     vfs_search_context_t * ctxt;
     const char *filehandle;
@@ -2841,7 +2865,8 @@ void game_load_global_profiles()
 //--------------------------------------------------------------------------------------------
 void game_load_all_profiles( const char *modname )
 {
-    /// @details ZZ@> This function loads a module's local objects and overrides the global ones already loaded
+    /// \author ZZ
+    /// \details  This function loads a module's local objects and overrides the global ones already loaded
 
     // Log all of the script errors
     parseerror = bfalse;
@@ -2959,7 +2984,8 @@ bool_t chr_setup_apply( const CHR_REF & ichr, spawn_file_info_t *pinfo )
 //--------------------------------------------------------------------------------------------
 bool_t activate_spawn_file_load_object( spawn_file_info_t * psp_info )
 {
-    /// @details BB@> Try to load a global object named int psp_info->spawn_coment into
+    /// \author BB
+    /// \details  Try to load a global object named int psp_info->spawn_coment into
     ///               slot psp_info->slot
 
     STRING filename;
@@ -3126,7 +3152,8 @@ activate_spawn_file_spawn_exit:
 //--------------------------------------------------------------------------------------------
 void activate_spawn_file_vfs()
 {
-    /// @details ZZ@> This function sets up character data, loaded from "SPAWN.TXT"
+    /// \author ZZ
+    /// \details  This function sets up character data, loaded from "SPAWN.TXT"
 
     const char       *newloadname;
     vfs_FILE         *fileread;
@@ -3193,7 +3220,8 @@ void activate_spawn_file_vfs()
 //--------------------------------------------------------------------------------------------
 void load_all_global_objects()
 {
-    /// @details ZF@> This function loads all global objects found on the mp_data mount point
+    /// \author ZF
+    /// \details  This function loads all global objects found on the mp_data mount point
 
     vfs_search_context_t * ctxt;
     const char *filehandle;
@@ -3280,7 +3308,8 @@ void game_load_all_assets( const char *modname )
 //--------------------------------------------------------------------------------------------
 void game_setup_module( const char *smallname )
 {
-    /// @details ZZ@> This runs the setup functions for a module
+    /// \author ZZ
+    /// \details  This runs the setup functions for a module
 
     STRING modname;
 
@@ -3300,7 +3329,8 @@ void game_setup_module( const char *smallname )
 //--------------------------------------------------------------------------------------------
 bool_t game_load_module_data( const char *smallname )
 {
-    /// @details ZZ@> This function loads a module
+    /// \author ZZ
+    /// \details  This function loads a module
 
     STRING modname;
 
@@ -3347,7 +3377,8 @@ game_load_module_data_fail:
 //--------------------------------------------------------------------------------------------
 void disaffirm_attached_particles( const CHR_REF & character )
 {
-    /// @details ZZ@> This function makes sure a character has no attached particles
+    /// \author ZZ
+    /// \details  This function makes sure a character has no attached particles
 
     PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
     {
@@ -3368,7 +3399,8 @@ void disaffirm_attached_particles( const CHR_REF & character )
 //--------------------------------------------------------------------------------------------
 int number_of_attached_particles( const CHR_REF & character )
 {
-    /// @details ZZ@> This function returns the number of particles attached to the given character
+    /// \author ZZ
+    /// \details  This function returns the number of particles attached to the given character
 
     int     cnt = 0;
 
@@ -3387,7 +3419,8 @@ int number_of_attached_particles( const CHR_REF & character )
 //--------------------------------------------------------------------------------------------
 int reaffirm_attached_particles( const CHR_REF & character )
 {
-    /// @details ZZ@> This function makes sure a character has all of its particles
+    /// \author ZZ
+    /// \details  This function makes sure a character has all of its particles
 
     int     number_added, number_attached;
     int     amount, attempts;
@@ -3432,7 +3465,8 @@ int reaffirm_attached_particles( const CHR_REF & character )
 //--------------------------------------------------------------------------------------------
 void game_quit_module()
 {
-    /// @details BB@> all of the de-initialization code after the module actually ends
+    /// \author BB
+    /// \details  all of the de-initialization code after the module actually ends
 
     // stop the module
     game_module_stop( PMod );
@@ -3464,7 +3498,8 @@ void game_quit_module()
 //--------------------------------------------------------------------------------------------
 void game_clear_vfs_paths()
 {
-    /// @details BB@> clear out the all mount points
+    /// \author BB
+    /// \details  clear out the all mount points
 
     // clear out the basic mount points
     egoboo_clear_vfs_paths();
@@ -3479,7 +3514,8 @@ void game_clear_vfs_paths()
 //--------------------------------------------------------------------------------------------
 bool_t game_setup_vfs_paths( const char * mod_path )
 {
-    /// @details BB@> set up the virtual mount points for the module's data
+    /// \author BB
+    /// \details  set up the virtual mount points for the module's data
     ///               and objects
 
     const char * path_seperator_1, * path_seperator_2;
@@ -3556,9 +3592,10 @@ bool_t game_setup_vfs_paths( const char * mod_path )
 //--------------------------------------------------------------------------------------------
 bool_t game_begin_module( const char * modname, Uint32 seed )
 {
-    /// @details BB@> all of the initialization code before the module actually starts
+    /// \author BB
+    /// \details  all of the initialization code before the module actually starts
 
-    if ((Uint32( ~0 ) ) == seed ) seed = time( NULL );
+    if (( Uint32( ~0 ) ) == seed ) seed = time( NULL );
 
     // make sure the old game has been quit
     game_quit_module();
@@ -3608,7 +3645,8 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
 //--------------------------------------------------------------------------------------------
 egoboo_rv game_update_imports()
 {
-    /// @details BB@> This function copies all the players into the imports dir to prepare for the next module
+    /// \author BB
+    /// \details  This function copies all the players into the imports dir to prepare for the next module
     bool_t is_local;
     int tnc, j;
     CHR_REF character;
@@ -3693,7 +3731,8 @@ egoboo_rv game_update_imports()
 //--------------------------------------------------------------------------------------------
 void game_release_module_data()
 {
-    /// @details ZZ@> This function frees up memory used by the module
+    /// \author ZZ
+    /// \details  This function frees up memory used by the module
 
     ego_mpd   * ptmp;
 
@@ -3746,7 +3785,8 @@ bool_t attach_one_particle( ego_bundle_prt * pbdl_prt )
 //--------------------------------------------------------------------------------------------
 void attach_all_particles()
 {
-    /// @details ZZ@> This function attaches particles to their characters so everything gets
+    /// \author ZZ
+    /// \details  This function attaches particles to their characters so everything gets
     ///    drawn right
 
     PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, prt_bdl )
@@ -3759,7 +3799,8 @@ void attach_all_particles()
 //--------------------------------------------------------------------------------------------
 bool_t add_player( const CHR_REF & character, BIT_FIELD device_bits )
 {
-    /// @details ZZ@> This function adds a player, returning bfalse if it fails, btrue otherwise
+    /// \author ZZ
+    /// \details  This function adds a player, returning bfalse if it fails, btrue otherwise
 
     ego_player * ppla = NULL;
     ego_chr    * pchr = NULL;
@@ -3799,7 +3840,8 @@ bool_t add_player( const CHR_REF & character, BIT_FIELD device_bits )
 //--------------------------------------------------------------------------------------------
 void let_all_characters_think()
 {
-    /// @details ZZ@> This function runs the ai scripts for all eligible objects
+    /// \author ZZ
+    /// \details  This function runs the ai scripts for all eligible objects
 
     static Uint32 last_update = Uint32( ~0 );
 
@@ -3895,14 +3937,15 @@ void game_finish_module()
     game_update_imports();
 
     // quit the old module
-    /// @note ZF@> I think this not needed because this is done elswhere?
+    /// \note ZF@> I think this not needed because this is done elswhere?
     //game_quit_module();
 }
 
 //--------------------------------------------------------------------------------------------
 void free_all_objects( void )
 {
-    /// @details BB@> free every instance of the three object types used in the game.
+    /// \author BB
+    /// \details  free every instance of the three object types used in the game.
 
     PrtObjList.free_all();
     EncObjList.free_all();
@@ -3939,7 +3982,8 @@ ego_camera * set_PCamera( ego_camera * pcam )
 //--------------------------------------------------------------------------------------------
 float get_mesh_level( ego_mpd   * pmesh, float x, float y, bool_t waterwalk )
 {
-    /// @details ZZ@> This function returns the height of a point within a mesh fan, precise
+    /// \author ZZ
+    /// \details  This function returns the height of a point within a mesh fan, precise
     ///    If waterwalk is nonzero and the fan is watery, then the level returned is the
     ///    level of the water.
 
@@ -3963,7 +4007,8 @@ float get_mesh_level( ego_mpd   * pmesh, float x, float y, bool_t waterwalk )
 //--------------------------------------------------------------------------------------------
 bool_t make_water( ego_water_instance * pinst, wawalite_water_t * pdata )
 {
-    /// @details ZZ@> This function sets up water movements
+    /// \author ZZ
+    /// \details  This function sets up water movements
 
     int layer, frame, point, cnt;
     float temp;
@@ -4014,7 +4059,8 @@ bool_t make_water( ego_water_instance * pinst, wawalite_water_t * pdata )
 //--------------------------------------------------------------------------------------------
 void reset_end_text()
 {
-    /// @details ZZ@> This function resets the end-module text
+    /// \author ZZ
+    /// \details  This function resets the end-module text
 
     endtext_carat = SDL_snprintf( endtext, SDL_arraysize( endtext ), "The game has ended..." );
 
@@ -4495,7 +4541,8 @@ bool_t do_line_of_sight( ego_line_of_sight_info * plos )
 //--------------------------------------------------------------------------------------------
 void game_reset_players()
 {
-    /// @details ZZ@> This function clears the player list data
+    /// \author ZZ
+    /// \details  This function clears the player list data
 
     // Reset the local data stuff
     local_stats.init();
@@ -4796,7 +4843,8 @@ bool_t upload_camera_data( wawalite_camera_t * pdata )
 //--------------------------------------------------------------------------------------------
 void upload_wawalite()
 {
-    /// @details ZZ@> This function sets up water and lighting for the module
+    /// \author ZZ
+    /// \details  This function sets up water and lighting for the module
 
     wawalite_data_t * pdata = &wawalite_data;
 
@@ -4863,7 +4911,8 @@ bool_t game_module_reset( ego_game_module_data * pinst, Uint32 seed )
 //--------------------------------------------------------------------------------------------
 bool_t game_module_start( ego_game_module_data * pinst )
 {
-    /// @details BB@> Let the module go
+    /// \author BB
+    /// \details  Let the module go
 
     if ( NULL == pinst ) return bfalse;
 
@@ -4881,7 +4930,8 @@ bool_t game_module_start( ego_game_module_data * pinst )
 //--------------------------------------------------------------------------------------------
 bool_t game_module_stop( ego_game_module_data * pinst )
 {
-    /// @details BB@> stop the module
+    /// \author BB
+    /// \details  stop the module
 
     if ( NULL == pinst ) return bfalse;
 
@@ -4985,7 +5035,8 @@ wawalite_data_t * read_wawalite( /* const char *modname */ )
 //--------------------------------------------------------------------------------------------
 bool_t write_wawalite( const char *modname, wawalite_data_t * pdata )
 {
-    /// @details BB@> Prepare and write the wawalite file
+    /// \author BB
+    /// \details  Prepare and write the wawalite file
 
     int cnt;
 //    STRING filename;
@@ -5021,8 +5072,8 @@ Uint8 get_local_light( int light )
 {
     if ( 0xFFL == light ) return light;
 
-    /// @note ZF@> Why should Darkvision reveal invisible?
-    /// @note BB@> It doesn't. INVISIBLE doesn't have anything to do with invisibility,
+    /// \note ZF@> Why should Darkvision reveal invisible?
+    /// \note BB@> It doesn't. INVISIBLE doesn't have anything to do with invisibility,
     ///            it is just a generic threshold for whether an object can be visible to a character.
     ///            If it is actually magically invisible, then that is handled elsewhere.
 
@@ -5055,7 +5106,7 @@ bool_t do_shop_drop( const CHR_REF & idropper, const CHR_REF & iitem )
         int ix = pitem->pos.x / GRID_SIZE;
         int iy = pitem->pos.y / GRID_SIZE;
 
-        iowner = ShopStack_find_owner( ix, iy );
+        iowner = ShopStack.find_owner( ix, iy );
         if ( INGAME_CHR( iowner ) )
         {
             int price;
@@ -5111,7 +5162,7 @@ bool_t do_shop_buy( const CHR_REF & ipicker, const CHR_REF & iitem )
         int ix = pitem->pos.x / GRID_SIZE;
         int iy = pitem->pos.y / GRID_SIZE;
 
-        iowner = ShopStack_find_owner( ix, iy );
+        iowner = ShopStack.find_owner( ix, iy );
         if ( INGAME_CHR( iowner ) )
         {
             ego_chr * powner = ChrObjList.get_data_ptr( iowner );
@@ -5144,7 +5195,7 @@ bool_t do_shop_buy( const CHR_REF & ipicker, const CHR_REF & iitem )
     }
 
     /// print some feedback messages
-    /// @note: some of these are handled in scripts, so they could be disabled
+    /// \note: some of these are handled in scripts, so they could be disabled
     /*if( can_grab )
     {
         if( in_shop )
@@ -5190,7 +5241,7 @@ bool_t do_shop_steal( const CHR_REF & ithief, const CHR_REF & iitem )
         int ix = pitem->pos.x / GRID_SIZE;
         int iy = pitem->pos.y / GRID_SIZE;
 
-        iowner = ShopStack_find_owner( ix, iy );
+        iowner = ShopStack.find_owner( ix, iy );
         if ( INGAME_CHR( iowner ) )
         {
             IPair  tmp_rand = {1, 100};
@@ -5233,7 +5284,7 @@ bool_t do_item_pickup( const CHR_REF & ichr, const CHR_REF & iitem )
 
     // assume that there is no shop so that the character can grab anything
     can_grab = btrue;
-    in_shop = INGAME_CHR( ShopStack_find_owner( ix, iy ) );
+    in_shop = INGAME_CHR( ShopStack.find_owner( ix, iy ) );
 
     if ( in_shop )
     {
@@ -5304,7 +5355,8 @@ float get_mesh_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, ego_oct_
 //--------------------------------------------------------------------------------------------
 float get_mesh_max_vertex_2( ego_mpd   * pmesh, ego_chr * pchr )
 {
-    /// @details BB@> the object does not overlap a single grid corner. Check the 4 corners of the collision volume
+    /// \author BB
+    /// \details  the object does not overlap a single grid corner. Check the 4 corners of the collision volume
 
     int corner;
     int ix_off[4] = {1, 1, 0, 0};
@@ -5435,7 +5487,8 @@ float get_chr_level( ego_mpd   * pmesh, ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 egoboo_rv move_water( ego_water_instance * pwater )
 {
-    /// @details ZZ@> This function animates the water overlays
+    /// \author ZZ
+    /// \details  This function animates the water overlays
 
     int layer;
 
@@ -5471,7 +5524,8 @@ void cleanup_character_enchants( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 void sort_stat_list()
 {
-    /// @details ZZ@> This function puts all of the local players on top of the StatList
+    /// \author ZZ
+    /// \details  This function puts all of the local players on top of the StatList
 
     for ( player_deque::iterator it = PlaDeque.begin(); it != PlaDeque.end(); it++ )
     {
@@ -5517,7 +5571,8 @@ bool_t stat_lst::remove( const CHR_REF & ichr )
 //--------------------------------------------------------------------------------------------
 bool_t stat_lst::add( const CHR_REF & ichr )
 {
-    /// @details ZZ@> This function adds a status display to the do list
+    /// \author ZZ
+    /// \details  This function adds a status display to the do list
 
     if ( count >= MAXSTAT ) return bfalse;
 
@@ -5545,7 +5600,8 @@ bool_t stat_lst::add( const CHR_REF & ichr )
 //--------------------------------------------------------------------------------------------
 bool_t stat_lst::move_to_top( const CHR_REF & ichr )
 {
-    /// @details ZZ@> This function puts the character on top of the StatList
+    /// \author ZZ
+    /// \details  This function puts the character on top of the StatList
 
     int cnt, oldloc;
 

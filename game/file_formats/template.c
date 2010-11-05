@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/template.c
-/// @brief Functions output Egoboo's custom text file types using templates in /basicdat/templates/*.txt
-/// @details
+/// \file file_formats/template.c
+/// \brief Functions output Egoboo's custom text file types using templates in /basicdat/templates/*.txt
+/// \details
 
 #include "template.h"
 
@@ -41,7 +41,8 @@ static void   template_copy_to_eof( vfs_FILE * tempfile, vfs_FILE * outfile );
 //--------------------------------------------------------------------------------------------
 char * template_dump_buffer( vfs_FILE * outfile, char * buffer_beg, char * buffer_end, char * pcarat )
 {
-    /// @details BB@> copy any buffer characters to the output file
+    /// \author BB
+    /// \details  copy any buffer characters to the output file
 
     char * ptmp;
 

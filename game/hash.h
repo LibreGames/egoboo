@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file hash.h
-/// @details Implementation of the "efficient" hash node storage.
+/// \file hash.h
+/// \details Implementation of the "efficient" hash node storage.
 
 #include "egoboo_typedef_cpp.h"
 
@@ -46,6 +46,19 @@ struct ego_hash_node
 //--------------------------------------------------------------------------------------------
 struct ego_hash_list
 {
+    /// An iterator element for traversing the ego_hash_list
+    struct iterator
+    {
+        int             hash;
+        ego_hash_node * pnode;
+
+        static iterator * ctor_this( iterator * it );
+        static void     * ptr( iterator * it );
+        static bool_t     set_begin( iterator * it, ego_hash_list * hlst );
+        static bool_t     done( iterator * it, ego_hash_list * hlst );
+        static bool_t     next( iterator * it, ego_hash_list * hlst );
+    };
+
     int              allocated;
     size_t         * subcount;
     ego_hash_node ** sublist;
@@ -85,17 +98,3 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------
-
-/// An iterator element for traversing the ego_hash_list
-struct ego_hash_list_iterator
-{
-    int           hash;
-    ego_hash_node * pnode;
-
-    static ego_hash_list_iterator * ctor_this( ego_hash_list_iterator * it );
-    static void                   * ptr( ego_hash_list_iterator * it );
-    static bool_t                   set_begin( ego_hash_list_iterator * it, ego_hash_list * hlst );
-    static bool_t                   done( ego_hash_list_iterator * it, ego_hash_list * hlst );
-    static bool_t                   next( ego_hash_list_iterator * it, ego_hash_list * hlst );
-};
-

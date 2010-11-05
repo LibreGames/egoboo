@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file ui.c
-/// @brief The Egoboo GUI
-/// @details A basic library for implementing user interfaces, based off of Casey Muratori's
+/// \file ui.c
+/// \brief The Egoboo GUI
+/// \details A basic library for implementing user interfaces, based off of Casey Muratori's
 /// IMGUI.  (https://mollyrocket.com/forums/viewtopic.php?t=134)
 
 #include "ui.h"
@@ -749,7 +749,7 @@ egoboo_rv ui_Widget::drawText( ui_Widget * pw )
 //--------------------------------------------------------------------------------------------
 /** ui_vupdateTextBox
  * Draws a text string into a box, splitting it into lines according to newlines in the string.
- * @warning Doesn't pay attention to the width/height arguments yet.
+ * \warning Doesn't pay attention to the width/height arguments yet.
  *
  * text    - The text to draw
  * x       - The x position to start drawing at
@@ -1384,7 +1384,8 @@ bool_t ui_Widget::update_bound( ui_Widget * pw, frect_t * pbound )
 //--------------------------------------------------------------------------------------------
 bool_t ui_Widget::set_bound( ui_Widget * pw, float x, float y, float w, float h )
 {
-    /// @details BB@> render the text string to a SDL_Surface
+    /// \author BB
+    /// \details  render the text string to a SDL_Surface
 
     frect_t size = {0, 0, 0, 0};
 
@@ -1455,7 +1456,8 @@ bool_t ui_Widget::set_pos( ui_Widget * pw, float x, float y )
 //--------------------------------------------------------------------------------------------
 bool_t ui_Widget::set_id( ui_Widget * pw, ui_id_t id )
 {
-    /// @details BB@>
+    /// \author BB
+    /// \details
 
     if ( NULL == pw ) return bfalse;
 
@@ -1722,7 +1724,8 @@ bool_t ui_Widget::set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * 
 //--------------------------------------------------------------------------------------------
 bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font * ttf_ptr, const char * format, ... )
 {
-    /// @details BB@> render the text string to a ogl texture
+    /// \author BB
+    /// \details  render the text string to a ogl texture
 
     va_list args;
     bool_t retval;
@@ -1758,7 +1761,8 @@ bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font *
 //--------------------------------------------------------------------------------------------
 void ui_virtual_to_screen_abs( float vx, float vy, float * rx, float * ry )
 {
-    /// @details BB@> convert "virtual" screen positions into "real" space
+    /// \author BB
+    /// \details  convert "virtual" screen positions into "real" space
 
     *rx = ui_context.aw * vx + ui_context.bw;
     *ry = ui_context.ah * vy + ui_context.bh;
@@ -1767,7 +1771,8 @@ void ui_virtual_to_screen_abs( float vx, float vy, float * rx, float * ry )
 //--------------------------------------------------------------------------------------------
 void ui_screen_to_virtual_abs( float rx, float ry, float *vx, float *vy )
 {
-    /// @details BB@> convert "real" mouse positions into "virtual" space
+    /// \author BB
+    /// \details  convert "real" mouse positions into "virtual" space
 
     *vx = ui_context.iaw * rx + ui_context.ibw;
     *vy = ui_context.iah * ry + ui_context.ibh;
@@ -1776,7 +1781,8 @@ void ui_screen_to_virtual_abs( float rx, float ry, float *vx, float *vy )
 //--------------------------------------------------------------------------------------------
 void ui_virtual_to_screen_rel( float vx, float vy, float * rx, float * ry )
 {
-    /// @details BB@> convert "virtual" screen positions into "real" space
+    /// \author BB
+    /// \details  convert "virtual" screen positions into "real" space
 
     *rx = ui_context.aw * vx;
     *ry = ui_context.ah * vy;
@@ -1785,7 +1791,8 @@ void ui_virtual_to_screen_rel( float vx, float vy, float * rx, float * ry )
 //--------------------------------------------------------------------------------------------
 void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy )
 {
-    /// @details BB@> convert "real" mouse positions into "virtual" space
+    /// \author BB
+    /// \details  convert "real" mouse positions into "virtual" space
 
     *vx = ui_context.iaw * rx;
     *vy = ui_context.iah * ry;
@@ -1794,7 +1801,8 @@ void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy )
 //--------------------------------------------------------------------------------------------
 void ui_set_virtual_screen( float vw, float vh, float ww, float wh )
 {
-    /// @details BB@> set up the ui's virtual screen
+    /// \author BB
+    /// \details  set up the ui's virtual screen
 
     float k;
     TTF_Font * old_defaultFont;

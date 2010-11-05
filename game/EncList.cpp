@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file EncObjList.c
-/// @brief Implementation of the EncList_* functions
-/// @details
+/// \file EncObjList.c
+/// \brief Implementation of the EncList_* functions
+/// \details
 
 #include "EncList.h"
 

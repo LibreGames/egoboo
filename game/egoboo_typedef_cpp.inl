@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_typedef_cpp.inl
-/// @details cpp-only inline and template implementations
+/// \file egoboo_typedef_cpp.inl
+/// \details cpp-only inline and template implementations
 
 #include "egoboo_typedef_cpp.h"
 
@@ -45,7 +45,8 @@ _ty * t_list< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
 template <typename _ty, size_t _sz>
 size_t t_list< _ty, _sz >::get_free()
 {
-    /// @details ZZ@> This function returns the next free object or _sz if there are none
+    /// \author ZZ
+    /// \details  This function returns the next free object or _sz if there are none
 
     size_t retval = _sz;
 

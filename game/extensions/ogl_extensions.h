@@ -19,12 +19,12 @@
 //*
 //********************************************************************************************
 
-/// @defgroup _ogl_extensions_ Extensions to OpenGL
+/// \defgroup _ogl_extensions_ Extensions to OpenGL
 
-/// @file extensions/ogl_extensions.h
-/// @ingroup _ogl_extensions_
-/// @brief Definitions for extended functions and variables for OpenGL
-/// @details
+/// \file extensions/ogl_extensions.h
+/// \ingroup _ogl_extensions_
+/// \brief Definitions for extended functions and variables for OpenGL
+/// \details
 
 #include <SDL_opengl.h>
 #include "file_common.h"

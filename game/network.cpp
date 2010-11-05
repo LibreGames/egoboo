@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file network.c
-/// @brief Egoboo networking implementation
-/// @details Shuttles bits across the network, using Enet.  Networked play doesn't
+/// \file network.c
+/// \brief Egoboo networking implementation
+/// \details Shuttles bits across the network, using Enet.  Networked play doesn't
 /// really work at the moment.
 
 #include "network.h"
@@ -251,7 +251,8 @@ void net_close_session()
     size_t i, numPeers;
     ENetEvent event;
 
-    /// @details ZZ@> This function gets the computer out of a network game
+    /// \author ZZ
+    /// \details  This function gets the computer out of a network game
 
     if ( _gnet.initialized )
     {
@@ -305,7 +306,8 @@ void net_close_session()
 //--------------------------------------------------------------------------------------------
 void net_packet::start_new( net_packet * pkt )
 {
-    /// @details ZZ@> This function starts building a network packet
+    /// \author ZZ
+    /// \details  This function starts building a network packet
 
     pkt->head = 0;
     pkt->size = 0;
@@ -315,7 +317,8 @@ void net_packet::start_new( net_packet * pkt )
 //--------------------------------------------------------------------------------------------
 void net_packet::add_UnsignedByte( net_packet * pkt, Uint8 uc )
 {
-    /// @details ZZ@> This function appends an Uint8 to the packet
+    /// \author ZZ
+    /// \details  This function appends an Uint8 to the packet
 
     Uint8* ucp;
     ucp = ( Uint8* )( &pkt->buffer[pkt->head] );
@@ -327,7 +330,8 @@ void net_packet::add_UnsignedByte( net_packet * pkt, Uint8 uc )
 //--------------------------------------------------------------------------------------------
 void net_packet::add_SignedByte( net_packet * pkt, Sint8 sc )
 {
-    /// @details ZZ@> This function appends a Sint8 to the packet
+    /// \author ZZ
+    /// \details  This function appends a Sint8 to the packet
 
     signed char* scp;
     scp = ( signed char* )( &pkt->buffer[pkt->head] );
@@ -339,7 +343,8 @@ void net_packet::add_SignedByte( net_packet * pkt, Sint8 sc )
 //--------------------------------------------------------------------------------------------
 void net_packet::add_UnsignedShort( net_packet * pkt, Uint16 us )
 {
-    /// @details ZZ@> This function appends an Uint16 to the packet
+    /// \author ZZ
+    /// \details  This function appends an Uint16 to the packet
 
     Uint16* usp;
     usp = ( Uint16* )( &pkt->buffer[pkt->head] );
@@ -352,7 +357,8 @@ void net_packet::add_UnsignedShort( net_packet * pkt, Uint16 us )
 //--------------------------------------------------------------------------------------------
 void net_packet::add_SignedShort( net_packet * pkt, Sint16 ss )
 {
-    /// @details ZZ@> This function appends a Sint16 to the packet
+    /// \author ZZ
+    /// \details  This function appends a Sint16 to the packet
 
     signed short* ssp;
     ssp = ( signed short* )( &pkt->buffer[pkt->head] );
@@ -366,7 +372,8 @@ void net_packet::add_SignedShort( net_packet * pkt, Sint16 ss )
 //--------------------------------------------------------------------------------------------
 void net_packet::add_UnsignedInt( net_packet * pkt, Uint32 ui )
 {
-    /// @details ZZ@> This function appends an Uint32 to the packet
+    /// \author ZZ
+    /// \details  This function appends an Uint32 to the packet
 
     Uint32* uip;
     uip = ( Uint32* )( &pkt->buffer[pkt->head] );
@@ -380,7 +387,8 @@ void net_packet::add_UnsignedInt( net_packet * pkt, Uint32 ui )
 //--------------------------------------------------------------------------------------------
 void net_packet::add_SignedInt( net_packet * pkt, Sint32 si )
 {
-    /// @details ZZ@> This function appends a Sint32 to the packet
+    /// \author ZZ
+    /// \details  This function appends a Sint32 to the packet
 
     signed int* sip;
     sip = ( signed int* )( &pkt->buffer[pkt->head] );
@@ -394,7 +402,8 @@ void net_packet::add_SignedInt( net_packet * pkt, Sint32 si )
 //--------------------------------------------------------------------------------------------
 void net_packet::add_String( net_packet * pkt, const char *string )
 {
-    /// @details ZZ@> This function appends a null terminated string to the packet
+    /// \author ZZ
+    /// \details  This function appends a null terminated string to the packet
 
     char* cp;
     char cTmp;
@@ -430,7 +439,8 @@ void packet_doneReading( enet_pkt & pkt )
 //--------------------------------------------------------------------------------------------
 void packet_readString( enet_pkt & pkt, char *buffer, int maxLen )
 {
-    /// @details ZZ@> This function reads a null terminated string from the packet
+    /// \author ZZ
+    /// \details  This function reads a null terminated string from the packet
 
     Uint8 uc;
     Uint16 outindex;
@@ -453,11 +463,12 @@ void packet_readString( enet_pkt & pkt, char *buffer, int maxLen )
 //--------------------------------------------------------------------------------------------
 Uint8 packet_readUnsignedByte( enet_pkt & pkt )
 {
-    /// @details ZZ@> This function reads an Uint8 from the packet
+    /// \author ZZ
+    /// \details  This function reads an Uint8 from the packet
 
     Uint8 uc;
 
-    uc = Uint8(pkt.packet->data[pkt.location]);
+    uc = Uint8( pkt.packet->data[pkt.location] );
     pkt.location++;
 
     return uc;
@@ -466,7 +477,8 @@ Uint8 packet_readUnsignedByte( enet_pkt & pkt )
 //--------------------------------------------------------------------------------------------
 Sint8 packet_readSignedByte( enet_pkt & pkt )
 {
-    /// @details ZZ@> This function reads a Sint8 from the packet
+    /// \author ZZ
+    /// \details  This function reads a Sint8 from the packet
 
     Sint8 sc;
 
@@ -479,7 +491,8 @@ Sint8 packet_readSignedByte( enet_pkt & pkt )
 //--------------------------------------------------------------------------------------------
 Uint16 packet_readUnsignedShort( enet_pkt & pkt )
 {
-    /// @details ZZ@> This function reads an Uint16 from the packet
+    /// \author ZZ
+    /// \details  This function reads an Uint16 from the packet
 
     Uint16 us;
     Uint16* usp;
@@ -495,7 +508,8 @@ Uint16 packet_readUnsignedShort( enet_pkt & pkt )
 //--------------------------------------------------------------------------------------------
 Sint16 packet_readSignedShort( enet_pkt & pkt )
 {
-    /// @details ZZ@> This function reads a Sint16 from the packet
+    /// \author ZZ
+    /// \details  This function reads a Sint16 from the packet
 
     Sint16 ss;
     signed short* ssp;
@@ -512,7 +526,8 @@ Sint16 packet_readSignedShort( enet_pkt & pkt )
 //--------------------------------------------------------------------------------------------
 Uint32 packet_readUnsignedInt( enet_pkt & pkt )
 {
-    /// @details ZZ@> This function reads an Uint32 from the packet
+    /// \author ZZ
+    /// \details  This function reads an Uint32 from the packet
 
     Uint32 ui;
     Uint32* uip;
@@ -527,7 +542,8 @@ Uint32 packet_readUnsignedInt( enet_pkt & pkt )
 //--------------------------------------------------------------------------------------------
 Sint32 packet_readSignedInt( enet_pkt & pkt )
 {
-    /// @details ZZ@> This function reads a Sint32 from the packet
+    /// \author ZZ
+    /// \details  This function reads a Sint32 from the packet
 
     Sint32 si;
     signed int* sip;
@@ -542,7 +558,8 @@ Sint32 packet_readSignedInt( enet_pkt & pkt )
 //--------------------------------------------------------------------------------------------
 size_t packet_remainingSize( enet_pkt & pkt )
 {
-    /// @details ZZ@> This function tells if there's still data left in the packet
+    /// \author ZZ
+    /// \details  This function tells if there's still data left in the packet
 
     return pkt.packet->dataLength - pkt.location;
 }
@@ -550,7 +567,8 @@ size_t packet_remainingSize( enet_pkt & pkt )
 //--------------------------------------------------------------------------------------------
 void net_sendPacketToHost( net_packet * pkt )
 {
-    /// @details ZZ@> This function sends a packet to the host
+    /// \author ZZ
+    /// \details  This function sends a packet to the host
 
     ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, 0 );
 
@@ -560,7 +578,8 @@ void net_sendPacketToHost( net_packet * pkt )
 //--------------------------------------------------------------------------------------------
 void net_sendPacketToAllPlayers( net_packet * pkt )
 {
-    /// @details ZZ@> This function sends a packet to all the players
+    /// \author ZZ
+    /// \details  This function sends a packet to all the players
 
     ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, 0 );
 
@@ -570,7 +589,8 @@ void net_sendPacketToAllPlayers( net_packet * pkt )
 //--------------------------------------------------------------------------------------------
 void net_sendPacketToHostGuaranteed( net_packet * pkt )
 {
-    /// @details ZZ@> This function sends a packet to the host
+    /// \author ZZ
+    /// \details  This function sends a packet to the host
 
     ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, ENET_PACKET_FLAG_RELIABLE );
 
@@ -580,7 +600,8 @@ void net_sendPacketToHostGuaranteed( net_packet * pkt )
 //--------------------------------------------------------------------------------------------
 void net_sendPacketToAllPlayersGuaranteed( net_packet * pkt )
 {
-    /// @details ZZ@> This function sends a packet to all the players
+    /// \author ZZ
+    /// \details  This function sends a packet to all the players
 
     ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, ENET_PACKET_FLAG_RELIABLE );
     enet_host_broadcast( _gnet.my_host, NET_GUARANTEED_CHANNEL, packet );
@@ -589,7 +610,8 @@ void net_sendPacketToAllPlayersGuaranteed( net_packet * pkt )
 //--------------------------------------------------------------------------------------------
 void net_sendPacketToOnePlayerGuaranteed( net_packet * pkt, int player )
 {
-    /// @details ZZ@> This function sends a packet to one of the players
+    /// \author ZZ
+    /// \details  This function sends a packet to one of the players
 
     ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, ENET_PACKET_FLAG_RELIABLE );
     if ( player < _gnet.player_count )
@@ -601,7 +623,8 @@ void net_sendPacketToOnePlayerGuaranteed( net_packet * pkt, int player )
 //--------------------------------------------------------------------------------------------
 void net_sendPacketToPeer( net_packet * pkt, ENetPeer *peer )
 {
-    /// @details JF@> This function sends a packet to a given peer
+    /// \author JF
+    /// \details This function sends a packet to a given peer
 
     ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, ENET_PACKET_FLAG_RELIABLE );
 
@@ -611,7 +634,8 @@ void net_sendPacketToPeer( net_packet * pkt, ENetPeer *peer )
 //--------------------------------------------------------------------------------------------
 void net_sendPacketToPeerGuaranteed( net_packet * pkt, ENetPeer *peer )
 {
-    /// @details JF@> This function sends a packet to a given peer, with guaranteed delivery
+    /// \author JF
+    /// \details This function sends a packet to a given peer, with guaranteed delivery
 
     ENetPacket *packet = enet_packet_create( pkt->buffer, pkt->size, 0 );
 
@@ -621,8 +645,9 @@ void net_sendPacketToPeerGuaranteed( net_packet * pkt, ENetPeer *peer )
 //--------------------------------------------------------------------------------------------
 void net_copyFileToAllPlayers( const char *source, const char *dest )
 {
-    /// @details JF@> This function queues up files to send to all the hosts.
-    ///    @todo Deal with having to send to up to MAX_PLAYER players...
+    /// \author JF
+    /// \details This function queues up files to send to all the hosts.
+    /// \todo Deal with having to send to up to MAX_PLAYER players...
 
     NetFileTransfer *state;
     if ( net_numFileTransfers < NET_MAX_FILE_TRANSFERS )
@@ -654,7 +679,8 @@ void net_copyFileToAllPlayers( const char *source, const char *dest )
 //--------------------------------------------------------------------------------------------
 void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
 {
-    /// @details ZZ@> This function copies a file on the host to every remote computer.
+    /// \author ZZ
+    /// \details  This function copies a file on the host to every remote computer.
     ///    Packets are sent in chunks of COPYSIZE bytes.  The max file size
     ///    that can be sent is 2 Megs ( TOTALSIZE ).
 
@@ -738,7 +764,8 @@ void net_copyFileToHost( const char *source, const char *dest )
 {
     NetFileTransfer *state;
 
-    /// @details JF@> New function merely queues up a new file to be sent
+    /// \author JF
+    /// \details New function merely queues up a new file to be sent
 
     // If this is the host, just copy the file locally
     if ( _gnet.hostactive )
@@ -783,7 +810,8 @@ void net_copyFileToHost( const char *source, const char *dest )
 //--------------------------------------------------------------------------------------------
 void net_copyFileToHostOld_vfs( const char *source, const char *dest )
 {
-    /// @details ZZ@> This function copies a file on the remote to the host computer.
+    /// \author ZZ
+    /// \details  This function copies a file on the remote to the host computer.
     ///    Packets are sent in chunks of COPYSIZE bytes.  The max file size
     ///    that can be sent is 2 Megs ( TOTALSIZE ).
 
@@ -876,7 +904,8 @@ void net_copyFileToHostOld_vfs( const char *source, const char *dest )
 //--------------------------------------------------------------------------------------------
 void net_copyDirectoryToHost( const char *dirname, const char *todirname )
 {
-    /// @details ZZ@> This function copies all files in a directory
+    /// \author ZZ
+    /// \details  This function copies all files in a directory
 
     vfs_search_context_t * ctxt;
     const char *searchResult;
@@ -926,7 +955,8 @@ void net_copyDirectoryToHost( const char *dirname, const char *todirname )
 //--------------------------------------------------------------------------------------------
 void net_copyDirectoryToAllPlayers( const char *dirname, const char *todirname )
 {
-    /// @details ZZ@> This function copies all files in a directory
+    /// \author ZZ
+    /// \details  This function copies all files in a directory
 
     vfs_search_context_t * ctxt;
     const char *searchResult;
@@ -974,7 +1004,8 @@ void net_copyDirectoryToAllPlayers( const char *dirname, const char *todirname )
 //--------------------------------------------------------------------------------------------
 void net_sayHello()
 {
-    /// @details ZZ@> This function lets everyone know we're here
+    /// \author ZZ
+    /// \details  This function lets everyone know we're here
 
     if ( !_gnet.initialized )
     {
@@ -1001,7 +1032,8 @@ void net_sayHello()
 //--------------------------------------------------------------------------------------------
 void cl_talkToHost()
 {
-    /// @details ZZ@> This function sends the latch packets to the host machine
+    /// \author ZZ
+    /// \details  This function sends the latch packets to the host machine
 
     PLA_REF player;
 
@@ -1057,7 +1089,8 @@ void cl_talkToHost()
 //--------------------------------------------------------------------------------------------
 void sv_talkToRemotes()
 {
-    /// @details ZZ@> This function sends the character data to all the remote machines
+    /// \author ZZ
+    /// \details  This function sends the character data to all the remote machines
 
     PLA_REF player;
     int time;
@@ -1134,7 +1167,7 @@ void sv_talkToRemotes()
             {
                 int loc_lag = update_wld - it->tlatch[index].time  + 1;
 
-                if ( loc_lag > 0 && Uint32(loc_lag) > _gnet.timed_latch_count )
+                if ( loc_lag > 0 && Uint32( loc_lag ) > _gnet.timed_latch_count )
                 {
                     _gnet.timed_latch_count = loc_lag;
                 }
@@ -1223,7 +1256,7 @@ void net_handlePacket( ENetEvent *event )
 
                     // add the latch if the player id exists
                     ego_player * pplayer = PlaDeque.find_by_ref( player );
-                    if( NULL != pplayer )
+                    if ( NULL != pplayer )
                     {
                         pla_add_tlatch( *pplayer, time, tmp_latch );
                     }
@@ -1639,7 +1672,8 @@ void net_handlePacket( ENetEvent *event )
 //--------------------------------------------------------------------------------------------
 void net_dispatch_packets()
 {
-    /// @details ZZ@> This function reads any new messages and sets the player latch and matrix needed
+    /// \author ZZ
+    /// \details  This function reads any new messages and sets the player latch and matrix needed
     ///    lists...
 
     ENetEvent event;
@@ -1859,7 +1893,8 @@ void unbuffer_one_player_latch_do_respawn( ego_player & rpla )
 //--------------------------------------------------------------------------------------------
 void unbuffer_all_player_latches()
 {
-    /// @details ZZ@> This function sets character latches based on player input to the host
+    /// \author ZZ
+    /// \details  This function sets character latches based on player input to the host
 
     player_deque::iterator ipla;
 
@@ -1874,7 +1909,7 @@ void unbuffer_all_player_latches()
     }
 
     // set the player latch
-    for (ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
+    for ( ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
     {
         if ( !ipla->valid ) continue;
 
@@ -1893,7 +1928,8 @@ void unbuffer_all_player_latches()
 //--------------------------------------------------------------------------------------------
 void net_initialize( ego_config_data * pcfg )
 {
-    /// @details ZZ@> This starts up the network and logs whatever goes on
+    /// \author ZZ
+    /// \details  This starts up the network and logs whatever goes on
 
     // assume the worst
     _gnet.session_count = 0;
@@ -1951,7 +1987,8 @@ void find_open_sessions()
 {
     /*PORT - if we are connected to a host, ask it for the open sessions?
 
-    /// @details ZZ@> This function finds some open games to join
+    /// \author ZZ
+    /// \details  This function finds some open games to join
 
     DPSESSIONDESC2      sessionDesc;
     HRESULT             hr;
@@ -1971,7 +2008,8 @@ void find_open_sessions()
 //--------------------------------------------------------------------------------------------
 void sv_letPlayersJoin()
 {
-    /// @details ZZ@> This function finds all the players in the game
+    /// \author ZZ
+    /// \details  This function finds all the players in the game
 
     ENetEvent event;
     STRING hostName;
@@ -2021,7 +2059,8 @@ void sv_letPlayersJoin()
 //--------------------------------------------------------------------------------------------
 int cl_joinGame( const char* hostname )
 {
-    /// @details ZZ@> This function tries to join one of the sessions we found
+    /// \author ZZ
+    /// \details  This function tries to join one of the sessions we found
 
     ENetAddress address;
     ENetEvent event;
@@ -2029,7 +2068,7 @@ int cl_joinGame( const char* hostname )
     {
         log_info( "cl_joinGame: Creating client network connection... " );
         // Create my host thingamabober
-        /// @todo Should I limit client bandwidth here?
+        /// \todo Should I limit client bandwidth here?
         _gnet.my_host = enet_host_create( NULL, 1, 0, 0 );
         if ( NULL == _gnet.my_host )
         {
@@ -2073,13 +2112,15 @@ int cl_joinGame( const char* hostname )
 //--------------------------------------------------------------------------------------------
 void stop_players_from_joining()
 {
-    /// @details ZZ@> This function stops players from joining a game
+    /// \author ZZ
+    /// \details  This function stops players from joining a game
 }
 
 //--------------------------------------------------------------------------------------------
 int sv_hostGame()
 {
-    /// @details ZZ@> This function tries to host a new session
+    /// \author ZZ
+    /// \details  This function tries to host a new session
 
     ENetAddress address;
     if ( _gnet.initialized )
@@ -2112,7 +2153,8 @@ int sv_hostGame()
 //--------------------------------------------------------------------------------------------
 /*void turn_on_service( int service )
 {
-    /// ZZ@> This function turns on a network service ( IPX, TCP, serial, modem )
+    /// \author ZZ
+    /// \details This function turns on a network service ( IPX, TCP, serial, modem )
 }
 
 */
@@ -2178,7 +2220,7 @@ void net_file_updateTransfers()
                     strcpy( p, state->destName );
                     p += nameLen;
 
-                    networkSize = ENET_HOST_TO_NET_32( Uint32(fileSize) );
+                    networkSize = ENET_HOST_TO_NET_32( Uint32( fileSize ) );
                     *( size_t* )p = networkSize;
                     p += 4;
 
@@ -2217,7 +2259,8 @@ void net_file_updateTransfers()
 //--------------------------------------------------------------------------------------------
 void net_send_message()
 {
-    /// @details ZZ@> sends the message in the keyboard buffer to all other players
+    /// \author ZZ
+    /// \details  sends the message in the keyboard buffer to all other players
 
     if ( !_gnet.initialized ) return;
 
@@ -2286,7 +2329,7 @@ latch_2d_t ego_player_data::convert_latch_2d( const PLA_REF & iplayer, const lat
 
     // is there a valid character?
     ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( pplayer->index );
-    if( NULL == pchr ) return dst;
+    if ( NULL == pchr ) return dst;
 
     return ego_chr::convert_latch_2d( pchr, src );
 }
@@ -2436,7 +2479,7 @@ void player_deque::reinit()
 //--------------------------------------------------------------------------------------------
 void player_deque::toggle_all_explore()
 {
-    for( iterator it = begin(); it != end(); it++ )
+    for ( iterator it = begin(); it != end(); it++ )
     {
         if ( !it->valid ) continue;
 
@@ -2447,7 +2490,7 @@ void player_deque::toggle_all_explore()
 //--------------------------------------------------------------------------------------------
 void player_deque::toggle_all_wizard()
 {
-    for( iterator it = begin(); it != end(); it++ )
+    for ( iterator it = begin(); it != end(); it++ )
     {
         if ( !it->valid ) continue;
 
@@ -2460,7 +2503,7 @@ bool_t player_deque::has_explore()
 {
     bool_t  retval = bfalse;
 
-    for( iterator it = begin(); it != end(); it++ )
+    for ( iterator it = begin(); it != end(); it++ )
     {
         if ( !it->valid ) continue;
 
@@ -2479,7 +2522,7 @@ bool_t player_deque::has_wizard()
 {
     bool_t  retval = bfalse;
 
-    for( iterator it = begin(); it != end(); it++ )    
+    for ( iterator it = begin(); it != end(); it++ )
     {
         if ( !it->valid ) continue;
 

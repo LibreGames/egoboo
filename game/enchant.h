@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file enchant.h
-/// @details Decleares some stuff used for handling enchants
+/// \file enchant.h
+/// \details Decleares some stuff used for handling enchants
 
 #include "egoboo_object_list.h"
 

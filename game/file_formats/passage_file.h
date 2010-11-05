@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/passage_file.h
-/// @details help read/write the passage file
+/// \file file_formats/passage_file.h
+/// \details help read/write the passage file
 
 #include "egoboo_typedef.h"
 
@@ -39,7 +39,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 /// The definition of an "active area" in the game
-/// @details Used for a variety of purposes, including doors and shops.
+/// \details Used for a variety of purposes, including doors and shops.
     struct s_passage_data
     {
         // Passage positions

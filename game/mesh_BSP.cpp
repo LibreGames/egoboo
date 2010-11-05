@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file mesh_BSP.cpp
-/// @brief
-/// @details
+/// \file mesh_BSP.cpp
+/// \brief
+/// \details
 
 #include "mesh_BSP.h"
 
@@ -34,7 +34,8 @@ mpd_BSP mpd_BSP::root;
 //--------------------------------------------------------------------------------------------
 mpd_BSP * mpd_BSP::ctor_this( mpd_BSP * pbsp, ego_mpd   * pmesh )
 {
-    /// @details BB@> Create a new BSP tree for the mesh.
+    /// \author BB
+    /// \details  Create a new BSP tree for the mesh.
     //     These parameters duplicate the max resolution of the old system.
 
     int size_x, size_y;
@@ -147,7 +148,8 @@ bool_t mpd_BSP::fill( mpd_BSP * pbsp )
 //--------------------------------------------------------------------------------------------
 int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
-    /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
+    /// \author BB
+    /// \details  fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
     if ( NULL == pbsp || NULL == paabb ) return 0;

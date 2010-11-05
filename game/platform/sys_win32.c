@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file platform/sys_win32.c
-/// @brief System Dependent Functions
-/// @details Win32 - specific code
+/// \file platform/sys_win32.c
+/// \brief System Dependent Functions
+/// \details Win32 - specific code
 
 #include <windows.h>
 
@@ -58,7 +58,8 @@ double sys_getTime()
 //--------------------------------------------------------------------------------------------
 void sys_popup( const char * popup_title, const char * warning, const char * format, va_list args )
 {
-    /// @details ZF@> Windows users get a proper error message popup box
+    /// \author ZF
+    /// \details  Windows users get a proper error message popup box
 
     STRING message, buffer;
 

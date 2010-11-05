@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_typedef_cpp.h
-/// @details cpp-only definitions
+/// \file egoboo_typedef_cpp.h
+/// \details cpp-only definitions
 
 #include "egoboo_typedef.h"
 
@@ -41,18 +41,19 @@
 #           include <backward/hash_map>
 #           include <backward/hash_set>
 
-            // this is getting bloody ugly
-            template< typename _ty >
-            class LargeIntHasher {
-            public:
-              size_t operator()(_ty * ptr ) const
-              {
-                return h( (size_t) ptr);
-              };
+// this is getting bloody ugly
+template< typename _ty >
+class LargeIntHasher
+{
+    public:
+        size_t operator()( _ty * ptr ) const
+        {
+            return h(( size_t ) ptr );
+        };
 
-            private:
-              __gnu_cxx::hash<size_t> h;
-            };
+    private:
+        __gnu_cxx::hash<size_t> h;
+};
 
 #           define EGOBOO_MAP __gnu_cxx::hash_map
 #           define EGOBOO_SET __gnu_cxx::hash_set
@@ -116,7 +117,6 @@ template< typename _data, size_t _sz > struct t_ego_obj_container;
 struct ego_obj_chr;
 struct ego_obj_enc;
 struct ego_obj_prt;
-
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -369,7 +369,7 @@ public:
 
 /// this struct must be inherited by any class that wants to use t_allocator_dynamic<>.
 ///
-/// @note The compiler will complain that it could not generate an assignment operator,
+/// \note The compiler will complain that it could not generate an assignment operator,
 /// but this is to be expected, since we want no two objects that interact with the
 /// allocator to have the same id
 
@@ -832,7 +832,7 @@ private:
 
     /// a specialization of the new command
     ///
-    /// @note using both find_element_index() and valid_element_ptr() calls the
+    /// \note using both find_element_index() and valid_element_ptr() calls the
     /// function find_element_index() twice
     _ty * heap_new( _ty * new_ptr = NULL )
     {
@@ -1059,7 +1059,7 @@ private:
 
     // some private typedefs
 #if defined(USE_HASH) && defined(__GNUC__)
-        typedef typename EGOBOO_MAP< const _ity, const _ty *, LargeIntHasher<_ity> > cache_type;
+    typedef typename EGOBOO_MAP< const _ity, const _ty *, LargeIntHasher<_ity> > cache_type;
 #else
     typedef typename EGOBOO_MAP< const _ity, const _ty * > cache_type;
 #endif

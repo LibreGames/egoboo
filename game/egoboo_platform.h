@@ -19,9 +19,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_platform.h
-/// @brief System-dependent global parameters.
-///   @todo  some of this stuff is compiler dependent, rather than system dependent.
+/// \file egoboo_platform.h
+/// \brief System-dependent global parameters.
+///   \todo  some of this stuff is compiler dependent, rather than system dependent.
 
 #include <SDL.h>  ///< use the basic SDL platform definitions
 

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file bbox.c
-/// @brief
-/// @details
+/// \file bbox.c
+/// \brief
+/// \details
 
 #include "bbox.h"
 
@@ -306,8 +306,9 @@ ego_OVolume ego_OVolume::do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 )
 //--------------------------------------------------------------------------------------------
 bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolume )
 {
-    /// @details BB@> determine which of the 16 possible intersection points are within both
-    //     square and diamond bounding volumes
+    /// \author BB
+    /// \details  determine which of the 16 possible intersection points are within both
+    ///     square and diamond bounding volumes
 
     bool_t invalid;
     int cnt, tnc, count;
@@ -578,7 +579,8 @@ bool_t ego_CVolume::ctor_this( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume
 //--------------------------------------------------------------------------------------------
 bool_t ego_CVolume::refine( ego_CVolume * pcv )
 {
-    /// @details BB@> determine which of the 16 possible intersection points are within both
+    /// \author BB
+    /// \details  determine which of the 16 possible intersection points are within both
     //     square and diamond bounding volumes
 
     if ( NULL == pcv ) return bfalse;
@@ -612,14 +614,15 @@ static int cv_point_data_cmp( const void * pleft, const void * pright )
 //--------------------------------------------------------------------------------------------
 int oct_bb_to_points( ego_oct_bb   * pbmp, fvec4_t   pos[], size_t pos_count )
 {
-    /// @details BB@> convert the corners of the level 1 bounding box to a point cloud
+    /// \author BB
+    /// \details  convert the corners of the level 1 bounding box to a point cloud
     ///      set pos[].w to zero for now, that the transform does not
     ///      shift the points while transforming them
     ///
-    /// @note Make sure to set pos[].w to zero so that the bounding box will not be translated
+    /// \note Make sure to set pos[].w to zero so that the bounding box will not be translated
     ///      then the transformation matrix is applied.
     ///
-    /// @note The math for finding the corners of this bumper is not hard, but it is easy to make a mistake.
+    /// \note The math for finding the corners of this bumper is not hard, but it is easy to make a mistake.
     ///      be careful if you modify anything.
 
     float ftmp;
@@ -873,7 +876,8 @@ int oct_bb_to_points( ego_oct_bb   * pbmp, fvec4_t   pos[], size_t pos_count )
 //--------------------------------------------------------------------------------------------
 void points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count )
 {
-    /// @details BB@> convert the new point cloud into a level 1 bounding box using a fvec4_t
+    /// \author BB
+    /// \details  convert the new point cloud into a level 1 bounding box using a fvec4_t
     ///               array as the source
 
     Uint32 cnt;
@@ -965,7 +969,8 @@ ego_oct_bb * ego_oct_bb::ctor_this( ego_oct_bb * pobb )
 //--------------------------------------------------------------------------------------------
 bool_t ego_oct_bb::do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst )
 {
-    /// @details BB@> find the union of two ego_oct_bb
+    /// \author BB
+    /// \details  find the union of two ego_oct_bb
 
     if ( NULL == pdst ) return bfalse;
 
@@ -990,7 +995,8 @@ bool_t ego_oct_bb::do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   
 //--------------------------------------------------------------------------------------------
 bool_t ego_oct_bb::do_intersection( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst )
 {
-    /// @details BB@> find the intersection of two ego_oct_bb
+    /// \author BB
+    /// \details  find the intersection of two ego_oct_bb
 
     if ( NULL == pdst ) return bfalse;
 
@@ -1015,7 +1021,8 @@ bool_t ego_oct_bb::do_intersection( ego_oct_bb & src1, ego_oct_bb & src2, ego_oc
 //--------------------------------------------------------------------------------------------
 bool_t ego_oct_bb::add_vector( const ego_oct_bb & src, const fvec3_base_t vec, ego_oct_bb * pdst )
 {
-    /// @details BB@> shift the bounding box by the vector vec
+    /// \author BB
+    /// \details  shift the bounding box by the vector vec
 
     if ( NULL == pdst ) return bfalse;
 
@@ -1061,7 +1068,8 @@ bool_t ego_oct_bb::empty( ego_oct_bb & src1 )
 //--------------------------------------------------------------------------------------------
 void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bumper bump_base, ego_bumper * pdst_bump, ego_oct_bb   * pdst_bb )
 {
-    /// @details BB@> convert a level 1 bumper to an "equivalent" level 0 bumper
+    /// \author BB
+    /// \details  convert a level 1 bumper to an "equivalent" level 0 bumper
 
     float val1, val2, val3, val4;
 

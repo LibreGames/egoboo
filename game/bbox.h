@@ -20,8 +20,8 @@
 //********************************************************************************************
 
 ///
-/// @file bbox.h
-/// @brief A small "library" for dealing with various bounding boxes
+/// \file bbox.h
+/// \brief A small "library" for dealing with various bounding boxes
 
 #include "egoboo_typedef_cpp.h"
 
@@ -182,7 +182,7 @@ private:
 
 //--------------------------------------------------------------------------------------------
 
-/// @details A convex poly representation of an object volume
+/// \details A convex poly representation of an object volume
 struct ego_OVolume
 {
     int      lod;             ///< the level of detail (LOD) of this volume
@@ -220,7 +220,7 @@ struct ego_OTree
 
 //--------------------------------------------------------------------------------------------
 
-/// @details A convex polygon representation of the collision of two objects
+/// \details A convex polygon representation of the collision of two objects
 struct ego_CVolume
 {
     float          volume;

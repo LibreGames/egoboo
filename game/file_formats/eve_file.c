@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/eve_data_file.c
-/// @brief Functions to read and write Egoboo's enchant definition files ( /modules/*.mod/objects/*.obj/enchant.txt )
-/// @details
+/// \file file_formats/eve_data_file.c
+/// \brief Functions to read and write Egoboo's enchant definition files ( /modules/*.mod/objects/*.obj/enchant.txt )
+/// \details
 
 #include "eve_file.h"
 
@@ -46,7 +46,8 @@ eve_data_t * eve_data_init( eve_data_t * peve )
 //--------------------------------------------------------------------------------------------
 eve_data_t * load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * peve )
 {
-    /// @details ZZ@> This function loads the enchantment associated with an object
+    /// \author ZZ
+    /// \details  This function loads the enchantment associated with an object
 
     int cnt;
     vfs_FILE* fileread;
@@ -209,7 +210,8 @@ eve_data_t * load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * pev
 //--------------------------------------------------------------------------------------------
 bool_t save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplateName, eve_data_t * peve )
 {
-    /// @details ZZ@> This function loads the enchantment associated with an object
+    /// \author ZZ
+    /// \details  This function loads the enchantment associated with an object
     vfs_FILE* filewrite, * filetemp;
 
     if ( NULL == peve ) return bfalse;

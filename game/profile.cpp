@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file profile.c
-/// @brief Implementation of functions for controlling and accessing object profiles
-/// @details
+/// \file profile.c
+/// \brief Implementation of functions for controlling and accessing object profiles
+/// \details
 
 #include "profile.inl"
 
@@ -64,7 +64,8 @@ static void get_message( vfs_FILE* fileread );
 //--------------------------------------------------------------------------------------------
 void init_all_profiles()
 {
-    /// @details ZZ@> This function initializes all of the model profiles
+    /// \author ZZ
+    /// \details  This function initializes all of the model profiles
 
     int tnc;
 
@@ -89,7 +90,8 @@ void init_all_profiles()
 //--------------------------------------------------------------------------------------------
 void release_all_profiles()
 {
-    /// @details ZZ@> This function clears out all of the model data
+    /// \author ZZ
+    /// \details  This function clears out all of the model data
 
     // release the allocated data in all profiles (sounds, textures, etc.)
     release_all_pro_data();
@@ -108,7 +110,8 @@ void release_all_profiles()
 //--------------------------------------------------------------------------------------------
 void profile_system_begin()
 {
-    /// @details BB@> initialize the profile list and load up some initialization files
+    /// \author BB
+    /// \details  initialize the profile list and load up some initialization files
     ///     necessary for the the profile loading code to work
 
     if ( _profile_initialized )
@@ -144,7 +147,8 @@ void profile_system_begin()
 //--------------------------------------------------------------------------------------------
 void profile_system_end()
 {
-    /// @details BB@> initialize the profile list and load up some initialization files
+    /// \author BB
+    /// \details  initialize the profile list and load up some initialization files
     ///     necessary for the the profile loading code to work
 
     if ( _profile_initialized )
@@ -202,7 +206,8 @@ bool_t pro_init( ego_pro * pobj )
 //--------------------------------------------------------------------------------------------
 int ProList_search_free( const PRO_REF & iobj )
 {
-    /// @details BB@> if an object of index iobj exists on the free list, return the free list index
+    /// \author BB
+    /// \details  if an object of index iobj exists on the free list, return the free list index
     ///     otherwise return -1
 
     size_t cnt;
@@ -226,7 +231,8 @@ int ProList_search_free( const PRO_REF & iobj )
 //--------------------------------------------------------------------------------------------
 size_t ProList_pop_free( int idx )
 {
-    /// @details BB@> pop off whatever object exists at the free list index idx
+    /// \author BB
+    /// \details  pop off whatever object exists at the free list index idx
 
     size_t retval;
 
@@ -261,7 +267,8 @@ size_t ProList_pop_free( int idx )
 //--------------------------------------------------------------------------------------------
 bool_t ProList_push_free( const PRO_REF & iobj )
 {
-    /// @details BB@> push an object onto the free stack
+    /// \author BB
+    /// \details  push an object onto the free stack
 
     bool_t retval;
 
@@ -291,7 +298,8 @@ bool_t ProList_push_free( const PRO_REF & iobj )
 //--------------------------------------------------------------------------------------------
 void ProList_init()
 {
-    /// @details BB@> initialize all the objects and the object free list.
+    /// \author BB
+    /// \details  initialize all the objects and the object free list.
     ///     call before ever using the object list.
 
     PRO_REF cnt;
@@ -310,7 +318,8 @@ void ProList_init()
 //--------------------------------------------------------------------------------------------
 size_t ProList_get_free( const PRO_REF & override )
 {
-    /// @details ZZ@> This function returns the next free character or MAX_PROFILE if there are none
+    /// \author ZZ
+    /// \details  This function returns the next free character or MAX_PROFILE if there are none
 
     size_t retval = MAX_PROFILE;
 
@@ -341,7 +350,8 @@ size_t ProList_get_free( const PRO_REF & override )
 //--------------------------------------------------------------------------------------------
 bool_t ProList_free_one( const PRO_REF & iobj )
 {
-    /// @details ZZ@> This function sticks an object back on the free object stack
+    /// \author ZZ
+    /// \details  This function sticks an object back on the free object stack
 
     if ( !VALID_PRO_RANGE( iobj ) ) return bfalse;
 
@@ -456,7 +466,8 @@ bool_t release_one_pro( const PRO_REF & iobj )
 //--------------------------------------------------------------------------------------------
 void release_all_pro()
 {
-    /// @details BB@> release the allocated data for all objects
+    /// \author BB
+    /// \details  release the allocated data for all objects
     PRO_REF cnt;
 
     for ( cnt = 0; cnt < MAX_PROFILE; cnt++ )
@@ -468,7 +479,8 @@ void release_all_pro()
 //--------------------------------------------------------------------------------------------
 void release_all_pro_data()
 {
-    /// @details BB@> release the allocated data for all objects
+    /// \author BB
+    /// \details  release the allocated data for all objects
     PRO_REF cnt;
 
     for ( cnt = 0; cnt < MAX_PROFILE; cnt++ )
@@ -569,7 +581,8 @@ int load_profile_skins_vfs( const char * tmploadname, const PRO_REF & object )
 //--------------------------------------------------------------------------------------------
 void get_message( vfs_FILE* fileread )
 {
-    /// @details ZZ@> This function loads a string into the message buffer, making sure it
+    /// \author ZZ
+    /// \details  This function loads a string into the message buffer, making sure it
     ///    is null terminated.
 
     int cnt;
@@ -612,7 +625,8 @@ void get_message( vfs_FILE* fileread )
 //--------------------------------------------------------------------------------------------
 void load_all_messages_vfs( const char *loadname, const PRO_REF & object )
 {
-    /// @details ZZ@> This function loads all of an objects messages
+    /// \author ZZ
+    /// \details  This function loads all of an objects messages
     vfs_FILE *fileread;
 
     ProList.lst[object].message_start = 0;
@@ -744,7 +758,8 @@ int pro_get_slot_vfs( const char * tmploadname, int slot_override )
 //--------------------------------------------------------------------------------------------
 int load_one_profile_vfs( const char* tmploadname, int slot_override )
 {
-    /// @details ZZ@> This function loads one object and returns the object slot
+    /// \author ZZ
+    /// \details  This function loads one object and returns the object slot
 
     int cnt;
     STRING newloadname;
@@ -872,7 +887,8 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
 //--------------------------------------------------------------------------------------------
 void reset_messages()
 {
-    /// @details ZZ@> This makes messages safe to use
+    /// \author ZZ
+    /// \details  This makes messages safe to use
     int cnt;
 
     MessageOffset.count = 0;
@@ -897,7 +913,8 @@ void reset_messages()
 //--------------------------------------------------------------------------------------------
 const char * pro_create_chop( const PRO_REF & iprofile )
 {
-    /// BB@> use the profile's chop to generate a name. Return "*NONE*" on a failure.
+    /// \author BB
+    /// \details use the profile's chop to generate a name. Return "*NONE*" on a failure.
 
     ego_pro * ppro;
     ego_cap * pcap;
@@ -935,7 +952,9 @@ const char * pro_create_chop( const PRO_REF & iprofile )
 //--------------------------------------------------------------------------------------------
 bool_t pro_load_chop_vfs( const PRO_REF & iprofile, const char *szLoadname )
 {
-    /// BB@> load the chop for the given profile
+    /// \author BB
+    /// \details load the chop for the given profile
+
     ego_pro * ppro;
 
     if ( !VALID_PRO_RANGE( iprofile ) ) return bfalse;
@@ -967,8 +986,9 @@ ego_chop_definition * chop_definition_init( ego_chop_definition * pdefinition )
 //--------------------------------------------------------------------------------------------
 ego_chop_data * chop_data_init( ego_chop_data * pdata )
 {
-    /// @details ZZ@> This function prepares the name chopper for use
-    ///          BB@> It may actually be useful to blank the chop buffer
+    /// \author ZZ
+    /// \details  This function prepares the name chopper for use
+    /// \note BB@> It may actually be useful to blank the chop buffer
 
     if ( NULL == pdata ) return pdata;
 
@@ -981,7 +1001,8 @@ ego_chop_data * chop_data_init( ego_chop_data * pdata )
 //--------------------------------------------------------------------------------------------
 const char * chop_create( ego_chop_data * pdata, ego_chop_definition * pdefinition )
 {
-    /// @details ZZ@> This function generates a random name.  Return "Blah" on a failure.
+    /// \author ZZ
+    /// \details  This function generates a random name.  Return "Blah" on a failure.
 
     int read, write, section, mychop;
     char cTmp;
@@ -1027,7 +1048,8 @@ const char * chop_create( ego_chop_data * pdata, ego_chop_definition * pdefiniti
 //--------------------------------------------------------------------------------------------
 bool_t chop_load_vfs( ego_chop_data * pdata, const char *szLoadname, ego_chop_definition * pdefinition )
 {
-    /// @details ZZ@> This function reads a naming.txt file into the chop data buffer and sets the
+    /// \author ZZ
+    /// \details  This function reads a naming.txt file into the chop data buffer and sets the
     ///               values of a chop definition
 
     int       which_section, section_count;
@@ -1104,7 +1126,8 @@ bool_t chop_load_vfs( ego_chop_data * pdata, const char *szLoadname, ego_chop_de
 //--------------------------------------------------------------------------------------------
 bool_t chop_export_vfs( const char *szSaveName, const char * szChop )
 {
-    /// @details ZZ@> This function exports a simple string to the naming.txt file
+    /// \author ZZ
+    /// \details  This function exports a simple string to the naming.txt file
 
     vfs_FILE* filewrite;
     char cTmp;

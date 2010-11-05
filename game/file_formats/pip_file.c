@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/pip_file.c
-/// @brief Routines for reading and writing the particle profile file "part*.txt"
-/// @details
+/// \file file_formats/pip_file.c
+/// \brief Routines for reading and writing the particle profile file "part*.txt"
+/// \details
 
 #include "pip_file.h"
 
@@ -75,7 +75,8 @@ pip_data_t * pip_init( pip_data_t * ppip )
 //--------------------------------------------------------------------------------------------
 pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
 {
-    /// @details ZZ@> This function loads a particle template, returning bfalse if the file wasn't
+    /// \author ZZ
+    /// \details  This function loads a particle template, returning bfalse if the file wasn't
     ///    found
 
     vfs_FILE* fileread;
@@ -225,8 +226,8 @@ pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
     {
         idsz = fget_idsz( fileread );
 
-        /// @note ZF@> Does this line doesn't do anything?
-        /// @note BB@> Should it be "ppip->damfx = DAMFX_NONE"?
+        /// \note ZF@> Does this line doesn't do anything?
+        /// \note BB@> Should it be "ppip->damfx = DAMFX_NONE"?
         if ( MAKE_IDSZ( 'T', 'U', 'R', 'N' ) == idsz )       ADD_BITS( ppip->damfx, DAMFX_NONE );
 
         else if ( MAKE_IDSZ( 'A', 'R', 'M', 'O' ) == idsz )  ADD_BITS( ppip->damfx, DAMFX_ARMO );

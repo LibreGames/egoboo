@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/eve_data_file.h
-/// @details data and functions for reading and writing enchant.txt files
+/// \file file_formats/eve_data_file.h
+/// \details data and functions for reading and writing enchant.txt files
 
 #include "egoboo_typedef.h"
 
@@ -45,7 +45,7 @@ extern "C"
     enum e_enchant_set
     {
         SETMORPH = 0,           ///< Morph character?
-        ///< @details this must be first since the
+        ///< \details this must be first since the
         ///< character must be morphed before adding any of the other enchants
 
         SETDAMAGETYPE,          ///< Type of damage dealt
@@ -111,7 +111,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
 /// An enchantment profile, or "eve"
-/// @details An internal representation of the "enchant.txt" file
+/// \details An internal representation of the "enchant.txt" file
     struct s_eve_data
     {
         EGO_PROFILE_STUFF;

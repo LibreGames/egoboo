@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file char.h
-/// @note You will routinely include "char.h" only in headers (*.h) files where you need to declare an
+/// \file char.h
+/// \note You will routinely include "char.h" only in headers (*.h) files where you need to declare an
 ///       object of ego_team or ego_chr. In *.inl files or *.c/*.cpp files you will routinely include "char.inl", instead.
 
 #include "character_defs.h"
@@ -61,7 +61,6 @@ typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
 #define IS_FLYING_CHR_RAW(ICHR)   ( (ChrObjList.get_data_ref(ICHR).is_flying_jump || ChrObjList.get_data_ref(ICHR).is_flying_platform) )
 #define IS_PACKED_CHR_RAW(ICHR)   ( ChrObjList.get_data_ref(ICHR).pack.is_packed )
 #define IS_ATTACHED_CHR_RAW(ICHR) ( (DEFINED_CHR(ChrObjList.get_data_ref(ICHR).attachedto) || ChrObjList.get_data_ref(ICHR).pack.is_packed) )
-
 
 #define IS_FLYING_PCHR_RAW(PCHR)   ( ((PCHR)->is_flying_jump || (PCHR)->is_flying_platform) )
 #define IS_PACKED_PCHR_RAW(PCHR)   ( (PCHR)->pack.is_packed )
@@ -426,7 +425,7 @@ struct ego_chr_data : public ego_chr_cap_data
 
     /// collision info
 
-    /// @note - to make it easier for things to "hit" one another (like a damage particle from
+    /// \note - to make it easier for things to "hit" one another (like a damage particle from
     ///        a torch hitting a grub bug), Aaron sometimes made the bumper size much different
     ///        than the shape of the actual object.
     ///        The old bumper data that is read from the data.txt file will be kept in

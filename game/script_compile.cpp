@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file script_compile.c
-/// @brief Implementation of the script compiler
-/// @details
+/// \file script_compile.c
+/// \brief Implementation of the script compiler
+/// \details
 
 #include "script_compile.h"
 
@@ -523,7 +523,8 @@ static void print_line();
 //--------------------------------------------------------------------------------------------
 void script_compiler_init()
 {
-    /// @details BB@> initialize the sctipt compiling module
+    /// \author BB
+    /// \details  initialize the sctipt compiling module
 
     // necessary for loading up the ai script
     init_all_ai_scripts();
@@ -537,7 +538,8 @@ void script_compiler_init()
 //--------------------------------------------------------------------------------------------
 void insert_space( int position )
 {
-    /// @details ZZ@> This function adds a space into the load line if there isn't one
+    /// \author ZZ
+    /// \details  This function adds a space into the load line if there isn't one
     ///    there already
 
     char cTmp, cSwap;
@@ -563,7 +565,8 @@ void insert_space( int position )
 //--------------------------------------------------------------------------------------------
 int load_one_line( int read )
 {
-    /// @details ZZ@> This function loads a line into the line buffer
+    /// \author ZZ
+    /// \details  This function loads a line into the line buffer
 
     int stillgoing, foundtext;
     char cTmp;
@@ -704,7 +707,8 @@ void surround_space( int position )
 //--------------------------------------------------------------------------------------------
 int get_indentation()
 {
-    /// @details ZZ@> This function returns the number of starting spaces in a line
+    /// \author ZZ
+    /// \details  This function returns the number of starting spaces in a line
 
     int cnt;
     char cTmp;
@@ -736,7 +740,8 @@ int get_indentation()
 //--------------------------------------------------------------------------------------------
 void fix_operators()
 {
-    /// @details ZZ@> This function puts spaces around operators to seperate words
+    /// \author ZZ
+    /// \details  This function puts spaces around operators to seperate words
     ///    better
 
     int cnt;
@@ -762,7 +767,8 @@ void fix_operators()
 //--------------------------------------------------------------------------------------------
 int parse_token( int read )
 {
-    /// @details ZZ@> This function tells what code is being indexed by read, it
+    /// \author ZZ
+    /// \details  This function tells what code is being indexed by read, it
     ///    will return the next spot to read from and stick the code number
     ///    in Token.iIndex
 
@@ -876,7 +882,8 @@ void emit_opcode( BIT_FIELD highbits )
 //--------------------------------------------------------------------------------------------
 void parse_line_by_line()
 {
-    /// @details ZZ@> This function removes comments and endline codes, replacing
+    /// \author ZZ
+    /// \details  This function removes comments and endline codes, replacing
     ///    them with a 0
 
     int read;
@@ -1025,7 +1032,8 @@ void parse_line_by_line()
 //--------------------------------------------------------------------------------------------
 Uint32 jump_goto( int index, int index_end )
 {
-    /// @details ZZ@> This function figures out where to jump to on a fail based on the
+    /// \author ZZ
+    /// \details  This function figures out where to jump to on a fail based on the
     ///    starting location and the following code.  The starting location
     ///    should always be a function code with indentation
 
@@ -1066,7 +1074,8 @@ Uint32 jump_goto( int index, int index_end )
 //--------------------------------------------------------------------------------------------
 void parse_jumps( int ainumber )
 {
-    /// @details ZZ@> This function sets up the fail jumps for the down and dirty code
+    /// \author ZZ
+    /// \details  This function sets up the fail jumps for the down and dirty code
 
     int index, index_end;
     Uint32 value, iTmp;
@@ -1102,7 +1111,8 @@ void parse_jumps( int ainumber )
 //--------------------------------------------------------------------------------------------
 int ai_goto_colon( int read )
 {
-    /// @details ZZ@> This function goes to spot after the next colon
+    /// \author ZZ
+    /// \details  This function goes to spot after the next colon
 
     char cTmp;
 
@@ -1120,7 +1130,8 @@ int ai_goto_colon( int read )
 //--------------------------------------------------------------------------------------------
 void get_code( int read )
 {
-    /// @details ZZ@> This function gets code names and other goodies
+    /// \author ZZ
+    /// \details  This function gets code names and other goodies
 
     char cTmp;
     int iTmp;
@@ -1136,7 +1147,8 @@ void get_code( int read )
 //--------------------------------------------------------------------------------------------
 void load_ai_codes_vfs( const char* loadname )
 {
-    /// @details ZZ@> This function loads all of the function and variable names
+    /// \author ZZ
+    /// \details  This function loads all of the function and variable names
 
     vfs_FILE* fileread;
     int read;
@@ -1163,7 +1175,8 @@ void load_ai_codes_vfs( const char* loadname )
 //--------------------------------------------------------------------------------------------
 int load_ai_script_vfs( const char *loadname )
 {
-    /// @details ZZ@> This function loads a script to memory and
+    /// \author ZZ
+    /// \details  This function loads a script to memory and
     ///    returns the index of the script, returns -1 if it fails
 
     vfs_FILE* fileread;
@@ -1226,7 +1239,8 @@ int load_ai_script_vfs( const char *loadname )
 //--------------------------------------------------------------------------------------------
 void release_all_ai_scripts()
 {
-    /// @details ZZ@> This function resets the ai script "pointers"
+    /// \author ZZ
+    /// \details  This function resets the ai script "pointers"
 
     AisCompiled_offset = 0;
     AisStorage.count = 0;
@@ -1235,7 +1249,8 @@ void release_all_ai_scripts()
 //--------------------------------------------------------------------------------------------
 void init_all_ai_scripts()
 {
-    /// @details ZZ@> This function initializes the ai script "pointers"
+    /// \author ZZ
+    /// \details  This function initializes the ai script "pointers"
 
     AisCompiled_offset = 0;
     AisStorage.count = 0;
@@ -1965,10 +1980,11 @@ DEFINE_FUNCTION( FIFNOTPUTAWAY,    IfNotTakenOut    )
 //--------------------------------------------------------------------------------------------
 // int load_parsed_line( int read )
 // {
-//   /// @details ZZ@> This function loads a line into the line buffer
+//   /// \author ZZ
+//   /// \details  This function loads a line into the line buffer
 //
 //   char cTmp;
-
+//
 //   // Parse to start to maintain indentation
 //   iLineSize = 0;
 //   cTmp = cLoadBuffer[read];
@@ -1987,11 +2003,12 @@ DEFINE_FUNCTION( FIFNOTPUTAWAY,    IfNotTakenOut    )
 //--------------------------------------------------------------------------------------------
 // void parse_null_terminate_comments()
 // {
-//   /// @details ZZ@> This function removes comments and endline codes, replacing
+//   /// \author ZZ
+//   /// \details  This function removes comments and endline codes, replacing
 //   ///    them with a 0
 //
 //   int read, write;
-
+//
 //   read = 0;
 //   write = 0;
 

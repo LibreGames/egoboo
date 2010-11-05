@@ -251,7 +251,7 @@ extern ego_water_instance water;
 //--------------------------------------------------------------------------------------------
 
 /// The in-game fog state
-/// @warn Fog is currently not used
+/// \warn Fog is currently not used
 struct ego_fog_instance
 {
     bool_t  on;            ///< Do ground fog?

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file sound.h
-/// @Sound handling using SDL_mixer
+/// \file sound.h
+/// \details Sound handling using SDL_mixer
 
 #include "egoboo_typedef.h"
 
@@ -46,7 +46,7 @@ extern "C"
 #define MENU_SONG              0           ///< default music theme played when in the menu
 
 #define MIX_HIGH_QUALITY   44100        ///< frequency 44100 for 44.1KHz, which is CD audio rate.
-    /// @details Most games use 22050, because 44100 requires too much
+    /// \details Most games use 22050, because 44100 requires too much
     /// CPU power on older computers.
 
 #define VALID_SND( ISND )       ( ISND >= 0 && ISND < MAX_WAVE )

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_console.c
-/// @brief Implementation of code for implementing a Quake-like console in Egoboo
-/// @details
+/// \file egoboo_console.c
+/// \brief Implementation of code for implementing a Quake-like console in Egoboo
+/// \details
 
 #include "egoboo_console.inl"
 
@@ -677,7 +677,8 @@ SDL_Event * egoboo_console_handle_events( SDL_Event * pevt )
 //--------------------------------------------------------------------------------------------
 void init_scancodes()
 {
-    /// @details BB@> initialize the scancode translation
+    /// \author BB
+    /// \details  initialize the scancode translation
 
     int i;
 

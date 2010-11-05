@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_setup.c
-/// @brief Functions for handling the setup.txt file
-/// @details
+/// \file egoboo_setup.c
+/// \brief Functions for handling the setup.txt file
+/// \details
 
 #include "egoboo_setup.h"
 
@@ -174,13 +174,15 @@ bool_t setup_quit()
 //--------------------------------------------------------------------------------------------
 egoboo_rv setup_read_vfs()
 {
-    /// @details BB@> read the local setup file. The function will automatically copy the default setup
+    /// \author BB
+    ///
+    /// \details  read the local setup file. The function will automatically copy the default setup
     ///               file if it isn't found in the local folder.
     ///
-    /// @TODO: ZF@> We do not need a default setup.txt file which we copy. If the setup.txt file is missing, we should simply
+    /// \todo ZF@> We do not need a default setup.txt file which we copy. If the setup.txt file is missing, we should simply
     ///            create a new one with the default values. This should make life easier.
     ///
-    /// @TODO: BB@> The reason that you might want a file is that it is not hard coded, and could be
+    /// \todo BB@> The reason that you might want a file is that it is not hard coded, and could be
     ///             changed without re-compiling. The "default" parameters here are mostly for
     ///             a kind of constructor for conformance with c++...
 
@@ -221,7 +223,8 @@ egoboo_rv setup_read_vfs()
 //--------------------------------------------------------------------------------------------
 bool_t setup_write()
 {
-    /// @details BB@> save the current setup file
+    /// \author BB
+    /// \details  save the current setup file
     bool_t success = bfalse;
 
     if ( INVALID_CSTR( _config_filename ) ) return bfalse;
@@ -235,7 +238,8 @@ bool_t setup_write()
 //--------------------------------------------------------------------------------------------
 bool_t setup_download( config_data_t * pcfg )
 {
-    /// @details BB@> download the ConfigFile_t keys into game variables
+    /// \author BB
+    /// \details  download the ConfigFile_t keys into game variables
     ///     use default values to fill in any missing keys
 
     const char *lCurSectionName;
@@ -461,7 +465,8 @@ bool_t setup_synch( config_data_t * pcfg )
 //--------------------------------------------------------------------------------------------
 bool_t setup_upload( config_data_t * pcfg )
 {
-    /// @details BB@> upload game variables into the ConfigFile_t keys
+    /// \author BB
+    /// \details  upload game variables into the ConfigFile_t keys
 
     STRING buffer;
     const char * sz_literal = NULL;

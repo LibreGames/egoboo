@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file char.inl
-/// @note You will routinely include "char.inl" in all *.inl files or *.c/*.cpp files, instead of "char.h"
+/// \file char.inl
+/// \note You will routinely include "char.inl" in all *.inl files or *.c/*.cpp files, instead of "char.h"
 
 #include "egoboo_typedef_cpp.inl"
 
@@ -30,7 +30,7 @@
 #include "enchant.inl"
 #include "particle.inl"
 
-/// @note include "profile.inl" here.
+/// \note include "profile.inl" here.
 ///  Do not include "char.inl" in "profile.inl", otherwise there is a bootstrapping problem.
 #include "profile.inl"
 
@@ -60,7 +60,8 @@ static INLINE bool_t IS_PLAYER_PCHR( ego_chr * pchr );
 //--------------------------------------------------------------------------------------------
 INLINE bool_t cap_is_type_idsz( const CAP_REF & icap, IDSZ test_idsz )
 {
-    /// @details BB@> check IDSZ_PARENT and IDSZ_TYPE to see if the test_idsz matches. If we are not
+    /// \author BB
+    /// \details  check IDSZ_PARENT and IDSZ_TYPE to see if the test_idsz matches. If we are not
     ///     picky (i.e. IDSZ_NONE == test_idsz), then it matches any valid item.
 
     ego_cap * pcap;
@@ -78,7 +79,8 @@ INLINE bool_t cap_is_type_idsz( const CAP_REF & icap, IDSZ test_idsz )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t cap_has_idsz( const CAP_REF & icap, IDSZ idsz )
 {
-    /// @details BB@> does idsz match any of the stored values in pcap->idsz[]?
+    /// \author BB
+    /// \details  does idsz match any of the stored values in pcap->idsz[]?
     ///               Matches anything if not picky (idsz == IDSZ_NONE)
 
     int     cnt;
@@ -133,7 +135,8 @@ INLINE ego_chr  * team_get_pleader( const TEAM_REF & iteam )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t team_hates_team( const TEAM_REF & ipredator_team, const TEAM_REF & iprey_team )
 {
-    /// @details BB@> a wrapper function for access to the hatesteam data
+    /// \author BB
+    /// \details  a wrapper function for access to the hatesteam data
 
     if ( ipredator_team >= TEAM_MAX || iprey_team >= TEAM_MAX ) return bfalse;
 
@@ -346,7 +349,8 @@ INLINE IDSZ ego_chr::get_idsz( const CHR_REF & ichr, int type )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t ego_chr::has_idsz( const CHR_REF & ichr, IDSZ idsz )
 {
-    /// @details BB@> a wrapper for cap_has_idsz
+    /// \author BB
+    /// \details  a wrapper for cap_has_idsz
 
     CAP_REF icap = ego_chr::get_icap( ichr );
 
@@ -356,7 +360,8 @@ INLINE bool_t ego_chr::has_idsz( const CHR_REF & ichr, IDSZ idsz )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t ego_chr::is_type_idsz( const CHR_REF & item, IDSZ test_idsz )
 {
-    /// @details BB@> check IDSZ_PARENT and IDSZ_TYPE to see if the test_idsz matches. If we are not
+    /// \author BB
+    /// \details  check IDSZ_PARENT and IDSZ_TYPE to see if the test_idsz matches. If we are not
     ///     picky (i.e. IDSZ_NONE == test_idsz), then it matches any valid item.
 
     CAP_REF icap;
@@ -369,7 +374,8 @@ INLINE bool_t ego_chr::is_type_idsz( const CHR_REF & item, IDSZ test_idsz )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t ego_chr::has_vulnie( const CHR_REF & item, const PRO_REF & test_profile )
 {
-    /// @details BB@> is item vulnerable to the type in profile test_profile?
+    /// \author BB
+    /// \details  is item vulnerable to the type in profile test_profile?
 
     IDSZ vulnie;
 
@@ -389,7 +395,8 @@ INLINE bool_t ego_chr::has_vulnie( const CHR_REF & item, const PRO_REF & test_pr
 //--------------------------------------------------------------------------------------------
 INLINE bool_t ego_chr::get_MatUp( ego_chr *pchr, fvec3_t   *pvec )
 {
-    /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
+    /// \author BB
+    /// \details  MAKE SURE the value it calculated relative to a valid matrix
 
     if ( !VALID_PCHR( pchr ) ) return bfalse;
 
@@ -416,7 +423,8 @@ INLINE bool_t ego_chr::get_MatUp( ego_chr *pchr, fvec3_t   *pvec )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t ego_chr::get_MatRight( ego_chr *pchr, fvec3_t   *pvec )
 {
-    /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
+    /// \author BB
+    /// \details  MAKE SURE the value it calculated relative to a valid matrix
 
     if ( !VALID_PCHR( pchr ) ) return bfalse;
 
@@ -444,7 +452,8 @@ INLINE bool_t ego_chr::get_MatRight( ego_chr *pchr, fvec3_t   *pvec )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t ego_chr::get_MatForward( ego_chr *pchr, fvec3_t   *pvec )
 {
-    /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
+    /// \author BB
+    /// \details  MAKE SURE the value it calculated relative to a valid matrix
 
     if ( !VALID_PCHR( pchr ) ) return bfalse;
 
@@ -472,7 +481,8 @@ INLINE bool_t ego_chr::get_MatForward( ego_chr *pchr, fvec3_t   *pvec )
 //--------------------------------------------------------------------------------------------
 INLINE bool_t ego_chr::get_MatTranslate( ego_chr *pchr, fvec3_t   *pvec )
 {
-    /// @details BB@> MAKE SURE the value it calculated relative to a valid matrix
+    /// \author BB
+    /// \details  MAKE SURE the value it calculated relative to a valid matrix
 
     if ( !VALID_PCHR( pchr ) ) return bfalse;
 
@@ -510,7 +520,8 @@ INLINE void ego_chr::update_size( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 INLINE void ego_chr_data::update_size( ego_chr_data * pchr )
 {
-    /// @details BB@> Convert the base size values to the size values that are used in the game
+    /// \author BB
+    /// \details  Convert the base size values to the size values that are used in the game
 
     if ( NULL == pchr ) return;
 
@@ -523,7 +534,8 @@ INLINE void ego_chr_data::update_size( ego_chr_data * pchr )
 //--------------------------------------------------------------------------------------------
 INLINE void ego_chr_data::init_size( ego_chr_data * pchr, ego_cap * pcap )
 {
-    /// @details BB@> initialize the character size info
+    /// \author BB
+    /// \details  initialize the character size info
 
     if ( NULL == pchr ) return;
     if ( NULL == pcap || !pcap->loaded ) return;
@@ -546,7 +558,8 @@ INLINE void ego_chr_data::init_size( ego_chr_data * pchr, ego_cap * pcap )
 //--------------------------------------------------------------------------------------------
 INLINE void ego_chr::init_size( ego_chr * pchr, ego_cap * pcap )
 {
-    /// @details BB@> initialize the character size info
+    /// \author BB
+    /// \details  initialize the character size info
 
     if ( !VALID_PCHR( pchr ) ) return;
     if ( NULL == pcap || !pcap->loaded ) return;
@@ -569,7 +582,8 @@ INLINE void ego_chr::init_size( ego_chr * pchr, ego_cap * pcap )
 //--------------------------------------------------------------------------------------------
 INLINE void ego_chr::set_size( ego_chr * pchr, float size )
 {
-    /// @details BB@> scale the entire character so that the size matches the given value
+    /// \author BB
+    /// \details  scale the entire character so that the size matches the given value
 
     float ratio;
 
@@ -588,7 +602,8 @@ INLINE void ego_chr::set_size( ego_chr * pchr, float size )
 //--------------------------------------------------------------------------------------------
 INLINE void ego_chr::set_width( ego_chr * pchr, float width )
 {
-    /// @details BB@> update the base character "width". This also modifies the shadow size
+    /// \author BB
+    /// \details  update the base character "width". This also modifies the shadow size
 
     float ratio;
 
@@ -606,7 +621,8 @@ INLINE void ego_chr::set_width( ego_chr * pchr, float width )
 //--------------------------------------------------------------------------------------------
 INLINE void ego_chr::set_shadow( ego_chr * pchr, float width )
 {
-    /// @details BB@> update the base shadow size
+    /// \author BB
+    /// \details  update the base shadow size
 
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -618,7 +634,8 @@ INLINE void ego_chr::set_shadow( ego_chr * pchr, float width )
 //--------------------------------------------------------------------------------------------
 INLINE void ego_chr::set_fat( ego_chr * pchr, float fat )
 {
-    /// @details BB@> update all the character size info by specifying the fat value
+    /// \author BB
+    /// \details  update all the character size info by specifying the fat value
 
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -630,7 +647,8 @@ INLINE void ego_chr::set_fat( ego_chr * pchr, float fat )
 //--------------------------------------------------------------------------------------------
 INLINE void ego_chr::set_height( ego_chr * pchr, float height )
 {
-    /// @details BB@> update the base character height
+    /// \author BB
+    /// \details  update the base character height
 
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -667,14 +685,14 @@ INLINE latch_2d_t ego_chr::convert_latch_2d( const ego_chr * pchr, const latch_2
 //--------------------------------------------------------------------------------------------
 static INLINE bool_t IS_INVICTUS_PCHR_RAW( ego_chr * pchr )
 {
-    if( NULL == pchr ) return btrue;
+    if ( NULL == pchr ) return btrue;
 
     bool_t invictus = pchr->invictus;
 
     ego_player * ppla = PlaDeque.find_by_ref( pchr->is_which_player );
-    if( NULL != ppla && ppla->valid )
+    if ( NULL != ppla && ppla->valid )
     {
-        if( ppla->wizard_mode ) invictus = btrue;
+        if ( ppla->wizard_mode ) invictus = btrue;
     }
 
     return invictus;
@@ -683,7 +701,7 @@ static INLINE bool_t IS_INVICTUS_PCHR_RAW( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 static INLINE bool_t IS_PLAYER_PCHR( ego_chr * pchr )
 {
-    if( !DEFINED_PCHR(pchr) ) return bfalse;
+    if ( !DEFINED_PCHR( pchr ) ) return bfalse;
 
     ego_player * ppla = PlaDeque.find_by_ref( pchr->is_which_player );
 

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file menu.c
-/// @brief Implements the main menu tree, using the code in Ui.*
-/// @details
+/// \file menu.c
+/// \brief Implements the main menu tree, using the code in Ui.*
+/// \details
 
 #include "menu.h"
 
@@ -1264,7 +1264,8 @@ static int cmp_mod_ref_mult = 1;
 
 int cmp_mod_ref( const void * vref1, const void * vref2 )
 {
-    /// @details BB@> Sort MOD REF values based on the rank of the module that they point to.
+    /// \author BB
+    /// \details  Sort MOD REF values based on the rank of the module that they point to.
     ///               Trap all stupid values.
 
     MOD_REF * pref1 = ( MOD_REF * )vref1;
@@ -1299,7 +1300,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
     }
 
     // if they are beaten, float them to the end of the list
-    retval = int(mnu_ModList[*pref1].base.beaten) - int(mnu_ModList[*pref2].base.beaten);
+    retval = int( mnu_ModList[*pref1].base.beaten ) - int( mnu_ModList[*pref2].base.beaten );
 
     if ( 0 == retval )
     {
@@ -1587,7 +1588,7 @@ bool_t ChooseModule_data::update_filter_label( ui_Widget * lab_ptr, int which )
 //--------------------------------------------------------------------------------------------
 int ChooseModule_data::run( double deltaTime )
 {
-    /// @details Choose the module
+    /// \details Choose the module
 
     int result = 0;
     int i, x, y;
@@ -2297,7 +2298,7 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         x1 = x + 25;
         y1 = y + 25;
 
-        Uint8 skin = Uint8(SDL_max( 0, pcap->skin_override ));
+        Uint8 skin = Uint8( SDL_max( 0, pcap->skin_override ) );
 
         //---- the background
         ui_drawButton( UI_Nothing, x, y, width, height, NULL );
@@ -2723,7 +2724,7 @@ int ChoosePlayer_data::run( double deltaTime )
                     // do each of the input buttons
                     for ( j = 0, m++; j < 4; j++, m++ )
                     {
-                        /// @note check for devices being turned on and off each time
+                        /// \note check for devices being turned on and off each time
                         /// technically we COULD recognize joysticks being inserted and removed while the
                         /// game is running but we don't. I will set this up to handle such future behavior
                         /// anyway :)
@@ -3433,7 +3434,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
     int                 retval = which;
 
     // valid device?
-    if ( idevice < 0 || Uint32(idevice) >= input_device_count ) return -1;
+    if ( idevice < 0 || Uint32( idevice ) >= input_device_count ) return -1;
     pdevice = controls + idevice;
 
     // waiting for any spicific control?
@@ -3452,7 +3453,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
             // is a joy button combo activated?
             for ( tag = 0; tag < scantag_count && -1 != retval; tag++ )
             {
-                if ( 0 != scantag[tag].value && Uint32(scantag[tag].value) == joy[ijoy].b )
+                if ( 0 != scantag[tag].value && Uint32( scantag[tag].value ) == joy[ijoy].b )
                 {
                     pcontrol->tag    = Uint32( scantag[tag].value );
                     pcontrol->is_key = bfalse;
@@ -3465,7 +3466,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
             {
                 if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                if ( SDLKEYDOWN(Uint32( scantag[tag].value ) ) )
+                if ( SDLKEYDOWN( Uint32( scantag[tag].value ) ) )
                 {
                     pcontrol->tag    = scantag[tag].value;
                     pcontrol->is_key = btrue;
@@ -3485,7 +3486,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
                     {
                         if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                        if ( SDLKEYDOWN(Uint32( scantag[tag].value ) ) )
+                        if ( SDLKEYDOWN( Uint32( scantag[tag].value ) ) )
                         {
                             pcontrol->tag    = scantag[tag].value;
                             pcontrol->is_key = btrue;
@@ -3513,7 +3514,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
                     {
                         if ( scantag[tag].value < 0 || scantag[tag].value >= SDLK_NUMLOCK ) continue;
 
-                        if ( SDLKEYDOWN(Uint32( scantag[tag].value ) ) )
+                        if ( SDLKEYDOWN( Uint32( scantag[tag].value ) ) )
                         {
                             pcontrol->tag    = scantag[tag].value;
                             pcontrol->is_key = btrue;
@@ -3919,14 +3920,14 @@ int OptionsInput_data::run( double deltaTime )
                     new_player = CLIP( player, -1, SDL_max( 0, int( input_device_count ) - 1 ) );
                     new_player++;
 
-                    if ( new_player >= 0 && Uint32(new_player) >= input_device_count ) new_player = 0;
+                    if ( new_player >= 0 && Uint32( new_player ) >= input_device_count ) new_player = 0;
 
                     if ( new_player != player )
                     {
                         player = new_player;
 
                         pdevice = NULL;
-                        if ( player >= 0 && Uint32(new_player) < input_device_count )
+                        if ( player >= 0 && Uint32( new_player ) < input_device_count )
                         {
                             pdevice = controls + player;
                         }
@@ -4270,7 +4271,7 @@ bool_t OptionsGame_data::update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE typ
 //--------------------------------------------------------------------------------------------
 int OptionsGame_data::run( double deltaTime )
 {
-    /// @details Game options menu
+    /// \details Game options menu
 
     int cnt;
     int  result = 0;
@@ -4745,7 +4746,7 @@ bool_t OptionsAudio_data::update_settings( ego_config_data * pcfg )
 //--------------------------------------------------------------------------------------------
 int OptionsAudio_data::run( double deltaTime )
 {
-    /// @details Audio options menu
+    /// \details Audio options menu
 
     bool_t old_sound_allowed       = cfg.sound_allowed;
     Uint8  old_sound_volume        = cfg.sound_volume;
@@ -5180,7 +5181,8 @@ void OptionsVideo_data::format()
 //--------------------------------------------------------------------------------------------
 bool_t OptionsVideo_data::coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio )
 {
-    /// @details BB@> coerce the aspect ratio of the screen to some standard size
+    /// \author BB
+    /// \details  coerce the aspect ratio of the screen to some standard size
 
     float req_aspect_ratio;
 
@@ -5639,7 +5641,7 @@ int coerce_3dfx( int src )
 //--------------------------------------------------------------------------------------------
 int OptionsVideo_data::run( double deltaTime )
 {
-    /// @details Video options menu
+    /// \details Video options menu
 
     int cnt, result = 0;
 
@@ -6204,7 +6206,7 @@ int ShowResults_data::run( double deltaTime )
                     fnt_getTextBoxSize( menuFont, 20, &text_w, &text_h, "GAME TIP" );
                     ui_drawTextBoxImmediate( menuFont, ( GFX_WIDTH / 2 )  - text_w / 2, GFX_HEIGHT - 150, 20, "GAME TIP" );
 
-                    fnt_getTextBoxSize( menuFont, 20, &text_w, &text_h, game_hint );       /// @todo ZF@> : this doesn't work as I intended, ui_get_TextSize() does not take line breaks into account
+                    fnt_getTextBoxSize( menuFont, 20, &text_w, &text_h, game_hint );       /// \todo ZF@> : this doesn't work as I intended, ui_get_TextSize() does not take line breaks into account
                     ui_drawTextBoxImmediate( menuFont, GFX_WIDTH / 2 - text_w / 2, GFX_HEIGHT - 110, 20, game_hint );
                 }
 
@@ -6706,7 +6708,7 @@ static LoadPlayer_data LoadPlayerState;
 // place this last so that we do not have to prototype every menu function
 int doMenu( float deltaTime )
 {
-    /// @details the global function that controls the navigation between menus
+    /// \details the global function that controls the navigation between menus
 
     int retval, result = 0;
 
@@ -7015,7 +7017,8 @@ void copyrightText_set_position( TTF_Font * font, const char * text, int spacing
 //--------------------------------------------------------------------------------------------
 void mnu_load_all_module_images_vfs()
 {
-    /// @details ZZ@> This function loads the title image for each module.  Modules without a
+    /// \author ZZ
+    /// \details  This function loads the title image for each module.  Modules without a
     ///     title are marked as invalid
 
     STRING loadname;
@@ -7043,7 +7046,7 @@ void mnu_load_all_module_images_vfs()
         }
         else if ( mnu_test_by_index( imod, 0, NULL ) )
         {
-            // @note just because we can't load the title image DOES NOT mean that we ignore the module
+            // \note just because we can't load the title image DOES NOT mean that we ignore the module
             SDL_snprintf( loadname, SDL_arraysize( loadname ), "%s/gamedat/title", mnu_ModList[imod].vfs_path );
 
             mnu_ModList[imod].tex_index = TxTitleImage_load_one_vfs( loadname );
@@ -7065,7 +7068,8 @@ void mnu_load_all_module_images_vfs()
 //--------------------------------------------------------------------------------------------
 TX_REF mnu_get_icon_ref( const CAP_REF & icap, const TX_REF & default_ref )
 {
-    /// @details BB@> This function gets the proper icon for a an object profile.
+    /// \author BB
+    /// \details  This function gets the proper icon for a an object profile.
     //
     //     In the character preview section of the menu system, we do not load
     //     entire profiles, just the character definition file ("data.txt")
@@ -7115,7 +7119,8 @@ TX_REF mnu_get_icon_ref( const CAP_REF & icap, const TX_REF & default_ref )
 //--------------------------------------------------------------------------------------------
 int mnu_get_mod_number( const char *szModName )
 {
-    /// @details ZZ@> This function returns -1 if the module does not exist locally, the module
+    /// \author ZZ
+    /// \details  This function returns -1 if the module does not exist locally, the module
     ///    index otherwise
 
     MOD_REF modnum;
@@ -7180,7 +7185,8 @@ bool_t mnu_test_by_index( const MOD_REF & modnumber, size_t buffer_len, char * b
 //--------------------------------------------------------------------------------------------
 bool_t mnu_test_by_name( const char *szModName )
 {
-    /// @details ZZ@> This function tests to see if a module can be entered by
+    /// \author ZZ
+    /// \details  This function tests to see if a module can be entered by
     ///    the players
 
     bool_t retval;
@@ -7243,7 +7249,7 @@ void mnu_load_all_module_info()
             strncpy( pmod->vfs_path, vfs_ModPath, SDL_arraysize( pmod->vfs_path ) );
 
             // Save the user data directory version of the module path.
-            // @note This is kinda a cheat since we know that the virtual paths all begin with "mp_" at the moment.
+            // \note This is kinda a cheat since we know that the virtual paths all begin with "mp_" at the moment.
             // If that changes, this line must be changed as well.
             SDL_snprintf( pmod->dest_path, SDL_arraysize( pmod->dest_path ), "/%s", vfs_ModPath + 3 );
 
@@ -7356,7 +7362,8 @@ void TxTitleImage_clear_data()
 //--------------------------------------------------------------------------------------------
 void TxTitleImage_ctor()
 {
-    /// @details ZZ@> This function clears out all of the textures
+    /// \author ZZ
+    /// \details  This function clears out all of the textures
 
     TX_REF cnt;
 
@@ -7379,7 +7386,8 @@ void TxTitleImage_release_one( const TX_REF & index )
 //--------------------------------------------------------------------------------------------
 void TxTitleImage_release_all()
 {
-    /// @details ZZ@> This function releases all of the textures
+    /// \author ZZ
+    /// \details  This function releases all of the textures
 
     TX_REF cnt;
 
@@ -7394,7 +7402,8 @@ void TxTitleImage_release_all()
 //--------------------------------------------------------------------------------------------
 void TxTitleImage_dtor()
 {
-    /// @details ZZ@> This function clears out all of the textures
+    /// \author ZZ
+    /// \details  This function clears out all of the textures
 
     TX_REF cnt;
 
@@ -7409,7 +7418,8 @@ void TxTitleImage_dtor()
 //--------------------------------------------------------------------------------------------
 TX_REF TxTitleImage_load_one_vfs( const char *szLoadName )
 {
-    /// @details ZZ@> This function loads a title in the specified image slot, forcing it into
+    /// \author ZZ
+    /// \details  This function loads a title in the specified image slot, forcing it into
     ///    system memory.  Returns btrue if it worked
 
     TX_REF itex;
@@ -7442,7 +7452,8 @@ oglx_texture_t * TxTitleImage_get_ptr( const TX_REF & itex )
 //--------------------------------------------------------------------------------------------
 void TxTitleImage_reload_all()
 {
-    /// @details ZZ@> This function re-loads all the current textures back into
+    /// \author ZZ
+    /// \details  This function re-loads all the current textures back into
     ///               OpenGL texture memory using the cached SDL surfaces
 
     TX_REF cnt;
@@ -7463,7 +7474,9 @@ void TxTitleImage_reload_all()
 //--------------------------------------------------------------------------------------------
 void mnu_GameTip_load_global_vfs()
 {
-    /// ZF@> This function loads all of the game hints and tips
+    /// \author ZF
+    /// \details This function loads all of the game hints and tips
+
     STRING buffer;
     vfs_FILE *fileread;
     Uint8 cnt;
@@ -7503,7 +7516,8 @@ void mnu_GameTip_load_global_vfs()
 //--------------------------------------------------------------------------------------------
 bool_t mnu_GameTip_load_local_vfs()
 {
-    /// ZF@> This function loads all module specific hints and tips. If this fails, the game will
+    /// \author ZF
+    /// \details This function loads all module specific hints and tips. If this fails, the game will
     //       default to the global hints and tips instead
 
     STRING buffer;
@@ -7875,7 +7889,8 @@ bool_t loadplayer_import_one( const char * foundfile )
 //--------------------------------------------------------------------------------------------
 void mnu_player_check_import( const char *dirname, bool_t initialize )
 {
-    /// @details ZZ@> This function figures out which players may be imported, and loads basic
+    /// \author ZZ
+    /// \details  This function figures out which players may be imported, and loads basic
     ///     data for each
 
     vfs_search_context_t * ctxt;

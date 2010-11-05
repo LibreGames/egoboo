@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_math.c
-/// @brief The name's pretty self explanatory, doncha think?
-/// @details This is the remainder of non-inlined math functions that deal with initialization
+/// \file egoboo_math.c
+/// \brief The name's pretty self explanatory, doncha think?
+/// \details This is the remainder of non-inlined math functions that deal with initialization
 
 #include "egoboo_math.inl"
 
@@ -34,7 +34,8 @@ Uint16  randie[RANDIE_COUNT];
 //--------------------------------------------------------------------------------------------
 void make_turntosin( void )
 {
-    /// @details ZZ@> This function makes the lookup table for chrturn...
+    /// \author ZZ
+    /// \details  This function makes the lookup table for chrturn...
     int cnt;
     float ftmp = TWO_PI / ( float )TRIG_TABLE_SIZE;
 
@@ -48,7 +49,8 @@ void make_turntosin( void )
 //--------------------------------------------------------------------------------------------
 void make_randie()
 {
-    /// @details ZZ@> This function makes the random number table
+    /// \author ZZ
+    /// \details  This function makes the random number table
     int tnc, cnt;
 
     // Fill in the basic values

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file network.h
-/// @brief Skeleton for Egoboo networking
+/// \file network.h
+/// \brief Skeleton for Egoboo networking
 
 #include "egoboo_typedef_cpp.h"
 
@@ -128,7 +128,7 @@ extern net_shared_stats net_stats;
 //--------------------------------------------------------------------------------------------
 
 /// A latch with a time attached
-/// @details This is recieved over the network, or inserted into the list by the local system to simulate
+/// \details This is recieved over the network, or inserted into the list by the local system to simulate
 ///  network traffic
 struct ego_time_latch
 {
@@ -187,8 +187,8 @@ struct ego_player_data
     /// Network latch, set by unbuffer_all_player_latches(), used to set the local character's latch
     latch_input_t           net_latch;
 
-    ego_player_data()  { ctor(this); }
-    ~ego_player_data() { dtor(this); }
+    ego_player_data()  { ctor( this ); }
+    ~ego_player_data() { dtor( this ); }
 
     static ego_player_data * ctor( ego_player_data * ppla );
     static ego_player_data * dtor( ego_player_data * ppla );
@@ -205,9 +205,9 @@ struct ego_player : public ego_player_data
 {
     friend class std::deque< ego_player >;
 
-    ego_player( ego_uint id ) : _id(id) {}
+    ego_player( ego_uint id ) : _id( id ) {}
 
-    ego_player & operator = (const ego_player & rhs)
+    ego_player & operator = ( const ego_player & rhs )
     {
         get_data() = rhs.cget_data();
         return *this;
@@ -219,7 +219,7 @@ private:
 
     /// this constructor can only be called by player_deque for the purpose
     /// of setting up the std::deque< ego_player >
-    explicit ego_player() : _id(ego_uint(-1)) { ctor(this); }
+    explicit ego_player() : _id( ego_uint( -1 ) ) { ctor( this ); }
 
     const ego_uint _id;
 };
@@ -230,7 +230,7 @@ private:
 /// std::deque for keeping track of players
 struct player_deque : public std::deque< ego_player >
 {
-    player_deque() : _guid(0) { init(); }
+    player_deque() : _guid( 0 ) { init(); }
     ~player_deque() { dtor(); }
 
     void   toggle_all_explore();
@@ -239,21 +239,21 @@ struct player_deque : public std::deque< ego_player >
     bool_t has_wizard();
 
     // wrapper function to make sure that you are indexing the PlayerDeque by the right kind of reference
-    ego_player * find_by_ref( const PLA_REF & ref ) { return find_by_id(ref.get_value()); }
+    ego_player * find_by_ref( const PLA_REF & ref ) { return find_by_id( ref.get_value() ); }
 
     /// a no-fail "creation" process
-    ego_player * create( const ego_uint id = ego_uint(-1) )
+    ego_player * create( const ego_uint id = ego_uint( -1 ) )
     {
         ego_player * ppla = NULL;
 
-        if( ego_uint(-1) != id )
+        if ( ego_uint( -1 ) != id )
         {
-            ppla = find_by_id(id);
+            ppla = find_by_id( id );
 
-            if( NULL == ppla )
+            if ( NULL == ppla )
             {
-                push_back( ego_player(id) );
-                ppla = &(back());
+                push_back( ego_player( id ) );
+                ppla = &( back() );
             }
             else
             {
@@ -262,12 +262,11 @@ struct player_deque : public std::deque< ego_player >
         }
         else
         {
-            push_back( ego_player(_guid) );
-            ppla = &(back());
+            push_back( ego_player( _guid ) );
+            ppla = &( back() );
 
             _guid++;
         }
-
 
         return ppla;
     }
@@ -282,14 +281,14 @@ private:
 
     ego_player * find_by_id( ego_uint id )
     {
-        if( empty() ) return NULL;
+        if ( empty() ) return NULL;
 
         ego_player * ppla = NULL;
-        for( iterator it = begin(); it != end(); it ++ )
+        for ( iterator it = begin(); it != end(); it ++ )
         {
-            if( it->get_id() == id )
+            if ( it->get_id() == id )
             {
-                ppla = &(*it);
+                ppla = &( *it );
             }
         }
 
@@ -432,6 +431,5 @@ void tlatch_ary_init( ego_time_latch ary[], size_t len );
 
 ego_chr    * pla_get_pchr( const ego_player & rplayer );
 ego_player * net_get_ppla( const CHR_REF & ichr );
-
 
 void net_synchronize_game_clock();

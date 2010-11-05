@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file menu.h
-/// @details Implements the main menu tree, using the code in Ui.*.
+/// \file menu.h
+/// \details Implements the main menu tree, using the code in Ui.*.
 
 #include "network.h"
 #include "profile.h"

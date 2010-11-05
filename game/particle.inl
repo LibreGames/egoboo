@@ -118,9 +118,10 @@ INLINE bool_t ego_prt::set_size( ego_prt * pprt, int size )
 //--------------------------------------------------------------------------------------------
 INLINE CHR_REF ego_prt::get_iowner( const PRT_REF & iprt, int depth )
 {
-    /// BB@> A helper function for determining the owner of a particle
+    /// \author BB
+    /// \brief A helper function for determining the owner of a particle
     ///
-    ///      @details There could be a possibility that a particle exists that was spawned by
+    ///      \details There could be a possibility that a particle exists that was spawned by
     ///      another particle, but has lost contact with its original spawner. For instance
     ///      If an explosion particle bounces off of something with MISSILE_DEFLECT or
     ///      MISSILE_REFLECT, which subsequently dies before the particle...
@@ -129,7 +130,7 @@ INLINE CHR_REF ego_prt::get_iowner( const PRT_REF & iprt, int depth )
     ///      spawn particles just keeping track of the spawner (whether particle or character)
     ///      and working backward to any potential owner using this function. ;)
     ///
-    ///      @note this function should be completely trivial for anything other than
+    ///      \note this function should be completely trivial for anything other than
     ///       namage particles created by an explosion
 
     CHR_REF iowner = CHR_REF( MAX_CHR );
@@ -187,7 +188,8 @@ INLINE CHR_REF ego_prt::get_iowner( const PRT_REF & iprt, int depth )
 //--------------------------------------------------------------------------------------------
 INLINE float ego_prt::get_scale( ego_prt * pprt )
 {
-    /// @details BB@> get the scale factor between the "graphical size" of the particle and the actual
+    /// \author BB
+    /// \details  get the scale factor between the "graphical size" of the particle and the actual
     ///               display size
 
     float scale = 0.25f;

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo.c
-/// @brief Code for the main program process
-/// @details
+/// \file egoboo.c
+/// \brief Code for the main program process
+/// \details
 
 #define DECLARE_GLOBALS
 
@@ -345,7 +345,7 @@ egoboo_rv ego_main_process::do_running()
                     // only kill characters that the players hate
                     for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
                     {
-                        if( !ipla->valid ) continue;
+                        if ( !ipla->valid ) continue;
 
                         ego_chr * pchr = pla_get_pchr( *ipla );
                         if ( NULL == pchr ) continue;
@@ -467,7 +467,8 @@ egoboo_rv ego_main_process::do_finishing()
 //--------------------------------------------------------------------------------------------
 int SDL_main( int argc, char **argv )
 {
-    /// @details ZZ@> This is where the program starts and all the high level stuff happens
+    /// \author ZZ
+    /// \details  This is where the program starts and all the high level stuff happens
 
     int result = 0;
 
@@ -517,7 +518,8 @@ int SDL_main( int argc, char **argv )
 //--------------------------------------------------------------------------------------------
 void memory_cleanUp( void )
 {
-    /// @details ZF@> This function releases all loaded things in memory and cleans up everything properly
+    /// \author ZF
+    /// \details  This function releases all loaded things in memory and cleans up everything properly
 
     log_info( "memory_cleanUp() - Attempting to clean up loaded things in memory... " );
 
@@ -626,11 +628,12 @@ void ego_init_SDL_base()
 //--------------------------------------------------------------------------------------------
 void console_begin()
 {
-    /// @details BB@> initialize the console. This must happen after the screen has been defines,
+    /// \author BB
+    /// \details  initialize the console. This must happen after the screen has been defines,
     ///     otherwise sdl_scr.x == sdl_scr.y == 0 and the screen will be defined to
     ///     have no area...
 
-    SDL_Rect blah = {0, 0, Uint16 (sdl_scr.x), Uint16( sdl_scr.y / 4 )};
+    SDL_Rect blah = {0, 0, Uint16( sdl_scr.x ), Uint16( sdl_scr.y / 4 )};
 
 #if defined(USE_LUA_CONSOLE)
     _top_con = lua_console_create( NULL, blah );
@@ -643,7 +646,8 @@ void console_begin()
 //--------------------------------------------------------------------------------------------
 void console_end()
 {
-    /// @details BB@> de-initialize the top console
+    /// \author BB
+    /// \details  de-initialize the top console
 
 #if defined(USE_LUA_CONSOLE)
     {
@@ -664,7 +668,8 @@ void console_end()
 //--------------------------------------------------------------------------------------------
 void object_systems_begin( void )
 {
-    /// @details BB@> initialize all the object systems
+    /// \author BB
+    /// \details  initialize all the object systems
 
     particle_system_begin();
     enchant_system_begin();
@@ -674,7 +679,8 @@ void object_systems_begin( void )
 //--------------------------------------------------------------------------------------------
 void object_systems_end( void )
 {
-    /// @details BB@> quit all the object systems
+    /// \author BB
+    /// \details  quit all the object systems
 
     particle_system_end();
     enchant_system_end();
@@ -684,7 +690,8 @@ void object_systems_end( void )
 //--------------------------------------------------------------------------------------------
 void _quit_game( ego_main_process * pgame )
 {
-    /// @details ZZ@> This function exits the game entirely
+    /// \author ZZ
+    /// \details  This function exits the game entirely
 
     if ( pgame->running() )
     {
@@ -712,7 +719,8 @@ ego_main_process * ego_main_process::init( ego_main_process * eproc, int argc, c
 //--------------------------------------------------------------------------------------------
 void egoboo_clear_vfs_paths()
 {
-    /// @details BB@> clear out the basic mount points
+    /// \author BB
+    /// \details  clear out the basic mount points
 
     vfs_remove_mount_point( "mp_data" );
     vfs_remove_mount_point( "mp_modules" );
@@ -723,7 +731,8 @@ void egoboo_clear_vfs_paths()
 //--------------------------------------------------------------------------------------------
 void egoboo_setup_vfs_paths()
 {
-    /// @details BB@> set the basic mount points used by the main program
+    /// \author BB
+    /// \details  set the basic mount points used by the main program
 
     //---- tell the vfs to add the basic search paths
     vfs_set_base_search_paths();
@@ -743,7 +752,7 @@ void egoboo_setup_vfs_paths()
     vfs_add_mount_point( fs_getUserDirectory(), "players", "mp_players", 1 );
 
     // Create a mount point for the /data/players directory
-    /// @note ZF@> Let's remove the local players folder since it caused so many problems for people
+    /// \note ZF@> Let's remove the local players folder since it caused so many problems for people
     //vfs_add_mount_point( fs_getDataDirectory(), "players", "mp_players", 1 );
 
     // Create a mount point for the /user/import directory

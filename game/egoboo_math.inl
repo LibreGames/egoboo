@@ -19,9 +19,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_math.inl
-/// @brief
-/// @details Almost all of the math functions are intended to be inlined for maximum speed
+/// \file egoboo_math.inl
+/// \brief
+/// \details Almost all of the math functions are intended to be inlined for maximum speed
 
 #include "egoboo_math.h"
 #include "log.h"
@@ -146,7 +146,8 @@ static INLINE void facing_to_vec( FACING_T facing, float * dx, float * dy )
 //--------------------------------------------------------------------------------------------
 static INLINE int terp_dir( FACING_T majordir, FACING_T minordir, int weight )
 {
-    /// @details ZZ@> This function returns a direction between the major and minor ones, closer
+    /// \author ZZ
+    /// \details  This function returns a direction between the major and minor ones, closer
     ///    to the major.
 
     int diff;
@@ -171,7 +172,8 @@ static INLINE int terp_dir( FACING_T majordir, FACING_T minordir, int weight )
 //--------------------------------------------------------------------------------------------
 static INLINE void getadd( int min, int value, int max, int* valuetoadd )
 {
-    /// @details ZZ@> This function figures out what value to add should be in order
+    /// \author ZZ
+    /// \details  This function figures out what value to add should be in order
     ///    to not overflow the min and max bounds
 
     int newvalue;
@@ -196,7 +198,8 @@ static INLINE void getadd( int min, int value, int max, int* valuetoadd )
 //--------------------------------------------------------------------------------------------
 static INLINE void fgetadd( float min, float value, float max, float* valuetoadd )
 {
-    /// @details ZZ@> This function figures out what value to add should be in order
+    /// \author ZZ
+    /// \details  This function figures out what value to add should be in order
     ///    to not overflow the min and max bounds
 
     float newvalue;
@@ -223,7 +226,8 @@ static INLINE void fgetadd( float min, float value, float max, float* valuetoadd
 //--------------------------------------------------------------------------------------------
 static INLINE int generate_irand_pair( IPair num )
 {
-    /// @details ZZ@> This function generates a random number
+    /// \author ZZ
+    /// \details  This function generates a random number
 
     int tmp = 0;
     int irand = RANDIE;
@@ -240,7 +244,8 @@ static INLINE int generate_irand_pair( IPair num )
 //--------------------------------------------------------------------------------------------
 static INLINE int generate_irand_range( FRange num )
 {
-    /// @details ZZ@> This function generates a random number
+    /// \author ZZ
+    /// \details  This function generates a random number
 
     IPair loc_pair;
 
@@ -252,7 +257,8 @@ static INLINE int generate_irand_range( FRange num )
 //--------------------------------------------------------------------------------------------
 static INLINE int generate_randmask( int base, int mask )
 {
-    /// @details ZZ@> This function generates a random number
+    /// \author ZZ
+    /// \details  This function generates a random number
     int tmp;
     int irand = RANDIE;
 
@@ -606,7 +612,8 @@ static INLINE fvec3_t fvec3_cross_product( const fvec3_base_t A, const fvec3_bas
 //--------------------------------------------------------------------------------------------
 static INLINE float fvec3_decompose( const fvec3_base_t A, const fvec3_base_t NRM, fvec3_base_t PARA, fvec3_base_t PERP )
 {
-    /// BB@> the normal (NRM) is assumed to be normalized. Try to get this as optimized as possible.
+    /// \author BB
+    /// \details the normal (NRM) is assumed to be normalized. Try to get this as optimized as possible.
 
     float dot;
 
@@ -972,7 +979,8 @@ static INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_SpaceFixed( const float scal
 //--------------------------------------------------------------------------------------------
 static INLINE fmat_4x4_t ScaleXYZRotateXYZTranslate_BodyFixed( const float scale_x, const float scale_y, const float scale_z, const Uint16 turn_z, const Uint16 turn_x, const Uint16 turn_y, const float translate_x, const float translate_y, const float translate_z )
 {
-    /// @details BB@> Transpose the SpaceFixed representation and invert the angles to get the BodyFixed representation
+    /// \author BB
+    /// \details  Transpose the SpaceFixed representation and invert the angles to get the BodyFixed representation
 
     fmat_4x4_t ret;
 
@@ -1068,15 +1076,25 @@ static INLINE fmat_4x4_t FourPoints( const fvec4_base_t ori, const fvec4_base_t 
 }
 
 //--------------------------------------------------------------------------------------------
-static INLINE fmat_4x4_t ViewMatrix( const fvec3_base_t   from,     // camera location
-                                     const fvec3_base_t   at,        // camera look-at target
-                                     const fvec3_base_t   world_up,  // world’s up, usually 0, 0, 1
-                                     const float roll )         // clockwise roll around
-//   viewing direction,
-//   in radians
+///
+///
+/**
+ * \author MN
+ * \details This probably should be replaced by a call to gluLookAt(),
+ * don't see why we need to make our own...
+ *
+ * \param from        camera location
+ * \param at          camera look-at target
+ * \param world_up    world’s up, usually 0, 0, 1
+ * \param roll        clockwise roll around viewing direction, in radians
+ *
+ * \return            the generated view matrix
+ */
+static INLINE fmat_4x4_t ViewMatrix( const fvec3_base_t   from,
+                                     const fvec3_base_t   at,
+                                     const fvec3_base_t   world_up,
+                                     const float roll )
 {
-    /// @details MN@> This probably should be replaced by a call to gluLookAt(),
-    ///               don't see why we need to make our own...
 
     fmat_4x4_t view = IdentityMatrix();
     fvec3_t   up, right, view_dir, temp;
@@ -1111,12 +1129,22 @@ static INLINE fmat_4x4_t ViewMatrix( const fvec3_base_t   from,     // camera lo
 }
 
 //--------------------------------------------------------------------------------------------
-static INLINE fmat_4x4_t ProjectionMatrix( const float near_plane,    // distance to near clipping plane
-        const float far_plane,      // distance to far clipping plane
-        const float fov )           // field of view angle, in radians
+/**
+ * \author MN
+ * \details Again, there is a gl function for this, glFrustum or gluPerspective...
+ *          does this account for viewport ratio?
+ *
+ * \param near_plane  distance to near clipping plane
+ * \param far_plane   distance to far clipping plane
+ * \param fov         field of view angle, in radians
+ *
+ * \return            generated projection matrix
+ */
+static INLINE fmat_4x4_t ProjectionMatrix(
+    const float near_plane,
+    const float far_plane,
+    const float fov )
 {
-    /// @details MN@> Again, there is a gl function for this, glFrustum or gluPerspective...
-    ///               does this account for viewport ratio?
 
     fmat_4x4_t ret = ZERO_MAT_4X4;
 
@@ -1134,14 +1162,17 @@ static INLINE fmat_4x4_t ProjectionMatrix( const float near_plane,    // distanc
 }
 
 //----------------------------------------------------
+/**
+ *  \author GS
+ *  \details   This is just a MulVectorMatrix for now. The W division and screen size multiplication
+ *                 must be done afterward.
+ *
+ *  \note BB@> the matrix transformation for OpenGL vertices. Some minor optimizations.
+ *        The value pSourceV->w is assumed to be constant for all of the elements of pSourceV
+ *
+ */
 static INLINE void  TransformVertices( const fmat_4x4_t *pMatrix, const fvec4_t *pSourceV, fvec4_t *pDestV, const Uint32 NumVertor )
 {
-    /// @details  GS@> This is just a MulVectorMatrix for now. The W division and screen size multiplication
-    ///                must be done afterward.
-    ///
-    /// BB@> the matrix transformation for OpenGL vertices. Some minor optimizations.
-    ///      The value pSourceV->w is assumed to be constant for all of the elements of pSourceV
-
     Uint32    cnt;
     fvec4_t * SourceIt = ( fvec4_t * )pSourceV;
 

@@ -18,9 +18,9 @@
 //********************************************************************************************
 
 ///
-/// @file file_formats/configfile.c
-/// @brief Configuration file loading implementation
-/// @details All functions to manage a ConfigFile
+/// \file file_formats/configfile.c
+/// \brief Configuration file loading implementation
+/// \details All functions to manage a ConfigFile
 ///
 /// A ConfigFile_t contains sections which themselves contains values.
 /// A section name is contained between "{}" Ex: {Section Name}
@@ -37,24 +37,24 @@
 /// [Key1] : "TRUE" // This is a commentary
 /// [Key2] : "Hello ""MAN""" // this will become : Hello "MAN"
 ///
-/// @todo optimisation
-/// @todo error checking
-/// @todo Run-time commentary editing
+/// \todo optimisation
+/// \todo error checking
+/// \todo Run-time commentary editing
 ///
-/// @bug Multiple section with the same name will be loaded and saved but only the first
+/// \bug Multiple section with the same name will be loaded and saved but only the first
 ///   one will be looked for value. Should not load sections with same name.
 ///
 ///
 /// History:
 ///
 /// 2001-01-09
-///  @li Implemented ConfigFileString_Encode in ConfigFile_SetValue_String
+///  \li Implemented ConfigFileString_Encode in ConfigFile_SetValue_String
 ///
 /// 2000-12-10
-///  @li Added the length of the string buffer used as parameter for ConfigFile_GetValue_String.
-///  @li Added ConfigFile_SetValue_Boolean, SetConfigIntValue and ConfigFile_SetValue_Float to standardise
+///  \li Added the length of the string buffer used as parameter for ConfigFile_GetValue_String.
+///  \li Added ConfigFile_SetValue_Boolean, SetConfigIntValue and ConfigFile_SetValue_Float to standardise
 ///      the way to set usual data types.
-///  @li Added ConfigFile_GetValue_Boolean, ConfigFile_GetValue_Int and GetConfigFloatValue.
+///  \li Added ConfigFile_GetValue_Boolean, ConfigFile_GetValue_Int and GetConfigFloatValue.
 
 #include "configfile.h"
 
@@ -224,7 +224,8 @@ ConfigFileValuePtr_t ConfigFile_createValue( ConfigFilePtr_t f, ConfigFileSectio
 //--------------------------------------------------------------------------------------------
 char * ConfigFileString_create( size_t len )
 {
-    /// @details BB@> must use SDL_malloc/SDL_calloc instead of new, since we have to accommodate realoc()
+    /// \author BB
+    /// \details  must use SDL_malloc/SDL_calloc instead of new, since we have to accommodate realoc()
 
     char * ptmp;
 
@@ -237,7 +238,8 @@ char * ConfigFileString_create( size_t len )
 //--------------------------------------------------------------------------------------------
 ConfigFile_retval ConfigFileString_destroy( char ** ptmp )
 {
-    /// @details BB@> must use free instead of delete, since we have to accommodate realoc()
+    /// \author BB
+    /// \details  must use free instead of delete, since we have to accommodate realoc()
 
     ConfigFile_retval retval;
 

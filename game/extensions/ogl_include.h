@@ -20,12 +20,12 @@
 //*
 //********************************************************************************************
 
-/// @defgroup _ogl_extensions_ Extensions to OpenGL
+/// \defgroup _ogl_extensions_ Extensions to OpenGL
 
-/// @file extensions/ogl_include.h
-/// @ingroup _ogl_extensions_
-/// @brief Base definitions of the extensions to OpenGL
-/// @details
+/// \file extensions/ogl_include.h
+/// \ingroup _ogl_extensions_
+/// \brief Base definitions of the extensions to OpenGL
+/// \details
 
 #include <SDL_opengl.h>
 
@@ -102,15 +102,15 @@ extern "C"
     GLboolean handle_opengl_error( void );
 
     void oglx_ViewMatrix( GLXmatrix view,
-                          const GLXvector3f from,      ///< @var camera location
-                          const GLXvector3f at,        ///< @var camera look-at target
-                          const GLXvector3f world_up,  ///< @var world’s up, usually 0, 0, 1
-                          const GLfloat roll );        ///< @var clockwise roll around viewing direction, in radians
+                          const GLXvector3f from,      ///< \var camera location
+                          const GLXvector3f at,        ///< \var camera look-at target
+                          const GLXvector3f world_up,  ///< \var world’s up, usually 0, 0, 1
+                          const GLfloat roll );        ///< \var clockwise roll around viewing direction, in radians
 
     void oglx_ProjectionMatrix( GLXmatrix proj,
-                                const GLfloat near_plane,    ///< @var distance to near clipping plane
-                                const GLfloat far_plane,     ///< @var distance to far clipping plane
-                                const GLfloat fov );         ///< @var field of view angle, in radians
+                                const GLfloat near_plane,    ///< \var distance to near clipping plane
+                                const GLfloat far_plane,     ///< \var distance to far clipping plane
+                                const GLfloat fov );         ///< \var field of view angle, in radians
 
     /// Set the FILE that ogl_include will use to dump debugging information.
     /// If not set, it will default to stderr.

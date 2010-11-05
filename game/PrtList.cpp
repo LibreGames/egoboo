@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file PrtObjList.c
-/// @brief Implementation of the PrtList_* functions
-/// @details
+/// \file PrtObjList.c
+/// \brief Implementation of the PrtList_* functions
+/// \details
 
 #include "egoboo_typedef_cpp.inl"
 
@@ -157,7 +157,8 @@ PRT_REF ego_particle_list::allocate_activate( const PRT_REF & iprt )
 //--------------------------------------------------------------------------------------------
 PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
 {
-    /// @details ZZ@> This function gets an unused particle.  If all particles are in use
+    /// \author ZZ
+    /// \details  This function gets an unused particle.  If all particles are in use
     ///    and force is set, it grabs the first unimportant one.  The iprt
     ///    index is the return value
 

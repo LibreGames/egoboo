@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file mesh.c
-/// @brief Functions for creating, reading, and writing Egoboo's .mpd mesh file
-/// @details
+/// \file mesh.c
+/// \brief Functions for creating, reading, and writing Egoboo's .mpd mesh file
+/// \details
 
 #include "mesh.inl"
 
@@ -118,7 +118,8 @@ ego_tile_mem * ego_tile_mem::dtor_this( ego_tile_mem * pmem )
 //--------------------------------------------------------------------------------------------
 ego_mpd   * ego_mpd::ctor_this( ego_mpd * pmesh )
 {
-    /// @details BB@> initialize the ego_mpd   structure
+    /// \author BB
+    /// \details  initialize the ego_mpd   structure
 
     if ( NULL != pmesh )
     {
@@ -214,7 +215,8 @@ void ego_mpd::init_tile_offset( ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 bool_t ego_mpd::remove_ambient( ego_mpd   * pmesh )
 {
-    /// @details BB@> remove extra ambient light in the lightmap
+    /// \author BB
+    /// \details  remove extra ambient light in the lightmap
 
     Uint32 cnt;
     UFP8_T min_vrt_a = 255;
@@ -638,7 +640,8 @@ bool_t ego_tile_mem::dealloc( ego_tile_mem * pmem )
 //--------------------------------------------------------------------------------------------
 ego_grid_mem * ego_grid_mem::make_fanstart( ego_grid_mem * pgmem, ego_mpd_info * pinfo )
 {
-    /// @details ZZ@> This function builds a look up table to ease calculating the
+    /// \author ZZ
+    /// \details  This function builds a look up table to ease calculating the
     ///    fan number given an x,y pair
 
     int cnt;
@@ -709,7 +712,8 @@ void ego_mpd::make_vrtstart( ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 void mesh_make_twist()
 {
-    /// @details ZZ@> This function precomputes surface normals and steep hill acceleration for
+    /// \author ZZ
+    /// \details  This function precomputes surface normals and steep hill acceleration for
     ///    the mesh
 
     Uint16 cnt;
@@ -783,7 +787,8 @@ Uint8 cartman_get_fan_twist( ego_mpd   * pmesh, Uint32 tile )
 //--------------------------------------------------------------------------------------------
 bool_t ego_mpd::make_bbox( ego_mpd   * pmesh )
 {
-    /// @details BB@> set the bounding box for each tile, and for the entire mesh
+    /// \author BB
+    /// \details  set the bounding box for each tile, and for the entire mesh
 
     size_t mesh_vrt;
     int tile_vrt;
@@ -849,7 +854,8 @@ bool_t ego_mpd::make_bbox( ego_mpd   * pmesh )
 //--------------------------------------------------------------------------------------------
 bool_t ego_mpd::make_normals( ego_mpd   * pmesh )
 {
-    /// @details BB@> this function calculates a set of normals for the 4 corners
+    /// \author BB
+    /// \details  this function calculates a set of normals for the 4 corners
     ///               of a given tile. It is supposed to generate smooth normals for
     ///               most tiles, but where there is a creas (i.e. between the floor and
     ///               a wall) the normals should not be smoothed.
@@ -1349,7 +1355,8 @@ struct mesh_wall_data
 //--------------------------------------------------------------------------------------------
 bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, struct mesh_wall_data * pdata )
 {
-    /// @details BB@> an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
+    /// \author BB
+    /// \details  an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
 
     mesh_wall_data loc_data;
 
@@ -1596,7 +1603,8 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
 //--------------------------------------------------------------------------------------------
 fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, BIT_FIELD bits )
 {
-    /// @details BB@> determine the shortest "way out", but creating an array of "pressures"
+    /// \author BB
+    /// \details  determine the shortest "way out", but creating an array of "pressures"
     /// with each element representing the pressure when the object is moved in different directions
     /// by 1/2 a tile.
 
@@ -1672,7 +1680,8 @@ fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float c
 //--------------------------------------------------------------------------------------------
 BIT_FIELD ego_mpd::hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, float nrm[], float * pressure )
 {
-    /// @details BB@> an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
+    /// \author BB
+    /// \details  an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
 
     BIT_FIELD loc_pass;
     Uint32 itile, pass;

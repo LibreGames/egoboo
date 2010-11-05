@@ -19,12 +19,12 @@
 //*
 //********************************************************************************************
 
-/// @defgroup _ogl_extensions_ Extensions to OpenGL
+/// \defgroup _ogl_extensions_ Extensions to OpenGL
 
-/// @file extensions/ogl_debug.h
-/// @ingroup _ogl_extensions_
-/// @brief Definitions for the debugging extensions for OpenGL
-/// @details This debugging scheme seems to be reporting too many errors, especially ones related to texture mapped quads.
+/// \file extensions/ogl_debug.h
+/// \ingroup _ogl_extensions_
+/// \brief Definitions for the debugging extensions for OpenGL
+/// \details This debugging scheme seems to be reporting too many errors, especially ones related to texture mapped quads.
 
 #include "ogl_include.h"
 
@@ -537,7 +537,7 @@ extern "C"
 
     /// a wrapper function for automatically debugging OpenGL function calls
     /// Usage: GL_DEBUG( gl* )( param1, param2, ... )
-    /// @warning Wrapping glEnd() in this manner will generate a multitude of odd errors.
+    /// \warning Wrapping glEnd() in this manner will generate a multitude of odd errors.
 #    define GL_DEBUG(XX) \
     (handle_gl_error(), \
      oglx_next_cmd = #XX, \

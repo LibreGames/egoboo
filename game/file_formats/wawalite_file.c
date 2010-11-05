@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/wawalite_file.c
-/// @brief Functions to read and write the Egoboo's wawalite.txt file
-/// @details
+/// \file file_formats/wawalite_file.c
+/// \brief Functions to read and write the Egoboo's wawalite.txt file
+/// \details
 
 #include "wawalite_file.h"
 #include "pip_file.h"
@@ -220,7 +220,7 @@ wawalite_weather_t * read_wawalite_weather( vfs_FILE * fileread, wawalite_data_t
     // weather data
     if ( pdata->version >= 2 )
     {
-        pweather->particle    = fget_next_int( fileread );          //@todo: allow text to be read here
+        pweather->particle    = fget_next_int( fileread );          //\todo: allow text to be read here
     }
     else
     {
@@ -297,7 +297,8 @@ wawalite_data_t * read_wawalite_fog( vfs_FILE * fileread, wawalite_data_t * pdat
 //--------------------------------------------------------------------------------------------
 wawalite_data_t * read_wawalite_file_vfs( const char *filename, wawalite_data_t * pdata )
 {
-    /// @details ZZ@> This function sets up water and lighting for the module
+    /// \author ZZ
+    /// \details  This function sets up water and lighting for the module
 
     vfs_FILE*  fileread;
     STRING newloadname;
@@ -507,7 +508,8 @@ bool_t write_wawalite_fog( vfs_FILE * filewrite, wawalite_data_t * pdata )
 //--------------------------------------------------------------------------------------------
 bool_t write_wawalite_file_vfs( wawalite_data_t * pdata )
 {
-    /// @details ZZ@> This function sets up water and lighting for the module
+    /// \author ZZ
+    /// \details  This function sets up water and lighting for the module
 
     vfs_FILE*  filewrite;
     STRING newloadname;

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_console.h
-/// @A quake-console that can be used for anything.
+/// \file egoboo_console.h
+/// \details A quake-console that can be used for anything.
 
 #include "egoboo_config.h"
 

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_object_list.h
-/// @brief Routines for character list management
+/// \file egoboo_object_list.h
+/// \brief Routines for character list management
 
 #include "egoboo_object.h"
 #include "egoboo_typedef_cpp.h"

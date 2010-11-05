@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file clock.c
-/// @brief Clock & timer implementation
-/// @details This implementation was adapted from Noel Lopis' article in Game Programming Gems 4.
+/// \file clock.c
+/// \brief Clock & timer implementation
+/// \details This implementation was adapted from Noel Lopis' article in Game Programming Gems 4.
 
 #include "clock.h"
 

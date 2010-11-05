@@ -17,8 +17,8 @@
 //*
 //********************************************************************************************
 
-/// @file particle.c
-/// @brief Manages particle systems.
+/// \file particle.c
+/// \brief Manages particle systems.
 
 #include "particle.inl"
 
@@ -156,8 +156,8 @@ ego_prt_data * ego_prt_data::dtor_this( ego_prt_data * pdata )
 //--------------------------------------------------------------------------------------------
 ego_prt_data * ego_prt_data::init( ego_prt_data * pdata )
 {
-    /// BB@> Set all particle parameters to safe values.
-    ///      @details The c equivalent of the particle prt::new() function.
+    /// \author BB
+    /// \details Set all particle parameters to safe values. The c equivalent of the particle prt::new() function.
 
     if ( NULL == pdata ) return pdata;
 
@@ -185,8 +185,8 @@ ego_prt_data * ego_prt_data::init( ego_prt_data * pdata )
 //--------------------------------------------------------------------------------------------
 ego_prt * ego_prt::ctor_this( ego_prt * pprt )
 {
-    /// BB@> Set all particle parameters to safe values.
-    ///      @details The c equivalent of the particle prt::new() function.
+    /// \author BB
+    /// \details Set all particle parameters to safe values. The c equivalent of the particle prt::new() function.
 
     pprt = ego_prt::dealloc( pprt );
     pprt = ego_prt::alloc( pprt );
@@ -240,7 +240,8 @@ ego_prt * ego_prt::dealloc( ego_prt * pprt )
 //--------------------------------------------------------------------------------------------
 void play_particle_sound( const PRT_REF & particle, Sint8 sound )
 {
-    /// ZZ@> This function plays a sound effect for a particle
+    /// \author ZZ
+    /// \details This function plays a sound effect for a particle
 
     ego_prt * pprt;
 
@@ -262,10 +263,11 @@ void play_particle_sound( const PRT_REF & particle, Sint8 sound )
 //--------------------------------------------------------------------------------------------
 void free_one_particle_in_game( const PRT_REF & particle )
 {
-    /// @details ZZ@> This function sticks a particle back on the free particle stack and
+    /// \author ZZ
+    /// \details  This function sticks a particle back on the free particle stack and
     ///    plays the sound associated with the particle
     ///
-    /// @note BB@> Use ego_obj_prt::request_terminate() instead of calling this function directly.
+    /// \note BB@> Use ego_obj_prt::request_terminate() instead of calling this function directly.
     ///            Requesting termination will defer the actual deletion of a particle until
     ///            it is finally destroyed by cleanup_all_particles()
 
@@ -371,7 +373,7 @@ ego_prt * ego_prt::do_initializing( ego_prt * pprt )
     pprt->team        = pdata->team;
     pprt->owner_ref   = loc_chr_origin;
     pprt->parent_ref  = pdata->prt_origin;
-    pprt->parent_guid = VALID_PRT( pdata->prt_origin ) ? PrtObjList.get_data_ref( pdata->prt_origin ).guid : (Uint32( ~0 ) );
+    pprt->parent_guid = VALID_PRT( pdata->prt_origin ) ? PrtObjList.get_data_ref( pdata->prt_origin ).guid : ( Uint32( ~0 ) );
     pprt->damagetype  = ppip->damagetype;
     pprt->lifedrain   = ppip->lifedrain;
     pprt->manadrain   = ppip->manadrain;
@@ -416,8 +418,8 @@ ego_prt * ego_prt::do_initializing( ego_prt * pprt )
             if ( DEFINED_CHR( pprt->target_ref ) && !ppip->homing )
             {
                 loc_facing -= glo_useangle;
-                /// @note ZF@> ?What does this do?!
-                /// @note BB@> glo_useangle is the angle found in prt_find_target()
+                /// \note ZF@> ?What does this do?!
+                /// \note BB@> glo_useangle is the angle found in prt_find_target()
             }
 
             // Correct loc_facing for dexterity...
@@ -723,7 +725,8 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
                             const CHR_REF & chr_attach, Uint16 vrt_offset, const TEAM_REF & team,
                             const CHR_REF & chr_origin, const PRT_REF & prt_origin, int multispawn, const CHR_REF & oldtarget )
 {
-    /// @details ZZ@> This function spawns a new particle.
+    /// \author ZZ
+    /// \details  This function spawns a new particle.
     ///               Returns the index of that particle or MAX_PRT on a failure.
 
     PIP_REF ipip;
@@ -839,7 +842,7 @@ fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
     if ( NULL == test_pos ) return retval;
 
     // calculate the radius based on whether the particle is on camera
-    /// @note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
+    /// \note ZF@> this may be the cause of the bug allowing AI to move through walls when the camera is not looking at them?
     radius = 0.0f;
     if ( ego_mpd::grid_is_valid( PMesh, pprt->onwhichgrid ) )
     {
@@ -864,7 +867,8 @@ fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
 //--------------------------------------------------------------------------------------------
 BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * pressure )
 {
-    /// @details ZZ@> This function returns nonzero if the particle hit a wall that the
+    /// \author ZZ
+    /// \details  This function returns nonzero if the particle hit a wall that the
     ///    particle is not allowed to cross
 
     BIT_FIELD  retval;
@@ -898,7 +902,8 @@ BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * p
 //--------------------------------------------------------------------------------------------
 bool_t prt_test_wall( ego_prt * pprt, float test_pos[] )
 {
-    /// @details ZZ@> This function returns nonzero if the particle hit a wall that the
+    /// \author ZZ
+    /// \details  This function returns nonzero if the particle hit a wall that the
     ///    particle is not allowed to cross
 
     bool_t retval;
@@ -933,7 +938,8 @@ bool_t prt_test_wall( ego_prt * pprt, float test_pos[] )
 //--------------------------------------------------------------------------------------------
 void update_all_particles()
 {
-    /// @details BB@> main loop for updating particles. Do not use the
+    /// \author BB
+    /// \details  main loop for updating particles. Do not use the
     ///               PRT_BEGIN_LOOP_* macro.
     ///               Converted all the update functions to the ego_obj_prt::run() paradigm.
 
@@ -981,7 +987,8 @@ ego_bundle_prt * prt_calc_environment( ego_bundle_prt * pbdl )
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt * move_one_particle_get_environment( ego_bundle_prt * pbdl_prt, ego_prt_environment * penviro )
 {
-    /// @details BB@> A helper function that gets all of the information about the particle's
+    /// \author BB
+    /// \details  A helper function that gets all of the information about the particle's
     ///               environment (like friction, etc.) that will be necessary for the other
     ///               move_one_particle_*() functions to work
 
@@ -1099,9 +1106,10 @@ ego_bundle_prt * move_one_particle_get_environment( ego_bundle_prt * pbdl_prt, e
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt * move_one_particle_do_fluid_friction( ego_bundle_prt * pbdl_prt )
 {
-    /// @details BB@> A helper function that computes particle friction with the floor
+    /// \author BB
+    /// \details  A helper function that computes particle friction with the floor
     ///
-    /// @note this is pretty much ripped from the character version of this function and may
+    /// \note this is pretty much ripped from the character version of this function and may
     ///       contain some features that are not necessary for any particles that are actually in game.
     ///       For instance, the only particles that is under their own control are the homing particles
     ///       but they do not have friction with the mesh, but that case is still treated in the code below.
@@ -1251,7 +1259,8 @@ move_one_particle_do_homing_fail:
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt * move_one_particle_do_z_motion( ego_bundle_prt * pbdl_prt )
 {
-    /// @details BB@> A helper function that does gravitational acceleration and buoyancy
+    /// \author BB
+    /// \details  A helper function that does gravitational acceleration and buoyancy
 
     float loc_zlerp;
 
@@ -1268,9 +1277,9 @@ ego_bundle_prt * move_one_particle_do_z_motion( ego_bundle_prt * pbdl_prt )
     loc_penviro = &( loc_pprt->enviro );
     loc_pphys   = &( loc_pprt->phys );
 
-    /// @note ZF@> We really can't do gravity for Light! A lot of magical effects and attacks in the game depend on being able
+    /// \note ZF@> We really can't do gravity for Light! A lot of magical effects and attacks in the game depend on being able
     ///            to move forward in a straight line without being dragged down into the dust!
-    /// @note BB@> however, the fireball particle is light, and without gravity it will never bounce on the
+    /// \note BB@> however, the fireball particle is light, and without gravity it will never bounce on the
     ///            ground as it is supposed to
     if ( /* loc_pprt->type == SPRITE_LIGHT || */ loc_pprt->is_homing || INGAME_CHR( loc_pprt->attachedto_ref ) ) return pbdl_prt;
 
@@ -1311,9 +1320,10 @@ ego_bundle_prt * move_one_particle_do_z_motion( ego_bundle_prt * pbdl_prt )
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt * move_one_particle_do_floor( ego_bundle_prt * pbdl_prt )
 {
-    /// @details BB@> A helper function that computes particle friction with the floor
+    /// \author BB
+    /// \details  A helper function that computes particle friction with the floor
     ///
-    /// @note this is pretty much ripped from the character version of this function and may
+    /// \note this is pretty much ripped from the character version of this function and may
     ///       contain some features that are not necessary for any particles that are actually in game.
     ///       For instance, the only particles that is under their own control are the homing particles
     ///       but they do not have friction with the mesh, but that case is still treated in the code below.
@@ -1439,7 +1449,8 @@ ego_bundle_prt * move_one_particle_do_floor( ego_bundle_prt * pbdl_prt )
 //--------------------------------------------------------------------------------------------
 bool_t move_one_particle( ego_bundle_prt * pbdl_prt )
 {
-    /// @details BB@> The master function for controlling a particle's motion
+    /// \author BB
+    /// \details  The master function for controlling a particle's motion
 
     ego_prt             * loc_pprt;
     ego_prt_environment * loc_penviro;
@@ -1495,7 +1506,8 @@ bool_t move_one_particle( ego_bundle_prt * pbdl_prt )
 //--------------------------------------------------------------------------------------------
 void move_all_particles( void )
 {
-    /// @details ZZ@> This is the particle physics function
+    /// \author ZZ
+    /// \details  This is the particle physics function
 
     ego_prt::stoppedby_tests = 0;
 
@@ -1515,7 +1527,8 @@ void move_all_particles( void )
 //--------------------------------------------------------------------------------------------
 void particle_system_begin()
 {
-    /// @details ZZ@> This function sets up particle data
+    /// \author ZZ
+    /// \details  This function sets up particle data
 
     // Reset the allocation table
     PrtObjList.init();
@@ -1534,7 +1547,8 @@ void particle_system_end()
 //--------------------------------------------------------------------------------------------
 int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
 {
-    /// @details ZZ@> This function is for catching characters on fire and such
+    /// \author ZZ
+    /// \details  This function is for catching characters on fire and such
 
     int      cnt, bs_count;
     float    x, y, z;
@@ -1608,7 +1622,7 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
                 grip_verts = GRIP_VERTS * slot_count;
             }
 
-            vertices = int(pchr->gfx_inst.vrt_count) - int( grip_verts );
+            vertices = int( pchr->gfx_inst.vrt_count ) - int( grip_verts );
             vertices = SDL_max( 0, vertices );
 
             if ( vertices != 0 )
@@ -1720,7 +1734,9 @@ int spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle )
 //--------------------------------------------------------------------------------------------
 bool_t prt_is_over_water( const PRT_REF & iprt )
 {
-    /// ZZ@> This function returns btrue if the particle is over a water tile
+    /// \author ZZ
+    /// \details This function returns btrue if the particle is over a water tile
+
     Uint32 fan;
 
     if ( !VALID_PRT( iprt ) ) return bfalse;
@@ -1751,7 +1767,8 @@ PIP_REF PipStack_get_free()
 //--------------------------------------------------------------------------------------------
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & pip_override )
 {
-    /// @details ZZ@> This function loads a particle template, returning bfalse if the file wasn't
+    /// \author ZZ
+    /// \details  This function loads a particle template, returning bfalse if the file wasn't
     ///    found
 
     PIP_REF ipip;
@@ -1788,7 +1805,8 @@ PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & p
 //--------------------------------------------------------------------------------------------
 void reset_particles( /* const char* modname */ )
 {
-    /// @details ZZ@> This resets all particle data and reads in the coin and water particles
+    /// \author ZZ
+    /// \details  This resets all particle data and reads in the coin and water particles
 
     const char *loadpath;
 
@@ -1954,10 +1972,11 @@ bool_t _prt_request_terminate( ego_bundle_prt * pbdl_prt )
 //--------------------------------------------------------------------------------------------
 bool_t _prt_request_terminate_ref( const PRT_REF & iprt )
 {
-    /// @details BB@> Tell the game to get rid of this object and treat it
+    /// \author BB
+    /// \details  Tell the game to get rid of this object and treat it
     ///               as if it was already dead
     ///
-    /// @note _prt_request_terminate() will force the game to
+    /// \note _prt_request_terminate() will force the game to
     ///       (eventually) call PrtObjList.free_one() on this particle
 
     if ( !VALID_PRT( iprt ) || TERMINATED_PRT( iprt ) ) return bfalse;
@@ -2079,7 +2098,7 @@ ego_bundle_prt * prt_do_bump_damage( ego_bundle_prt * pbdl_prt )
     if ( 0 != ( update_count & 31 ) ) return pbdl_prt;
 
     // do nothing if the particle is hidden
-    /// @note ZF@> This is already checked in prt_update_ingame()
+    /// \note ZF@> This is already checked in prt_update_ingame()
     //if ( loc_pprt->is_hidden ) return;
 
     // we must be attached to something
@@ -2101,7 +2120,7 @@ ego_bundle_prt * prt_do_bump_damage( ego_bundle_prt * pbdl_prt )
         ChrObjList.get_data_ref( ichr ).vel.y *= 0.5f;
     }
 
-    /// @note  Why is this commented out? Attached arrows need to do damage.
+    /// \note  Why is this commented out? Attached arrows need to do damage.
     local_damage = loc_pprt->damage;
 
     // distribute the damage over the particle's lifetime
@@ -2153,8 +2172,8 @@ int prt_do_contspawn( ego_bundle_prt * pbdl_prt )
             {
                 // Inherit velocities from the particle we were spawned from, but only if it wasn't attached to something
 
-                /// @note ZF@> I have disabled this at the moment. This is what caused the erratic particle movement for the Adventurer Torch
-                /// @note BB@> taking out the test works, though  I should have checked vs. loc_pprt->attached_ref, anyway,
+                /// \note ZF@> I have disabled this at the moment. This is what caused the erratic particle movement for the Adventurer Torch
+                /// \note BB@> taking out the test works, though  I should have checked vs. loc_pprt->attached_ref, anyway,
                 ///            since we already specified that the particle is not attached in the function call :P
                 /*if( !PROCESSING_CHR( loc_pprt->attachedto_ref ) )
                 {
@@ -2162,7 +2181,7 @@ int prt_do_contspawn( ego_bundle_prt * pbdl_prt )
                     PrtObjList.get_data_ref(prt_child).vel.y += loc_pprt->vel.y;
                     PrtObjList.get_data_ref(prt_child).vel.z += loc_pprt->vel.z;
                 }*/
-                /// @note ZF@> I have again disabled this. Is this really needed? It wasn't implemented before and causes
+                /// \note ZF@> I have again disabled this. Is this really needed? It wasn't implemented before and causes
                 ///     many, many, many issues with all particles around the game.
 
                 // Keep count of how many were actually spawned
@@ -2357,7 +2376,8 @@ ego_bundle_prt * prt_update_timers( ego_bundle_prt * pbdl_prt )
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt * prt_update_ingame( ego_bundle_prt * pbdl_prt )
 {
-    /// @details BB@> update everything about a particle that does not depend on collisions
+    /// \author BB
+    /// \details  update everything about a particle that does not depend on collisions
     ///               or interactions with characters
 
     ego_obj * pbase;
@@ -2438,7 +2458,8 @@ ego_bundle_prt * prt_update_ingame( ego_bundle_prt * pbdl_prt )
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt * prt_update_limbo( ego_bundle_prt * pbdl_prt )
 {
-    /// @details BB@> handle the case where the particle is still being diaplayed, but is no longer
+    /// \author BB
+    /// \details  handle the case where the particle is still being diaplayed, but is no longer
     ///               in the game
 
     bool_t prt_display;
@@ -2770,7 +2791,8 @@ void particle_physics_initialize_all()
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt * prt_bump_mesh_attached( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
-    /// @details BB@> A helper function that figures out the next valid position of the particle.
+    /// \author BB
+    /// \details  A helper function that figures out the next valid position of the particle.
     ///               Collisions with the mesh are included in this step.
 
     bool_t hit_a_mesh;
@@ -2818,7 +2840,8 @@ ego_bundle_prt * prt_bump_mesh_attached( ego_bundle_prt * pbdl, fvec3_t test_pos
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt * prt_bump_grid_attached( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
-    /// @details BB@> A helper function that figures out the next valid position of the particle.
+    /// \author BB
+    /// \details  A helper function that figures out the next valid position of the particle.
     ///               Collisions with the mesh are included in this step.
 
     float loc_level;
@@ -2889,7 +2912,8 @@ ego_bundle_prt * prt_bump_grid_attached( ego_bundle_prt * pbdl, fvec3_t test_pos
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt *  prt_bump_mesh( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt, bool_t * pbumped_mesh )
 {
-    /// @details BB@> A helper function that figures out the next valid position of the particle.
+    /// \author BB
+    /// \details  A helper function that figures out the next valid position of the particle.
     ///               Collisions with the mesh are included in this step.
 
     float loc_level;
@@ -3087,7 +3111,8 @@ ego_bundle_prt *  prt_bump_mesh( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_
 //--------------------------------------------------------------------------------------------
 ego_bundle_prt *  prt_bump_grid( ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt, bool_t * pbumped_grid )
 {
-    /// @details BB@> A helper function that figures out the next valid position of the particle.
+    /// \author BB
+    /// \details  A helper function that figures out the next valid position of the particle.
     ///               Collisions with the mesh are included in this step.
 
     float loc_level;
@@ -3439,10 +3464,11 @@ ego_prt * ego_prt::dtor_all( ego_prt * ptr )
 //--------------------------------------------------------------------------------------------
 bool_t ego_obj_prt::request_terminate( const PRT_REF & iprt )
 {
-    /// @details BB@> Tell the game to get rid of this object and treat it
+    /// \author BB
+    /// \details  Tell the game to get rid of this object and treat it
     ///               as if it was already dead
     ///
-    /// @note ego_obj_prt::request_terminate() will force the game to
+    /// \note ego_obj_prt::request_terminate() will force the game to
     ///       (eventually) call free_one_particle_in_game() on this particle
 
     return request_terminate( PrtObjList.get_allocated_data_ptr( iprt ) );
@@ -3451,10 +3477,11 @@ bool_t ego_obj_prt::request_terminate( const PRT_REF & iprt )
 //--------------------------------------------------------------------------------------------
 bool_t ego_obj_prt::request_terminate( ego_obj_prt * pobj )
 {
-    /// @details BB@> Tell the game to get rid of this object and treat it
+    /// \author BB
+    /// \details  Tell the game to get rid of this object and treat it
     ///               as if it was already dead
     ///
-    /// @note ego_obj_prt::request_terminate() will force the game to
+    /// \note ego_obj_prt::request_terminate() will force the game to
     ///       (eventually) call free_one_particle_in_game() on this particle
 
     if ( NULL == pobj || TERMINATED_PPRT( pobj ) ) return bfalse;

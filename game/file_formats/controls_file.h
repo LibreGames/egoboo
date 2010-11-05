@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/controls_file.h
-/// @details routines for reading and writing the file controls.txt and "scancode.txt"
+/// \file file_formats/controls_file.h
+/// \details routines for reading and writing the file controls.txt and "scancode.txt"
 
 #include "egoboo_typedef.h"
 

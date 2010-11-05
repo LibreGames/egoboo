@@ -20,9 +20,9 @@
 //********************************************************************************************
 
 ///
-/// @file clock.h
-/// @brief Clock & timer functionality.
-/// @details This implementation was adapted from Noel Lopis' article in
+/// \file clock.h
+/// \brief Clock & timer functionality.
+/// \details This implementation was adapted from Noel Lopis' article in
 ///   Game Programming Gems 4.
 
 #include <SDL_types.h>

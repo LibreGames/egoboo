@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_strutil.h
-/// @String manipulation functions.
+/// \file egoboo_strutil.h
+/// \brief String manipulation functions.
 
 #include "egoboo_typedef.h"
 #include <string.h>

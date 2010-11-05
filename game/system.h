@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file system.h
-/// @details Interface to operating system dependant stuff.  Currently only in use to
+/// \file system.h
+/// \details Interface to operating system dependant stuff.  Currently only in use to
 /// use a higher performance timer than SDL provides on Windows machines.
 
 #include <stdlib.h>

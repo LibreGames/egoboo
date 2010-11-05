@@ -18,12 +18,12 @@
 //*
 //********************************************************************************************
 
-/// @defgroup _sdl_extensions_ Extensions to SDL
+/// \defgroup _sdl_extensions_ Extensions to SDL
 
-/// @file extensions/SDL_extensions.h
-/// @ingroup _sdl_extensions_
-/// @brief Definitions for generic extensions to SDL
-/// @details
+/// \file extensions/SDL_extensions.h
+/// \ingroup _sdl_extensions_
+/// \brief Definitions for generic extensions to SDL
+/// \details
 
 #include <SDL.h>
 

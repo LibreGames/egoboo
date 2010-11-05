@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file font_ttf.c
-/// @brief TTF management
-/// @details True-type font drawing functionality.  Uses Freetype 2 & OpenGL
+/// \file font_ttf.c
+/// \brief TTF management
+/// \details True-type font drawing functionality.  Uses Freetype 2 & OpenGL
 /// to do its business.
 
 #include "font_ttf.h"
@@ -32,7 +32,6 @@
 #include "egoboo_strutil.h"
 #include "egoboo_math.h"
 #include "egoboo_display_list.h"
-
 
 #include "egoboo_typedef_cpp.inl"
 
@@ -54,7 +53,8 @@ static int fnt_atexit_registered = 0;
 
 int fnt_init()
 {
-    /// @details BB@> Make sure the TTF library was initialized
+    /// \author BB
+    /// \details  Make sure the TTF library was initialized
 
     int initialized;
 
@@ -380,15 +380,15 @@ const char * fnt_getTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, con
 //--------------------------------------------------------------------------------------------
 /** font_drawTextBox
  * Draws a text string into a box, splitting it into lines according to newlines in the string.
- * @warning Doesn't pay attention to the width/height arguments yet.
+ * \warning Doesn't pay attention to the width/height arguments yet.
  *
- * @var font    - The font to draw with
- * @var text    - The text to draw
- * @var x       - The x position to start drawing at
- * @var y       - The y position to start drawing at
- * @var width   - Maximum width of the box (not implemented)
- * @var height  - Maximum height of the box (not implemented)
- * @var spacing - Amount of space to move down between lines. (usually close to your font size)
+ * \var font    - The font to draw with
+ * \var text    - The text to draw
+ * \var x       - The x position to start drawing at
+ * \var y       - The y position to start drawing at
+ * \var width   - Maximum width of the box (not implemented)
+ * \var height  - Maximum height of the box (not implemented)
+ * \var spacing - Amount of space to move down between lines. (usually close to your font size)
  */
 
 int fnt_vconvertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, va_list args )

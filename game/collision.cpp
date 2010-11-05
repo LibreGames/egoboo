@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file collision.c
-/// @brief The code that handles collisions between in-game objects
-/// @details
+/// \file collision.c
+/// \brief The code that handles collisions between in-game objects
+/// \details
 
 #include "egoboo_typedef_cpp.inl"
 
@@ -323,7 +323,8 @@ CHashList_t * CHashList_dtor( CHashList_t * pchlst )
 //--------------------------------------------------------------------------------------------
 CHashList_t * CHashList_get_Instance( int size )
 {
-    /// @details BB@> allows access to a "private" CHashList singleton object. This will automatically
+    /// \author BB
+    /// \details  allows access to a "private" CHashList singleton object. This will automatically
     ///               initialze the _Colist_singleton and (almost) prevent anything from messing up
     ///               the initialization.
 
@@ -696,9 +697,10 @@ bool_t fill_interaction_list( CHashList_t * pchlst, CoNode_ary * cn_lst, HashNod
 //--------------------------------------------------------------------------------------------
 bool_t fill_bumplists( ego_obj_BSP * pbsp )
 {
-    /// @details BB@> Fill in the ego_obj_BSP for this frame
+    /// \author BB
+    /// \details  Fill in the ego_obj_BSP for this frame
     ///
-    /// @note do not use ego_obj_BSP::empty every frame, because the number of pre-allocated nodes can be quite large.
+    /// \note do not use ego_obj_BSP::empty every frame, because the number of pre-allocated nodes can be quite large.
     /// Instead, just remove the nodes from the tree, fill the tree, and then prune any empty leaves
 
     if ( NULL == pbsp ) return bfalse;
@@ -1111,7 +1113,8 @@ bool_t do_prt_platform_detection( const PRT_REF & iprt_a, const CHR_REF & ichr_b
 //--------------------------------------------------------------------------------------------
 bool_t attach_chr_to_platform( ego_chr * pchr, ego_chr * pplat )
 {
-    /// @details BB@> attach a character to a platform
+    /// \author BB
+    /// \details  attach a character to a platform
 
     ego_cap * pchr_cap;
 
@@ -1159,7 +1162,8 @@ bool_t attach_chr_to_platform( ego_chr * pchr, ego_chr * pplat )
 //--------------------------------------------------------------------------------------------
 bool_t detach_character_from_platform( ego_chr * pchr )
 {
-    /// @details BB@> detach a character from a platform
+    /// \author BB
+    /// \details  detach a character from a platform
 
     ego_chr * pplat;
 
@@ -1200,7 +1204,8 @@ bool_t detach_character_from_platform( ego_chr * pchr )
 //--------------------------------------------------------------------------------------------
 bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat )
 {
-    /// @details BB@> attach a particle to a platform
+    /// \author BB
+    /// \details  attach a particle to a platform
 
     ego_pip   * pprt_pip;
 
@@ -1237,7 +1242,8 @@ bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat )
 //--------------------------------------------------------------------------------------------
 bool_t detach_particle_from_platform( ego_prt * pprt )
 {
-    /// @details BB@> attach a particle to a platform
+    /// \author BB
+    /// \details  attach a particle to a platform
 
     ego_bundle_prt bdl_prt;
 
@@ -1265,7 +1271,8 @@ bool_t detach_particle_from_platform( ego_prt * pprt )
 //--------------------------------------------------------------------------------------------
 void bump_all_objects( ego_obj_BSP * pbsp )
 {
-    /// @details ZZ@> This function handles characters hitting other characters or particles
+    /// \author ZZ
+    /// \details  This function handles characters hitting other characters or particles
 
     // prepare the collision node list for tracking object interactions
     if ( rv_success == bump_prepare( pbsp ) )
@@ -1293,9 +1300,10 @@ void bump_all_objects( ego_obj_BSP * pbsp )
 //--------------------------------------------------------------------------------------------
 bool_t bump_all_platforms( CoNode_ary * pcn_ary )
 {
-    /// @details BB@> Detect all character and particle interactions with platforms, then attach them.
+    /// \author BB
+    /// \details  Detect all character and particle interactions with platforms, then attach them.
     ///
-    /// @note it is important to only attach the character to a platform once, so its
+    /// \note it is important to only attach the character to a platform once, so its
     ///  weight does not get applied to multiple platforms
 
     size_t     cnt;
@@ -1429,15 +1437,15 @@ egoboo_rv bump_prepare( ego_obj_BSP * pbsp )
 
     //if ( co_node_count > 0 )
     //{
-    //    ego_hash_list_iterator it;
+    //    ego_hash_list::iterator it;
 
     //    _coll_node_lst.top = 0;
 
-    //    ego_hash_list_iterator::ctor_this( &it );
-    //    ego_hash_list_iterator::set_begin( &it, pchlst );
-    //    for ( /* nothing */; !ego_hash_list_iterator::done( &it, pchlst ); ego_hash_list_iterator::next( &it, pchlst ) )
+    //    ego_hash_list::iterator::ctor_this( &it );
+    //    ego_hash_list::iterator::set_begin( &it, pchlst );
+    //    for ( /* nothing */; !ego_hash_list::iterator::done( &it, pchlst ); ego_hash_list::iterator::next( &it, pchlst ) )
     //    {
-    //        ego_CoNode * ptr = ( ego_CoNode * )ego_hash_list_iterator::ptr( &it );
+    //        ego_CoNode * ptr = ( ego_CoNode * )ego_hash_list::iterator::ptr( &it );
     //        if ( NULL == ptr ) break;
 
     //        CoNode_ary::push_back( &_coll_node_lst, *ptr );
@@ -1467,7 +1475,8 @@ void bump_begin()
 //--------------------------------------------------------------------------------------------
 bool_t bump_all_mounts( CoNode_ary * pcn_ary )
 {
-    /// @details BB@> Detect all character interactions with mounts, then attach them.
+    /// \author BB
+    /// \details  Detect all character interactions with mounts, then attach them.
 
     size_t     cnt;
     ego_CoNode * d;
@@ -1517,7 +1526,8 @@ bool_t bump_all_mounts( CoNode_ary * pcn_ary )
 ////--------------------------------------------------------------------------------------------
 //bool_t bump_all_mounts( CoNode_ary * pcn_ary )
 //{
-//    /// @details BB@> Detect all character interactions with mounts, then attach them.
+//    /// \author BB
+//    /// \details  Detect all character interactions with mounts, then attach them.
 //
 //    int        cnt;
 //    ego_CoNode * d;
@@ -1541,7 +1551,8 @@ bool_t bump_all_mounts( CoNode_ary * pcn_ary )
 //--------------------------------------------------------------------------------------------
 bool_t bump_all_collisions( CoNode_ary * pcn_ary )
 {
-    /// @details BB@> Detect all character-character and character-particle collisions (with exclusions
+    /// \author BB
+    /// \details  Detect all character-character and character-particle collisions (with exclusions
     ///               for the mounts and platforms found in the previous steps)
 
     size_t cnt;
@@ -1809,7 +1820,8 @@ bool_t do_chr_chr_collision_test( ego_bundle_chr *pbdl_a, ego_bundle_chr *pbdl_b
 //--------------------------------------------------------------------------------------------
 bool_t do_chr_plat_collision_test( ego_bundle_chr *pbdl_item, ego_bundle_chr *pbdl_plat )
 {
-    /// BB@> break off the collision tests to this function
+    /// \author BB
+    /// \details break off the collision tests to this function
 
     CHR_REF ichr_plat;
     ego_chr * pchr_item, * pchr_plat;
@@ -2184,7 +2196,8 @@ bool_t do_chr_chr_collision_interaction( ego_CoNode * d, ego_bundle_chr *pbdl_a,
 //--------------------------------------------------------------------------------------------
 bool_t do_chr_chr_collision( ego_CoNode * d )
 {
-    /// BB@> Take a collision node and actually do all of the collision physics
+    /// \author BB
+    /// \details Take a collision node and actually do all of the collision physics
 
     bool_t retval = bfalse;                         // assume that the collision will fail
 
@@ -2297,9 +2310,10 @@ bool_t do_chr_chr_collision( ego_CoNode * d )
 //--------------------------------------------------------------------------------------------
 bool_t do_prt_platform_physics( ego_prt * pprt, ego_chr * pplat, ego_chr_prt_collsion_data * pdata )
 {
-    /// @details BB@> handle the particle interaction with a platform it is not attached "on".
-    ///               @note gravity is not handled here
-    ///               @note use bump_min here since we are interested in the physical size of the particle
+    /// \author BB
+    /// \details  handle the particle interaction with a platform it is not attached "on".
+    ///               \note gravity is not handled here
+    ///               \note use bump_min here since we are interested in the physical size of the particle
 
     bool_t plat_collision = bfalse;
     bool_t z_collide, was_z_collide;
@@ -2401,7 +2415,7 @@ bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, ego_chr_prt
     if ( !LOADED_PIP( pprt->pip_ref ) ) return bfalse;
     ppip = PipStack + pprt->pip_ref;
 
-    /// @note ZF@> Simply ignore characters with invictus for now, it causes some strange effects
+    /// \note ZF@> Simply ignore characters with invictus for now, it causes some strange effects
     if ( IS_INVICTUS_PCHR_RAW( pchr ) ) return btrue;
 
     // find the "attack direction" of the particle
@@ -2538,7 +2552,8 @@ bool_t do_chr_prt_collision_deflect( ego_chr * pchr, ego_prt * pprt, ego_chr_prt
 //--------------------------------------------------------------------------------------------
 bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_collsion_data * pdata )
 {
-    /// @details BB@> make the character and particle recoil from the collision
+    /// \author BB
+    /// \details  make the character and particle recoil from the collision
     float prt_mass;
     float attack_factor;
 
@@ -3018,12 +3033,13 @@ bool_t do_chr_prt_collision_init( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_co
 //--------------------------------------------------------------------------------------------
 bool_t do_chr_prt_collision( ego_CoNode * d )
 {
-    /// @details BB@> this function goes through all of the steps to handle character-particle
+    /// \author BB
+    /// \details  this function goes through all of the steps to handle character-particle
     ///               interactions. A basic interaction has been detected. This needs to be refined
     ///               and then handled. The function returns bfalse if the basic interaction was wrong
     ///               or if the interaction had no effect.
     ///
-    /// @note This function is a little more complicated than the character-character case because
+    /// \note This function is a little more complicated than the character-character case because
     ///       of the friend-foe logic as well as the damage and other special effects that particles can do.
 
     bool_t retval = bfalse;
@@ -3212,7 +3228,8 @@ void update_all_prt_platform_attachments()
 //--------------------------------------------------------------------------------------------
 void update_all_platform_attachments()
 {
-    /// BB@> do all the platform-related stuff that must be done every update
+    /// \author BB
+    /// \details do all the platform-related stuff that must be done every update
 
     update_all_chr_platform_attachments();
     update_all_prt_platform_attachments();
@@ -3222,7 +3239,8 @@ void update_all_platform_attachments()
 //--------------------------------------------------------------------------------------------
 bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary )
 {
-    /// @details BB@> use a standard size for the grip
+    /// \author BB
+    /// \details  use a standard size for the grip
 
     // take the character size from the adventurer model
     const float default_chr_height = 88.0f;

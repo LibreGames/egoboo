@@ -19,9 +19,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo.h
+/// \file egoboo.h
 ///
-/// @details Disgusting, hairy, way too monolithic header file for the whole darn
+/// \details Disgusting, hairy, way too monolithic header file for the whole darn
 /// project.  In severe need of cleaning up.  Venture here with extreme
 /// caution, and bring one of those canaries with you to make sure you
 /// don't run out of oxygen.

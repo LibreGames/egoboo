@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file server.c
-/// @brief This code is not currently in use.
-/// @details
+/// \file server.c
+/// \brief This code is not currently in use.
+/// \details
 
 #include "server.h"
 

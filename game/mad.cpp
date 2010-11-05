@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file mad.c
-/// @brief The files for handling Egoboo's internal model definitions
-/// @details
+/// \file mad.c
+/// \brief The files for handling Egoboo's internal model definitions
+/// \details
 
 #include "mad.h"
 
@@ -148,7 +148,8 @@ bool_t ego_mad::dealloc( ego_mad * pmad )
 //--------------------------------------------------------------------------------------------
 ego_mad * ego_mad::reconstruct( ego_mad * pmad )
 {
-    /// @details BB@> initialize the character data to safe values
+    /// \author BB
+    /// \details  initialize the character data to safe values
     ///     since we use SDL_memset(..., 0, ...), all = 0, = false, and = 0.0f
     ///     statements are redundant
 
@@ -184,7 +185,8 @@ ego_mad * ego_mad::ctor_this( ego_mad * pmad )
 //--------------------------------------------------------------------------------------------
 ego_mad * ego_mad::dtor_this( ego_mad * pmad )
 {
-    /// @details BB@> deinitialize the character data
+    /// \author BB
+    /// \details  deinitialize the character data
 
     if ( NULL == pmad || !pmad->loaded ) return NULL;
 
@@ -314,7 +316,8 @@ egoboo_rv mad_instance::start_anim( mad_instance * pmad_inst, int next_action, b
 //--------------------------------------------------------------------------------------------
 egoboo_rv mad_instance::increment_action( mad_instance * pmad_inst )
 {
-    /// @details BB@> This function starts the next action for a character
+    /// \author BB
+    /// \details  This function starts the next action for a character
 
     egoboo_rv retval;
     ego_mad * pmad;
@@ -346,7 +349,8 @@ egoboo_rv mad_instance::increment_action( mad_instance * pmad_inst )
 //--------------------------------------------------------------------------------------------
 egoboo_rv mad_instance::increment_frame( mad_instance * pmad_inst, bool_t mounted )
 {
-    /// @details BB@> all the code necessary to move on to the next frame of the animation
+    /// \author BB
+    /// \details  all the code necessary to move on to the next frame of the animation
 
     int tmp_action;
     ego_mad * pmad;
@@ -402,7 +406,8 @@ egoboo_rv mad_instance::increment_frame( mad_instance * pmad_inst, bool_t mounte
 //--------------------------------------------------------------------------------------------
 egoboo_rv mad_instance::play_action( mad_instance * pmad_inst, int next_action, bool_t next_ready )
 {
-    /// @details ZZ@> This function starts a generic action for a character
+    /// \author ZZ
+    /// \details  This function starts a generic action for a character
     ego_mad * pmad;
 
     if ( NULL == pmad_inst ) return rv_error;
@@ -621,7 +626,8 @@ MAD_REF mad_loader::load_vfs( const char* tmploadname, const MAD_REF & imad )
     {
         strncpy( szModelName, vfs_resolveReadFilename( newloadname ), SDL_arraysize( szModelName ) );
 
-        /// @details BB@> Egoboo md2 models were designed with 1 tile = 32x32 units, but internally Egoboo uses
+        /// \author BB
+        /// \details  Egoboo md2 models were designed with 1 tile = 32x32 units, but internally Egoboo uses
         ///      1 tile = 128x128 units. Previously, this was handled by sprinkling a bunch of
         ///      commands that multiplied various quantities by 4 or by 4.125 throughout the code.
         ///      It was very counter-intuitive, and caused me no end of headaches...  Of course the
@@ -640,7 +646,8 @@ MAD_REF mad_loader::load_vfs( const char* tmploadname, const MAD_REF & imad )
 //--------------------------------------------------------------------------------------------
 ego_mad * mad_loader::copy_action_correct( ego_mad * pmad, int actiona, int actionb )
 {
-    /// @details ZZ@> This function makes sure both actions are valid if either of them
+    /// \author ZZ
+    /// \details  This function makes sure both actions are valid if either of them
     ///    are valid.  It will copy start and ends to mirror the valid action.
 
     if ( NULL == pmad ) return pmad;
@@ -702,7 +709,8 @@ ego_mad * mad_loader::copy_action_correct( ego_mad * pmad, int actiona, int acti
 //--------------------------------------------------------------------------------------------
 ego_mad * mad_loader::apply_copy_file_vfs( ego_mad * pmad, const char* loadname )
 {
-    /// @details ZZ@> This function copies a model's actions
+    /// \author ZZ
+    /// \details  This function copies a model's actions
 
     vfs_FILE *fileread;
     int actiona, actionb;
@@ -736,7 +744,8 @@ ego_mad * mad_loader::apply_copy_file_vfs( ego_mad * pmad, const char* loadname 
 //--------------------------------------------------------------------------------------------
 ego_mad * mad_loader::make_walk_lip( ego_mad * pmad, const int lip, const int action )
 {
-    /// @details ZZ@> This helps make walking look right
+    /// \author ZZ
+    /// \details  This helps make walking look right
 
     int frame = 0;
     int framesinaction, action_stt;
@@ -774,14 +783,15 @@ ego_mad * mad_loader::make_walk_lip( ego_mad * pmad, const int lip, const int ac
 //--------------------------------------------------------------------------------------------
 ego_mad * mad_loader::make_framefx( ego_mad * pmad, const char * cFrameName, int frame )
 {
-    /// @details ZZ@> This function figures out the IFrame invulnerability, and Attack, Grab, and
-    ///               Drop timings
+    /// \author ZZ
+    /// \details  This function figures out the IFrame invulnerability, and Attack, Grab, and
+    ///           Drop timings
     ///
-    ///          BB@> made a bit more sturdy parser that is not going to confuse strings like "LCRA"
-    ///               which would not crop up if the convention of L or R going first was applied universally.
-    ///               However, there are existing (and common) models which use the opposite convention, leading
-    ///               to the possibility that an fx string "LARC" could be interpreted as ACTLEFT, CHARRIGHT, *and*
-    ///               ACTRIGHT.
+    /// \note BB@> made a bit more sturdy parser that is not going to confuse strings like "LCRA"
+    ///            which would not crop up if the convention of L or R going first was applied universally.
+    ///            However, there are existing (and common) models which use the opposite convention, leading
+    ///            to the possibility that an fx string "LARC" could be interpreted as ACTLEFT, CHARRIGHT, *and*
+    ///            ACTRIGHT.
 
     BIT_FIELD fx = 0;
     char name_action[16], name_fx[16];
@@ -986,7 +996,8 @@ ego_mad * mad_loader::make_framefx( ego_mad * pmad, const char * cFrameName, int
 //--------------------------------------------------------------------------------------------
 ego_mad * mad_loader::make_frame_lip( ego_mad * pmad, int action )
 {
-    /// @details ZZ@> This helps make walking look right
+    /// \author ZZ
+    /// \details  This helps make walking look right
 
     int frame_count, frame, framesinaction;
 
@@ -1127,7 +1138,8 @@ ego_mad * mad_loader::finalize( ego_mad * pmad )
 //--------------------------------------------------------------------------------------------
 ego_mad * mad_loader::make_actions( ego_mad * pmad )
 {
-    /// @details ZZ@> This function creates the iframe lists for each this_action based on the
+    /// \author ZZ
+    /// \details  This function creates the iframe lists for each this_action based on the
     ///    name of each md2 iframe in the model
 
     int frame_count, iframe;
@@ -1194,7 +1206,8 @@ ego_mad * mad_loader::make_actions( ego_mad * pmad )
 //--------------------------------------------------------------------------------------------
 int mad_loader::get_action_index( const char * cFrameName )
 {
-    /// @details ZZ@> This function returns the number of the action in cFrameName, or
+    /// \author ZZ
+    /// \details  This function returns the number of the action in cFrameName, or
     ///    it returns NOACTION if it could not find a match
 
     int cnt;
@@ -1221,8 +1234,8 @@ int mad_loader::get_action_index( const char * cFrameName )
 //--------------------------------------------------------------------------------------------
 int mad_get_action( const ego_mad * pmad, const int action )
 {
-    /// @detaills BB@> translate the action that was given into a valid action for the model
-    ///
+    /// \author BB
+    /// \details  translate the action that was given into a valid action for the model.
     /// returns ACTION_COUNT on a complete failure, or the default ACTION_DA if it exists
 
     int     retval;
@@ -1274,7 +1287,8 @@ int mad_get_action( const ego_mad * pmad, const int action )
 //--------------------------------------------------------------------------------------------
 int mad_get_action( const MAD_REF & imad, int action )
 {
-    /// @detaills BB@> version that accepts a reference rather than a pointer
+    /// \author BB
+    /// \details version that accepts a reference rather than a pointer
 
     if ( !LOADED_MAD( imad ) ) return ACTION_COUNT;
 
@@ -1314,12 +1328,13 @@ BIT_FIELD mad_get_actionfx( const MAD_REF & imad, int action )
 //--------------------------------------------------------------------------------------------
 int action_which( char cTmp )
 {
-    /// @details ZZ@> This function changes a letter into an action code
+    /// \author ZZ
+    /// \details  This function changes a letter into an action code
     int action;
 
     switch ( SDL_toupper( cTmp ) )
     {
-            /// @note ZF@> Attack animation WALK is used for doing nothing (for example charging spells)
+            /// \note ZF@> Attack animation WALK is used for doing nothing (for example charging spells)
             ///            Make it default to ACTION_DA in this case.
         case 'W': action = ACTION_DA; break;
         case 'D': action = ACTION_DA; break;
@@ -1344,7 +1359,8 @@ int action_which( char cTmp )
 //--------------------------------------------------------------------------------------------
 void mad_make_equally_lit( const MAD_REF & imad )
 {
-    /// @details ZZ@> This function makes ultra low poly models look better
+    /// \author ZZ
+    /// \details  This function makes ultra low poly models look better
 
     int cnt, vert;
     ego_MD2_Model * md2;
@@ -1369,7 +1385,8 @@ void mad_make_equally_lit( const MAD_REF & imad )
 //--------------------------------------------------------------------------------------------
 void load_action_names_vfs( const char* loadname )
 {
-    /// @details ZZ@> This function loads all of the 2 letter action names
+    /// \author ZZ
+    /// \details  This function loads all of the 2 letter action names
 
     vfs_FILE* fileread;
     int cnt;
@@ -1419,7 +1436,8 @@ void load_action_names_vfs( const char* loadname )
 //--------------------------------------------------------------------------------------------
 int mad_randomize_action( int action, int slot )
 {
-    /// @details BB@> this function actually determines whether the action fillows the
+    /// \author BB
+    /// \details  this function actually determines whether the action fillows the
     ///               pattern of ACTION_?A, ACTION_?B, ACTION_?C, ACTION_?D, with
     ///               A and B being for the left hand, and C and D being for the right hand
 

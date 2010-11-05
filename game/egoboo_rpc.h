@@ -19,10 +19,10 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_rpc.h
-/// @brief Definitions for the Remote Procedure Call module
+/// \file egoboo_rpc.h
+/// \brief Definitions for the Remote Procedure Call module
 ///
-/// @details This module allows inter-thread and network control of certain game functions.
+/// \details This module allows inter-thread and network control of certain game functions.
 /// The main use of this at the moment (since we have no server), is to make it possible
 /// to do things like loading modules in a worker thread. All graphics functions must be
 /// called from the main thread...

@@ -19,9 +19,9 @@
 //*
 //********************************************************************************************
 
-/// @file mesh_BSP.h
-/// @brief
-/// @details
+/// \file mesh_BSP.h
+/// \brief
+/// \details
 
 #include "egoboo_typedef_cpp.h"
 

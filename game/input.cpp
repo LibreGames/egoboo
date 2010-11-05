@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file input.c
-/// @brief Keyboard, mouse, and joystick handling code.
-/// @details
+/// \file input.c
+/// \brief Keyboard, mouse, and joystick handling code.
+/// \details
 
 #include "input.h"
 #include "file_formats/controls_file.h"
@@ -91,7 +91,8 @@ void input_init_keyboard()
 //--------------------------------------------------------------------------------------------
 void input_init_mouse()
 {
-    /// @details BB@> set up the mouse
+    /// \author BB
+    /// \details  set up the mouse
     SDL_memset( &mous, 0, sizeof( mous ) );
     mous.on      = btrue;
     mous.sense   = 24;
@@ -100,7 +101,8 @@ void input_init_mouse()
 //--------------------------------------------------------------------------------------------
 void input_init_joysticks()
 {
-    /// @details BB@> init the joysticks
+    /// \author BB
+    /// \details  init the joysticks
 
     int i;
 
@@ -119,7 +121,8 @@ void input_init_joysticks()
 //--------------------------------------------------------------------------------------------
 void input_init()
 {
-    /// @details BB@> initialize the inputs
+    /// \author BB
+    /// \details  initialize the inputs
 
     log_info( "Intializing SDL Joystick... " );
     if ( SDL_InitSubSystem( SDL_INIT_JOYSTICK ) < 0 )
@@ -228,7 +231,8 @@ void input_read_joysticks()
 //--------------------------------------------------------------------------------------------
 void input_read()
 {
-    /// @details ZZ@> This function gets all the current player input states
+    /// \author ZZ
+    /// \details  This function gets all the current player input states
 
     SDL_Event evt;
 
@@ -378,7 +382,7 @@ void input_read()
     }
 
     // log info on certain events (turned off by default)
-    /// @note BB@> foud out I could not get info about USB devices being added or removed from the system... :(
+    /// \note BB@> foud out I could not get info about USB devices being added or removed from the system... :(
     SDLX_Log_Event( &evt );
 
     // Get immediate mode state for the rest of the game
@@ -416,7 +420,8 @@ Uint32 input_get_buttonmask( Uint32 idevice )
 //--------------------------------------------------------------------------------------------
 bool_t control_is_pressed( Uint32 idevice, Uint8 icontrol )
 {
-    /// @details ZZ@> This function returns btrue if the given icontrol is cursor_pressed...
+    /// \author ZZ
+    /// \details  This function returns btrue if the given icontrol is cursor_pressed...
 
     bool_t retval = bfalse;
 

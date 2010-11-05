@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_object.h
-/// @details Definitions of data that all Egoboo objects should "inherit"
+/// \file egoboo_object.h
+/// \details Definitions of data that all Egoboo objects should "inherit"
 
 #include "egoboo_typedef_cpp.h"
 #include "egoboo_state_machine.h"
@@ -296,7 +296,7 @@ protected:
     ego_object_request_data() { clear(); }
     ~ego_object_request_data() { clear(); }
 
-    /// @note MAKE SURE there are no virtual functions or any members that are constructed
+    /// \note MAKE SURE there are no virtual functions or any members that are constructed
     /// before you use memset like this
     void clear() { SDL_memset( this, 0, sizeof( *this ) ); };
 
@@ -523,7 +523,7 @@ extern ego_object_engine obj_engine;
             ego_obj::increment_spawn_depth();\
         }\
     }\
-
+     
 #define POBJ_END_SPAWN( POBJ ) \
     if( (NULL != (POBJ)) && FLAG_VALID_PBASE(POBJ) ) \
     {\
@@ -533,7 +533,7 @@ extern ego_object_engine obj_engine;
             ego_obj::decrement_spawn_depth();\
         }\
     }\
-
+     
 /// Is the object flagged as valid?
 #define FLAG_VALID_PBASE( PBASE ) ego_object_process_state_data::get_valid(PBASE)
 

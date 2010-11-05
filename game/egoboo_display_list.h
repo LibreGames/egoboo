@@ -19,9 +19,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_display_list.h
-/// @brief Definitions for our simplistic implementation of a display list
-/// @todo  add an interface for OpenGL display lists?
+/// \file egoboo_display_list.h
+/// \brief Definitions for our simplistic implementation of a display list
+/// \todo  add an interface for OpenGL display lists?
 
 #include <SDL_ttf.h>
 

@@ -19,8 +19,8 @@
 //*
 //********************************************************************************************
 
-/// @file ChrList.h
-/// @brief Routines for character list management
+/// \file ChrList.h
+/// \brief Routines for character list management
 
 #include "egoboo_object.h"
 #include "char.h"
@@ -92,7 +92,7 @@ typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
 
 #define CHR_LOOP_WRAP_PTR( PCHR, POBJ ) \
     ego_chr * PCHR = (ego_chr *)static_cast<const ego_chr *>(POBJ); \
-
+     
 #define CHR_LOOP_WRAP_BDL( BDL, PCHR ) \
     ego_bundle_chr BDL( PCHR );
 

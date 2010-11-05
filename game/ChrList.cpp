@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file ChrObjList.c
-/// @brief Implementation of the ChrList_* functions
-/// @details
+/// \file ChrObjList.c
+/// \brief Implementation of the ChrList_* functions
+/// \details
 
 #include "ChrList.h"
 

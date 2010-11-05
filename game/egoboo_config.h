@@ -19,9 +19,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_config.h
-/// @brief System-dependent global parameters.
-///   @todo  some of this stuff is compiler dependent, rather than system dependent.
+/// \file egoboo_config.h
+/// \brief System-dependent global parameters.
+///   \todo  some of this stuff is compiler dependent, rather than system dependent.
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

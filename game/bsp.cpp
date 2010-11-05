@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file bsp.c
-/// @brief
-/// @details
+/// \file bsp.c
+/// \brief
+/// \details
 
 #include "bsp.h"
 #include "log.h"
@@ -121,7 +121,8 @@ ego_BSP_aabb * ego_BSP_aabb::dealloc( ego_BSP_aabb * pbb )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_aabb::reset( ego_BSP_aabb * psrc )
 {
-    /// @details BB@> Return this bounding box to an empty state.
+    /// \author BB
+    /// \details  Return this bounding box to an empty state.
 
     size_t cnt;
 
@@ -143,7 +144,8 @@ bool_t ego_BSP_aabb::reset( ego_BSP_aabb * psrc )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_aabb::lhs_contains_rhs( const ego_BSP_aabb & lhs, const ego_BSP_aabb & rhs )
 {
-    /// @details BB@> Is rhs contained within lhs? If rhs has less dimensions
+    /// \author BB
+    /// \details  Is rhs contained within lhs? If rhs has less dimensions
     ///               than lhs, just check the lowest common dimensions.
 
     size_t cnt, min_dim;
@@ -174,7 +176,8 @@ bool_t ego_BSP_aabb::lhs_contains_rhs( const ego_BSP_aabb & lhs, const ego_BSP_a
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_aabb::test_intersection( const ego_BSP_aabb & lhs, const ego_BSP_aabb & rhs )
 {
-    /// @details BB@> Do psrc1 and psrc2 overlap? If psrc2 has less dimensions
+    /// \author BB
+    /// \details  Do psrc1 and psrc2 overlap? If psrc2 has less dimensions
     ///               than psrc1, just check the lowest common dimensions.
 
     int cnt;
@@ -207,7 +210,8 @@ bool_t ego_BSP_aabb::test_intersection( const ego_BSP_aabb & lhs, const ego_BSP_
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_aabb::from_oct_bb( ego_BSP_aabb * pdst, ego_oct_bb   * psrc )
 {
-    /// @details BB@> do an automatic conversion from an ego_oct_bb   to a ego_BSP_aabb
+    /// \author BB
+    /// \details  do an automatic conversion from an ego_oct_bb   to a ego_BSP_aabb
 
     size_t cnt;
 
@@ -539,7 +543,8 @@ bool_t ego_BSP_branch::dealloc_nodes( ego_BSP_branch * B, bool_t recursive )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::prune_one_branch( ego_BSP_tree   * t, ego_BSP_branch * B, bool_t recursive )
 {
-    /// @details BB@> remove all leaves with no child_lst. Do a depth first recursive search for efficiency
+    /// \author BB
+    /// \details  remove all leaves with no child_lst. Do a depth first recursive search for efficiency
 
     size_t i;
     bool_t   retval;
@@ -642,7 +647,8 @@ bool_t ego_BSP_branch::empty( ego_BSP_branch * pbranch )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
-    /// @details BB@> Recursively search the BSP tree for collisions with the paabb
+    /// \author BB
+    /// \details  Recursively search the BSP tree for collisions with the paabb
     //      Return bfalse if we need to break out of the recursive search for any reason.
 
     size_t       cnt;
@@ -709,7 +715,8 @@ bool_t ego_BSP_tree::free_allocation_lists( ego_BSP_tree   * t )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::init_0( ego_BSP_tree   * t )
 {
-    /// @details BB@> reset the tree to the "empty" state. Assume we do not own the node_set or child_lst.
+    /// \author BB
+    /// \details  reset the tree to the "empty" state. Assume we do not own the node_set or child_lst.
 
     size_t i;
     ego_BSP_branch * pbranch;
@@ -996,7 +1003,8 @@ bool_t ego_BSP_tree::dealloc_branches( ego_BSP_tree   * t )
 //--------------------------------------------------------------------------------------------
 bool_t   ego_BSP_tree::prune( ego_BSP_tree   * t )
 {
-    /// @details BB@> remove all leaves with no child_lst or node_set.
+    /// \author BB
+    /// \details  remove all leaves with no child_lst or node_set.
 
     if ( NULL == t || NULL == t->root ) return bfalse;
 
@@ -1163,7 +1171,8 @@ bool_t ego_BSP_tree::insert_leaf( ego_BSP_tree   * ptree, ego_BSP_leaf * pleaf )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::insert_leaf_rec( ego_BSP_tree   * ptree, ego_BSP_branch * pbranch, ego_BSP_leaf * pleaf, int depth )
 {
-    /// @details BB@> recursively insert a leaf in a tree of ego_BSP_branch  *. Get new branches using the
+    /// \author BB
+    /// \details  recursively insert a leaf in a tree of ego_BSP_branch  *. Get new branches using the
     ///              ego_BSP_tree::get_free() function to allocate any new branches that are needed.
 
     size_t cnt;
@@ -1215,7 +1224,7 @@ bool_t ego_BSP_tree::insert_leaf_rec( ego_BSP_tree   * ptree, ego_BSP_branch * p
         tmp_stack.pop();
 
         //---- determine which child the leaf needs to go under
-        /// @note This function is not optimal, since we encode the comparisons
+        /// \note This function is not optimal, since we encode the comparisons
         /// in the 32-bit integer indices, and then may have to decimate index to construct
         /// the child  branch's bounding by calling ego_BSP_tree::generate_aabb_child().
         /// The reason that it is done this way is that we would have to be dynamically
@@ -1299,7 +1308,8 @@ bool_t ego_BSP_tree::insert_leaf_rec( ego_BSP_tree   * ptree, ego_BSP_branch * p
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, ego_BSP_branch * B )
 {
-    /// @details BB@> an optimized version of iterating through the t->branch_used list
+    /// \author BB
+    /// \details  an optimized version of iterating through the t->branch_used list
     //                and then calling ego_BSP_tree::prune_branch() on the empty branch. In the old method,
     //                the t->branch_used list was searched twice to find each empty branch. This
     //                function does it only once.
@@ -1372,7 +1382,8 @@ bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, ego_BSP_branch * B )
 //--------------------------------------------------------------------------------------------
 int ego_BSP_tree::collide( ego_BSP_tree * tree, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
-    /// @details BB@> fill the collision list with references to tiles that the object volume may overlap.
+    /// \author BB
+    /// \details  fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
     if ( NULL == tree || NULL == paabb ) return 0;
@@ -1453,7 +1464,8 @@ ego_BSP_tree * ego_BSP_tree::clear( ego_BSP_tree * ptr )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_leaf_list_insert( leaf_child_list_t & lst, ego_BSP_leaf * n )
 {
-    /// @details BB@> Insert a leaf in the list, making sure there are no duplicates.
+    /// \author BB
+    /// \details  Insert a leaf in the list, making sure there are no duplicates.
     ///               Duplicates will cause loops in the list and make it impossible to
     ///               traverse properly.
 
@@ -1473,7 +1485,8 @@ bool_t ego_BSP_leaf_list_insert( leaf_child_list_t & lst, ego_BSP_leaf * n )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_leaf_list_clear( leaf_child_list_t & lst )
 {
-    /// @details BB@> Clear out the leaf list.
+    /// \author BB
+    /// \details  Clear out the leaf list.
 
     if ( lst.empty() ) return btrue;
 
@@ -1494,7 +1507,8 @@ bool_t ego_BSP_leaf_list_clear( leaf_child_list_t & lst )
 //--------------------------------------------------------------------------------------------
 bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
 {
-    /// @details BB@> check for collisions with the given node list
+    /// \author BB
+    /// \details  check for collisions with the given node list
 
     bool_t       retval;
 

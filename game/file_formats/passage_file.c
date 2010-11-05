@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/passage_data_file.c
-/// @brief A scanner for the passage file for a given module ( /modules/*.mod/basicdat/passages.txt )
-/// @details
+/// \file file_formats/passage_data_file.c
+/// \brief A scanner for the passage file for a given module ( /modules/*.mod/basicdat/passages.txt )
+/// \details
 
 #include "passage_file.h"
 
@@ -42,7 +42,8 @@ passage_data_t * passage_data_init( passage_data_t * ppass )
 //--------------------------------------------------------------------------------------------
 bool_t scan_passage_data_file( vfs_FILE * fileread, passage_data_t * ppass )
 {
-    /// @details ZZ@> This function reads the passage file
+    /// \author ZZ
+    /// \details  This function reads the passage file
 
     bool_t found;
 

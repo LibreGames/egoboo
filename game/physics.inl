@@ -19,10 +19,10 @@
 //*
 //********************************************************************************************
 
-/// @file physics.inl
-/// @details Put all the functions that need to be fast in this file
+/// \file physics.inl
+/// \details Put all the functions that need to be fast in this file
 ///
-/// @notes
+/// \notes
 /// The test functions are designed to detect an interaction with the "least possible" computation.
 /// Don't spoil the optimization by calling a test_interaction* function and then a get_depth* function
 ///
@@ -77,7 +77,8 @@ INLINE bool_t phys_data_accumulate_avel_index( ego_phys_data * pdata, const floa
 //--------------------------------------------------------------------------------------------
 INLINE bool_t test_interaction_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform )
 {
-    /// @details BB@> Test whether two objects could interact based on the "collision bounding box"
+    /// \author BB
+    /// \details  Test whether two objects could interact based on the "collision bounding box"
     ///               This version is for character-particle collisions
 
     ego_oct_bb   cv_a, cv_b;
@@ -92,7 +93,8 @@ INLINE bool_t test_interaction_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bu
 //--------------------------------------------------------------------------------------------
 INLINE bool_t test_interaction_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform )
 {
-    /// @details BB@> Test whether two objects could interact based on the "collision bounding box"
+    /// \author BB
+    /// \details  Test whether two objects could interact based on the "collision bounding box"
     ///               This version is for character-particle collisions
 
     ego_oct_bb   cv_a, cv_b;
@@ -107,7 +109,8 @@ INLINE bool_t test_interaction_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper b
 //--------------------------------------------------------------------------------------------
 INLINE bool_t test_interaction_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform )
 {
-    /// @details BB@> Test whether two objects could interact based on the "collision bounding box"
+    /// \author BB
+    /// \details  Test whether two objects could interact based on the "collision bounding box"
     ///               This version is for character-particle collisions
 
     ego_oct_bb   cv_b;
@@ -121,7 +124,8 @@ INLINE bool_t test_interaction_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bu
 //--------------------------------------------------------------------------------------------
 INLINE bool_t test_interaction_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform )
 {
-    /// @details BB@> Test whether two objects could interact based on the "collision bounding box"
+    /// \author BB
+    /// \details  Test whether two objects could interact based on the "collision bounding box"
     ///               This version is for character-particle collisions
 
     ego_oct_bb   cv_b;
@@ -135,7 +139,8 @@ INLINE bool_t test_interaction_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper b
 //--------------------------------------------------------------------------------------------
 INLINE bool_t test_interaction_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, int test_platform )
 {
-    /// @details BB@> Test whether two objects could interact based on the "collision bounding box"
+    /// \author BB
+    /// \details  Test whether two objects could interact based on the "collision bounding box"
     ///               This version is for character-character collisions
 
     int cnt;
@@ -165,7 +170,8 @@ INLINE bool_t test_interaction_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oc
 //--------------------------------------------------------------------------------------------
 INLINE bool_t test_interaction_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, int test_platform )
 {
-    /// @details BB@> Test whether two objects could interact based on the "collision bounding box"
+    /// \author BB
+    /// \details  Test whether two objects could interact based on the "collision bounding box"
     ///               This version is for character-character collisions
 
     int cnt;
@@ -196,7 +202,8 @@ INLINE bool_t test_interaction_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb &
 //--------------------------------------------------------------------------------------------
 INLINE bool_t get_depth_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
 {
-    /// @details BB@> Estimate the depth of collision based on the "collision bounding box"
+    /// \author BB
+    /// \details  Estimate the depth of collision based on the "collision bounding box"
     ///               This version is for character-particle collisions
 
     ego_oct_bb   cv_a, cv_b;
@@ -211,7 +218,8 @@ INLINE bool_t get_depth_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bu
 //--------------------------------------------------------------------------------------------
 INLINE bool_t get_depth_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
 {
-    /// @details BB@> Estimate the depth of collision based on the "collision bounding box"
+    /// \author BB
+    /// \details  Estimate the depth of collision based on the "collision bounding box"
     ///               This version is for character-particle collisions
 
     ego_oct_bb   cv_a, cv_b;
@@ -229,7 +237,8 @@ INLINE bool_t get_depth_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t get_depth_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
 {
-    /// @details BB@> Estimate the depth of collision based on the "collision bounding box"
+    /// \author BB
+    /// \details  Estimate the depth of collision based on the "collision bounding box"
     ///               This version is for character-particle collisions
 
     ego_oct_bb   cv_b;
@@ -243,7 +252,8 @@ INLINE bool_t get_depth_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bu
 //--------------------------------------------------------------------------------------------
 INLINE bool_t get_depth_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
 {
-    /// @details BB@> Estimate the depth of collision based on the "collision bounding box"
+    /// \author BB
+    /// \details  Estimate the depth of collision based on the "collision bounding box"
     ///               This version is for character-particle collisions
 
     ego_oct_bb   cv_b;
@@ -257,7 +267,8 @@ INLINE bool_t get_depth_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
 {
-    /// @details BB@> Estimate the depth of collision based on the "collision bounding box"
+    /// \author BB
+    /// \details  Estimate the depth of collision based on the "collision bounding box"
     ///               This version is for character-character collisions
 
     int cnt;
@@ -303,7 +314,8 @@ INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & 
 //--------------------------------------------------------------------------------------------
 INLINE bool_t get_depth_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
 {
-    /// @details BB@> Estimate the depth of collision based on the "collision bounding box"
+    /// \author BB
+    /// \details  Estimate the depth of collision based on the "collision bounding box"
     ///               This version is for character-character collisions
 
     int cnt;

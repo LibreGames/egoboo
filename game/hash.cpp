@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file hash.c
-/// @brief Implementation of the support functions for hash tables
-/// @details
+/// \file hash.c
+/// \brief Implementation of the support functions for hash tables
+/// \details
 
 #include "hash.h"
 
@@ -154,7 +154,8 @@ ego_hash_list * ego_hash_list::dtor_this( ego_hash_list * lst )
 //--------------------------------------------------------------------------------------------
 size_t ego_hash_list::count_nodes( ego_hash_list *plst )
 {
-    /// @details BB@> count the total number of nodes in the hash list
+    /// \author BB
+    /// \details  count the total number of nodes in the hash list
 
     int    i;
     size_t count = 0;
@@ -301,7 +302,8 @@ bool_t ego_hash_list::alloc( ego_hash_list * lst, int size )
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::renew( ego_hash_list * lst )
 {
-    /// @details BB@> renew the ego_CoNode hash table.
+    /// \author BB
+    /// \details  renew the ego_CoNode hash table.
     ///
     /// Since we are filling this list with pre-allocated ego_CoNode's,
     /// there is no need to delete any of the existing pchlst->sublist elements
@@ -321,7 +323,7 @@ bool_t ego_hash_list::renew( ego_hash_list * lst )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_hash_list_iterator * ego_hash_list_iterator::ctor_this( ego_hash_list_iterator * it )
+ego_hash_list::iterator * ego_hash_list::iterator::ctor_this( ego_hash_list::iterator * it )
 {
     if ( NULL == it ) return NULL;
 
@@ -331,11 +333,11 @@ ego_hash_list_iterator * ego_hash_list_iterator::ctor_this( ego_hash_list_iterat
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list_iterator::set_begin( ego_hash_list_iterator * it, ego_hash_list * hlst )
+bool_t ego_hash_list::iterator::set_begin( ego_hash_list::iterator * it, ego_hash_list * hlst )
 {
     int i;
 
-    it = ego_hash_list_iterator::ctor_this( it );
+    it = ego_hash_list::iterator::ctor_this( it );
 
     if ( NULL == it || NULL == hlst ) return bfalse;
 
@@ -350,7 +352,7 @@ bool_t ego_hash_list_iterator::set_begin( ego_hash_list_iterator * it, ego_hash_
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list_iterator::done( ego_hash_list_iterator * it, ego_hash_list * hlst )
+bool_t ego_hash_list::iterator::done( ego_hash_list::iterator * it, ego_hash_list * hlst )
 {
     if ( NULL == it || NULL == hlst ) return btrue;
 
@@ -361,7 +363,7 @@ bool_t ego_hash_list_iterator::done( ego_hash_list_iterator * it, ego_hash_list 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list_iterator::next( ego_hash_list_iterator * it, ego_hash_list * hlst )
+bool_t ego_hash_list::iterator::next( ego_hash_list::iterator * it, ego_hash_list * hlst )
 {
     int i, inext;
     ego_hash_node * pnext;
@@ -399,7 +401,7 @@ bool_t ego_hash_list_iterator::next( ego_hash_list_iterator * it, ego_hash_list 
 }
 
 //--------------------------------------------------------------------------------------------
-void * ego_hash_list_iterator::ptr( ego_hash_list_iterator * it )
+void * ego_hash_list::iterator::ptr( ego_hash_list::iterator * it )
 {
     if ( NULL == it || NULL == it->pnode ) return NULL;
 

@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file file_formats/controls_file.c
-/// @brief Routines for reading and writing the file "controls.txt" and "scancode.txt"
-/// @details
+/// \file file_formats/controls_file.c
+/// \brief Routines for reading and writing the file "controls.txt" and "scancode.txt"
+/// \details
 
 #include "controls_file.h"
 #include "scancode_file.h"
@@ -49,7 +49,8 @@ static void export_control( vfs_FILE * filewrite, const char * text, Sint32 devi
 //--------------------------------------------------------------------------------------------
 bool_t input_settings_load_vfs( const char *szFilename )
 {
-    /// @details ZZ@> This function reads the controls.txt file
+    /// \author ZZ
+    /// \details  This function reads the controls.txt file
     vfs_FILE* fileread;
     char currenttag[TAGSIZE] = EMPTY_CSTR;
     int i, cnt;
@@ -108,7 +109,8 @@ bool_t input_settings_load_vfs( const char *szFilename )
 //--------------------------------------------------------------------------------------------
 bool_t input_settings_save_vfs( const char* szFilename )
 {
-    /// @details ZF@> This function saves all current game settings to "controls.txt"
+    /// \author ZF
+    /// \details  This function saves all current game settings to "controls.txt"
 
     device_controls_t * pdevice;
     vfs_FILE* filewrite;

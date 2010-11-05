@@ -18,10 +18,10 @@
 //*
 //********************************************************************************************
 
-/// @file extensions/ogl_include.c
-/// @ingroup _ogl_extensions_
-/// @brief Base implementation of the OpenGL extensions
-/// @details
+/// \file extensions/ogl_include.c
+/// \ingroup _ogl_extensions_
+/// \brief Base implementation of the OpenGL extensions
+/// \details
 
 #include "ogl_include.h"
 #include "ogl_debug.h"

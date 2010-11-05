@@ -203,7 +203,7 @@ struct ego_ai_state
 //--------------------------------------------------------------------------------------------
 
 /// The state of the scripting system
-/// @details It is not persistent between one evaluation of a script and another
+/// \details It is not persistent between one evaluation of a script and another
 struct ego_script_state
 {
     int     x;

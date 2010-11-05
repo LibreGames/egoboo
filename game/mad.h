@@ -19,7 +19,7 @@
 //*
 //********************************************************************************************
 
-/// @file mad.h
+/// \file mad.h
 
 #include "mad_defs.h"
 
@@ -103,7 +103,7 @@ extern mad_loader MadLoader;
 /// the the data to describe the "pose" that the model is currently in
 /// a snapshot of the current animation state.
 ///
-/// @note this data is needed by multiple game systems
+/// \note this data is needed by multiple game systems
 struct pose_data
 {
     static const float flip_tolerance;

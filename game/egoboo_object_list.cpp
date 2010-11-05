@@ -17,9 +17,9 @@
 //*
 //********************************************************************************************
 
-/// @file egoboo_object_list.cpp
-/// @brief
-/// @details
+/// \file egoboo_object_list.cpp
+/// \brief
+/// \details
 
 #include "egoboo_object_list.inl"
 
