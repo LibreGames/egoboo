@@ -38,7 +38,7 @@ struct Mix_Chunk;
 /// The definition of the Egoboo model type
 struct ego_mad
 {
-    EGO_PROFILE_STUFF;
+    EGO_PROFILE_STUFF
 
     Uint16  frameliptowalkframe[4][16];        ///< For walk animations
 

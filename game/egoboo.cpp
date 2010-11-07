@@ -521,7 +521,7 @@ void memory_cleanUp( void )
     /// \author ZF
     /// \details  This function releases all loaded things in memory and cleans up everything properly
 
-    log_info( "memory_cleanUp() - Attempting to clean up loaded things in memory... " );
+    log_info( "%s - Attempting to clean up loaded things in memory... ", __FUNCTION__ );
 
     // quit any existing game
     _quit_game( EProc );
@@ -551,7 +551,7 @@ void memory_cleanUp( void )
     clk_shutdown();
 
     // deallocate any dynamically allocated collision memory
-    collision_system_end();
+    collision_system::end();
 
     // deallocate any dynamically allocated scripting memory
     scripting_system_end();

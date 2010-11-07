@@ -38,12 +38,30 @@
 
 static bool_t ego_BSP_leaf_list_insert( leaf_child_list_t & lst, ego_BSP_leaf * n );
 static bool_t ego_BSP_leaf_list_clear( leaf_child_list_t & lst );
-static bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
+static bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb & bbox, leaf_child_list_t & colst );
 
 //--------------------------------------------------------------------------------------------
 // ego_BSP_aabb
 //--------------------------------------------------------------------------------------------
 
+void ego_BSP_aabb::invalidate()
+{
+    /// \author BB
+    /// \brief invert the bounding box to make it invalid
+
+    if ( NULL == this || dim <= 0 ) return;
+
+    for ( size_t cnt = 0; cnt < dim; cnt++ )
+    {
+        float min_val = std::min( mins[cnt], maxs[cnt] );
+        float max_val = std::max( mins[cnt], maxs[cnt] );
+
+        mins[cnt] = max_val;
+        maxs[cnt] = min_val;
+    }
+}
+
+//--------------------------------------------------------------------------------------------
 ego_BSP_aabb * ego_BSP_aabb::init( ego_BSP_aabb * pbb, size_t dim )
 {
     if ( NULL == pbb ) return NULL;
@@ -73,15 +91,15 @@ ego_BSP_aabb * ego_BSP_aabb::deinit( ego_BSP_aabb * pbb )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_aabb::empty( ego_BSP_aabb * psrc )
+bool_t ego_BSP_aabb::empty( const ego_BSP_aabb & src )
 {
     size_t cnt;
 
-    if ( NULL == psrc || 0 == psrc->dim ) return btrue;
+    if ( 0 == src.dim ) return btrue;
 
-    for ( cnt = 0; cnt < psrc->dim; cnt++ )
+    for ( cnt = 0; cnt < src.dim; cnt++ )
     {
-        if ( psrc->maxs[cnt] <= psrc->mins[cnt] )
+        if ( src.maxs[cnt] <= src.mins[cnt] )
             return btrue;
     }
 
@@ -119,23 +137,23 @@ ego_BSP_aabb * ego_BSP_aabb::dealloc( ego_BSP_aabb * pbb )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_aabb::reset( ego_BSP_aabb * psrc )
+bool_t ego_BSP_aabb::reset( ego_BSP_aabb & src )
 {
     /// \author BB
     /// \details  Return this bounding box to an empty state.
 
     size_t cnt;
 
-    if ( NULL == psrc || 0 == psrc->dim ) return bfalse;
+    if ( 0 == src.dim ) return bfalse;
 
-    if ( psrc->mins.empty() || psrc->mids.empty() || psrc->maxs.empty() )
+    if ( src.mins.empty() || src.mids.empty() || src.maxs.empty() )
     {
-        alloc( psrc, psrc->dim );
+        alloc( &src, src.dim );
     }
 
-    for ( cnt = 0; cnt < psrc->dim; cnt++ )
+    for ( cnt = 0; cnt < src.dim; cnt++ )
     {
-        psrc->mins[cnt] = psrc->mids[cnt] = psrc->maxs[cnt] = 0.0f;
+        src.mins[cnt] = src.mids[cnt] = src.maxs[cnt] = 0.0f;
     }
 
     return btrue;
@@ -155,6 +173,12 @@ bool_t ego_BSP_aabb::lhs_contains_rhs( const ego_BSP_aabb & lhs, const ego_BSP_a
 
     for ( cnt = 0; cnt < min_dim; cnt++ )
     {
+        if ( lhs.maxs[cnt] < rhs.maxs[cnt] )
+            return bfalse;
+
+        if ( lhs.mins[cnt] > rhs.mins[cnt] )
+            return bfalse;
+
         // inverted aabb?
         if ( lhs.maxs[cnt] < lhs.mins[cnt] )
             return bfalse;
@@ -162,19 +186,13 @@ bool_t ego_BSP_aabb::lhs_contains_rhs( const ego_BSP_aabb & lhs, const ego_BSP_a
         // inverted aabb?
         if ( rhs.maxs[cnt] < rhs.mins[cnt] )
             return bfalse;
-
-        if ( rhs.maxs[cnt] > lhs.maxs[cnt] )
-            return bfalse;
-
-        if ( rhs.mins[cnt] < lhs.mins[cnt] )
-            return bfalse;
     }
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_aabb::test_intersection( const ego_BSP_aabb & lhs, const ego_BSP_aabb & rhs )
+bool_t ego_BSP_aabb::lhs_intersects_rhs( const ego_BSP_aabb & lhs, const ego_BSP_aabb & rhs )
 {
     /// \author BB
     /// \details  Do psrc1 and psrc2 overlap? If psrc2 has less dimensions
@@ -188,6 +206,13 @@ bool_t ego_BSP_aabb::test_intersection( const ego_BSP_aabb & lhs, const ego_BSP_
 
     for ( cnt = 0; cnt < min_dim; cnt++ )
     {
+        // are these two tests enough?
+        if ( rhs.maxs[cnt] < lhs.mins[cnt] )
+            return bfalse;
+
+        if ( rhs.mins[cnt] > lhs.maxs[cnt] )
+            return bfalse;
+
         // inverted aabb?
         if ( lhs.maxs[cnt] < lhs.mins[cnt] )
             return bfalse;
@@ -195,67 +220,58 @@ bool_t ego_BSP_aabb::test_intersection( const ego_BSP_aabb & lhs, const ego_BSP_
         // inverted aabb?
         if ( rhs.maxs[cnt] < rhs.mins[cnt] )
             return bfalse;
-
-        // are these two tests enough?
-        if ( rhs.maxs[cnt] < lhs.mins[cnt] )
-            return bfalse;
-
-        if ( rhs.mins[cnt] < rhs.maxs[cnt] )
-            return bfalse;
     }
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_aabb::from_oct_bb( ego_BSP_aabb * pdst, ego_oct_bb   * psrc )
+bool_t ego_BSP_aabb::from_oct_bb( ego_BSP_aabb & dst, const ego_oct_bb & src )
 {
     /// \author BB
     /// \details  do an automatic conversion from an ego_oct_bb   to a ego_BSP_aabb
 
     size_t cnt;
 
-    if ( NULL == pdst || NULL == psrc ) return bfalse;
-
-    if ( pdst->dim <= 0 ) return bfalse;
+    if ( dst.dim <= 0 ) return bfalse;
 
     // this process is a little bit complicated because the
     // order to the OCT_* indices is optimized for a different test.
-    if ( 1 == pdst->dim )
+    if ( 1 == dst.dim )
     {
-        pdst->mins[0] = psrc->mins[OCT_X];
+        dst.mins[0] = src.mins[OCT_X];
 
-        pdst->maxs[0] = psrc->maxs[OCT_X];
+        dst.maxs[0] = src.maxs[OCT_X];
     }
-    else if ( 2 == pdst->dim )
+    else if ( 2 == dst.dim )
     {
-        pdst->mins[0] = psrc->mins[OCT_X];
-        pdst->mins[1] = psrc->mins[OCT_Y];
+        dst.mins[0] = src.mins[OCT_X];
+        dst.mins[1] = src.mins[OCT_Y];
 
-        pdst->maxs[0] = psrc->maxs[OCT_X];
-        pdst->maxs[1] = psrc->maxs[OCT_Y];
+        dst.maxs[0] = src.maxs[OCT_X];
+        dst.maxs[1] = src.maxs[OCT_Y];
     }
-    else if ( pdst->dim >= 3 )
+    else if ( dst.dim >= 3 )
     {
-        pdst->mins[0] = psrc->mins[OCT_X];
-        pdst->mins[1] = psrc->mins[OCT_Y];
-        pdst->mins[2] = psrc->mins[OCT_Z];
+        dst.mins[0] = src.mins[OCT_X];
+        dst.mins[1] = src.mins[OCT_Y];
+        dst.mins[2] = src.mins[OCT_Z];
 
-        pdst->maxs[0] = psrc->maxs[OCT_X];
-        pdst->maxs[1] = psrc->maxs[OCT_Y];
-        pdst->maxs[2] = psrc->maxs[OCT_Z];
+        dst.maxs[0] = src.maxs[OCT_X];
+        dst.maxs[1] = src.maxs[OCT_Y];
+        dst.maxs[2] = src.maxs[OCT_Z];
 
         // blank any extended dimensions
-        for ( cnt = 3; cnt < pdst->dim; cnt++ )
+        for ( cnt = 3; cnt < dst.dim; cnt++ )
         {
-            pdst->mins[cnt] = pdst->maxs[cnt] = 0.0f;
+            dst.mins[cnt] = dst.maxs[cnt] = 0.0f;
         }
     }
 
     // find the mid values
-    for ( cnt = 0; cnt < pdst->dim; cnt++ )
+    for ( cnt = 0; cnt < dst.dim; cnt++ )
     {
-        pdst->mids[cnt] = 0.5f * ( pdst->mins[cnt] + pdst->maxs[cnt] );
+        dst.mids[cnt] = 0.5f * ( dst.mins[cnt] + dst.maxs[cnt] );
     }
 
     return btrue;
@@ -466,6 +482,8 @@ bool_t ego_BSP_branch::insert_leaf( ego_BSP_branch * B, ego_BSP_leaf * n )
 {
     std::pair <leaf_child_list_t::iterator, bool> rv = B->node_set.insert( n );
 
+    n->inserted = rv.second;
+
     return rv.second;
 }
 
@@ -645,7 +663,7 @@ bool_t ego_BSP_branch::empty( ego_BSP_branch * pbranch )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
+bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb & bbox, leaf_child_list_t & colst )
 {
     /// \author BB
     /// \details  Recursively search the BSP tree for collisions with the paabb
@@ -659,14 +677,14 @@ bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, 
     pbranch_bb = &( pbranch->bbox );
 
     // is the branch completely contained by the test aabb?
-    if ( ego_BSP_aabb::lhs_contains_rhs( *paabb, *pbranch_bb ) )
+    if ( ego_BSP_aabb::lhs_contains_rhs( bbox, pbranch->bbox ) )
     {
         // add every single node under this branch
         return ego_BSP_branch::add_all_nodes( pbranch, colst );
     }
 
     // return if the object does not intersect the branch
-    if ( !ego_BSP_aabb::test_intersection( *paabb, *pbranch_bb ) )
+    if ( !ego_BSP_aabb::lhs_intersects_rhs( bbox, pbranch->bbox ) )
     {
         // the branch and the object do not overlap at all.
         // do nothing.
@@ -674,7 +692,7 @@ bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, 
     }
 
     // check the node_set
-    ego_BSP_leaf_list_collide( pbranch->node_set, paabb, colst );
+    ego_BSP_leaf_list_collide( pbranch->node_set, bbox, colst );
 
     // check for collisions with all child_lst branches
     for ( cnt = 0; cnt < pbranch->child_lst.size(); cnt++ )
@@ -684,7 +702,7 @@ bool_t ego_BSP_branch::collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, 
         // scan all the child_lst
         if ( NULL == pchild ) continue;
 
-        ego_BSP_branch::collide( pchild, paabb, colst );
+        ego_BSP_branch::collide( pchild, bbox, colst );
     }
 
     return btrue;
@@ -1373,26 +1391,26 @@ bool_t ego_BSP_tree::prune_branch( ego_BSP_tree   * t, ego_BSP_branch * B )
 
         B->depth = -1;
 
-        ego_BSP_aabb::reset( &( B->bbox ) );
+        ego_BSP_aabb::reset( B->bbox );
     }
 
     return remove;
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_BSP_tree::collide( ego_BSP_tree * tree, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
+int ego_BSP_tree::collide( ego_BSP_tree * tree, ego_BSP_aabb & bbox, leaf_child_list_t & colst )
 {
     /// \author BB
     /// \details  fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
-    if ( NULL == tree || NULL == paabb ) return 0;
+    if ( NULL == tree ) return 0;
 
     // collide with any "infinite" nodes
-    ego_BSP_leaf_list_collide( tree->infinite, paabb, colst );
+    ego_BSP_leaf_list_collide( tree->infinite, bbox, colst );
 
     // collide with the rest of the tree
-    ego_BSP_branch::collide( tree->root, paabb, colst );
+    ego_BSP_branch::collide( tree->root, bbox, colst );
 
     return colst.size();
 }
@@ -1474,7 +1492,7 @@ bool_t ego_BSP_leaf_list_insert( leaf_child_list_t & lst, ego_BSP_leaf * n )
     if ( n->inserted )
     {
         // hmmm.... what to do?
-        log_warning( "ego_BSP_leaf_list_insert() - trying to insert a ego_BSP_leaf that is claiming to be part of a list already\n" );
+        log_warning( "%s - trying to insert a ego_BSP_leaf that is claiming to be part of a list already\n", __FUNCTION__ );
     }
 
     std::pair <leaf_child_list_t::iterator, bool> rv = lst.insert( n );
@@ -1505,31 +1523,34 @@ bool_t ego_BSP_leaf_list_clear( leaf_child_list_t & lst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
+bool_t ego_BSP_leaf_list_collide( leaf_child_list_t & leaf_lst, ego_BSP_aabb & bbox, leaf_child_list_t & colst )
 {
     /// \author BB
     /// \details  check for collisions with the given node list
 
     bool_t       retval;
 
-    if ( NULL == paabb ) return bfalse;
+    if ( leaf_lst.empty() ) return bfalse;
 
-    leaf_child_list_t::iterator it;
-    for ( it = leaf_lst.begin(); it != leaf_lst.end(); it++ )
+    for ( leaf_child_list_t::iterator it = leaf_lst.begin(); it != leaf_lst.end(); it++ )
     {
         if ( NULL == *it ) continue;
 
-        ego_BSP_aabb * pleaf_bb = &(( *it )->bbox );
-
-        EGOBOO_ASSERT(( *it )->data_type > -1 );
+        if (( *it )->data_type < 0 )
+        {
+            // hmmm.... what to do?
+            log_warning( "%s - a node in a leaf list has an invalid data type\n", __FUNCTION__ );
+            continue;
+        }
 
         if ( !( *it )->inserted )
         {
             // hmmm.... what to do?
-            log_warning( "ego_BSP_leaf_list_collide() - a node in a leaf list is claiming to not be inserted\n" );
+            log_warning( "%s - a node in a leaf list is claiming to not be inserted\n", __FUNCTION__ );
+            continue;
         }
 
-        if ( ego_BSP_aabb::test_intersection( *paabb, *pleaf_bb ) )
+        if ( ego_BSP_aabb::lhs_intersects_rhs( bbox, ( *it )->bbox ) )
         {
             // we have a possible intersection
             std::pair <leaf_child_list_t::iterator, bool> rv = colst.insert(( *it ) );

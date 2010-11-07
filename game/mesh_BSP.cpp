@@ -94,7 +94,7 @@ bool_t mpd_BSP::alloc( mpd_BSP * pbsp, ego_mpd * pmesh )
         ego_tile_info * ptile = pmesh->tmem.tile_list + i;
 
         // add the bounding volume for this tile to the bounding volume for the mesh
-        ego_oct_bb::do_union( pbsp->volume, ptile->oct, &( pbsp->volume ) );
+        ego_oct_bb::do_union( pbsp->volume, ptile->oct, pbsp->volume );
 
         // let data type 1 stand for a tile, -1 is uninitialized
         ego_BSP_leaf::init( pleaf, 2, pmesh->tmem.tile_list + i, 1 );
@@ -136,7 +136,7 @@ bool_t mpd_BSP::fill( mpd_BSP * pbsp )
         if ( NULL == pdata ) continue;
 
         // calculate the leaf's ego_BSP_aabb
-        ego_BSP_aabb::from_oct_bb( &( pleaf->bbox ), &( pdata->oct ) );
+        ego_BSP_aabb::from_oct_bb( pleaf->bbox , pdata->oct );
 
         // insert the leaf
         ego_BSP_tree::insert_leaf( &( pbsp->tree ), pleaf );
@@ -146,15 +146,15 @@ bool_t mpd_BSP::fill( mpd_BSP * pbsp )
 }
 
 //--------------------------------------------------------------------------------------------
-int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
+int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb & bbox, leaf_child_list_t & colst )
 {
     /// \author BB
     /// \details  fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
-    if ( NULL == pbsp || NULL == paabb ) return 0;
+    if ( NULL == pbsp ) return 0;
 
-    return ego_BSP_tree::collide( &( pbsp->tree ), paabb, colst );
+    return ego_BSP_tree::collide( &( pbsp->tree ), bbox, colst );
 }
 
 ////--------------------------------------------------------------------------------------------

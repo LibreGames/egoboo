@@ -1033,7 +1033,7 @@ int vfs_mkdir( const char *dirName )
 
     if ( !retval )
     {
-        log_debug( "vfs_copyDirectory() - Could not create new folder folder \"%s\". (%s)\n", dirName, vfs_getError() );
+        log_debug( "%s - Could not create new folder folder \"%s\". (%s)\n", __FUNCTION__, dirName, vfs_getError() );
     }
 
     return retval;
@@ -1967,7 +1967,7 @@ int vfs_copyDirectory( const char *sourceDir, const char *destDir )
 
             if ( !vfs_copyFile( srcPath, destPath ) )
             {
-                log_debug( "vfs_copyDirectory() - Failed to copy from \"%s\" to \"%s\" (%s)\n", srcPath, destPath, vfs_getError() );
+                log_debug( "%s - Failed to copy from \"%s\" to \"%s\" (%s)\n", __FUNCTION__, srcPath, destPath, vfs_getError() );
             }
         }
         ctxt = vfs_findNext( &ctxt );

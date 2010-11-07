@@ -34,11 +34,11 @@ extern TX_REF          meshlasttexture;             ///< Last texture used
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void animate_all_tiles( struct ego_mpd * pmesh );
-void render_fan( struct ego_mpd * pmesh, Uint32 fan );
-void render_hmap_fan( struct ego_mpd * pmesh, Uint32 fan );
-void render_water_fan( struct ego_mpd * pmesh, Uint32 fan, Uint8 layer );
+void animate_all_tiles( ego_mpd * pmesh );
+void render_fan( ego_mpd * pmesh, Uint32 fan );
+void render_hmap_fan( ego_mpd * pmesh, Uint32 fan );
+void render_water_fan( ego_mpd * pmesh, Uint32 fan, Uint8 layer );
 
 void animate_tiles( void );
 
-void   do_grid_lighting( struct ego_mpd * pmesh, struct ego_camera * pcam );
+void   do_grid_lighting( ego_mpd * pmesh, ego_camera * pcam );

@@ -25,6 +25,8 @@
 #include "egoboo_typedef_cpp.h"
 #include "egoboo_state_machine.h"
 
+#include "bsp.h"
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
@@ -351,16 +353,53 @@ struct ego_object_process_engine
 extern ego_object_process_engine obj_proc_engine;
 
 //--------------------------------------------------------------------------------------------
-/// Additional data that all egoboo object use
+
+/// All addtional data used by ego_obj
 struct ego_obj_data
 {
-    // basic object definitions
-    STRING         base_name;     ///< what is its name at creation. Probably related to the filename that generated it.
-    Uint32         guid;          ///< a globally unique identifier for each object
+    //---- public data
 
-    // things related to the updating of objects
-    size_t         update_count;  ///< How many updates have been made to this object?
-    size_t         frame_count;   ///< How many frames have been rendered?
+    // all ego_obj have a name
+    STRING         obj_name;                       ///< what is its name at creation. Probably related to the filename that generated it.
+
+    // all ego_obj can count their updates
+    size_t         update_count;                   ///< How many updates have been made to this object?
+    size_t         frame_count;                    ///< How many frames have been rendered?
+
+    // all ego_obj can be placed in a BSP
+    ego_BSP_leaf      bsp_leaf;                    ///< where this object is in its BSP
+
+    // all ego_obj can collide with characters
+    ego_oct_bb        max_cv;                      ///< largest possible collision volume for this object
+
+    //---- constructors
+    ego_obj_data( Uint32 guid ) : _id( guid ) { clear(); ctor_this( this ); }
+    ~ego_obj_data()
+    {
+        dtor_this( this );
+        clear();
+
+        // do something stupid to set the id to a "bad" value
+        *(( Uint32 * )&_id ) = Uint32( ~0 );
+    }
+
+    //---- accessors
+    const Uint32 get_id() { return _id; }
+
+private:
+
+    //---- construction
+    static ego_obj_data * ctor_this( ego_obj_data * ptr );
+    static ego_obj_data * dtor_this( ego_obj_data * ptr );
+
+    static ego_obj_data * alloc( ego_obj_data * pobj );
+    static ego_obj_data * dealloc( ego_obj_data * pobj );
+
+    void clear();
+
+    //---- private data
+    const Uint32   _id;            ///< a globally unique identifier for each object
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -377,6 +416,8 @@ struct i_ego_obj
     virtual ego_obj_enc * get_obj_enc_ptr( void ) = 0;
     virtual ego_obj_prt * get_obj_prt_ptr( void ) = 0;
 
+    virtual void          update_max_cv() = 0;
+    virtual void          update_bsp() = 0;
 };
 
 //--------------------------------------------------------------------------------------------
@@ -388,8 +429,9 @@ struct ego_obj : public i_ego_obj, public ego_obj_data, public ego_object_proces
 {
     friend struct ego_object_engine;
 
-    explicit ego_obj() { ctor_this( this ); }
-    ~ego_obj() {  dtor_this( this );  }
+    /// force use the guid_counter to automatically assign a unique id to an ego_object
+    /// upon creation
+    explicit ego_obj() : ego_obj_data( guid_counter++ ) {}
 
     static ego_obj * reallocate_all( ego_obj * ptr )
     {
@@ -429,11 +471,10 @@ struct ego_obj : public i_ego_obj, public ego_obj_data, public ego_object_proces
     virtual ego_obj_enc * get_obj_enc_ptr( void )    { return NULL; }
     virtual ego_obj_prt * get_obj_prt_ptr( void )    { return NULL; }
 
-protected:
+    virtual void          update_max_cv()            { max_cv.invalidate();  }
+    virtual void          update_bsp()               { update_max_cv(); }
 
-    // generic construction/destruction functions
-    static ego_obj * ctor_this( ego_obj * ptr ) { return ptr; }
-    static ego_obj * dtor_this( ego_obj * ptr ) { return ptr; }
+protected:
 
     // use placement new and a destructor call
     static ego_obj * ctor_all( ego_obj * ptr ) { if ( NULL != ptr )  ptr = new( ptr ) ego_obj; return ptr; }

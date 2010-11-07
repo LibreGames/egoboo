@@ -153,6 +153,13 @@
 			Filter="">
 			<File
 				RelativePath=".\bbox.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						GeneratePreprocessedFile="0"
+						KeepComments="FALSE"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\bsp.cpp">

@@ -76,11 +76,11 @@ PRT_REF ego_particle_list::allocate_find()
             // if the particle has been "terminated" but is still waiting around, bump it to the
             // front of the list
 
-            size_t min_time  = SDL_min( pprt->lifetime_remaining, pprt->frames_remaining );
+            size_t min_time  = SDL_min( pprt->life_timer, pprt->frames_remaining );
 
             if ( min_time < SDL_max( min_life, min_display ) )
             {
-                min_life     = pprt->lifetime_remaining;
+                min_life     = pprt->life_timer;
                 min_life_idx = iprt;
 
                 min_display     = pprt->frames_remaining;
@@ -91,9 +91,9 @@ PRT_REF ego_particle_list::allocate_find()
         {
             // if the particle has not yet died, let choose the worst one
 
-            if ( pprt->lifetime_remaining < min_life )
+            if ( pprt->life_timer < min_life )
             {
-                min_life     = pprt->lifetime_remaining;
+                min_life     = pprt->life_timer;
                 min_life_idx = iprt;
             }
 

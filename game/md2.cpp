@@ -351,7 +351,7 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
     f = fopen( szFilename, "rb" );
     if ( NULL == f )
     {
-        log_warning( "ego_MD2_Model::load() - could not open model (%s)\n", szFilename );
+        log_warning( "%s - could not open model (%s)\n", __FUNCTION__, szFilename );
         return NULL;
     }
 
@@ -379,7 +379,7 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
     if ( md2_header.ident != MD2_MAGIC_NUMBER || md2_header.version != MD2_VERSION )
     {
         fclose( f );
-        log_warning( "ego_MD2_Model::load() - model does not have valid header or identifier (%s)\n", szFilename );
+        log_warning( "%s - model does not have valid header or identifier (%s)\n", __FUNCTION__, szFilename );
         return NULL;
     }
 
@@ -387,7 +387,7 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
     model = ( NULL == mdl ) ? ego_MD2_Model::create() : mdl;
     if ( NULL == model )
     {
-        log_error( "ego_MD2_Model::load() - could create ego_MD2_Model\n" );
+        log_error( "%s - could create ego_MD2_Model\n", __FUNCTION__ );
         return NULL;
     }
 

@@ -142,16 +142,16 @@ struct ego_prt_data
     FACING_T facing;                          ///< Direction of the part
     TEAM_REF team;                            ///< Team
 
-    fvec3_t pos, pos_old, pos_stt;           ///< Position
-    fvec3_t vel, vel_old, vel_stt;           ///< Velocity
-    fvec3_t offset;                          ///< The initial offset when spawning the particle
+    fvec3_t pos, pos_old, pos_stt;            ///< Position
+    fvec3_t vel, vel_old, vel_stt;            ///< Velocity
+    fvec3_t offset;                           ///< The initial offset when spawning the particle
 
     Uint32  onwhichgrid;                      ///< Where the part is
-    Uint32  onwhichblock;                    ///< The particle's collision block
-    bool_t  is_hidden;                       ///< Is the particle related to a hidden character?
+    Uint32  onwhichblock;                     ///< The particle's collision block
+    bool_t  is_hidden;                        ///< Is the particle related to a hidden character?
 
     // platforms
-    float   targetplatform_overlap;             ///< What is the height of the target platform?
+    float   targetplatform_overlap;           ///< What is the height of the target platform?
     CHR_REF targetplatform_ref;               ///< Am I trying to attach to a platform?
     CHR_REF onwhichplatform_ref;              ///< Is the particle on a platform?
     Uint32  onwhichplatform_update;           ///< When was the last platform attachment made?
@@ -171,17 +171,18 @@ struct ego_prt_data
 
     bool_t   is_eternal;                      ///< Does the particle ever time-out?
     unsigned lifetime;                        ///< Total particle lifetime in updates
-    unsigned lifetime_remaining;              ///< How many updates does the particle have left?
+    unsigned life_timer;              ///< How many updates does the particle have left?
     unsigned frames_remaining;                ///< How many frames does the particle have left?
-    int      contspawn_delay;                 ///< Time until spawn
+    int      contspawn_timer;                 ///< Time until spawn
 
     Uint32            bump_size_stt;                   ///< the starting size of the particle (8.8-bit fixed point)
-    ego_bumper          bump_real;                       ///< Actual size of the particle
-    ego_bumper          bump_padded;                     ///< The maximum of the "real" bumper and the "bump size" bumper
-    ego_bumper          bump_min;                        ///< The minimum of the "real" bumper and the "bump size" bumper
-    ego_oct_bb            prt_cv;                          ///< Collision volume for chr-prt interactions
-    ego_oct_bb            prt_min_cv;                      ///< Collision volume for chr-platform interactions
-    PRT_REF           bumplist_next;                   ///< Next particle on fanblock
+    ego_bumper        bump_real;                       ///< Actual size of the particle
+    ego_bumper        bump_padded;                     ///< The maximum of the "real" bumper and the "bump size" bumper
+    ego_bumper        bump_min;                        ///< The minimum of the "real" bumper and the "bump size" bumper
+
+    ego_oct_bb        prt_min_cv;                      ///< The "actual size" of the particle
+    ego_oct_bb        prt_max_cv;                      ///< Maximum possible collision volume
+
     IPair             damage;                          ///< For strength
     Uint8             damagetype;                      ///< Damage type
     Uint16            lifedrain;
@@ -245,7 +246,6 @@ struct ego_prt : public ego_prt_data
     static int pressure_tests;
 
     ego_prt_spawn_data  spawn_data;
-    ego_BSP_leaf        bsp_leaf;
 
     //---- constructors and destructors
 
@@ -369,7 +369,7 @@ struct ego_obj_prt : public ego_obj, public ego_prt
     static const data_type * cget_data_ptr( const its_type * ptr ) { return NULL == ptr ? NULL : static_cast<const data_type *>( ptr ); }
 
     static bool_t request_terminate( const reference_type & iprt );
-    static bool_t request_terminate( ego_bundle_prt * pbdl_prt );
+    static bool_t request_terminate( ego_bundle_prt & bdl_prt );
     static bool_t request_terminate( its_type * pprt );
 
     //---- specialization of the ego_object_process methods
@@ -387,6 +387,25 @@ struct ego_obj_prt : public ego_obj, public ego_prt
     //virtual ego_obj_enc *  get_obj_enc_ptr(void);
     virtual ego_obj_prt *  get_obj_prt_ptr( void )  { return this; }
 
+    virtual void update_max_cv();
+    virtual void update_bsp();
+
+protected:
+
+    //---- construction and destruction
+
+    /// construct this struct, and ALL dependent structs. use placement new
+    static ego_obj_prt * ctor_this( ego_obj_prt * ptr );
+    /// destruct this struct, and ALL dependent structs. call the destructor
+    static ego_obj_prt * dtor_this( ego_obj_prt * ptr );
+
+    //---- memory management
+
+    /// allocate data for this struct, ONLY
+    static ego_obj_prt * alloc( ego_obj_prt * pobj );
+    /// deallocate data for this struct, ONLY
+    static ego_obj_prt * dealloc( ego_obj_prt * pobj );
+
 private:
 
     /// a hook to container_type, which is the parent container of this object
@@ -396,44 +415,76 @@ private:
 //--------------------------------------------------------------------------------------------
 struct ego_bundle_prt
 {
-    PRT_REF   prt_ref;
-    ego_prt   * prt_ptr;
+    ego_bundle_prt( ego_prt * pprt ) { invalidate(); if ( NULL != pprt ) set( pprt ); }
 
-    PIP_REF   pip_ref;
-    ego_pip   * pip_ptr;
+    //---- construction
+    egoboo_rv validate();
+    egoboo_rv invalidate();
+    egoboo_rv set( ego_prt * pprt );
 
-    ego_bundle_prt( ego_prt * pprt = NULL ) { ctor_this( this ); if ( NULL != pprt ) set( this, pprt ); }
+    static ego_bundle_prt * validate( ego_bundle_prt * ptr ) { egoboo_rv rv = ptr->validate(); return rv_error == rv ? NULL : ptr; }
+    static ego_bundle_prt * invalidate( ego_bundle_prt * ptr ) { egoboo_rv rv = ptr->invalidate(); return rv_error == rv ? NULL : ptr; }
+    static ego_bundle_prt * set( ego_bundle_prt * ptr, ego_prt * pprt ) { egoboo_rv rv = ptr->set( pprt ); return rv_error == rv ? NULL : ptr; }
 
-    static ego_bundle_prt * ctor_this( ego_bundle_prt * pbundle );
-    static ego_bundle_prt * validate( ego_bundle_prt * pbundle );
-    static ego_bundle_prt * set( ego_bundle_prt * pbundle, ego_prt * pprt );
-
+    //---- accessors
     static ego_prt & get_prt_ref( ego_bundle_prt & ref )
     {
         // handle the worst-case scenario
-        if ( NULL == ref.prt_ptr ) { validate( &ref ); CPP_EGOBOO_ASSERT( NULL != ref.prt_ptr ); }
+        if ( NULL == ref._prt_ptr ) { ref.validate(); CPP_EGOBOO_ASSERT( NULL != ref._prt_ptr ); }
 
-        return *( ref.prt_ptr );
+        return *( ref._prt_ptr );
     }
 
-    static ego_prt * get_prt_ptr( ego_bundle_prt * ptr )
+    static ego_prt * get_prt_ptr( ego_bundle_prt & ref )
     {
-        if ( NULL == ptr ) return NULL;
+        if ( NULL == ref._prt_ptr ) ref.validate();
 
-        if ( NULL == ptr->prt_ptr ) validate( ptr );
-
-        return ptr->prt_ptr;
+        return ref._prt_ptr;
     }
 
-    static const ego_prt * cget_prt_ptr( const ego_bundle_prt * ptr )
+    static const ego_prt * cget_prt_ptr( const ego_bundle_prt & ref )
     {
-        if ( NULL == ptr ) return NULL;
-
         // cannot do the following since the bundle is CONST... ;)
-        // if( NULL == ptr->prt_ptr ) validate(ptr);
+        // if( NULL == ref.prt_ptr ) validate(ptr);
 
-        return ptr->prt_ptr;
+        return ref._prt_ptr;
     }
+
+    PRT_REF     prt_ref() { validate(); return _prt_ref; }
+    ego_prt   * prt_ptr() { validate(); return _prt_ptr; }
+    PIP_REF     pip_ref() { validate(); return _pip_ref; }
+    ego_pip   * pip_ptr() { validate(); return _pip_ptr; }
+
+    // const can't change anything so no calls to validate()
+    PRT_REF     prt_ref() const { return _prt_ref; }
+    ego_prt   * prt_ptr() const { return _prt_ptr; }
+    PIP_REF     pip_ref() const { return _pip_ref; }
+    ego_pip   * pip_ptr() const { return _pip_ptr; }
+
+    operator PRT_REF() { validate(); return _prt_ref; }
+    operator ego_prt   *() { validate(); return _prt_ptr; }
+    operator PIP_REF() { validate(); return _pip_ref; }
+    operator ego_pip   *() { validate(); return _pip_ptr; }
+
+    // const can't change anything so no calls to validate()
+    operator PRT_REF() const { return _prt_ref; }
+    operator ego_prt   *() const { return _prt_ptr; }
+    operator PIP_REF() const { return _pip_ref; }
+    operator ego_pip   *() const { return _pip_ptr; }
+
+protected:
+
+    // so no one can create the bundle with a default constructor...
+    ego_bundle_prt() { invalidate( this ); }
+
+private:
+
+    PRT_REF   _prt_ref;
+    ego_prt   * _prt_ptr;
+
+    PIP_REF   _pip_ref;
+    ego_pip   * _pip_ptr;
+
 };
 
 //--------------------------------------------------------------------------------------------
@@ -471,6 +522,6 @@ bool_t    prt_is_over_water( const PRT_REF & particle );
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & pip_override );
 void    reset_particles();
 
-ego_bundle_prt * prt_calc_environment( ego_bundle_prt * pbdl );
+ego_bundle_prt & prt_calc_environment( ego_bundle_prt & bdl );
 
 #define _particle_h

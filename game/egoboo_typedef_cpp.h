@@ -135,8 +135,8 @@ class egoboo_exception : public std::exception
 //--------------------------------------------------------------------------------------------
 
 // macros to use the high resolution timer for profiling
-#define PROFILE_KEEP  0.9
-#define PROFILE_NEW  (1.0 - PROFILE_KEEP)
+#define PROFILE_KEEP  0.9F
+#define PROFILE_NEW  (1.0F - PROFILE_KEEP)
 
 struct debug_profiler
 {
@@ -162,25 +162,25 @@ struct debug_profiler
     void set_keep( double keep )
     {
         keep_amt = std::min( std::max( 0.0, keep ), 1.0 );
-        new_amt  = 1.0 - keep_amt;
+        new_amt  = 1.0F - keep_amt;
     }
 
     static debug_profiler * reset( debug_profiler * ptr )
     {
         if ( NULL != ptr )
         {
-            ptr->count = ptr->time = 0.0;
-            ptr->dt = ptr->dt_max = ptr->dt_min = 0.0;
-            ptr->rate = ptr->rate_min = ptr->rate_max = 0.0;
+            ptr->count = ptr->time = 0.0F;
+            ptr->dt = ptr->dt_max = ptr->dt_min = 0.0F;
+            ptr->rate = ptr->rate_min = ptr->rate_max = 0.0F;
         }
         return ptr;
     }
 
     static double query( debug_profiler * ptr )
     {
-        if ( NULL == ptr ) return 0.0;
+        if ( NULL == ptr ) return 0.0F;
 
-        return ptr->on ? ptr->calc() : 1.0;
+        return ptr->on ? ptr->calc() : 1.0F;
     }
 
     static debug_profiler * begin( debug_profiler * ptr )
@@ -200,12 +200,12 @@ struct debug_profiler
         if ( ptr->on )
         {
             ptr->update();
-            ptr->count = ptr->count * ptr->keep_amt + ptr->new_amt * 1.0;
+            ptr->count = ptr->count * ptr->keep_amt + ptr->new_amt * 1.0F;
             ptr->time  = ptr->time * ptr->keep_amt + ptr->new_amt * ptr->dt;
         }
         else
         {
-            ptr->count += 1.0;
+            ptr->count += 1.0F;
         }
 
         return ptr;
@@ -219,12 +219,12 @@ struct debug_profiler
         {
             ptr->update();
 
-            ptr->count += 1.0;
+            ptr->count += 1.0F;
             ptr->time  += ptr->dt;
         }
         else
         {
-            ptr->count += 1.0;
+            ptr->count += 1.0F;
         }
 
         return ptr;
@@ -237,7 +237,7 @@ private:
         clk_frameStep( state );
         dt = clk_getFrameDuration( state );
 
-        if ( 0.0 == count )
+        if ( 0.0F == count )
         {
             dt_max = dt_min = dt;
         }
@@ -252,16 +252,16 @@ private:
     {
         double old_rate = rate;
 
-        if ( NULL == this || 0.0 == count )
+        if ( NULL == this || 0.0F == count )
         {
-            rate = 0.0;
+            rate = 0.0F;
         }
         else
         {
             rate = time / count;
         }
 
-        if ( 0.0 == old_rate && 0.0 != rate )
+        if ( 0.0F == old_rate && 0.0F != rate )
         {
             rate_min = rate;
             rate_max = rate;
@@ -274,7 +274,6 @@ private:
 
         return rate;
     }
-
 };
 
 #define PROFILE_QUERY_STRUCT(PTR)  debug_profiler::query( &((PTR)->dbg_pro) )
@@ -287,7 +286,7 @@ private:
 #define PROFILE_END(NAME)    debug_profiler::end( &(dbg_pro_##NAME) );
 #define PROFILE_END2(NAME)   debug_profiler::end2( &(dbg_pro_##NAME) );
 
-#if defined(DEBUG_PROFILE) && EGO_DEBUG
+#if (PROFILE_LEVEL > 0)
 #   define PROFILE_INIT_STRUCT(NAME)    dbg_pro(btrue, #NAME)
 #   define PROFILE_DECLARE(NAME)        debug_profiler dbg_pro_##NAME(btrue, #NAME);
 #else
@@ -299,6 +298,7 @@ private:
 #define PROFILE_INIT(NAME)           debug_profiler::reset( &(dbg_pro_##NAME) );
 #define PROFILE_DECLARE_STRUCT(NAME) debug_profiler dbg_pro;
 #define PROFILE_RESET(NAME)          debug_profiler::reset( &(dbg_pro_##NAME) );
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // definition of the reference template

@@ -280,7 +280,7 @@ void net_close_session()
                         break;
 
                     case ENET_EVENT_TYPE_DISCONNECT:
-                        log_info( "net_close_session: Peer id %d disconnected gracefully.\n", event.peer->address.host );
+                        log_info( "%s - Peer id %d disconnected gracefully.\n", __FUNCTION__, event.peer->address.host );
                         numPeers--;
                         break;
 
@@ -296,7 +296,7 @@ void net_close_session()
             }
         }
 
-        log_info( "net_close_session: Disconnecting from network.\n" );
+        log_info( "%s - Disconnecting from network.\n", __FUNCTION__ );
         enet_host_destroy( _gnet.my_host );
         _gnet.my_host = NULL;
         _gnet.game_host = NULL;
@@ -671,7 +671,7 @@ void net_copyFileToAllPlayers( const char *source, const char *dest )
         }
         if ( net_fileTransferTail == net_fileTransferHead )
         {
-            log_warning( "net_copyFileToAllPlayers: Warning!  Queue tail caught up with the head!\n" );
+            log_warning( "%s - Warning!  Queue tail caught up with the head!\n", __FUNCTION__ );
         }
     }
 }
@@ -692,7 +692,7 @@ void net_copyFileToAllPlayersOld_vfs( const char *source, const char *dest )
 
     net_packet tmp_packet;
 
-    log_info( "net_copyFileToAllPlayers: %s, %s\n", source, dest );
+    log_info( "%s - %s, %s\n", __FUNCTION__, source, dest );
     if ( _gnet.initialized && _gnet.hostactive )
     {
         fileisdir = vfs_isDirectory( source );
@@ -802,7 +802,7 @@ void net_copyFileToHost( const char *source, const char *dest )
         }
         if ( net_fileTransferTail == net_fileTransferHead )
         {
-            log_warning( "net_copyFileToHost: Warning!  Queue tail caught up with the head!\n" );
+            log_warning( "%s - Warning!  Queue tail caught up with the head!\n", __FUNCTION__ );
         }
     }
 }
@@ -823,7 +823,7 @@ void net_copyFileToHostOld_vfs( const char *source, const char *dest )
 
     net_packet tmp_packet;
 
-    log_info( "net_copyFileToHost: " );
+    log_info( "%s - ", __FUNCTION__ );
     fileisdir = vfs_isDirectory( source );
     if ( _gnet.hostactive )
     {
@@ -913,7 +913,7 @@ void net_copyDirectoryToHost( const char *dirname, const char *todirname )
     STRING fromname;
     STRING toname;
 
-    log_info( "net_copyDirectoryToHost: %s, %s\n", dirname, todirname );
+    log_info( "%s - %s, %s\n", __FUNCTION__, dirname, todirname );
 
     // Search for all files
     ctxt = vfs_findFirst( dirname, NULL, VFS_SEARCH_FILE | VFS_SEARCH_BARE );
@@ -964,7 +964,7 @@ void net_copyDirectoryToAllPlayers( const char *dirname, const char *todirname )
     STRING fromname;
     STRING toname;
 
-    log_info( "net_copyDirectoryToAllPlayers: %s, %s\n", dirname, todirname );
+    log_info( "%s - %s, %s\n", __FUNCTION__, dirname, todirname );
 
     // Search for all files
     ctxt = vfs_findFirst( dirname, NULL, VFS_SEARCH_FILE | VFS_SEARCH_BARE );
@@ -1013,7 +1013,7 @@ void net_sayHello()
     }
     else if ( _gnet.hostactive )
     {
-        log_info( "net_sayHello: Server saying hello.\n" );
+        log_info( "%s - Server saying hello.\n", __FUNCTION__ );
         net_stats.pla_count_loaded++;
         if ( net_stats.pla_count_loaded >= _gnet.player_count )
         {
@@ -1022,7 +1022,7 @@ void net_sayHello()
     }
     else
     {
-        log_info( "net_sayHello: Client saying hello.\n" );
+        log_info( "%s - Client saying hello.\n", __FUNCTION__ );
         net_packet::start_new( &tmp_packet );
         net_packet::add_UnsignedShort( &tmp_packet, TO_HOST_IM_LOADED );
         net_sendPacketToHostGuaranteed( &tmp_packet );
@@ -1209,7 +1209,7 @@ void net_handlePacket( ENetEvent *event )
     vfs_FILE *file;
     size_t fileSize;
 
-    log_info( "net_handlePacket: Received " );
+    log_info( "%s - Received ", __FUNCTION__ );
 
     packet_startReading( net_read,  event->packet );
     header = packet_readUnsignedShort( net_read );
@@ -1332,7 +1332,7 @@ void net_handlePacket( ENetEvent *event )
             }
             else
             {
-                log_warning( "net_handlePacket: Couldn't write new file!\n" );
+                log_warning( "%s - Couldn't write new file!\n", __FUNCTION__ );
             }
 
             // Acknowledge that we got this file
@@ -1615,17 +1615,17 @@ void net_handlePacket( ENetEvent *event )
                 }
                 if ( stamp < _gnet.next_time_stamp )
                 {
-                    log_warning( "net_handlePacket: OUT OF ORDER PACKET\n" );
+                    log_warning( "%s - OUT OF ORDER PACKET\n", __FUNCTION__ );
                     net_stats.out_of_sync = btrue;
                 }
                 if ( stamp <= update_wld )
                 {
-                    log_warning( "net_handlePacket: LATE PACKET\n" );
+                    log_warning( "%s - LATE PACKET\n", __FUNCTION__ );
                     net_stats.out_of_sync = btrue;
                 }
                 if ( stamp > _gnet.next_time_stamp )
                 {
-                    log_warning( "net_handlePacket: MISSED PACKET\n" );
+                    log_warning( "%s - MISSED PACKET\n", __FUNCTION__ );
                     _gnet.next_time_stamp = stamp;  // Still use it
                     net_stats.out_of_sync = btrue;
                 }
@@ -1691,7 +1691,8 @@ void net_dispatch_packets()
 
                 case ENET_EVENT_TYPE_CONNECT:
                     // don't allow anyone to connect during the game session
-                    log_warning( "net_dispatch_packets: Client tried to connect during the game: %x:%u\n",
+                    log_warning( "%s - Client tried to connect during the game: %x:%u\n",
+                                 __FUNCTION__,
                                  event.peer->address.host, event.peer->address.port );
 #if defined(ENET11)
                     enet_peer_disconnect( event.peer, 0 );
@@ -1709,8 +1710,7 @@ void net_dispatch_packets()
                         net_remote_player_info *info = ( net_remote_player_info * )event.peer->data;
 
                         // uh oh, how do we handle losing a player?
-                        log_warning( "net_dispatch_packets: Player %d disconnected!\n",
-                                     info->which_slot );
+                        log_warning( "%s - Player %d disconnected!\n", __FUNCTION__, info->which_slot );
                     }
                     break;
 
@@ -1949,7 +1949,7 @@ void net_initialize( ego_config_data * pcfg )
     if ( NULL != pcfg && pcfg->cfg_ptr()->network_allowed )
     {
         // initialize enet
-        log_info( "net_initialize: Initializing enet... " );
+        log_info( "%s - Initializing enet... ", __FUNCTION__ );
         if ( 0 != enet_initialize() )
         {
             log_info( "Failure!\n" );
@@ -1969,7 +1969,7 @@ void net_initialize( ego_config_data * pcfg )
     else
     {
         // We're not doing networking this time...
-        log_info( "net_initialize: Networking not enabled.\n" );
+        log_info( "%s - Networking not enabled.\n", __FUNCTION__ );
     }
 }
 
@@ -1978,7 +1978,7 @@ void net_shutDown()
 {
     if ( !_gnet.initialized ) return;
 
-    log_info( "net_shutDown: Turning off networking.\n" );
+    log_info( "%s - Turning off networking.\n", __FUNCTION__ );
     enet_deinitialize();
 }
 
@@ -2023,8 +2023,8 @@ void sv_letPlayersJoin()
                 // Look up the hostname the player is connecting from
                 enet_address_get_host( &event.peer->address, hostName, 64 );
 
-                log_info( "sv_letPlayersJoin: A new player connected from %s:%u\n",
-                          hostName, event.peer->address.port );
+                log_info( "%s - A new player connected from %s:%u\n",
+                          __FUNCTION__, hostName, event.peer->address.port );
 
                 // save the player data here.
                 enet_address_get_host( &event.peer->address, hostName, 64 );
@@ -2035,7 +2035,7 @@ void sv_letPlayersJoin()
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
-                log_info( "sv_letPlayersJoin: Recieved a packet when we weren't expecting it...\n" );
+                log_info( "%s - Recieved a packet when we weren't expecting it...\n", __FUNCTION__ );
                 log_info( "\tIt came from %x:%u\n", event.peer->address.host, event.peer->address.port );
 
                 // clean up the packet
@@ -2043,8 +2043,8 @@ void sv_letPlayersJoin()
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                log_info( "sv_letPlayersJoin: A client disconnected!  Address %x:%u\n",
-                          event.peer->address.host, event.peer->address.port );
+                log_info( "%s - A client disconnected!  Address %x:%u\n",
+                          __FUNCTION__, event.peer->address.host, event.peer->address.port );
 
                 // Reset that peer's data
                 event.peer->data = NULL;
@@ -2066,7 +2066,8 @@ int cl_joinGame( const char* hostname )
     ENetEvent event;
     if ( _gnet.initialized )
     {
-        log_info( "cl_joinGame: Creating client network connection... " );
+        log_info( "%s - Creating client network connection... ", __FUNCTION__ );
+
         // Create my host thingamabober
         /// \todo Should I limit client bandwidth here?
         _gnet.my_host = enet_host_create( NULL, 1, 0, 0 );
@@ -2082,13 +2083,14 @@ int cl_joinGame( const char* hostname )
         };
 
         // Now connect to the remote host
-        log_info( "cl_joinGame: Attempting to connect to %s:%d\n", hostname, NET_EGOBOO_PORT );
+        log_info( "%s - Attempting to connect to %s:%d\n", __FUNCTION__, hostname, NET_EGOBOO_PORT );
+
         enet_address_set_host( &address, hostname );
         address.port = NET_EGOBOO_PORT;
         _gnet.game_host = enet_host_connect( _gnet.my_host, &address, NET_EGOBOO_NUM_CHANNELS );
         if ( NULL == _gnet.game_host )
         {
-            log_info( "cl_joinGame: No available peers to create a connection!\n" );
+            log_info( "%s - No available peers to create a connection!\n", __FUNCTION__ );
             return bfalse;
         }
 
@@ -2096,13 +2098,13 @@ int cl_joinGame( const char* hostname )
         if ( enet_host_service( _gnet.my_host, &event, 5000 ) > 0 &&
              event.type == ENET_EVENT_TYPE_CONNECT )
         {
-            log_info( "cl_joinGame: Connected to %s:%d\n", hostname, NET_EGOBOO_PORT );
+            log_info( "%s - Connected to %s:%d\n", __FUNCTION__, hostname, NET_EGOBOO_PORT );
             return btrue;
             // return create_player(bfalse);
         }
         else
         {
-            log_info( "cl_joinGame: Could not connect to %s:%d!\n", hostname, NET_EGOBOO_PORT );
+            log_info( "% - Could not connect to %s:%d!\n", __FUNCTION__, hostname, NET_EGOBOO_PORT );
         }
     }
 
@@ -2129,11 +2131,11 @@ int sv_hostGame()
         address.host = ENET_HOST_ANY;
         address.port = NET_EGOBOO_PORT;
 
-        log_info( "sv_hostGame: Creating game on port %d\n", NET_EGOBOO_PORT );
+        log_info( "%s - Creating game on port %d\n", __FUNCTION__, NET_EGOBOO_PORT );
         _gnet.my_host = enet_host_create( &address, MAX_PLAYER, 0, 0 );
         if ( NULL == _gnet.my_host )
         {
-            log_info( "sv_hostGame: Could not create network connection!\n" );
+            log_info( "%s - Could not create network connection!\n", __FUNCTION__ );
             return bfalse;
         }
 
@@ -2186,7 +2188,7 @@ void net_file_updateTransfers()
             if ( vfs_isDirectory( state->sourceName ) )
             {
                 // Tell the target to create a directory
-                log_info( "net_updateFileTranfers: Creating directory %s on target\n", state->destName );
+                log_info( "%s - Creating directory %s on target\n", __FUNCTION__, state->destName );
                 net_packet::start_new( &tmp_packet );
                 net_packet::add_UnsignedShort( &tmp_packet, NET_CREATE_DIRECTORY );
                 net_packet::add_String( &tmp_packet, state->destName );
@@ -2199,7 +2201,7 @@ void net_file_updateTransfers()
                 file = vfs_openReadB( state->sourceName );
                 if ( file )
                 {
-                    log_info( "net_file_updateTransfers: Attempting to send %s to %s\n", state->sourceName, state->destName );
+                    log_info( "%s - Attempting to send %s to %s\n", __FUNCTION__, state->sourceName, state->destName );
 
                     fileSize = vfs_fileLength( file );
                     vfs_seek( file, 0 );
@@ -2237,7 +2239,7 @@ void net_file_updateTransfers()
                 }
                 else
                 {
-                    log_warning( "net_file_updateTransfers: Could not open file %s to send it!\n", state->sourceName );
+                    log_warning( "%s - Could not open file %s to send it!\n", __FUNCTION__, state->sourceName );
                 }
             }
 

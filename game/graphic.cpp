@@ -480,7 +480,7 @@ int ogl_init()
     GL_DEBUG( glTexGeni )( GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP );  // Set The Texture Generation Mode For T To Sphere Mapping (NEW)
 
     //Initialize the motion blur buffer
-    GL_DEBUG( glClearAccum )( 0.0, 0.0, 0.0, 1.0 );
+    GL_DEBUG( glClearAccum )( 0.0f, 0.0f, 0.0f, 1.0f );
     GL_DEBUG( glClear )( GL_ACCUM_BUFFER_BIT );
 
     // Load the current graphical settings
@@ -1516,49 +1516,42 @@ int draw_fps( int y )
     if ( fpson )
     {
         y = _draw_string_raw( 0, y, "%2.3f FPS, %2.3f UPS, Update lag = %d", stabilized_fps, stabilized_ups, update_lag );
-
-#if EGO_DEBUG
-
-#    if defined(DEBUG_BSP) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtObjList.free_count() );
-        y = _draw_string_raw( 0, y, "BSP collisions %d", CHashList_inserted );
-        y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", ego_chr::stoppedby_tests + ego_chr::pressure_tests, ego_prt::stoppedby_tests + ego_prt::pressure_tests );
-#    endif
-
-#if defined(DEBUG_RENDERLIST) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "Renderlist tiles %d/%d", renderlist.all_count, PMesh->info.tiles_count );
-#endif
-
-#    if defined(DEBUG_PROFILE_DISPLAY) && EGO_DEBUG
-
-#        if defined(DEBUG_PROFILE_RENDER) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "estimated max FPS %2.3f UPS %4.2f GFX %4.2f", est_max_fps, est_max_ups, est_max_gfx );
-        y = _draw_string_raw( 0, y, "gfx:total %2.4f, render:total %2.4f", est_render_time, time_draw_scene );
-        y = _draw_string_raw( 0, y, "render:init %2.4f,  render:mesh %2.4f", time_render_scene_init, time_render_scene_mesh );
-        y = _draw_string_raw( 0, y, "render:solid %2.4f, render:water %2.4f", time_render_scene_solid, time_render_scene_water );
-        y = _draw_string_raw( 0, y, "render:trans %2.4f", time_render_scene_trans );
-#        endif
-
-#        if defined(DEBUG_PROFILE_MESH) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "mesh:total %2.4f", time_render_scene_mesh );
-        y = _draw_string_raw( 0, y, "mesh:dolist_sort %2.4f, mesh:ndr %2.4f", time_render_scene_mesh_dolist_sort , time_render_scene_mesh_ndr );
-        y = _draw_string_raw( 0, y, "mesh:drf_back %2.4f, mesh:ref %2.4f", time_render_scene_mesh_drf_back, time_render_scene_mesh_ref );
-        y = _draw_string_raw( 0, y, "mesh:ref_chr %2.4f, mesh:drf_solid %2.4f", time_render_scene_mesh_ref_chr, time_render_scene_mesh_drf_solid );
-        y = _draw_string_raw( 0, y, "mesh:render_shadows %2.4f", time_render_scene_mesh_render_shadows );
-#        endif
-
-#        if defined(DEBUG_PROFILE_INIT) && EGO_DEBUG
-        y = _draw_string_raw( 0, y, "init:total %2.4f", time_render_scene_init );
-        y = _draw_string_raw( 0, y, "init:renderlist_make %2.4f, init:dolist_make %2.4f", time_render_scene_init_renderlist_make, time_render_scene_init_dolist_make );
-        y = _draw_string_raw( 0, y, "init:do_grid_lighting %2.4f, init:light_fans %2.4f", time_render_scene_init_do_grid_dynalight, time_render_scene_init_light_fans );
-        y = _draw_string_raw( 0, y, "init:update_all_chr_instance %2.4f", time_render_scene_init_update_all_chr_instance );
-        y = _draw_string_raw( 0, y, "init:update_all_prt_instance %2.4f", time_render_scene_init_update_all_prt_instance );
-#        endif
-
-#    endif
-
-#endif
     }
+
+#    if defined(BSP_INFO)
+    y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtObjList.free_count() );
+    y = _draw_string_raw( 0, y, "BSP collisions %d", collision_system::hash_nodes_inserted );
+    y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", ego_chr::stoppedby_tests + ego_chr::pressure_tests, ego_prt::stoppedby_tests + ego_prt::pressure_tests );
+#    endif
+
+#if defined(RENDERLIST_INFO)
+    y = _draw_string_raw( 0, y, "Renderlist tiles %d/%d", renderlist.all_count, PMesh->info.tiles_count );
+#endif
+
+#if defined(PROFILE_RENDER) && PROFILE_DISPLAY
+    y = _draw_string_raw( 0, y, "estimated max FPS %2.3f UPS %4.2f GFX %4.2f", est_max_fps, est_max_ups, est_max_gfx );
+    y = _draw_string_raw( 0, y, "gfx:total %2.4g, render:total %2.4g", est_render_time, time_draw_scene );
+    y = _draw_string_raw( 0, y, "render:init %2.4g,  render:mesh %2.4g", time_render_scene_init, time_render_scene_mesh );
+    y = _draw_string_raw( 0, y, "render:solid %2.4g, render:water %2.4g", time_render_scene_solid, time_render_scene_water );
+    y = _draw_string_raw( 0, y, "render:trans %2.4g", time_render_scene_trans );
+#endif
+
+#if defined(PROFILE_MESH) && PROFILE_DISPLAY
+    y = _draw_string_raw( 0, y, "mesh:total %2.4g", time_render_scene_mesh );
+    y = _draw_string_raw( 0, y, "mesh:dolist_sort %2.4g, mesh:ndr %2.4g", time_render_scene_mesh_dolist_sort , time_render_scene_mesh_ndr );
+    y = _draw_string_raw( 0, y, "mesh:drf_back %2.4g, mesh:ref %2.4g", time_render_scene_mesh_drf_back, time_render_scene_mesh_ref );
+    y = _draw_string_raw( 0, y, "mesh:ref_chr %2.4g, mesh:drf_solid %2.4g", time_render_scene_mesh_ref_chr, time_render_scene_mesh_drf_solid );
+    y = _draw_string_raw( 0, y, "mesh:render_shadows %2.4g", time_render_scene_mesh_render_shadows );
+#endif
+
+#if defined(PROFILE_INIT) && PROFILE_DISPLAY
+    y = _draw_string_raw( 0, y, "init:total %2.4g", time_render_scene_init );
+    y = _draw_string_raw( 0, y, "init:renderlist_make %2.4g, init:dolist_make %2.4g", time_render_scene_init_renderlist_make, time_render_scene_init_dolist_make );
+    y = _draw_string_raw( 0, y, "init:do_grid_lighting %2.4g, init:light_fans %2.4g", time_render_scene_init_do_grid_dynalight, time_render_scene_init_light_fans );
+    y = _draw_string_raw( 0, y, "init:update_all_chr_instance %2.4g", time_render_scene_init_update_all_chr_instance );
+    y = _draw_string_raw( 0, y, "init:update_all_prt_instance %2.4g", time_render_scene_init_update_all_prt_instance );
+#endif
+
 
     return y;
 }
@@ -1642,21 +1635,21 @@ int draw_debug_player( PLA_REF ipla, int y )
 //--------------------------------------------------------------------------------------------
 int draw_debug( int y )
 {
-    PLA_REF ipla;
-    ego_player * ppla;
+    //PLA_REF ipla;
+    //ego_player * ppla;
 
     if ( !cfg.dev_mode ) return y;
 
     // draw the character's speed
-    ppla = PlaDeque.find_by_ref( PLA_REF( 0 ) );
-    if ( NULL != ppla && ppla->valid ) return y;
-    {
-        ego_chr * pchr = ChrObjList.get_allocated_data_ptr( ppla->index );
-        if ( DEFINED_PCHR( pchr ) )
-        {
-            y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", ipla.get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
-        }
-    }
+    //ppla = PlaDeque.find_by_ref( PLA_REF( 0 ) );
+    //if ( NULL != ppla && ppla->valid )
+    //{
+    //    ego_chr * pchr = ChrObjList.get_allocated_data_ptr( ppla->index );
+    //    if ( DEFINED_PCHR( pchr ) )
+    //    {
+    //        y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", ipla.get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
+    //    }
+    //}
 
     if ( SDLKEYDOWN( SDLK_F5 ) )
     {
@@ -2704,9 +2697,9 @@ void render_scene( ego_mpd   * pmesh, ego_camera * pcam )
     }
     PROFILE_END( render_scene_trans );
 
-#if EGO_DEBUG
-    //render_all_prt_attachment();
-#endif
+//#if EGO_DEBUG
+//    render_all_prt_attachment();
+//#endif
 
 #if EGO_DEBUG && defined(DEBUG_PRT_BBOX)
     render_all_prt_bbox();
@@ -3004,7 +2997,7 @@ void render_world( ego_camera * pcam )
             //Do motion blur
             GL_DEBUG( glAccum )( GL_MULT, pcam->motion_blur );
             GL_DEBUG( glAccum )( GL_ACCUM, 1.00f - pcam->motion_blur );
-            GL_DEBUG( glAccum )( GL_RETURN, 1.0 );
+            GL_DEBUG( glAccum )( GL_RETURN, 1.0f );
         }
     }
     gfx_end_3d();
@@ -3829,7 +3822,7 @@ void render_all_billboards( ego_camera * pcam )
 
                 if ( !pbb->valid ) continue;
 
-                render_billboard( pcam, pbb, 0.75 );
+                render_billboard( pcam, pbb, 0.75f );
             }
         }
         ATTRIB_POP( "render_all_billboards()" );
@@ -4229,10 +4222,10 @@ void dolist_make( ego_mpd   * pmesh )
 
     PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
-        if ( ego_mpd::grid_is_valid( pmesh, prt_bdl.prt_ptr->onwhichgrid ) )
+        if ( ego_mpd::grid_is_valid( pmesh, prt_bdl.prt_ptr()->onwhichgrid ) )
         {
             // Add the character
-            dolist_add_prt( pmesh, prt_bdl.prt_ref );
+            dolist_add_prt( pmesh, prt_bdl.prt_ref() );
         }
     }
     PRT_END_LOOP();
@@ -4837,13 +4830,13 @@ void load_bars()
     pname = "mp_data/bars";
     if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( pname, TX_REF( TX_BARS ), TRANSCOLOR ) )
     {
-        log_warning( "load_bars() - Cannot load file! (\"%s\")\n", pname );
+        log_warning( "%s - Cannot load file! (\"%s\")\n", __FUNCTION__, pname );
     }
 
     pname = "mp_data/xpbar";
     if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( pname, TX_REF( TX_XP_BAR ), TRANSCOLOR ) )
     {
-        log_warning( "load_bars() - Cannot load file! (\"%s\")\n", pname );
+        log_warning( "%s - Cannot load file! (\"%s\")\n", __FUNCTION__, pname );
     }
 }
 
@@ -4865,7 +4858,7 @@ void load_map()
     szMap = "mp_data/plan";
     if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( szMap, TX_REF( TX_MAP ), INVALID_KEY ) )
     {
-        log_debug( "load_map() - Cannot load file! (\"%s\")\n", szMap );
+        log_debug( "%s - Cannot load file! (\"%s\")\n", __FUNCTION__, szMap );
     }
     else
     {
@@ -5232,7 +5225,7 @@ void light_fans( ego_renderlist * prlist )
     /// intensity differences when the intensity is low.
     ///
     /// \note it is normally assumed that 64 colors of gray can make a smoothly colored black and white picture
-    /// which means that the threshold could be set as low as 1/64 = 0.015625.
+    /// which means that the threshold could be set as low as 1/64 = 0.015625f.
     const float delta_threshold = 0.05f;
 
     ego_mpd        * pmesh;
@@ -5498,16 +5491,16 @@ void gfx_make_dynalist( ego_camera * pcam )
     dyna_distancetobeat = 1e12;
     PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
-        prt_bdl.prt_ptr->inview = bfalse;
+        prt_bdl.prt_ptr()->inview = bfalse;
 
-        if ( !ego_mpd::grid_is_valid( PMesh, prt_bdl.prt_ptr->onwhichgrid ) ) continue;
+        if ( !ego_mpd::grid_is_valid( PMesh, prt_bdl.prt_ptr()->onwhichgrid ) ) continue;
 
-        prt_bdl.prt_ptr->inview = PMesh->tmem.tile_list[prt_bdl.prt_ptr->onwhichgrid].inrenderlist;
+        prt_bdl.prt_ptr()->inview = PMesh->tmem.tile_list[prt_bdl.prt_ptr()->onwhichgrid].inrenderlist;
 
         // Set up the lights we need
-        if ( !prt_bdl.prt_ptr->dynalight.on ) continue;
+        if ( !prt_bdl.prt_ptr()->dynalight.on ) continue;
 
-        vdist = fvec3_sub( ego_prt::get_pos_v( prt_bdl.prt_ptr ), pcam->track_pos.v );
+        vdist = fvec3_sub( ego_prt::get_pos_v( prt_bdl.prt_ptr() ), pcam->track_pos.v );
 
         distance = vdist.x * vdist.x + vdist.y * vdist.y + vdist.z * vdist.z;
         if ( distance < dyna_distancetobeat )
@@ -5553,9 +5546,9 @@ void gfx_make_dynalist( ego_camera * pcam )
 
             if ( found )
             {
-                dyna_list[slot].pos     = ego_prt::get_pos( prt_bdl.prt_ptr );
-                dyna_list[slot].level   = prt_bdl.prt_ptr->dynalight.level;
-                dyna_list[slot].falloff = prt_bdl.prt_ptr->dynalight.falloff;
+                dyna_list[slot].pos     = ego_prt::get_pos( prt_bdl.prt_ptr() );
+                dyna_list[slot].level   = prt_bdl.prt_ptr()->dynalight.level;
+                dyna_list[slot].falloff = prt_bdl.prt_ptr()->dynalight.falloff;
             }
         }
     }

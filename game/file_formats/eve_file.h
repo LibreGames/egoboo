@@ -114,7 +114,7 @@ extern "C"
 /// \details An internal representation of the "enchant.txt" file
     struct s_eve_data
     {
-        EGO_PROFILE_STUFF;
+        EGO_PROFILE_STUFF
 
         bool_t  override;                    ///< Override other enchants?
         bool_t  removeoverridden;            ///< Remove other enchants?
@@ -128,7 +128,7 @@ extern "C"
         Uint8   dontdamagetype;              ///< Don't work if ...
         Uint8   onlydamagetype;              ///< Only work if ...
         IDSZ    removedbyidsz;               ///< By particle or [NONE]
-        Uint16  contspawn_delay;              ///< Spawn timer
+        Uint16  contspawn_timer;              ///< Spawn timer
         Uint8   contspawn_amount;            ///< Spawn amount
         Uint16  contspawn_facingadd;         ///< Spawn in circle
         int     contspawn_pip;               ///< Spawn type ( local )
@@ -151,10 +151,6 @@ extern "C"
 
         // other values that are enchanted
         bool_t  seekurse;                    ///< Allow target to see kurses
-
-        // debugging parameters
-        int ego_enc_request_count;                ///< a way to tell how popular this enchant is
-        int ego_enc_create_count;                 ///< if this number is significantly less than the ego_enc_request_count, there is a problem.
     };
     typedef struct s_eve_data eve_data_t;
 

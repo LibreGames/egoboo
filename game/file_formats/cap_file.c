@@ -117,10 +117,9 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
 
     cap_data_init( pcap );
 
-    // mark the source filename
+    // set up the EGO_PROFILE_STUFF
     strncpy( pcap->name, szLoadName, SDL_arraysize( pcap->name ) );
-
-    // mark it as loaded
+    pcap->name[ SDL_arraysize( pcap->name ) - 1 ] = CSTR_END;
     pcap->loaded = btrue;
 
     // Read in the real general data
@@ -439,7 +438,7 @@ cap_data_t * load_one_cap_data_file_vfs( const char * tmploadname, cap_data_t * 
 
     vfs_close( fileread );
 
-    //log_info( "load_one_character_profile_vfs() - loaded cap \"%s\"(%d)\n", pcap->classname, icap );
+    //log_info( "%s - loaded cap \"%s\"(%d)\n", __FUNCTION__, pcap->classname, icap );
 
     return pcap;
 }

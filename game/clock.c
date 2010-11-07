@@ -138,7 +138,7 @@ ClockState_t * clk_ctor( ClockState_t * cs, const char * name, int window_size )
     cs->sourceStartTime = psrc();
     cs->sourceLastTime  = cs->sourceStartTime;
 
-    cs->maximumFrameTime = 0.2;
+    cs->maximumFrameTime = 0.2F;
     cs->name = name;
 
     if ( window_size < 0 ) window_size = 1;
@@ -317,7 +317,7 @@ Uint32 clk_getFrameNumber( ClockState_t * cs )
 //--------------------------------------------------------------------------------------------
 float clk_getFrameRate( ClockState_t * cs )
 {
-    return ( float )( 1.0 / cs->frameTime );
+    return ( float )( 1.0F / cs->frameTime );
 }
 
 //--------------------------------------------------------------------------------------------

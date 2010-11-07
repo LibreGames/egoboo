@@ -423,7 +423,7 @@ bool_t sound_load( snd_mix_ptr * ptr, const char * szFileName, snd_mix_type type
 
         default:
             // there is an error only if the file exists and can't be loaded
-            log_debug( "sound_load() - Mix type recognized %d.\n", type );
+            log_debug( "%s - Mix type recognized %d.\n", __FUNCTION__, type );
             break;
     };
 
@@ -498,7 +498,7 @@ void sound_restart()
         }
         else
         {
-            log_warning( "sound_restart() - Cannot get the sound module to restart. (%s)\n", Mix_GetError() );
+            log_warning( "%s - Cannot get the sound module to restart. (%s)\n", __FUNCTION__, Mix_GetError() );
         }
     }
 }

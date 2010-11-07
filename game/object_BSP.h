@@ -24,7 +24,9 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
+struct ego_chr;
 struct mpd_BSP;
+struct ego_bundle_prt;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -42,7 +44,7 @@ struct ego_obj_BSP
     ego_obj_BSP() {};
     ~ego_obj_BSP() { dtor_this( this ); };
 
-    static bool_t ctor_this( ego_obj_BSP * pbsp, struct mpd_BSP   * pmesh_bsp );
+    static bool_t ctor_this( ego_obj_BSP * pbsp, mpd_BSP * pmesh_bsp );
     static bool_t dtor_this( ego_obj_BSP * pbsp );
 
     static bool_t alloc( ego_obj_BSP * pbsp, int depth );
@@ -52,9 +54,9 @@ struct ego_obj_BSP
     static bool_t empty( ego_obj_BSP * pbsp );
 
     //bool_t insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pnode, int depth, int address_x[], int address_y[], int address_z[] );
-    static bool_t insert_chr( ego_obj_BSP * pbsp, struct ego_chr * pchr );
-    static bool_t insert_prt( ego_obj_BSP * pbsp, struct ego_bundle_prt * pbdl_prt );
+    static bool_t insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr );
+    static bool_t insert_prt( ego_obj_BSP * pbsp, const ego_bundle_prt & bdl_prt );
 
-    static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
+    static int    collide( ego_obj_BSP * pbsp, ego_BSP_aabb & bbox, leaf_child_list_t & colst );
 };
 

@@ -56,51 +56,52 @@
 
 // this line can be added to get some debugging features enabled in release mode
 // the compiler will complain
-//#define EGO_DEBUG 1
+//#define EGO_DEBUG 0
 
-// Some macro switches
+//--- experimental game features
 #undef  OLD_CAMERA_MODE       ///< Use the old camera style
 #undef  ENABLE_BODY_GRAB      ///< Enable the grabbing of bodies?
-#undef  TEST_NAN_RESULT       ///< Test the result of certain math operations
-
 #undef  USE_LUA_CONSOLE       ///< LUA support for the console
-
-#undef  RENDER_HMAP           ///< render the mesh's heightmap?
-#undef  DEBUG_MESH_NORMALS    ///< render the mesh normals
-#define LOG_TO_CONSOLE        ///< dump all log info to file and to the console. Only useful if your compiler generates console for program output. Otherwise the results will end up in a file called stdout.txt
-
-#undef  DEBUG_BSP             ///< Print debugging info about the BSP/octree state
-
-#undef  DEBUG_RENDERLIST      ///< Print debugging info for the currently rendered mesh
-
-#define DEBUG_PROFILE         ///< Switch the profiling functions on and off
-#undef  DEBUG_PROFILE_DISPLAY ///< Display the results for the performance profiling
-#undef  DEBUG_PROFILE_RENDER  ///< Display the results for the performance profiling of the generic rendering
-#undef  DEBUG_PROFILE_MESH    ///< Display the results for the performance profiling of the mesh rendering sub-system
-#undef  DEBUG_PROFILE_INIT    ///< Display the results for the performance profiling of the rendering initialization
-
-#undef  DEBUG_OBJECT_SPAWN    ///< Log debug info for every object spawned
-
-#undef  DEBUG_LIST          ///< Perform some extra steps to make sure the data in the XxxObjList do not become corrupt
 
 #define CLIP_LIGHT_FANS      ///< is the light_fans() function going to be throttled?
 #define CLIP_ALL_LIGHT_FANS  ///< a switch for selecting how the fans will be updated
 
+//---- graphics feedback
+#undef  RENDER_HMAP           ///< render the mesh's heightmap?
+#undef  DEBUG_MESH_NORMALS    ///< render the mesh normals
+#undef  DEBUG_CHR_BBOX        ///< display the all character bounding boxes
+#undef  DEBUG_PRT_BBOX        ///< display the all particle bounding boxes
+
+//---- generic debugging
+#define LOG_TO_CONSOLE        ///< dump all log info to file and to the console. Only useful if your compiler generates console for program output. Otherwise the results will end up in a file called stdout.txt
+#define DEBUG_OBJECT_SPAWN    ///< Log debug info for every object spawned
+#define TEST_NAN_RESULT       ///< Test the result of certain math operations
 #undef  DEBUG_WAYPOINTS      ///< display error messages when adding waypoints
 
 /// How much script debugging.
 ///    0 -- debugging off ( requires EGO_DEBUG )
-/// >= 1 -- Log the amount of script time that every object uses (requires EGO_DEBUG and DEBUG_PROFILE)
-/// >= 2 -- Log the amount of time that every single script command uses (requires EGO_DEBUG and DEBUG_PROFILE)
+/// >= 1 -- Log the amount of script time that every object uses (requires EGO_DEBUG and PROFILE_LEVEL)
+/// >= 2 -- Log the amount of time that every single script command uses (requires EGO_DEBUG and PROFILE_LEVEL)
 /// >= 3 -- decompile every script (requires EGO_DEBUG)
 #define DEBUG_SCRIPT_LEVEL 0
 
-#undef DEBUG_CPP_LISTS
-
-#undef  DEBUG_CHR_BBOX        ///< display the all character bounding boxes
-#undef  DEBUG_PRT_BBOX        ///< display the all particle bounding boxes
-
+//---- list debugging
 #define USE_HASH              ///< use stdext::hash_map and stdext::hash_set instead of std::map and std::set
+#undef  DEBUG_LIST            ///< Perform some extra steps to make sure the data in the XxxObjList do not become corrupt
+#undef  DEBUG_CPP_LISTS
+
+//---- performance feedback
+#undef  BSP_INFO             ///< Print info about the BSP/octree state
+#undef  RENDERLIST_INFO      ///< Print info for the currently rendered mesh
+
+/// How much profiling
+///    0 -- profiling off ( does not require EGO_DEBUG )
+/// >= 1 -- calculate profiling
+#define PROFILE_LEVEL                    0
+#define PROFILE_DISPLAY (PROFILE_LEVEL > 0)    ///< Display the results for the performance profiling
+#undef  PROFILE_INIT                           ///< Display the results for the performance profiling of the rendering initialization
+#undef  PROFILE_RENDER                         ///< Display the results for the performance profiling of the generic rendering
+#undef  PROFILE_MESH                           ///< Display the results for the performance profiling of the mesh rendering sub-system
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

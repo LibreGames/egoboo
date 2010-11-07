@@ -54,18 +54,20 @@ struct ego_BSP_aabb
     ego_BSP_aabb( size_t _dim = 0 ) : mins( _dim ), maxs( _dim ), mids( _dim ) { clear( this ); init( this, _dim ); };
     ~ego_BSP_aabb()                { deinit( this ); };
 
+    void invalidate();
+
     static ego_BSP_aabb * init( ego_BSP_aabb * pbb, size_t dim );
     static ego_BSP_aabb * deinit( ego_BSP_aabb * pbb );
 
     static ego_BSP_aabb * alloc( ego_BSP_aabb * pbb, size_t dim );
     static ego_BSP_aabb * dealloc( ego_BSP_aabb * pbb );
-    static bool_t         reset( ego_BSP_aabb * psrc );
-    static bool_t         empty( ego_BSP_aabb * psrc1 );
 
-    static bool_t         from_oct_bb( ego_BSP_aabb * pdst, ego_oct_bb   * psrc );
+    static bool_t         reset( ego_BSP_aabb & src );
+    static bool_t         empty( const ego_BSP_aabb & src1 );
+    static bool_t         lhs_contains_rhs( const ego_BSP_aabb & lhs, const ego_BSP_aabb & rhs );
+    static bool_t         lhs_intersects_rhs( const ego_BSP_aabb & lhs, const ego_BSP_aabb & rhs );
 
-    static bool_t         test_intersection( const ego_BSP_aabb & lhs, const ego_BSP_aabb & rhs );
-    static bool_t         lhs_contains_rhs( const ego_BSP_aabb & psrc1, const ego_BSP_aabb & psrc2 );
+    static bool_t         from_oct_bb( ego_BSP_aabb & dst, const ego_oct_bb & src );
 
 private:
     static ego_BSP_aabb * clear( ego_BSP_aabb * ptr )
@@ -101,6 +103,8 @@ struct ego_BSP_leaf
     static ego_BSP_leaf * alloc( ego_BSP_leaf * L, int dim );
     static ego_BSP_leaf * dealloc( ego_BSP_leaf * L );
 
+    void invalidate() { clear( this ); }
+
 private:
     static ego_BSP_leaf * clear( ego_BSP_leaf * ptr )
     {
@@ -111,6 +115,8 @@ private:
         ptr->data_type = -1;
         ptr->data = NULL;
         ptr->index = size_t( -1 );
+
+        ptr->bbox.invalidate();
 
         return ptr;
     }
@@ -173,7 +179,7 @@ private:
         return ptr;
     }
 
-    static bool_t             collide( ego_BSP_branch * pbranch, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
+    static bool_t             collide( ego_BSP_branch * pbranch, ego_BSP_aabb & bb, leaf_child_list_t & colst );
     static bool_t             dealloc_nodes( ego_BSP_branch * B, bool_t recursive = bfalse );
 };
 
@@ -227,7 +233,7 @@ struct ego_BSP_tree
     static bool_t             insert_leaf( ego_BSP_tree   * ptree, ego_BSP_leaf * pleaf );
 
     static bool_t             generate_aabb_child( ego_BSP_aabb * psrc, int index, ego_BSP_aabb * pdst );
-    static int                collide( ego_BSP_tree   * tree, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
+    static int                collide( ego_BSP_tree   * tree, ego_BSP_aabb & bb, leaf_child_list_t & colst );
 
 protected:
 

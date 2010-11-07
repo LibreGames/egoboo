@@ -170,7 +170,7 @@ bool_t pro_init( ego_pro * pobj )
 
     if ( pobj->loaded )
     {
-        log_warning( "pro_init() - trying to init an object in use" );
+        log_warning( "%s - trying to init an object in use", __FUNCTION__ );
     }
 
     //---- reset everything to safe values
@@ -781,11 +781,11 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
         // The data file wasn't found
         if ( required )
         {
-            log_warning( "load_one_profile_vfs() - \"%s\" was not found. Overriding a global object?\n", tmploadname );
+            log_warning( "%s - \"%s\" was not found. Overriding a global object?\n", __FUNCTION__, tmploadname );
         }
         else if ( CapStack.valid_idx( slot_override ) && slot_override > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "load_one_profile_vfs() - Not able to open file \"%s\"\n", tmploadname );
+            log_warning( "%s - Not able to open file \"%s\"\n", __FUNCTION__, tmploadname );
         }
 
         return MAX_PROFILE;
@@ -803,11 +803,11 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
         // Make sure global objects don't load over existing models
         if ( required && SPELLBOOK == iobj )
         {
-            log_error( "load_one_profile_vfs() - object slot %i is a special reserved slot number (cannot be used by %s).\n", SPELLBOOK, tmploadname );
+            log_error( "%s - object slot %i is a special reserved slot number (cannot be used by %s).\n", __FUNCTION__, SPELLBOOK, tmploadname );
         }
         else if ( required && overrideslots )
         {
-            log_error( "load_one_profile_vfs() - object slot %i used twice (%s, %s)\n", iobj.get_value(), tmp_pobj->name, tmploadname );
+            log_error( "%s - object slot %i used twice (%s, %s)\n", __FUNCTION__, iobj.get_value(), tmp_pobj->name, tmploadname );
         }
         else
         {
@@ -820,7 +820,7 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
     iobj = ProList_get_free( iobj );
     if ( !VALID_PRO_RANGE( iobj ) )
     {
-        log_warning( "load_one_profile_vfs() - Cannot allocate object %d (\"%s\")\n", iobj.get_value(), tmploadname );
+        log_warning( "%s - Cannot allocate object %d (\"%s\")\n", __FUNCTION__, iobj.get_value(), tmploadname );
         return MAX_PROFILE;
     }
 
@@ -877,8 +877,9 @@ int load_one_profile_vfs( const char* tmploadname, int slot_override )
         mad_make_equally_lit( pobj->imad );
     }
 
-    // mark the profile as loaded
+    // set up the EGO_PROFILE_STUFF
     strncpy( pobj->name, tmploadname, SDL_arraysize( pobj->name ) );
+    pobj->name[ SDL_arraysize( pobj->name ) - 1 ] = CSTR_END;
     pobj->loaded = btrue;
 
     return islot;

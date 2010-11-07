@@ -213,14 +213,14 @@ mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
     fileread = fopen( loadname, "rb" );
     if ( NULL == fileread )
     {
-        log_warning( "mpd_load() - cannot find \"%s\"!!\n", loadname );
+        log_warning( "%s - cannot find \"%s\"!!\n", __FUNCTION__, loadname );
         return NULL;
     }
 
     fread( &itmp, 4, 1, fileread );
     if ( MAPID != ( Uint32 )ENDIAN_INT32( itmp ) )
     {
-        log_warning( "mpd_load() - this is not a valid level.mpd!!\n" );
+        log_warning( "%s - this is not a valid level.mpd!!\n", __FUNCTION__ );
         fclose( fileread );
         return NULL;
     }
@@ -233,7 +233,7 @@ mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
     if ( pinfo->tiles_x >= MAXMESHTILEY )
     {
         mpd_dtor( pmesh );
-        log_warning( "mpd_load() - invalid mpd size. Mesh too large in x direction.\n" );
+        log_warning( "%s - invalid mpd size. Mesh too large in x direction.\n", __FUNCTION__ );
         fclose( fileread );
         return NULL;
     }
@@ -242,7 +242,7 @@ mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
     if ( pinfo->tiles_y >= MAXMESHTILEY )
     {
         mpd_dtor( pmesh );
-        log_warning( "mpd_load() - invalid mpd size. Mesh too large in y direction.\n" );
+        log_warning( "%s - invalid mpd size. Mesh too large in y direction.\n", __FUNCTION__ );
         fclose( fileread );
         return NULL;
     }
@@ -252,7 +252,7 @@ mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
     {
         mpd_dtor( pmesh );
         fclose( fileread );
-        log_warning( "mpd_load() - could not allocate memory for the mesh!!\n" );
+        log_warning( "%s - could not allocate memory for the mesh!!\n", __FUNCTION__ );
         return NULL;
     }
 
@@ -362,7 +362,7 @@ bool_t mpd_mem_alloc( mpd_mem_t * pmem, mpd_info_t * pinfo )
 
     if ( pinfo->vertcount > MESH_MAXTOTALVERTRICES )
     {
-        log_warning( "mpd_mem_alloc() - mesh requires too much memory ( %d requested, but max is %d ). \n", pinfo->vertcount, MESH_MAXTOTALVERTRICES );
+        log_warning( "%s - mesh requires too much memory ( %d requested, but max is %d ). \n", __FUNCTION__, pinfo->vertcount, MESH_MAXTOTALVERTRICES );
         return bfalse;
     }
 
@@ -371,7 +371,7 @@ bool_t mpd_mem_alloc( mpd_mem_t * pmem, mpd_info_t * pinfo )
     if ( NULL == pmem->vlst )
     {
         mpd_mem_free( pmem );
-        log_error( "mpd_mem_alloc() - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n" );
+        log_error( "%s - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n", __FUNCTION__ );
         return bfalse;
     }
     pmem->vcount = pinfo->vertcount;
@@ -381,7 +381,7 @@ bool_t mpd_mem_alloc( mpd_mem_t * pmem, mpd_info_t * pinfo )
     if ( NULL == pmem->tile_list )
     {
         mpd_mem_free( pmem );
-        log_error( "mpd_mem_alloc() - not enough memory to allocate the tile info\n" );
+        log_error( "%s - not enough memory to allocate the tile info\n", __FUNCTION__ );
         return bfalse;
     }
     pmem->tile_count = tile_count;

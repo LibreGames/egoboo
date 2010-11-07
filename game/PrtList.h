@@ -79,9 +79,9 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 #define WAITING_PPRT( PPRT )        ( ALLOCATED_PPRT(PPRT) && WAITING_PBASE(PPRT_CGET_POBJ(PPRT)) )
 
 /// Is the particle flagged as being in limbo?
-#define FLAG_LIMBO_PPRT_OBJ( PPRT_OBJ )  ( (PPRT_OBJ)->obj_base_display )
+#define FLAG_DISPLAY_PPRT_OBJ( PPRT_OBJ )  ( (PPRT_OBJ)->obj_base_display )
 /// Is the particle object in limbo?
-#define STATE_LIMBO_PPRT_OBJ( PPRT_OBJ ) ( FLAG_VALID_PBASE(PPRT_OBJ) && FLAG_LIMBO_PPRT_OBJ(PPRT_OBJ) )
+#define STATE_LIMBO_PPRT_OBJ( PPRT_OBJ ) (STATE_PROCESSING_PBASE(PBASE) || STATE_WAITING_PBASE(PBASE))
 
 //--------------------------------------------------------------------------------------------
 // Macros to automate looping through a PrtObjList. Based on generic code for
@@ -169,8 +169,8 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 
 // the same as INGAME_*_BASE except that the particle does not have to be "on"
 // visible particles stick around in the active state (but off) until they have been displayed at least once
-#define LIMBO_PRT(IPRT)            ( INGAME_PRT(IPRT)  && FLAG_LIMBO_PPRT_OBJ( IPRT_GET_PCONT(IPRT) ) )
-#define LIMBO_PPRT(PPRT)           ( INGAME_PPRT(PPRT) && FLAG_LIMBO_PPRT_OBJ( PDATA_GET_POBJ(ego_prt, PPRT) ) )
+#define LIMBO_PRT(IPRT)            ( FLAG_INITIALIZED_PBASE(IPRT_GET_POBJ(IPRT)) && !FLAG_ON_PBASE(IPRT_GET_POBJ(IPRT)) && FLAG_DISPLAY_PPRT_OBJ( IPRT_GET_POBJ(IPRT) ) )
+#define LIMBO_PPRT(PPRT)           ( FLAG_INITIALIZED_PBASE(PDATA_GET_POBJ(ego_prt, PPRT)) && !FLAG_ON_PBASE(PDATA_GET_POBJ(ego_prt, PPRT)) && FLAG_DISPLAY_PPRT_OBJ( PDATA_GET_POBJ(ego_prt, PPRT) ) )
 
 //--------------------------------------------------------------------------------------------
 // list definition

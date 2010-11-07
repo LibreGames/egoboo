@@ -232,7 +232,7 @@ struct ego_ai_bundle
 
     static ego_ai_bundle * ctor_this( ego_ai_bundle * pbundle );
     static ego_ai_bundle * validate( ego_ai_bundle * pbundle );
-    static ego_ai_bundle * set( ego_ai_bundle * pbundle, struct ego_chr * pchr );
+    static ego_ai_bundle * set( ego_ai_bundle * pbundle, ego_chr * pchr );
 };
 
 //--------------------------------------------------------------------------------------------

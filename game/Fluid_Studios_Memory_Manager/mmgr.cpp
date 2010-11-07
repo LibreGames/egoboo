@@ -141,7 +141,7 @@
 //       want to test with (0 = none, >100 = all failures).
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-//#define	RANDOM_FAILURE 10.0
+//#define	RANDOM_FAILURE 10.0f
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // -DOC- Locals -- modify these flags to suit your needs
@@ -1101,11 +1101,8 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		SDL_memset(au, 0, sizeof(sAllocUnit));
 		au->actualSize        = calculateActualSize(reportedSize);
 		#ifdef RANDOM_FAILURE
-		double	a = rand();
-		double
- = RAND_MAX / 100.0 * RANDOM_FAILURE;
-		if (a >
-)
+		double	a = RAND_MAX / 100.0f;
+		if (a > RANDOM_FAILURE )
 		{
 			au->actualAddress = SDL_malloc(au->actualSize);
 		}
@@ -1280,11 +1277,8 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 		size_t	newActualSize = calculateActualSize(reportedSize);
 		void	*newActualAddress = NULL;
 		#ifdef RANDOM_FAILURE
-		double	a = rand();
-		double
- = RAND_MAX / 100.0 * RANDOM_FAILURE;
-		if (a >
-)
+		double	a = RAND_MAX / 100.0f;
+		if (a > RANDOM_FAILURE )
 		{
 			newActualAddress = SDL_realloc(au->actualAddress, newActualSize);
 		}

@@ -120,16 +120,23 @@ bool_t ego_obj_BSP::dtor_this( ego_obj_BSP * pbsp )
 }
 
 //--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
 {
     /// \author BB
     /// \details  insert a character's ego_BSP_leaf   into the ego_BSP_tree
 
-    bool_t       retval;
-    ego_BSP_leaf * pleaf;
+    bool_t           retval;
+    ego_BSP_leaf   * pleaf;
     ego_BSP_tree   * ptree;
 
-    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
+    if ( NULL == pbsp ) return bfalse;
+    ptree = &( pbsp->tree );
+
+    ego_obj_chr * loc_pobj = ego_chr::get_obj_ptr( pchr );
+    if ( !PROCESSING_PBASE( loc_pobj ) ) return bfalse;
+
+    pleaf = &( loc_pobj->bsp_leaf );
 
     // no interactions with hidden objects
     if ( pchr->is_hidden )
@@ -143,30 +150,12 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
     if ( 0 == pchr->bump_stt.size )
         return bfalse;
 
-    if ( NULL == pbsp ) return bfalse;
-    ptree = &( pbsp->tree );
-
-    pleaf = &( pchr->bsp_leaf );
-    if ( pchr != ( ego_chr * )( pleaf->data ) )
-    {
-        // some kind of error. re-initialize the data.
-        pleaf->data      = pchr;
-        pleaf->index     = GET_IDX_PCHR( pchr );
-        pleaf->data_type = LEAF_CHR;
-    };
+    // update the object's bsp data
+    loc_pobj->update_bsp();
 
     retval = bfalse;
-    if ( !ego_oct_bb::empty( pchr->chr_max_cv ) )
+    if ( !ego_BSP_aabb::empty( pleaf->bbox ) )
     {
-        ego_oct_bb   tmp_oct;
-
-        // use the object velocity to figure out where the volume that the object will occupy during this
-        // update
-        phys_expand_chr_bb( pchr, 0.0f, 1.0f, &tmp_oct );
-
-        // convert the bounding box
-        ego_BSP_aabb::from_oct_bb( &( pleaf->bbox ), &tmp_oct );
-
         // insert the leaf
         retval = ego_BSP_tree::insert_leaf( ptree, pleaf );
     }
@@ -175,7 +164,7 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_bundle_prt * pbdl_prt )
+bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, const ego_bundle_prt & bdl_prt )
 {
     /// \author BB
     /// \details  insert a particle's ego_BSP_leaf   into the ego_BSP_tree
@@ -191,12 +180,16 @@ bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_bundle_prt * pbdl_prt )
     bool_t       does_damage, does_status_effect, does_special_effect;
     bool_t       needs_bump;
 
+    loc_pprt = bdl_prt.prt_ptr();
+    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == loc_pprt ) return bfalse;
+
+    ego_obj_prt * loc_pobj = ego_prt::get_obj_ptr( loc_pprt );
+    if ( NULL == loc_pobj ) return bfalse;
+    pleaf = &( loc_pobj->bsp_leaf );
+
     if ( NULL == pbsp ) return bfalse;
     ptree = &( pbsp->tree );
-
-    if ( NULL == pbdl_prt ) return bfalse;
-    loc_pprt = pbdl_prt->prt_ptr;
-    loc_ppip = pbdl_prt->pip_ptr;
 
     if ( !PROCESSING_PPRT( loc_pprt ) || loc_pprt->is_hidden ) return bfalse;
 
@@ -219,27 +212,13 @@ bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, ego_bundle_prt * pbdl_prt )
     if ( !has_bump_size && !needs_bump && !has_enchant && !does_damage && !does_status_effect && !does_special_effect )
         return bfalse;
 
-    pleaf = &( loc_pprt->bsp_leaf );
-    if ( loc_pprt != ( ego_prt * )( pleaf->data ) )
-    {
-        // some kind of error. re-initialize the data.
-        pleaf->data      = loc_pprt;
-        pleaf->index     = GET_IDX_PPRT( loc_pprt );
-        pleaf->data_type = LEAF_PRT;
-    };
+    // update the object's bsp data
+    loc_pobj->ego_obj_prt::update_bsp();
 
     retval = bfalse;
-    if ( PROCESSING_PPRT( loc_pprt ) )
+    if ( !ego_BSP_aabb::empty( pleaf->bbox ) )
     {
-        ego_oct_bb   tmp_oct;
-
-        // use the object velocity to figure out where the volume that the object will occupy during this
-        // update
-        phys_expand_prt_bb( loc_pprt, 0.0f, 1.0f, &tmp_oct );
-
-        // convert the bounding box
-        ego_BSP_aabb::from_oct_bb( &( pleaf->bbox ), &tmp_oct );
-
+        // insert the leaf
         retval = ego_BSP_tree::insert_leaf( ptree, pleaf );
     }
 
@@ -261,7 +240,7 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
     ego_obj_BSP::chr_count = 0;
     CHR_BEGIN_LOOP_DEFINED( ichr, pchr )
     {
-        pchr->bsp_leaf.inserted = bfalse;
+        pchr_obj->bsp_leaf.inserted = bfalse;
     }
     CHR_END_LOOP();
 
@@ -269,7 +248,7 @@ bool_t ego_obj_BSP::empty( ego_obj_BSP * pbsp )
     ego_obj_BSP::prt_count = 0;
     PRT_BEGIN_LOOP_DEFINED_BDL( iprt, bdl )
     {
-        bdl.prt_ptr->bsp_leaf.inserted = bfalse;
+        bdl_ptr_obj->bsp_leaf.inserted = bfalse;
     }
     PRT_END_LOOP();
 
@@ -292,8 +271,14 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
         pchr->targetmount_ref        = CHR_REF( MAX_CHR );
         pchr->targetmount_overlap    = 0.0f;
 
+        // make sure the leaf is not marked as inserted
+        pchr_obj->bsp_leaf.inserted = bfalse;
+
         // try to insert the character
-        if ( ego_obj_BSP::insert_chr( pbsp, pchr ) )
+        ego_obj_BSP::insert_chr( pbsp, pchr );
+
+        // did we succeed?
+        if ( pchr_obj->bsp_leaf.inserted )
         {
             ego_obj_BSP::chr_count++;
         }
@@ -305,11 +290,16 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
     PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
         // reset a couple of things here
-        prt_bdl.prt_ptr->targetplatform_ref     = CHR_REF( MAX_CHR );
-        prt_bdl.prt_ptr->targetplatform_overlap = 0.0f;
+        prt_bdl.prt_ptr()->targetplatform_ref     = CHR_REF( MAX_CHR );
+        prt_bdl.prt_ptr()->targetplatform_overlap = 0.0f;
+
+        // make sure the leaf is not marked as inserted
+        prt_bdl_ptr_obj->bsp_leaf.inserted = bfalse;
 
         // try to insert the particle
-        if ( ego_obj_BSP::insert_prt( pbsp, &prt_bdl ) )
+        insert_prt( pbsp, prt_bdl );
+
+        if ( prt_bdl_ptr_obj->bsp_leaf.inserted )
         {
             ego_obj_BSP::prt_count++;
         }
@@ -320,15 +310,15 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst )
+int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb & bbox, leaf_child_list_t & colst )
 {
     /// \author BB
     /// \details  fill the collision list with references to tiles that the object volume may overlap.
     //      Return the number of collisions found.
 
-    if ( NULL == pbsp || NULL == paabb ) return 0;
+    if ( NULL == pbsp ) return 0;
 
-    return ego_BSP_tree::collide( &( pbsp->tree ), paabb, colst );
+    return ego_BSP_tree::collide( &( pbsp->tree ), bbox, colst );
 }
 
 ////--------------------------------------------------------------------------------------------

@@ -109,8 +109,8 @@ INLINE bool_t ego_prt::set_size( ego_prt * pprt, int size )
     }
 
     // use the padded bumper to figure out the prt_cv
-    bumper_to_oct_bb_0( pprt->bump_padded, &( pprt->prt_cv ) );
     bumper_to_oct_bb_0( pprt->bump_min,    &( pprt->prt_min_cv ) );
+    bumper_to_oct_bb_0( pprt->bump_padded, &( pprt->prt_max_cv ) );
 
     return btrue;
 }
@@ -165,7 +165,7 @@ INLINE CHR_REF ego_prt::get_iowner( const PRT_REF & iprt, int depth )
             // not the parent. Depending on how scrambled the list gets, there could actually
             // be looping structures. I have actually seen this, so don't laugh :)
 
-            if ( PrtObjList.get_data_ref( pprt->parent_ref ).guid == pprt->parent_guid )
+            if ( PrtObjList.get_data_ref( pprt->parent_ref ).get_id() == pprt->parent_guid )
             {
                 if ( iprt != pprt->parent_ref )
                 {
@@ -206,3 +206,4 @@ INLINE float ego_prt::get_scale( ego_prt * pprt )
 
     return scale;
 }
+

@@ -94,6 +94,7 @@ void MadStack_reconstruct_all()
         ego_mad::reconstruct( MadStack + cnt );
     }
 }
+
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void MadStack_release_all()
@@ -459,7 +460,7 @@ BIT_FIELD mad_instance::update_frame( mad_instance * pmad_inst )
     }
     else
     {
-        log_warning( "mad_instance::update_animation() did not succeed" );
+        log_warning( "%s did not succeed", __FUNCTION__ );
     }
 
     return fx;
@@ -607,12 +608,10 @@ MAD_REF mad_loader::load_vfs( const char* tmploadname, const MAD_REF & imad )
     // clear out the mad
     ego_mad::reconstruct( pmad );
 
-    // mark it as used
-    pmad->loaded = btrue;
-
-    // Make up a name for the model...  IMPORT\TEMP0000.OBJ
+    // set up the EGO_PROFILE_STUFF
     strncpy( pmad->name, tmploadname, SDL_arraysize( pmad->name ) );
     pmad->name[ SDL_arraysize( pmad->name ) - 1 ] = CSTR_END;
+    pmad->loaded = btrue;
 
     // Load the imad model
     make_newloadname( tmploadname, "/tris.md2", newloadname );
@@ -632,7 +631,7 @@ MAD_REF mad_loader::load_vfs( const char* tmploadname, const MAD_REF & imad )
         ///      commands that multiplied various quantities by 4 or by 4.125 throughout the code.
         ///      It was very counter-intuitive, and caused me no end of headaches...  Of course the
         ///      solution is to scale the model!
-        ego_MD2_Model::scale( pmad->md2_ptr, -3.5, 3.5, 3.5 );
+        ego_MD2_Model::scale( pmad->md2_ptr, -3.5f, 3.5f, 3.5f );
     }
 
     // Create the actions table for this imad

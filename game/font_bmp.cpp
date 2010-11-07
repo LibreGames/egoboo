@@ -86,7 +86,7 @@ void font_bmp_load_vfs( const char* szBitmap, const char* szSpacing )
     font_bmp_init();
     if ( INVALID_TX_TEXTURE == TxTexture_load_one_vfs( szBitmap, TX_REF( TX_FONT ), TRANSCOLOR ) )
     {
-        log_error( "load_font() - Cannot load file! (\"%s\")\n", szBitmap );
+        log_error( "%s - Cannot load file! (\"%s\")\n", __FUNCTION__, szBitmap );
     }
 
     // Get the size of the bitmap
@@ -94,7 +94,7 @@ void font_bmp_load_vfs( const char* szBitmap, const char* szSpacing )
     ysize = oglx_texture_GetImageHeight( TxTexture_get_ptr( TX_REF( TX_FONT ) ) );
     if ( xsize == 0 || ysize == 0 )
     {
-        log_error( "Bad font size! (%i, %i)\n", xsize, ysize );
+        log_error( "%s - Bad font size! (%i, %i)\n", __FUNCTION__, xsize, ysize );
     }
 
     // Figure out the general size of each font
@@ -105,7 +105,7 @@ void font_bmp_load_vfs( const char* szBitmap, const char* szSpacing )
     fileread = vfs_openRead( szSpacing );
     if ( NULL == fileread )
     {
-        log_error( "display_item_t spacing not avalible! (%i, %i)\n", xsize, ysize );
+        log_error( "%s - spacing file not avalible! (%i, %i)\n", __FUNCTION__, xsize, ysize );
     }
 
     y = 0;

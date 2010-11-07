@@ -87,14 +87,7 @@ egoboo_rv t_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
     //assume that the data is not corrupt, at the moment
     if ( ptr->in_free_list() ) return rv_fail;
 
-    //EGOBOO_ASSERT( !pbase->in_free_list() );
-
-#if EGO_DEBUG && defined(DEBUG_LIST)
-    if ( get_free_list_index( ref ) > 0 )
-    {
-        return rv_error;
-    }
-#endif
+    EGOBOO_ASSERT( !pbase->in_free_list() );
 
     if ( free_full() )
     {
@@ -220,14 +213,7 @@ egoboo_rv t_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
     //assume that the data is not corrupt, at the moment
     if ( ptr->in_used_list() ) return rv_fail;
 
-    //EGOBOO_ASSERT( !ptr->in_used_list() );
-
-#if EGO_DEBUG && defined(DEBUG_LIST)
-    if ( get_used_list_index( ref ) > 0 )
-    {
-        return rv_error;
-    }
-#endif
+    EGOBOO_ASSERT( !ptr->in_used_list() );
 
     if ( used_full() )
     {

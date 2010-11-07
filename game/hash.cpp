@@ -29,6 +29,8 @@
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_node::dtor_this( ego_hash_node * n )
 {
+    /// \author BB
+
     if ( NULL == n ) return bfalse;
 
     n->data = NULL;
@@ -39,6 +41,8 @@ bool_t ego_hash_node::dtor_this( ego_hash_node * n )
 //--------------------------------------------------------------------------------------------
 ego_hash_node * ego_hash_node::ctor_this( ego_hash_node * pn, void * data )
 {
+    /// \author BB
+
     if ( NULL == pn ) return pn;
 
     SDL_memset( pn, 0, sizeof( *pn ) );
@@ -49,23 +53,39 @@ ego_hash_node * ego_hash_node::ctor_this( ego_hash_node * pn, void * data )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_hash_node * ego_hash_node::create( void * data )
+ego_hash_node * ego_hash_node::create( void * data, ego_hash_node * ptr )
 {
-    ego_hash_node * n = EGOBOO_NEW( ego_hash_node );
+    /// \author BB
 
-    return ego_hash_node::ctor_this( n, data );
+    ego_hash_node * n = NULL;
+
+    if ( NULL == ptr )
+    {
+        n = new ego_hash_node;
+    }
+    else
+    {
+        n = new( ptr ) ego_hash_node;
+    }
+
+    return ctor_this( n, data );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_node::destroy( ego_hash_node ** pn )
+bool_t ego_hash_node::destroy( ego_hash_node ** pn, bool_t own_ptr )
 {
+    /// \author BB
+
     bool_t retval = bfalse;
 
     if ( NULL == pn || NULL == *pn ) return bfalse;
 
     retval = ego_hash_node::dtor_this( *pn );
 
-    EGOBOO_DELETE( *pn );
+    if ( own_ptr )
+    {
+        EGOBOO_DELETE( *pn );
+    }
 
     return retval;
 }
@@ -73,6 +93,10 @@ bool_t ego_hash_node::destroy( ego_hash_node ** pn )
 //--------------------------------------------------------------------------------------------
 ego_hash_node * ego_hash_node::insert_after( ego_hash_node lst[], ego_hash_node * n )
 {
+    /// \author BB
+
+    /// \author BB
+
     if ( NULL == n ) return lst;
     n->next = NULL;
 
@@ -87,6 +111,8 @@ ego_hash_node * ego_hash_node::insert_after( ego_hash_node lst[], ego_hash_node 
 //--------------------------------------------------------------------------------------------
 ego_hash_node * ego_hash_node::insert_before( ego_hash_node lst[], ego_hash_node * n )
 {
+    /// \author BB
+
     if ( NULL == n ) return lst;
     n->next = NULL;
 
@@ -100,6 +126,8 @@ ego_hash_node * ego_hash_node::insert_before( ego_hash_node lst[], ego_hash_node
 //--------------------------------------------------------------------------------------------
 ego_hash_node * ego_hash_node::remove_after( ego_hash_node lst[] )
 {
+    /// \author BB
+
     ego_hash_node * n;
 
     if ( NULL == lst ) return NULL;
@@ -116,6 +144,8 @@ ego_hash_node * ego_hash_node::remove_after( ego_hash_node lst[] )
 //--------------------------------------------------------------------------------------------
 ego_hash_node * ego_hash_node::remove( ego_hash_node lst[] )
 {
+    /// \author BB
+
     ego_hash_node * n;
 
     if ( NULL == lst ) return NULL;
@@ -132,11 +162,13 @@ ego_hash_node * ego_hash_node::remove( ego_hash_node lst[] )
 //--------------------------------------------------------------------------------------------
 ego_hash_list * ego_hash_list::ctor_this( ego_hash_list * lst, int hash_size )
 {
+    /// \author BB
+
     if ( NULL == lst ) return NULL;
 
     if ( hash_size < 0 ) hash_size = 256;
 
-    ego_hash_list::alloc( lst, hash_size );
+    alloc( lst, hash_size );
 
     return lst;
 }
@@ -144,9 +176,11 @@ ego_hash_list * ego_hash_list::ctor_this( ego_hash_list * lst, int hash_size )
 //--------------------------------------------------------------------------------------------
 ego_hash_list * ego_hash_list::dtor_this( ego_hash_list * lst )
 {
+    /// \author BB
+
     if ( NULL == lst ) return NULL;
 
-    ego_hash_list::dealloc( lst );
+    dealloc( lst );
 
     return lst;
 }
@@ -174,26 +208,39 @@ size_t ego_hash_list::count_nodes( ego_hash_list *plst )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_hash_list * ego_hash_list::create( int size )
+ego_hash_list * ego_hash_list::create( int size, ego_hash_list * ptr )
 {
-    ego_hash_list * rv = EGOBOO_NEW( ego_hash_list );
-    if ( NULL == rv ) return NULL;
+    /// \author BB
 
-    SDL_memset( rv, 0, sizeof( *rv ) );
+    ego_hash_list * rv = NULL;
 
-    return ego_hash_list::ctor_this( rv, size );
+    if ( NULL != ptr )
+    {
+        rv = new( ptr ) ego_hash_list( size );
+    }
+    else
+    {
+        rv = new ego_hash_list( size );
+    }
+
+    return rv;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::destroy( ego_hash_list ** plst )
+bool_t ego_hash_list::destroy( ego_hash_list ** plst, bool_t own_ptr )
 {
+    /// \author BB
+
     bool_t retval = bfalse;
 
     if ( NULL == plst || NULL == *plst ) return bfalse;
 
     retval = ( NULL != ego_hash_list::dtor_this( *plst ) );
 
-    EGOBOO_DELETE( *plst );
+    if ( own_ptr )
+    {
+        EGOBOO_DELETE( *plst );
+    }
 
     return retval;
 }
@@ -209,6 +256,8 @@ int ego_hash_list::get_allocd( ego_hash_list *plst )
 //--------------------------------------------------------------------------------------------
 size_t ego_hash_list::get_count( ego_hash_list *plst, int i )
 {
+    /// \author BB
+
     if ( NULL == plst || NULL == plst->subcount ) return 0;
 
     return plst->subcount[i];
@@ -217,6 +266,8 @@ size_t ego_hash_list::get_count( ego_hash_list *plst, int i )
 //--------------------------------------------------------------------------------------------
 ego_hash_node *  ego_hash_list::get_node( ego_hash_list *plst, int i )
 {
+    /// \author BB
+
     if ( NULL == plst || NULL == plst->sublist ) return NULL;
 
     return plst->sublist[i];
@@ -225,6 +276,8 @@ ego_hash_node *  ego_hash_list::get_node( ego_hash_list *plst, int i )
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::set_allocd( ego_hash_list *plst, int ival )
 {
+    /// \author BB
+
     if ( NULL == plst ) return bfalse;
 
     plst->allocated = ival;
@@ -235,6 +288,8 @@ bool_t ego_hash_list::set_allocd( ego_hash_list *plst, int ival )
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::set_count( ego_hash_list *plst, int i, size_t count )
 {
+    /// \author BB
+
     if ( NULL == plst || NULL == plst->subcount ) return bfalse;
 
     if ( i >= plst->allocated ) return bfalse;
@@ -247,6 +302,8 @@ bool_t ego_hash_list::set_count( ego_hash_list *plst, int i, size_t count )
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::set_node( ego_hash_list *plst, int i, ego_hash_node * pnode )
 {
+    /// \author BB
+
     if ( NULL == plst || NULL == plst->sublist ) return bfalse;
 
     if ( i >= plst->allocated ) return bfalse;
@@ -259,6 +316,8 @@ bool_t ego_hash_list::set_node( ego_hash_list *plst, int i, ego_hash_node * pnod
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::dealloc( ego_hash_list * lst )
 {
+    /// \author BB
+
     if ( NULL == lst ) return bfalse;
     if ( 0 == lst->allocated ) return btrue;
 
@@ -272,6 +331,8 @@ bool_t ego_hash_list::dealloc( ego_hash_list * lst )
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::alloc( ego_hash_list * lst, int size )
 {
+    /// \author BB
+
     if ( NULL == lst ) return bfalse;
 
     ego_hash_list::dealloc( lst );
@@ -290,8 +351,7 @@ bool_t ego_hash_list::alloc( ego_hash_list * lst, int size )
     }
     else
     {
-        int cnt;
-        for ( cnt = 0; cnt < size; cnt++ ) lst->sublist[cnt] = NULL;
+        for ( int cnt = 0; cnt < size; cnt++ ) lst->sublist[cnt] = NULL;
     }
 
     lst->allocated = size;
@@ -303,9 +363,9 @@ bool_t ego_hash_list::alloc( ego_hash_list * lst, int size )
 bool_t ego_hash_list::renew( ego_hash_list * lst )
 {
     /// \author BB
-    /// \details  renew the ego_CoNode hash table.
+    /// \details  renew the collision_node hash table.
     ///
-    /// Since we are filling this list with pre-allocated ego_CoNode's,
+    /// Since we are filling this list with pre-allocated collision_node's,
     /// there is no need to delete any of the existing pchlst->sublist elements
 
     int cnt;
@@ -325,6 +385,8 @@ bool_t ego_hash_list::renew( ego_hash_list * lst )
 //--------------------------------------------------------------------------------------------
 ego_hash_list::iterator * ego_hash_list::iterator::ctor_this( ego_hash_list::iterator * it )
 {
+    /// \author BB
+
     if ( NULL == it ) return NULL;
 
     SDL_memset( it, 0, sizeof( *it ) );
@@ -335,6 +397,8 @@ ego_hash_list::iterator * ego_hash_list::iterator::ctor_this( ego_hash_list::ite
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::iterator::set_begin( ego_hash_list::iterator * it, ego_hash_list * hlst )
 {
+    /// \author BB
+
     int i;
 
     it = ego_hash_list::iterator::ctor_this( it );
@@ -354,6 +418,8 @@ bool_t ego_hash_list::iterator::set_begin( ego_hash_list::iterator * it, ego_has
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::iterator::done( ego_hash_list::iterator * it, ego_hash_list * hlst )
 {
+    /// \author BB
+
     if ( NULL == it || NULL == hlst ) return btrue;
 
     // the end position
@@ -365,6 +431,8 @@ bool_t ego_hash_list::iterator::done( ego_hash_list::iterator * it, ego_hash_lis
 //--------------------------------------------------------------------------------------------
 bool_t ego_hash_list::iterator::next( ego_hash_list::iterator * it, ego_hash_list * hlst )
 {
+    /// \author BB
+
     int i, inext;
     ego_hash_node * pnext;
 
@@ -403,6 +471,8 @@ bool_t ego_hash_list::iterator::next( ego_hash_list::iterator * it, ego_hash_lis
 //--------------------------------------------------------------------------------------------
 void * ego_hash_list::iterator::ptr( ego_hash_list::iterator * it )
 {
+    /// \author BB
+
     if ( NULL == it || NULL == it->pnode ) return NULL;
 
     return it->pnode->data;

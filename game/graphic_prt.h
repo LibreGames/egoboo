@@ -96,11 +96,11 @@ bool_t render_one_prt_solid( const PRT_REF & iprt );
 bool_t render_one_prt_trans( const PRT_REF & iprt );
 bool_t render_one_prt_ref( const PRT_REF & iprt );
 
-void   render_all_particles( struct ego_camera * pcam );
+void   render_all_particles( ego_camera * pcam );
 void   render_all_prt_bbox();
-void   render_prt_ref( struct ego_camera * pcam );
+void   render_prt_ref( ego_camera * pcam );
 
 void   render_all_prt_attachment();
 
-void update_all_prt_instance( struct ego_camera * pcam );
+void update_all_prt_instance( ego_camera * pcam );
 

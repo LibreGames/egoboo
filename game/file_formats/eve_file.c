@@ -189,7 +189,7 @@ eve_data_t * load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * pev
 
         if ( MAKE_IDSZ( 'A', 'M', 'O', 'U' ) == idsz ) peve->contspawn_amount = fget_int( fileread );
         else if ( MAKE_IDSZ( 'T', 'Y', 'P', 'E' ) == idsz ) peve->contspawn_pip = fget_int( fileread );
-        else if ( MAKE_IDSZ( 'T', 'I', 'M', 'E' ) == idsz ) peve->contspawn_delay = fget_int( fileread );
+        else if ( MAKE_IDSZ( 'T', 'I', 'M', 'E' ) == idsz ) peve->contspawn_timer = fget_int( fileread );
         else if ( MAKE_IDSZ( 'F', 'A', 'C', 'E' ) == idsz ) peve->contspawn_facingadd = fget_int( fileread );
         else if ( MAKE_IDSZ( 'S', 'E', 'N', 'D' ) == idsz ) peve->endsound_index = fget_int( fileread );
         else if ( MAKE_IDSZ( 'S', 'T', 'A', 'Y' ) == idsz ) peve->stayifnoowner = ( 0 != fget_int( fileread ) );
@@ -201,7 +201,9 @@ eve_data_t * load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * pev
     // All done ( finally )
     vfs_close( fileread );
 
+    // set up the EGO_PROFILE_STUFF
     strncpy( peve->name, szLoadName, SDL_arraysize( peve->name ) );
+    peve->name[ SDL_arraysize( peve->name ) - 1 ] = '\0';
     peve->loaded = btrue;
 
     return peve;
@@ -365,9 +367,9 @@ bool_t save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplat
         fput_expansion( filewrite, "", MAKE_IDSZ( 'T', 'I', 'M', 'E' ), peve->contspawn_facingadd );
     }
 
-    if ( peve->contspawn_delay > 0 )
+    if ( peve->contspawn_timer > 0 )
     {
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'F', 'A', 'C', 'E' ), peve->contspawn_delay );
+        fput_expansion( filewrite, "", MAKE_IDSZ( 'F', 'A', 'C', 'E' ), peve->contspawn_timer );
     }
 
     if ( INVALID_SOUND != peve->endsound_index )

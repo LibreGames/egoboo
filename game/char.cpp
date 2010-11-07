@@ -120,17 +120,17 @@ static bool_t update_chr_darkvision( const CHR_REF & character );
 
 static const float traction_min = 0.2f;
 
-static ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_chr_environment * penviro );
-static ego_bundle_chr * move_one_character_do_fluid_friction( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_do_involuntary( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_do_z_motion( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_do_animation( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_limit_flying( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_do_jump( ego_bundle_chr * pbdl );
-static ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl );
+static ego_bundle_chr & move_one_character_get_environment( ego_bundle_chr & bdl, ego_chr_environment * penviro );
+static ego_bundle_chr & move_one_character_do_fluid_friction( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_do_voluntary_flying( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_do_voluntary( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_do_involuntary( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_do_orientation( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_do_z_motion( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_do_animation( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_limit_flying( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_do_jump( ego_bundle_chr & bdl );
+static ego_bundle_chr & move_one_character_do_floor( ego_bundle_chr & bdl );
 
 static bool_t pack_validate( ego_pack * ppack );
 
@@ -2225,11 +2225,11 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
         // The data file wasn't found
         if ( required )
         {
-            log_debug( "load_one_character_profile_vfs() - \"%s\" was not found. Overriding a global object?\n", szLoadName );
+            log_debug( "%s - \"%s\" was not found. Overriding a global object?\n", __FUNCTION__, szLoadName );
         }
         else if ( CapStack.valid_idx( slot_override ) && slot_override > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "load_one_character_profile_vfs() - Not able to open file \"%s\"\n", szLoadName );
+            log_warning( "%s - Not able to open file \"%s\"\n", __FUNCTION__, szLoadName );
         }
 
         return CAP_REF( MAX_CAP );
@@ -2509,18 +2509,18 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
 }
 
 //--------------------------------------------------------------------------------------------
-int damage_character_hurt( ego_bundle_chr * pbdl, int base_damage, int actual_damage, CHR_REF attacker, bool_t ignore_invictus )
+int damage_character_hurt( ego_bundle_chr & bdl, int base_damage, int actual_damage, CHR_REF attacker, bool_t ignore_invictus )
 {
     CHR_REF      loc_ichr;
     ego_chr      * loc_pchr;
 
     if ( 0 == actual_damage ) return 0;
 
-    if ( NULL == pbdl || NULL == pbdl->chr_ptr ) return 0;
+    if ( NULL == bdl.chr_ptr() ) return 0;
 
     // alias some variables
-    loc_ichr = pbdl->chr_ref;
-    loc_pchr = pbdl->chr_ptr;
+    loc_ichr = bdl.chr_ref();
+    loc_pchr = bdl.chr_ptr();
 
     // Only actual_damage if not invincible
     if ( loc_pchr->damagetime > 0 && !ignore_invictus ) return 0;
@@ -2541,17 +2541,17 @@ int damage_character_hurt( ego_bundle_chr * pbdl, int base_damage, int actual_da
 }
 
 //--------------------------------------------------------------------------------------------
-int damage_character_heal( ego_bundle_chr * pbdl, int heal_amount, CHR_REF attacker, bool_t ignore_invictus )
+int damage_character_heal( ego_bundle_chr & bdl, int heal_amount, CHR_REF attacker, bool_t ignore_invictus )
 {
     CHR_REF      loc_ichr;
     ego_chr      * loc_pchr;
     ego_ai_state * loc_pai;
 
-    if ( NULL == pbdl || NULL == pbdl->chr_ptr ) return 0;
+    if ( NULL == bdl.chr_ptr() ) return 0;
 
     // alias some variables
-    loc_ichr = pbdl->chr_ref;
-    loc_pchr = pbdl->chr_ptr;
+    loc_ichr = bdl.chr_ref();
+    loc_pchr = bdl.chr_ptr();
     loc_pai  = &( loc_pchr->ai );
 
     heal_character( loc_ichr, attacker, heal_amount, ignore_invictus );
@@ -2585,10 +2585,12 @@ int damage_character( const CHR_REF & character, FACING_T direction,
     if ( !INGAME_PCHR( loc_pchr ) ) return 0;
     ego_bundle_chr bdl( loc_pchr );
 
-    if ( NULL == ego_bundle_chr::set( &bdl, loc_pchr ) ) return 0;
-    loc_pchr = bdl.chr_ptr;
-    loc_pcap = bdl.cap_ptr;
-    loc_ichr = bdl.chr_ref;
+    bdl.set( loc_pchr );
+    if ( NULL == bdl.chr_ptr() ) return 0;
+
+    loc_pchr = bdl.chr_ptr();
+    loc_pcap = bdl.cap_ptr();
+    loc_ichr = bdl.chr_ref();
     loc_pai  = &( loc_pchr->ai );
 
     // determine some optional behavior
@@ -2730,7 +2732,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         }
 
         // hurt the character
-        actual_damage = damage_character_hurt( &bdl, base_damage, actual_damage, attacker, ignore_invictus );
+        actual_damage = damage_character_hurt( bdl, base_damage, actual_damage, attacker, ignore_invictus );
 
         // Make the character invincible for a limited time only
         if ( HAS_NO_BITS( effects, DAMFX_TIME ) )
@@ -2823,7 +2825,7 @@ int damage_character( const CHR_REF & character, FACING_T direction,
         int actual_heal = 0;
 
         // heal the character
-        actual_heal = damage_character_heal( &bdl, -actual_damage, attacker, ignore_invictus );
+        actual_heal = damage_character_heal( bdl, -actual_damage, attacker, ignore_invictus );
 
         // Isssue an alert
         if ( team == TEAM_DAMAGE )
@@ -2944,8 +2946,11 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     /// \details  This function spawns a character and returns the character's index number
     ///               if it worked, MAX_CHR otherwise
 
-    CHR_REF       iobj;
-    ego_obj_chr * pobj;
+    CHR_REF       ichr_obj;
+    ego_obj_chr * pchr_obj;
+
+    CAP_REF       icap;
+    ego_cap     * pcap;
 
     // fix a "bad" name
     if ( NULL == name ) name = "";
@@ -2965,38 +2970,51 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
         return CHR_REF( MAX_CHR );
     }
 
-    // allocate a new character
-    iobj = ChrObjList.allocate( override );
-    if ( !DEFINED_CHR( iobj ) )
+    icap = pro_get_icap( profile );
+    if ( LOADED_CAP( icap ) )
     {
-        log_warning( "%s - failed to spawn character (invalid index number %d?)\n", __FUNCTION__, iobj.get_value() );
+        log_warning( "%s - trying to spawn using unknown character profile (data.txt) %d\n", __FUNCTION__, icap.get_value() );
+
         return CHR_REF( MAX_CHR );
     }
+    pcap = CapStack + icap;
 
-    pobj = ChrObjList.get_data_ptr( iobj );
+    // count all the requests for this character type
+    pcap->request_count++;
+
+    // allocate a new character
+    ichr_obj = ChrObjList.allocate( override );
+    if ( !DEFINED_CHR( ichr_obj ) )
+    {
+        log_warning( "%s - failed to spawn character (invalid index number %d?)\n", __FUNCTION__, ichr_obj.get_value() );
+        return CHR_REF( MAX_CHR );
+    }
+    pchr_obj = ChrObjList.get_data_ptr( ichr_obj );
 
     // just set the spawn info
-    pobj->spawn_data.pos      = pos;
-    pobj->spawn_data.profile  = profile;
-    pobj->spawn_data.team     = team;
-    pobj->spawn_data.skin     = skin;
-    pobj->spawn_data.facing   = facing;
-    strncpy( pobj->spawn_data.name, name, SDL_arraysize( pobj->spawn_data.name ) );
-    pobj->spawn_data.override = override;
+    pchr_obj->spawn_data.pos      = pos;
+    pchr_obj->spawn_data.profile  = profile;
+    pchr_obj->spawn_data.team     = team;
+    pchr_obj->spawn_data.skin     = skin;
+    pchr_obj->spawn_data.facing   = facing;
+    strncpy( pchr_obj->spawn_data.name, name, SDL_arraysize( pchr_obj->spawn_data.name ) );
+    pchr_obj->spawn_data.override = override;
 
-    POBJ_BEGIN_SPAWN( pobj );
+    POBJ_BEGIN_SPAWN( pchr_obj );
 
     // actually force the character to spawn
-    ego_object_engine::run_activate( pobj, 100 );
+    if ( NULL != ego_object_engine::run_activate( pchr_obj, 100 ) )
+    {
+        pcap->create_count++;
+    }
 
 #if defined(DEBUG_OBJECT_SPAWN) && EGO_DEBUG
     {
-        CAP_REF icap = pro_get_icap( profile );
-        log_debug( "%s - slot: %i, index: %i, name: %s, class: %s\n", __FUNCTION__, profile.get_value(), iobj.get_value(), name, CapStack[icap].classname );
+        log_debug( "%s - slot: %i, index: %i, name: %s, class: %s\n", __FUNCTION__, profile.get_value(), ichr_obj.get_value(), name, pcap->classname );
     }
 #endif
 
-    return iobj;
+    return ichr_obj;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4210,7 +4228,7 @@ bool_t chr_do_latch_attack( ego_chr * pchr, slot_t which_slot )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
+ego_bundle_chr & chr_do_latch_button( ego_bundle_chr & bdl )
 {
     /// \author BB
     /// \details  Character latches for generalized buttons
@@ -4223,15 +4241,15 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
     CHR_REF item;
     bool_t attack_handled;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_ichr    = pbdl->chr_ref;
-    loc_pchr    = pbdl->chr_ptr;
+    loc_ichr    = bdl.chr_ref();
+    loc_pchr    = bdl.chr_ptr();
     loc_pphys   = &( loc_pchr->phys );
     loc_pai     = &( loc_pchr->ai );
 
-    if ( !loc_pchr->alive || 0 == loc_pchr->latch.trans.b ) return pbdl;
+    if ( !loc_pchr->alive || 0 == loc_pchr->latch.trans.b ) return bdl;
 
     if ( HAS_SOME_BITS( loc_pchr->latch.trans.b, LATCHBUTTON_JUMP ) && 0 == loc_pchr->jump_time )
     {
@@ -4324,9 +4342,9 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
             }
 
             // Play the jump sound (Boing!)
-            if ( NULL != pbdl->cap_ptr )
+            if ( NULL != bdl.cap_ptr() )
             {
-                ijump = pbdl->cap_ptr->sound_index[SOUND_JUMP];
+                ijump = bdl.cap_ptr()->sound_index[SOUND_JUMP];
                 if ( VALID_SND( ijump ) )
                 {
                     sound_play_chunk( loc_pchr->pos, ego_chr::get_chunk_ptr( loc_pchr, ijump ) );
@@ -4457,7 +4475,7 @@ ego_bundle_chr * chr_do_latch_button( ego_bundle_chr * pbdl )
         attack_handled = chr_do_latch_attack( loc_pchr, SLOT_RIGHT );
     }
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -4860,18 +4878,18 @@ bool_t chr_is_attacking( ego_chr *pchr )
 //--------------------------------------------------------------------------------------------
 bool_t chr_calc_environment( ego_chr * pchr )
 {
-    ego_bundle_chr  bdl, *retval;
+    ego_bundle_chr  bdl( pchr );
 
-    if ( NULL == pchr ) return bfalse;
+    if ( NULL == bdl.chr_ptr() ) return bfalse;
 
-    retval = move_one_character_get_environment( ego_bundle_chr::set( &bdl, pchr ), NULL );
+    bdl = move_one_character_get_environment( bdl, NULL );
 
-    return NULL != retval;
+    return NULL != bdl.chr_ptr();
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_chr_environment * penviro )
+ego_bundle_chr & move_one_character_get_environment( ego_bundle_chr & bdl, ego_chr_environment * penviro )
 {
     Uint32 itile = INVALID_TILE;
 
@@ -4883,10 +4901,10 @@ ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_
     float   grid_level, water_level;
     ego_chr * pplatform = NULL;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr  = pbdl->chr_ptr;
+    loc_pchr  = bdl.chr_ptr();
     loc_pphys = &( loc_pchr->phys );
     loc_pai   = &( loc_pchr->ai );
 
@@ -5098,28 +5116,28 @@ ego_bundle_chr * move_one_character_get_environment( ego_bundle_chr * pbdl, ego_
     // the velocity difference relative to the ground causes acceleration
     loc_penviro->ground_diff = fvec3_sub( loc_penviro->ground_vel.v, loc_pchr->vel.v );
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_fluid_friction( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_fluid_friction( ego_bundle_chr & bdl )
 {
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
     ego_phys_data       * loc_pphys;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_penviro = &( loc_pchr->enviro );
     loc_pphys   = &( loc_pchr->phys );
 
     // no fluid friction for "mario platforms"
-    if ( loc_pchr->platform && loc_pchr->is_flying_platform && INFINITE_WEIGHT == loc_pphys->weight ) return pbdl;
+    if ( loc_pchr->platform && loc_pchr->is_flying_platform && INFINITE_WEIGHT == loc_pphys->weight ) return bdl;
 
     // no fluid friction if you are riding or being carried
-    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
+    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return bdl;
 
     // Apply fluid friction from last time
     {
@@ -5131,11 +5149,11 @@ ego_bundle_chr * move_one_character_do_fluid_friction( ego_bundle_chr * pbdl )
         phys_data_accumulate_avel( loc_pphys, _tmp_vec.v );
     }
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_voluntary_flying( ego_bundle_chr & bdl )
 {
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
@@ -5151,10 +5169,10 @@ ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl )
     fvec3_t acc_up, acc_rt, acc_fw, acc;
     fvec3_t loc_latch;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_penviro = &( loc_pchr->enviro );
     loc_pori    = &( loc_pchr->ori );
 
@@ -5260,18 +5278,18 @@ ego_bundle_chr * move_one_character_do_voluntary_flying( ego_bundle_chr * pbdl )
     // fake the desired velocity
     loc_penviro->chr_vel = fvec3_add( loc_pchr->vel.v, acc.v );
 
-    return pbdl;
-    //return move_one_character_limit_flying( pbdl );
+    return bdl;
+    //return move_one_character_limit_flying( bdl );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_voluntary_riding( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_voluntary_riding( ego_bundle_chr & bdl )
 {
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_voluntary( ego_bundle_chr & bdl )
 {
     // do voluntary motion
 
@@ -5289,10 +5307,10 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
 
     fvec3_t total_vel;
 
-    if ( NULL == pbdl || NULL == pbdl->chr_ptr ) return pbdl;
+    if ( NULL == bdl.chr_ptr() ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_penviro = &( loc_pchr->enviro );
     loc_pphys   = &( loc_pchr->phys );
 
@@ -5301,23 +5319,23 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
     fvec3_self_clear( loc_penviro->chr_vel.v );
 
     // non-active characters do not move themselves
-    if ( !PROCESSING_PCHR( loc_pchr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( loc_pchr ) ) return bdl;
 
     // if it is attached to another character, there is no voluntary motion
     if ( IS_ATTACHED_PCHR( loc_pchr ) )
     {
-        return move_one_character_do_voluntary_riding( pbdl );
+        return move_one_character_do_voluntary_riding( bdl );
     }
 
     // if we are flying, interpret the controls differently
     if ( loc_pchr->is_flying_jump )
     {
-        return move_one_character_do_voluntary_flying( pbdl );
+        return move_one_character_do_voluntary_flying( bdl );
     }
 
     // should we use the character's latch info?
     use_latch = loc_pchr->alive && !loc_pchr->isitem && loc_pchr->latch.trans_valid;
-    if ( !use_latch ) return pbdl;
+    if ( !use_latch ) return bdl;
 
     // is this character a player?
     is_player = IS_PLAYER_PCHR( loc_pchr );
@@ -5481,11 +5499,11 @@ ego_bundle_chr * move_one_character_do_voluntary( ego_bundle_chr * pbdl )
         }
     }
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_involuntary( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_involuntary( ego_bundle_chr & bdl )
 {
     /// Do the "non-physics" motion that the character has no control over
 
@@ -5494,10 +5512,10 @@ ego_bundle_chr * move_one_character_do_involuntary( ego_bundle_chr * pbdl )
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_penviro = &( loc_pchr->enviro );
 
     // should we use the character's latch info?
@@ -5561,11 +5579,11 @@ ego_bundle_chr * move_one_character_do_involuntary( ego_bundle_chr * pbdl )
     //    }
     //}
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_orientation( ego_bundle_chr & bdl )
 {
     // do voluntary motion
 
@@ -5576,11 +5594,11 @@ ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
 
     bool_t can_control_direction;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
-    loc_ichr    = pbdl->chr_ref;
+    loc_pchr    = bdl.chr_ptr();
+    loc_ichr    = bdl.chr_ref();
     loc_penviro = &( loc_pchr->enviro );
     loc_pai     = &( loc_pchr->ai );
 
@@ -5596,7 +5614,7 @@ ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
 
         loc_pchr->ori = pmount->ori;
 
-        return pbdl;
+        return bdl;
     }
 
     // can the character control its direction?
@@ -5840,20 +5858,20 @@ ego_bundle_chr * move_one_character_do_orientation( ego_bundle_chr * pbdl )
         }
     }
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_z_motion( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_z_motion( ego_bundle_chr & bdl )
 {
     ego_chr             * loc_pchr;
     ego_phys_data       * loc_pphys;
     ego_chr_environment * loc_penviro;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // aliases for easier notiation
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_pphys   = &( loc_pchr->phys );
     loc_penviro = &( loc_pchr->enviro );
 
@@ -5867,11 +5885,11 @@ ego_bundle_chr * move_one_character_do_z_motion( ego_bundle_chr * pbdl )
         phys_data_accumulate_avel_index( loc_pphys, gravity, kZ );
     }
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_animation( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_animation( ego_bundle_chr & bdl )
 {
     float dflip, flip_diff;
     float test_amount;
@@ -5882,11 +5900,11 @@ ego_bundle_chr * move_one_character_do_animation( ego_bundle_chr * pbdl )
     CHR_REF            loc_ichr;
     ego_uint           old_id;
 
-    if ( NULL == pbdl || !INGAME_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !INGAME_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr      = pbdl->chr_ptr;
-    loc_ichr      = pbdl->chr_ref;
+    loc_pchr      = bdl.chr_ptr();
+    loc_ichr      = bdl.chr_ref();
     loc_pgfx_inst = &( loc_pchr->gfx_inst );
     loc_pmad_inst = &( loc_pchr->mad_inst );
 
@@ -5951,11 +5969,11 @@ ego_bundle_chr * move_one_character_do_animation( ego_bundle_chr * pbdl )
         chr_invalidate_instances( loc_pchr );
     }
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_limit_flying( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_limit_flying( ego_bundle_chr & bdl )
 {
     // this should only be called by move_one_character_do_floor() after the
     // normal acceleration has been killed
@@ -5966,16 +5984,16 @@ ego_bundle_chr * move_one_character_limit_flying( ego_bundle_chr * pbdl )
     ego_chr_environment * loc_penviro;
     ego_phys_data       * loc_pphys;
 
-    return pbdl;
+    return bdl;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_penviro = &( loc_pchr->enviro );
     loc_pphys   = &( loc_pchr->phys );
 
-    if ( !IS_FLYING_PCHR( loc_pchr ) ) return pbdl;
+    if ( !IS_FLYING_PCHR( loc_pchr ) ) return bdl;
 
     total_acc = loc_penviro->chr_acc;
 
@@ -6047,11 +6065,11 @@ ego_bundle_chr * move_one_character_limit_flying( ego_bundle_chr * pbdl )
         }
     }
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_jump( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_jump( ego_bundle_chr & bdl )
 {
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
@@ -6062,26 +6080,26 @@ ego_bundle_chr * move_one_character_do_jump( ego_bundle_chr * pbdl )
 
     float jump_lerp, fric_lerp;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_penviro = &( loc_pchr->enviro );
     loc_pphys   = &( loc_pchr->phys );
 
-    if ( IS_FLYING_PCHR( loc_pchr ) ) return pbdl;
+    if ( IS_FLYING_PCHR( loc_pchr ) ) return bdl;
 
     // determine whether a character has recently jumped
     jump_lerp = ( float )loc_pchr->jump_time / ( float )JUMP_DELAY;
     jump_lerp = CLIP( jump_lerp, 0.0f, 1.0f );
 
     // if we have not jumped, there's nothing to do
-    if ( 0.0f == jump_lerp ) return pbdl;
+    if ( 0.0f == jump_lerp ) return bdl;
 
     // determine the amount of acceleration necessary to get the desired acceleration
     total_acc = fvec3_sub( loc_penviro->chr_acc.v, loc_pphys->avel.v );
 
-    if ( 0.0f == fvec3_length_abs( total_acc.v ) ) return pbdl;
+    if ( 0.0f == fvec3_length_abs( total_acc.v ) ) return bdl;
 
     // decompose this into acceleration parallel and perpendicular to the ground
     fvec3_decompose( total_acc.v, loc_penviro->walk_nrm.v, total_acc_perp.v, total_acc_para.v );
@@ -6104,33 +6122,33 @@ ego_bundle_chr * move_one_character_do_jump( ego_bundle_chr * pbdl )
     // apply the jumping control
     phys_data_accumulate_avel( loc_pphys, total_acc.v );
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_flying( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_flying( ego_bundle_chr & bdl )
 {
     ego_chr             * loc_pchr;
     ego_chr_environment * loc_penviro;
     ego_phys_data       * loc_pphys;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_penviro = &( loc_pchr->enviro );
     loc_pphys   = &( loc_pchr->phys );
 
-    if ( !IS_FLYING_PCHR( loc_pchr ) || IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
+    if ( !IS_FLYING_PCHR( loc_pchr ) || IS_ATTACHED_PCHR( loc_pchr ) ) return bdl;
 
     // apply the flying forces
     phys_data_accumulate_avel( loc_pphys, loc_penviro->chr_acc.v );
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character_do_floor( ego_bundle_chr & bdl )
 {
     /// \author BB
     /// \details  Friction is complicated when you want to have sliding characters :P
@@ -6155,18 +6173,18 @@ ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
 
     float  fric_lerp;
 
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     loc_penviro = &( loc_pchr->enviro );
     loc_pphys   = &( loc_pchr->phys );
 
     // no floor friction if you are riding or being carried
-    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
+    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return bdl;
 
     // exempt "mario platforms" from interaction with the floor
-    if ( loc_pchr->is_flying_platform && INFINITE_WEIGHT == loc_pphys->weight ) return pbdl;
+    if ( loc_pchr->is_flying_platform && INFINITE_WEIGHT == loc_pphys->weight ) return bdl;
 
     fric_lerp = 1.0f;
     pplatform = NULL;
@@ -6190,16 +6208,16 @@ ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
     fric_lerp *= 1.0f - loc_penviro->walk_lerp;
 
     // if we're not in touch with the ground, there is no walking
-    if ( 0.0f == fric_lerp ) return pbdl;
+    if ( 0.0f == fric_lerp ) return bdl;
 
     // if there is no friction with the ground, nothing to do
-    if ( loc_penviro->ground_fric >= 1.0f ) return pbdl;
+    if ( loc_penviro->ground_fric >= 1.0f ) return bdl;
 
     // determine the amount of acceleration necessary to get the desired acceleration
     total_acc = fvec3_sub( loc_penviro->chr_acc.v, loc_pphys->avel.v );
 
     // if there is no total acceleration, there's nothing to do
-    if ( 0.0f == fvec3_length_abs( total_acc.v ) ) return pbdl;
+    if ( 0.0f == fvec3_length_abs( total_acc.v ) ) return bdl;
 
     // decompose this into acceleration parallel and perpendicular to the ground
     fvec3_decompose( total_acc.v, loc_penviro->walk_nrm.v, total_acc_perp.v, total_acc_para.v );
@@ -6301,16 +6319,16 @@ ego_bundle_chr * move_one_character_do_floor( ego_bundle_chr * pbdl )
         }
     }
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * move_one_character( ego_bundle_chr * pbdl )
+ego_bundle_chr & move_one_character( ego_bundle_chr & bdl )
 {
-    if ( NULL == pbdl || !PROCESSING_PCHR( pbdl->chr_ptr ) ) return pbdl;
+    if ( !PROCESSING_PCHR( bdl.chr_ptr() ) ) return bdl;
 
     // alias some variables
-    ego_chr * loc_pchr = pbdl->chr_ptr;
+    ego_chr * loc_pchr = bdl.chr_ptr();
 
     // calculate the acceleration from the last time-step
     loc_pchr->enviro.acc = fvec3_sub( loc_pchr->vel.v, loc_pchr->vel_old.v );
@@ -6323,11 +6341,11 @@ ego_bundle_chr * move_one_character( ego_bundle_chr * pbdl )
     // determine the character's environment
     // if this is not done, reflections will not update properly
     PROFILE_BEGIN( move_one_character_get_environment );
-    pbdl = move_one_character_get_environment( pbdl, NULL );
+    bdl = move_one_character_get_environment( bdl, NULL );
     PROFILE_END2( move_one_character_get_environment );
 
     //---- none of the remaining functions are valid for attached characters
-    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return pbdl;
+    if ( IS_ATTACHED_PCHR( loc_pchr ) ) return bdl;
 
     // make the object want to continue its current motion, unless this is overridden
     if ( loc_pchr->latch.trans_valid )
@@ -6337,55 +6355,55 @@ ego_bundle_chr * move_one_character( ego_bundle_chr * pbdl )
 
     // apply the fluid friction for the object
     PROFILE_BEGIN( move_one_character_do_fluid_friction );
-    pbdl = move_one_character_do_fluid_friction( pbdl );
+    bdl = move_one_character_do_fluid_friction( bdl );
     PROFILE_END2( move_one_character_do_fluid_friction );
 
     // determine how the character would *like* to move
     PROFILE_BEGIN( move_one_character_do_voluntary );
-    pbdl = move_one_character_do_voluntary( pbdl );
+    bdl = move_one_character_do_voluntary( bdl );
     PROFILE_END2( move_one_character_do_voluntary );
 
     // apply gravitational an buoyancy effects
     PROFILE_BEGIN( move_one_character_do_z_motion );
-    pbdl = move_one_character_do_z_motion( pbdl );
+    bdl = move_one_character_do_z_motion( bdl );
     PROFILE_END2( move_one_character_do_z_motion );
 
     // determine how the character is being *forced* to move
     PROFILE_BEGIN( move_one_character_do_involuntary );
-    pbdl = move_one_character_do_involuntary( pbdl );
+    bdl = move_one_character_do_involuntary( bdl );
     PROFILE_END2( move_one_character_do_involuntary );
 
     // read and apply any latch buttons
     PROFILE_BEGIN( chr_do_latch_button );
-    pbdl = chr_do_latch_button( pbdl );
+    bdl = chr_do_latch_button( bdl );
     PROFILE_END2( chr_do_latch_button );
 
     // allow the character to control its flight
     PROFILE_BEGIN( move_one_character_do_flying );
-    pbdl = move_one_character_do_flying( pbdl );
+    bdl = move_one_character_do_flying( bdl );
     PROFILE_END2( move_one_character_do_flying );
 
     // allow the character to have some additional control over jumping
     PROFILE_BEGIN( move_one_character_do_jump );
-    pbdl = move_one_character_do_jump( pbdl );
+    bdl = move_one_character_do_jump( bdl );
     PROFILE_END2( move_one_character_do_jump );
 
     // determine how the character can *actually* move
     PROFILE_BEGIN( move_one_character_do_floor );
-    pbdl = move_one_character_do_floor( pbdl );
+    bdl = move_one_character_do_floor( bdl );
     PROFILE_END2( move_one_character_do_floor );
 
     // do the character animation and apply any MADFX found in the animation frames
     PROFILE_BEGIN( move_one_character_do_animation );
-    pbdl = move_one_character_do_animation( pbdl );
+    bdl = move_one_character_do_animation( bdl );
     PROFILE_END2( move_one_character_do_animation );
 
     // set the rotation angles for the character
     PROFILE_BEGIN( move_one_character_do_orientation );
-    pbdl = move_one_character_do_orientation( pbdl );
+    bdl = move_one_character_do_orientation( bdl );
     PROFILE_END2( move_one_character_do_orientation );
 
-    return pbdl;
+    return bdl;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -6407,7 +6425,7 @@ void move_all_characters( void )
         pchr->enviro.air_friction = air_friction;
         pchr->enviro.ice_friction = ice_friction;
 
-        move_one_character( &bdl );
+        move_one_character( bdl );
 
         PROFILE_END2( move_one_character );
     }
@@ -6930,7 +6948,7 @@ const char * ego_chr::get_dir_name( const CHR_REF & ichr )
         EGOBOO_ASSERT( bfalse );
 
         // copy the character's data.txt path
-        strncpy( buffer, ego_chr::get_obj_ref( *pchr ).base_name, SDL_arraysize( buffer ) );
+        strncpy( buffer, ego_chr::get_obj_ref( *pchr ).obj_name, SDL_arraysize( buffer ) );
 
         // the name should be "...some path.../data.txt"
         // grab the path
@@ -7050,20 +7068,26 @@ egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
     // only use pchr->bump.height if it was overridden in data.txt through the [MODL] expansion
     if ( pchr->bump_stt.height >= 0.0f )
     {
-        pchr->chr_cv.mins[OCT_Z ] = 0.0f;
-        pchr->chr_cv.maxs[OCT_Z ] = pchr->bump.height * pchr->fat;
+        pchr->chr_cv.mins[ OCT_Z ] = 0.0f;
+        pchr->chr_cv.maxs[ OCT_Z ] = pchr->bump.height * pchr->fat;
 
-        pchr->chr_min_cv.mins[OCT_Z ] = SDL_max( pchr->chr_min_cv.mins[OCT_Z ], 0.0f );
-        pchr->chr_min_cv.maxs[OCT_Z ] = SDL_min( pchr->chr_min_cv.maxs[OCT_Z ], pchr->bump.height   * pchr->fat );
+        pchr->chr_min_cv.mins[ OCT_Z ] = SDL_max( pchr->chr_min_cv.mins[ OCT_Z ], 0.0f );
+        pchr->chr_min_cv.maxs[ OCT_Z ] = SDL_min( pchr->chr_min_cv.maxs[ OCT_Z ], pchr->bump.height   * pchr->fat );
 
-        pchr->chr_max_cv.mins[OCT_Z ] = SDL_min( pchr->chr_max_cv.mins[OCT_Z ], 0.0f );
-        pchr->chr_max_cv.maxs[OCT_Z ] = SDL_max( pchr->chr_max_cv.maxs[OCT_Z ], pchr->bump.height   * pchr->fat );
+        pchr->chr_max_cv.mins[ OCT_Z ] = SDL_min( pchr->chr_max_cv.mins[ OCT_Z ], 0.0f );
+        pchr->chr_max_cv.maxs[ OCT_Z ] = SDL_max( pchr->chr_max_cv.maxs[ OCT_Z ], pchr->bump.height   * pchr->fat );
     }
 
     // raise the upper bound for platforms
     if ( pchr->platform )
     {
         pchr->chr_max_cv.maxs[OCT_Z] += PLATTOLERANCE;
+    }
+
+    // make a union
+    if ( pchr->ismount )
+    {
+        ego_oct_bb::do_union( pchr->chr_max_cv, pchr->chr_saddle_cv, pchr->chr_max_cv );
     }
 
     // make sure all the bounding coordinates are valid
@@ -7086,7 +7110,7 @@ egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
     }
 
     // convert the level 1 bounding box to a level 0 bounding box
-    ego_oct_bb::downgrade( &bdst, pchr->bump_stt, pchr->bump, &( pchr->bump_1 ), NULL );
+    ego_oct_bb::downgrade( bdst, pchr->bump_stt, pchr->bump, &( pchr->bump_1 ), NULL );
 
     return rv_success;
 }
@@ -7115,18 +7139,18 @@ const char* describe_value( float value, float maxval, int * rank_ptr )
     *rank_ptr = -5;
     strcpy( retval, "Unknown" );
 
-    if ( fval >= .83 )        { strcpy( retval, "Godlike!" );   *rank_ptr =  8; }
-    else if ( fval >= .66 ) { strcpy( retval, "Ultimate" );   *rank_ptr =  7; }
-    else if ( fval >= .56 ) { strcpy( retval, "Epic" );       *rank_ptr =  6; }
-    else if ( fval >= .50 ) { strcpy( retval, "Powerful" );   *rank_ptr =  5; }
-    else if ( fval >= .43 ) { strcpy( retval, "Heroic" );     *rank_ptr =  4; }
-    else if ( fval >= .36 ) { strcpy( retval, "Very High" );  *rank_ptr =  3; }
-    else if ( fval >= .30 ) { strcpy( retval, "High" );       *rank_ptr =  2; }
-    else if ( fval >= .23 ) { strcpy( retval, "Good" );       *rank_ptr =  1; }
-    else if ( fval >= .17 ) { strcpy( retval, "Average" );    *rank_ptr =  0; }
-    else if ( fval >= .11 ) { strcpy( retval, "Pretty Low" ); *rank_ptr = -1; }
-    else if ( fval >= .07 ) { strcpy( retval, "Bad" );        *rank_ptr = -2; }
-    else if ( fval >  .00 ) { strcpy( retval, "Terrible" );   *rank_ptr = -3; }
+    if ( fval >= .83f )        { strcpy( retval, "Godlike!" );   *rank_ptr =  8; }
+    else if ( fval >= .66f ) { strcpy( retval, "Ultimate" );   *rank_ptr =  7; }
+    else if ( fval >= .56f ) { strcpy( retval, "Epic" );       *rank_ptr =  6; }
+    else if ( fval >= .50f ) { strcpy( retval, "Powerful" );   *rank_ptr =  5; }
+    else if ( fval >= .43f ) { strcpy( retval, "Heroic" );     *rank_ptr =  4; }
+    else if ( fval >= .36f ) { strcpy( retval, "Very High" );  *rank_ptr =  3; }
+    else if ( fval >= .30f ) { strcpy( retval, "High" );       *rank_ptr =  2; }
+    else if ( fval >= .23f ) { strcpy( retval, "Good" );       *rank_ptr =  1; }
+    else if ( fval >= .17f ) { strcpy( retval, "Average" );    *rank_ptr =  0; }
+    else if ( fval >= .11f ) { strcpy( retval, "Pretty Low" ); *rank_ptr = -1; }
+    else if ( fval >= .07f ) { strcpy( retval, "Bad" );        *rank_ptr = -2; }
+    else if ( fval >  .00f ) { strcpy( retval, "Terrible" );   *rank_ptr = -3; }
     else                    { strcpy( retval, "None" );       *rank_ptr = -4; }
 
     return retval;
@@ -7156,15 +7180,15 @@ const char* describe_damage( float value, float maxval, int * rank_ptr )
     *rank_ptr = -5;
     strcpy( retval, "Unknown" );
 
-    if ( fval >= 1.50 )         { strcpy( retval, "Annihilation!" ); *rank_ptr =  5; }
-    else if ( fval >= 1.00 ) { strcpy( retval, "Overkill!" );     *rank_ptr =  4; }
-    else if ( fval >= 0.80 ) { strcpy( retval, "Deadly" );        *rank_ptr =  3; }
-    else if ( fval >= 0.70 ) { strcpy( retval, "Crippling" );     *rank_ptr =  2; }
-    else if ( fval >= 0.50 ) { strcpy( retval, "Devastating" );   *rank_ptr =  1; }
-    else if ( fval >= 0.25 ) { strcpy( retval, "Hurtful" );       *rank_ptr =  0; }
-    else if ( fval >= 0.10 ) { strcpy( retval, "A Scratch" );     *rank_ptr = -1; }
-    else if ( fval >= 0.05 ) { strcpy( retval, "Ticklish" );      *rank_ptr = -2; }
-    else if ( fval >= 0.00 ) { strcpy( retval, "Meh..." );        *rank_ptr = -3; }
+    if ( fval >= 1.50f )         { strcpy( retval, "Annihilation!" ); *rank_ptr =  5; }
+    else if ( fval >= 1.00f ) { strcpy( retval, "Overkill!" );     *rank_ptr =  4; }
+    else if ( fval >= 0.80f ) { strcpy( retval, "Deadly" );        *rank_ptr =  3; }
+    else if ( fval >= 0.70f ) { strcpy( retval, "Crippling" );     *rank_ptr =  2; }
+    else if ( fval >= 0.50f ) { strcpy( retval, "Devastating" );   *rank_ptr =  1; }
+    else if ( fval >= 0.25f ) { strcpy( retval, "Hurtful" );       *rank_ptr =  0; }
+    else if ( fval >= 0.10f ) { strcpy( retval, "A Scratch" );     *rank_ptr = -1; }
+    else if ( fval >= 0.05f ) { strcpy( retval, "Ticklish" );      *rank_ptr = -2; }
+    else if ( fval >= 0.00f ) { strcpy( retval, "Meh..." );        *rank_ptr = -3; }
 
     return retval;
 }
@@ -8300,78 +8324,75 @@ bool_t ego_chr::set_maxaccel( ego_chr * pchr, float new_val )
 //--------------------------------------------------------------------------------------------
 ego_bundle_chr * ego_bundle_chr::ctor_this( ego_bundle_chr * pbundle )
 {
-    if ( NULL == pbundle ) return NULL;
+    if ( NULL == pbundle ) return pbundle;
 
-    pbundle->chr_ref = CHR_REF( MAX_CHR );
-    pbundle->chr_ptr = NULL;
+    pbundle->_chr_ref = CHR_REF( MAX_CHR );
+    pbundle->_chr_ptr = NULL;
 
-    pbundle->cap_ref = CAP_REF( MAX_CAP );
-    pbundle->cap_ptr = NULL;
+    pbundle->_cap_ref = CAP_REF( MAX_CAP );
+    pbundle->_cap_ptr = NULL;
 
-    pbundle->pro_ref = PRO_REF( MAX_PROFILE );
-    pbundle->pro_ptr = NULL;
+    pbundle->_pro_ref = PRO_REF( MAX_PROFILE );
+    pbundle->_pro_ptr = NULL;
 
     return pbundle;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * ego_bundle_chr::validate( ego_bundle_chr * pbundle )
+egoboo_rv ego_bundle_chr::validate()
 {
-    if ( NULL == pbundle ) return NULL;
+    if ( NULL == this ) return rv_error;
 
     // get the character info from the reference or the pointer
-    if ( VALID_CHR( pbundle->chr_ref ) )
+    if ( VALID_CHR( _chr_ref ) )
     {
-        pbundle->chr_ptr = ChrObjList.get_data_ptr( pbundle->chr_ref );
+        _chr_ptr = ChrObjList.get_data_ptr( _chr_ref );
     }
-    else if ( NULL != pbundle->chr_ptr )
+    else if ( NULL != _chr_ptr )
     {
-        pbundle->chr_ref = GET_REF_PCHR( pbundle->chr_ptr );
+        _chr_ref = GET_REF_PCHR( _chr_ptr );
     }
     else
     {
-        pbundle->chr_ref = MAX_CHR;
-        pbundle->chr_ptr = NULL;
+        _chr_ref = MAX_CHR;
+        _chr_ptr = NULL;
     }
 
-    if ( NULL == pbundle->chr_ptr ) goto ego_chr_bundle__validate_fail;
+    if ( NULL == _chr_ptr ) goto ego_chr_bundle__validate_fail;
 
     // get the profile info
-    pbundle->pro_ref = pbundle->chr_ptr->profile_ref;
-    if ( !LOADED_PRO( pbundle->pro_ref ) ) goto ego_chr_bundle__validate_fail;
+    _pro_ref = _chr_ptr->profile_ref;
+    if ( !LOADED_PRO( _pro_ref ) ) goto ego_chr_bundle__validate_fail;
 
-    pbundle->pro_ptr = ProList.lst + pbundle->pro_ref;
+    _pro_ptr = ProList.lst + _pro_ref;
 
     // get the cap info
-    pbundle->cap_ref = pbundle->pro_ptr->icap;
+    _cap_ref = _pro_ptr->icap;
 
-    if ( !LOADED_CAP( pbundle->cap_ref ) ) goto ego_chr_bundle__validate_fail;
-    pbundle->cap_ptr = CapStack + pbundle->cap_ref;
+    if ( !LOADED_CAP( _cap_ref ) ) goto ego_chr_bundle__validate_fail;
+    _cap_ptr = CapStack + _cap_ref;
 
-    return pbundle;
+    return rv_success;
 
 ego_chr_bundle__validate_fail:
 
-    return ego_bundle_chr::ctor_this( pbundle );
+    ctor_this( this );
+
+    return rv_fail;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_chr * ego_bundle_chr::set( ego_bundle_chr * pbundle, ego_chr * pchr )
+egoboo_rv ego_bundle_chr::set( ego_chr * pchr )
 {
-    if ( NULL == pbundle ) return NULL;
-
     // blank out old data
-    pbundle = ego_bundle_chr::ctor_this( pbundle );
+    if ( NULL == ctor_this( this ) ) return rv_error;
 
-    if ( NULL == pbundle || NULL == pchr ) return pbundle;
+    if ( NULL == pchr ) return rv_success;
 
     // set the particle pointer
-    pbundle->chr_ptr = pchr;
+    _chr_ptr = pchr;
 
-    // validate the particle data
-    pbundle = ego_bundle_chr::validate( pbundle );
-
-    return pbundle;
+    return validate();
 }
 
 //--------------------------------------------------------------------------------------------
@@ -8385,13 +8406,13 @@ void character_physics_initialize_all()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_mesh_attached( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_mesh_attached( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_mesh( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_mesh( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
     ego_chr             * loc_pchr;
     ego_cap             * loc_pcap;
@@ -8404,14 +8425,11 @@ bool_t chr_bump_mesh( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel,
     float   diff;
     bool_t  needs_update = bfalse;
 
-    // does the bundle exist?
-    if ( NULL == pbdl ) return bfalse;
-
     // some aliases to make the notation easier
-    loc_pchr    = pbdl->chr_ptr;
+    loc_pchr    = bdl.chr_ptr();
     if ( NULL == loc_pchr ) return bfalse;
 
-    loc_pcap    = pbdl->cap_ptr;
+    loc_pcap    = bdl.cap_ptr();
     if ( NULL == loc_pcap ) return bfalse;
 
     loc_pphys   = &( loc_pchr->phys );
@@ -8467,13 +8485,13 @@ bool_t chr_bump_mesh( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel,
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_grid_attached( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_grid_attached( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_grid( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_grid( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
 {
     ego_chr             * loc_pchr;
     ego_cap             * loc_pcap;
@@ -8498,14 +8516,11 @@ bool_t chr_bump_grid( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel,
 
     ego_breadcrumb * bc         = NULL;
 
-    // does the bundle exist?
-    if ( NULL == pbdl ) return bfalse;
-
     // some aliases to make the notation easier
-    loc_pchr = pbdl->chr_ptr;
+    loc_pchr = bdl.chr_ptr();
     if ( NULL == loc_pchr ) return bfalse;
 
-    loc_pcap = pbdl->cap_ptr;
+    loc_pcap = bdl.cap_ptr();
     if ( NULL == loc_pcap ) return bfalse;
 
     loc_pphys   = &( loc_pchr->phys );
@@ -8725,7 +8740,7 @@ bool_t chr_bump_grid( ego_bundle_chr * pbdl, fvec3_t test_pos, fvec3_t test_vel,
 }
 
 //--------------------------------------------------------------------------------------------
-void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
+void character_physics_finalize_one( ego_bundle_chr & bdl, float dt )
 {
     bool_t bumped_mesh = bfalse, bumped_grid  = bfalse, needs_update = bfalse;
 
@@ -8735,10 +8750,8 @@ void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
     ego_chr * loc_pchr;
     ego_phys_data * loc_pphys;
 
-    if ( NULL == pbdl ) return;
-
     // alias these parameter for easier notation
-    loc_pchr   = pbdl->chr_ptr;
+    loc_pchr   = bdl.chr_ptr();
     loc_pphys  = &( loc_pchr->phys );
 
     // do the "integration" of the accumulators
@@ -8751,11 +8764,11 @@ void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
     bumped_mesh = bfalse;
     if ( PROCESSING_CHR( loc_pchr->attachedto ) )
     {
-        bumped_mesh = chr_bump_mesh_attached( pbdl, test_pos, test_vel, dt );
+        bumped_mesh = chr_bump_mesh_attached( bdl, test_pos, test_vel, dt );
     }
     else
     {
-        bumped_mesh = chr_bump_mesh( pbdl, test_pos, test_vel, dt );
+        bumped_mesh = chr_bump_mesh( bdl, test_pos, test_vel, dt );
     }
 
     // if the character hit the mesh, re-do the "integration" of the accumulators again,
@@ -8771,11 +8784,11 @@ void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
     bumped_grid = bfalse;
     if ( PROCESSING_CHR( loc_pchr->attachedto ) )
     {
-        bumped_grid = chr_bump_grid_attached( pbdl, test_pos, test_vel, dt );
+        bumped_grid = chr_bump_grid_attached( bdl, test_pos, test_vel, dt );
     }
     else
     {
-        bumped_grid = chr_bump_grid( pbdl, test_pos, test_vel, dt );
+        bumped_grid = chr_bump_grid( bdl, test_pos, test_vel, dt );
     }
 
     // if the character hit the grid, re-do the "integration" of the accumulators again,
@@ -8805,7 +8818,7 @@ void character_physics_finalize_one( ego_bundle_chr * pbdl, float dt )
     if ( !needs_update )
     {
         // make a timer that is individual for each object
-        Uint32 chr_update = ego_chr::get_obj_ref( *loc_pchr ).guid + update_wld;
+        Uint32 chr_update = ego_chr::get_obj_ref( *loc_pchr ).get_id() + update_wld;
 
         needs_update = ( 0 == ( chr_update & 7 ) );
     }
@@ -8823,7 +8836,7 @@ void character_physics_finalize_all( float dt )
     CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
     {
         ego_bundle_chr bdl( pchr );
-        character_physics_finalize_one( &bdl, dt );
+        character_physics_finalize_one( bdl, dt );
     }
     CHR_END_LOOP();
 }
@@ -9053,7 +9066,7 @@ bool_t pack_validate( ego_pack * ppack )
         /*        if ( !item_ptr->isitem )
                 {
                     // how did this get in a pack?
-                    log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", ego_chr::get_obj_ref(*item_ptr).base_name );
+                    log_warning( "pack_validate() - The item %s is in a pack, even though it is not tagged as an item.\n", ego_chr::get_obj_ref(*item_ptr).obj_name );
 
                     // remove the item from the pack
                     parent_pack_ptr->next     = item_pack_ptr->next;
@@ -9077,7 +9090,7 @@ bool_t pack_validate( ego_pack * ppack )
     if ( MAX_CHR != item_ref && !DEFINED_CHR( item_ref ) )
     {
         // There was corrupt data in the pack list.
-        log_warning( "pack_validate() - Found a bad pack and am fixing it.\n" );
+        log_warning( "%s - Found a bad pack and am fixing it.\n", __FUNCTION__ );
 
         if ( parent_pack_ptr == ppack )
         {
@@ -9125,7 +9138,7 @@ bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
     // is this item packed in another pack?
     if ( pitem_pack->is_packed )
     {
-        log_warning( "pack_add_item() - Trying to add a packed item (%s) to a pack.\n", ego_chr::get_obj_ref( *pitem ).base_name );
+        log_warning( "%s - Trying to add a packed item (%s) to a pack.\n", __FUNCTION__, ego_chr::get_obj_ref( *pitem ).obj_name );
 
         return bfalse;
     }
@@ -9133,7 +9146,7 @@ bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
     // does this item have packed objects of its own?
     if ( 0 != pitem_pack->count || MAX_CHR != pitem_pack->next )
     {
-        log_warning( "pack_add_item() - Trying to add an item (%s) to a pack that has a sub-pack.\n", ego_chr::get_obj_ref( *pitem ).base_name );
+        log_warning( "%s - Trying to add an item (%s) to a pack that has a sub-pack.\n", __FUNCTION__, ego_chr::get_obj_ref( *pitem ).obj_name );
 
         return bfalse;
     }
@@ -9141,7 +9154,7 @@ bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
     // is the item even an item?
     if ( !pitem->isitem )
     {
-        log_debug( "pack_add_item() - Trying to add a non-item %s to a pack.\n", ego_chr::get_obj_ref( *pitem ).base_name );
+        log_debug( "%s - Trying to add a non-item %s to a pack.\n", __FUNCTION__, ego_chr::get_obj_ref( *pitem ).obj_name );
     }
 
     // add the item to the front of the pack's linked list
@@ -9834,8 +9847,7 @@ ego_chr * ego_chr::alloc( ego_chr * pchr )
 
     dealloc( pchr );
 
-    // initialize the bsp node for this character
-    ego_BSP_leaf::init( &( pchr->bsp_leaf ), 3, pchr, 1 );
+    /* add something here */
 
     return pchr;
 }
@@ -9845,7 +9857,7 @@ ego_chr * ego_chr::dealloc( ego_chr * pchr )
 {
     if ( NULL == pchr ) return pchr;
 
-    ego_BSP_leaf::dealloc( &( pchr->bsp_leaf ) );
+    /* add somethign here */
 
     return pchr;
 }
@@ -9891,11 +9903,6 @@ ego_chr * ego_chr::ctor_this( ego_chr * pchr )
 
     // start the character out in the "dance" animation
     ego_chr::start_anim( pchr, ACTION_DA, btrue, btrue );
-
-    // set the ego_BSP_leaf data
-    pchr->bsp_leaf.data      = pchr;
-    pchr->bsp_leaf.data_type = LEAF_CHR;
-    pchr->bsp_leaf.index     = GET_IDX_PCHR( pchr );
 
     return pchr;
 }
@@ -10224,6 +10231,7 @@ bool_t ego_chr_data::download_cap( ego_chr_data * pchr, ego_cap * pcap )
 
     return rv;
 }
+
 //--------------------------------------------------------------------------------------------
 bool_t ego_chr_cap_data::download_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
 {
@@ -10671,7 +10679,7 @@ ego_chr *  ego_chr::do_initializing( ego_chr * pchr )
     pcap = pro_get_pcap( pchr->spawn_data.profile );
     if ( NULL == pcap )
     {
-        log_debug( "ego_chr::do_init() - cannot initialize character.\n" );
+        log_debug( "%s - cannot initialize character.\n", __FUNCTION__ );
 
         return NULL;
     }
@@ -10923,7 +10931,7 @@ ego_chr * ego_chr::do_processing( ego_chr * pchr )
                     ripand = RIPPLEAND >> ( -ripple_suppression );
                 }
 
-                if ( 0 == (( update_wld + ego_chr::get_obj_ref( *pchr ).guid ) & ripand ) && pchr->pos.z < water.surface_level && pchr->alive )
+                if ( 0 == (( update_wld + ego_chr::get_obj_ref( *pchr ).get_id() ) & ripand ) && pchr->pos.z < water.surface_level && pchr->alive )
                 {
                     fvec3_t   vtmp = VECT3( pchr->pos.x, pchr->pos.y, water.surface_level );
 
@@ -11124,17 +11132,13 @@ bool_t ego_obj_chr::request_terminate( ego_obj_chr * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_obj_chr::request_terminate( ego_bundle_chr * pbdl_chr )
+bool_t ego_obj_chr::request_terminate( ego_bundle_chr & bdl )
 {
     bool_t retval;
-    if ( NULL == pbdl_chr ) return bfalse;
 
-    retval = ego_obj_chr::request_terminate( pbdl_chr->chr_ref );
+    retval = ego_obj_chr::request_terminate( bdl.chr_ref() );
 
-    if ( retval )
-    {
-        ego_bundle_chr::validate( pbdl_chr );
-    }
+    if ( retval ) bdl.validate();
 
     return retval;
 }
@@ -11324,4 +11328,97 @@ int convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[],
     TransformVertices( &( pholder->gfx_inst.matrix ), src_point, dst_point, point_count );
 
     return point_count;
+}
+
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::alloc( ego_obj_chr * pobj )
+{
+    if ( NULL == pobj ) return pobj;
+
+    dealloc( pobj );
+
+    // initialize the bsp node for this character
+    ego_BSP_leaf::init( &( pobj->bsp_leaf ), 3, pobj, 1 );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::dealloc( ego_obj_chr * pobj )
+{
+    if ( NULL == pobj ) return pobj;
+
+    // initialize the bsp node for this character
+    ego_BSP_leaf::dealloc( &( pobj->bsp_leaf ) );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::ctor_this( ego_obj_chr * pobj )
+{
+    /// \author BB
+    /// \details  initialize the ego_obj_chr
+
+    if ( NULL == pobj ) return pobj;
+
+    // construct/allocate any dynamic data
+    pobj = ego_obj_chr::alloc( pobj );
+    if ( NULL == pobj ) return pobj;
+
+    // set the ego_BSP_leaf data
+    pobj->bsp_leaf.data      = pobj;
+    pobj->bsp_leaf.data_type = LEAF_CHR;
+    pobj->bsp_leaf.index     = GET_IDX_PCHR( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_chr * ego_obj_chr::dtor_this( ego_obj_chr * pobj )
+{
+    if ( NULL == pobj ) return pobj;
+
+    // destruct/free any dynamic data
+    pobj = ego_obj_chr::dealloc( pobj );
+    if ( NULL == pobj ) return NULL;
+
+    /* add something here */
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+void ego_obj_chr::update_max_cv()
+{
+    /// \author BB
+    ///
+    /// \details use this function to update the ego_obj::max_cv with
+    ///       the largest possible collision volume
+
+    update_collision_size( this, btrue );
+
+    ego_oct_bb::add_vector( chr_max_cv, ego_chr::get_pos_v( this ), max_cv );
+}
+
+//--------------------------------------------------------------------------------------------
+void ego_obj_chr::update_bsp()
+{
+    ego_oct_bb   tmp_oct;
+
+    // re-initialize the data.
+    bsp_leaf.data      = static_cast<ego_chr*>( this );
+    bsp_leaf.index     = GET_IDX_PCHR( this );
+    bsp_leaf.data_type = LEAF_CHR;
+    bsp_leaf.inserted  = bfalse;
+
+    update_max_cv();
+
+    // use the object velocity to figure out where the volume that the object will occupy during this
+    // update
+    phys_expand_chr_bb( this, 0.0f, 1.0f, tmp_oct );
+
+    // convert the bounding box
+    ego_BSP_aabb::from_oct_bb( bsp_leaf.bbox, tmp_oct );
 }

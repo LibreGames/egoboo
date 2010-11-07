@@ -435,7 +435,7 @@ void   read_player_local_latch( const PLA_REF & player );
 bool_t add_player( const CHR_REF & character, BIT_FIELD device );
 
 // AI targeting
-CHR_REF chr_find_target( struct ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits );
+CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits );
 CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
                          const PIP_REF & particletype, const TEAM_REF & team, const CHR_REF & donttarget, const CHR_REF & oldtarget );
 
@@ -443,39 +443,39 @@ CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
 void  free_all_objects( void );
 
 // Data
-struct ego_mpd * set_PMesh( struct ego_mpd * pmpd );
-struct ego_camera  * set_PCamera( struct ego_camera * pcam );
+struct ego_mpd * set_PMesh( ego_mpd * pmpd );
+struct ego_camera  * set_PCamera( ego_camera * pcam );
 
-bool_t upload_animtile_data( ego_animtile_instance pinst[], struct s_wawalite_animtile * pdata, size_t animtile_count );
-bool_t upload_damagetile_data( ego_damagetile_instance * pinst, struct s_wawalite_damagetile * pdata );
-bool_t upload_weather_data( ego_weather_instance * pinst, struct s_wawalite_weather * pdata );
-bool_t upload_water_data( ego_water_instance * pinst, struct s_wawalite_water * pdata );
-bool_t upload_fog_data( ego_fog_instance * pinst, struct s_wawalite_fog * pdata );
+bool_t upload_animtile_data( ego_animtile_instance pinst[], s_wawalite_animtile * pdata, size_t animtile_count );
+bool_t upload_damagetile_data( ego_damagetile_instance * pinst, s_wawalite_damagetile * pdata );
+bool_t upload_weather_data( ego_weather_instance * pinst, s_wawalite_weather * pdata );
+bool_t upload_water_data( ego_water_instance * pinst, s_wawalite_water * pdata );
+bool_t upload_fog_data( ego_fog_instance * pinst, s_wawalite_fog * pdata );
 
-float get_mesh_level( struct ego_mpd * pmesh, float x, float y, bool_t waterwalk );
+float get_mesh_level( ego_mpd * pmesh, float x, float y, bool_t waterwalk );
 
-bool_t make_water( ego_water_instance * pinst, struct s_wawalite_water * pdata );
+bool_t make_water( ego_water_instance * pinst, s_wawalite_water * pdata );
 
 bool_t game_choose_module( int imod, int seed );
 
-int game_do_menu( struct ego_menu_process * mproc );
+int game_do_menu( ego_menu_process * mproc );
 
-void expand_escape_codes( const CHR_REF & ichr, struct ego_script_state * pstate, char * src, char * src_end, char * dst, char * dst_end );
+void expand_escape_codes( const CHR_REF & ichr, ego_script_state * pstate, char * src, char * src_end, char * dst, char * dst_end );
 
 void upload_wawalite();
 
-bool_t game_module_setup( ego_game_module_data * pinst, struct s_mod_file * pdata, const char * loadname, Uint32 seed );
+bool_t game_module_setup( ego_game_module_data * pinst, s_mod_file * pdata, const char * loadname, Uint32 seed );
 bool_t game_module_init( ego_game_module_data * pinst );
 bool_t game_module_reset( ego_game_module_data * pinst, Uint32 seed );
 bool_t game_module_start( ego_game_module_data * pinst );
 bool_t game_module_stop( ego_game_module_data * pinst );
 
-bool_t check_target( struct ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_FIELD targeting_bits );
+bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_FIELD targeting_bits );
 
 void attach_all_particles();
 
 struct s_wawalite_data * read_wawalite();
-bool_t write_wawalite( const char *modname, struct s_wawalite_data * pdata );
+bool_t write_wawalite( const char *modname, s_wawalite_data * pdata );
 
 Uint8 get_local_alpha( int alpha );
 Uint8 get_local_light( int light );
@@ -486,15 +486,15 @@ bool_t do_shop_buy( const CHR_REF & ipicker, const CHR_REF & ichr );
 bool_t do_shop_steal( const CHR_REF & ithief, const CHR_REF & iitem );
 bool_t do_item_pickup( const CHR_REF & ichr, const CHR_REF & iitem );
 
-bool_t get_chr_regeneration( struct ego_chr * pchr, int *pliferegen, int * pmanaregen );
+bool_t get_chr_regeneration( ego_chr * pchr, int *pliferegen, int * pmanaregen );
 
-float get_chr_level( struct ego_mpd * pmesh, struct ego_chr * pchr );
+float get_chr_level( ego_mpd * pmesh, ego_chr * pchr );
 
 egoboo_rv move_water( ego_water_instance * pwater );
 
 // manage the game's vfs mount points
 bool_t game_setup_vfs_paths( const char * mod_path );
 
-void cleanup_character_enchants( struct ego_chr * pchr );
+void cleanup_character_enchants( ego_chr * pchr );
 
-bool_t attach_one_particle( struct ego_bundle_prt * pbdl_prt );
+bool_t attach_one_particle( const ego_bundle_prt & bdl_prt );

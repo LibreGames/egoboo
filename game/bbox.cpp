@@ -967,81 +967,99 @@ ego_oct_bb * ego_oct_bb::ctor_this( ego_oct_bb * pobb )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_oct_bb::do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst )
+void ego_oct_bb::invalidate()
+{
+    /// \author BB
+    /// \details invert all the dimensions of the oct_bb
+
+    for ( int cnt = 0; cnt < OCT_COUNT; cnt ++ )
+    {
+        float min_val = std::min( mins[cnt], maxs[cnt] );
+        float max_val = std::max( mins[cnt], maxs[cnt] );
+
+        mins[cnt] = max_val;
+        maxs[cnt] = min_val;
+    }
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_oct_bb::do_union( const ego_oct_bb & src1, const ego_oct_bb & src2, ego_oct_bb & dst )
 {
     /// \author BB
     /// \details  find the union of two ego_oct_bb
 
-    if ( NULL == pdst ) return bfalse;
+    ego_oct_bb tmp;
 
-    pdst->mins[OCT_X]  = SDL_min( src1.mins[OCT_X],  src2.mins[OCT_X] );
-    pdst->maxs[OCT_X]  = SDL_max( src1.maxs[OCT_X],  src2.maxs[OCT_X] );
+    tmp.mins[OCT_X]  = SDL_min( src1.mins[OCT_X],  src2.mins[OCT_X] );
+    tmp.maxs[OCT_X]  = SDL_max( src1.maxs[OCT_X],  src2.maxs[OCT_X] );
 
-    pdst->mins[OCT_Y]  = SDL_min( src1.mins[OCT_Y],  src2.mins[OCT_Y] );
-    pdst->maxs[OCT_Y]  = SDL_max( src1.maxs[OCT_Y],  src2.maxs[OCT_Y] );
+    tmp.mins[OCT_Y]  = SDL_min( src1.mins[OCT_Y],  src2.mins[OCT_Y] );
+    tmp.maxs[OCT_Y]  = SDL_max( src1.maxs[OCT_Y],  src2.maxs[OCT_Y] );
 
-    pdst->mins[OCT_XY] = SDL_min( src1.mins[OCT_XY], src2.mins[OCT_XY] );
-    pdst->maxs[OCT_XY] = SDL_max( src1.maxs[OCT_XY], src2.maxs[OCT_XY] );
+    tmp.mins[OCT_XY] = SDL_min( src1.mins[OCT_XY], src2.mins[OCT_XY] );
+    tmp.maxs[OCT_XY] = SDL_max( src1.maxs[OCT_XY], src2.maxs[OCT_XY] );
 
-    pdst->mins[OCT_YX] = SDL_min( src1.mins[OCT_YX], src2.mins[OCT_YX] );
-    pdst->maxs[OCT_YX] = SDL_max( src1.maxs[OCT_YX], src2.maxs[OCT_YX] );
+    tmp.mins[OCT_YX] = SDL_min( src1.mins[OCT_YX], src2.mins[OCT_YX] );
+    tmp.maxs[OCT_YX] = SDL_max( src1.maxs[OCT_YX], src2.maxs[OCT_YX] );
 
-    pdst->mins[OCT_Z]  = SDL_min( src1.mins[OCT_Z],  src2.mins[OCT_Z] );
-    pdst->maxs[OCT_Z]  = SDL_max( src1.maxs[OCT_Z],  src2.maxs[OCT_Z] );
+    tmp.mins[OCT_Z]  = SDL_min( src1.mins[OCT_Z],  src2.mins[OCT_Z] );
+    tmp.maxs[OCT_Z]  = SDL_max( src1.maxs[OCT_Z],  src2.maxs[OCT_Z] );
+
+    dst = tmp;
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_oct_bb::do_intersection( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst )
+bool_t ego_oct_bb::do_intersection( const ego_oct_bb & src1, const ego_oct_bb & src2, ego_oct_bb & dst )
 {
     /// \author BB
     /// \details  find the intersection of two ego_oct_bb
 
-    if ( NULL == pdst ) return bfalse;
+    ego_oct_bb tmp;
 
-    pdst->mins[OCT_X]  = SDL_max( src1.mins[OCT_X],  src2.mins[OCT_X] );
-    pdst->maxs[OCT_X]  = SDL_min( src1.maxs[OCT_X],  src2.maxs[OCT_X] );
+    tmp.mins[OCT_X]  = SDL_max( src1.mins[OCT_X],  src2.mins[OCT_X] );
+    tmp.maxs[OCT_X]  = SDL_min( src1.maxs[OCT_X],  src2.maxs[OCT_X] );
 
-    pdst->mins[OCT_Y]  = SDL_max( src1.mins[OCT_Y],  src2.mins[OCT_Y] );
-    pdst->maxs[OCT_Y]  = SDL_min( src1.maxs[OCT_Y],  src2.maxs[OCT_Y] );
+    tmp.mins[OCT_Y]  = SDL_max( src1.mins[OCT_Y],  src2.mins[OCT_Y] );
+    tmp.maxs[OCT_Y]  = SDL_min( src1.maxs[OCT_Y],  src2.maxs[OCT_Y] );
 
-    pdst->mins[OCT_XY] = SDL_max( src1.mins[OCT_XY], src2.mins[OCT_XY] );
-    pdst->maxs[OCT_XY] = SDL_min( src1.maxs[OCT_XY], src2.maxs[OCT_XY] );
+    tmp.mins[OCT_XY] = SDL_max( src1.mins[OCT_XY], src2.mins[OCT_XY] );
+    tmp.maxs[OCT_XY] = SDL_min( src1.maxs[OCT_XY], src2.maxs[OCT_XY] );
 
-    pdst->mins[OCT_YX] = SDL_max( src1.mins[OCT_YX], src2.mins[OCT_YX] );
-    pdst->maxs[OCT_YX] = SDL_min( src1.maxs[OCT_YX], src2.maxs[OCT_YX] );
+    tmp.mins[OCT_YX] = SDL_max( src1.mins[OCT_YX], src2.mins[OCT_YX] );
+    tmp.maxs[OCT_YX] = SDL_min( src1.maxs[OCT_YX], src2.maxs[OCT_YX] );
 
-    pdst->mins[OCT_Z]  = SDL_max( src1.mins[OCT_Z],  src2.mins[OCT_Z] );
-    pdst->maxs[OCT_Z]  = SDL_min( src1.maxs[OCT_Z],  src2.maxs[OCT_Z] );
+    tmp.mins[OCT_Z]  = SDL_max( src1.mins[OCT_Z],  src2.mins[OCT_Z] );
+    tmp.maxs[OCT_Z]  = SDL_min( src1.maxs[OCT_Z],  src2.maxs[OCT_Z] );
+
+    dst = tmp;
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_oct_bb::add_vector( const ego_oct_bb & src, const fvec3_base_t vec, ego_oct_bb * pdst )
+bool_t ego_oct_bb::add_vector( const ego_oct_bb & src, const fvec3_base_t vec, ego_oct_bb & dst )
 {
     /// \author BB
     /// \details  shift the bounding box by the vector vec
 
-    if ( NULL == pdst ) return bfalse;
-
     if ( NULL == vec ) return btrue;
 
-    pdst->mins[OCT_X]  = src.mins[OCT_X] + vec[kX];
-    pdst->maxs[OCT_X]  = src.maxs[OCT_X] + vec[kX];
+    dst.mins[OCT_X]  = src.mins[OCT_X] + vec[kX];
+    dst.maxs[OCT_X]  = src.maxs[OCT_X] + vec[kX];
 
-    pdst->mins[OCT_Y]  = src.mins[OCT_Y] + vec[kY];
-    pdst->maxs[OCT_Y]  = src.maxs[OCT_Y] + vec[kY];
+    dst.mins[OCT_Y]  = src.mins[OCT_Y] + vec[kY];
+    dst.maxs[OCT_Y]  = src.maxs[OCT_Y] + vec[kY];
 
-    pdst->mins[OCT_XY] = src.mins[OCT_XY] + ( vec[kX] + vec[kY] );
-    pdst->maxs[OCT_XY] = src.maxs[OCT_XY] + ( vec[kX] + vec[kY] );
+    dst.mins[OCT_XY] = src.mins[OCT_XY] + ( vec[kX] + vec[kY] );
+    dst.maxs[OCT_XY] = src.maxs[OCT_XY] + ( vec[kX] + vec[kY] );
 
-    pdst->mins[OCT_YX] = src.mins[OCT_YX] + ( -vec[kX] + vec[kY] );
-    pdst->maxs[OCT_YX] = src.maxs[OCT_YX] + ( -vec[kX] + vec[kY] );
+    dst.mins[OCT_YX] = src.mins[OCT_YX] + ( -vec[kX] + vec[kY] );
+    dst.maxs[OCT_YX] = src.maxs[OCT_YX] + ( -vec[kX] + vec[kY] );
 
-    pdst->mins[OCT_Z]  = src.mins[OCT_Z] + vec[kZ];
-    pdst->maxs[OCT_Z]  = src.maxs[OCT_Z] + vec[kZ];
+    dst.mins[OCT_Z]  = src.mins[OCT_Z] + vec[kZ];
+    dst.maxs[OCT_Z]  = src.maxs[OCT_Z] + vec[kZ];
 
     return btrue;
 }
@@ -1066,15 +1084,12 @@ bool_t ego_oct_bb::empty( ego_oct_bb & src1 )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bumper bump_base, ego_bumper * pdst_bump, ego_oct_bb   * pdst_bb )
+void ego_oct_bb::downgrade( const ego_oct_bb & src_bb, const ego_bumper & bump_stt, const ego_bumper & bump_base, ego_bumper * pdst_bump, ego_oct_bb * pdst_bb )
 {
     /// \author BB
     /// \details  convert a level 1 bumper to an "equivalent" level 0 bumper
 
     float val1, val2, val3, val4;
-
-    // return if there is no source
-    if ( NULL == psrc_bb ) return;
 
     //---- handle all of the pdst_bump data first
     if ( NULL != pdst_bump )
@@ -1089,7 +1104,7 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
             // to make object-particle interactions easier (i.e. it allows you to
             // hit a grub bug with your hands)
 
-            pdst_bump->height = SDL_max( bump_base.height, psrc_bb->maxs[OCT_Z] );
+            pdst_bump->height = SDL_max( bump_base.height, src_bb.maxs[OCT_Z] );
         }
 
         if ( 0.0f == bump_stt.size )
@@ -1098,10 +1113,10 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
         }
         else
         {
-            val1 = SDL_abs( psrc_bb->mins[OCT_X] );
-            val2 = SDL_abs( psrc_bb->maxs[OCT_Y] );
-            val3 = SDL_abs( psrc_bb->mins[OCT_Y] );
-            val4 = SDL_abs( psrc_bb->maxs[OCT_Y] );
+            val1 = SDL_abs( src_bb.mins[OCT_X] );
+            val2 = SDL_abs( src_bb.maxs[OCT_Y] );
+            val3 = SDL_abs( src_bb.mins[OCT_Y] );
+            val4 = SDL_abs( src_bb.maxs[OCT_Y] );
             pdst_bump->size = SDL_max( SDL_max( val1, val2 ), SDL_max( val3, val4 ) );
         }
 
@@ -1111,10 +1126,10 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
         }
         else
         {
-            val1 = SDL_abs( psrc_bb->maxs[OCT_YX] );
-            val2 = SDL_abs( psrc_bb->mins[OCT_YX] );
-            val3 = SDL_abs( psrc_bb->maxs[OCT_XY] );
-            val4 = SDL_abs( psrc_bb->mins[OCT_XY] );
+            val1 = SDL_abs( src_bb.maxs[OCT_YX] );
+            val2 = SDL_abs( src_bb.mins[OCT_YX] );
+            val3 = SDL_abs( src_bb.maxs[OCT_XY] );
+            val4 = SDL_abs( src_bb.mins[OCT_XY] );
             pdst_bump->size_big = SDL_max( SDL_max( val1, val2 ), SDL_max( val3, val4 ) );
         }
     }
@@ -1123,9 +1138,9 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
     if ( NULL != pdst_bb )
     {
         // SDL_memcpy() can fail horribly if the domains overlap, so use SDL_memmove()
-        if ( pdst_bb != psrc_bb )
+        if ( pdst_bb != &src_bb )
         {
-            SDL_memmove( pdst_bb, psrc_bb, sizeof( *pdst_bb ) );
+            SDL_memmove( pdst_bb, &src_bb, sizeof( *pdst_bb ) );
         }
 
         if ( 0.0f == bump_stt.height )
@@ -1135,7 +1150,7 @@ void ego_oct_bb::downgrade( ego_oct_bb   * psrc_bb, ego_bumper bump_stt, ego_bum
         else
         {
             // handle the vertical distortion the same as above
-            pdst_bb->maxs[OCT_Z] = SDL_max( bump_base.height, psrc_bb->maxs[OCT_Z] );
+            pdst_bb->maxs[OCT_Z] = SDL_max( bump_base.height, src_bb.maxs[OCT_Z] );
         }
 
         // 0.0f == bump_stt.size is supposed to be shorthand for "this object doesn't interact

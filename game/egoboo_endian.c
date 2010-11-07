@@ -42,5 +42,7 @@ float ENDIAN_FLOAT( float X )
     utmp.i = SDL_SwapLE32( utmp.i );
 
     return utmp.f;
+    ^
 }
+
 #endif

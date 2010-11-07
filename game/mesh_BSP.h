@@ -56,6 +56,6 @@ struct mpd_BSP
 
     static bool_t    fill( mpd_BSP * pbsp );
 
-    static int       collide( mpd_BSP * pbsp, ego_BSP_aabb * paabb, leaf_child_list_t & colst );
+    static int       collide( mpd_BSP * pbsp, ego_BSP_aabb & bbox, leaf_child_list_t & colst );
 };
 

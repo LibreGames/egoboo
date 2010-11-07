@@ -120,7 +120,7 @@ extern "C"
 /// The definition of a particle profile
     struct s_pip_data
     {
-        EGO_PROFILE_STUFF;
+        EGO_PROFILE_STUFF
 
         char    comment[1024];                ///< the first line of the file has a comment line
 
@@ -169,7 +169,7 @@ extern "C"
         int     bumpspawn_pip;               ///< Spawn type ( global )
 
         // continuous spawning
-        Uint16  contspawn_delay;              ///< Spawn timer
+        Uint16  contspawn_timer;              ///< Spawn timer
         Uint8   contspawn_amount;             ///< Spawn amount
         Uint16  contspawn_facingadd;          ///< Spawn in circle
         int     contspawn_pip;                ///< Spawn type ( local )
@@ -207,10 +207,6 @@ extern "C"
         dynalight_info_t dynalight;           ///< Dynamic lighting info
 
         prt_ori_t orientation;                ///< the way the particle orientation is calculated for display
-
-        // debugging parameters
-        int prt_request_count;                ///< a way to tell how popular this particle is
-        int prt_create_count;                 ///< if this number is significantly less than the prt_request_count, there is a problem.
     };
 
     typedef struct s_pip_data pip_data_t;

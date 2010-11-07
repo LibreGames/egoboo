@@ -1939,7 +1939,7 @@ Uint8 scr_SpawnCharacter( ego_script_state * pstate, ego_ai_bundle * pbdl_self )
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "Object %s failed to spawn a copy of itself\n", ego_chr::get_obj_ref( *pchr ).base_name );
+            log_warning( "Object %s failed to spawn a copy of itself\n", ego_chr::get_obj_ref( *pchr ).obj_name );
         }
     }
     else
@@ -5519,7 +5519,7 @@ Uint8 scr_SpawnCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
     {
         if ( ichr > PMod->importamount * MAXIMPORTPERPLAYER )
         {
-            log_warning( "Object %s failed to spawn a copy of itself\n", ego_chr::get_obj_ref( *pchr ).base_name );
+            log_warning( "Object %s failed to spawn a copy of itself\n", ego_chr::get_obj_ref( *pchr ).obj_name );
         }
     }
     else
@@ -5576,7 +5576,7 @@ Uint8 scr_SpawnExactCharacterXYZ( ego_script_state * pstate, ego_ai_bundle * pbd
         {
             ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
-            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", ego_chr::get_obj_ref( *pchr ).base_name, NULL == pcap ? "INVALID" : pcap->classname, pstate->argument );
+            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", ego_chr::get_obj_ref( *pchr ).obj_name, NULL == pcap ? "INVALID" : pcap->classname, pstate->argument );
         }
     }
     else
@@ -7507,7 +7507,7 @@ Uint8 scr_SpawnAttachedCharacter( ego_script_state * pstate, ego_ai_bundle * pbd
         {
             ego_cap * pcap = pro_get_pcap( pchr->profile_ref );
 
-            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", ego_chr::get_obj_ref( *pchr ).base_name, NULL == pcap ? "IVALID" : pcap->classname, pstate->argument );
+            log_warning( "Object \"%s\"(\"%s\") failed to spawn profile index %d\n", ego_chr::get_obj_ref( *pchr ).obj_name, NULL == pcap ? "IVALID" : pcap->classname, pstate->argument );
         }
     }
     else

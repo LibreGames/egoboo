@@ -434,25 +434,25 @@ struct ego_chr_data : public ego_chr_cap_data
 
     ego_bumper     bump;
     ego_bumper     bump_save;
+    ego_bumper     bump_1;                          ///< the loosest collision volume that mimics the current bump
 
-    ego_bumper   bump_1;       ///< the loosest collision volume that mimics the current bump
-    ego_oct_bb   chr_cv;       ///< the collision volume determined by the model's points.
-    ego_oct_bb   chr_min_cv;   ///< the smallest collision volume.
-    ego_oct_bb   chr_max_cv;   ///< the largest collision volume. For character, particle, and platform collisions.
+    ego_oct_bb     chr_cv;                          ///< the collision volume determined by the model's points.
+    ego_oct_bb     chr_saddle_cv;                   ///< the the collision volume of the "saddle"
+    ego_oct_bb     chr_min_cv;                      ///< the smallest collision volume.
+    ego_oct_bb     chr_max_cv;                      ///< the largest collision volume.
 
     // character location data
     fvec3_t        pos_stt;                       ///< Starting position
     fvec3_t        pos;                           ///< Character's position
     fvec3_t        vel;                           ///< Character's velocity
-    ego_orientation  ori;                           ///< Character's orientation
+    ego_orientation  ori;                         ///< Character's orientation
 
     fvec3_t        pos_old;                       ///< Character's last position
     fvec3_t        vel_old;                       ///< Character's last velocity
-    ego_orientation  ori_old;                       ///< Character's last orientation
+    ego_orientation  ori_old;                     ///< Character's last orientation
 
     Uint32         onwhichgrid;                   ///< Where the char is
     Uint32         onwhichblock;                  ///< The character's collision block
-    CHR_REF        bumplist_next;                 ///< Next character on fanblock
 
     // movement properties
     TURN_MODE      turnmode;                      ///< Turning mode
@@ -464,7 +464,7 @@ struct ego_chr_data : public ego_chr_cap_data
     bool_t         is_flying_jump;                 ///< The object can_fly_jump and has jumped
     float          fly_height;                     ///< Height to stabilize at
 
-    // data for doing the physics in bump_all_objects()
+    // data for doing the physics in collision_system::bump_all_objects()
     ego_phys_data       phys;
     ego_chr_environment enviro;
 
@@ -522,7 +522,6 @@ public:
     //---- extra data
 
     ego_chr_spawn_data  spawn_data;
-    ego_BSP_leaf        bsp_leaf;
 
     // counters for debugging wall collisions
     static int stoppedby_tests;
@@ -738,7 +737,7 @@ struct ego_obj_chr : public ego_obj, public ego_chr
 
     static bool_t request_terminate( const reference_type & ichr );
     static bool_t request_terminate( its_type * pobj );
-    static bool_t request_terminate( ego_bundle_chr * pbdl_chr );
+    static bool_t request_terminate( ego_bundle_chr & bdl_chr );
 
     //---- specialization of the ego_object_process methods
     virtual int do_constructing( void ) { if ( NULL == this ) return -1; return NULL == data_type::do_constructing( this ) ? -1 : 1; };
@@ -754,6 +753,21 @@ struct ego_obj_chr : public ego_obj, public ego_chr
     virtual ego_obj_chr * get_obj_chr_ptr( void )  { return this; }
     //virtual ego_obj_enc * get_obj_enc_ptr(void);
     //virtual ego_obj_prt * get_obj_prt_ptr(void);
+
+    virtual void update_max_cv();
+    virtual void update_bsp();
+
+protected:
+
+    /// construct this struct, ONLY
+    static ego_obj_chr * ctor_this( ego_obj_chr * );
+    /// destruct this struct, ONLY
+    static ego_obj_chr * dtor_this( ego_obj_chr * );
+
+    /// allocate data for this struct, ONLY
+    static ego_obj_chr * alloc( ego_obj_chr * pchr );
+    /// deallocate data for this struct, ONLY
+    static ego_obj_chr * dealloc( ego_obj_chr * pchr );
 
 private:
 
@@ -854,47 +868,94 @@ struct ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const
 //--------------------------------------------------------------------------------------------
 struct ego_bundle_chr
 {
-    CHR_REF   chr_ref;
-    ego_chr * chr_ptr;
+    //---- constructor
+    ego_bundle_chr( ego_chr * pchr = NULL ) { ctor_this( this ); set( pchr );  }
 
-    PRO_REF   pro_ref;
-    ego_pro * pro_ptr;
+    //---- construction
+    egoboo_rv validate();
+    egoboo_rv set( ego_chr * pchr );
 
-    CAP_REF   cap_ref;
-    ego_cap * cap_ptr;
+    static ego_bundle_chr * validate( ego_bundle_chr * ptr ) { egoboo_rv rv = ptr->validate(); return rv_error == rv ? NULL : ptr; }
+    static ego_bundle_chr * set( ego_bundle_chr * ptr, ego_chr * pchr ) { egoboo_rv rv = ptr->set( pchr ); return rv_error == rv ? NULL : ptr; }
 
-    ego_bundle_chr( ego_chr * pchr = NULL ) { ctor_this( this ); if ( NULL != pchr ) set( this, pchr );  }
-
-    static ego_bundle_chr * ctor_this( ego_bundle_chr * pbundle );
-    static ego_bundle_chr * validate( ego_bundle_chr * pbundle );
-    static ego_bundle_chr * set( ego_bundle_chr * pbundle, ego_chr * pchr );
-
-    static ego_chr & get_chr_ref( ego_bundle_chr & ref )
+    //---- accessors
+    static ego_chr & get_chr_ref( ego_bundle_chr & bdl )
     {
         // handle the worst-case scenario
-        if ( NULL == ref.chr_ptr ) { validate( &ref ); CPP_EGOBOO_ASSERT( NULL != ref.chr_ptr ); }
+        if ( NULL == bdl._chr_ptr ) {  bdl.validate(); CPP_EGOBOO_ASSERT( NULL != bdl._chr_ptr ); }
 
-        return *( ref.chr_ptr );
+        return *( bdl._chr_ptr );
     }
 
-    static ego_chr * get_chr_ptr( ego_bundle_chr * ptr )
+    static ego_chr * get_chr_ptr( ego_bundle_chr & bdl )
     {
-        if ( NULL == ptr ) return NULL;
+        if ( NULL == bdl._chr_ptr ) bdl.validate();
 
-        if ( NULL == ptr->chr_ptr ) validate( ptr );
-
-        return ptr->chr_ptr;
+        return bdl._chr_ptr;
     }
 
-    static const ego_chr * cget_chr_ptr( const ego_bundle_chr * ptr )
+    static const ego_chr * cget_chr_ptr( const ego_bundle_chr & bdl )
     {
-        if ( NULL == ptr ) return NULL;
-
         // cannot do the following since the bundle is CONST... ;)
-        // if( NULL == ptr->chr_ptr ) validate(ptr);
+        // if( NULL == bdl.get_chr_ptr() ) validate(ptr);
 
-        return ptr->chr_ptr;
+        return bdl._chr_ptr;
     }
+
+    CHR_REF   chr_ref() { validate(); return _chr_ref; }
+    ego_chr * chr_ptr() { validate(); return _chr_ptr; }
+
+    PRO_REF   pro_ref() { validate(); return _pro_ref; }
+    ego_pro * pro_ptr() { validate(); return _pro_ptr; }
+
+    CAP_REF   cap_ref() { validate(); return _cap_ref; }
+    ego_cap * cap_ptr() { validate(); return _cap_ptr; }
+
+    // const can't change anything so no calls to validate()
+    CHR_REF   chr_ref() const { return _chr_ref; }
+    ego_chr * chr_ptr() const { return _chr_ptr; }
+
+    PRO_REF   pro_ref() const { return _pro_ref; }
+    ego_pro * pro_ptr() const { return _pro_ptr; }
+
+    CAP_REF   cap_ref() const { return _cap_ref; }
+    ego_cap * cap_ptr() const { return _cap_ptr; }
+
+
+    //---- crazy accessors
+    operator CHR_REF() { validate(); return _chr_ref; }
+    operator ego_chr *() { validate(); return _chr_ptr; }
+
+    operator PRO_REF() { validate(); return _pro_ref; }
+    operator ego_pro *() { validate(); return _pro_ptr; }
+
+    operator CAP_REF() { validate(); return _cap_ref; }
+    operator ego_cap *() { validate(); return _cap_ptr; }
+
+    // const can't change anything so no calls to validate()
+    operator CHR_REF() const { return _chr_ref; }
+    operator ego_chr *() const { return _chr_ptr; }
+
+    operator PRO_REF() const { return _pro_ref; }
+    operator ego_pro *() const { return _pro_ptr; }
+
+    operator CAP_REF() const { return _cap_ref; }
+    operator ego_cap *() const { return _cap_ptr; }
+
+protected:
+
+    //---- construction
+    static ego_bundle_chr * ctor_this( ego_bundle_chr * bundle );
+
+    CHR_REF   _chr_ref;
+    ego_chr * _chr_ptr;
+
+    PRO_REF   _pro_ref;
+    ego_pro * _pro_ptr;
+
+    CAP_REF   _cap_ref;
+    ego_cap * _cap_ptr;
+
 };
 
 //--------------------------------------------------------------------------------------------

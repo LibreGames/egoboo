@@ -156,7 +156,6 @@ extern shop_stack ShopStack;
 //--------------------------------------------------------------------------------------------
 // prototypes
 
-
 /// \author ZZ
 // \details  This function clears the passage list ( for doors )
 void   passage_system_clear();

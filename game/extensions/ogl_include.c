@@ -70,7 +70,7 @@ void oglx_ViewMatrix( GLXmatrix view,
         GL_DEBUG( glLoadIdentity )();
         GL_DEBUG( glScalef )( -1, 1, 1 );
 
-        if ( roll > .001 )
+        if ( roll > .001f )
         {
             // GLXmatrix stupid_intermediate_matrix = RotateZ( roll );
             // GL_DEBUG(glMultMatrixf)(stupid_intermediate_matrix );

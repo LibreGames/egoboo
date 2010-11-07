@@ -341,6 +341,63 @@ egoboo_rv ego_object_process::proc_set_spawning( bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
+// struct ego_obj_data
+//--------------------------------------------------------------------------------------------
+
+ego_obj_data * ego_obj_data::ctor_this( ego_obj_data * pobj )
+{
+    if ( NULL == pobj ) return pobj;
+
+    dealloc( pobj );
+    alloc( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_data * ego_obj_data::dtor_this( ego_obj_data * pobj )
+{
+    if ( NULL == pobj ) return pobj;
+
+    dealloc( pobj );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_data * ego_obj_data::alloc( ego_obj_data * pobj )
+{
+    if ( NULL == pobj ) return pobj;
+
+    // all ego_obj are assumed to be 3 dimensional
+    ego_BSP_leaf::alloc( &( pobj->bsp_leaf ), 3 );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_obj_data * ego_obj_data::dealloc( ego_obj_data * pobj )
+{
+    if ( NULL == pobj ) return pobj;
+
+    ego_BSP_leaf::dealloc( &( pobj->bsp_leaf ) );
+
+    return pobj;
+}
+
+//--------------------------------------------------------------------------------------------
+void ego_obj_data::clear()
+{
+    obj_name[0] = CSTR_END;
+
+    update_count = frame_count = 0;
+
+    bsp_leaf.invalidate();
+
+    max_cv.invalidate();
+}
+
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 ego_obj * ego_obj::allocate_all( ego_obj * pobj )
 {
@@ -366,11 +423,7 @@ ego_obj * ego_obj::validate( ego_obj * pbase, bool_t val )
 {
     if ( NULL == pbase ) return pbase;
 
-    if ( rv_success == ego_object_process::validate( pbase, val ) )
-    {
-        // if this succeeds, assign a new guid
-        pbase->guid = ego_obj::guid_counter++;
-    }
+    ego_object_process::validate( pbase, val );
 
     return pbase;
 }
@@ -380,7 +433,7 @@ ego_obj * ego_obj::begin_processing( ego_obj * pbase, const char * name )
 {
     if ( NULL == pbase ) return pbase;
 
-    strncpy( pbase->base_name, "*INVLAID*", SDL_arraysize( pbase->base_name ) );
+    strncpy( pbase->obj_name, "*INVLAID*", SDL_arraysize( pbase->obj_name ) );
 
     // tell the process to begin processing
     if ( rv_success != pbase->proc_set_process() )
@@ -390,7 +443,7 @@ ego_obj * ego_obj::begin_processing( ego_obj * pbase, const char * name )
 
     // create a name for the object
     if ( NULL == name ) name = "*UNKNOWN*";
-    strncpy( pbase->base_name, name, SDL_arraysize( pbase->base_name ) );
+    strncpy( pbase->obj_name, name, SDL_arraysize( pbase->obj_name ) );
 
     return pbase;
 }

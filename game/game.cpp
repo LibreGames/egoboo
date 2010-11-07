@@ -130,7 +130,7 @@ PROFILE_DECLARE( cl_talkToHost );
 PROFILE_DECLARE( misc_update );
 PROFILE_DECLARE( object_io );
 PROFILE_DECLARE( initialize_all_objects );
-PROFILE_DECLARE( bump_all_objects );
+PROFILE_DECLARE( collision_system__bump_all_objects );
 PROFILE_DECLARE( move_all_objects );
 PROFILE_DECLARE( finalize_all_objects );
 PROFILE_DECLARE( game_update_clocks );
@@ -386,7 +386,7 @@ void export_all_players( bool_t require_local )
     // Stop if export isn't valid
     if ( !PMod->exportvalid ) return;
 
-    log_info( "export_all_players() - Exporting all player characters.\n" );
+    log_info( "%s - Exporting all player characters.\n", __FUNCTION__ );
 
     // Check each player
     for ( player_deque::iterator ipla = PlaDeque.begin(); ipla != PlaDeque.end(); ipla++ )
@@ -924,9 +924,9 @@ int game_update()
             initialize_all_objects();
             PROFILE_END2( initialize_all_objects );
             {
-                PROFILE_BEGIN( bump_all_objects );
-                bump_all_objects( &ego_obj_BSP::root );    // do the interactions
-                PROFILE_END2( bump_all_objects );
+                PROFILE_BEGIN( collision_system__bump_all_objects );
+                collision_system::bump_all_objects( &ego_obj_BSP::root );    // do the interactions
+                PROFILE_END2( collision_system__bump_all_objects );
 
                 PROFILE_BEGIN( move_all_objects );
                 move_all_objects();                   // this function may clear some latches
@@ -959,8 +959,8 @@ int game_update()
         PROFILE_END2( game_single_update );
 
         // estimate how much time the main loop is taking per second
-        est_single_update_time = 0.9 * est_single_update_time + 0.1 * PROFILE_QUERY( game_single_update );
-        est_single_ups         = 0.9 * est_single_ups         + 0.1 * ( 1.0 / PROFILE_QUERY( game_single_update ) );
+        est_single_update_time = 0.9F * est_single_update_time + 0.1F * PROFILE_QUERY( game_single_update );
+        est_single_ups         = 0.9F * est_single_ups         + 0.1F * ( 1.0F / PROFILE_QUERY( game_single_update ) );
     }
 
     return update_loop_cnt;
@@ -1208,7 +1208,7 @@ egoboo_rv ego_game_process::do_beginning()
     else log_message( "Failure!\n" );
 
     // initialize the collision system
-    collision_system_begin();
+    collision_system::begin();
 
     // initialize the "profile system"
     profile_system_begin();
@@ -1420,13 +1420,13 @@ egoboo_rv ego_game_process::do_running()
         // even when the inner loop does not execute
         if ( update_loops > 0 )
         {
-            est_update_time = 0.9 * est_update_time + 0.1 * PROFILE_QUERY( game_update_loop ) / update_loops;
-            est_max_ups     = 0.9 * est_max_ups     + 0.1 * ( update_loops / PROFILE_QUERY( game_update_loop ) );
+            est_update_time = 0.9F * est_update_time + 0.1F * PROFILE_QUERY( game_update_loop ) / update_loops;
+            est_max_ups     = 0.9F * est_max_ups     + 0.1F * ( update_loops / PROFILE_QUERY( game_update_loop ) );
         }
         else
         {
-            est_update_time = 0.9 * est_update_time + 0.1 * PROFILE_QUERY( game_update_loop );
-            est_max_ups     = 0.9 * est_max_ups     + 0.1 * ( 1.0 / PROFILE_QUERY( game_update_loop ) );
+            est_update_time = 0.9F * est_update_time + 0.1F * PROFILE_QUERY( game_update_loop );
+            est_max_ups     = 0.9F * est_max_ups     + 0.1F * ( 1.0F / PROFILE_QUERY( game_update_loop ) );
         }
 
         single_update_requested = bfalse;
@@ -1449,12 +1449,12 @@ egoboo_rv ego_game_process::do_running()
         PROFILE_END2( gfx_loop );
 
         // estimate how much time the main loop is taking per second
-        est_gfx_time = 0.9 * est_gfx_time + 0.1 * PROFILE_QUERY( gfx_loop );
-        est_max_gfx  = 0.9 * est_max_gfx  + 0.1 * ( 1.0 / PROFILE_QUERY( gfx_loop ) );
+        est_gfx_time = 0.9F * est_gfx_time + 0.1F * PROFILE_QUERY( gfx_loop );
+        est_max_gfx  = 0.9F * est_max_gfx  + 0.1F * ( 1.0F / PROFILE_QUERY( gfx_loop ) );
 
         // estimate how much time the main loop is taking per second
         est_render_time = est_gfx_time * TARGET_FPS;
-        est_max_fps     = 0.9 * est_max_fps + 0.1 * ( 1.0 - est_update_time * TARGET_UPS ) / PROFILE_QUERY( gfx_loop );
+        est_max_fps     = 0.9F * est_max_fps + 0.1F * ( 1.0F - est_update_time * TARGET_UPS ) / PROFILE_QUERY( gfx_loop );
 
         single_frame_requested = bfalse;
     }
@@ -1506,7 +1506,7 @@ egoboo_rv ego_game_process::do_leaving()
     MProc->resume();
 
     // deallocate any dynamically allocated collision memory
-    collision_system_end();
+    collision_system::end();
 
     // deallocate any data used by the profile system
     profile_system_end();
@@ -1914,9 +1914,9 @@ void game_update_pits()
             // Kill any particles that fell in a pit, if they die in water...
             PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
             {
-                if ( prt_bdl.prt_ptr->pos.z < PITDEPTH && prt_bdl.pip_ptr->end_water )
+                if ( prt_bdl.prt_ptr()->pos.z < PITDEPTH && prt_bdl.pip_ptr()->end_water )
                 {
-                    ego_obj_prt::request_terminate( &prt_bdl );
+                    ego_obj_prt::request_terminate( prt_bdl );
                 }
             }
             PRT_END_LOOP();
@@ -3356,7 +3356,7 @@ bool_t game_load_module_data( const char *smallname )
     {
         // do not cause the program to fail, in case we are using a script function to load a module
         // just return a failure value and log a warning message for debugging purposes
-        log_warning( "game_load_module_data() - Uh oh! Problems loading the mesh! (%s)\n", modname );
+        log_warning( "%s - Uh oh! Problems loading the mesh! (%s)\n", __FUNCTION__, modname );
 
         goto game_load_module_data_fail;
     }
@@ -3382,9 +3382,9 @@ void disaffirm_attached_particles( const CHR_REF & character )
 
     PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
     {
-        if ( prt_bdl.prt_ptr->attachedto_ref == character )
+        if ( prt_bdl.prt_ptr()->attachedto_ref == character )
         {
-            ego_obj_prt::request_terminate( &prt_bdl );
+            ego_obj_prt::request_terminate( prt_bdl );
         }
     }
     PRT_END_LOOP();
@@ -3406,7 +3406,7 @@ int number_of_attached_particles( const CHR_REF & character )
 
     PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
     {
-        if ( prt_bdl.prt_ptr->attachedto_ref == character )
+        if ( prt_bdl.prt_ptr()->attachedto_ref == character )
         {
             cnt++;
         }
@@ -3662,7 +3662,7 @@ egoboo_rv game_update_imports()
     vfs_empty_import_directory();
     if ( !vfs_mkdir( "/import" ) )
     {
-        log_warning( "game_update_imports() - Could not create the import folder. (%s)\n", vfs_getError() );
+        log_warning( "%s - Could not create the import folder. (%s)\n", __FUNCTION__, vfs_getError() );
     }
 
     // export all of the players directly from memory straight to the "import" dir
@@ -3691,7 +3691,7 @@ egoboo_rv game_update_imports()
         if ( tnc == loadplayer_count )
         {
             retval = rv_fail;
-            log_warning( "game_update_imports() - cannot find exported file for \"%s\" (\"%s\") \n", ChrObjList.get_data_ref( character ).base_name, str_encode_path( ChrObjList.get_data_ref( character ).name ) ) ;
+            log_warning( "%s - cannot find exported file for \"%s\" (\"%s\") \n", __FUNCTION__, ChrObjList.get_data_ref( character ).obj_name, str_encode_path( ChrObjList.get_data_ref( character ).name ) ) ;
             continue;
         }
 
@@ -3755,27 +3755,27 @@ void game_release_module_data()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t attach_one_particle( ego_bundle_prt * pbdl_prt )
+bool_t attach_one_particle( const ego_bundle_prt & prt_bdl )
 {
-    ego_prt * pprt;
-    ego_chr * pchr;
+    ego_prt * loc_pprt;
+    ego_chr * loc_pchr;
 
-    if ( NULL == pbdl_prt ) return bfalse;
-    pprt = pbdl_prt->prt_ptr;
+    loc_pprt = prt_bdl.prt_ptr();
+    if ( NULL == loc_pprt ) return bfalse;
 
-    if ( !INGAME_CHR( pbdl_prt->prt_ptr->attachedto_ref ) ) return bfalse;
-    pchr = ChrObjList.get_data_ptr( pbdl_prt->prt_ptr->attachedto_ref );
+    if ( !INGAME_CHR( prt_bdl.prt_ptr()->attachedto_ref ) ) return bfalse;
+    loc_pchr = ChrObjList.get_data_ptr( prt_bdl.prt_ptr()->attachedto_ref );
 
-    pprt = place_particle_at_vertex( pprt, pprt->attachedto_ref, pprt->attachedto_vrt_off );
-    if ( NULL == pprt ) return bfalse;
+    loc_pprt = place_particle_at_vertex( loc_pprt, loc_pprt->attachedto_ref, loc_pprt->attachedto_vrt_off );
+    if ( NULL == loc_pprt ) return bfalse;
 
     // the previous function can inactivate a particle
-    if ( PROCESSING_PPRT( pprt ) )
+    if ( PROCESSING_PPRT( loc_pprt ) )
     {
         // Correct facing so swords knock characters in the right direction...
-        if ( NULL != pbdl_prt->pip_ptr && HAS_SOME_BITS( pbdl_prt->pip_ptr->damfx, DAMFX_TURN ) )
+        if ( NULL != prt_bdl.pip_ptr() && HAS_SOME_BITS( prt_bdl.pip_ptr()->damfx, DAMFX_TURN ) )
         {
-            pprt->facing = pchr->ori.facing_z;
+            loc_pprt->facing = loc_pchr->ori.facing_z;
         }
     }
 
@@ -3791,7 +3791,7 @@ void attach_all_particles()
 
     PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, prt_bdl )
     {
-        attach_one_particle( &prt_bdl );
+        attach_one_particle( prt_bdl );
     }
     PRT_END_LOOP()
 }

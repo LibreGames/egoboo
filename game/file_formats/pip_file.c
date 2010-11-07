@@ -93,6 +93,7 @@ pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
 
     // set up the EGO_PROFILE_STUFF
     strncpy( ppip->name, szLoadName, SDL_arraysize( ppip->name ) );
+    ppip->name[ SDL_arraysize( ppip->name ) - 1 ] = '\0';
     ppip->loaded = btrue;
 
     // read the 1 line comment at the top of the file
@@ -165,7 +166,7 @@ pip_data_t * load_one_pip_file_vfs( const char *szLoadName, pip_data_t * ppip )
     ppip->vel_vrt_pair.rand      = fget_next_int( fileread );
 
     // Continuous spawning of other particles
-    ppip->contspawn_delay      = fget_next_int( fileread );
+    ppip->contspawn_timer      = fget_next_int( fileread );
     ppip->contspawn_amount    = fget_next_int( fileread );
     ppip->contspawn_facingadd = fget_next_int( fileread );
     ppip->contspawn_pip       = fget_next_int( fileread );

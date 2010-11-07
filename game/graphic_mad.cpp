@@ -435,8 +435,8 @@ bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bi
     if ( 0 == ( bits & CHR_REFLECT ) )
     {
         render_chr_bbox( pchr );
-        render_chr_grips( pchr );
-        render_chr_mount_cv( pchr );
+        //render_chr_grips( pchr );
+        //render_chr_mount_cv( pchr );
         //render_chr_points( pchr );
     }
 #endif
@@ -543,7 +543,7 @@ void render_chr_bbox( ego_chr * pchr )
         {
             ego_oct_bb   bb;
 
-            ego_oct_bb::add_vector( pchr->chr_min_cv, pchr->pos.v, &bb );
+            ego_oct_bb::add_vector( pchr->chr_min_cv, pchr->pos.v, bb );
 
             GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
             render_oct_bb( &bb, btrue, btrue );
@@ -858,7 +858,7 @@ void gfx_mad_instance::update_lighting_base( gfx_mad_instance * pinst, ego_chr *
 
     // reduce the amount of updates to an average of about 1 every 2 frames, but dither
     // the updating so that not all objects update on the same frame
-    pinst->lighting_frame_all = frame_all + (( frame_all + ego_chr::get_obj_ref( *pchr ).guid ) & 0x03 );
+    pinst->lighting_frame_all = frame_all + (( frame_all + ego_chr::get_obj_ref( *pchr ).get_id() ) & 0x03 );
 
     // interpolate the lighting for the origin of the object
     grid_lighting_interpolate( PMesh, &global_light, pchr->pos.x, pchr->pos.y );
@@ -1119,12 +1119,12 @@ egoboo_rv gfx_mad_instance::update_vertices( gfx_mad_instance * pgfx_inst, const
     md2_vertices = md2_get_numVertices( pgfx_inst->md2_ptr );
     if ( md2_vertices < 0 )
     {
-        log_error( "gfx_mad_instance::update_vertices() - md2 model has negative number of vertices.... is it corrupted?\n" );
+        log_error( "%s - md2 model has negative number of vertices.... is it corrupted?\n", __FUNCTION__ );
     }
 
     if ( pgfx_inst->vrt_count != ( size_t )md2_vertices )
     {
-        log_error( "gfx_mad_instance::update_vertices() - character instance vertex data does not match its md2\n" );
+        log_error( "%s - character instance vertex data does not match its md2\n", __FUNCTION__ );
     }
 
     // get the vertex list size from the chr_instance
@@ -1166,7 +1166,7 @@ egoboo_rv gfx_mad_instance::update_vertices( gfx_mad_instance * pgfx_inst, const
     frame_count = md2_get_numFrames( pgfx_inst->md2_ptr );
     if ( p_new.frame_nxt >= frame_count || p_new.frame_lst >= frame_count )
     {
-        log_error( "gfx_mad_instance::update_vertices() - character instance frame is outside the range of its md2\n" );
+        log_error( "%s - character instance frame is outside the range of its md2\n", __FUNCTION__ );
     }
 
     // grab the frame data from the correct model
@@ -1651,7 +1651,7 @@ void gfx_mad_instance::get_tint( gfx_mad_instance * pgfx_inst, GLfloat * tint, B
     {
         // solid characters are not blended onto the canvas
         // the alpha channel is not important
-        weight_sum += 1.0;
+        weight_sum += 1.0f;
 
         tint[0] += 1.0f / ( 1 << local_redshift );
         tint[1] += 1.0f / ( 1 << local_grnshift );
@@ -1663,7 +1663,7 @@ void gfx_mad_instance::get_tint( gfx_mad_instance * pgfx_inst, GLfloat * tint, B
     {
         // alpha characters are blended onto the canvas using the alpha channel
         // the alpha channel is not important
-        weight_sum += 1.0;
+        weight_sum += 1.0f;
 
         tint[0] += 1.0f / ( 1 << local_redshift );
         tint[1] += 1.0f / ( 1 << local_grnshift );
@@ -1677,7 +1677,7 @@ void gfx_mad_instance::get_tint( gfx_mad_instance * pgfx_inst, GLfloat * tint, B
         // the more black the colors, the less visible the character
         // the alpha channel is not important
 
-        weight_sum += 1.0;
+        weight_sum += 1.0f;
 
         if ( local_light < 255 )
         {
@@ -1696,7 +1696,7 @@ void gfx_mad_instance::get_tint( gfx_mad_instance * pgfx_inst, GLfloat * tint, B
 
         float amount;
 
-        weight_sum += 1.0;
+        weight_sum += 1.0f;
 
         amount = ( CLIP( local_sheen, 0, 15 ) << 4 ) / 240.0f;
 

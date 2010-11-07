@@ -79,17 +79,17 @@ egoboo_rv quest_file_close( ConfigFilePtr_t * ppfile, bool_t export_file )
 
         if ( rv_error == export_file_rv )
         {
-            log_warning( "quest_file_close() - error writing quest.txt\n" );
+            log_warning( "%s - error writing quest.txt\n", __FUNCTION__ );
         }
         else if ( rv_fail == export_file_rv )
         {
-            log_warning( "quest_file_close() - could not export_file quest.txt\n" );
+            log_warning( "%s - could not export_file quest.txt\n", __FUNCTION__ );
         }
     }
 
     if ( ConfigFile_succeed != ConfigFile_destroy( ppfile ) )
     {
-        log_warning( "quest_file_close() - could not successfully close quest.txt\n" );
+        log_warning( "%s - could not successfully close quest.txt\n", __FUNCTION__ );
     }
 
     return ( NULL == *ppfile ) && ( rv_success == export_file_rv ) ? rv_success : rv_fail;
@@ -134,13 +134,13 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
         // Stop here if it failed
         if ( rv_error == rv )
         {
-            log_warning( "quest_log_download_vfs() - Encountered an error while trying to add a quest. (%s)\n", newloadname );
+            log_warning( "%s - Encountered an error while trying to add a quest. (%s)\n", __FUNCTION__, newloadname );
             retval = rv;
             break;
         }
         else if ( rv_fail == rv )
         {
-            log_warning( "quest_log_download_vfs() - Unable to load all quests. (%s)\n", newloadname );
+            log_warning( "%s - Unable to load all quests. (%s)\n", __FUNCTION__, newloadname );
             retval = rv;
             break;
         }

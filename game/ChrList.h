@@ -119,7 +119,7 @@ typedef t_ego_obj_container< ego_obj_chr, MAX_CHR >  ego_chr_container;
 /// loops through ChrObjList for all in-game characters that are registered in the BSP
 #define CHR_BEGIN_LOOP_BSP(IT, PCHR) \
     CHR_BEGIN_LOOP_INGAME(IT, PCHR) \
-    if( !PCHR->bsp_leaf.inserted ) continue;
+    if( !PCHR##_obj->bsp_leaf.inserted ) continue;
 
 /// loops through ChrObjList for all "defined" characters, creating a reference, and a pointer
 #define CHR_BEGIN_LOOP_ALLOCATED_BDL(IT, CHR_BDL) \

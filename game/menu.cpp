@@ -5190,7 +5190,7 @@ bool_t OptionsVideo_data::coerce_aspect_ratio( int width, int height, float * pr
 
     req_aspect_ratio = ( float )width / ( float )height;
 
-    if ( req_aspect_ratio > 0.0 && req_aspect_ratio < 0.5f*(( 5.0f / 4.0f ) + ( 4.0f / 3.0f ) ) )
+    if ( req_aspect_ratio > 0.0f && req_aspect_ratio < 0.5f*(( 5.0f / 4.0f ) + ( 4.0f / 3.0f ) ) )
     {
         *pratio = 5.0f / 4.0f;
         strncpy( *psz_ratio, "5:4", sizeof( *psz_ratio ) );

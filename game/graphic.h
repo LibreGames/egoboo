@@ -297,7 +297,7 @@ void   gfx_system_end();
 
 int    ogl_init();
 void   gfx_main();
-void   gfx_begin_3d( struct ego_camera * pcam );
+void   gfx_begin_3d( ego_camera * pcam );
 void   gfx_end_3d();
 void   gfx_reload_all_textures();
 
@@ -307,7 +307,7 @@ bool_t flip_pages_requested();
 void   request_flip_pages();
 void   do_flip_pages();
 
-void   dolist_sort( struct ego_camera * pcam, bool_t do_reflect );
+void   dolist_sort( ego_camera * pcam, bool_t do_reflect );
 void   dolist_make( ego_mpd   * pmesh );
 bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr );
 bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt );
@@ -322,15 +322,15 @@ int  draw_status( const CHR_REF & character, float x, float y );
 void draw_text();
 void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t draw_ammo );
 void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map );
-void draw_all_lines( struct ego_camera * pcam );
+void draw_all_lines( ego_camera * pcam );
 
-void   render_world( struct ego_camera * pcam );
+void   render_world( ego_camera * pcam );
 void   render_shadow( const CHR_REF & character );
 void   render_bad_shadow( const CHR_REF & character );
-void   render_scene( ego_mpd   * pmesh, struct ego_camera * pcam );
+void   render_scene( ego_mpd   * pmesh, ego_camera * pcam );
 bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond );
 bool_t render_aabb( ego_aabb * pbbox );
-void   render_all_billboards( struct ego_camera * pcam );
+void   render_all_billboards( ego_camera * pcam );
 
 void   make_enviro();
 void   clear_messages();
@@ -342,7 +342,7 @@ int  DisplayMsg_get_free();
 int debug_printf( const char *format, ... );
 
 void renderlist_reset();
-void renderlist_make( ego_mpd   * pmesh, struct ego_camera * pcam );
+void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam );
 
 bool_t grid_lighting_interpolate( ego_mpd   * pmesh, ego_lighting_cache * dst, float fx, float fy );
 float  grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff );

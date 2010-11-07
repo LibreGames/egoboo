@@ -259,8 +259,10 @@ extern "C"
 
 /// the "base class" of Egoboo profiles
 #define  EGO_PROFILE_STUFF \
-    bool_t         loaded;      /* Does it exist? */ \
-    STRING         name
+    bool_t         loaded;        /**< was it loased */    \
+    STRING         name;          /**< initial filename */ \
+    size_t         request_count; /**< spawn attempts */   \
+    size_t         create_count;  /**< spawn successes */
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

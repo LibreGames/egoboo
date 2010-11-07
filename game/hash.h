@@ -33,8 +33,8 @@ struct ego_hash_node
     ego_hash_node * next;
     void          * data;
 
-    static ego_hash_node * create( void * data );
-    static bool_t          destroy( ego_hash_node ** );
+    static ego_hash_node * create( void * data, ego_hash_node * src = NULL );
+    static bool_t          destroy( ego_hash_node **, bool_t own_ptr );
     static ego_hash_node * ctor_this( ego_hash_node * n, void * data );
     static bool_t          dtor_this( ego_hash_node * n );
     static ego_hash_node * insert_after( ego_hash_node lst[], ego_hash_node * n );
@@ -59,17 +59,9 @@ struct ego_hash_list
         static bool_t     next( iterator * it, ego_hash_list * hlst );
     };
 
-    int              allocated;
-    size_t         * subcount;
-    ego_hash_node ** sublist;
+    static ego_hash_list * create( int size, ego_hash_list * ptr = NULL );
+    static bool_t          destroy( ego_hash_list **, bool_t own_ptr = btrue );
 
-    ego_hash_list() { clear( this ); }
-    ~ego_hash_list() { dtor_this( this ); }
-
-    static ego_hash_list * create( int size );
-    static bool_t          destroy( ego_hash_list ** );
-    static ego_hash_list * ctor_this( ego_hash_list * lst, int size );
-    static ego_hash_list * dtor_this( ego_hash_list * lst );
     static bool_t          dealloc( ego_hash_list * lst );
     static bool_t          alloc( ego_hash_list * lst, int size );
     static bool_t          renew( ego_hash_list * lst );
@@ -85,16 +77,37 @@ struct ego_hash_list
 
     static bool_t          insert_unique( ego_hash_list * phash, ego_hash_node * pnode );
 
+protected:
+
+    static ego_hash_list * ctor_this( ego_hash_list * lst, int size );
+    static ego_hash_list * dtor_this( ego_hash_list * lst );
+
+    ego_hash_list( int size = -1 ) { _init(); ctor_this( this, size ); }
+    ~ego_hash_list() { dtor_this( this ); _init(); }
+
 private:
 
     static ego_hash_list * clear( ego_hash_list * ptr )
     {
         if ( NULL == ptr ) return NULL;
 
-        SDL_memset( ptr, 0, sizeof( *ptr ) );
+        ego_hash_list::dtor_this( ptr );
 
         return ptr;
     }
+
+    void _init()
+    {
+        if ( NULL != this )
+        {
+            SDL_memset( this, 0, sizeof( *this ) );
+        }
+    }
+
+    int              allocated;
+    size_t         * subcount;
+    ego_hash_node ** sublist;
+
 };
 
 //--------------------------------------------------------------------------------------------

@@ -552,7 +552,7 @@ bool_t ego_grid_mem::alloc( ego_grid_mem * pgmem, ego_mpd_info * pinfo )
 ego_grid_mem_alloc_fail:
 
     ego_grid_mem::dealloc( pgmem );
-    log_error( "ego_grid_mem::alloc() - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n" );
+    log_error( "%s - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n", __FUNCTION__ );
     return bfalse;
 }
 
@@ -612,7 +612,7 @@ bool_t ego_tile_mem::alloc( ego_tile_mem * pmem, ego_mpd_info * pinfo )
 mesh_mem_alloc_fail:
 
     ego_tile_mem::dealloc( pmem );
-    log_error( "ego_tile_mem::alloc() - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n" );
+    log_error( "%s - reduce the maximum number of vertices! (Check MESH_MAXTOTALVERTRICES)\n", __FUNCTION__ );
     return bfalse;
 }
 
@@ -705,7 +705,7 @@ void ego_mpd::make_vrtstart( ego_mpd   * pmesh )
 
     if ( vert != pinfo->vertcount )
     {
-        log_warning( "mesh_make_vrtstart() - unexpected number of vertices %d of %d\n", vert, pinfo->vertcount );
+        log_warning( "%s - unexpected number of vertices %d of %d\n", __FUNCTION__, vert, pinfo->vertcount );
     }
 }
 
@@ -1308,7 +1308,7 @@ bool_t ego_tile_mem::interpolate_vertex( ego_tile_mem * pmem, int fan, float pos
         ( *plight )  += wt * ( *lc )[cnt];
     }
 
-    if (( *plight ) > 0 && weight_sum > 0.0 )
+    if (( *plight ) > 0 && weight_sum > 0.0f )
     {
         ( *plight ) /= weight_sum;
     }
@@ -1331,11 +1331,11 @@ float grid_get_mix( float u0, float u, float v0, float v )
     float dv = v - v0;
 
     // du *= 1.0f;
-    if ( SDL_abs( du ) > 1.0 ) return 0;
+    if ( SDL_abs( du ) > 1.0f ) return 0.0f;
     wt_u = ( 1.0f - du ) * ( 1.0f + du );
 
     // dv *= 1.0f;
-    if ( SDL_abs( dv ) > 1.0 ) return 0;
+    if ( SDL_abs( dv ) > 1.0f ) return 0.0f;
     wt_v = ( 1.0f - dv ) * ( 1.0f + dv );
 
     return wt_u * wt_v;

@@ -134,7 +134,7 @@ bool_t phys_estimate_chr_chr_normal( ego_oct_vec & opos_a, ego_oct_vec & opos_b,
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_oct_bb::intersect_index( int index, ego_oct_bb & src1, ego_oct_vec & opos1, ego_oct_vec & ovel1, ego_oct_bb & src2, ego_oct_vec & opos2, ego_oct_vec & ovel2, float *tmin, float *tmax )
+egoboo_rv ego_oct_bb::intersect_index( const int index, const ego_oct_bb & src1, const ego_oct_vec & opos1, const ego_oct_vec & ovel1, const ego_oct_bb & src2, const ego_oct_vec & opos2, const ego_oct_vec & ovel2, float *tmin, float *tmax )
 {
     float diff;
     float time[4];
@@ -167,7 +167,7 @@ egoboo_rv ego_oct_bb::intersect_index( int index, ego_oct_bb & src1, ego_oct_vec
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_oct_bb::intersect_index_close( int index, ego_oct_bb & src1, ego_oct_vec & opos1, ego_oct_vec & ovel1, ego_oct_bb & src2, ego_oct_vec & opos2, ego_oct_vec & ovel2, float *tmin, float *tmax )
+egoboo_rv ego_oct_bb::intersect_index_close( const int index, const ego_oct_bb & src1, const ego_oct_vec & opos1, const ego_oct_vec & ovel1, const ego_oct_bb & src2, const ego_oct_vec & opos2, const ego_oct_vec & ovel2, float *tmin, float *tmax )
 {
     egoboo_rv retval = rv_error;
     float     diff;
@@ -226,7 +226,7 @@ egoboo_rv ego_oct_bb::intersect_index_close( int index, ego_oct_bb & src1, ego_o
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2_orig, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
+bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2_orig, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb * pdst, float *tmin, float *tmax )
 {
     /// \author BB
     /// \details  A test to determine whether two "fast moving" objects are interacting within a frame.
@@ -333,15 +333,15 @@ bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1
         tmp_max = CLIP( *tmax, 0.0f, 1.0f );
 
         // shift the source bounding boxes to be centered on the given positions
-        ego_oct_bb::add_vector( src1_orig, pos1.v, &src1 );
-        ego_oct_bb::add_vector( src2_orig, pos2.v, &src2 );
+        ego_oct_bb::add_vector( src1_orig, pos1.v, src1 );
+        ego_oct_bb::add_vector( src2_orig, pos2.v, src2 );
 
         // determine the expanded collision volumes for both objects
-        phys_expand_oct_bb( src1, vel1, tmp_min, tmp_max, &exp1 );
-        phys_expand_oct_bb( src2, vel2, tmp_min, tmp_max, &exp2 );
+        phys_expand_oct_bb( src1, vel1, tmp_min, tmp_max, exp1 );
+        phys_expand_oct_bb( src2, vel2, tmp_min, tmp_max, exp2 );
 
         // determine the intersection of these two volumes
-        ego_oct_bb::do_intersection( exp1, exp2, pdst );
+        ego_oct_bb::do_intersection( exp1, exp2, *pdst );
 
         // check to see if there is any possibility of interaction at all
         for ( cnt = 0; cnt < OCT_COUNT; cnt++ )
@@ -355,7 +355,7 @@ bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t phys_expand_oct_bb( ego_oct_bb & src, fvec3_t vel, float tmin, float tmax, ego_oct_bb   * pdst )
+bool_t phys_expand_oct_bb( const ego_oct_bb & src, const fvec3_t vel, const float tmin, const float tmax, ego_oct_bb & dst )
 {
     /// \author BB
     /// \details  use the velocity of an object and its ego_oct_bb   to determine the
@@ -368,10 +368,7 @@ bool_t phys_expand_oct_bb( ego_oct_bb & src, fvec3_t vel, float tmin, float tmax
     abs_vel = fvec3_length_abs( vel.v );
     if ( 0.0f == abs_vel )
     {
-        if ( NULL != pdst )
-        {
-            *pdst = src;
-        }
+        dst = src;
         return btrue;
     }
 
@@ -389,7 +386,7 @@ bool_t phys_expand_oct_bb( ego_oct_bb & src, fvec3_t vel, float tmin, float tmax
         pos_min.z = vel.z * tmin;
 
         // adjust the bounding box to take in the position at the next step
-        if ( !ego_oct_bb::add_vector( src, pos_min.v, &tmp_min ) ) return bfalse;
+        if ( !ego_oct_bb::add_vector( src, pos_min.v, tmp_min ) ) return bfalse;
     }
 
     // determine the bounding volume at t == tmax
@@ -406,17 +403,17 @@ bool_t phys_expand_oct_bb( ego_oct_bb & src, fvec3_t vel, float tmin, float tmax
         pos_max.z = vel.z * tmax;
 
         // adjust the bounding box to take in the position at the next step
-        if ( !ego_oct_bb::add_vector( src, pos_max.v, &tmp_max ) ) return bfalse;
+        if ( !ego_oct_bb::add_vector( src, pos_max.v, tmp_max ) ) return bfalse;
     }
 
     // determine bounding box for the range of times
-    if ( !ego_oct_bb::do_union( tmp_min, tmp_max, pdst ) ) return bfalse;
+    if ( !ego_oct_bb::do_union( tmp_min, tmp_max, dst ) ) return bfalse;
 
     return btrue;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_expand_chr_bb( ego_chr * pchr, float tmin, float tmax, ego_oct_bb   * pdst )
+bool_t phys_expand_chr_bb( ego_chr * pchr, const float tmin, float const tmax, ego_oct_bb & dst )
 {
     /// \author BB
     /// \details  use the object velocity to figure out where the volume that the character will
@@ -432,14 +429,14 @@ bool_t phys_expand_chr_bb( ego_chr * pchr, float tmin, float tmax, ego_oct_bb   
     tmp_oct1 = pchr->chr_max_cv;
 
     // add in the current position to the bounding volume
-    ego_oct_bb::add_vector( tmp_oct1, pchr->pos.v, &tmp_oct2 );
+    ego_oct_bb::add_vector( tmp_oct1, pchr->pos.v, tmp_oct2 );
 
     // stretch the bounding volume to cover the path of the object
-    return phys_expand_oct_bb( tmp_oct2, pchr->vel, tmin, tmax, pdst );
+    return phys_expand_oct_bb( tmp_oct2, pchr->vel, tmin, tmax, dst );
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   * pdst )
+bool_t phys_expand_prt_bb( ego_prt * pprt, const float tmin, const float tmax, ego_oct_bb & dst )
 {
     /// \author BB
     /// \details  use the object velocity to figure out where the volume that the particle will
@@ -452,11 +449,11 @@ bool_t phys_expand_prt_bb( ego_prt * pprt, float tmin, float tmax, ego_oct_bb   
     // add in the current position to the bounding volume
     {
         fvec3_t _tmp_vec = ego_prt::get_pos( pprt );
-        ego_oct_bb::add_vector( pprt->prt_cv, _tmp_vec.v, &tmp_oct );
+        ego_oct_bb::add_vector( pprt->prt_max_cv, _tmp_vec.v, tmp_oct );
     }
 
     // stretch the bounding volume to cover the path of the object
-    return phys_expand_oct_bb( tmp_oct, pprt->vel, tmin, tmax, pdst );
+    return phys_expand_oct_bb( tmp_oct, pprt->vel, tmin, tmax, dst );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -904,7 +901,7 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
     if ( 1.0f == perp_factor && 1.0f == para_factor ) return btrue;
 
     // make a shortcut for the simple case of both scale factors being zero
-    if ( 0.0f == perp_factor && 0.0 == para_factor )
+    if ( 0.0f == perp_factor && 0.0f == para_factor )
     {
         fvec3_self_clear( sum.v );
     }
@@ -1132,8 +1129,8 @@ bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, 
 //    if ( *tmin > 1.0f || *tmax < 0.0f ) return bfalse;
 //
 //    // determine the expanded collision volumes for both objects
-//    phys_expand_oct_bb( src1, vel1, *tmin, *tmax, &exp1 );
-//    phys_expand_oct_bb( src2, vel2, *tmin, *tmax, &exp2 );
+//    phys_expand_oct_bb( src1, vel1, *tmin, *tmax, exp1 );
+//    phys_expand_oct_bb( src2, vel2, *tmin, *tmax, exp2 );
 //
 //    // determine the intersection of these two volumes
 //    ego_oct_bb::do_intersection( exp1, exp2, &intersection );

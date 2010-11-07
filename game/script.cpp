@@ -82,7 +82,7 @@ void scripting_system_begin()
         for ( cnt = 0; cnt < SCRIPT_FUNCTIONS_COUNT; cnt++ )
         {
             _script_function_calls[cnt] = 0;
-            _script_function_times[cnt] = 0.0;
+            _script_function_times[cnt] = 0.0F;
         }
 
         _scripting_system_initialized = btrue;
@@ -96,7 +96,7 @@ void scripting_system_end()
     {
         PROFILE_FREE( script_function );
 
-#if (DEBUG_SCRIPT_LEVEL > 1 ) && defined(DEBUG_PROFILE) && EGO_DEBUG
+#if (DEBUG_SCRIPT_LEVEL > 1 ) && (PROFILE_LEVEL > 0) && EGO_DEBUG
         {
             FILE * ftmp = fopen( vfs_resolveWriteFilename( "/debug/script_function_timing.txt" ), "a+" );
 
@@ -457,7 +457,7 @@ Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
     returncode = btrue;
     if ( MAX_OPCODE == valuecode )
     {
-        log_message( "SCRIPT ERROR: scr_run_function() - model == %d, class name == \"%s\" - Unknown opcode found!\n", script_error_model.get_value(), script_error_classname );
+        log_message( "SCRIPT ERROR: %s - model == %d, class name == \"%s\" - Unknown opcode found!\n", __FUNCTION__, script_error_model.get_value(), script_error_classname );
         return bfalse;
     }
 
@@ -885,7 +885,7 @@ Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 
                     // if none of the above, skip the line and log an error
                 default:
-                    log_message( "SCRIPT ERROR: scr_run_function() - ai script %d - unhandled script function %d\n", pself->type, valuecode );
+                    log_message( "SCRIPT ERROR: %s - ai script %d - unhandled script function %d\n", __FUNCTION__, pself->type, valuecode );
                     returncode = bfalse;
                     break;
             }
@@ -928,7 +928,7 @@ void scr_set_operand( ego_script_state * pstate, Uint8 variable )
             break;
 
         default:
-            log_warning( "scr_set_operand() - cannot assign a number to index %d", variable );
+            log_message( "SCRIPT WARNING: %s - cannot assign a number to index %d", __FUNCTION__, variable );
             break;
     }
 }

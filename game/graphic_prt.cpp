@@ -100,9 +100,9 @@ static void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst,
 static int  cmp_prt_registry_entity( const void * vlhs, const void * vrhs );
 
 static void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vrt_offset );
-static void prt_draw_attached_point( ego_bundle_prt * pbdl_prt );
+static void prt_draw_attached_point( const ego_bundle_prt & bdl_prt );
 
-static void render_prt_bbox( ego_bundle_prt * pbdl_prt );
+static void render_prt_bbox( const ego_bundle_prt & bdl_prt );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -154,9 +154,9 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], s
 
         if ( numparticle >= reg_count ) break;
 
-        pinst = &( prt_bdl.prt_ptr->inst );
+        pinst = &( prt_bdl.prt_ptr()->inst );
 
-        if ( !prt_bdl.prt_ptr->inview || prt_bdl.prt_ptr->is_hidden ) continue;
+        if ( !prt_bdl.prt_ptr()->inview || prt_bdl.prt_ptr()->is_hidden ) continue;
 
         if ( 0 != pinst->size )
         {
@@ -171,7 +171,7 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], s
 
             if ( dist > 0 )
             {
-                reg[numparticle].index = ( prt_bdl.prt_ref ).get_value();
+                reg[numparticle].index = prt_bdl.prt_ref().get_value();
                 reg[numparticle].dist  = dist;
                 numparticle++;
             }
@@ -419,9 +419,9 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
 
         if ( numparticle >= reg_count ) break;
 
-        pinst = &( prt_bdl.prt_ptr->inst );
+        pinst = &( prt_bdl.prt_ptr()->inst );
 
-        if ( !prt_bdl.prt_ptr->inview || prt_bdl.prt_ptr->is_hidden ) continue;
+        if ( !prt_bdl.prt_ptr()->inview || prt_bdl.prt_ptr()->is_hidden ) continue;
 
         if ( pinst->size != 0 )
         {
@@ -664,7 +664,7 @@ void render_all_prt_attachment()
 
     PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
-        prt_draw_attached_point( &prt_bdl );
+        prt_draw_attached_point( prt_bdl );
     }
     PRT_END_LOOP();
 }
@@ -674,7 +674,7 @@ void render_all_prt_bbox()
 {
     PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
-        render_prt_bbox( &prt_bdl );
+        render_prt_bbox( prt_bdl );
     }
     PRT_END_LOOP();
 }
@@ -723,7 +723,7 @@ void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vr
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_draw_attached_point( ego_bundle_prt * pbdl_prt )
+void prt_draw_attached_point( const ego_bundle_prt & bdl_prt )
 {
     ego_mad * pholder_mad;
     ego_cap * pholder_cap;
@@ -731,8 +731,8 @@ void prt_draw_attached_point( ego_bundle_prt * pbdl_prt )
 
     ego_prt * loc_pprt;
 
-    if ( NULL == pbdl_prt ) return;
-    loc_pprt = pbdl_prt->prt_ptr;
+    if ( NULL == bdl_prt.prt_ptr() ) return;
+    loc_pprt = bdl_prt.prt_ptr();
 
     if ( !INGAME_PPRT( loc_pprt ) ) return;
 
@@ -762,7 +762,7 @@ void update_all_prt_instance( ego_camera * pcam )
     PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
         // get the parent object
-        ego_obj_prt * pobj = ego_prt::get_obj_ptr( prt_bdl.prt_ptr );
+        ego_obj_prt * pobj = ego_prt::get_obj_ptr( prt_bdl.prt_ptr() );
 
         // only do frame counting for particles that are fully activated!
         if ( !FLAG_VALID_PBASE( pobj ) ) continue;
@@ -1189,14 +1189,14 @@ void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 tra
 }
 
 //--------------------------------------------------------------------------------------------
-void render_prt_bbox( ego_bundle_prt * pbdl_prt )
+void render_prt_bbox( const ego_bundle_prt & bdl_prt )
 {
     ego_prt * loc_pprt;
     ego_pip * loc_ppip;
 
-    if ( NULL == pbdl_prt ) return;
-    loc_pprt = pbdl_prt->prt_ptr;
-    loc_ppip = pbdl_prt->pip_ptr;
+    if ( NULL == bdl_prt.prt_ptr() ) return;
+    loc_pprt = bdl_prt.prt_ptr();
+    loc_ppip = bdl_prt.pip_ptr();
 
     // only draw damaging particles
     if ( 0 == SDL_abs( loc_pprt->damage.base ) + SDL_abs( loc_pprt->damage.rand ) ) return;
@@ -1210,7 +1210,7 @@ void render_prt_bbox( ego_bundle_prt * pbdl_prt )
         ego_oct_bb   loc_bb, tmp_bb, exp_bb;
 
         // copy the bounding volume
-        tmp_bb = loc_pprt->prt_cv;
+        tmp_bb = loc_pprt->prt_max_cv;
 
         // make sure that it has some minimum extent
         for ( cnt = 0; cnt < OCT_COUNT; cnt++ )
@@ -1220,10 +1220,10 @@ void render_prt_bbox( ego_bundle_prt * pbdl_prt )
         }
 
         // determine the expanded collision volumes for both objects
-        phys_expand_oct_bb( tmp_bb, loc_pprt->vel, 0, 1, &exp_bb );
+        phys_expand_oct_bb( tmp_bb, loc_pprt->vel, 0, 1, exp_bb );
 
         // shift the source bounding boxes to be centered on the given positions
-        ego_oct_bb::add_vector( exp_bb, loc_pprt->pos.v, &loc_bb );
+        ego_oct_bb::add_vector( exp_bb, loc_pprt->pos.v, loc_bb );
 
         GL_DEBUG( glDisable )( GL_TEXTURE_2D );
         {

@@ -762,7 +762,7 @@ char * copy_mem_to_delimiter( char * pmem, char * pmem_end, vfs_FILE * filewrite
         {
             if ( write_pos > SDL_arraysize( temp_buffer ) - 2 )
             {
-                log_error( "copy_mem_to_delimiter() - temp_buffer overflow.\n" );
+                log_error( "%s - temp_buffer overflow.\n", __FUNCTION__ );
             }
 
             temp_buffer[write_pos++] = cTmp;

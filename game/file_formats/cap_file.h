@@ -183,7 +183,7 @@ extern "C"
 /// The internal representation of the information in data.txt
     struct s_cap_data
     {
-        EGO_PROFILE_STUFF;
+        EGO_PROFILE_STUFF
 
         // naming
         char         classname[MAXCAPNAMESIZE];            ///< Class name

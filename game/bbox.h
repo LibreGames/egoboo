@@ -101,16 +101,24 @@ struct ego_oct_bb
 
     ego_oct_bb() : mins(), maxs() {}
 
-    static ego_oct_bb * ctor_this( ego_oct_bb * pobb );
-    static bool_t       do_union( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst );
-    static bool_t       do_intersection( ego_oct_bb & src1, ego_oct_bb & src2, ego_oct_bb   * pdst );
+    void                invalidate();
+
+    static bool_t       do_union( const ego_oct_bb & src1, const ego_oct_bb & src2, ego_oct_bb & dst );
+    static bool_t       do_intersection( const ego_oct_bb & src1, const ego_oct_bb & src2, ego_oct_bb & dst );
     static bool_t       empty( ego_oct_bb & src1 );
 
-    static void         downgrade( ego_oct_bb * psrc, ego_bumper bump_stt, ego_bumper bump_base, ego_bumper * p_bump, ego_oct_bb   * pdst );
-    static bool_t       add_vector( const ego_oct_bb & src, const fvec3_base_t vec, ego_oct_bb   * pdst );
+    static void         downgrade( const ego_oct_bb & src_bb, const ego_bumper & bump_stt, const ego_bumper & bump_base, ego_bumper * pdst_bump, ego_oct_bb * pdst_bb );
+    static bool_t       add_vector( const ego_oct_bb & src, const fvec3_base_t vec, ego_oct_bb & dst );
 
-    static egoboo_rv intersect_index( int index, ego_oct_bb & src1, ego_oct_vec & opos1, ego_oct_vec & ovel1, ego_oct_bb & src2, ego_oct_vec & opos2, ego_oct_vec & ovel2, float *tmin, float *tmax );
-    static egoboo_rv intersect_index_close( int index, ego_oct_bb & src1, ego_oct_vec & opos1, ego_oct_vec & ovel1, ego_oct_bb & src2, ego_oct_vec & opos2, ego_oct_vec & ovel2, float *tmin, float *tmax );
+    static egoboo_rv intersect_index( const int index, const ego_oct_bb & src1, const ego_oct_vec & opos1, const ego_oct_vec & ovel1, const ego_oct_bb & src2, const ego_oct_vec & opos2, const ego_oct_vec & ovel2, float *tmin, float *tmax );
+    static egoboo_rv intersect_index_close( const int index, const ego_oct_bb & src1, const ego_oct_vec & opos1, const ego_oct_vec & ovel1, const ego_oct_bb & src2, const ego_oct_vec & opos2, const ego_oct_vec & ovel2, float *tmin, float *tmax );
+
+
+
+private:
+
+    static ego_oct_bb * ctor_this( ego_oct_bb * pobb );
+
 };
 
 //--------------------------------------------------------------------------------------------

@@ -105,7 +105,7 @@ ego_chop_definition * chop_definition_init( ego_chop_definition * pdefinition );
 /// a wrapper for all the datafiles in the *.obj dir
 struct ego_pro
 {
-    EGO_PROFILE_STUFF;
+    EGO_PROFILE_STUFF
 
     // the sub-profiles
     REF_T   iai;                              ///< the AI  for this profile

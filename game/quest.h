@@ -28,7 +28,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-/// \note BB@> use this forward declaration of the "struct s_IDSZ_node" instead of including
+/// \note BB@> use this forward declaration of the "s_IDSZ_node" instead of including
 /// "IDSZ_map.h" to remove possible circular dependencies
 
 struct s_IDSZ_node;
@@ -46,12 +46,12 @@ enum e_quest_values
 };
 
 // Public functions
-egoboo_rv quest_log_download_vfs( struct s_IDSZ_node quest_log[], size_t quest_log_len, const char* player_directory );
-egoboo_rv quest_log_upload_vfs( struct s_IDSZ_node quest_log[], size_t quest_log_len, const char *player_directory );
-int       quest_set_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
-int       quest_adjust_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int adjustment );
-int       quest_get_level( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz );
-egoboo_rv quest_add( struct s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
+egoboo_rv quest_log_download_vfs( s_IDSZ_node quest_log[], size_t quest_log_len, const char* player_directory );
+egoboo_rv quest_log_upload_vfs( s_IDSZ_node quest_log[], size_t quest_log_len, const char *player_directory );
+int       quest_set_level( s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
+int       quest_adjust_level( s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int adjustment );
+int       quest_get_level( s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz );
+egoboo_rv quest_add( s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
 
 ConfigFilePtr_t quest_file_open( const char *player_directory );
 egoboo_rv       quest_file_export( ConfigFilePtr_t pfile );
