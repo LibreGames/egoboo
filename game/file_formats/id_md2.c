@@ -78,7 +78,7 @@ id_md2_model_t * id_md2_load( const char *filename, id_md2_model_t * mdl )
     mdl->texcoords = ( id_md2_texcoord_t * ) SDL_calloc( mdl->header.num_st,      sizeof( id_md2_texcoord_t ) );
     mdl->triangles = ( id_md2_triangle_t * ) SDL_calloc( mdl->header.num_tris,    sizeof( id_md2_triangle_t ) );
     mdl->frames    = ( id_md2_frame_t    * ) SDL_calloc( mdl->header.num_frames,  sizeof( id_md2_frame_t ) );
-    mdl->glcmds    = ( int               * ) SDL_calloc( mdl->header.size_glcmds, sizeof( int ) );
+    mdl->glcmds    = ( int               * ) SDL_calloc( mdl->header.size_glcmds, sizeof( const int ) );
 
     /* Read model data */
     fseek( fp, mdl->header.offset_skins, SEEK_SET );
@@ -91,7 +91,7 @@ id_md2_model_t * id_md2_load( const char *filename, id_md2_model_t * mdl )
     fread( mdl->triangles, sizeof( id_md2_triangle_t ), mdl->header.num_tris, fp );
 
     fseek( fp, mdl->header.offset_glcmds, SEEK_SET );
-    fread( mdl->glcmds, sizeof( int ), mdl->header.size_glcmds, fp );
+    fread( mdl->glcmds, sizeof( const int ), mdl->header.size_glcmds, fp );
 
     /* Read frames */
     fseek( fp, mdl->header.offset_frames, SEEK_SET );
@@ -101,8 +101,8 @@ id_md2_model_t * id_md2_load( const char *filename, id_md2_model_t * mdl )
         mdl->frames[i].verts = ( id_md2_vertex_t * )SDL_calloc( mdl->header.num_vertices, sizeof( id_md2_vertex_t ) );
 
         /* Read frame data */
-        fread( mdl->frames[i].scale, sizeof( float ), 3, fp );
-        fread( mdl->frames[i].translate, sizeof( float ), 3, fp );
+        fread( mdl->frames[i].scale, sizeof( const float ), 3, fp );
+        fread( mdl->frames[i].translate, sizeof( const float ), 3, fp );
         fread( mdl->frames[i].name, sizeof( char ), 16, fp );
         fread( mdl->frames[i].verts, sizeof( id_md2_vertex_t ), mdl->header.num_vertices, fp );
     }

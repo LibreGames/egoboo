@@ -32,7 +32,7 @@ mpd_BSP mpd_BSP::root;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-mpd_BSP * mpd_BSP::ctor_this( mpd_BSP * pbsp, ego_mpd   * pmesh )
+mpd_BSP * mpd_BSP::ctor_this( mpd_BSP * pbsp, ego_mpd * pmesh )
 {
     /// \author BB
     /// \details  Create a new BSP tree for the mesh.
@@ -158,13 +158,13 @@ int mpd_BSP::collide( mpd_BSP * pbsp, ego_BSP_aabb & bbox, leaf_child_list_t & c
 }
 
 ////--------------------------------------------------------------------------------------------
-//bool_t mpd_BSP::insert_node( mpd_BSP * pbsp, ego_BSP_leaf * pnode, int depth, int address_x[], int address_y[] )
+//bool_t mpd_BSP::insert_node( mpd_BSP * pbsp, ego_BSP_leaf * pnode, const int depth, const int address_x[], const int address_y[] )
 //{
 //    int i;
 //    bool_t retval;
 //    Uint32 index;
 //    ego_BSP_branch * pbranch, * pbranch_new;
-//    ego_BSP_tree   * ptree = &( pbsp->tree );
+//    ego_BSP_tree * ptree = &( pbsp->tree );
 //
 //    retval = bfalse;
 //    if ( depth < 0 )

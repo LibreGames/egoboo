@@ -46,8 +46,8 @@ extern "C"
 
 #define MAX_CAP    MAX_PROFILE
 
-#define INFINITE_WEIGHT          (( Uint32 )0xFFFFFFFF)
-#define MAX_WEIGHT               (( Uint32 )0xFFFFFFFE)
+#define INFINITE_WEIGHT          (( const Uint32 )0xFFFFFFFF)
+#define MAX_WEIGHT               (( const Uint32 )0xFFFFFFFE)
 
 #define GRABSIZE            135.0f //90.0f             ///< Grab tolerance
 #define NOHIDE              127                        ///< Don't hide

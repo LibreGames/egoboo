@@ -179,9 +179,9 @@ struct ego_particle_list : public t_obj_lst_deque<ego_obj_prt, MAX_PRT>
 {
     typedef t_obj_lst_deque<ego_obj_prt, MAX_PRT> list_type;
 
-    PRT_REF allocate( bool_t force, const PRT_REF & override = PRT_REF( MAX_PRT ) );
+    PRT_REF allocate( const bool_t force, const PRT_REF & override = PRT_REF( MAX_PRT ) );
 
-    ego_particle_list( size_t len = 512 ) : t_obj_lst_deque<ego_obj_prt, MAX_PRT>( len ) {}
+    ego_particle_list( const size_t len = 512 ) : t_obj_lst_deque<ego_obj_prt, MAX_PRT>( len ) {}
 
 protected:
     PRT_REF allocate_find();

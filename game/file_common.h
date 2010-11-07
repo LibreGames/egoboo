@@ -91,7 +91,7 @@ extern "C"
     int    fs_removeDirectory( const char *dirname );
     void   fs_deleteFile( const char *filename );
     bool_t fs_copyFile( const char *source, const char *dest );
-    void   fs_removeDirectoryAndContents( const char *dirname, int recursive );
+    void   fs_removeDirectoryAndContents( const char *dirname, const int recursive );
     void   fs_copyDirectory( const char *sourceDir, const char *destDir );
 
 // Enumerate directory contents
@@ -99,7 +99,7 @@ extern "C"
     const char *fs_findNextFile( fs_find_context_t * fs_search );
     void        fs_findClose( fs_find_context_t * fs_search );
 
-    bool_t fs_ensureUserFile( const char * relative_filename, bool_t required );
+    bool_t fs_ensureUserFile( const char * relative_filename, const bool_t required );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

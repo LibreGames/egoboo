@@ -72,7 +72,7 @@ ego_hash_node * ego_hash_node::create( void * data, ego_hash_node * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_node::destroy( ego_hash_node ** pn, bool_t own_ptr )
+bool_t ego_hash_node::destroy( ego_hash_node ** pn, const bool_t own_ptr )
 {
     /// \author BB
 
@@ -160,15 +160,16 @@ ego_hash_node * ego_hash_node::remove( ego_hash_node lst[] )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_hash_list * ego_hash_list::ctor_this( ego_hash_list * lst, int hash_size )
+ego_hash_list * ego_hash_list::ctor_this( ego_hash_list * lst, const int hash_size )
 {
     /// \author BB
 
     if ( NULL == lst ) return NULL;
 
-    if ( hash_size < 0 ) hash_size = 256;
+    int loc_hash_size = hash_size;
+    if ( loc_hash_size < 0 ) loc_hash_size = 256;
 
-    alloc( lst, hash_size );
+    alloc( lst, loc_hash_size );
 
     return lst;
 }
@@ -208,7 +209,7 @@ size_t ego_hash_list::count_nodes( ego_hash_list *plst )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_hash_list * ego_hash_list::create( int size, ego_hash_list * ptr )
+ego_hash_list * ego_hash_list::create( const int size, ego_hash_list * ptr )
 {
     /// \author BB
 
@@ -227,7 +228,7 @@ ego_hash_list * ego_hash_list::create( int size, ego_hash_list * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::destroy( ego_hash_list ** plst, bool_t own_ptr )
+bool_t ego_hash_list::destroy( ego_hash_list ** plst, const bool_t own_ptr )
 {
     /// \author BB
 
@@ -254,7 +255,7 @@ int ego_hash_list::get_allocd( ego_hash_list *plst )
 }
 
 //--------------------------------------------------------------------------------------------
-size_t ego_hash_list::get_count( ego_hash_list *plst, int i )
+size_t ego_hash_list::get_count( ego_hash_list *plst, const int i )
 {
     /// \author BB
 
@@ -264,7 +265,7 @@ size_t ego_hash_list::get_count( ego_hash_list *plst, int i )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_hash_node *  ego_hash_list::get_node( ego_hash_list *plst, int i )
+ego_hash_node *  ego_hash_list::get_node( ego_hash_list *plst, const int i )
 {
     /// \author BB
 
@@ -274,7 +275,7 @@ ego_hash_node *  ego_hash_list::get_node( ego_hash_list *plst, int i )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::set_allocd( ego_hash_list *plst, int ival )
+bool_t ego_hash_list::set_allocd( ego_hash_list *plst, const int ival )
 {
     /// \author BB
 
@@ -286,7 +287,7 @@ bool_t ego_hash_list::set_allocd( ego_hash_list *plst, int ival )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::set_count( ego_hash_list *plst, int i, size_t count )
+bool_t ego_hash_list::set_count( ego_hash_list *plst, const int i, const size_t count )
 {
     /// \author BB
 
@@ -300,7 +301,7 @@ bool_t ego_hash_list::set_count( ego_hash_list *plst, int i, size_t count )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::set_node( ego_hash_list *plst, int i, ego_hash_node * pnode )
+bool_t ego_hash_list::set_node( ego_hash_list *plst, const int i, ego_hash_node * pnode )
 {
     /// \author BB
 
@@ -329,7 +330,7 @@ bool_t ego_hash_list::dealloc( ego_hash_list * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::alloc( ego_hash_list * lst, int size )
+bool_t ego_hash_list::alloc( ego_hash_list * lst, const int size )
 {
     /// \author BB
 
@@ -395,7 +396,7 @@ ego_hash_list::iterator * ego_hash_list::iterator::ctor_this( ego_hash_list::ite
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::iterator::set_begin( ego_hash_list::iterator * it, ego_hash_list * hlst )
+bool_t ego_hash_list::iterator::set_begin( ego_hash_list::iterator * it, const ego_hash_list * hlst )
 {
     /// \author BB
 
@@ -416,7 +417,7 @@ bool_t ego_hash_list::iterator::set_begin( ego_hash_list::iterator * it, ego_has
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::iterator::done( ego_hash_list::iterator * it, ego_hash_list * hlst )
+bool_t ego_hash_list::iterator::done( const ego_hash_list::iterator * it, const ego_hash_list * hlst )
 {
     /// \author BB
 
@@ -429,7 +430,7 @@ bool_t ego_hash_list::iterator::done( ego_hash_list::iterator * it, ego_hash_lis
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_hash_list::iterator::next( ego_hash_list::iterator * it, ego_hash_list * hlst )
+bool_t ego_hash_list::iterator::next( ego_hash_list::iterator * it, const ego_hash_list * hlst )
 {
     /// \author BB
 

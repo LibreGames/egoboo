@@ -33,7 +33,7 @@ union u_convert {float f; Uint32 i;};
 typedef union u_convert convert_t;
 
 //--------------------------------------------------------------------------------------------
-float ENDIAN_FLOAT( float X )
+float ENDIAN_FLOAT( const float X )
 {
     convert_t utmp;
 

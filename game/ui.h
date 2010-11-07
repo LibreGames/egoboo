@@ -116,33 +116,32 @@ struct ui_Widget
     ui_Widget()  { clear( this ); }
     ~ui_Widget() { dtor_this( this ); }
 
-    static ui_Widget * ctor_this( ui_Widget * pw, ui_id_t id = UI_Nothing );
+    static ui_Widget * ctor_this( ui_Widget * pw, const ui_id_t id = UI_Nothing );
     static ui_Widget * dtor_this( ui_Widget * pw );
-    static ui_Widget * reset( ui_Widget * pw, ui_id_t id = UI_Nothing );
+    static ui_Widget * reset( ui_Widget * pw, const ui_id_t id = UI_Nothing );
     static bool_t      dealloc( ui_Widget * pw );
 
     static ui_buttonValues Run( ui_Widget * pw );
 
     static bool_t copy( ui_Widget * pw2, ui_Widget * pw1 );
-    static bool_t shrink( ui_Widget * pw2, ui_Widget * pw1, float pixels );
-    //static bool_t init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float x, float y, float width, float height );
+    static bool_t shrink( ui_Widget * pw2, ui_Widget * pw1, const float pixels );
 
-    static bool_t    LatchMask_Add( ui_Widget * pw, BIT_FIELD mbits );
-    static bool_t    LatchMask_Remove( ui_Widget * pw, BIT_FIELD mbits );
-    static bool_t    LatchMask_Set( ui_Widget * pw, BIT_FIELD mbits );
-    static BIT_FIELD LatchMask_Test( ui_Widget * pw, BIT_FIELD mbits );
+    static bool_t    LatchMask_Add( ui_Widget * pw, const BIT_FIELD mbits );
+    static bool_t    LatchMask_Remove( ui_Widget * pw, const BIT_FIELD mbits );
+    static bool_t    LatchMask_Set( ui_Widget * pw, const BIT_FIELD mbits );
+    static BIT_FIELD LatchMask_Test( ui_Widget * pw, const BIT_FIELD mbits );
 
-    static bool_t    DisplayMask_Add( ui_Widget * pw, BIT_FIELD mbits );
-    static bool_t    DisplayMask_Remove( ui_Widget * pw, BIT_FIELD mbits );
-    static bool_t    DisplayMask_Set( ui_Widget * pw, BIT_FIELD mbits );
-    static BIT_FIELD DisplayMask_Test( ui_Widget * pw, BIT_FIELD mbits );
+    static bool_t    DisplayMask_Add( ui_Widget * pw, const BIT_FIELD mbits );
+    static bool_t    DisplayMask_Remove( ui_Widget * pw, const BIT_FIELD mbits );
+    static bool_t    DisplayMask_Set( ui_Widget * pw, const BIT_FIELD mbits );
+    static BIT_FIELD DisplayMask_Test( ui_Widget * pw, const BIT_FIELD mbits );
 
-    static bool_t set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font * ttf_ptr, const char * format, ... );
-    static bool_t set_img( ui_Widget * pw, const ego_ui_Just & just, oglx_texture_t *img, bool_t own = bfalse );
-    static bool_t set_bound( ui_Widget * pw, float x, float y, float w, float h );
-    static bool_t set_button( ui_Widget * pw, float x, float y, float w, float h );
-    static bool_t set_pos( ui_Widget * pw, float x, float y );
-    static bool_t set_id( ui_Widget * pw, ui_id_t id );
+    static bool_t set_text( ui_Widget * pw, const ego_ui_Just & just, const TTF_Font * ttf_ptr, const char * format, ... );
+    static bool_t set_img( ui_Widget * pw, const ego_ui_Just & just, oglx_texture_t *img, const bool_t own = bfalse );
+    static bool_t set_bound( ui_Widget * pw, const float x, const float y, const float w, const float h );
+    static bool_t set_button( ui_Widget * pw, const float x, const float y, const float w, const float h );
+    static bool_t set_pos( ui_Widget * pw, const float x, const float y );
+    static bool_t set_id( ui_Widget * pw, const ui_id_t id );
 
 protected:
     static void   setActive( ui_Widget * pw );
@@ -155,7 +154,7 @@ protected:
 
     static bool_t update_text_pos( ui_Widget * pw );
     static bool_t update_bound( ui_Widget * pw, frect_t * pbound );
-    static bool_t set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, va_list args );
+    static bool_t set_vtext( ui_Widget * pw, const ego_ui_Just just, const TTF_Font * ttf_ptr, const char * format, va_list args );
 
 private:
 
@@ -164,7 +163,7 @@ private:
 };
 
 // Initialize or shut down the ui system
-int  ui_begin( const char *default_font, int default_font_size );
+int  ui_begin( const char *default_font, const int default_font_size );
 void ui_end();
 void ui_Reset();
 
@@ -172,17 +171,17 @@ void ui_Reset();
 bool_t ui_handleSDLEvent( SDL_Event *evt );
 
 // Allow the ui to do work that needs to be done before and after each frame
-void ui_beginFrame( float deltaTime );
+void ui_beginFrame( const float deltaTime );
 void ui_endFrame();
 
 // UI controls
-ui_buttonValues ui_doButton( ui_id_t id, display_item_t * tx_ptr, const char *text, float x, float y, float width, float height );
-ui_buttonValues ui_doImageButton( ui_id_t id, oglx_texture_t *img, float x, float y, float width, float height, GLXvector3f image_tint );
-ui_buttonValues ui_doImageButtonWithText( ui_id_t id, display_item_t * tx_ptr, oglx_texture_t *img, const char *text, float x, float y, float width, float height );
-// int  ui_doTextBox(ui_id_t id, const char *text, float x, float y, float width, float height);
+ui_buttonValues ui_doButton( ui_id_t id, display_item_t * tx_ptr, const char *text, const float x, const float y, const float width, const float height );
+ui_buttonValues ui_doImageButton( ui_id_t id, oglx_texture_t *img, const float x, const float y, const float width, const float height, GLXvector3f image_tint );
+ui_buttonValues ui_doImageButtonWithText( ui_id_t id, display_item_t * tx_ptr, oglx_texture_t *img, const char *text, const float x, const float y, const float width, const float height );
+// int  ui_doTextBox(ui_id_t id, const char *text, const float x, const float y, const float width, const float height);
 
 // Utility functions
-int  ui_mouseInside( float x, float y, float width, float height );
+int  ui_mouseInside( const float x, const float y, const float width, const float height );
 // void ui_setActive( ui_id_t id );
 // void ui_setHot( ui_id_t id );
 TTF_Font * ui_getFont();
@@ -194,26 +193,26 @@ TTF_Font * ui_setFont( TTF_Font * font );
 /*****************************************************************************/
 
 // Behaviors
-ui_buttonValues  ui_buttonBehavior( ui_id_t id, float x, float y, float width, float height );
+ui_buttonValues  ui_buttonBehavior( const ui_id_t id, const float x, const float y, const float width, const float height );
 
 // Drawing
-void   ui_drawButton( ui_id_t id, float x, float y, float width, float height, const GLXvector4f pcolor );
-void   ui_drawImage( ui_id_t id, oglx_texture_t *img, float x, float y, float width, float height, const GLXvector4f image_tint );
-bool_t ui_drawText( display_item_t * tx_ptr, float vx, float vy );
-int    ui_drawTextBox( display_list_t * tx_lst, float vx, float vy, float vwidth, float vheight );
+void   ui_drawButton( const ui_id_t id, const float x, const float y, const float width, const float height, const GLXvector4f pcolor );
+void   ui_drawImage( const ui_id_t id, oglx_texture_t *img, const float x, const float y, const float width, const  float height, const GLXvector4f image_tint );
+bool_t ui_drawText( display_item_t * tx_ptr, const float vx, const float vy );
+int    ui_drawTextBox( display_list_t * tx_lst, const float vx, const float vy, const float vwidth, const float vheight );
 
-display_item_t *     ui_updateText( display_item_t * tx_ptr, TTF_Font * ttf_ptr, float vx, float vy, const char *format, ... );
-display_list_t * ui_updateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, float vx, float vy, float vspacing, const char * format, ... );
-display_list_t * ui_updateTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, float vx, float vy, float vspacing, const char * text );
+display_item_t *     ui_updateText( display_item_t * tx_ptr, const TTF_Font * ttf_ptr, const float vx, const float vy, const char *format, ... );
+display_list_t * ui_updateTextBox( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float vx, const float vy, const float vspacing, const char * format, ... );
+display_list_t * ui_updateTextBox_literal( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float vx, const float vy, const float vspacing, const char * text );
 
-display_item_t *     ui_vupdateText( display_item_t * tx_ptr, TTF_Font * ttf_ptr, float vx, float vy, const char *format, va_list args );
-display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, float vx, float vy, float vspacing, const char * format, va_list args );
+display_item_t *     ui_vupdateText( display_item_t * tx_ptr, const TTF_Font * ttf_ptr, const float vx, const float vy, const char *format, va_list args );
+display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float vx, const float vy, const float vspacing, const char * format, va_list args );
 
-float ui_drawTextBoxImmediate( TTF_Font * ttf_ptr, float vx, float vy, float spacing, const char *format, ... );
+int ui_drawTextBoxImmediate( const TTF_Font * ttf_ptr, const float vx, const float vy, const float spacing, const char *format, ... );
 
 // virtual screen
-void ui_set_virtual_screen( float vw, float vh, float ww, float wh );
-TTF_Font * ui_loadFont( const char * font_name, float vpointSize );
+void ui_set_virtual_screen( const float vw, const float vh, const float ww, const float wh );
+TTF_Font * ui_loadFont( const char * font_name, const float vpointSize );
 
 #define _ui_h
 

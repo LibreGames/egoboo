@@ -8197,7 +8197,7 @@ Uint8 scr_GiveSkillToTarget( ego_script_state * pstate, ego_ai_bundle * pbdl_sel
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, const PASS_REF & passage, int *ptilex, int *ptiley )
+bool_t _break_passage( const int mesh_fx_or, const int become, const int frames, const int starttile, const PASS_REF & passage, int *ptilex, int *ptiley )
 {
     /// \author ZZ
     /// \details  This function breaks the tiles of a passage if there is a character standing
@@ -8210,10 +8210,11 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
     if ( INVALID_PASSAGE( passage ) ) return bfalse;
 
     // limit the start tile the the 256 tile images that we have
-    starttile = CLIP_TO_08BITS( starttile );
+    int loc_starttile = starttile;
+    loc_starttile = CLIP_TO_08BITS( loc_starttile );
 
     // same with the end tile
-    endtile   =  starttile + frames - 1;
+    endtile   =  loc_starttile + frames - 1;
     endtile = CLIP( endtile, 0, 255 );
 
     useful = bfalse;
@@ -8238,7 +8239,7 @@ bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, co
             Uint16 img      = PMesh->tmem.tile_list[fan].img & 0x00FF;
             int highbits = PMesh->tmem.tile_list[fan].img & 0xFF00;
 
-            if ( img >= starttile && img < endtile )
+            if ( img >= loc_starttile && img < endtile )
             {
                 if ( PassageStack.object_is_inside( PASS_REF( passage ), pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
                 {
@@ -8379,7 +8380,7 @@ Uint8 _find_grid_in_passage( const int x0, const int y0, const int tiletype, con
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 _display_message( const CHR_REF & ichr, const PRO_REF & iprofile, int message, ego_script_state * pstate )
+Uint8 _display_message( const CHR_REF & ichr, const PRO_REF & iprofile, const int message, ego_script_state * pstate )
 {
     /// \author ZZ
     /// \details  This function sticks a message_offset in the display queue and sets its timer

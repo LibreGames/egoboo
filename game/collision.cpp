@@ -203,7 +203,7 @@ void collision_system::end()
 }
 
 //--------------------------------------------------------------------------------------------
-collision_hash_list * collision_system::get_hash_ptr( int size )
+collision_hash_list * collision_system::get_hash_ptr( const int size )
 {
     /// \author BB
     /// \details  allows access to a "private" CHashList singleton object. This will automatically
@@ -878,7 +878,7 @@ int collision_node_cmp( const void * vleft, const void * vright )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-collision_hash_list * collision_hash_list::create( int size, collision_hash_list * ptr )
+collision_hash_list * collision_hash_list::create( const int size, collision_hash_list * ptr )
 {
     if ( NULL == ptr )
     {
@@ -893,7 +893,7 @@ collision_hash_list * collision_hash_list::create( int size, collision_hash_list
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t collision_hash_list::destroy( collision_hash_list ** ppchlst, bool_t own_ptr )
+bool_t collision_hash_list::destroy( collision_hash_list ** ppchlst, const bool_t own_ptr )
 {
     if ( NULL == ppchlst || NULL == *ppchlst ) return bfalse;
 
@@ -1681,7 +1681,7 @@ egoboo_rv do_chr_platform_physics( collision_node * d, ego_bundle_chr & bdl_item
 
         phys_data_accumulate_apos_plat_index( &( loc_pitem->phys ), ( 1.0f + loc_pitem->enviro.walk_level - loc_pitem->pos.z ) * apos_plat_coeff, kZ );
         phys_data_accumulate_avel_index( &( loc_pitem->phys ), ( loc_pplat->vel.z  - loc_pitem->vel.z ) * avel_coeff, kZ );
-        loc_pitem->ori.facing_z += ( float )( rot_a - rot_b ) * facing_coeff;
+        loc_pitem->ori.facing_z += ( const float )( rot_a - rot_b ) * facing_coeff;
     }
 
     // rv_fail indicates that the platform did not attach.
@@ -2101,7 +2101,7 @@ bool_t do_chr_chr_collision_interaction( collision_node * d, ego_bundle_chr & bd
 
                 if ( wta >= 0.0f )
                 {
-                    float ratio = ( float )SDL_abs( wtb ) / (( float )SDL_abs( wta ) + ( float )SDL_abs( wtb ) );
+                    float ratio = ( const float )SDL_abs( wtb ) / (( const float )SDL_abs( wta ) + ( const float )SDL_abs( wtb ) );
 
                     imp_a.x = tmin * nrm.x * ratio * pressure_strength;
                     imp_a.y = tmin * nrm.y * ratio * pressure_strength;
@@ -2110,7 +2110,7 @@ bool_t do_chr_chr_collision_interaction( collision_node * d, ego_bundle_chr & bd
 
                 if ( wtb >= 0.0f )
                 {
-                    float ratio = ( float )SDL_abs( wta ) / (( float )SDL_abs( wta ) + ( float )SDL_abs( wtb ) );
+                    float ratio = ( const float )SDL_abs( wta ) / (( const float )SDL_abs( wta ) + ( const float )SDL_abs( wtb ) );
 
                     imp_b.x = -tmin * nrm.x * ratio * pressure_strength;
                     imp_b.y = -tmin * nrm.y * ratio * pressure_strength;
@@ -2628,7 +2628,7 @@ bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
         // modify it by the the severity of the damage
         // reduces the damage below pdata->actual_damage == pchr->life_max
         // and it doubles it if pdata->actual_damage is really huge
-        //factor *= 2.0f * ( float )pdata->actual_damage / ( float )( SDL_abs( pdata->actual_damage ) + pchr->life_max );
+        //factor *= 2.0f * ( const float )pdata->actual_damage / ( const float )( SDL_abs( pdata->actual_damage ) + pchr->life_max );
 
         factor = CLIP( factor, 0.0f, 3.0f );
 
@@ -2675,7 +2675,7 @@ bool_t do_chr_prt_collision_recoil( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
                 // limit the prt_mass to be something relative to this object
                 float loc_prt_mass = CLIP( prt_mass, 1.0f, 2.0f * ptarget->phys.weight );
 
-                factor *= ( float ) loc_prt_mass / ( float )ptarget->phys.weight;
+                factor *= ( const float ) loc_prt_mass / ( const float )ptarget->phys.weight;
             }
 
             factor = CLIP( factor, 0.0f, 3.0f );
@@ -2858,7 +2858,7 @@ bool_t do_chr_prt_collision_damage( ego_chr * pchr, ego_prt * pprt, ego_chr_prt_
 
             // assume that the particle damage is like the kinetic energy,
             // then vfinal must be scaled by recoil^2
-            recoil = ( float )SDL_abs( SDL_abs( pdata->max_damage ) - SDL_abs( pdata->actual_damage ) ) / ( float )SDL_abs( pdata->max_damage );
+            recoil = ( const float )SDL_abs( SDL_abs( pdata->max_damage ) - SDL_abs( pdata->actual_damage ) ) / ( const float )SDL_abs( pdata->max_damage );
 
             vfinal.x *= recoil * recoil;
             vfinal.y *= recoil * recoil;
@@ -3227,7 +3227,7 @@ void update_all_platform_attachments()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary )
+bool_t calc_grip_cv( ego_chr * pmount, const int grip_offset, ego_oct_bb * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary )
 {
     /// \author BB
     /// \details  use a standard size for the grip
@@ -3273,7 +3273,7 @@ bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_p
     gfx_mad_instance::update_vertices( pmount_inst, pmount->mad_inst.state, gfx_range( vertex, vertex + grip_offset ), bfalse );
 
     // calculate the grip vertices
-    for ( grip_count = 0, cnt = 0; cnt < GRIP_VERTS && ( size_t )( vertex + cnt ) < pmount_inst->vrt_count; grip_count++, cnt++ )
+    for ( grip_count = 0, cnt = 0; cnt < GRIP_VERTS && ( const size_t )( vertex + cnt ) < pmount_inst->vrt_count; grip_count++, cnt++ )
     {
         grip_verts[cnt] = vertex + cnt;
     }

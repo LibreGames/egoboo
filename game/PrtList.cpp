@@ -41,9 +41,9 @@ PRT_REF ego_particle_list::allocate_find()
     PRT_REF iprt( MAX_PRT );
 
     PRT_REF found           = PRT_REF( MAX_PRT );
-    size_t  min_life        = ( size_t )( ~0 );
+    size_t  min_life        = ( const size_t )( ~0 );
     PRT_REF min_life_idx    = PRT_REF( MAX_PRT );
-    size_t  min_display     = ( size_t )( ~0 );
+    size_t  min_display     = ( const size_t )( ~0 );
     PRT_REF min_display_idx = PRT_REF( MAX_PRT );
 
     // Gotta find one, so go through the list and replace a unimportant one
@@ -155,7 +155,7 @@ PRT_REF ego_particle_list::allocate_activate( const PRT_REF & iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-PRT_REF ego_particle_list::allocate( bool_t force, const PRT_REF & override )
+PRT_REF ego_particle_list::allocate( const bool_t force, const PRT_REF & override )
 {
     /// \author ZZ
     /// \details  This function gets an unused particle.  If all particles are in use

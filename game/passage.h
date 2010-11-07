@@ -59,15 +59,15 @@ struct ego_passage : public s_passage_data
 
     static bool_t  do_open( ego_passage * ppass );
 
-    static void    flash( ego_passage * ppass, Uint8 color );
+    static void    flash( ego_passage * ppass, const Uint8 color );
 
     /// \author ZF
     /// \details  returns btrue if the specified X and Y coordinates are within the passage
-    static bool_t  point_is_in( ego_passage * ppass, float xpos, float ypos );
+    static bool_t  point_is_in( ego_passage * ppass, const float xpos, const float ypos );
 
     /// \author ZF
     /// \details  returns btrue if an object of the given radius is PARTIALLY inside the passage
-    static bool_t  object_is_in( ego_passage * ppass, float xpos, float ypos, float radius );
+    static bool_t  object_is_in( ego_passage * ppass, const float xpos, const float ypos, const float radius );
 
     /// \author ZZ
     /// \details  searches for a specified object in a passage
@@ -103,19 +103,19 @@ struct passage_stack : public  t_stack< ego_passage, MAX_PASS >
 
     /// \author ZZ
     /// \details  makes a passage flash white
-    void     flash( const PASS_REF & ipassage, Uint8 color );
+    void     flash( const PASS_REF & ipassage, const Uint8 color );
 
     /// \author ZZ
     /// \details  Is any object "blocking" this passage
-    CHR_REF  who_is_blocking( const PASS_REF & passage, const CHR_REF & isrc, IDSZ idsz, BIT_FIELD targeting_bits, IDSZ require_item );
+    CHR_REF  who_is_blocking( const PASS_REF & passage, const CHR_REF & isrc, const IDSZ idsz, const BIT_FIELD targeting_bits, const IDSZ require_item );
 
     /// \author ZZ
     /// \details  Is a point inside a passage
-    bool_t   point_is_inside( const PASS_REF & ipassage, float xpos, float ypos );
+    bool_t   point_is_inside( const PASS_REF & ipassage, const float xpos, const float ypos );
 
     /// \author ZZ
     /// \details  Is an object completely inside a passage
-    bool_t   object_is_inside( const PASS_REF & ipassage, float xpos, float ypos, float radius );
+    bool_t   object_is_inside( const PASS_REF & ipassage, const float xpos, const float ypos, const float radius );
 
     void     free_all();
 
@@ -145,7 +145,7 @@ struct shop_stack : public t_stack< ego_shop, MAX_SHOP >
     int      get_free();
 
     void     add_one( const CHR_REF & owner, const PASS_REF & ipassage );
-    CHR_REF  find_owner( int ix, int iy );
+    CHR_REF  find_owner( const int ix, const int iy );
 };
 
 extern shop_stack ShopStack;

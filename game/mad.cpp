@@ -202,7 +202,7 @@ ego_mad * ego_mad::dtor_this( ego_mad * pmad )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-egoboo_rv mad_instance::set_action( mad_instance * pmad_inst, int next_action, bool_t next_ready, bool_t override_action )
+egoboo_rv mad_instance::set_action( mad_instance * pmad_inst, const int next_action, const bool_t next_ready, const bool_t override_action )
 {
     ego_mad * pmad;
 
@@ -255,7 +255,7 @@ egoboo_rv mad_instance::begin_action( mad_instance * pmad_inst )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv mad_instance::set_frame( mad_instance * pmad_inst, int frame, int ilip )
+egoboo_rv mad_instance::set_frame( mad_instance * pmad_inst, const int frame, const int ilip )
 {
     int frame_stt, frame_nxt;
     bool_t updated = bfalse;
@@ -300,7 +300,7 @@ egoboo_rv mad_instance::set_frame( mad_instance * pmad_inst, int frame, int ilip
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv mad_instance::start_anim( mad_instance * pmad_inst, int next_action, bool_t next_ready, bool_t override_action )
+egoboo_rv mad_instance::start_anim( mad_instance * pmad_inst, const int next_action, const bool_t next_ready, const bool_t override_action )
 {
     egoboo_rv retval = rv_fail;
 
@@ -348,7 +348,7 @@ egoboo_rv mad_instance::increment_action( mad_instance * pmad_inst )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv mad_instance::increment_frame( mad_instance * pmad_inst, bool_t mounted )
+egoboo_rv mad_instance::increment_frame( mad_instance * pmad_inst, const bool_t mounted )
 {
     /// \author BB
     /// \details  all the code necessary to move on to the next frame of the animation
@@ -405,7 +405,7 @@ egoboo_rv mad_instance::increment_frame( mad_instance * pmad_inst, bool_t mounte
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv mad_instance::play_action( mad_instance * pmad_inst, int next_action, bool_t next_ready )
+egoboo_rv mad_instance::play_action( mad_instance * pmad_inst, const int next_action, const bool_t next_ready )
 {
     /// \author ZZ
     /// \details  This function starts a generic action for a character
@@ -416,9 +416,9 @@ egoboo_rv mad_instance::play_action( mad_instance * pmad_inst, int next_action, 
     if ( !LOADED_MAD( pmad_inst->imad ) ) return rv_error;
     pmad = MadStack + pmad_inst->imad;
 
-    next_action = mad_get_action( pmad, next_action );
+    int dst_action = mad_get_action( pmad, next_action );
 
-    return mad_instance::start_anim( pmad_inst, next_action, next_ready, btrue );
+    return mad_instance::start_anim( pmad_inst, dst_action, next_ready, btrue );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -496,7 +496,7 @@ BIT_FIELD mad_instance::update_animation_one( mad_instance * pmad_inst )
 }
 
 //--------------------------------------------------------------------------------------------
-BIT_FIELD mad_instance::update_animation( mad_instance * pmad_inst, float dt )
+BIT_FIELD mad_instance::update_animation( mad_instance * pmad_inst, const float dt )
 {
     // this is a bit more complicated than the version that updates one frame at a time
     // beause of keeping the floating point flip and the integer ilip in synch.
@@ -643,7 +643,7 @@ MAD_REF mad_loader::load_vfs( const char* tmploadname, const MAD_REF & imad )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mad * mad_loader::copy_action_correct( ego_mad * pmad, int actiona, int actionb )
+ego_mad * mad_loader::copy_action_correct( ego_mad * pmad, const int actiona, const int actionb )
 {
     /// \author ZZ
     /// \details  This function makes sure both actions are valid if either of them
@@ -780,7 +780,7 @@ ego_mad * mad_loader::make_walk_lip( ego_mad * pmad, const int lip, const int ac
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mad * mad_loader::make_framefx( ego_mad * pmad, const char * cFrameName, int frame )
+ego_mad * mad_loader::make_framefx( ego_mad * pmad, const char * cFrameName, const int frame )
 {
     /// \author ZZ
     /// \details  This function figures out the IFrame invulnerability, and Attack, Grab, and
@@ -993,7 +993,7 @@ ego_mad * mad_loader::make_framefx( ego_mad * pmad, const char * cFrameName, int
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mad * mad_loader::make_frame_lip( ego_mad * pmad, int action )
+ego_mad * mad_loader::make_frame_lip( ego_mad * pmad, const int action )
 {
     /// \author ZZ
     /// \details  This helps make walking look right
@@ -1008,22 +1008,22 @@ ego_mad * mad_loader::make_frame_lip( ego_mad * pmad, int action )
     md2 = pmad->md2_ptr;
     if ( NULL == md2 ) return pmad;
 
-    action = mad_get_action( pmad, action );
-    if ( ACTION_COUNT == action || ACTION_DA == action ) return pmad;
+    int loc_action = mad_get_action( pmad, action );
+    if ( ACTION_COUNT == loc_action || ACTION_DA == loc_action ) return pmad;
 
-    if ( !pmad->action_valid[action] ) return pmad;
+    if ( !pmad->action_valid[loc_action] ) return pmad;
 
     frame_count = md2_get_numFrames( md2 );
     frame_list  = ( ego_MD2_Frame * )md2_get_Frames( md2 );
 
-    framesinaction = pmad->action_end[action] - pmad->action_stt[action];
+    framesinaction = pmad->action_end[loc_action] - pmad->action_stt[loc_action];
 
-    for ( frame = pmad->action_stt[action]; frame < pmad->action_end[action]; frame++ )
+    for ( frame = pmad->action_stt[loc_action]; frame < pmad->action_end[loc_action]; frame++ )
     {
         if ( frame > frame_count ) continue;
         pframe = frame_list + frame;
 
-        pframe->framelip = ( frame - pmad->action_stt[action] ) * 15 / framesinaction;
+        pframe->framelip = ( frame - pmad->action_stt[loc_action] ) * 15 / framesinaction;
         pframe->framelip = ( pframe->framelip ) & 15;
     }
 
@@ -1284,7 +1284,7 @@ int mad_get_action( const ego_mad * pmad, const int action )
 }
 
 //--------------------------------------------------------------------------------------------
-int mad_get_action( const MAD_REF & imad, int action )
+int mad_get_action( const MAD_REF & imad, const int action )
 {
     /// \author BB
     /// \details version that accepts a reference rather than a pointer
@@ -1295,7 +1295,7 @@ int mad_get_action( const MAD_REF & imad, int action )
 }
 
 //--------------------------------------------------------------------------------------------
-BIT_FIELD mad_get_actionfx( const MAD_REF & imad, int action )
+BIT_FIELD mad_get_actionfx( const MAD_REF & imad, const int action )
 {
     BIT_FIELD retval = EMPTY_BIT_FIELD;
     int cnt;
@@ -1433,7 +1433,7 @@ void load_action_names_vfs( const char* loadname )
 }
 
 //--------------------------------------------------------------------------------------------
-int mad_randomize_action( int action, int slot )
+int mad_randomize_action( const int src_action, const int slot )
 {
     /// \author BB
     /// \details  this function actually determines whether the action fillows the
@@ -1442,64 +1442,66 @@ int mad_randomize_action( int action, int slot )
 
     int diff = 0;
 
-    // a valid slot?
-    if ( slot < 0 || slot >= SLOT_COUNT ) return action;
+    int dst_action = src_action;
 
-    // a valid action?
-    if ( action < 0 || action >= ACTION_COUNT ) return bfalse;
+    // a valid slot?
+    if ( slot < 0 || slot >= SLOT_COUNT ) return dst_action;
+
+    // a valid dst_action?
+    if ( dst_action < 0 || dst_action >= ACTION_COUNT ) return bfalse;
 
     diff = slot * 2;
 
     //---- non-randomizable actions
-    if ( ACTION_MG == action ) return action;       // MG      = Open Chest
-    else if ( ACTION_MH == action ) return action;       // MH      = Sit
-    else if ( ACTION_MI == action ) return action;       // MI      = Ride
-    else if ( ACTION_MJ == action ) return action;       // MJ      = Object Activated
-    else if ( ACTION_MK == action ) return action;       // MK      = Snoozing
-    else if ( ACTION_ML == action ) return action;       // ML      = Unlock
-    else if ( ACTION_JA == action ) return action;       // JA      = Jump
-    else if ( ACTION_RA == action ) return action;       // RA      = Roll
-    else if ( ACTION_IS_TYPE( action, W ) ) return action;  // WA - WD = Walk
+    if ( ACTION_MG == dst_action ) return dst_action;       // MG      = Open Chest
+    else if ( ACTION_MH == dst_action ) return dst_action;       // MH      = Sit
+    else if ( ACTION_MI == dst_action ) return dst_action;       // MI      = Ride
+    else if ( ACTION_MJ == dst_action ) return dst_action;       // MJ      = Object Activated
+    else if ( ACTION_MK == dst_action ) return dst_action;       // MK      = Snoozing
+    else if ( ACTION_ML == dst_action ) return dst_action;       // ML      = Unlock
+    else if ( ACTION_JA == dst_action ) return dst_action;       // JA      = Jump
+    else if ( ACTION_RA == dst_action ) return dst_action;       // RA      = Roll
+    else if ( ACTION_IS_TYPE( dst_action, W ) ) return dst_action;  // WA - WD = Walk
 
     //---- do a couple of special actions that have left/right
-    else if ( ACTION_EA == action || ACTION_EB == action ) action = ACTION_JB + slot;   // EA/EB = Evade left/right
-    else if ( ACTION_JB == action || ACTION_JC == action ) action = ACTION_JB + slot;   // JB/JC = Dropped item left/right
-    else if ( ACTION_MA == action || ACTION_MB == action ) action = ACTION_MA + slot;   // MA/MB = Drop left/right item
-    else if ( ACTION_MC == action || ACTION_MD == action ) action = ACTION_MC + slot;   // MC/MD = Slam left/right
-    else if ( ACTION_ME == action || ACTION_MF == action ) action = ACTION_ME + slot;   // ME/MF = Grab item left/right
-    else if ( ACTION_MM == action || ACTION_MN == action ) action = ACTION_MM + slot;   // MM/MN = Held left/right
+    else if ( ACTION_EA == dst_action || ACTION_EB == dst_action ) dst_action = ACTION_JB + slot;   // EA/EB = Evade left/right
+    else if ( ACTION_JB == dst_action || ACTION_JC == dst_action ) dst_action = ACTION_JB + slot;   // JB/JC = Dropped item left/right
+    else if ( ACTION_MA == dst_action || ACTION_MB == dst_action ) dst_action = ACTION_MA + slot;   // MA/MB = Drop left/right item
+    else if ( ACTION_MC == dst_action || ACTION_MD == dst_action ) dst_action = ACTION_MC + slot;   // MC/MD = Slam left/right
+    else if ( ACTION_ME == dst_action || ACTION_MF == dst_action ) dst_action = ACTION_ME + slot;   // ME/MF = Grab item left/right
+    else if ( ACTION_MM == dst_action || ACTION_MN == dst_action ) dst_action = ACTION_MM + slot;   // MM/MN = Held left/right
 
     //---- actions that can be randomized, but are not left/right sensitive
     // D = dance
-    else if ( ACTION_IS_TYPE( action, D ) ) action = ACTION_TYPE( D ) + generate_randmask( 0, 3 );
+    else if ( ACTION_IS_TYPE( dst_action, D ) ) dst_action = ACTION_TYPE( D ) + generate_randmask( 0, 3 );
 
     //---- handle all the normal attack/defense animations
     // U = unarmed
-    else if ( ACTION_IS_TYPE( action, U ) ) action = ACTION_TYPE( U ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, U ) ) dst_action = ACTION_TYPE( U ) + diff + generate_randmask( 0, 1 );
     // T = thrust
-    else if ( ACTION_IS_TYPE( action, T ) ) action = ACTION_TYPE( T ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, T ) ) dst_action = ACTION_TYPE( T ) + diff + generate_randmask( 0, 1 );
     // C = chop
-    else if ( ACTION_IS_TYPE( action, C ) ) action = ACTION_TYPE( C ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, C ) ) dst_action = ACTION_TYPE( C ) + diff + generate_randmask( 0, 1 );
     // S = slice
-    else if ( ACTION_IS_TYPE( action, S ) ) action = ACTION_TYPE( S ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, S ) ) dst_action = ACTION_TYPE( S ) + diff + generate_randmask( 0, 1 );
     // B = bash
-    else if ( ACTION_IS_TYPE( action, B ) ) action = ACTION_TYPE( B ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, B ) ) dst_action = ACTION_TYPE( B ) + diff + generate_randmask( 0, 1 );
     // L = longbow
-    else if ( ACTION_IS_TYPE( action, L ) ) action = ACTION_TYPE( L ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, L ) ) dst_action = ACTION_TYPE( L ) + diff + generate_randmask( 0, 1 );
     // X = crossbow
-    else if ( ACTION_IS_TYPE( action, X ) ) action = ACTION_TYPE( X ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, X ) ) dst_action = ACTION_TYPE( X ) + diff + generate_randmask( 0, 1 );
     // F = fling
-    else if ( ACTION_IS_TYPE( action, F ) ) action = ACTION_TYPE( F ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, F ) ) dst_action = ACTION_TYPE( F ) + diff + generate_randmask( 0, 1 );
     // P = parry/block
-    else if ( ACTION_IS_TYPE( action, P ) ) action = ACTION_TYPE( P ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, P ) ) dst_action = ACTION_TYPE( P ) + diff + generate_randmask( 0, 1 );
     // Z = zap
-    else if ( ACTION_IS_TYPE( action, Z ) ) action = ACTION_TYPE( Z ) + diff + generate_randmask( 0, 1 );
+    else if ( ACTION_IS_TYPE( dst_action, Z ) ) dst_action = ACTION_TYPE( Z ) + diff + generate_randmask( 0, 1 );
 
     //---- these are passive actions
     // H = hurt
-    else if ( ACTION_IS_TYPE( action, H ) ) action = ACTION_TYPE( H ) + generate_randmask( 0, 3 );
+    else if ( ACTION_IS_TYPE( dst_action, H ) ) dst_action = ACTION_TYPE( H ) + generate_randmask( 0, 3 );
     // K = killed
-    else if ( ACTION_IS_TYPE( action, K ) ) action = ACTION_TYPE( K ) + generate_randmask( 0, 3 );
+    else if ( ACTION_IS_TYPE( dst_action, K ) ) dst_action = ACTION_TYPE( K ) + generate_randmask( 0, 3 );
 
-    return action;
+    return dst_action;
 }

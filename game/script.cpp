@@ -52,11 +52,11 @@ static const char *  script_error_name      = "UNKNOWN";
 static REF_T         script_error_index     = Uint16( ~0 );
 
 static bool_t scr_increment_exe( ego_ai_state * pself );
-static bool_t scr_set_exe( ego_ai_state * pself, size_t offset );
+static bool_t scr_set_exe( ego_ai_state * pself, const size_t offset );
 
 // static Uint8 run_function_obsolete( ego_script_state * pstate, ego_ai_state * pself );
 static Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pself );
-static void  scr_set_operand( ego_script_state * pstate, Uint8 variable );
+static void  scr_set_operand( ego_script_state * pstate, const Uint8 variable );
 static void  scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pself );
 
 static bool_t scr_run_operation( ego_script_state * pstate, ego_ai_bundle * pself );
@@ -901,7 +901,7 @@ Uint8 scr_run_function( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
 }
 
 //--------------------------------------------------------------------------------------------
-void scr_set_operand( ego_script_state * pstate, Uint8 variable )
+void scr_set_operand( ego_script_state * pstate, const Uint8 variable )
 {
     /// \author ZZ
     /// \details  This function sets one of the tmp* values for scripted AI
@@ -1548,7 +1548,7 @@ void scr_run_operand( ego_script_state * pstate, ego_ai_bundle * pbdl_ai )
             op = "DIV";
             if ( iTmp != 0 )
             {
-                pstate->operationsum = (( float )pstate->operationsum ) / iTmp;
+                pstate->operationsum = (( const float )pstate->operationsum ) / iTmp;
             }
             else
             {
@@ -1593,7 +1593,7 @@ bool_t scr_increment_exe( ego_ai_state * pself )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t scr_set_exe( ego_ai_state * pself, size_t offset )
+bool_t scr_set_exe( ego_ai_state * pself, const size_t offset )
 {
     if ( NULL == pself ) return bfalse;
     if ( offset < pself->exe_stt || offset >= pself->exe_end ) return bfalse;
@@ -1645,7 +1645,7 @@ bool_t ego_waypoint_list::peek( ego_waypoint_list * plst, waypoint_t wp )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_waypoint_list::push( ego_waypoint_list * plst, float x, float y, float z )
+bool_t ego_waypoint_list::push( ego_waypoint_list * plst, const float x, const float y, const float z )
 {
     /// \author BB
     /// \details  Add a waypoint to the waypoint list
@@ -1837,7 +1837,7 @@ void set_alerts( ego_ai_bundle * pbdl_ai )
 }
 
 //--------------------------------------------------------------------------------------------
-void issue_order( const CHR_REF & character, Uint32 value )
+void issue_order( const CHR_REF & character, const Uint32 value )
 {
     /// \author ZZ
     /// \details  This function issues an value for help to all teammates
@@ -1858,7 +1858,7 @@ void issue_order( const CHR_REF & character, Uint32 value )
 }
 
 //--------------------------------------------------------------------------------------------
-void issue_special_order( Uint32 value, IDSZ idsz )
+void issue_special_order( const Uint32 value, IDSZ idsz )
 {
     /// \author ZZ
     /// \details  This function issues an order to all characters with the a matching special IDSZ

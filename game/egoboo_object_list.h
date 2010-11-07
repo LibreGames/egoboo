@@ -30,9 +30,9 @@
 
 struct ego_obj_lst_state;
 
-template < typename _data, size_t _sz > struct t_ego_obj_container;
-template < typename _data, size_t _sz > struct t_obj_lst_map;
-template < typename _data, size_t _sz > struct t_obj_lst_deque;
+template < typename _data, const size_t _sz > struct t_ego_obj_container;
+template < typename _data, const size_t _sz > struct t_obj_lst_map;
+template < typename _data, const size_t _sz > struct t_obj_lst_deque;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ struct ego_obj_lst_state : public ego_obj_lst_state_data, public allocator_clien
 
     ~ego_obj_lst_state() { dtor_this( this ); }
 
-    static ego_obj_lst_state * retor_this( ego_obj_lst_state * ptr, ego_uint guid = invalid_value, ego_uint index = invalid_value )
+    static ego_obj_lst_state * retor_this( ego_obj_lst_state * ptr, const ego_uint guid = invalid_value, const ego_uint index = invalid_value )
     {
         if ( NULL == ptr ) return ptr;
 
@@ -91,7 +91,7 @@ struct ego_obj_lst_state : public ego_obj_lst_state_data, public allocator_clien
         return ptr;
     }
 
-    static ego_uint get_index( const ego_obj_lst_state * ptr, REF_T fail_value = ego_uint( ~0L ) )
+    static ego_uint get_index( const ego_obj_lst_state * ptr, const REF_T fail_value = ego_uint( ~0L ) )
     { return ( NULL == ptr || !ptr->allocator_client::has_valid_id() ) ? fail_value : ptr->allocator_client::get_index(); }
 
     static Uint32 get_id( ego_obj_lst_state * ptr )
@@ -109,7 +109,7 @@ protected:
 
 /// The actual container that will be stored in the t_list<>
 
-template< typename _data, size_t _sz >
+template< typename _data, const size_t _sz >
 struct t_ego_obj_container : public ego_obj_lst_state
 {
     friend struct t_obj_lst_map<_data, _sz>;
@@ -159,7 +159,7 @@ protected:
 
     /// set/change the information about where this object is stored in t_obj_lst_map<>.
     /// should only be called by t_obj_lst_map<>
-    static its_type * allocate( its_type * pobj, ego_uint index ) { if ( NULL == pobj ) return pobj; ego_obj_lst_state::retor_this( pobj, index ); return pobj; }
+    static its_type * allocate( its_type * pobj, const ego_uint index ) { if ( NULL == pobj ) return pobj; ego_obj_lst_state::retor_this( pobj, index ); return pobj; }
 
     /// tell this object that it is no longer stored in t_obj_lst_map<>
     /// should only be called by t_obj_lst_map<>
@@ -168,7 +168,7 @@ protected:
     /// cause this struct to completely deallocate and reallocate its data
     /// and the data of all its dependents
     /// should only be called by t_obj_lst_map<>
-    static its_type * retor_all( its_type * ptr, ego_uint new_idx = invalid_value )
+    static its_type * retor_all( its_type * ptr, const ego_uint new_idx = invalid_value )
     {
         if ( NULL == ptr ) return ptr;
 
@@ -189,7 +189,7 @@ protected:
 private:
 
     /// construct this struct, and ALL dependent structs. use placement new
-    static its_type * ctor_all( its_type * ptr, ego_uint id, ego_uint index )
+    static its_type * ctor_all( its_type * ptr, const ego_uint id, const ego_uint index )
     {
         if ( NULL == ptr ) return NULL;
 
@@ -205,7 +205,7 @@ private:
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _sz>, _sz >
 {
     /// use this typedef to make iterating through the t_map<> easier
@@ -216,7 +216,7 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
     typedef typename cache_type::iterator                   iterator;
 
     //---- construction/destruction
-    t_obj_lst_map( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
+    t_obj_lst_map( const size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
     ~t_obj_lst_map() { deinit(); }
 
     /// initialize the list from scratch
@@ -258,7 +258,7 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
 
     /// change the length of the list. this function can be called at any time and be set anywhere
     /// between 0 and _sz
-    bool_t set_length( size_t len );
+    bool_t set_length( const size_t len );
 
     /// is a given reference within the bounds of this list?
     INLINE bool_t in_range_ref( const lst_reference & ref ) { REF_T tmp = ref.get_value(); return tmp < _max_len; };
@@ -312,7 +312,7 @@ struct t_obj_lst_map :  public t_allocator_static< t_ego_obj_container<_data, _s
 protected:
 
     /// enables structs that inherit from this list to re-initialize the index of a container
-    void allocate_container( container_type & rcont, size_t index )
+    void allocate_container( container_type & rcont, const size_t index )
     {
         container_type::allocate( &rcont, index );
     }
@@ -343,7 +343,7 @@ private:
     lst_reference deactivate_element( const lst_reference & pcont );
 
     /// helper function to activate a given container
-    container_type * activate_container_raw( container_type *, size_t index );
+    container_type * activate_container_raw( container_type *, const size_t index );
 
     /// helper function to deactivate a given container
     container_type * deactivate_container_raw( container_type * );
@@ -372,7 +372,7 @@ private:
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _sz>, _sz >
 {
     typedef t_ego_obj_container<_data, _sz>                 container_type;
@@ -393,7 +393,7 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
     };
 
     //---- construction/destruction
-    t_obj_lst_deque( size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
+    t_obj_lst_deque( const size_t len = _sz ) : _max_len( len ), loop_depth( 0 )  { init(); }
     ~t_obj_lst_deque() { deinit(); }
 
     /// initialize the list from scratch
@@ -435,7 +435,7 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
 
     /// change the length of the list. this function can be called at any time and be set anywhere
     /// between 0 and _sz
-    bool_t set_length( size_t len );
+    bool_t set_length( const size_t len );
 
     //---- public iteration methods - iterate over the used deque
 
@@ -520,7 +520,7 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
 protected:
 
     /// enables structs that inherit from this list to re-initialize the index of a container
-    void allocate_container( container_type & rcont, size_t index )
+    void allocate_container( container_type & rcont, const size_t index )
     {
         container_type::allocate( &rcont, index );
     }

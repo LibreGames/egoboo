@@ -63,7 +63,7 @@ ego_cursor cursor = {0, 0, bfalse, bfalse, bfalse, bfalse, 0};
 static void input_read_mouse();
 static void input_read_keyboard();
 static void input_read_joysticks();
-static void input_read_joystick( int which );
+static void input_read_joystick( const int which );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -171,7 +171,7 @@ void input_read_keyboard()
 }
 
 //--------------------------------------------------------------------------------------------
-void input_read_joystick( int which )
+void input_read_joystick( const int which )
 {
     int dead_zone = 0x8000 / 10;
     int i, button_count, x, y;
@@ -195,8 +195,8 @@ void input_read_joystick( int which )
     else y = 0;
 
     // store the values
-    pjoy->x = x / ( float )( 0x8000 - dead_zone );
-    pjoy->y = y / ( float )( 0x8000 - dead_zone );
+    pjoy->x = x / ( const float )( 0x8000 - dead_zone );
+    pjoy->y = y / ( const float )( 0x8000 - dead_zone );
 
     // get buttons
     button_count = SDL_JoystickNumButtons( pjoy->sdl_ptr );
@@ -392,7 +392,7 @@ void input_read()
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 input_get_buttonmask( Uint32 idevice )
+Uint32 input_get_buttonmask( const Uint32 idevice )
 {
     Uint32 buttonmask = 0;
     Uint32 which_device;
@@ -418,7 +418,7 @@ Uint32 input_get_buttonmask( Uint32 idevice )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t control_is_pressed( Uint32 idevice, Uint8 icontrol )
+bool_t control_is_pressed( const Uint32 idevice, const Uint8 icontrol )
 {
     /// \author ZZ
     /// \details  This function returns btrue if the given icontrol is cursor_pressed...

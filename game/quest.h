@@ -46,13 +46,13 @@ enum e_quest_values
 };
 
 // Public functions
-egoboo_rv quest_log_download_vfs( s_IDSZ_node quest_log[], size_t quest_log_len, const char* player_directory );
-egoboo_rv quest_log_upload_vfs( s_IDSZ_node quest_log[], size_t quest_log_len, const char *player_directory );
-int       quest_set_level( s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
-int       quest_adjust_level( s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int adjustment );
-int       quest_get_level( s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz );
-egoboo_rv quest_add( s_IDSZ_node quest_log[], size_t quest_log_len, IDSZ idsz, int level );
+egoboo_rv quest_log_download_vfs( s_IDSZ_node quest_log[], const size_t quest_log_len, const char* player_directory );
+egoboo_rv quest_log_upload_vfs( s_IDSZ_node quest_log[], const size_t quest_log_len, const char *player_directory );
+int       quest_set_level( s_IDSZ_node quest_log[], const size_t quest_log_len, const IDSZ idsz, const int level );
+int       quest_adjust_level( s_IDSZ_node quest_log[], const size_t quest_log_len, const IDSZ idsz, const int adjustment );
+int       quest_get_level( s_IDSZ_node quest_log[], const size_t quest_log_len, const IDSZ idsz );
+egoboo_rv quest_add( s_IDSZ_node quest_log[], const size_t quest_log_len, const IDSZ idsz, const int level );
 
 ConfigFilePtr_t quest_file_open( const char *player_directory );
 egoboo_rv       quest_file_export( ConfigFilePtr_t pfile );
-egoboo_rv       quest_file_close( ConfigFilePtr_t * ppfile, bool_t export_file );
+egoboo_rv       quest_file_close( ConfigFilePtr_t * ppfile, const bool_t export_file );

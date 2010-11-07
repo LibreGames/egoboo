@@ -139,10 +139,10 @@ sMStats		m_getMemoryStatistics();
 // Variations of global operators new & delete
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-void	*operator new(size_t reportedSize);
-void	*operator new[](size_t reportedSize);
-void	*operator new(size_t reportedSize, const char *sourceFile, int sourceLine);
-void	*operator new[](size_t reportedSize, const char *sourceFile, int sourceLine);
+void	*operator new(const size_t reportedSize);
+void	*operator new[](const size_t reportedSize);
+void	*operator new(const size_t reportedSize, const char *sourceFile, const int sourceLine);
+void	*operator new[](const size_t reportedSize, const char *sourceFile, const int sourceLine);
 void	operator delete(void *reportedAddress);
 void	operator delete[](void *reportedAddress);
 

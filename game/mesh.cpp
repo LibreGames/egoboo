@@ -41,7 +41,7 @@
 //--------------------------------------------------------------------------------------------
 // mesh initialization - not accessible by scripts
 
-static float grid_get_mix( float u0, float u, float v0, float v );
+static float grid_get_mix( const float u0, const float u, const float v0, const float v );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ ego_mpd_info * ego_mpd_info::ctor_this( ego_mpd_info * pinfo )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd_info * ego_mpd_info::init( ego_mpd_info * pinfo, int numvert, size_t tiles_x, size_t tiles_y )
+ego_mpd_info * ego_mpd_info::init( ego_mpd_info * pinfo, const int numvert, const size_t tiles_x, const size_t tiles_y )
 {
     if ( NULL == pinfo ) return pinfo;
 
@@ -73,11 +73,12 @@ ego_mpd_info * ego_mpd_info::init( ego_mpd_info * pinfo, int numvert, size_t til
     pinfo->tiles_count = pinfo->tiles_x * pinfo->tiles_y;
 
     // set the desired number of vertices
-    if ( numvert < 0 )
+    int loc_numvert = numvert;
+    if ( loc_numvert < 0 )
     {
-        numvert = MAXMESHVERTICES * pinfo->tiles_count;
+        loc_numvert = MAXMESHVERTICES * pinfo->tiles_count;
     };
-    pinfo->vertcount = numvert;
+    pinfo->vertcount = loc_numvert;
 
     return pinfo;
 }
@@ -116,7 +117,7 @@ ego_tile_mem * ego_tile_mem::dtor_this( ego_tile_mem * pmem )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mpd   * ego_mpd::ctor_this( ego_mpd * pmesh )
+ego_mpd * ego_mpd::ctor_this( ego_mpd * pmesh )
 {
     /// \author BB
     /// \details  initialize the ego_mpd   structure
@@ -137,7 +138,7 @@ ego_mpd   * ego_mpd::ctor_this( ego_mpd * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * ego_mpd::dtor_this( ego_mpd   * pmesh )
+ego_mpd * ego_mpd::dtor_this( ego_mpd * pmesh )
 {
     if ( NULL == pmesh ) return NULL;
 
@@ -152,7 +153,7 @@ ego_mpd   * ego_mpd::dtor_this( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * ego_mpd::renew( ego_mpd   * pmesh )
+ego_mpd * ego_mpd::renew( ego_mpd * pmesh )
 {
     pmesh = ego_mpd::dtor_this( pmesh );
 
@@ -160,7 +161,7 @@ ego_mpd   * ego_mpd::renew( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * ego_mpd::ctor_1( ego_mpd   * pmesh, int tiles_x, int tiles_y )
+ego_mpd * ego_mpd::ctor_1( ego_mpd * pmesh, const int tiles_x, const int tiles_y )
 {
 
     if ( NULL == pmesh ) return pmesh;
@@ -176,7 +177,7 @@ ego_mpd   * ego_mpd::ctor_1( ego_mpd   * pmesh, int tiles_x, int tiles_y )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * ego_mpd::create( ego_mpd   * pmesh, int tiles_x, int tiles_y )
+ego_mpd * ego_mpd::create( ego_mpd * pmesh, const int tiles_x, const int tiles_y )
 {
     if ( NULL == pmesh )
     {
@@ -188,7 +189,7 @@ ego_mpd   * ego_mpd::create( ego_mpd   * pmesh, int tiles_x, int tiles_y )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::destroy( ego_mpd   ** ppmesh )
+bool_t ego_mpd::destroy( ego_mpd ** ppmesh )
 {
     if ( NULL == ppmesh || NULL == *ppmesh ) return bfalse;
 
@@ -200,7 +201,7 @@ bool_t ego_mpd::destroy( ego_mpd   ** ppmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_mpd::init_tile_offset( ego_mpd   * pmesh )
+void ego_mpd::init_tile_offset( ego_mpd * pmesh )
 {
     int cnt;
 
@@ -213,7 +214,7 @@ void ego_mpd::init_tile_offset( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::remove_ambient( ego_mpd   * pmesh )
+bool_t ego_mpd::remove_ambient( ego_mpd * pmesh )
 {
     /// \author BB
     /// \details  remove extra ambient light in the lightmap
@@ -237,7 +238,7 @@ bool_t ego_mpd::remove_ambient( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::recalc_twist( ego_mpd   * pmesh )
+bool_t ego_mpd::recalc_twist( ego_mpd * pmesh )
 {
     Uint32 fan;
     ego_mpd_info * pinfo;
@@ -260,7 +261,7 @@ bool_t ego_mpd::recalc_twist( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image )
+bool_t ego_mpd::set_texture( ego_mpd * pmesh, const Uint16 tile, const Uint16 image )
 {
     ego_tile_info * ptile;
     Uint16 tile_value, tile_upper, tile_lower;
@@ -281,7 +282,7 @@ bool_t ego_mpd::set_texture( ego_mpd   * pmesh, Uint16 tile, Uint16 image )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::update_texture( ego_mpd   * pmesh, Uint32 tile )
+bool_t ego_mpd::update_texture( ego_mpd * pmesh, const Uint32 tile )
 {
     size_t mesh_vrt;
     int    tile_vrt;
@@ -320,7 +321,7 @@ bool_t ego_mpd::update_texture( ego_mpd   * pmesh, Uint32 tile )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::make_texture( ego_mpd   * pmesh )
+bool_t ego_mpd::make_texture( ego_mpd * pmesh )
 {
     Uint32 cnt;
     ego_mpd_info * pinfo;
@@ -338,7 +339,7 @@ bool_t ego_mpd::make_texture( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd   * ego_mpd::finalize( ego_mpd   * pmesh )
+ego_mpd * ego_mpd::finalize( ego_mpd * pmesh )
 {
     if ( NULL == pmesh ) return NULL;
 
@@ -356,12 +357,12 @@ ego_mpd   * ego_mpd::finalize( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src )
+bool_t ego_mpd::convert( ego_mpd * pmesh_dst, const mpd_t * pmesh_src )
 {
     Uint32 cnt;
 
-    mpd_mem_t  * pmem_src;
-    mpd_info_t * pinfo_src;
+    const mpd_mem_t  * pmem_src;
+    const mpd_info_t * pinfo_src;
 
     ego_tile_mem * ptmem_dst;
     ego_grid_mem * pgmem_dst;
@@ -432,7 +433,7 @@ bool_t ego_mpd::convert( ego_mpd   * pmesh_dst, mpd_t * pmesh_src )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_mpd * mesh_load( const char *modname, ego_mpd   * pmesh )
+ego_mpd * mesh_load( const char *modname, ego_mpd * pmesh )
 {
     // trap bad module names
     if ( !VALID_CSTR( modname ) ) return pmesh;
@@ -675,7 +676,7 @@ ego_grid_mem * ego_grid_mem::make_fanstart( ego_grid_mem * pgmem, ego_mpd_info *
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_mpd::make_vrtstart( ego_mpd   * pmesh )
+void ego_mpd::make_vrtstart( ego_mpd * pmesh )
 {
     size_t vert;
     Uint32 tile;
@@ -759,7 +760,7 @@ void mesh_make_twist()
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 cartman_get_fan_twist( ego_mpd   * pmesh, Uint32 tile )
+Uint8 cartman_get_fan_twist( ego_mpd * pmesh, const Uint32 tile )
 {
     size_t vrtstart;
     float z0, z1, z2, z3;
@@ -785,7 +786,7 @@ Uint8 cartman_get_fan_twist( ego_mpd   * pmesh, Uint32 tile )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::make_bbox( ego_mpd   * pmesh )
+bool_t ego_mpd::make_bbox( ego_mpd * pmesh )
 {
     /// \author BB
     /// \details  set the bounding box for each tile, and for the entire mesh
@@ -852,7 +853,7 @@ bool_t ego_mpd::make_bbox( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::make_normals( ego_mpd   * pmesh )
+bool_t ego_mpd::make_normals( ego_mpd * pmesh )
 {
     /// \author BB
     /// \details  this function calculates a set of normals for the 4 corners
@@ -1066,7 +1067,7 @@ bool_t ego_mpd::make_normals( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::grid_light_one_corner( ego_mpd   * pmesh, int fan, float height, float nrm[], float * plight )
+bool_t ego_mpd::grid_light_one_corner( ego_mpd * pmesh, const int fan, const float height, float nrm[], float * plight )
 {
     bool_t             reflective;
     ego_lighting_cache * lighting;
@@ -1100,7 +1101,7 @@ bool_t ego_mpd::grid_light_one_corner( ego_mpd   * pmesh, int fan, float height,
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::test_one_corner( ego_mpd   * pmesh, GLXvector3f pos, float * pdelta )
+bool_t ego_mpd::test_one_corner( const ego_mpd * pmesh, GLXvector3f pos, float * pdelta )
 {
     float loc_delta, low_delta, hgh_delta;
     float hgh_wt, low_wt;
@@ -1121,7 +1122,7 @@ bool_t ego_mpd::test_one_corner( ego_mpd   * pmesh, GLXvector3f pos, float * pde
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::light_one_corner( ego_mpd   * pmesh, int itile, GLXvector3f pos, GLXvector3f nrm, float * plight )
+bool_t ego_mpd::light_one_corner( ego_mpd * pmesh, const int itile, const GLXvector3f pos, GLXvector3f nrm, float * plight )
 {
     ego_lighting_cache grid_light;
     bool_t reflective;
@@ -1152,7 +1153,7 @@ bool_t ego_mpd::light_one_corner( ego_mpd   * pmesh, int itile, GLXvector3f pos,
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::test_corners( ego_mpd   * pmesh, int itile, float threshold )
+bool_t ego_mpd::test_corners( ego_mpd * pmesh, const int itile, const float threshold )
 {
     bool_t retval;
     int corner;
@@ -1201,7 +1202,7 @@ bool_t ego_mpd::test_corners( ego_mpd   * pmesh, int itile, float threshold )
 }
 
 //--------------------------------------------------------------------------------------------
-float ego_mpd::light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_keep )
+float ego_mpd::light_corners( ego_mpd * pmesh, const int itile, const float mesh_lighting_keep )
 {
     int corner;
     float max_delta;
@@ -1277,7 +1278,7 @@ float ego_mpd::light_corners( ego_mpd   * pmesh, int itile, float mesh_lighting_
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_tile_mem::interpolate_vertex( ego_tile_mem * pmem, int fan, float pos[], float * plight )
+bool_t ego_tile_mem::interpolate_vertex( ego_tile_mem * pmem, const int fan, const float pos[], float * plight )
 {
     int cnt;
     int ix_off[4] = {0, 1, 1, 0}, iy_off[4] = {0, 0, 1, 1};
@@ -1324,7 +1325,7 @@ bool_t ego_tile_mem::interpolate_vertex( ego_tile_mem * pmem, int fan, float pos
 #define BLAH_MIX_1(DU,UU) (4.0f/9.0f*((UU)-(-1+(DU)))*((2+(DU))-(UU)))
 #define BLAH_MIX_2(DU,UU,DV,VV) (BLAH_MIX_1(DU,UU)*BLAH_MIX_1(DV,VV))
 
-float grid_get_mix( float u0, float u, float v0, float v )
+float grid_get_mix( const float u0, const float u, const float v0, const float v )
 {
     float wt_u, wt_v;
     float du = u - u0;
@@ -1353,7 +1354,7 @@ struct mesh_wall_data
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, struct mesh_wall_data * pdata )
+bool_t ego_mpd::test_wall( ego_mpd * pmesh, const float pos[], const float radius, BIT_FIELD bits, struct mesh_wall_data * pdata )
 {
     /// \author BB
     /// \details  an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
@@ -1378,7 +1379,9 @@ bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIE
     // require a valid position
     if ( NULL == pos ) return 0;
 
-    if ( 0.0f == radius )
+    float loc_radius = SDL_max( 0.0f, radius );
+
+    if ( 0.0f == loc_radius )
     {
         pdata->fx_min = pdata->fx_max = pos[kX];
         pdata->fy_min = pdata->fy_max = pos[kY];
@@ -1386,13 +1389,13 @@ bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIE
     else
     {
         // make sure it is positive
-        radius = SDL_abs( radius );
+        loc_radius = SDL_abs( loc_radius );
 
-        pdata->fx_min = pos[kX] - radius;
-        pdata->fx_max = pos[kX] + radius;
+        pdata->fx_min = pos[kX] - loc_radius;
+        pdata->fx_max = pos[kX] + loc_radius;
 
-        pdata->fy_min = pos[kY] - radius;
-        pdata->fy_max = pos[kY] + radius;
+        pdata->fy_min = pos[kY] - loc_radius;
+        pdata->fy_max = pos[kY] + loc_radius;
     }
 
     pdata->ix_min = FLOOR( pdata->fx_min / GRID_SIZE );
@@ -1447,7 +1450,7 @@ bool_t ego_mpd::test_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIE
 }
 
 //--------------------------------------------------------------------------------------------
-float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits )
+float ego_mpd::get_pressure( ego_mpd * pmesh, const float pos[], const float radius, BIT_FIELD bits )
 {
     const float tile_area = GRID_SIZE * GRID_SIZE;
 
@@ -1472,7 +1475,9 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
     tlist = pmesh->tmem.tile_list;
     glist = pmesh->gmem.grid_list;
 
-    if ( 0.0f == radius )
+    float loc_radius = SDL_max( 0.0f, radius );
+
+    if ( 0.0f == loc_radius )
     {
         fx_min = fx_max = pos[kX];
         fy_min = fy_max = pos[kY];
@@ -1482,13 +1487,13 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
     else
     {
         // make sure it is positive
-        radius = SDL_abs( radius );
+        loc_radius = SDL_abs( loc_radius );
 
-        fx_min = pos[kX] - radius;
-        fx_max = pos[kX] + radius;
+        fx_min = pos[kX] - loc_radius;
+        fx_max = pos[kX] + loc_radius;
 
-        fy_min = pos[kY] - radius;
-        fy_max = pos[kY] + radius;
+        fy_min = pos[kY] - loc_radius;
+        fy_max = pos[kY] + loc_radius;
 
         obj_area = ( fx_max - fx_min ) * ( fy_max - fy_min );
     }
@@ -1553,7 +1558,7 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
             {
                 // hiting the mesh
 
-                if ( 0.0f == radius )
+                if ( 0.0f == loc_radius )
                 {
                     area_ratio = 1.0f;
                     ovl_x_min = tx_min;
@@ -1601,7 +1606,7 @@ float ego_mpd::get_pressure( ego_mpd   * pmesh, float pos[], float radius, BIT_F
 }
 
 //--------------------------------------------------------------------------------------------
-fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float center_pressure, BIT_FIELD bits )
+fvec2_t ego_mpd::get_diff( ego_mpd * pmesh, const float pos[], const float radius, const float center_pressure, BIT_FIELD bits )
 {
     /// \author BB
     /// \details  determine the shortest "way out", but creating an array of "pressures"
@@ -1678,7 +1683,7 @@ fvec2_t ego_mpd::get_diff( ego_mpd   * pmesh, float pos[], float radius, float c
 }
 
 //--------------------------------------------------------------------------------------------
-BIT_FIELD ego_mpd::hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_FIELD bits, float nrm[], float * pressure )
+BIT_FIELD ego_mpd::hit_wall( ego_mpd * pmesh, const float pos[], const float radius, BIT_FIELD bits, float nrm[], float * pressure )
 {
     /// \author BB
     /// \details  an abstraction of the functions of chr_hit_wall() and prt_hit_wall()
@@ -1822,7 +1827,7 @@ BIT_FIELD ego_mpd::hit_wall( ego_mpd   * pmesh, float pos[], float radius, BIT_F
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-float ego_mpd::get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y )
+float ego_mpd::get_max_vertex_0( ego_mpd * pmesh, const int grid_x, const int grid_y )
 {
     Uint32 itile;
     int type;
@@ -1851,7 +1856,7 @@ float ego_mpd::get_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y )
 }
 
 //--------------------------------------------------------------------------------------------
-float ego_mpd::get_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, float xmin, float ymin, float xmax, float ymax )
+float ego_mpd::get_max_vertex_1( ego_mpd * pmesh, const int grid_x, const int grid_y, const float xmin, const float ymin, const float xmax, const float ymax )
 {
     Uint32 itile, cnt;
     int type;
@@ -1920,7 +1925,7 @@ ego_tile_info * ego_tile_info_alloc()
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tile_info * ego_tile_info_init_ary( ego_tile_info * ptr, size_t count )
+ego_tile_info * ego_tile_info_init_ary( ego_tile_info * ptr, const size_t count )
 {
     Uint32 cnt;
 
@@ -1935,7 +1940,7 @@ ego_tile_info * ego_tile_info_init_ary( ego_tile_info * ptr, size_t count )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tile_info * ego_tile_info_alloc_ary( size_t count )
+ego_tile_info * ego_tile_info_alloc_ary( const size_t count )
 {
     ego_tile_info * retval = NULL;
 

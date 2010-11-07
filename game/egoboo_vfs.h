@@ -98,8 +98,8 @@ extern "C"
     int vfs_isDirectory( const char *fname );
 
 // binary reading and writing
-    size_t vfs_read( void * buffer, size_t size, size_t count, vfs_FILE * pfile );
-    size_t vfs_write( void * buffer, size_t size, size_t count, vfs_FILE * pfile );
+    size_t vfs_read( void * buffer, const size_t size, const size_t count, vfs_FILE * pfile );
+    size_t vfs_write( void * buffer, const size_t size, const size_t count, vfs_FILE * pfile );
     int    vfs_read_Sint16( vfs_FILE * pfile, Sint16 * val );
     int    vfs_read_Uint16( vfs_FILE * pfile, Uint16 * val );
     int    vfs_read_Sint32( vfs_FILE * pfile, Sint32 * val );
@@ -113,7 +113,7 @@ extern "C"
 
     const char * vfs_search_context_get_current( struct s_vfs_search_context * ctxt );
 
-    vfs_search_context_t * vfs_findFirst( const char * search_path, const char * search_extension, Uint32 search_bits );
+    vfs_search_context_t * vfs_findFirst( const char * search_path, const char * search_extension, const Uint32 search_bits );
     vfs_search_context_t * vfs_findNext( vfs_search_context_t ** pctxt );
     void                   vfs_findClose( vfs_search_context_t ** pctxt );
 
@@ -129,8 +129,8 @@ extern "C"
 
     int    vfs_ungetc( int, vfs_FILE * );
     int    vfs_getc( vfs_FILE * );
-    int    vfs_removeDirectoryAndContents( const char * dirname, int recursive );
-    int    vfs_putc( int , vfs_FILE * );
+    int    vfs_removeDirectoryAndContents( const char * dirname, const int recursive );
+    int    vfs_putc( const int , vfs_FILE * );
     int    vfs_puts( const char * , vfs_FILE * );
     char * vfs_gets( char *, int, vfs_FILE * );
 
@@ -140,7 +140,7 @@ extern "C"
     const char* vfs_getError();
     const char* vfs_getVersion();
 
-    int vfs_add_mount_point( const char * dirname, const char * relative_path, const char * mount_point, int append );
+    int vfs_add_mount_point( const char * dirname, const char * relative_path, const char * mount_point, const int append );
     int vfs_remove_mount_point( const char * mount_point );
 
     void vfs_set_base_search_paths();

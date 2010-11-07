@@ -110,8 +110,8 @@ struct mnu_SlidyButtons
         return ps;
     }
 
-    static mnu_SlidyButtons * init( mnu_SlidyButtons * pstate, float lerp, int id_start, const char *button_text[], ui_Widget * button_widget );
-    static mnu_SlidyButtons * update_all( mnu_SlidyButtons * pstate, float deltaTime );
+    static mnu_SlidyButtons * init( mnu_SlidyButtons * pstate, const float lerp, const int id_start, const char *button_text[], ui_Widget * button_widget );
+    static mnu_SlidyButtons * update_all( mnu_SlidyButtons * pstate, const float deltaTime );
     static mnu_SlidyButtons * draw_all( mnu_SlidyButtons * pstate );
 };
 
@@ -282,12 +282,12 @@ ego_load_player_info loadplayer[MAXLOADPLAYER];
 //--------------------------------------------------------------------------------------------
 
 // implementation of the mnu_Selected* arrays
-static bool_t  mnu_Selected_check_loadplayer( int loadplayer_idx );
-static bool_t  mnu_Selected_add( int loadplayer_idx );
-static bool_t  mnu_Selected_remove( int loadplayer_idx );
-static bool_t  mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits );
-static bool_t  mnu_Selected_remove_input( int loadplayer_idx, BIT_FIELD input_bits );
-static int     mnu_Selected_get_loadplayer( int loadplayer_idx );
+static bool_t  mnu_Selected_check_loadplayer( const int loadplayer_idx );
+static bool_t  mnu_Selected_add( const int loadplayer_idx );
+static bool_t  mnu_Selected_remove( const int loadplayer_idx );
+static bool_t  mnu_Selected_add_input( const int loadplayer_idx, BIT_FIELD input_bits );
+static bool_t  mnu_Selected_remove_input( const int loadplayer_idx, BIT_FIELD input_bits );
+static int     mnu_Selected_get_loadplayer( const int loadplayer_idx );
 
 // implementation of "private" TxTitleImage functions
 static void             TxTitleImage_clear_data();
@@ -298,10 +298,10 @@ static void             TxTitleImage_dtor();
 static oglx_texture_t * TxTitleImage_get_ptr( const TX_REF & itex );
 
 // tipText functions
-static void tipText_set_position( TTF_Font * font, const char * text, int spacing );
+static void tipText_set_position( const TTF_Font * font, const char * text, const float spacing );
 
 // copyrightText functions
-static void copyrightText_set_position( TTF_Font * font, const char * text, int spacing );
+static void copyrightText_set_position( const TTF_Font * font, const char * text, const float spacing );
 
 // implementation of "private" ModList functions
 static void mnu_ModList_release_images();
@@ -548,21 +548,21 @@ struct mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 
     //---- these functions should probably be encapsulated in the menu process,
     //     rather than here
-    static void begin_menu( int which );
-    static void end_menu( int which );
-    static void switch_menu( int from, int to );
+    static void begin_menu( const int which );
+    static void end_menu( const int which );
+    static void switch_menu( const int from, const int to );
 
     //---- asset management for the widgets
-    void begin_widgets( ui_Widget lst[], size_t count );
-    void end_widgets( ui_Widget lst[], size_t count );
+    void begin_widgets( ui_Widget lst[], const size_t count );
+    void end_widgets( ui_Widget lst[], const size_t count );
 
-    void begin_labels( ui_Widget lst[], size_t count );
+    void begin_labels( ui_Widget lst[], const size_t count );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -577,7 +577,7 @@ void mnu_state_data::init()
     exit_button_ptr = NULL;
 }
 
-void mnu_state_data::begin( int state )
+void mnu_state_data::begin( const int state )
 {
     init();
 
@@ -614,7 +614,7 @@ void mnu_state_data::format()
 }
 
 //--------------------------------------------------------------------------------------------
-void mnu_state_data::begin_widgets( ui_Widget lst[], size_t count )
+void mnu_state_data::begin_widgets( ui_Widget lst[], const size_t count )
 {
     for ( size_t cnt = 0; cnt < count; cnt ++ )
     {
@@ -623,7 +623,7 @@ void mnu_state_data::begin_widgets( ui_Widget lst[], size_t count )
 }
 
 //--------------------------------------------------------------------------------------------
-void mnu_state_data::end_widgets( ui_Widget lst[], size_t count )
+void mnu_state_data::end_widgets( ui_Widget lst[], const size_t count )
 {
     for ( size_t cnt = 0; cnt < count; cnt ++ )
     {
@@ -632,7 +632,7 @@ void mnu_state_data::end_widgets( ui_Widget lst[], size_t count )
 }
 
 //--------------------------------------------------------------------------------------------
-void mnu_state_data::begin_labels( ui_Widget lst[], size_t count )
+void mnu_state_data::begin_labels( ui_Widget lst[], const size_t count )
 {
     for ( size_t cnt = 0; cnt < count; cnt ++ )
     {
@@ -831,7 +831,7 @@ struct Main_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 };
@@ -850,7 +850,7 @@ void Main_data::init()
     /* add something here */
 }
 
-void Main_data::begin( int state )
+void Main_data::begin( const int state )
 {
     init();
 
@@ -877,12 +877,12 @@ void Main_data::format()
     // calculate the centered position of the background
     if ( 0 != background.imgW )
     {
-        fminw = ( float ) SDL_min( GFX_WIDTH , background.imgW ) / ( float ) background.imgW;
+        fminw = ( const float ) SDL_min( GFX_WIDTH , background.imgW ) / ( const float ) background.imgW;
     }
 
     if ( 0 != background.imgH )
     {
-        fminh = ( float ) SDL_min( GFX_HEIGHT, background.imgH ) / ( float ) background.imgH;
+        fminh = ( const float ) SDL_min( GFX_HEIGHT, background.imgH ) / ( const float ) background.imgH;
     }
 
     fmin  = SDL_min( fminw, fminh );
@@ -1088,7 +1088,7 @@ struct SinglePlayer_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 };
@@ -1106,7 +1106,7 @@ void SinglePlayer_data::init()
     /* add something here */
 }
 
-void SinglePlayer_data::begin( int state )
+void SinglePlayer_data::begin( const int state )
 {
     init();
 
@@ -1299,7 +1299,7 @@ int cmp_mod_ref( const void * vref1, const void * vref2 )
         return -1;
     }
 
-    // if they are beaten, float them to the end of the list
+    // if they are beaten, const float them to the end of the list
     retval = int( mnu_ModList[*pref1].base.beaten ) - int( mnu_ModList[*pref2].base.beaten );
 
     if ( 0 == retval )
@@ -1368,15 +1368,15 @@ struct ChooseModule_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 
-    static bool_t update_filter_label( ui_Widget * lab_ptr, int which );
-    static bool_t update_description( ui_Widget * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule );
+    static bool_t update_filter_label( ui_Widget * lab_ptr, const int which );
+    static bool_t update_description( ui_Widget * lab_ptr, const MOD_REF validModules[], const size_t validModules_size, const int selectedModule );
 
-    static void update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size );
-    static bool_t update_select_button( ui_Widget * but_ptr, int count );
+    static void update_players( const int numVertical, const int startIndex, ui_Widget lst[], const size_t lst_size );
+    static bool_t update_select_button( ui_Widget * but_ptr, const int count );
 };
 
 const char * ChooseModule_data::sz_buttons[ChooseModule_data::but_sz_count] =
@@ -1402,7 +1402,7 @@ void ChooseModule_data::init()
     numValidModules = 0;
     for ( int i = 0; i < MAX_MODULE; i++ )
     {
-        SDL_memset( validModules + i, 0, sizeof( MOD_REF ) );
+        SDL_memset( validModules + i, 0, sizeof( const MOD_REF  & ) );
     }
 
     keycooldown           = 0;
@@ -1414,7 +1414,7 @@ void ChooseModule_data::init()
     beaten_tx_ptr       = NULL;
 }
 
-void ChooseModule_data::begin( int state )
+void ChooseModule_data::begin( const int state )
 {
     init();
 
@@ -1490,7 +1490,7 @@ void ChooseModule_data::format()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, MOD_REF validModules[], size_t validModules_size, int selectedModule )
+bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, const MOD_REF validModules[], const size_t validModules_size, const int selectedModule )
 {
     int i;
     char    buffer[1024]  = EMPTY_CSTR;
@@ -1499,7 +1499,7 @@ bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, MOD_REF valid
 
     if ( NULL == lab_ptr ) return bfalse;
 
-    if ( selectedModule < 0 || ( size_t )selectedModule >= validModules_size )
+    if ( selectedModule < 0 || ( const size_t )selectedModule >= validModules_size )
     {
         ui_Widget::set_text( lab_ptr, ui_just_topleft, menuFont, NULL );
         return bfalse;
@@ -1566,7 +1566,7 @@ bool_t ChooseModule_data::update_description( ui_Widget * lab_ptr, MOD_REF valid
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChooseModule_data::update_filter_label( ui_Widget * lab_ptr, int which )
+bool_t ChooseModule_data::update_filter_label( ui_Widget * lab_ptr, const int which )
 {
     if ( NULL == lab_ptr ) return bfalse;
 
@@ -1723,7 +1723,7 @@ int ChooseModule_data::run( double deltaTime )
                 // sort the modules by difficulty. easiest to hardest for starting a new character
                 // hardest to easiest for loading a module
                 cmp_mod_ref_mult = start_new_player ? 1 : -1;
-                SDL_qsort( validModules, numValidModules, sizeof( MOD_REF ), cmp_mod_ref );
+                SDL_qsort( validModules, numValidModules, sizeof( const MOD_REF  & ), cmp_mod_ref );
 
                 // load background depending on current filter
                 if ( start_new_player )
@@ -1991,7 +1991,7 @@ struct Player_stats_info
     }
 
     static Player_stats_info * ctor_this( Player_stats_info * ptr );
-    static Player_stats_info * dtor_this( Player_stats_info * ptr, bool_t owner );
+    static Player_stats_info * dtor_this( Player_stats_info * ptr, const bool_t owner );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -2013,7 +2013,7 @@ Player_stats_info * Player_stats_info::ctor_this( Player_stats_info * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-Player_stats_info * Player_stats_info::dtor_this( Player_stats_info * ptr, bool_t owner )
+Player_stats_info * Player_stats_info::dtor_this( Player_stats_info * ptr, const bool_t owner )
 {
     if ( NULL == ptr ) return ptr;
 
@@ -2068,16 +2068,16 @@ struct ChoosePlayer_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 
-    static Player_stats_info * load_stats( Player_stats_info * ptr, int player, int mode );
-    static Player_stats_info * render_stats( Player_stats_info * ptr, int x, int y, int width, int height );
-    static bool_t              load_profiles( int player, ego_ChoosePlayer_profiles * pro_list );
+    static Player_stats_info * load_stats( Player_stats_info * ptr, const int player, const int mode );
+    static Player_stats_info * render_stats( Player_stats_info * ptr, const int x, const int y, const int width, const int height );
+    static bool_t              load_profiles( const int player, ego_ChoosePlayer_profiles * pro_list );
 
-    static void   update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size );
-    static bool_t update_select_button( ui_Widget * but_ptr, int count );
+    static void   update_players( const int numVertical, const int startIndex, ui_Widget lst[], const size_t lst_size );
+    static bool_t update_select_button( ui_Widget * but_ptr, const int count );
 
 };
 
@@ -2115,7 +2115,7 @@ void ChoosePlayer_data::init()
 
 }
 
-void ChoosePlayer_data::begin( int state )
+void ChoosePlayer_data::begin( const int state )
 {
     init();
 
@@ -2189,8 +2189,10 @@ void ChoosePlayer_data::format()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Player_stats_info * ChoosePlayer_data::load_stats( Player_stats_info * ptr, int player, int mode )
+Player_stats_info * ChoosePlayer_data::load_stats( Player_stats_info * ptr, const int player, const int mode )
 {
+    int loc_mode = mode;
+
     if ( NULL == ptr )
     {
         ptr = Player_stats_info::ctor_this( ptr );
@@ -2201,10 +2203,10 @@ Player_stats_info * ChoosePlayer_data::load_stats( Player_stats_info * ptr, int 
     ptr->player_last = ptr->player;
     ptr->player      = player;
 
-    if ( ptr->player < 0 ) mode = 1;
+    if ( ptr->player < 0 ) loc_mode = 1;
 
     // handle the profile data
-    switch ( mode )
+    switch ( loc_mode )
     {
         case 0: // load new ptr->player data
 
@@ -2231,7 +2233,7 @@ Player_stats_info * ChoosePlayer_data::load_stats( Player_stats_info * ptr, int 
 }
 
 //--------------------------------------------------------------------------------------------
-Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, int x, int y, int width, int height )
+Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, const int x, const int y, const int width, const int height )
 {
     int i, x1, y1;
 
@@ -2316,13 +2318,13 @@ Player_stats_info * ChoosePlayer_data::render_stats( Player_stats_info * ptr, in
         //---- Life and mana (can be less than maximum if not in easy mode)
         if ( cfg.difficulty >= GAME_NORMAL )
         {
-            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min(( int )UFP8_TO_UINT( pcap->life_spawn ), int( pcap->life_stat.val.from ) ), int( pcap->life_stat.val.from ) );
-            y1 = draw_one_bar( pcap->life_color, x1, y1, ( int )UFP8_TO_UINT( pcap->life_spawn ), int( pcap->life_stat.val.from ) );
+            y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Life: %d/%d", SDL_min(( const int )UFP8_TO_UINT( pcap->life_spawn ), int( pcap->life_stat.val.from ) ), int( pcap->life_stat.val.from ) );
+            y1 = draw_one_bar( pcap->life_color, x1, y1, ( const int )UFP8_TO_UINT( pcap->life_spawn ), int( pcap->life_stat.val.from ) );
 
             if ( pcap->mana_stat.val.from > 0 )
             {
-                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", SDL_min(( int )UFP8_TO_UINT( pcap->mana_spawn ), int( pcap->mana_stat.val.from ) ), int( pcap->mana_stat.val.from ) );
-                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( int )UFP8_TO_UINT( pcap->mana_spawn ), int( pcap->mana_stat.val.from ) );
+                y1 = ui_drawTextBoxImmediate( menuFont, x1, y1, 20, "Mana: %d/%d", SDL_min(( const int )UFP8_TO_UINT( pcap->mana_spawn ), int( pcap->mana_stat.val.from ) ), int( pcap->mana_stat.val.from ) );
+                y1 = draw_one_bar( pcap->mana_color, x1, y1, ( const int )UFP8_TO_UINT( pcap->mana_spawn ), int( pcap->mana_stat.val.from ) );
             }
         }
         else
@@ -2413,7 +2415,7 @@ ChoosePlayer_data__render_stats_fail:
 }
 
 //--------------------------------------------------------------------------------------------
-void ChoosePlayer_data::update_players( int numVertical, int startIndex, ui_Widget lst[], size_t lst_size )
+void ChoosePlayer_data::update_players( const int numVertical, const int startIndex, ui_Widget lst[], const size_t lst_size )
 {
     int lplayer, splayer;
     int i;
@@ -2437,7 +2439,7 @@ void ChoosePlayer_data::update_players( int numVertical, int startIndex, ui_Widg
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChoosePlayer_data::update_select_button( ui_Widget * but_ptr, int count )
+bool_t ChoosePlayer_data::update_select_button( ui_Widget * but_ptr, const int count )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -2458,7 +2460,7 @@ bool_t ChoosePlayer_data::update_select_button( ui_Widget * but_ptr, int count )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ChoosePlayer_data::load_profiles( int player, ego_ChoosePlayer_profiles * pro_list )
+bool_t ChoosePlayer_data::load_profiles( const int player, ego_ChoosePlayer_profiles * pro_list )
 {
     int    i;
     CAP_REF ref_temp;
@@ -2995,7 +2997,7 @@ struct Options_data : public mnu_state_data
     //---- the state implementation
     int  run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 };
@@ -3015,7 +3017,7 @@ void Options_data::init()
     /* add something here */
 }
 
-void Options_data::begin( int state )
+void Options_data::begin( const int state )
 {
     init();
 
@@ -3247,14 +3249,14 @@ struct OptionsInput_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 
-    static bool_t update_one_button( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which );
-    static bool_t update_all_buttons( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput );
-    static int    update_control( ui_Widget lab_lst[], size_t lab_lst_size, int idevice, int which );
-    static bool_t update_player( ui_Widget * but_ptr, int player );
+    static bool_t update_one_button( ui_Widget lab_lst[], const size_t lab_lst_size, device_controls_t * pdevice, const int which );
+    static bool_t update_all_buttons( ui_Widget lab_lst[], const size_t lab_lst_size, device_controls_t * pdevice, const int waitingforinput );
+    static int    update_control( ui_Widget lab_lst[], const size_t lab_lst_size, const int idevice, const int which );
+    static bool_t update_player( ui_Widget * but_ptr, const int player );
 };
 
 const char * OptionsInput_data::sz_buttons[OptionsInput_data::but_sz_count] =
@@ -3307,7 +3309,7 @@ void OptionsInput_data::init()
     player = 0;
 }
 
-void OptionsInput_data::begin( int state )
+void OptionsInput_data::begin( const int state )
 {
     init();
 
@@ -3384,17 +3386,17 @@ void OptionsInput_data::format()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsInput_data::update_one_button( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int which )
+bool_t OptionsInput_data::update_one_button( ui_Widget lab_lst[], const size_t lab_lst_size, device_controls_t * pdevice, const int which )
 {
     // update the name of a specific control
 
     const char * sz_tag;
 
-    if ( which < 0 || ( size_t )which > lab_lst_size ) return bfalse;
+    if ( which < 0 || ( const size_t )which > lab_lst_size ) return bfalse;
 
     // get a name for this control
     sz_tag = NULL;
-    if ( NULL != pdevice && ( size_t )which < pdevice->count )
+    if ( NULL != pdevice && ( const size_t )which < pdevice->count )
     {
         sz_tag = scantag_get_string( pdevice->device, pdevice->control[which].tag, pdevice->control[which].is_key );
     }
@@ -3406,7 +3408,7 @@ bool_t OptionsInput_data::update_one_button( ui_Widget lab_lst[], size_t lab_lst
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsInput_data::update_all_buttons( ui_Widget lab_lst[], size_t lab_lst_size, device_controls_t * pdevice, int waitingforinput )
+bool_t OptionsInput_data::update_all_buttons( ui_Widget lab_lst[], const size_t lab_lst_size, device_controls_t * pdevice, const int waitingforinput )
 {
     int i;
 
@@ -3424,7 +3426,7 @@ bool_t OptionsInput_data::update_all_buttons( ui_Widget lab_lst[], size_t lab_ls
 }
 
 //--------------------------------------------------------------------------------------------
-int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size, int idevice, int which )
+int OptionsInput_data::update_control( ui_Widget lab_lst[], const size_t lab_lst_size, const int idevice, const int which )
 {
     // Grab the key/button input from the selected device
 
@@ -3442,7 +3444,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
     pcontrol = pdevice->control + which;
 
     // is the button available on this device?
-    if (( size_t )which >= pdevice->count ) return -1;
+    if (( const size_t )which >= pdevice->count ) return -1;
 
     if ( idevice >= INPUT_DEVICE_JOY )
     {
@@ -3535,7 +3537,7 @@ int OptionsInput_data::update_control( ui_Widget lab_lst[], size_t lab_lst_size,
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsInput_data::update_player( ui_Widget * but_ptr, int player )
+bool_t OptionsInput_data::update_player( ui_Widget * but_ptr, const int player )
 {
     Sint32              idevice, iicon;
     device_controls_t * pdevice;
@@ -4033,15 +4035,15 @@ struct OptionsGame_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 
-    static bool_t update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty );
-    static bool_t update_message_count( ui_Widget * lab_ptr, int message_count );
-    static bool_t update_message_duration( ui_Widget * lab_ptr, Uint16 duration );
-    static bool_t update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn );
-    static bool_t update_fps( ui_Widget * lab_ptr, bool_t allowed );
+    static bool_t update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, const int difficulty );
+    static bool_t update_message_count( ui_Widget * lab_ptr, const int message_count );
+    static bool_t update_message_duration( ui_Widget * lab_ptr, const Uint16 duration );
+    static bool_t update_cam_autoturn( ui_Widget * lab_ptr, const Uint8 turn );
+    static bool_t update_fps( ui_Widget * lab_ptr, const bool_t allowed );
     static bool_t update_feedback( ui_Widget * lab_ptr, FEEDBACK_TYPE type );
 };
 
@@ -4075,7 +4077,7 @@ void OptionsGame_data::init()
     difficulty_old = -1;
 }
 
-void OptionsGame_data::begin( int state )
+void OptionsGame_data::begin( const int state )
 {
     init();
 
@@ -4121,7 +4123,7 @@ void OptionsGame_data::format()
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsGame_data::update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, int difficulty )
+bool_t OptionsGame_data::update_difficulty( ui_Widget * but_ptr, ui_Widget * desc_ptr, const int difficulty )
 {
     // Fill out the difficulty description, and the button caption
 
@@ -4177,7 +4179,7 @@ bool_t OptionsGame_data::update_difficulty( ui_Widget * but_ptr, ui_Widget * des
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsGame_data::update_message_count( ui_Widget * lab_ptr, int message_count )
+bool_t OptionsGame_data::update_message_count( ui_Widget * lab_ptr, const int message_count )
 {
     bool_t retval;
 
@@ -4196,7 +4198,7 @@ bool_t OptionsGame_data::update_message_count( ui_Widget * lab_ptr, int message_
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsGame_data::update_message_duration( ui_Widget * lab_ptr, Uint16 duration )
+bool_t OptionsGame_data::update_message_duration( ui_Widget * lab_ptr, const Uint16 duration )
 {
     bool_t retval;
 
@@ -4219,7 +4221,7 @@ bool_t OptionsGame_data::update_message_duration( ui_Widget * lab_ptr, Uint16 du
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsGame_data::update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn )
+bool_t OptionsGame_data::update_cam_autoturn( ui_Widget * lab_ptr, const Uint8 turn )
 {
     bool_t retval;
 
@@ -4242,7 +4244,7 @@ bool_t OptionsGame_data::update_cam_autoturn( ui_Widget * lab_ptr, Uint8 turn )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsGame_data::update_fps( ui_Widget * lab_ptr, bool_t allowed )
+bool_t OptionsGame_data::update_fps( ui_Widget * lab_ptr, const bool_t allowed )
 {
     if ( NULL == lab_ptr ) return bfalse;
 
@@ -4554,18 +4556,18 @@ struct OptionsAudio_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 
-    static bool_t update_sound_on( ui_Widget * but_ptr, bool_t val );
-    static bool_t update_sound_volume( ui_Widget * but_ptr, Uint8 val );
-    static bool_t update_music_on( ui_Widget * but_ptr, bool_t val );
-    static bool_t update_music_volume( ui_Widget * but_ptr, Uint8 val );
-    static bool_t update_sound_channels( ui_Widget * but_ptr, Uint16 val );
-    static bool_t update_buffer_size( ui_Widget * but_ptr, Uint16 val );
-    static bool_t update_quality( ui_Widget * but_ptr, bool_t val );
-    static bool_t update_footfall( ui_Widget * but_ptr, bool_t val );
+    static bool_t update_sound_on( ui_Widget * but_ptr, const bool_t val );
+    static bool_t update_sound_volume( ui_Widget * but_ptr, const Uint8 val );
+    static bool_t update_music_on( ui_Widget * but_ptr, const bool_t val );
+    static bool_t update_music_volume( ui_Widget * but_ptr, const Uint8 val );
+    static bool_t update_sound_channels( ui_Widget * but_ptr, const Uint16 val );
+    static bool_t update_buffer_size( ui_Widget * but_ptr, const Uint16 val );
+    static bool_t update_quality( ui_Widget * but_ptr, const bool_t val );
+    static bool_t update_footfall( ui_Widget * but_ptr, const bool_t val );
     static bool_t update_settings( ego_config_data * pcfg );
 
 };
@@ -4602,7 +4604,7 @@ void OptionsAudio_data::init()
     /* add something here */
 }
 
-void OptionsAudio_data::begin( int state )
+void OptionsAudio_data::begin( const int state )
 {
     init();
 
@@ -4655,7 +4657,7 @@ void OptionsAudio_data::format()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_sound_on( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsAudio_data::update_sound_on( ui_Widget * but_ptr, const bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4663,7 +4665,7 @@ bool_t OptionsAudio_data::update_sound_on( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_sound_volume( ui_Widget * but_ptr, Uint8 val )
+bool_t OptionsAudio_data::update_sound_volume( ui_Widget * but_ptr, const Uint8 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4671,7 +4673,7 @@ bool_t OptionsAudio_data::update_sound_volume( ui_Widget * but_ptr, Uint8 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_music_on( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsAudio_data::update_music_on( ui_Widget * but_ptr, const bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4679,7 +4681,7 @@ bool_t OptionsAudio_data::update_music_on( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_music_volume( ui_Widget * but_ptr, Uint8 val )
+bool_t OptionsAudio_data::update_music_volume( ui_Widget * but_ptr, const Uint8 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4687,7 +4689,7 @@ bool_t OptionsAudio_data::update_music_volume( ui_Widget * but_ptr, Uint8 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_sound_channels( ui_Widget * but_ptr, Uint16 val )
+bool_t OptionsAudio_data::update_sound_channels( ui_Widget * but_ptr, const Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4695,7 +4697,7 @@ bool_t OptionsAudio_data::update_sound_channels( ui_Widget * but_ptr, Uint16 val
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_buffer_size( ui_Widget * but_ptr, Uint16 val )
+bool_t OptionsAudio_data::update_buffer_size( ui_Widget * but_ptr, const Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4703,7 +4705,7 @@ bool_t OptionsAudio_data::update_buffer_size( ui_Widget * but_ptr, Uint16 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_quality( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsAudio_data::update_quality( ui_Widget * but_ptr, const bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -4711,7 +4713,7 @@ bool_t OptionsAudio_data::update_quality( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsAudio_data::update_footfall( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsAudio_data::update_footfall( ui_Widget * but_ptr, const bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5063,25 +5065,25 @@ struct OptionsVideo_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
     virtual void format();
 
-    bool_t coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio );
+    bool_t coerce_aspect_ratio( const int width, const int height, float * pratio, STRING * psz_ratio );
     int    fix_fullscreen_resolution( config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size );
-    bool_t update_antialiasing( ui_Widget * but_ptr, Uint8 val );
-    bool_t update_texture_filter( ui_Widget * but_ptr, Uint8 val );
-    bool_t update_dither( ui_Widget * but_ptr, bool_t val );
-    bool_t update_fullscreen( ui_Widget * but_ptr, bool_t val );
-    bool_t update_reflections( ui_Widget * but_ptr, bool_t allowed, bool_t do_prt, Uint8 fade );
-    bool_t update_shadows( ui_Widget * but_ptr, bool_t allowed, bool_t sprite );
-    bool_t update_z_buffer( ui_Widget * but_ptr, int val );
-    bool_t update_max_lights( ui_Widget * but_ptr, int val );
-    bool_t update_3d_effects( ui_Widget * but_ptr, int val );
-    bool_t update_water_quality( ui_Widget * but_ptr, bool_t val );
-    bool_t update_max_particles( ui_Widget * but_ptr, Uint16 val );
-    bool_t update_widescreen( ui_Widget * but_ptr, bool_t val );
-    bool_t update_resolution( ui_Widget * but_ptr, int x, int y );
+    bool_t update_antialiasing( ui_Widget * but_ptr, const Uint8 val );
+    bool_t update_texture_filter( ui_Widget * but_ptr, const Uint8 val );
+    bool_t update_dither( ui_Widget * but_ptr, const bool_t val );
+    bool_t update_fullscreen( ui_Widget * but_ptr, const bool_t val );
+    bool_t update_reflections( ui_Widget * but_ptr, const bool_t allowed, const bool_t do_prt, const Uint8 fade );
+    bool_t update_shadows( ui_Widget * but_ptr, const bool_t allowed, const bool_t sprite );
+    bool_t update_z_buffer( ui_Widget * but_ptr, const int val );
+    bool_t update_max_lights( ui_Widget * but_ptr, const int val );
+    bool_t update_3d_effects( ui_Widget * but_ptr, const int val );
+    bool_t update_water_quality( ui_Widget * but_ptr, const bool_t val );
+    bool_t update_max_particles( ui_Widget * but_ptr, const Uint16 val );
+    bool_t update_widescreen( ui_Widget * but_ptr, const bool_t val );
+    bool_t update_resolution( ui_Widget * but_ptr, const int x, const int y );
     bool_t update_settings( ego_config_data * pcfg );
 
 };
@@ -5111,7 +5113,7 @@ void OptionsVideo_data::init()
     sz_screen_size[0] = CSTR_END;
 }
 
-void OptionsVideo_data::begin( int state )
+void OptionsVideo_data::begin( const int state )
 {
     init();
 
@@ -5179,7 +5181,7 @@ void OptionsVideo_data::format()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::coerce_aspect_ratio( int width, int height, float * pratio, STRING * psz_ratio )
+bool_t OptionsVideo_data::coerce_aspect_ratio( const int width, const int height, float * pratio, STRING * psz_ratio )
 {
     /// \author BB
     /// \details  coerce the aspect ratio of the screen to some standard size
@@ -5188,7 +5190,7 @@ bool_t OptionsVideo_data::coerce_aspect_ratio( int width, int height, float * pr
 
     if ( 0 == height || NULL == pratio || NULL == psz_ratio ) return bfalse;
 
-    req_aspect_ratio = ( float )width / ( float )height;
+    req_aspect_ratio = ( const float )width / ( const float )height;
 
     if ( req_aspect_ratio > 0.0f && req_aspect_ratio < 0.5f*(( 5.0f / 4.0f ) + ( 4.0f / 3.0f ) ) )
     {
@@ -5224,7 +5226,7 @@ bool_t OptionsVideo_data::coerce_aspect_ratio( int width, int height, float * pr
 int OptionsVideo_data::fix_fullscreen_resolution( config_data_t * pcfg, SDLX_screen_info_t * psdl_scr, STRING * psz_screen_size )
 {
     STRING     sz_aspect_ratio = "unknown";
-    float      req_screen_area  = ( float )pcfg->scrx_req * ( float )pcfg->scry_req;
+    float      req_screen_area  = ( const float )pcfg->scrx_req * ( const float )pcfg->scry_req;
     float      min_diff = 0.0f;
     SDL_Rect * found_rect = NULL, ** pprect = NULL;
 
@@ -5240,7 +5242,7 @@ int OptionsVideo_data::fix_fullscreen_resolution( config_data_t * pcfg, SDLX_scr
         float sdl_screen_area;
         float diff, diff1, diff2;
 
-        sdl_aspect_ratio = ( float )prect->w / ( float )prect->h;
+        sdl_aspect_ratio = ( const float )prect->w / ( const float )prect->h;
         sdl_screen_area  = prect->w * prect->h;
 
         diff1 = LOG( sdl_aspect_ratio / aspect_ratio );
@@ -5329,7 +5331,7 @@ int OptionsVideo_data::fix_fullscreen_resolution( config_data_t * pcfg, SDLX_scr
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_antialiasing( ui_Widget * but_ptr, Uint8 val )
+bool_t OptionsVideo_data::update_antialiasing( ui_Widget * but_ptr, const Uint8 val )
 {
     bool_t retval = bfalse;
 
@@ -5348,7 +5350,7 @@ bool_t OptionsVideo_data::update_antialiasing( ui_Widget * but_ptr, Uint8 val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val )
+bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, const Uint8 val )
 {
     bool_t retval = bfalse;
 
@@ -5404,7 +5406,7 @@ bool_t OptionsVideo_data::update_texture_filter( ui_Widget * but_ptr, Uint8 val 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_dither( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsVideo_data::update_dither( ui_Widget * but_ptr, const bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5412,7 +5414,7 @@ bool_t OptionsVideo_data::update_dither( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_fullscreen( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsVideo_data::update_fullscreen( ui_Widget * but_ptr, const bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5420,7 +5422,7 @@ bool_t OptionsVideo_data::update_fullscreen( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_reflections( ui_Widget * but_ptr, bool_t allowed, bool_t do_prt, Uint8 fade )
+bool_t OptionsVideo_data::update_reflections( ui_Widget * but_ptr, const bool_t allowed, const bool_t do_prt, const Uint8 fade )
 {
     bool_t retval = bfalse;
 
@@ -5447,7 +5449,7 @@ bool_t OptionsVideo_data::update_reflections( ui_Widget * but_ptr, bool_t allowe
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_shadows( ui_Widget * but_ptr, bool_t allowed, bool_t sprite )
+bool_t OptionsVideo_data::update_shadows( ui_Widget * but_ptr, const bool_t allowed, const bool_t sprite )
 {
     bool_t retval = bfalse;
 
@@ -5470,7 +5472,7 @@ bool_t OptionsVideo_data::update_shadows( ui_Widget * but_ptr, bool_t allowed, b
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_z_buffer( ui_Widget * but_ptr, int val )
+bool_t OptionsVideo_data::update_z_buffer( ui_Widget * but_ptr, const int val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5478,7 +5480,7 @@ bool_t OptionsVideo_data::update_z_buffer( ui_Widget * but_ptr, int val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_max_lights( ui_Widget * but_ptr, int val )
+bool_t OptionsVideo_data::update_max_lights( ui_Widget * but_ptr, const int val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5486,7 +5488,7 @@ bool_t OptionsVideo_data::update_max_lights( ui_Widget * but_ptr, int val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_3d_effects( ui_Widget * but_ptr, int val )
+bool_t OptionsVideo_data::update_3d_effects( ui_Widget * but_ptr, const int val )
 {
     bool_t retval = bfalse;
     const char * sz_literal = "UNKNOWN";
@@ -5509,7 +5511,7 @@ bool_t OptionsVideo_data::update_3d_effects( ui_Widget * but_ptr, int val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_water_quality( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsVideo_data::update_water_quality( ui_Widget * but_ptr, const bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5517,7 +5519,7 @@ bool_t OptionsVideo_data::update_water_quality( ui_Widget * but_ptr, bool_t val 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_max_particles( ui_Widget * but_ptr, Uint16 val )
+bool_t OptionsVideo_data::update_max_particles( ui_Widget * but_ptr, const Uint16 val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5525,7 +5527,7 @@ bool_t OptionsVideo_data::update_max_particles( ui_Widget * but_ptr, Uint16 val 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_widescreen( ui_Widget * but_ptr, bool_t val )
+bool_t OptionsVideo_data::update_widescreen( ui_Widget * but_ptr, const bool_t val )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5533,7 +5535,7 @@ bool_t OptionsVideo_data::update_widescreen( ui_Widget * but_ptr, bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t OptionsVideo_data::update_resolution( ui_Widget * but_ptr, int x, int y )
+bool_t OptionsVideo_data::update_resolution( ui_Widget * but_ptr, const int x, const int y )
 {
     if ( NULL == but_ptr ) return bfalse;
 
@@ -5559,7 +5561,7 @@ bool_t OptionsVideo_data::update_settings( ego_config_data * pcfg )
 }
 
 //--------------------------------------------------------------------------------------------
-int coerce_3dfx( int src )
+int coerce_3dfx( const int src )
 {
     int val = src;
 
@@ -5722,12 +5724,12 @@ int OptionsVideo_data::run( double deltaTime )
                 {
                     OptionsVideo_data::fix_fullscreen_resolution( ego_cfg.cfg_ptr(), &sdl_scr, &sz_screen_size );
 
-                    aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
+                    aspect_ratio = ( const float )cfg.scrx_req / ( const float )cfg.scry_req;
                     widescreen = ( aspect_ratio > ( 4.0f / 3.0f ) );
                 }
                 else
                 {
-                    aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
+                    aspect_ratio = ( const float )cfg.scrx_req / ( const float )cfg.scry_req;
                     widescreen = ( aspect_ratio > ( 4.0f / 3.0f ) );
                 }
 
@@ -6039,7 +6041,7 @@ int OptionsVideo_data::run( double deltaTime )
                     OptionsVideo_data::fix_fullscreen_resolution( ego_cfg.cfg_ptr(), &sdl_scr, &sz_screen_size );
                 }
 
-                aspect_ratio = ( float )cfg.scrx_req / ( float )cfg.scry_req;
+                aspect_ratio = ( const float )cfg.scrx_req / ( const float )cfg.scry_req;
 
                 // 1.539 is "half way" between normal aspect ratio (4/3) and anamorphic (16/9)
                 widescreen = ( aspect_ratio > ( 1.539f ) );
@@ -6118,7 +6120,7 @@ struct ShowResults_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
 };
 
@@ -6129,7 +6131,7 @@ void ShowResults_data::init()
     buffer[0] = CSTR_END;
 }
 
-void ShowResults_data::begin( int state )
+void ShowResults_data::begin( const int state )
 {
     init();
 
@@ -6183,7 +6185,7 @@ int ShowResults_data::run( double deltaTime )
 
         case MM_Running:
             {
-                int text_h, text_w;
+                float text_h, text_w;
                 ui_drawButton( UI_Nothing, 30, 30, GFX_WIDTH  - 60, GFX_HEIGHT - 65, NULL );
 
                 GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -6251,7 +6253,7 @@ struct NotImplemented_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
 };
 
@@ -6262,7 +6264,7 @@ void NotImplemented_data::init()
     /* add something here */
 }
 
-void NotImplemented_data::begin( int state )
+void NotImplemented_data::begin( const int state )
 {
     init();
 
@@ -6325,7 +6327,7 @@ struct GamePaused_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
 };
 
@@ -6343,7 +6345,7 @@ void GamePaused_data::init()
     /* add something here */
 }
 
-void GamePaused_data::begin( int state )
+void GamePaused_data::begin( const int state )
 {
     init();
 
@@ -6475,7 +6477,7 @@ struct ShowEndgame_data : public mnu_state_data
     //---- the state implementation
     int run( double deltaTime );
 
-    virtual void begin( int state = MM_Begin );
+    virtual void begin( const int state = MM_Begin );
     virtual void end();
 };
 
@@ -6490,7 +6492,7 @@ void ShowEndgame_data::init()
     /* add something here */
 }
 
-void ShowEndgame_data::begin( int state )
+void ShowEndgame_data::begin( const int state )
 {
     init();
 
@@ -6706,7 +6708,7 @@ static LoadPlayer_data LoadPlayerState;
 
 //--------------------------------------------------------------------------------------------
 // place this last so that we do not have to prototype every menu function
-int doMenu( float deltaTime )
+int doMenu( const float deltaTime )
 {
     /// \details the global function that controls the navigation between menus
 
@@ -6957,9 +6959,9 @@ void autoformat_init_copyright_text()
 //--------------------------------------------------------------------------------------------
 // Implementation of tipText
 //--------------------------------------------------------------------------------------------
-void tipText_set_position( TTF_Font * font, const char * text, int spacing )
+void tipText_set_position( const TTF_Font * font, const char * text, const float spacing )
 {
-    int w, h;
+    float w, h;
     const char * new_text = NULL;
 
     autoformat_init_tip_text();
@@ -6985,9 +6987,9 @@ void tipText_set_position( TTF_Font * font, const char * text, int spacing )
 //--------------------------------------------------------------------------------------------
 // Implementation of copyrightText
 //--------------------------------------------------------------------------------------------
-void copyrightText_set_position( TTF_Font * font, const char * text, int spacing )
+void copyrightText_set_position( const TTF_Font * font, const char * text, const float spacing )
 {
-    int w, h;
+    float w, h;
 
     autoformat_init_copyright_text();
 
@@ -7139,7 +7141,7 @@ int mnu_get_mod_number( const char *szModName )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_test_by_index( const MOD_REF & modnumber, size_t buffer_len, char * buffer )
+bool_t mnu_test_by_index( const MOD_REF & modnumber, const size_t buffer_len, char * buffer )
 {
     int            cnt;
     mnu_module * pmod;
@@ -7280,7 +7282,7 @@ void mnu_release_one_module( const MOD_REF & imod )
 //--------------------------------------------------------------------------------------------
 // Implementation of the ModList struct
 //--------------------------------------------------------------------------------------------
-mod_file_t * mnu_ModList_get_base( int imod )
+mod_file_t * mnu_ModList_get_base( const int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
@@ -7288,7 +7290,7 @@ mod_file_t * mnu_ModList_get_base( int imod )
 }
 
 //--------------------------------------------------------------------------------------------
-const char * mnu_ModList_get_vfs_path( int imod )
+const char * mnu_ModList_get_vfs_path( const int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
@@ -7296,7 +7298,7 @@ const char * mnu_ModList_get_vfs_path( int imod )
 }
 
 //--------------------------------------------------------------------------------------------
-const char * mnu_ModList_get_dest_path( int imod )
+const char * mnu_ModList_get_dest_path( const int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
@@ -7304,7 +7306,7 @@ const char * mnu_ModList_get_dest_path( int imod )
 }
 
 //--------------------------------------------------------------------------------------------
-const char * mnu_ModList_get_name( int imod )
+const char * mnu_ModList_get_name( const int imod )
 {
     if ( imod < 0 || imod >= MAX_MODULE ) return NULL;
 
@@ -7557,7 +7559,7 @@ bool_t mnu_GameTip_load_local_vfs()
 //--------------------------------------------------------------------------------------------
 // Implementation of the mnu_SlidyButton array
 //--------------------------------------------------------------------------------------------
-mnu_SlidyButtons * mnu_SlidyButtons::init( mnu_SlidyButtons * pstate, float lerp, int id_start, const char *button_text[], ui_Widget * button_widget )
+mnu_SlidyButtons * mnu_SlidyButtons::init( mnu_SlidyButtons * pstate, const float lerp, const int id_start, const char *button_text[], ui_Widget * button_widget )
 {
     size_t i, count;
 
@@ -7607,7 +7609,7 @@ mnu_SlidyButtons * mnu_SlidyButtons::init( mnu_SlidyButtons * pstate, float lerp
 }
 
 //--------------------------------------------------------------------------------------------
-mnu_SlidyButtons * mnu_SlidyButtons::update_all( mnu_SlidyButtons * pstate, float deltaTime )
+mnu_SlidyButtons * mnu_SlidyButtons::update_all( mnu_SlidyButtons * pstate, const float deltaTime )
 {
     size_t i;
 
@@ -7646,7 +7648,7 @@ mnu_SlidyButtons * mnu_SlidyButtons::draw_all( mnu_SlidyButtons * pstate )
 //--------------------------------------------------------------------------------------------
 // implementation of the mnu_Selected* arrays
 //--------------------------------------------------------------------------------------------
-bool_t mnu_Selected_check_loadplayer( int loadplayer_idx )
+bool_t mnu_Selected_check_loadplayer( const int loadplayer_idx )
 {
     int i;
     if ( loadplayer_idx > loadplayer_count ) return bfalse;
@@ -7660,7 +7662,7 @@ bool_t mnu_Selected_check_loadplayer( int loadplayer_idx )
 }
 
 //--------------------------------------------------------------------------------------------
-int mnu_Selected_get_loadplayer( int loadplayer_idx )
+int mnu_Selected_get_loadplayer( const int loadplayer_idx )
 {
     int cnt, selected_index;
 
@@ -7680,7 +7682,7 @@ int mnu_Selected_get_loadplayer( int loadplayer_idx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_Selected_add( int loadplayer_idx )
+bool_t mnu_Selected_add( const int loadplayer_idx )
 {
     if ( loadplayer_idx > loadplayer_count || mnu_selectedPlayerCount >= MAX_PLAYER ) return bfalse;
     if ( mnu_Selected_check_loadplayer( loadplayer_idx ) ) return bfalse;
@@ -7693,7 +7695,7 @@ bool_t mnu_Selected_add( int loadplayer_idx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_Selected_remove( int loadplayer_idx )
+bool_t mnu_Selected_remove( const int loadplayer_idx )
 {
     int i;
     bool_t found = bfalse;
@@ -7735,7 +7737,7 @@ bool_t mnu_Selected_remove( int loadplayer_idx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits )
+bool_t mnu_Selected_add_input( const int loadplayer_idx, BIT_FIELD input_bits )
 {
     int i;
     bool_t done, retval = bfalse;
@@ -7798,7 +7800,7 @@ bool_t mnu_Selected_add_input( int loadplayer_idx, BIT_FIELD input_bits )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t mnu_Selected_remove_input( int loadplayer_idx, BIT_FIELD input_bits )
+bool_t mnu_Selected_remove_input( const int loadplayer_idx, BIT_FIELD input_bits )
 {
     int i;
     bool_t retval = bfalse;
@@ -7887,7 +7889,7 @@ bool_t loadplayer_import_one( const char * foundfile )
 //--------------------------------------------------------------------------------------------
 // Player utilities
 //--------------------------------------------------------------------------------------------
-void mnu_player_check_import( const char *dirname, bool_t initialize )
+void mnu_player_check_import( const char *dirname, const bool_t initialize )
 {
     /// \author ZZ
     /// \details  This function figures out which players may be imported, and loads basic
@@ -7915,7 +7917,7 @@ void mnu_player_check_import( const char *dirname, bool_t initialize )
     vfs_findClose( &ctxt );
 }
 
-void mnu_state_data::begin_menu( int which )
+void mnu_state_data::begin_menu( const int which )
 {
     switch ( which )
     {
@@ -7993,7 +7995,7 @@ void mnu_state_data::begin_menu( int which )
     }
 }
 
-void mnu_state_data::end_menu( int which )
+void mnu_state_data::end_menu( const int which )
 {
     switch ( which )
     {
@@ -8071,7 +8073,7 @@ void mnu_state_data::end_menu( int which )
     }
 }
 
-void mnu_state_data::switch_menu( int from, int to )
+void mnu_state_data::switch_menu( const int from, const int to )
 {
     mnu_state_data::end_menu( from );
     mnu_state_data::begin_menu( to );

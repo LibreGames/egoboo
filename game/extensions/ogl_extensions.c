@@ -105,7 +105,7 @@ void oglx_report_caps()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void oglx_set_filtering( GLenum target, GLint min_f, GLint mag_f, GLfloat anisotropy )
+void oglx_set_filtering( const GLenum target, const GLint min_f, const GLint mag_f, const GLfloat anisotropy )
 {
     GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_MAG_FILTER, mag_f );
     GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_MIN_FILTER, min_f );
@@ -117,14 +117,14 @@ void oglx_set_filtering( GLenum target, GLint min_f, GLint mag_f, GLfloat anisot
 }
 
 //--------------------------------------------------------------------------------------------
-void oglx_set_wrapping( GLenum target, GLint wrap_s, GLint wrap_t )
+void oglx_set_wrapping( const GLenum target, const GLint wrap_s, const GLint wrap_t )
 {
     GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_WRAP_S, wrap_s );
     GL_DEBUG( glTexParameteri )( target, GL_TEXTURE_WRAP_T, wrap_t );
 }
 
 //--------------------------------------------------------------------------------------------
-void oglx_upload_1d( GLboolean use_alpha, GLsizei w, const GLvoid * data )
+void oglx_upload_1d( const GLboolean use_alpha, GLsizei w, const GLvoid * data )
 {
     if ( use_alpha )
     {
@@ -137,7 +137,7 @@ void oglx_upload_1d( GLboolean use_alpha, GLsizei w, const GLvoid * data )
 }
 
 //--------------------------------------------------------------------------------------------
-void oglx_upload_2d( GLboolean use_alpha, GLsizei w, GLsizei h, const GLvoid * data )
+void oglx_upload_2d( const GLboolean use_alpha, GLsizei w, GLsizei h, const GLvoid * data )
 {
     if ( use_alpha )
     {
@@ -150,7 +150,7 @@ void oglx_upload_2d( GLboolean use_alpha, GLsizei w, GLsizei h, const GLvoid * d
 }
 
 //--------------------------------------------------------------------------------------------
-void oglx_upload_2d_mipmap( GLboolean use_alpha, GLsizei w, GLsizei h, const GLvoid * data )
+void oglx_upload_2d_mipmap( const GLboolean use_alpha, const GLsizei w, const GLsizei h, const GLvoid * data )
 {
     if ( use_alpha )
     {

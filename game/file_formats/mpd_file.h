@@ -181,10 +181,10 @@ extern "C"
     mpd_t *      mpd_dtor( mpd_t * pmesh );
     bool_t       mpd_free( mpd_t * pmesh );
 
-    bool_t twist_to_normal( Uint8 twist, float v[], float slide );
-    Uint8  cartman_get_twist( int x, int y );
+    bool_t twist_to_normal( const Uint8 twist, float v[], const float slide );
+    Uint8  cartman_get_twist( const int x, const int y );
 
-    void tile_dictionary_load_vfs( const char * filename, tile_definition_t dict[], size_t dict_size );
+    void tile_dictionary_load_vfs( const char * filename, tile_definition_t dict[], const size_t dict_size );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

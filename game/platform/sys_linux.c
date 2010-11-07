@@ -32,7 +32,7 @@
 //--------------------------------------------------------------------------------------------
 // Linux hook into the main function
 
-extern int SDL_main( int argc, char **argv );
+extern int SDL_main( const int argc, char **argv );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ double sys_getTime()
 
 //--------------------------------------------------------------------------------------------
 // This is where the whole thing actually starts in Linux
-int main( int argc, char* argv[] )
+int main( const int argc, char* argv[] )
 {
     return SDL_main( argc, argv );
 }

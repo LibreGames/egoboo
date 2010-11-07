@@ -262,6 +262,7 @@ struct ego_prt : public ego_prt_data
     // an ego_object can be interfaced with in the same way
 
     static       object_type &  get_obj_ref( ego_prt & ref ) { return *(( object_type * )ref._obj_ptr ); }
+    static const object_type & cget_obj_ref( const ego_prt & ref ) { return *(( object_type * )ref._obj_ptr ); }
     static       object_type *  get_obj_ptr( ego_prt * ptr ) { return ( NULL == ptr ) ? NULL : ( object_type * )ptr->_obj_ptr; }
     static const object_type * cget_obj_ptr( const ego_prt * ptr ) { return ( NULL == ptr ) ? NULL : ptr->_obj_ptr; }
 
@@ -277,16 +278,16 @@ struct ego_prt : public ego_prt_data
 
     //---- generic particle functions
 
-    static bool_t    set_pos( ego_prt * pprt, fvec3_base_t pos );
+    static bool_t    set_pos( ego_prt * pprt, const fvec3_base_t pos );
     static float *   get_pos_v( ego_prt * pprt );
     static fvec3_t   get_pos( ego_prt * pprt );
-    static void      set_level( ego_prt * pprt, float level );
+    static void      set_level( ego_prt * pprt, const float level );
 
     // INLINE functions
     static INLINE PIP_REF    get_ipip( const PRT_REF & particle );
     static INLINE ego_pip  * get_ppip( const PRT_REF & particle );
-    static INLINE CHR_REF    get_iowner( const PRT_REF & iprt, int depth );
-    static INLINE bool_t     set_size( ego_prt *, int size );
+    static INLINE CHR_REF    get_iowner( const PRT_REF & iprt, const int depth );
+    static INLINE bool_t     set_size( ego_prt *, const int size );
     static INLINE float      get_scale( ego_prt * pprt );
 
 protected:
@@ -358,7 +359,7 @@ struct ego_obj_prt : public ego_obj, public ego_prt
     //---- accessors
 
     /// tell the its_type whether it is in limbo or not
-    static its_type * set_limbo( its_type * pobj, bool_t val );
+    static its_type * set_limbo( its_type * pobj, const bool_t val );
 
     // This its_type is contained by container_type. We need some way of accessing it.
 
@@ -494,7 +495,7 @@ void particle_system_begin();
 void particle_system_end();
 
 void particle_physics_initialize_all();
-void particle_physics_finalize_all( float dt );
+void particle_physics_finalize_all( const float dt );
 
 void   init_all_pip();
 void   release_all_pip();
@@ -507,16 +508,16 @@ void move_all_particles( void );
 void cleanup_all_particles( void );
 void increment_all_particle_update_counters( void );
 
-void play_particle_sound( const PRT_REF & particle, Sint8 sound );
+void play_particle_sound( const PRT_REF & particle, const Sint8 sound );
 
-PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofile, int pip_index,
-                            const CHR_REF & chr_attach, Uint16 vrt_offset, const TEAM_REF & team,
-                            const CHR_REF & chr_origin, const PRT_REF & prt_origin, int multispawn, const CHR_REF & oldtarget );
+PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofile, const int pip_index,
+                            const CHR_REF & chr_attach, const Uint16 vrt_offset, const TEAM_REF & team,
+                            const CHR_REF & chr_origin, const PRT_REF & prt_origin, const int multispawn, const CHR_REF & oldtarget );
 
 #define spawn_one_particle_global( pos, facing, ipip, multispawn ) spawn_one_particle( pos, facing, PRO_REF(MAX_PROFILE), ipip, CHR_REF(MAX_CHR), GRIP_LAST, TEAM_REF(TEAM_NULL), CHR_REF(MAX_CHR), PRT_REF(MAX_PRT), multispawn, CHR_REF(MAX_CHR) );
 
-BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * pressure );
-bool_t    prt_test_wall( ego_prt * pprt, float test_pos[] );
+BIT_FIELD prt_hit_wall( ego_prt * pprt, const float test_pos[], float nrm[], float * pressure );
+bool_t    prt_test_wall( ego_prt * pprt, const float test_pos[] );
 bool_t    prt_is_over_water( const PRT_REF & particle );
 
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & pip_override );

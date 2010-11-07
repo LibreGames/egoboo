@@ -503,10 +503,10 @@ static void   fix_operators();
 static int    parse_token( int read );
 static void   emit_opcode( BIT_FIELD highbits );
 static void   parse_line_by_line();
-static Uint32 jump_goto( int index, int index_end );
-static void   parse_jumps( int ainumber );
+static Uint32 jump_goto( int index, const int index_end );
+static void   parse_jumps( const int ainumber );
 static int    ai_goto_colon( int read );
-static void   get_code( int read );
+static void   get_code( const int read );
 
 static void load_ai_codes_vfs( const char* loadname );
 
@@ -1030,7 +1030,7 @@ void parse_line_by_line()
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32 jump_goto( int index, int index_end )
+Uint32 jump_goto( int index, const int index_end )
 {
     /// \author ZZ
     /// \details  This function figures out where to jump to on a fail based on the
@@ -1072,7 +1072,7 @@ Uint32 jump_goto( int index, int index_end )
 }
 
 //--------------------------------------------------------------------------------------------
-void parse_jumps( int ainumber )
+void parse_jumps( const int ainumber )
 {
     /// \author ZZ
     /// \details  This function sets up the fail jumps for the down and dirty code
@@ -1128,7 +1128,7 @@ int ai_goto_colon( int read )
 }
 
 //--------------------------------------------------------------------------------------------
-void get_code( int read )
+void get_code( const int read )
 {
     /// \author ZZ
     /// \details  This function gets code names and other goodies
@@ -1157,7 +1157,7 @@ void load_ai_codes_vfs( const char* loadname )
     fileread = vfs_openRead( loadname );
     if ( fileread )
     {
-        iLoadSize = ( int )vfs_read( cLoadBuffer, 1, AISMAXLOADSIZE, fileread );
+        iLoadSize = ( const int )vfs_read( cLoadBuffer, 1, AISMAXLOADSIZE, fileread );
         read = 0;
         read = ai_goto_colon( read );
 
@@ -1199,7 +1199,7 @@ int load_ai_script_vfs( const char *loadname )
     }
 
     // load the file
-    iLoadSize = ( int )vfs_read( cLoadBuffer, 1, AISMAXLOADSIZE, fileread );
+    iLoadSize = ( const int )vfs_read( cLoadBuffer, 1, AISMAXLOADSIZE, fileread );
     vfs_close( fileread );
 
     // if the file is empty, use the default script
@@ -1978,7 +1978,7 @@ DEFINE_FUNCTION( FIFNOTPUTAWAY,    IfNotTakenOut    )
 */
 
 //--------------------------------------------------------------------------------------------
-// int load_parsed_line( int read )
+// int load_parsed_line( const int read )
 // {
 //   /// \author ZZ
 //   /// \details  This function loads a line into the line buffer

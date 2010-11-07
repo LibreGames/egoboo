@@ -42,8 +42,8 @@ static int    _rpc_system_guid;
 static void   TxReqList_ctor();
 static void   TxReqList_dtor();
 static bool_t TxReqList_timestep();
-static size_t TxReqList_get_free( int type );
-static bool_t TxReqList_free_one( int index );
+static size_t TxReqList_get_free( const int type );
+static bool_t TxReqList_free_one( const int index );
 
 static int rpc_system_get_guid();
 
@@ -59,7 +59,7 @@ ego_rpc * ego_rpc::clear( ego_rpc * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_rpc * ego_rpc::ctor_this( ego_rpc * prpc, int data_type, void * data )
+ego_rpc * ego_rpc::ctor_this( ego_rpc * prpc, const int data_type, void * data )
 {
     /// \author BB
     /// \details  construct the sample rpc data element
@@ -108,7 +108,7 @@ ego_tx_request * ego_tx_request::clear( ego_tx_request * ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_tx_request * ego_tx_request::ctor_this( ego_tx_request * preq, int type )
+ego_tx_request * ego_tx_request::ctor_this( ego_tx_request * preq, const int type )
 {
     if ( NULL == preq ) return NULL;
 
@@ -247,7 +247,7 @@ void TxReqList_dtor()
 }
 
 //--------------------------------------------------------------------------------------------
-size_t TxReqList_get_free( int type )
+size_t TxReqList_get_free( const int type )
 {
     /// \author ZZ
     /// \details  This function returns the next free index or MAX_TX_TEXTURE_REQ if there are none
@@ -271,7 +271,7 @@ size_t TxReqList_get_free( int type )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t TxReqList_free_one( int ireq )
+bool_t TxReqList_free_one( const int ireq )
 {
     /// \author ZZ
     /// \details
@@ -354,7 +354,7 @@ bool_t TxReqList_timestep()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_tx_request * ego_tx_request::load_TxTexture( const char *filename, int itex_src, Uint32 key )
+ego_tx_request * ego_tx_request::load_TxTexture( const char *filename, const int itex_src, const Uint32 key )
 {
     /// \author BB
     /// \details  request that the main thread loads the texture

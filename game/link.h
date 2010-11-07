@@ -35,9 +35,9 @@ struct ego_link
 extern ego_link LinkList[LINK_COUNT];
 
 // Function prototypes
-bool_t link_follow_modname( const char * modname, bool_t push_current_module );
+bool_t link_follow_modname( const char * modname, const bool_t  push_current_module );
 bool_t link_build_vfs( const char * fname, ego_link list[] );
 
 bool_t link_pop_module();
-bool_t link_load_parent( const char * modname, fvec3_t   pos );
+bool_t link_load_parent( const char * modname, fvec3_t pos );
 

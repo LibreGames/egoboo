@@ -49,15 +49,15 @@ struct blah : public ego_obj
     /// External handle for iterating the "egoboo object process" state machine
     static blah * run( blah * pchr );
     /// External handle for getting an "egoboo object process" into the constructed state
-    static blah * run_construct( blah * pprt, int max_iterations );
+    static blah * run_construct( blah * pprt, const int max_iterations );
     /// External handle for getting an "egoboo object process" into the initialized state
-    static blah * run_initialize( blah * pprt, int max_iterations );
+    static blah * run_initialize( blah * pprt, const int max_iterations );
     /// External handle for getting an "egoboo object process" into the active state
-    static blah * run_activate( blah * pprt, int max_iterations );
+    static blah * run_activate( blah * pprt, const int max_iterations );
     /// External handle for getting an "egoboo object process" into the deinitialized state
-    static blah * run_deinitialize( blah * pprt, int max_iterations );
+    static blah * run_deinitialize( blah * pprt, const int max_iterations );
     /// External handle for getting an "egoboo object process" into the deconstructed state
-    static blah * run_deconstruct( blah * pprt, int max_iterations );
+    static blah * run_deconstruct( blah * pprt, const int max_iterations );
 };
 
 typedef t_ego_obj_container< blah, 100 > blah_cont;
@@ -107,7 +107,7 @@ ego_obj_lst_state_data * ego_obj_lst_state_data::clear( ego_obj_lst_state_data *
 }
 
 ////--------------------------------------------------------------------------------------------
-//ego_obj_lst_state_data * ego_obj_lst_state_data::set_allocated( ego_obj_lst_state_data * ptr, bool_t val )
+//ego_obj_lst_state_data * ego_obj_lst_state_data::set_allocated( ego_obj_lst_state_data * ptr, const bool_t val )
 //{
 //    if ( NULL == ptr ) return ptr;
 //

@@ -109,7 +109,7 @@ bool_t passage_stack::open( const PASS_REF & passage )
 }
 
 //--------------------------------------------------------------------------------------------
-void passage_stack::flash( const PASS_REF & passage, Uint8 color )
+void passage_stack::flash( const PASS_REF & passage, const Uint8 color )
 {
     /// \author ZZ
     /// \details  This function makes a passage flash white
@@ -121,7 +121,7 @@ void passage_stack::flash( const PASS_REF & passage, Uint8 color )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t passage_stack::point_is_inside( const PASS_REF & passage, float xpos, float ypos )
+bool_t passage_stack::point_is_inside( const PASS_REF & passage, const float xpos, const float ypos )
 {
     bool_t useful = bfalse;
 
@@ -131,7 +131,7 @@ bool_t passage_stack::point_is_inside( const PASS_REF & passage, float xpos, flo
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t passage_stack::object_is_inside( const PASS_REF & passage, float xpos, float ypos, float radius )
+bool_t passage_stack::object_is_inside( const PASS_REF & passage, const float xpos, const float ypos, const float radius )
 {
     bool_t useful = bfalse;
 
@@ -276,7 +276,7 @@ void shop_stack::add_one( const CHR_REF & owner, const PASS_REF & passage )
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF shop_stack::find_owner( int ix, int iy )
+CHR_REF shop_stack::find_owner( const int ix, const int iy )
 {
     /// \author ZZ
     /// \details This function returns the owner of a item in a shop
@@ -367,7 +367,7 @@ bool_t ego_passage::do_open( ego_passage * ppass )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_passage::flash( ego_passage * ppass, Uint8 color )
+void ego_passage::flash( ego_passage * ppass, const Uint8 color )
 {
     int x, y, cnt;
     Uint32 fan;
@@ -391,7 +391,7 @@ void ego_passage::flash( ego_passage * ppass, Uint8 color )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_passage::point_is_in( ego_passage * ppass, float xpos, float ypos )
+bool_t ego_passage::point_is_in( ego_passage * ppass, const float xpos, const float ypos )
 {
     /// \author ZF
     /// \details  This return btrue if the specified X and Y coordinates are within the passage
@@ -408,7 +408,7 @@ bool_t ego_passage::point_is_in( ego_passage * ppass, float xpos, float ypos )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_passage::object_is_in( ego_passage * ppass, float xpos, float ypos, float radius )
+bool_t ego_passage::object_is_in( ego_passage * ppass, const float xpos, const float ypos, const float radius )
 {
     /// \author ZF
     /// \details  This return btrue if the specified X and Y coordinates are within the passage
@@ -419,11 +419,11 @@ bool_t ego_passage::object_is_in( ego_passage * ppass, float xpos, float ypos, f
     if ( NULL == ppass ) return bfalse;
 
     // Passage area
-    radius += CLOSETOLERANCE;
-    tmp_rect.xmin = ( ppass->area.xmin        * GRID_SIZE ) - radius;
-    tmp_rect.ymin = ( ppass->area.ymin        * GRID_SIZE ) - radius;
-    tmp_rect.xmax = (( ppass->area.xmax + 1 ) * GRID_SIZE ) + radius;
-    tmp_rect.ymax = (( ppass->area.ymax + 1 ) * GRID_SIZE ) + radius;
+    float tmp_radius = radius + CLOSETOLERANCE;
+    tmp_rect.xmin = ( ppass->area.xmin        * GRID_SIZE ) - tmp_radius;
+    tmp_rect.ymin = ( ppass->area.ymin        * GRID_SIZE ) - tmp_radius;
+    tmp_rect.xmax = (( ppass->area.xmax + 1 ) * GRID_SIZE ) + tmp_radius;
+    tmp_rect.ymax = (( ppass->area.ymax + 1 ) * GRID_SIZE ) + tmp_radius;
 
     return frect_point_inside( &tmp_rect, xpos, ypos );
 }

@@ -39,9 +39,9 @@ int ego_obj_BSP::prt_count = 0;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ego_obj_BSP::alloc( ego_obj_BSP * pbsp, int depth )
+bool_t ego_obj_BSP::alloc( ego_obj_BSP * pbsp, const int depth )
 {
-    ego_BSP_tree   * rv;
+    ego_BSP_tree * rv;
 
     if ( NULL == pbsp ) return bfalse;
 
@@ -72,7 +72,7 @@ bool_t ego_obj_BSP::ctor_this( ego_obj_BSP * pbsp, mpd_BSP * pmesh_bsp )
 
     int          cnt;
     float        bsp_size;
-    ego_BSP_tree   * t;
+    ego_BSP_tree * t;
 
     if ( NULL == pbsp || NULL == pmesh_bsp ) return bfalse;
 
@@ -128,7 +128,7 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
 
     bool_t           retval;
     ego_BSP_leaf   * pleaf;
-    ego_BSP_tree   * ptree;
+    ego_BSP_tree * ptree;
 
     if ( NULL == pbsp ) return bfalse;
     ptree = &( pbsp->tree );
@@ -171,7 +171,7 @@ bool_t ego_obj_BSP::insert_prt( ego_obj_BSP * pbsp, const ego_bundle_prt & bdl_p
 
     bool_t       retval;
     ego_BSP_leaf * pleaf;
-    ego_BSP_tree   * ptree;
+    ego_BSP_tree * ptree;
 
     ego_prt *loc_pprt;
     ego_pip *loc_ppip;
@@ -322,13 +322,13 @@ int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb & bbox, leaf_child_li
 }
 
 ////--------------------------------------------------------------------------------------------
-//bool_t ego_obj_BSP::insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pleaf, int depth, int address_x[], int address_y[], int address_z[] )
+//bool_t ego_obj_BSP::insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pleaf, const int depth, const int address_x[], const int address_y[], const int address_z[] )
 //{
 //    int i;
 //    bool_t retval;
 //    Uint32 index;
 //    ego_BSP_branch * pbranch, * pbranch_new;
-//    ego_BSP_tree   * ptree = &( pbsp->tree );
+//    ego_BSP_tree * ptree = &( pbsp->tree );
 //
 //    retval = bfalse;
 //    if ( depth < 0 )
@@ -351,7 +351,7 @@ int ego_obj_BSP::collide( ego_obj_BSP * pbsp, ego_BSP_aabb & bbox, leaf_child_li
 //        pbranch = ptree->root;
 //        for ( i = 0; i < depth; i++ )
 //        {
-//            index = (( Uint32 )address_x[i] ) | ((( Uint32 )address_y[i] ) << 1 ) | ((( Uint32 )address_z[i] ) << 2 ) ;
+//            index = (( const Uint32 )address_x[i] ) | ((( const Uint32 )address_y[i] ) << 1 ) | ((( const Uint32 )address_z[i] ) << 2 ) ;
 //
 //            pbranch_new = ego_BSP_tree::ensure_branch( ptree, pbranch, index );
 //            if ( NULL == pbranch_new ) break;

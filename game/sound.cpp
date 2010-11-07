@@ -55,11 +55,11 @@ static t_list< snd_looped_sound_data, LOOPED_COUNT  > LoopedList;
 
 static void   LoopedList_init();
 static void   LoopedList_clear();
-static bool_t LoopedList_free_one( size_t index );
+static bool_t LoopedList_free_one( const size_t index );
 static size_t LoopedList_get_free();
 
 static bool_t LoopedList_validate();
-static size_t LoopedList_add( Mix_Chunk * sound, int loops, const CHR_REF &  object );
+static size_t LoopedList_add( Mix_Chunk * sound, const int loops, const CHR_REF & object );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -98,8 +98,8 @@ static bool_t sdl_mixer_initialize();
 static void   sdl_mixer_quit( void );
 
 int    _calculate_volume( fvec3_t   diff );
-bool_t _update_stereo_channel( int channel, fvec3_t   diff );
-bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff );
+bool_t _update_stereo_channel( const int channel, fvec3_t   diff );
+bool_t _update_channel_volume( const int channel, const int volume, fvec3_t   diff );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -153,7 +153,7 @@ static void music_stack_finished_callback( void )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t music_stack_push( Mix_Music * mus, int song )
+bool_t music_stack_push( Mix_Music * mus, const int song )
 {
     if ( music_stack_depth >= MUSIC_STACK_COUNT - 1 )
     {
@@ -531,15 +531,17 @@ int _calculate_volume( fvec3_t   diff )
     return volume;
 }
 
-bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff )
+bool_t _update_channel_volume( const int channel, const int volume, fvec3_t   diff )
 {
     float pan;
     float cosval;
     int leftvol, rightvol;
 
+    int new_volume = volume;
+
     // determine the angle away from "forward"
     pan = ATAN2( diff.y, diff.x ) - PCamera->turn_z_rad;
-    volume *= ( 2.0f + COS( pan ) ) / 3.0f;
+    new_volume *= ( 2.0f + COS( pan ) ) / 3.0f;
 
     // determine the angle from the left ear
     pan += 1.5f * PI;
@@ -551,8 +553,8 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff )
     leftvol  = cosval * 128;
     rightvol = 128 - leftvol;
 
-    leftvol  = (( 127 + leftvol ) * volume ) >> 8;
-    rightvol = (( 127 + rightvol ) * volume ) >> 8;
+    leftvol  = (( 127 + leftvol ) * new_volume ) >> 8;
+    rightvol = (( 127 + rightvol ) * new_volume ) >> 8;
 
     // apply the volume adjustments
     Mix_SetPanning( channel, leftvol, rightvol );
@@ -561,7 +563,7 @@ bool_t _update_channel_volume( int channel, int volume, fvec3_t   diff )
 }
 
 //--------------------------------------------------------------------------------------------
-int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const CHR_REF & owner )
+int sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, const int loops, const CHR_REF & owner )
 {
     /// \author ZF
     /// \details This function plays a specified sound and returns which channel its using
@@ -629,7 +631,7 @@ int sound_play_chunk_full( Mix_Chunk * pchunk )
 }
 
 //--------------------------------------------------------------------------------------------
-void sound_stop_channel( int whichchannel )
+void sound_stop_channel( const int whichchannel )
 {
     /// \author ZF
     /// \details  Stops a sound effect playing in the specified channel
@@ -642,7 +644,7 @@ void sound_stop_channel( int whichchannel )
 //------------------------------------
 // Mix_Music stuff -------------------
 //------------------------------------
-void sound_play_song( int songnumber, Uint16 fadetime, int loops )
+void sound_play_song( const int songnumber, const Uint16 fadetime, const int loops )
 {
     /// \author ZF
     /// \details  This functions plays a specified track loaded into memory
@@ -667,7 +669,7 @@ void sound_play_song( int songnumber, Uint16 fadetime, int loops )
 }
 
 //--------------------------------------------------------------------------------------------
-void sound_finish_song( Uint16 fadetime )
+void sound_finish_song( const Uint16 fadetime )
 {
     Mix_Music * mus;
     int         song;
@@ -833,7 +835,7 @@ bool_t snd_config_init( snd_config_data_t * psnd )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t snd_config_synch( snd_config_data_t * psnd, config_data_t * pcfg )
+bool_t snd_config_synch( snd_config_data_t * psnd, const config_data_t * pcfg )
 {
     if ( NULL == psnd && NULL == pcfg ) return bfalse;
 
@@ -843,8 +845,11 @@ bool_t snd_config_synch( snd_config_data_t * psnd, config_data_t * pcfg )
     }
 
     // coerce pcfg to have valid values
-    pcfg->sound_channel_count = CLIP( pcfg->sound_channel_count, 8, 128 );
-    pcfg->sound_buffer_size   = CLIP( pcfg->sound_buffer_size, 512, 8196 );
+    Uint16 sound_channel_count = pcfg->sound_channel_count;
+    sound_channel_count = CLIP( pcfg->sound_channel_count, 8, 128 );
+
+    Uint16 sound_buffer_size = pcfg->sound_buffer_size;
+    sound_buffer_size   = CLIP( sound_buffer_size, 512, 8196 );
 
     if ( NULL != psnd )
     {
@@ -852,8 +857,8 @@ bool_t snd_config_synch( snd_config_data_t * psnd, config_data_t * pcfg )
         psnd->soundvolume     = pcfg->sound_volume;
         psnd->musicvalid      = pcfg->music_allowed;
         psnd->musicvolume     = pcfg->music_volume;
-        psnd->maxsoundchannel = pcfg->sound_channel_count;
-        psnd->buffersize      = pcfg->sound_buffer_size;
+        psnd->maxsoundchannel = sound_channel_count;
+        psnd->buffersize      = sound_buffer_size;
         psnd->highquality     = pcfg->sound_highquality;
     }
 
@@ -925,7 +930,7 @@ bool_t LoopedList_validate()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t LoopedList_free_one( size_t index )
+bool_t LoopedList_free_one( const size_t index )
 {
     /// \author BB
     /// \details  free a looped sound only if it is actually being used
@@ -1010,7 +1015,7 @@ void LoopedList_clear()
 }
 
 //--------------------------------------------------------------------------------------------
-size_t LoopedList_add( Mix_Chunk * sound, int channel, const CHR_REF &  ichr )
+size_t LoopedList_add( Mix_Chunk * sound, const int channel, const CHR_REF & ichr )
 {
     /// \author BB
     /// \details  add a looped sound to the list
@@ -1037,7 +1042,7 @@ size_t LoopedList_add( Mix_Chunk * sound, int channel, const CHR_REF &  ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t LoopedList_remove( int channel )
+bool_t LoopedList_remove( const int channel )
 {
     /// \author BB
     /// \details  remove a looped sound from the used list
@@ -1070,7 +1075,7 @@ bool_t LoopedList_remove( int channel )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t _update_stereo_channel( int channel, fvec3_t   diff )
+bool_t _update_stereo_channel( const int channel, fvec3_t   diff )
 {
     /// \author BB
     /// \details  This updates the stereo image of a looped sound
@@ -1121,7 +1126,7 @@ void looped_update_all_sound()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t looped_stop_object_sounds( const CHR_REF &  ichr )
+bool_t looped_stop_object_sounds( const CHR_REF & ichr )
 {
     /// \author BB
     /// \details  free any looped sound(s) being made by a certain character

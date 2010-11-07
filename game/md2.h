@@ -94,11 +94,11 @@ struct ego_MD2_Frame
     BIT_FIELD     framefx;        ///< the special effects associated with this frame
 
     ego_MD2_Frame();
-    ego_MD2_Frame( size_t size );
+    ego_MD2_Frame( const size_t size );
     ~ego_MD2_Frame();
 
 protected:
-    static ego_MD2_Frame * ctor_this( ego_MD2_Frame * pframe, size_t size );
+    static ego_MD2_Frame * ctor_this( ego_MD2_Frame * pframe, const size_t size );
     static ego_MD2_Frame * dtor_this( ego_MD2_Frame * pframe );
 
 private:
@@ -126,14 +126,14 @@ struct ego_MD2_GLCommand
     ~ego_MD2_GLCommand();
 
     static ego_MD2_GLCommand * create( void );
-    static ego_MD2_GLCommand * new_vector( int n );
+    static ego_MD2_GLCommand * new_vector( const int n );
     static void                destroy( ego_MD2_GLCommand ** m );
-    static void                delete_vector( ego_MD2_GLCommand * v, int n );
+    static void                delete_vector( ego_MD2_GLCommand * v, const int n );
 
 protected:
     static ego_MD2_GLCommand * ctor_this( ego_MD2_GLCommand * m );
     static ego_MD2_GLCommand * dtor_this( ego_MD2_GLCommand * m );
-    static ego_MD2_GLCommand * delete_list( ego_MD2_GLCommand * command_ptr, int command_count );
+    static ego_MD2_GLCommand * delete_list( ego_MD2_GLCommand * command_ptr, const int command_count );
 
 private:
     static ego_MD2_GLCommand * clear( ego_MD2_GLCommand * m );
@@ -161,13 +161,13 @@ struct ego_MD2_Model
     static ego_MD2_Model * create( void );
     static void            destroy( ego_MD2_Model ** m );
 
-    static ego_MD2_Model * new_vector( int n );
-    static void            delete_vector( ego_MD2_Model * v, int n );
+    static ego_MD2_Model * new_vector( const int n );
+    static void            delete_vector( ego_MD2_Model * v, const int n );
 
     // Other functions
     static ego_MD2_Model * load( const char * szFilename, ego_MD2_Model* m );
     static void            dealloc( ego_MD2_Model * m );
-    static void            scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, float scale_z );
+    static void            scale( ego_MD2_Model * pmd2, const float scale_x, const float scale_y, const float scale_z );
 
 protected:
 

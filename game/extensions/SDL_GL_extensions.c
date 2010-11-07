@@ -48,10 +48,10 @@ const Uint32 sdl_b_shift = 16;
 const Uint32 sdl_g_shift =  8;
 const Uint32 sdl_r_shift =  0;
 
-const Uint32 sdl_a_mask = ( Uint32 )( 0xFF << 24 );
-const Uint32 sdl_b_mask = ( Uint32 )( 0xFF << 16 );
-const Uint32 sdl_g_mask = ( Uint32 )( 0xFF <<  8 );
-const Uint32 sdl_r_mask = ( Uint32 )( 0xFF <<  0 );
+const Uint32 sdl_a_mask = ( const Uint32 )( 0xFF << 24 );
+const Uint32 sdl_b_mask = ( const Uint32 )( 0xFF << 16 );
+const Uint32 sdl_g_mask = ( const Uint32 )( 0xFF <<  8 );
+const Uint32 sdl_r_mask = ( const Uint32 )( 0xFF <<  0 );
 
 #else
 
@@ -60,10 +60,10 @@ const Uint32 sdl_b_shift = 8;
 const Uint32 sdl_g_shift = 16;
 const Uint32 sdl_r_shift = 24;
 
-const Uint32 sdl_a_mask = ( Uint32 )( 0xFF <<  0 );
-const Uint32 sdl_b_mask = ( Uint32 )( 0xFF <<  8 );
-const Uint32 sdl_g_mask = ( Uint32 )( 0xFF << 16 );
-const Uint32 sdl_r_mask = ( Uint32 )( 0xFF << 24 );
+const Uint32 sdl_a_mask = ( const Uint32 )( 0xFF <<  0 );
+const Uint32 sdl_b_mask = ( const Uint32 )( 0xFF <<  8 );
+const Uint32 sdl_g_mask = ( const Uint32 )( 0xFF << 16 );
+const Uint32 sdl_r_mask = ( const Uint32 )( 0xFF << 24 );
 
 #endif
 
@@ -71,7 +71,7 @@ const Uint32 sdl_r_mask = ( Uint32 )( 0xFF << 24 );
 // -   Global function stolen from Jonathan Fisher
 // - who stole it from gl_font.c test program from SDL_ttf ;)
 //--------------------------------------------------------------------------------------------
-int powerOfTwo( int input )
+int powerOfTwo( const int input )
 {
     int value = 1;
 
@@ -86,7 +86,7 @@ int powerOfTwo( int input )
 // - Global function stolen from Jonathan Fisher
 // - who stole it from gl_font.c test program from SDL_ttf ;)
 //--------------------------------------------------------------------------------------------
-SDL_bool SDL_GL_uploadSurface( SDL_Surface *surface, GLuint tx_id, GLfloat texCoords[] )
+SDL_bool SDL_GL_uploadSurface( SDL_Surface *surface, const GLuint tx_id, GLfloat texCoords[] )
 {
     int tx_w, tx_h;
 
@@ -292,7 +292,7 @@ FILE * SDL_GL_set_stdout( FILE * pfile )
 }
 
 //--------------------------------------------------------------------------------------------
-GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap_s, GLint wrap_t )
+GLuint SDL_GL_convert_surface( const GLenum binding, SDL_Surface * surface, const GLint wrap_s, GLint const wrap_t )
 {
     int               srf_w, srf_h, tx_w, tx_h;
     SDL_Surface     * screen, * local_surface;
@@ -303,6 +303,10 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
 
     SDLX_screen_info_t tmp_sdl_scr;
 
+    GLenum new_binding = binding;
+    GLint loc_wrap_s = wrap_s;
+    GLint loc_wrap_t = wrap_t;
+
     // Bind the error texture instead of the old texture
     ErrorImage_bind( GL_TEXTURE_2D, binding );
 
@@ -310,8 +314,8 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
     local_surface = surface;
 
     // handle default parameters
-    if ( wrap_s < 0 ) wrap_s = GL_REPEAT;
-    if ( wrap_t < 0 ) wrap_t = GL_REPEAT;
+    if ( loc_wrap_s < 0 ) loc_wrap_s = GL_REPEAT;
+    if ( loc_wrap_t < 0 ) loc_wrap_t = GL_REPEAT;
 
     // grab the screen information
     SDLX_Get_Screen_Info( &tmp_sdl_scr, SDL_FALSE );
@@ -415,11 +419,11 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
     /* Generate an OpenGL texture ID */
     if ( !VALID_BINDING( binding ) || ERROR_IMAGE_BINDING( binding ) )
     {
-        GL_DEBUG( glGenTextures )( 1, &binding );
+        GL_DEBUG( glGenTextures )( 1, &new_binding );
     }
 
     /* Set up some parameters for the format of the oglx_texture_t */
-    binding = oglx_bind_default( binding, target, wrap_s, wrap_t );
+    new_binding = oglx_bind_default( new_binding, target, loc_wrap_s, loc_wrap_t );
 
     /* actually create the OpenGL textures */
     use_alpha = !( 8 == local_surface->format->Aloss );
@@ -445,6 +449,6 @@ GLuint SDL_GL_convert_surface( GLenum binding, SDL_Surface * surface, GLint wrap
 
     if ( local_surface != surface )  SDL_FreeSurface( local_surface );
 
-    return binding;
+    return new_binding;
 }
 

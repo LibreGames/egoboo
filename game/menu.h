@@ -153,7 +153,7 @@ int  menu_system_begin();
 void menu_system_end();
 
 // global function to control navigation of the game menus
-int doMenu( float deltaTime );
+int doMenu( const float deltaTime );
 
 // code to start and stop menus
 bool_t mnu_begin_menu( which_menu_t which );
@@ -161,7 +161,7 @@ void   mnu_end_menu();
 int    mnu_get_menu_depth();
 void   mnu_restart();
 
-void  mnu_player_check_import( const char *dirname, bool_t initialize );
+void  mnu_player_check_import( const char *dirname, const bool_t initialize );
 
 // "public" implmentation of the TxTitleImage array
 void   TxTitleImage_reload_all();
@@ -170,15 +170,15 @@ TX_REF TxTitleImage_load_one_vfs( const char *szLoadName );
 extern bool_t start_new_player;
 
 // "public" implementation of mnu_ModList
-struct s_mod_file * mnu_ModList_get_base( int imod );
-const char *        mnu_ModList_get_vfs_path( int imod );
-const char *        mnu_ModList_get_dest_path( int imod );
-const char *        mnu_ModList_get_name( int imod );
+struct s_mod_file * mnu_ModList_get_base( const int imod );
+const char *        mnu_ModList_get_vfs_path( const int imod );
+const char *        mnu_ModList_get_dest_path( const int imod );
+const char *        mnu_ModList_get_name( const int imod );
 
 // "public" module utilities
 int    mnu_get_mod_number( const char *szModName );
 bool_t mnu_test_by_name( const char *szModName );
-bool_t mnu_test_by_index( const MOD_REF & modnumber, size_t buffer_len, char * buffer );
+bool_t mnu_test_by_index( const MOD_REF & modnumber, const size_t buffer_len, char * buffer );
 
 // "public" reset of the autoformatting
 void autoformat_init( ego_gfx_config * pgfx );

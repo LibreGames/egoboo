@@ -46,11 +46,11 @@ const float ice_friction = 0.9738f;  // the square of air_friction
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static bool_t  phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc );
+static bool_t  phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, const float para_factor, const float perp_factor, fvec3_t * pnrm_acc );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t phys_estimate_chr_chr_normal( ego_oct_vec & opos_a, ego_oct_vec & opos_b, ego_oct_vec & odepth, float exponent, fvec3_base_t nrm )
+bool_t phys_estimate_chr_chr_normal( const ego_oct_vec & opos_a, const ego_oct_vec & opos_b, ego_oct_vec & odepth, const float exponent, fvec3_base_t nrm )
 {
     bool_t retval;
 
@@ -226,7 +226,7 @@ egoboo_rv ego_oct_bb::intersect_index_close( const int index, const ego_oct_bb &
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_intersect_oct_bb( ego_oct_bb & src1_orig, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2_orig, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb * pdst, float *tmin, float *tmax )
+bool_t phys_intersect_oct_bb( const ego_oct_bb & src1_orig, const fvec3_t pos1, const fvec3_t vel1, const ego_oct_bb & src2_orig, const fvec3_t pos2, const fvec3_t vel2, const int test_platform, ego_oct_bb * pdst, float *tmin, float *tmax )
 {
     /// \author BB
     /// \details  A test to determine whether two "fast moving" objects are interacting within a frame.
@@ -413,7 +413,7 @@ bool_t phys_expand_oct_bb( const ego_oct_bb & src, const fvec3_t vel, const floa
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_expand_chr_bb( ego_chr * pchr, const float tmin, float const tmax, ego_oct_bb & dst )
+bool_t phys_expand_chr_bb( ego_chr * pchr, const float tmin, const float tmax, ego_oct_bb & dst )
 {
     /// \author BB
     /// \details  use the object velocity to figure out where the volume that the character will
@@ -730,7 +730,7 @@ ego_breadcrumb * breadcrumb_list_oldest( ego_breadcrumb_list * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_breadcrumb * breadcrumb_list_oldest_grid( ego_breadcrumb_list * lst, Uint32 match_grid )
+ego_breadcrumb * breadcrumb_list_oldest_grid( ego_breadcrumb_list * lst, const Uint32 match_grid )
 {
     int cnt;
 
@@ -885,7 +885,7 @@ bool_t breadcrumb_list_add( ego_breadcrumb_list * lst, ego_breadcrumb * pnew )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc )
+bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, const float para_factor, const float perp_factor, fvec3_t * pnrm_acc )
 {
     fvec3_t sum = ZERO_VECT3;
 
@@ -974,7 +974,7 @@ bool_t phys_apply_normal_acceleration( fvec3_base_t acc, fvec3_base_t nrm, float
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, ego_phys_data * pdata, float dt )
+bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, ego_phys_data * pdata, const float dt )
 {
     fvec3_t loc_pos = ZERO_VECT3;
     fvec3_t loc_vel = ZERO_VECT3;
@@ -1014,7 +1014,7 @@ bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, ego_phy
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc )
+bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, const float para_factor, const float perp_factor, fvec3_t * pnrm_acc )
 {
     /// \author BB
     /// \details  break the acceleration up into parts that are parallel and perpendicular to the floor
@@ -1057,7 +1057,7 @@ bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, 
 // OBSOLETE CODE
 //--------------------------------------------------------------------------------------------
 
-//bool_t ego_oct_bb::intersect_close( ego_oct_bb & src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
+//bool_t ego_oct_bb::intersect_close( ego_oct_bb & src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2, fvec3_t pos2, fvec3_t vel2, const int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax )
 //{
 //    /// \author BB
 //    /// \details  A test to determine whether two "fast moving" objects are interacting within a frame.

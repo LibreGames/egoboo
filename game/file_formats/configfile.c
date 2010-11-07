@@ -98,7 +98,7 @@ struct s_ConfigFile
 // util
 static void ConfigFileString_Encode( char *pStr );
 
-static ConfigFilePtr_t   ConfigFile_open( ConfigFilePtr_t pConfigFile, const char *szFileName, const char * szAttribute, bool_t force );
+static ConfigFilePtr_t   ConfigFile_open( ConfigFilePtr_t pConfigFile, const char *szFileName, const char * szAttribute, const bool_t force );
 static ConfigFile_retval ConfigFile_close( ConfigFilePtr_t pConfigFile );
 
 static ConfigFile_retval ConfigFile_read( ConfigFilePtr_t pConfigFile );
@@ -222,7 +222,7 @@ ConfigFileValuePtr_t ConfigFile_createValue( ConfigFilePtr_t f, ConfigFileSectio
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-char * ConfigFileString_create( size_t len )
+char * ConfigFileString_create( const size_t len )
 {
     /// \author BB
     /// \details  must use SDL_malloc/SDL_calloc instead of new, since we have to accommodate realoc()
@@ -342,7 +342,7 @@ void ConfigFileString_Encode( char *pStr )
 {
     if ( NULL == pStr ) return;
 
-    str_encode( pStr, ( size_t )( -1 ), pStr );
+    str_encode( pStr, ( const size_t )( -1 ), pStr );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -605,7 +605,7 @@ ConfigFile_retval ConfigFile_ReadCommentary( ConfigFilePtr_t pConfigFile, Config
 // ConfigFile_open allocates the memory for the ConfigFile_t. To
 // deallocate the memory, use ConfigFile_close
 
-ConfigFilePtr_t ConfigFile_open( ConfigFilePtr_t pConfigFile, const char *szFileName, const char * szAttribute, bool_t force )
+ConfigFilePtr_t ConfigFile_open( ConfigFilePtr_t pConfigFile, const char *szFileName, const char * szAttribute, const bool_t force )
 {
     char    local_attribute[32] = { '\0' };
     FILE   *lTempFile;
@@ -876,7 +876,7 @@ ConfigFile_retval ConfigFile_FindKey( ConfigFilePtr_t pConfigFile, const char *p
 // If the value isn't found, the function returns 0.
 
 ConfigFile_retval ConfigFile_GetValue_String( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, char *pValue,
-        Sint32 pValueBufferLength )
+        const Sint32 pValueBufferLength )
 {
     if ( NULL == pConfigFile  || NULL == pValue  || NULL == pSection  || NULL == pKey  || pValueBufferLength <= 0 )
     {
@@ -886,7 +886,7 @@ ConfigFile_retval ConfigFile_GetValue_String( ConfigFilePtr_t pConfigFile, const
     {
         return ConfigFile_fail;
     }
-    if ( SDL_strlen( pConfigFile->CurrentValue->Value ) >= ( size_t ) pValueBufferLength )
+    if ( SDL_strlen( pConfigFile->CurrentValue->Value ) >= ( const size_t ) pValueBufferLength )
     {
         strncpy( pValue, pConfigFile->CurrentValue->Value, pValueBufferLength - 1 );
         pValue[pValueBufferLength] = 0;
@@ -903,7 +903,7 @@ ConfigFile_retval ConfigFile_GetValue_String( ConfigFilePtr_t pConfigFile, const
 // ConfigFile_GetValue_Boolean set to btrue or bfalse pBool. If the function can't find the value, it
 // returns 0. If the value can't be identified as btrue or bfalse, the default is bfalse.
 
-ConfigFile_retval ConfigFile_GetValue_Boolean( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t   *pBool )
+ConfigFile_retval ConfigFile_GetValue_Boolean( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t *pBool )
 {
     char lBoolStr[16] = { '\0' };
     Sint32 lRet;
@@ -1011,7 +1011,7 @@ ConfigFile_retval ConfigFile_SetValue_String( ConfigFilePtr_t pConfigFile, const
         }
     }
 
-    lLengthNewValue = ( Sint32 ) SDL_strlen( pValue );
+    lLengthNewValue = ( const Sint32 ) SDL_strlen( pValue );
     if ( NULL == pConfigFile->CurrentValue->Value )
     {
         // if the stirng value doesn't exist than allocate memory for it
@@ -1030,7 +1030,7 @@ ConfigFile_retval ConfigFile_SetValue_String( ConfigFilePtr_t pConfigFile, const
 //--------------------------------------------------------------------------------------------
 // ConfigFile_SetValue_Boolean saves a boolean in a value specified by pSection and pKey
 
-ConfigFile_retval ConfigFile_SetValue_Boolean( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, bool_t pBool )
+ConfigFile_retval ConfigFile_SetValue_Boolean( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, const bool_t pBool )
 {
     if ( pBool )
     {
@@ -1045,7 +1045,7 @@ ConfigFile_retval ConfigFile_SetValue_Boolean( ConfigFilePtr_t pConfigFile, cons
 //--------------------------------------------------------------------------------------------
 // ConfigFile_SetValue_Int saves an integer in a value specified by pSection and pKey
 
-ConfigFile_retval ConfigFile_SetValue_Int( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, int pInt )
+ConfigFile_retval ConfigFile_SetValue_Int( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, const int pInt )
 {
     static char lIntStr[16] = { '\0' };
 
@@ -1056,7 +1056,7 @@ ConfigFile_retval ConfigFile_SetValue_Int( ConfigFilePtr_t pConfigFile, const ch
 //--------------------------------------------------------------------------------------------
 // ConfigFile_SetValue_Float saves a float in a value specified by pSection and pKey
 
-ConfigFile_retval ConfigFile_SetValue_Float( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, float pFloat )
+ConfigFile_retval ConfigFile_SetValue_Float( ConfigFilePtr_t pConfigFile, const char *pSection, const char *pKey, const float pFloat )
 {
     static char lFloatStr[16] = { '\0' };
 
@@ -1158,7 +1158,7 @@ ConfigFile_retval ConfigFile_write( ConfigFilePtr_t pConfigFile )
 //--------------------------------------------------------------------------------------------
 // ReadConfigFile creates a new ConfigFile_t fills it with the data in the file szFileName
 
-ConfigFilePtr_t LoadConfigFile( const char *szFileName, bool_t force )
+ConfigFilePtr_t LoadConfigFile( const char *szFileName, const bool_t force )
 {
     ConfigFilePtr_t lConfigFile;
 

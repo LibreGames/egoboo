@@ -37,14 +37,14 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-_ty * ego_object_engine::run_construct( _ty * pdata, int max_iterations )
+_ty * ego_object_engine::run_construct( _ty * pdata, const int max_iterations )
 {
     int iterations;
 
     if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
-    if ( ego_obj::get_action( pdata ) > ( int )( ego_obj_constructing + 1 ) )
+    if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_constructing + 1 ) )
     {
         _ty * tmp_chr = ego_object_engine::run_deconstruct( pdata, max_iterations );
         if ( tmp_chr == pdata ) return NULL;
@@ -64,7 +64,7 @@ _ty * ego_object_engine::run_construct( _ty * pdata, int max_iterations )
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-_ty * ego_object_engine::run_initialize( _ty * pdata, int max_iterations )
+_ty * ego_object_engine::run_initialize( _ty * pdata, const int max_iterations )
 {
     int iterations;
 
@@ -72,7 +72,7 @@ _ty * ego_object_engine::run_initialize( _ty * pdata, int max_iterations )
     if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
-    if ( ego_obj::get_action( pdata ) > ( int )( ego_obj_initializing + 1 ) )
+    if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_initializing + 1 ) )
     {
         _ty * tmp_chr = ego_object_engine::run_deconstruct( pdata, max_iterations );
         if ( tmp_chr == pdata ) return NULL;
@@ -91,14 +91,14 @@ _ty * ego_object_engine::run_initialize( _ty * pdata, int max_iterations )
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-_ty * ego_object_engine::run_activate( _ty * pdata, int max_iterations )
+_ty * ego_object_engine::run_activate( _ty * pdata, const int max_iterations )
 {
     int                 iterations;
 
     if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
-    if ( ego_obj::get_action( pdata ) > ( int )( ego_obj_processing + 1 ) )
+    if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_processing + 1 ) )
     {
         _ty * tmp_chr = ego_object_engine::run_deconstruct( pdata, max_iterations );
         if ( tmp_chr == pdata ) return NULL;
@@ -117,7 +117,7 @@ _ty * ego_object_engine::run_activate( _ty * pdata, int max_iterations )
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-_ty * ego_object_engine::run_deinitialize( _ty * pdata, int max_iterations )
+_ty * ego_object_engine::run_deinitialize( _ty * pdata, const int max_iterations )
 {
     int iterations;
 
@@ -125,7 +125,7 @@ _ty * ego_object_engine::run_deinitialize( _ty * pdata, int max_iterations )
     if ( !FLAG_VALID_PBASE( pobj ) ) return NULL;
 
     // if the character is already beyond this stage, deinitialize it
-    if ( ego_obj::get_action( pdata ) > ( int )( ego_obj_deinitializing + 1 ) )
+    if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_deinitializing + 1 ) )
     {
         return pdata;
     }
@@ -147,14 +147,14 @@ _ty * ego_object_engine::run_deinitialize( _ty * pdata, int max_iterations )
 
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-_ty * ego_object_engine::run_deconstruct( _ty * pdata, int max_iterations )
+_ty * ego_object_engine::run_deconstruct( _ty * pdata, const int max_iterations )
 {
     int iterations;
 
     if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, do nothing
-    if ( ego_obj::get_action( pdata ) > ( int )( ego_obj_destructing + 1 ) )
+    if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_destructing + 1 ) )
     {
         return pdata;
     }

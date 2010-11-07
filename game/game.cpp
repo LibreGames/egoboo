@@ -219,7 +219,7 @@ static void sort_stat_list();
 //--------------------------------------------------------------------------------------------
 // Random Things
 //--------------------------------------------------------------------------------------------
-void export_one_character( const CHR_REF & character, const CHR_REF & owner, int number, bool_t is_local )
+void export_one_character( const CHR_REF & character, const CHR_REF & owner, const int number, const bool_t is_local )
 {
     /// \author ZZ
     /// \details  This function exports a character
@@ -370,7 +370,7 @@ void export_one_character( const CHR_REF & character, const CHR_REF & owner, int
 }
 
 //--------------------------------------------------------------------------------------------
-void export_all_players( bool_t require_local )
+void export_all_players( const bool_t require_local )
 {
     /// \author ZZ
     /// \details  This function saves all the local players in the
@@ -562,7 +562,7 @@ void initialize_all_objects()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void object_physics_finalize( float dt )
+void object_physics_finalize( const float dt )
 {
     character_physics_finalize_all( dt );
     particle_physics_finalize_all( dt );
@@ -1066,7 +1066,7 @@ void game_update_clocks()
 
     if ( ups_clk.update_cnt > 0 && ups_clk.tick_cnt > 0 )
     {
-        stabilized_ups_sum    = stabilized_ups_sum * fold + fnew * ( float ) ups_clk.update_cnt / (( float ) ups_clk.tick_cnt / TICKS_PER_SEC );
+        stabilized_ups_sum    = stabilized_ups_sum * fold + fnew * ( const float ) ups_clk.update_cnt / (( const float ) ups_clk.tick_cnt / TICKS_PER_SEC );
         stabilized_ups_weight = stabilized_ups_weight * fold + fnew;
 
         // blank these every so often so that the numbers don't overflow
@@ -1130,7 +1130,7 @@ int game_do_menu( ego_menu_process * mproc )
         need_menu = btrue;
 
         // force the menu to be displayed immediately when the game stops
-        mproc->dtime = 1.0f / ( float )cfg.framelimit;
+        mproc->dtime = 1.0f / ( const float )cfg.framelimit;
     }
     else if ( rv_success != GProc->running() )
     {
@@ -1437,7 +1437,7 @@ egoboo_rv ego_game_process::do_running()
     if (( !single_update_mode && fps_ticks_now > fps_ticks_next ) || ( single_update_mode && single_frame_requested ) )
     {
         // FPS limit
-        float  frameskip = ( float )TICKS_PER_SEC / ( float )cfg.framelimit;
+        float  frameskip = ( const float )TICKS_PER_SEC / ( const float )cfg.framelimit;
         fps_ticks_next = fps_ticks_now + frameskip;
 
         PROFILE_BEGIN( gfx_loop );
@@ -1569,7 +1569,7 @@ egoboo_rv ego_game_process::do_finishing()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
+CHR_REF prt_find_target( const float pos_x, const float pos_y, const float pos_z, FACING_T facing,
                          const PIP_REF & particletype, const TEAM_REF & team, const CHR_REF & donttarget, const CHR_REF & oldtarget )
 {
     /// \author ZF
@@ -1733,7 +1733,7 @@ bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_F
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits )
+CHR_REF chr_find_target( ego_chr * psrc, const float max_dist, IDSZ idsz, BIT_FIELD targeting_bits )
 {
     /// \author ZF
     /// \details  This is the new improved AI targeting system. Also includes distance in the Z direction.
@@ -2503,7 +2503,7 @@ void check_stats()
 }
 
 //--------------------------------------------------------------------------------------------
-void show_stat( int statindex )
+void show_stat( const int statindex )
 {
     /// \author ZZ
     /// \details  This function shows the more specific stats for a character
@@ -2567,7 +2567,7 @@ void show_stat( int statindex )
 }
 
 //--------------------------------------------------------------------------------------------
-void show_armor( int statindex )
+void show_armor( const int statindex )
 {
     /// \author ZF
     /// \details  This function shows detailed armor information for the character
@@ -2663,7 +2663,7 @@ bool_t get_chr_regeneration( ego_chr * pchr, int * pliferegen, int * pmanaregen 
 }
 
 //--------------------------------------------------------------------------------------------
-void show_full_status( int statindex )
+void show_full_status( const int statindex )
 {
     /// \author ZF
     /// \details  This function shows detailed armor information for the character including magic
@@ -2704,7 +2704,7 @@ void show_full_status( int statindex )
 }
 
 //--------------------------------------------------------------------------------------------
-void show_magic_status( int statindex )
+void show_magic_status( const int statindex )
 {
     /// \author ZF
     /// \details  Displays special enchantment effects for the character
@@ -3125,7 +3125,7 @@ bool_t activate_spawn_file_spawn( spawn_file_info_t * psp_info )
             // about a 50% chance to get identified every time you enter a module
             if ( player_added && !pobject->nameknown )
             {
-                float frand = rand() / ( float )RAND_MAX;
+                float frand = rand() / ( const float )RAND_MAX;
 
                 if ( frand > 0.5f )
                 {
@@ -3590,12 +3590,14 @@ bool_t game_setup_vfs_paths( const char * mod_path )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_begin_module( const char * modname, Uint32 seed )
+bool_t game_begin_module( const char * modname, const Uint32 seed )
 {
     /// \author BB
     /// \details  all of the initialization code before the module actually starts
 
-    if (( Uint32( ~0 ) ) == seed ) seed = time( NULL );
+    Uint32 loc_seed = seed;
+
+    if (( Uint32( ~0 ) ) == loc_seed ) loc_seed = time( NULL );
 
     // make sure the old game has been quit
     game_quit_module();
@@ -3606,7 +3608,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
     if ( !game_setup_vfs_paths( modname ) ) return bfalse;
 
     // load all the in-game module data
-    srand( seed );
+    srand( loc_seed );
     if ( !game_load_module_data( modname ) )
     {
         game_module_stop( PMod );
@@ -3621,7 +3623,7 @@ bool_t game_begin_module( const char * modname, Uint32 seed )
     // initialize the game objects
     initialize_all_objects();
     cursor_reset();
-    game_module_reset( PMod, seed );
+    game_module_reset( PMod, loc_seed );
     ego_camera::reset( PCamera, PMesh );
     make_all_character_matrices( update_wld != 0 );
     attach_all_particles();
@@ -3734,7 +3736,7 @@ void game_release_module_data()
     /// \author ZZ
     /// \details  This function frees up memory used by the module
 
-    ego_mpd   * ptmp;
+    ego_mpd * ptmp;
 
     // make sure that the object lists are cleared out
     free_all_objects();
@@ -3954,9 +3956,9 @@ void free_all_objects( void )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_mpd   * set_PMesh( ego_mpd   * pmpd )
+ego_mpd * set_PMesh( ego_mpd * pmpd )
 {
-    ego_mpd   * pmpd_old = PMesh;
+    ego_mpd * pmpd_old = PMesh;
 
     PMesh = pmpd;
 
@@ -3971,16 +3973,16 @@ ego_camera * set_PCamera( ego_camera * pcam )
     PCamera = pcam;
 
     // Matrix init stuff (from remove.c)
-    rotmeshtopside    = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_TOPSIDE / ( 1.33333f );
-    rotmeshbottomside = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_BOTTOMSIDE / ( 1.33333f );
-    rotmeshup         = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_UP / ( 1.33333f );
-    rotmeshdown       = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_DOWN / ( 1.33333f );
+    rotmeshtopside    = (( const float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_TOPSIDE / ( 1.33333f );
+    rotmeshbottomside = (( const float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_BOTTOMSIDE / ( 1.33333f );
+    rotmeshup         = (( const float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_UP / ( 1.33333f );
+    rotmeshdown       = (( const float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_DOWN / ( 1.33333f );
 
     return pcam_old;
 }
 
 //--------------------------------------------------------------------------------------------
-float get_mesh_level( ego_mpd   * pmesh, float x, float y, bool_t waterwalk )
+float get_mesh_level( ego_mpd * pmesh, const float x, const float y, const bool_t waterwalk )
 {
     /// \author ZZ
     /// \details  This function returns the height of a point within a mesh fan, precise
@@ -4338,15 +4340,17 @@ void expand_escape_codes( const CHR_REF & ichr, ego_script_state * pstate, char 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_choose_module( int imod, int seed )
+bool_t game_choose_module( const int imod, const int seed )
 {
     bool_t retval;
 
-    if ( seed < 0 ) seed = time( NULL );
+    int loc_seed = seed;
+
+    if ( loc_seed < 0 ) loc_seed = time( NULL );
 
     if ( NULL == PMod ) PMod = &gmod;
 
-    retval = game_module_setup( PMod, mnu_ModList_get_base( imod ), mnu_ModList_get_vfs_path( imod ), seed );
+    retval = game_module_setup( PMod, mnu_ModList_get_base( imod ), mnu_ModList_get_vfs_path( imod ), loc_seed );
 
     if ( retval )
     {
@@ -4552,7 +4556,7 @@ void game_reset_players()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t upload_water_layer_data( ego_water_layer_instance inst[], wawalite_water_layer_t data[], int layer_count )
+bool_t upload_water_layer_data( ego_water_layer_instance inst[], wawalite_water_layer_t data[], const int layer_count )
 {
     int layer;
 
@@ -4722,7 +4726,7 @@ bool_t upload_damagetile_data( ego_damagetile_instance * pinst, wawalite_damaget
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t upload_animtile_data( ego_animtile_instance inst[], wawalite_animtile_t * pdata, size_t animtile_count )
+bool_t upload_animtile_data( ego_animtile_instance inst[], wawalite_animtile_t * pdata, const size_t animtile_count )
 {
     Uint32 cnt;
 
@@ -4860,7 +4864,7 @@ void upload_wawalite()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_module_setup( ego_game_module_data * pinst, mod_file_t * pdata, const char * loadname, Uint32 seed )
+bool_t game_module_setup( ego_game_module_data * pinst, mod_file_t * pdata, const char * loadname, const Uint32 seed )
 {
     // Prepares a module to be played
     if ( NULL == pdata ) return bfalse;
@@ -4897,7 +4901,7 @@ bool_t game_module_init( ego_game_module_data * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t game_module_reset( ego_game_module_data * pinst, Uint32 seed )
+bool_t game_module_reset( ego_game_module_data * pinst, const Uint32 seed )
 {
     if ( NULL == pinst ) return bfalse;
 
@@ -5017,16 +5021,16 @@ wawalite_data_t * read_wawalite( /* const char *modname */ )
 
     if ( waterspeed_count > 1 )
     {
-        waterspeed.x /= ( float )waterspeed_count;
-        waterspeed.y /= ( float )waterspeed_count;
-        waterspeed.z /= ( float )waterspeed_count;
+        waterspeed.x /= ( const float )waterspeed_count;
+        waterspeed.y /= ( const float )waterspeed_count;
+        waterspeed.z /= ( const float )waterspeed_count;
     }
 
     if ( windspeed_count > 1 )
     {
-        windspeed.x /= ( float )windspeed_count;
-        windspeed.y /= ( float )windspeed_count;
-        windspeed.z /= ( float )windspeed_count;
+        windspeed.x /= ( const float )windspeed_count;
+        windspeed.y /= ( const float )windspeed_count;
+        windspeed.z /= ( const float )windspeed_count;
     }
 
     return &wawalite_data;
@@ -5056,19 +5060,21 @@ bool_t write_wawalite( const char *modname, wawalite_data_t * pdata )
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 get_local_alpha( int light )
+Uint8 get_local_alpha( const int alpha )
 {
+    int loc_alpha = alpha;
+
     if ( local_stats.seeinvis_level > 0 )
     {
-        light = SDL_max( light, INVISIBLE );
-//        light *= local_seeinvis_level + 1;
+        loc_alpha = SDL_max( loc_alpha, INVISIBLE );
+        loc_alpha *= local_stats.seeinvis_level + 1;
     }
 
-    return CLIP( light, 0, 255 );
+    return CLIP( loc_alpha, 0, 255 );
 }
 
 //--------------------------------------------------------------------------------------------
-Uint8 get_local_light( int light )
+Uint8 get_local_light( const int light )
 {
     if ( 0xFFL == light ) return light;
 
@@ -5077,13 +5083,15 @@ Uint8 get_local_light( int light )
     ///            it is just a generic threshold for whether an object can be visible to a character.
     ///            If it is actually magically invisible, then that is handled elsewhere.
 
+    int loc_light = light;
+
     if ( local_stats.seedark_level > 0 )
     {
-        light = SDL_max( light, INVISIBLE );
-        light *= local_stats.seedark_level + 1;
+        loc_light = SDL_max( loc_light, INVISIBLE );
+        loc_light *= local_stats.seedark_level + 1;
     }
 
-    return CLIP( light, 0, 254 );
+    return CLIP( loc_light, 0, 255 );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -5317,7 +5325,7 @@ bool_t do_item_pickup( const CHR_REF & ichr, const CHR_REF & iitem )
 }
 
 //--------------------------------------------------------------------------------------------
-float get_mesh_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y, bool_t waterwalk )
+float get_mesh_max_vertex_0( ego_mpd * pmesh, const int grid_x, const int grid_y, const bool_t waterwalk )
 {
     float zdone = ego_mpd::get_max_vertex_0( pmesh, grid_x, grid_y );
 
@@ -5335,7 +5343,7 @@ float get_mesh_max_vertex_0( ego_mpd   * pmesh, int grid_x, int grid_y, bool_t w
 }
 
 //--------------------------------------------------------------------------------------------
-float get_mesh_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, ego_oct_bb   * pbump, bool_t waterwalk )
+float get_mesh_max_vertex_1( ego_mpd * pmesh, const int grid_x, const int grid_y, ego_oct_bb   * pbump, const bool_t waterwalk )
 {
     float zdone = ego_mpd::get_max_vertex_1( pmesh, grid_x, grid_y, pbump->mins[OCT_X], pbump->mins[OCT_Y], pbump->maxs[OCT_X], pbump->maxs[OCT_Y] );
 
@@ -5353,7 +5361,7 @@ float get_mesh_max_vertex_1( ego_mpd   * pmesh, int grid_x, int grid_y, ego_oct_
 }
 
 //--------------------------------------------------------------------------------------------
-float get_mesh_max_vertex_2( ego_mpd   * pmesh, ego_chr * pchr )
+float get_mesh_max_vertex_2( ego_mpd * pmesh, ego_chr * pchr )
 {
     /// \author BB
     /// \details  the object does not overlap a single grid corner. Check the 4 corners of the collision volume
@@ -5383,7 +5391,7 @@ float get_mesh_max_vertex_2( ego_mpd   * pmesh, ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-float get_chr_level( ego_mpd   * pmesh, ego_chr * pchr )
+float get_chr_level( ego_mpd * pmesh, ego_chr * pchr )
 {
     float zmax;
     int ix, ixmax, ixmin;

@@ -122,7 +122,7 @@ int ego_object_process_state::end_invalidating()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_object_process_state_data::set_valid( ego_object_process_state_data * ptr, bool_t val )
+bool_t ego_object_process_state_data::set_valid( ego_object_process_state_data * ptr, const bool_t val )
 {
     if ( NULL == ptr ) return bfalse;
 
@@ -155,7 +155,7 @@ int ego_object_process_state::begin_waiting( )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_object_process::validate( ego_object_process * ptr, bool_t val )
+egoboo_rv ego_object_process::validate( ego_object_process * ptr, const bool_t val )
 {
     if ( NULL == ptr ) return rv_error;
 
@@ -191,7 +191,7 @@ egoboo_rv ego_object_process::proc_req_terminate()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_object_process::proc_req_on( bool_t val )
+egoboo_rv ego_object_process::proc_req_on( const bool_t val )
 {
     if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
@@ -204,7 +204,7 @@ egoboo_rv ego_object_process::proc_req_on( bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_object_process::proc_req_pause( bool_t val )
+egoboo_rv ego_object_process::proc_req_pause( const bool_t val )
 {
     if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
@@ -244,7 +244,7 @@ egoboo_rv ego_object_process::proc_set_process()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_object_process::proc_set_killed( bool_t val )
+egoboo_rv ego_object_process::proc_set_killed( const bool_t val )
 {
     if ( NULL == this ) return rv_error;
 
@@ -270,7 +270,7 @@ egoboo_rv ego_object_process::proc_set_killed( bool_t val )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_object_process::proc_set_on( bool_t val )
+egoboo_rv ego_object_process::proc_set_on( const bool_t val )
 {
     if ( !get_valid( this ) || get_killed( this ) ) return rv_error;
 
@@ -320,7 +320,7 @@ egoboo_rv ego_object_process::proc_do_on()
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_object_process::proc_set_spawning( bool_t val )
+egoboo_rv ego_object_process::proc_set_spawning( const bool_t val )
 {
     bool_t old_val;
 
@@ -419,7 +419,7 @@ ego_obj * ego_obj::deallocate_all( ego_obj * pobj )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::validate( ego_obj * pbase, bool_t val )
+ego_obj * ego_obj::validate( ego_obj * pbase, const bool_t val )
 {
     if ( NULL == pbase ) return pbase;
 
@@ -512,7 +512,7 @@ ego_obj * ego_obj::grant_on( ego_obj * pbase )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj * ego_obj::set_spawning( ego_obj * pbase, bool_t val )
+ego_obj * ego_obj::set_spawning( ego_obj * pbase, const bool_t val )
 {
     if ( NULL == pbase ) return pbase;
 

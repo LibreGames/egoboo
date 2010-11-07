@@ -189,15 +189,15 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 
     /// Grab the current SDL screen information
-    SDL_bool      SDLX_Get_Screen_Info( SDLX_screen_info_t * psi, SDL_bool display );
+    SDL_bool      SDLX_Get_Screen_Info( SDLX_screen_info_t * psi, const SDL_bool display );
 
     /// Use a SDLX_video_parameters_t structure to request a SDL video mode
-    SDL_Surface * SDLX_RequestVideoMode( SDLX_video_parameters_t * v, SDL_bool make_report );
+    SDL_Surface * SDLX_RequestVideoMode( SDLX_video_parameters_t * v, const SDL_bool make_report );
 
     /// Use a SDLX_video_parameters_t structure to try to set a SDL video mode directly
     /// on success, it returns a pointer to the actual data used to set the mode. On failure,
     /// it resets the mode to v_old (if possible), and returns a pointer to the restored parameters
-    SDLX_video_parameters_t * SDLX_set_mode( SDLX_video_parameters_t * v_old, SDLX_video_parameters_t * v_new, SDL_bool has_valid_mode, SDL_bool make_report );
+    SDLX_video_parameters_t * SDLX_set_mode( SDLX_video_parameters_t * v_old, SDLX_video_parameters_t * v_new, const SDL_bool has_valid_mode, const SDL_bool make_report );
 
     /// Determine the minimum changes to the current pixel format to accomodate the requested format
     // Mostly used to add an alpha channel to a SDL_Surface
@@ -211,7 +211,7 @@ extern "C"
     void SDLX_report_mode( SDL_Surface * surface, SDLX_video_parameters_t * v );
 
     /// Turn even logging on or off for each event type
-    void SDLX_Event_Log_Mask_set_event( Uint8 type, unsigned value );
+    void SDLX_Event_Log_Mask_set_event( const Uint8 type, const unsigned value );
 
     /// Log selected SDL_Events
     bool_t SDLX_Log_Event( SDL_Event * evt_ptr );

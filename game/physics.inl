@@ -48,19 +48,19 @@
 // FORWARD DECLARATIONS
 //--------------------------------------------------------------------------------------------
 
-INLINE bool_t test_interaction_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform );
-INLINE bool_t test_interaction_1( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform );
-INLINE bool_t test_interaction_2( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, int test_platform );
-INLINE bool_t test_interaction_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform );
-INLINE bool_t test_interaction_close_1( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform );
-INLINE bool_t test_interaction_close_2( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, int test_platform );
+INLINE bool_t test_interaction_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const int test_platform );
+INLINE bool_t test_interaction_1( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const int test_platform );
+INLINE bool_t test_interaction_2( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, const int test_platform );
+INLINE bool_t test_interaction_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const int test_platform );
+INLINE bool_t test_interaction_close_1( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const int test_platform );
+INLINE bool_t test_interaction_close_2( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, const int test_platform );
 
-INLINE bool_t get_depth_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth );
-INLINE bool_t get_depth_1( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth );
-INLINE bool_t get_depth_2( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth );
-INLINE bool_t get_depth_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth );
-INLINE bool_t get_depth_close_1( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth );
-INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth );
+INLINE bool_t get_depth_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth );
+INLINE bool_t get_depth_1( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth );
+INLINE bool_t get_depth_2( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth );
+INLINE bool_t get_depth_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth );
+INLINE bool_t get_depth_close_1( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth );
+INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a,   fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth );
 
 INLINE void phys_data_blank_accumulators( ego_phys_data * pdata );
 
@@ -75,7 +75,7 @@ INLINE bool_t phys_data_accumulate_avel_index( ego_phys_data * pdata, const floa
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION
 //--------------------------------------------------------------------------------------------
-INLINE bool_t test_interaction_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform )
+INLINE bool_t test_interaction_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const int test_platform )
 {
     /// \author BB
     /// \details  Test whether two objects could interact based on the "collision bounding box"
@@ -91,7 +91,7 @@ INLINE bool_t test_interaction_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bu
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t test_interaction_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform )
+INLINE bool_t test_interaction_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const int test_platform )
 {
     /// \author BB
     /// \details  Test whether two objects could interact based on the "collision bounding box"
@@ -107,7 +107,7 @@ INLINE bool_t test_interaction_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper b
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t test_interaction_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform )
+INLINE bool_t test_interaction_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const int test_platform )
 {
     /// \author BB
     /// \details  Test whether two objects could interact based on the "collision bounding box"
@@ -122,7 +122,7 @@ INLINE bool_t test_interaction_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bu
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t test_interaction_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, int test_platform )
+INLINE bool_t test_interaction_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const int test_platform )
 {
     /// \author BB
     /// \details  Test whether two objects could interact based on the "collision bounding box"
@@ -137,7 +137,7 @@ INLINE bool_t test_interaction_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper b
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t test_interaction_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, int test_platform )
+INLINE bool_t test_interaction_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, const int test_platform )
 {
     /// \author BB
     /// \details  Test whether two objects could interact based on the "collision bounding box"
@@ -168,7 +168,7 @@ INLINE bool_t test_interaction_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oc
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t test_interaction_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, int test_platform )
+INLINE bool_t test_interaction_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, const int test_platform )
 {
     /// \author BB
     /// \details  Test whether two objects could interact based on the "collision bounding box"
@@ -200,7 +200,7 @@ INLINE bool_t test_interaction_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb &
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE bool_t get_depth_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
+INLINE bool_t get_depth_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth )
 {
     /// \author BB
     /// \details  Estimate the depth of collision based on the "collision bounding box"
@@ -216,7 +216,7 @@ INLINE bool_t get_depth_close_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bu
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t get_depth_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
+INLINE bool_t get_depth_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth )
 {
     /// \author BB
     /// \details  Estimate the depth of collision based on the "collision bounding box"
@@ -235,7 +235,7 @@ INLINE bool_t get_depth_0( ego_bumper bump_a, fvec3_t pos_a, ego_bumper bump_b, 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t get_depth_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
+INLINE bool_t get_depth_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth )
 {
     /// \author BB
     /// \details  Estimate the depth of collision based on the "collision bounding box"
@@ -250,7 +250,7 @@ INLINE bool_t get_depth_close_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bu
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t get_depth_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
+INLINE bool_t get_depth_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth )
 {
     /// \author BB
     /// \details  Estimate the depth of collision based on the "collision bounding box"
@@ -265,7 +265,7 @@ INLINE bool_t get_depth_1( ego_oct_bb & cv_a, fvec3_t pos_a, ego_bumper bump_b, 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
+INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth )
 {
     /// \author BB
     /// \details  Estimate the depth of collision based on the "collision bounding box"
@@ -312,7 +312,7 @@ INLINE bool_t get_depth_close_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & 
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t get_depth_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, bool_t break_out, ego_oct_vec & depth )
+INLINE bool_t get_depth_2( ego_oct_bb & cv_a, fvec3_t pos_a, ego_oct_bb & cv_b, fvec3_t pos_b, const bool_t break_out, ego_oct_vec & depth )
 {
     /// \author BB
     /// \details  Estimate the depth of collision based on the "collision bounding box"

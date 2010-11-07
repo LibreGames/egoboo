@@ -204,7 +204,7 @@ bool_t TxTexture_free_one( const TX_REF & itex )
 }
 
 //--------------------------------------------------------------------------------------------
-TX_REF TxTexture_load_one_vfs( const char *filename, const TX_REF & itex_src, Uint32 key )
+TX_REF TxTexture_load_one_vfs( const char *filename, const TX_REF & itex_src, const Uint32 key )
 {
     /// \author BB
     /// \details  load a texture into TxTexture.

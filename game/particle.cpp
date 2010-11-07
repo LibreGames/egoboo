@@ -162,9 +162,9 @@ ego_prt_data * ego_prt_data::init( ego_prt_data * pdata )
     if ( NULL == pdata ) return pdata;
 
     // "no lifetime" = "eternal"
-    pdata->lifetime           = ( size_t )( ~0 );
+    pdata->lifetime           = ( const size_t )( ~0 );
     pdata->life_timer         = pdata->lifetime;
-    pdata->frames_remaining   = ( size_t )( ~0 );
+    pdata->frames_remaining   = ( const size_t )( ~0 );
 
     pdata->pip_ref      = MAX_PIP;
     pdata->profile_ref  = MAX_PROFILE;
@@ -232,7 +232,7 @@ ego_prt * ego_prt::dealloc( ego_prt * pprt )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void play_particle_sound( const PRT_REF & particle, Sint8 sound )
+void play_particle_sound( const PRT_REF & particle, const Sint8 sound )
 {
     /// \author ZZ
     /// \details This function plays a sound effect for a particle
@@ -529,7 +529,7 @@ ego_prt * ego_prt::do_initializing( ego_prt * pprt )
     // "no lifetime" = "eternal"
     if ( 0 == prt_lifetime )
     {
-        pprt->lifetime           = ( size_t )( ~0 );
+        pprt->lifetime           = ( const size_t )( ~0 );
         pprt->life_timer = pprt->lifetime;
         pprt->is_eternal         = btrue;
     }
@@ -539,7 +539,7 @@ ego_prt * ego_prt::do_initializing( ego_prt * pprt )
         // to keep the number of updates stable, the frames could lag.
         // sooo... we just rescale the prt_lifetime so that it will work with the
         // updates and cross our fingers
-        pprt->lifetime           = ceil(( float ) prt_lifetime * ( float )TARGET_UPS / ( float )TARGET_FPS );
+        pprt->lifetime           = ceil(( const float ) prt_lifetime * ( const float )TARGET_UPS / ( const float )TARGET_FPS );
         pprt->life_timer = pprt->lifetime;
     }
 
@@ -769,9 +769,9 @@ bool_t ego_obj_prt::object_update_list_id( void )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofile, int pip_index,
-                            const CHR_REF & chr_attach, Uint16 vrt_offset, const TEAM_REF & team,
-                            const CHR_REF & chr_origin, const PRT_REF & prt_origin, int multispawn, const CHR_REF & oldtarget )
+PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofile, const int pip_index,
+                            const CHR_REF & chr_attach, const Uint16 vrt_offset, const TEAM_REF & team,
+                            const CHR_REF & chr_origin, const PRT_REF & prt_origin, const int multispawn, const CHR_REF & oldtarget )
 {
     /// \author ZZ
     /// \details  This function spawns a new particle.
@@ -850,7 +850,7 @@ PRT_REF spawn_one_particle( fvec3_t pos, FACING_T facing, const PRO_REF & iprofi
 }
 
 //--------------------------------------------------------------------------------------------
-float prt_calc_mesh_pressure( ego_prt * pprt, float test_pos[] )
+float prt_calc_mesh_pressure( ego_prt * pprt, const float test_pos[] )
 {
     float retval = 0.0f;
     BIT_FIELD  stoppedby;
@@ -881,7 +881,7 @@ float prt_calc_mesh_pressure( ego_prt * pprt, float test_pos[] )
 }
 
 //--------------------------------------------------------------------------------------------
-fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
+fvec2_t prt_calc_diff( ego_prt * pprt, const float test_pos[], const float center_pressure )
 {
     fvec2_t        retval = ZERO_VECT2;
     float        radius;
@@ -924,7 +924,7 @@ fvec2_t prt_calc_diff( ego_prt * pprt, float test_pos[], float center_pressure )
 }
 
 //--------------------------------------------------------------------------------------------
-BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * pressure )
+BIT_FIELD prt_hit_wall( ego_prt * pprt, const float test_pos[], float nrm[], float * pressure )
 {
     /// \author ZZ
     /// \details  This function returns nonzero if the particle hit a wall that the
@@ -959,7 +959,7 @@ BIT_FIELD prt_hit_wall( ego_prt * pprt, float test_pos[], float nrm[], float * p
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_test_wall( ego_prt * pprt, float test_pos[] )
+bool_t prt_test_wall( ego_prt * pprt, const float test_pos[] )
 {
     /// \author ZZ
     /// \details  This function returns nonzero if the particle hit a wall that the
@@ -1011,7 +1011,7 @@ void update_all_particles()
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_prt::set_level( ego_prt * pprt, float level )
+void ego_prt::set_level( ego_prt * pprt, const float level )
 {
     float loc_height;
 
@@ -1259,13 +1259,13 @@ ego_bundle_prt & move_one_particle_do_homing( ego_bundle_prt & bdl_prt )
         uncertainty = 256 - ( 256 * ChrObjList.get_data_ref( loc_pprt->owner_ref ).intelligence ) / PERFECTBIG;
 
         ival = RANDIE;
-        vdither.x = ((( float ) ival / 0x8000 ) - 1.0f )  * uncertainty;
+        vdither.x = ((( const float ) ival / 0x8000 ) - 1.0f )  * uncertainty;
 
         ival = RANDIE;
-        vdither.y = ((( float ) ival / 0x8000 ) - 1.0f )  * uncertainty;
+        vdither.y = ((( const float ) ival / 0x8000 ) - 1.0f )  * uncertainty;
 
         ival = RANDIE;
-        vdither.z = ((( float ) ival / 0x8000 ) - 1.0f )  * uncertainty;
+        vdither.z = ((( const float ) ival / 0x8000 ) - 1.0f )  * uncertainty;
 
         // take away any dithering along the direction of motion of the particle
         vlen = fvec3_dot_product( loc_pprt->vel.v, loc_pprt->vel.v );
@@ -2656,7 +2656,7 @@ bool_t prt_update_safe_raw( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t prt_update_safe( ego_prt * pprt, bool_t force )
+bool_t prt_update_safe( ego_prt * pprt, const bool_t force )
 {
     Uint32 new_grid;
     bool_t retval = bfalse;
@@ -2733,7 +2733,7 @@ bool_t prt_update_pos( ego_prt * pprt )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_prt::set_pos( ego_prt * pprt, fvec3_base_t pos )
+bool_t ego_prt::set_pos( ego_prt * pprt, const fvec3_base_t pos )
 {
     bool_t retval = bfalse;
 
@@ -2752,7 +2752,7 @@ bool_t ego_prt::set_pos( ego_prt * pprt, fvec3_base_t pos )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_obj_prt * ego_obj_prt::set_limbo( ego_obj_prt * pobj, bool_t val )
+ego_obj_prt * ego_obj_prt::set_limbo( ego_obj_prt * pobj, const bool_t val )
 {
     // An analogy to the ego_obj_set_*() functions, but with the extra particle data in
     // obj_base_display
@@ -2848,7 +2848,7 @@ void particle_physics_initialize_all()
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_bump_mesh_attached( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+ego_bundle_prt & prt_bump_mesh_attached( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
 {
     /// \author BB
     /// \details  A helper function that figures out the next valid position of the particle.
@@ -2897,7 +2897,7 @@ ego_bundle_prt & prt_bump_mesh_attached( ego_bundle_prt & bdl, fvec3_t test_pos,
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_bump_grid_attached( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+ego_bundle_prt & prt_bump_grid_attached( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
 {
     /// \author BB
     /// \details  A helper function that figures out the next valid position of the particle.
@@ -2969,7 +2969,7 @@ ego_bundle_prt & prt_bump_grid_attached( ego_bundle_prt & bdl, fvec3_t test_pos,
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt &  prt_bump_mesh( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt, bool_t * pbumped_mesh )
+ego_bundle_prt &  prt_bump_mesh( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt, bool_t * pbumped_mesh )
 {
     /// \author BB
     /// \details  A helper function that figures out the next valid position of the particle.
@@ -3168,7 +3168,7 @@ ego_bundle_prt &  prt_bump_mesh( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt &  prt_bump_grid( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt, bool_t * pbumped_grid )
+ego_bundle_prt &  prt_bump_grid( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt, bool_t * pbumped_grid )
 {
     /// \author BB
     /// \details  A helper function that figures out the next valid position of the particle.
@@ -3366,7 +3366,7 @@ ego_bundle_prt &  prt_bump_grid( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv particle_physics_finalize_one( ego_bundle_prt & bdl, float dt )
+egoboo_rv particle_physics_finalize_one( ego_bundle_prt & bdl, const float dt )
 {
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
@@ -3487,7 +3487,7 @@ egoboo_rv particle_physics_finalize_one( ego_bundle_prt & bdl, float dt )
 }
 
 //--------------------------------------------------------------------------------------------
-void particle_physics_finalize_all( float dt )
+void particle_physics_finalize_all( const float dt )
 {
     // accumulate the accumulators
     PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, bdl )

@@ -42,25 +42,25 @@ extern "C"
 
     display_item_t * display_item_new();
     display_item_t * display_item_ctor( display_item_t * );
-    display_item_t * display_item_free( display_item_t * ptr, GLboolean owner );
+    display_item_t * display_item_free( display_item_t * ptr, const GLboolean owner );
     display_item_t * display_item_validate_texture( display_item_t * item_ptr );
     display_item_t * display_item_validate_list( display_item_t * item_ptr );
     frect_t        * display_item_prect( display_item_t * ptr );
     GLfloat        * display_item_texCoords( display_item_t * );
     GLuint           display_item_texture_name( display_item_t * );
     GLuint           display_item_list_name( display_item_t * );
-    GLboolean        display_item_set_pos( display_item_t *, GLint x, GLint y );
-    GLboolean        display_item_set_bound( display_item_t *, GLint x, GLint y, GLint w, GLint h );
-    GLboolean        display_item_adjust_bound( display_item_t *, GLfloat dx, GLfloat dy );
+    GLboolean        display_item_set_pos( display_item_t *, const GLint x, const GLint y );
+    GLboolean        display_item_set_bound( display_item_t *, const GLint x, const GLint y, const GLint w, const GLint h );
+    GLboolean        display_item_adjust_bound( display_item_t *, const GLfloat dx, const GLfloat dy );
 
 /// Tell the display_item that it does not own its resources
     GLboolean       display_item_release_ownership( display_item_t * );
 
 /// Set the texture that the display_item is using
-    GLuint display_item_set_texture( display_item_t *, GLuint tex_name, GLboolean owner );
+    GLuint display_item_set_texture( display_item_t *, const GLuint tex_name, const GLboolean owner );
 
 /// Set the OGL display list that the display_item is using
-    GLuint display_item_set_list( display_item_t *, GLuint list_name, GLboolean owner );
+    GLuint display_item_set_list( display_item_t *, const GLuint list_name, const GLboolean owner );
 
 /// Draw a display_item_t directly to the screen
     GLboolean       display_item_draw( display_item_t * );
@@ -71,15 +71,15 @@ extern "C"
     struct display_list;
     typedef struct display_list display_list_t;
 
-    display_list_t * display_list_ctor( display_list_t *, GLsizei count );
-    display_list_t * display_list_dtor( display_list_t *, GLboolean owner );
+    display_list_t * display_list_ctor( display_list_t *, const GLsizei count );
+    display_list_t * display_list_dtor( display_list_t *, const GLboolean owner );
     display_list_t * display_list_dealloc( display_list_t * );
 
     GLsizei          display_list_size( display_list_t * );
     GLsizei          display_list_used( display_list_t * );
-    display_item_t * display_list_get( display_list_t *, GLsizei index );
+    display_item_t * display_list_get( display_list_t *, const GLsizei index );
     GLboolean        display_list_pbound( display_list_t *, frect_t * ptmp );
-    GLboolean        display_list_adjust_bound( display_list_t *, GLfloat dx, GLfloat dy );
+    GLboolean        display_list_adjust_bound( display_list_t *, const GLfloat dx, const GLfloat dy );
     display_item_t * display_list_append( display_list_t *, display_item_t * pitem );
 
 /// Draw the elements of a display_list_t directly to the screen

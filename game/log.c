@@ -85,7 +85,7 @@ void log_shutdown()
 }
 
 //--------------------------------------------------------------------------------------------
-void log_setLoggingLevel( int level )
+void log_setLoggingLevel( const int level )
 {
     if ( level > 0 )
     {

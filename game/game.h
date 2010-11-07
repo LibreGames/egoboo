@@ -368,7 +368,7 @@ struct stat_lst
         }
     }
 
-    CHR_REF & operator []( size_t val ) { return lst[val]; }
+    CHR_REF & operator []( const size_t val ) { return lst[val]; }
 
     bool_t remove( const CHR_REF & ichr );
     bool_t add( const CHR_REF & ichr );
@@ -408,17 +408,17 @@ void   game_quit_module();
 // the hook for exporting all the current players and reloading them
 egoboo_rv game_update_imports();
 void   game_finish_module();
-bool_t game_begin_module( const char * modname, Uint32 seed );
+bool_t game_begin_module( const char * modname, const Uint32 seed );
 
 // Exporting stuff
-void export_one_character( const CHR_REF & character, const CHR_REF & owner, int number, bool_t is_local );
-void export_all_players( bool_t require_local );
+void export_one_character( const CHR_REF & character, const CHR_REF & owner, const int number, const bool_t is_local );
+void export_all_players( const bool_t require_local );
 
 // Messages
-void show_stat( int statindex );
-void show_armor( int statindex );
-void show_full_status( int statindex );
-void show_magic_status( int statindex );
+void show_stat( const int statindex );
+void show_armor( const int statindex );
+void show_full_status( const int statindex );
+void show_magic_status( const int statindex );
 
 // End Text
 void reset_end_text();
@@ -428,15 +428,15 @@ int     number_of_attached_particles( const CHR_REF & character );
 int     spawn_bump_particles( const CHR_REF & character, const PRT_REF & particle );
 void    disaffirm_attached_particles( const CHR_REF & character );
 int     reaffirm_attached_particles( const CHR_REF & character );
-ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, int vertex_offset );
+ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, const int vertex_offset );
 
 /// Player
 void   read_player_local_latch( const PLA_REF & player );
-bool_t add_player( const CHR_REF & character, BIT_FIELD device );
+bool_t add_player( const CHR_REF & character, const BIT_FIELD device );
 
 // AI targeting
-CHR_REF chr_find_target( ego_chr * psrc, float max_dist, IDSZ idsz, BIT_FIELD targeting_bits );
-CHR_REF prt_find_target( float pos_x, float pos_y, float pos_z, FACING_T facing,
+CHR_REF chr_find_target( ego_chr * psrc, const float max_dist, const IDSZ idsz, const BIT_FIELD targeting_bits );
+CHR_REF prt_find_target( const float pos_x, const float pos_y, const float pos_z, const FACING_T facing,
                          const PIP_REF & particletype, const TEAM_REF & team, const CHR_REF & donttarget, const CHR_REF & oldtarget );
 
 // object initialization
@@ -446,17 +446,17 @@ void  free_all_objects( void );
 struct ego_mpd * set_PMesh( ego_mpd * pmpd );
 struct ego_camera  * set_PCamera( ego_camera * pcam );
 
-bool_t upload_animtile_data( ego_animtile_instance pinst[], s_wawalite_animtile * pdata, size_t animtile_count );
+bool_t upload_animtile_data( ego_animtile_instance pinst[], s_wawalite_animtile * pdata, const size_t animtile_count );
 bool_t upload_damagetile_data( ego_damagetile_instance * pinst, s_wawalite_damagetile * pdata );
 bool_t upload_weather_data( ego_weather_instance * pinst, s_wawalite_weather * pdata );
 bool_t upload_water_data( ego_water_instance * pinst, s_wawalite_water * pdata );
 bool_t upload_fog_data( ego_fog_instance * pinst, s_wawalite_fog * pdata );
 
-float get_mesh_level( ego_mpd * pmesh, float x, float y, bool_t waterwalk );
+float get_mesh_level( ego_mpd * pmesh, const float x, const float y, const bool_t waterwalk );
 
-bool_t make_water( ego_water_instance * pinst, s_wawalite_water * pdata );
+bool_t make_water( ego_water_instance * pinst, const s_wawalite_water * pdata );
 
-bool_t game_choose_module( int imod, int seed );
+bool_t game_choose_module( const int imod, const int seed );
 
 int game_do_menu( ego_menu_process * mproc );
 
@@ -464,9 +464,9 @@ void expand_escape_codes( const CHR_REF & ichr, ego_script_state * pstate, char 
 
 void upload_wawalite();
 
-bool_t game_module_setup( ego_game_module_data * pinst, s_mod_file * pdata, const char * loadname, Uint32 seed );
+bool_t game_module_setup( ego_game_module_data * pinst, s_mod_file * pdata, const char * loadname, const Uint32 seed );
 bool_t game_module_init( ego_game_module_data * pinst );
-bool_t game_module_reset( ego_game_module_data * pinst, Uint32 seed );
+bool_t game_module_reset( ego_game_module_data * pinst, const Uint32 seed );
 bool_t game_module_start( ego_game_module_data * pinst );
 bool_t game_module_stop( ego_game_module_data * pinst );
 
@@ -477,8 +477,8 @@ void attach_all_particles();
 struct s_wawalite_data * read_wawalite();
 bool_t write_wawalite( const char *modname, s_wawalite_data * pdata );
 
-Uint8 get_local_alpha( int alpha );
-Uint8 get_local_light( int light );
+Uint8 get_local_alpha( const int alpha );
+Uint8 get_local_light( const int light );
 
 bool_t do_shop_drop( const CHR_REF & idropper, const CHR_REF & iitem );
 

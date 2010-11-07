@@ -55,7 +55,7 @@ const Uint32 amask = 0x000000ff;
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void SDLX_download_sdl_video_flags( Uint32 iflags, SDLX_sdl_video_flags_t * pflags );
+static void SDLX_download_sdl_video_flags( const Uint32 iflags, SDLX_sdl_video_flags_t * pflags );
 static void SDLX_read_sdl_gl_attrib( SDLX_sdl_gl_attrib_t * patt );
 
 //--------------------------------------------------------------------------------------------
@@ -250,7 +250,7 @@ Uint32 SDLX_upload_sdl_video_flags( SDLX_sdl_video_flags_t flags )
 }
 
 //--------------------------------------------------------------------------------------------
-void SDLX_download_sdl_video_flags( Uint32 iflags, SDLX_sdl_video_flags_t * pflags )
+void SDLX_download_sdl_video_flags( const Uint32 iflags, SDLX_sdl_video_flags_t * pflags )
 {
     if ( NULL != pflags )
     {
@@ -392,7 +392,7 @@ SDL_bool SDLX_set_sdl_gl_attrib( SDLX_video_parameters_t * v )
 }
 
 //--------------------------------------------------------------------------------------------
-SDL_Surface * SDLX_RequestVideoMode( SDLX_video_parameters_t * v, SDL_bool make_report )
+SDL_Surface * SDLX_RequestVideoMode( SDLX_video_parameters_t * v, const SDL_bool make_report )
 {
     Uint32 flags;
     int sdl_nearset_bpp = -1;
@@ -644,7 +644,7 @@ void SDLX_report_mode( SDL_Surface * surface, SDLX_video_parameters_t * v )
 }
 
 //--------------------------------------------------------------------------------------------
-SDLX_video_parameters_t * SDLX_set_mode( SDLX_video_parameters_t * v_old, SDLX_video_parameters_t * v_new, SDL_bool has_valid_mode, SDL_bool make_report )
+SDLX_video_parameters_t * SDLX_set_mode( SDLX_video_parameters_t * v_old, SDLX_video_parameters_t * v_new, const SDL_bool has_valid_mode, const SDL_bool make_report )
 {
     /// \author BB
     /// \details  let SDL try to set a new video mode.
@@ -835,7 +835,7 @@ static bool_t SDLX_Log_UserEvent( SDL_UserEvent * evt_ptr );
 static bool_t SDLX_Log_Unknown( SDL_Event * evt_ptr );
 
 //--------------------------------------------------------------------------------------------
-void SDLX_Event_Log_Mask_set_event( Uint8 type, unsigned value )
+void SDLX_Event_Log_Mask_set_event( const Uint8 type, const unsigned value )
 {
     switch ( type )
     {

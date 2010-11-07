@@ -118,7 +118,7 @@ extern "C"
     typedef Sint32 SFP16_T;
 
 #define FLOAT_TO_FP16( V1 )  ( (Uint32)((V1) * 0x00010000) )
-#define FP16_TO_FLOAT( V1 )  ( (float )((V1) * 0.0000152587890625f ) )
+#define FP16_TO_FLOAT( V1 )  ( (const float )((V1) * 0.0000152587890625f ) )
 
 //--------------------------------------------------------------------------------------------
 // BIT FIELDS
@@ -182,7 +182,7 @@ extern "C"
     };
     typedef struct s_frect frect_t;
 
-    bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst );
+    bool_t frect_union( const frect_t * src1, const frect_t * src2, frect_t * dst );
 
 //--------------------------------------------------------------------------------------------
 // Rectangle types
@@ -194,7 +194,7 @@ extern "C"
     };
     typedef struct s_ego_irect ego_irect_t;
 
-    bool_t irect_point_inside( ego_irect_t * prect, int   ix, int   iy );
+    bool_t irect_point_inside( ego_irect_t * prect, const int ix, const int iy );
 
     struct s_ego_frect
     {
@@ -203,7 +203,7 @@ extern "C"
     };
     typedef struct s_ego_frect ego_frect_t;
 
-    bool_t frect_point_inside( ego_frect_t * prect, float fx, float fy );
+    bool_t frect_point_inside( ego_frect_t * prect, const float fx, const float fy );
 
 //--------------------------------------------------------------------------------------------
 // PAIR AND RANGE
@@ -222,11 +222,11 @@ extern "C"
     };
     typedef struct s_range FRange;
 
-    void pair_to_range( IPair pair, FRange * prange );
-    void range_to_pair( FRange range, IPair * ppair );
+    void pair_to_range( const IPair pair, FRange * prange );
+    void range_to_pair( const FRange range, IPair * ppair );
 
-    void ints_to_range( int base, int rand, FRange * prange );
-    void floats_to_pair( float vmin, float vmax, IPair * ppair );
+    void ints_to_range( const int base, const int rand, FRange * prange );
+    void floats_to_pair( const float vmin, const float vmax, IPair * ppair );
 
 //--------------------------------------------------------------------------------------------
 // IDSZ

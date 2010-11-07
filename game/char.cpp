@@ -103,12 +103,12 @@ int ego_chr::pressure_tests = 0;
 
 static CHR_REF chr_pack_has_a_stack( const CHR_REF & item, const CHR_REF & character );
 static bool_t  chr_pack_add_item( const CHR_REF & item, const CHR_REF & character );
-static bool_t  chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem );
-static CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool_t ignorekurse );
+static bool_t  chr_pack_remove_item( const CHR_REF & ichr, const CHR_REF & iparent, const CHR_REF & iitem );
+static CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, const bool_t ignorekurse );
 
-static bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, Uint16 vrt_off );
+static bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, const Uint16 vrt_off );
 
-static BBOARD_REF chr_add_billboard( const CHR_REF & ichr, Uint32 lifetime_secs );
+static BBOARD_REF chr_add_billboard( const CHR_REF & ichr, const Uint32 lifetime_secs );
 
 static ego_chr * resize_one_character( ego_chr * pchr );
 
@@ -134,8 +134,8 @@ static ego_bundle_chr & move_one_character_do_floor( ego_bundle_chr & bdl );
 
 static bool_t pack_validate( ego_pack * ppack );
 
-static fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure );
-//static float   get_mesh_pressure( ego_chr * pchr, float test_pos[] );
+static fvec2_t chr_get_diff( ego_chr * pchr, const float test_pos[], const float center_pressure );
+//static float   get_mesh_pressure( ego_chr * pchr, const float test_pos[] );
 
 static egoboo_rv chr_invalidate_instances( ego_chr * pchr );
 
@@ -162,8 +162,8 @@ int chr_count_free()
 }
 
 //--------------------------------------------------------------------------------------------
-void flash_character_height( const CHR_REF & character, Uint8 valuelow, Sint16 low,
-                             Uint8 valuehigh, Sint16 high )
+void flash_character_height( const CHR_REF & character, const Uint8 valuelow, const Sint16 low,
+                             const Uint8 valuehigh, const Sint16 high )
 {
     /// \author ZZ
     /// \details  This function sets a character's lighting depending on vertex height...
@@ -487,7 +487,7 @@ void free_inventory_in_game( const CHR_REF & character )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, int vertex_offset )
+ego_prt * place_particle_at_vertex( ego_prt * pprt, const CHR_REF & character, const int vertex_offset )
 {
     /// \author ZZ
     /// \details  This function sets one particle's position to be attached to a character.
@@ -575,7 +575,7 @@ place_particle_at_vertex_fail:
 }
 
 //--------------------------------------------------------------------------------------------
-void make_all_character_matrices( bool_t do_physics )
+void make_all_character_matrices( const bool_t do_physics )
 {
     /// \author ZZ
     /// \details  This function makes all of the character's matrices
@@ -717,7 +717,7 @@ void free_all_chraracters()
 }
 
 //--------------------------------------------------------------------------------------------
-float chr_get_mesh_pressure( ego_chr * pchr, float test_pos[] )
+float chr_get_mesh_pressure( ego_chr * pchr, const float test_pos[] )
 {
     float retval = 0.0f;
     float radius = 0.0f;
@@ -753,7 +753,7 @@ float chr_get_mesh_pressure( ego_chr * pchr, float test_pos[] )
 }
 
 //--------------------------------------------------------------------------------------------
-fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure )
+fvec2_t chr_get_diff( ego_chr * pchr, const float test_pos[], const float center_pressure )
 {
     fvec2_t retval = ZERO_VECT2;
     float   radius;
@@ -789,7 +789,7 @@ fvec2_t chr_get_diff( ego_chr * pchr, float test_pos[], float center_pressure )
 }
 
 //--------------------------------------------------------------------------------------------
-BIT_FIELD chr_hit_wall( ego_chr * pchr, float test_pos[], float nrm[], float * pressure )
+BIT_FIELD chr_hit_wall( ego_chr * pchr, const float test_pos[], float nrm[], float * pressure )
 {
     /// \author ZZ
     /// \details  This function returns nonzero if the character hit a wall that the
@@ -829,7 +829,7 @@ BIT_FIELD chr_hit_wall( ego_chr * pchr, float test_pos[], float nrm[], float * p
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_test_wall( ego_chr * pchr, float test_pos[] )
+bool_t chr_test_wall( ego_chr * pchr, const float test_pos[] )
 {
     /// \author ZZ
     /// \details  This function returns nonzero if the character hit a wall that the
@@ -913,7 +913,7 @@ void reset_character_accel( const CHR_REF & character )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t detach_character_from_mount( const CHR_REF & character, Uint8 ignorekurse, Uint8 doshop )
+bool_t detach_character_from_mount( const CHR_REF & character, const Uint8 ignorekurse, const Uint8 doshop )
 {
     /// \author ZZ
     /// \details  This function drops an item
@@ -1398,7 +1398,7 @@ int grab_data_cmp( const void * pleft, const void * pright )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, bool_t grab_people )
+bool_t character_grab_stuff( const CHR_REF & ichr_a, grip_offset_t grip_off, const bool_t grab_people )
 {
     /// \author ZZ
     /// \details  This function makes the character pick up an item if there's one around
@@ -1808,7 +1808,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
 }
 
 //--------------------------------------------------------------------------------------------
-void drop_money( const CHR_REF & character, int money )
+int drop_money( const CHR_REF & character, const int money )
 {
     /// \author ZZ
     /// \details  This function drops some of a character's money
@@ -1816,16 +1816,18 @@ void drop_money( const CHR_REF & character, int money )
     int huns, tfives, fives, ones, cnt;
 
     ego_obj_chr * pchr = ChrObjList.get_allocated_data_ptr( character );
-    if ( !INGAME_PCHR( pchr ) ) return;
+    if ( !INGAME_PCHR( pchr ) ) return 0;
 
-    if ( money > pchr->money )  money = pchr->money;
-    if ( money > 0 && pchr->pos.z > -2 )
+    int loc_money = money;
+    if ( loc_money > pchr->money )  loc_money = pchr->money;
+
+    if ( loc_money > 0 && pchr->pos.z > -2 )
     {
-        pchr->money = pchr->money - money;
-        huns = money / 100;  money -= ( huns << 7 ) - ( huns << 5 ) + ( huns << 2 );
-        tfives = money / 25;  money -= ( tfives << 5 ) - ( tfives << 3 ) + tfives;
-        fives = money / 5;  money -= ( fives << 2 ) + fives;
-        ones = money;
+        pchr->money -= loc_money;
+        huns = loc_money / 100;  loc_money -= ( huns << 7 ) - ( huns << 5 ) + ( huns << 2 );
+        tfives = loc_money / 25;  loc_money -= ( tfives << 5 ) - ( tfives << 3 ) + tfives;
+        fives = loc_money / 5;  loc_money -= ( fives << 2 ) + fives;
+        ones = loc_money;
 
         for ( cnt = 0; cnt < ones; cnt++ )
         {
@@ -1849,6 +1851,8 @@ void drop_money( const CHR_REF & character, int money )
 
         pchr->damagetime = DAMAGETIME;  // So it doesn't grab it again
     }
+
+    return loc_money;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1994,7 +1998,7 @@ void do_level_up( const CHR_REF & character )
 }
 
 //--------------------------------------------------------------------------------------------
-void give_experience( const CHR_REF & character, int amount, xp_type xptype, bool_t override_invictus )
+void give_experience( const CHR_REF & character, const int amount, xp_type xptype, const bool_t override_invictus )
 {
     /// \author ZZ
     /// \details  This function gives a character experience
@@ -2037,7 +2041,7 @@ void give_experience( const CHR_REF & character, int amount, xp_type xptype, boo
 }
 
 //--------------------------------------------------------------------------------------------
-void give_team_experience( const TEAM_REF & team, int amount, xp_type xptype )
+void give_team_experience( const TEAM_REF & team, const int amount, xp_type xptype )
 {
     /// \author ZZ
     /// \details  This function gives every character on a team experience
@@ -2200,7 +2204,7 @@ bool_t export_one_character_skin_vfs( const char *szSaveName, const CHR_REF & ch
 }
 
 //--------------------------------------------------------------------------------------------
-CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_override, bool_t required )
+CAP_REF load_one_character_profile_vfs( const char * tmploadname, const int slot_override, const bool_t required )
 {
     /// \author ZZ
     /// \details  This function fills a character profile with data from data.txt, returning
@@ -2283,7 +2287,7 @@ CAP_REF load_one_character_profile_vfs( const char * tmploadname, int slot_overr
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t heal_character( const CHR_REF & character, const CHR_REF & healer, int amount, bool_t ignore_invictus )
+bool_t heal_character( const CHR_REF & character, const CHR_REF & healer, const int amount, const bool_t ignore_invictus )
 {
     /// \author ZF
     /// \details  This function gives some pure life points to the target, ignoring any resistances and so forth
@@ -2401,7 +2405,7 @@ void cleanup_one_character( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore_invictus )
+void kill_character( const CHR_REF & ichr, const CHR_REF & killer, const bool_t ignore_invictus )
 {
     /// \author BB
     /// \details  Handle a character death. Set various states, disconnect it from the world, etc.
@@ -2509,7 +2513,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, bool_t ignore
 }
 
 //--------------------------------------------------------------------------------------------
-int damage_character_hurt( ego_bundle_chr & bdl, int base_damage, int actual_damage, CHR_REF attacker, bool_t ignore_invictus )
+int damage_character_hurt( ego_bundle_chr & bdl, const int base_damage, const int actual_damage, const CHR_REF & attacker, const bool_t ignore_invictus )
 {
     CHR_REF      loc_ichr;
     ego_chr      * loc_pchr;
@@ -2541,7 +2545,7 @@ int damage_character_hurt( ego_bundle_chr & bdl, int base_damage, int actual_dam
 }
 
 //--------------------------------------------------------------------------------------------
-int damage_character_heal( ego_bundle_chr & bdl, int heal_amount, CHR_REF attacker, bool_t ignore_invictus )
+int damage_character_heal( ego_bundle_chr & bdl, const int heal_amount, const CHR_REF & attacker, const bool_t ignore_invictus )
 {
     CHR_REF      loc_ichr;
     ego_chr      * loc_pchr;
@@ -2561,8 +2565,8 @@ int damage_character_heal( ego_bundle_chr & bdl, int heal_amount, CHR_REF attack
 
 //--------------------------------------------------------------------------------------------
 int damage_character( const CHR_REF & character, FACING_T direction,
-                      IPair  damage, Uint8 damagetype, TEAM_REF team,
-                      CHR_REF attacker, BIT_FIELD effects, bool_t ignore_invictus )
+                      IPair  damage, const Uint8 damagetype, TEAM_REF team,
+                      CHR_REF attacker, BIT_FIELD effects, const bool_t ignore_invictus )
 {
     /// \author ZZ
     /// \details  This function calculates and applies damage to a character.  It also
@@ -2900,7 +2904,7 @@ void spawn_poof( const CHR_REF & character, const PRO_REF & profile )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_ai_state::spawn( ego_ai_state * pself, const CHR_REF & index, const PRO_REF & iobj, Uint16 rank )
+void ego_ai_state::spawn( ego_ai_state * pself, const CHR_REF & index, const PRO_REF & iobj, const Uint16 rank )
 {
     ego_chr * pchr;
     ego_pro * ppro;
@@ -2940,7 +2944,7 @@ void ego_ai_state::spawn( ego_ai_state * pself, const CHR_REF & index, const PRO
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_REF & team,
-                             Uint8 skin, FACING_T facing, const char *name, const CHR_REF & override )
+                             const Uint8 skin, const FACING_T facing, const char *name, const CHR_REF & override )
 {
     /// \author ZZ
     /// \details  This function spawns a character and returns the character's index number
@@ -3108,13 +3112,15 @@ void ego_chr::respawn( const CHR_REF & character )
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
+int ego_chr::change_skin( const CHR_REF & character, const Uint32 skin )
 {
     ego_chr * pchr;
     ego_pro * ppro;
     ego_mad * pmad;
     gfx_mad_instance * pgfx_inst;
     mad_instance     * pmad_inst;
+
+    Uint32 loc_skin = skin;
 
     pchr  = ChrObjList.get_data_ptr( character );
     if ( !INGAME_PCHR( pchr ) ) return 0;
@@ -3147,26 +3153,26 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
     {
         TX_REF txref = TX_REF( TX_WATER_TOP );
 
-        // do the best we can to change the skin
+        // do the best we can to change the loc_skin
         if ( NULL == ppro || 0 == ppro->skins )
         {
             ppro->skins = 1;
             ppro->tex_ref[0] = TX_WATER_TOP;
 
-            skin  = 0;
+            loc_skin  = 0;
             txref = TX_WATER_TOP;
         }
         else
         {
-            if ( skin > ppro->skins )
+            if ( loc_skin > ppro->skins )
             {
-                skin = 0;
+                loc_skin = 0;
             }
 
-            txref = ppro->tex_ref[skin];
+            txref = ppro->tex_ref[loc_skin];
         }
 
-        pchr->skin     = skin;
+        pchr->skin     = loc_skin;
         pgfx_inst->texture = txref;
     }
 
@@ -3180,7 +3186,7 @@ int ego_chr::change_skin( const CHR_REF & character, Uint32 skin )
 }
 
 //--------------------------------------------------------------------------------------------
-int ego_chr::change_armor( const CHR_REF & character, int skin )
+int ego_chr::change_armor( const CHR_REF & character, const int skin )
 {
     /// \author ZZ
     /// \details  This function changes the armor of the character
@@ -3189,6 +3195,8 @@ int ego_chr::change_armor( const CHR_REF & character, int skin )
     int     iTmp;
     ego_cap * pcap;
     ego_chr * pchr;
+
+    int loc_skin = skin;
 
     pchr = ChrObjList.get_allocated_data_ptr( character );
     if ( !INGAME_PCHR( pchr ) ) return 0;
@@ -3212,20 +3220,20 @@ int ego_chr::change_armor( const CHR_REF & character, int skin )
         enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
     }
 
-    // Change the skin
+    // Change the loc_skin
     pcap = ego_chr::get_pcap( character );
-    skin = ego_chr::change_skin( character, skin );
+    loc_skin = ego_chr::change_skin( character, loc_skin );
 
-    // Change stats associated with skin
-    pchr->defense = pcap->defense[skin];
+    // Change stats associated with loc_skin
+    pchr->defense = pcap->defense[loc_skin];
 
     for ( iTmp = 0; iTmp < DAMAGE_COUNT; iTmp++ )
     {
-        pchr->damagemodifier[iTmp] = pcap->damagemodifier[iTmp][skin];
+        pchr->damagemodifier[iTmp] = pcap->damagemodifier[iTmp][loc_skin];
     }
 
     // set the character's maximum acceleration
-    ego_chr::set_maxaccel( pchr, pcap->maxaccel[skin] );
+    ego_chr::set_maxaccel( pchr, pcap->maxaccel[loc_skin] );
 
     // cleanup the enchant list
     cleanup_character_enchants( pchr );
@@ -3258,11 +3266,11 @@ int ego_chr::change_armor( const CHR_REF & character, int skin )
         enchant = EncObjList.get_data_ref( enchant ).nextenchant_ref;
     }
 
-    return skin;
+    return loc_skin;
 }
 
 //--------------------------------------------------------------------------------------------
-void change_character_full( const CHR_REF & ichr, const PRO_REF & profile, Uint8 skin, Uint8 leavewhich )
+void change_character_full( const CHR_REF & ichr, const PRO_REF & profile, const Uint8 skin, const Uint8 leavewhich )
 {
     /// \author ZF
     /// \details  This function polymorphs a character permanently so that it can be exported properly
@@ -3289,7 +3297,7 @@ void change_character_full( const CHR_REF & ichr, const PRO_REF & profile, Uint8
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, Uint16 vrt_off )
+bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, const Uint16 vrt_off )
 {
     int i;
 
@@ -3355,7 +3363,7 @@ bool_t set_weapongrip( const CHR_REF & iitem, const CHR_REF & iholder, Uint16 vr
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new, Uint8 skin, Uint8 leavewhich )
+void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new, const Uint8 skin, const Uint8 leavewhich )
 {
     /// \author ZZ
     /// \details  This function polymorphs a character, changing stats, dropping weapons
@@ -3631,7 +3639,7 @@ void ego_chr::change_profile( const CHR_REF & ichr, const PRO_REF & profile_new,
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t cost_mana( const CHR_REF & character, int amount, const CHR_REF & killer )
+bool_t cost_mana( const CHR_REF & character, const int amount, const CHR_REF & killer )
 {
     /// \author ZZ
     /// \details  This function takes mana from a character ( or gives mana ),
@@ -3750,7 +3758,7 @@ void issue_clean( const CHR_REF & character )
 }
 
 //--------------------------------------------------------------------------------------------
-int restock_ammo( const CHR_REF & character, IDSZ idsz )
+int restock_ammo( const CHR_REF & character, const IDSZ idsz )
 {
     /// \author ZZ
     /// \details  This function restocks the characters ammo, if it needs ammo and if
@@ -4870,7 +4878,7 @@ float set_character_animation_rate( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_is_attacking( ego_chr *pchr )
+bool_t chr_is_attacking( const ego_chr *pchr )
 {
     return pchr->mad_inst.action.which >= ACTION_UA && pchr->mad_inst.action.which <= ACTION_FD;
 }
@@ -5177,7 +5185,7 @@ ego_bundle_chr & move_one_character_do_voluntary_flying( ego_bundle_chr & bdl )
     loc_pori    = &( loc_pchr->ori );
 
     // auto-control a variety of factors based on the transition between running and flying
-    jump_lerp = ( float )loc_pchr->jump_time / ( float )JUMP_DELAY;
+    jump_lerp = ( const float )loc_pchr->jump_time / ( const float )JUMP_DELAY;
     jump_lerp = CLIP( jump_lerp, 0.0f, 1.0f );
 
     // determine the net effect of the air friction on terminal velocity using the v2.22 method
@@ -5267,10 +5275,10 @@ ego_bundle_chr & move_one_character_do_voluntary_flying( ego_bundle_chr & bdl )
     // co complete one rotation in 3 seconds
 
     // pitch
-    loc_pori->map_facing_y += loc_latch.y * 0.125f * ( float )TRIG_TABLE_SIZE / TARGET_UPS * ( 1.0f - jump_lerp );
+    loc_pori->map_facing_y += loc_latch.y * 0.125f * ( const float )TRIG_TABLE_SIZE / TARGET_UPS * ( 1.0f - jump_lerp );
 
     // roll
-    loc_pori->map_facing_x += loc_latch.x * 0.5f * ( float )TRIG_TABLE_SIZE / TARGET_UPS * ( 1.0f - jump_lerp );
+    loc_pori->map_facing_x += loc_latch.x * 0.5f * ( const float )TRIG_TABLE_SIZE / TARGET_UPS * ( 1.0f - jump_lerp );
 
     // set the desired acceleration
     loc_penviro->chr_acc = acc;
@@ -6090,7 +6098,7 @@ ego_bundle_chr & move_one_character_do_jump( ego_bundle_chr & bdl )
     if ( IS_FLYING_PCHR( loc_pchr ) ) return bdl;
 
     // determine whether a character has recently jumped
-    jump_lerp = ( float )loc_pchr->jump_time / ( float )JUMP_DELAY;
+    jump_lerp = ( const float )loc_pchr->jump_time / ( const float )JUMP_DELAY;
     jump_lerp = CLIP( jump_lerp, 0.0f, 1.0f );
 
     // if we have not jumped, there's nothing to do
@@ -6198,7 +6206,7 @@ ego_bundle_chr & move_one_character_do_floor( ego_bundle_chr & bdl )
 
     // determine whether the object is part of the scenery
     is_scenery_object = ( INFINITE_WEIGHT == loc_pphys->weight );
-    scenery_grip = is_scenery_object ? 1.0f : ( float )loc_pphys->weight / ( float )MAX_WEIGHT;
+    scenery_grip = is_scenery_object ? 1.0f : ( const float )loc_pphys->weight / ( const float )MAX_WEIGHT;
     scenery_grip = CLIP( scenery_grip, 0.0f, 1.0f );
 
     // apply the acceleration from the "normal force"
@@ -6486,7 +6494,7 @@ void increment_all_character_update_counters()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uint16 effects )
+bool_t is_invictus_direction( const FACING_T direction, const CHR_REF & character, const BIT_FIELD effects )
 {
     FACING_T left, right;
 
@@ -6495,6 +6503,8 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
     ego_mad * pmad;
 
     bool_t  is_invictus;
+
+    FACING_T loc_direction = direction;
 
     pchr = ChrObjList.get_allocated_data_ptr( character );
     if ( !INGAME_PCHR( pchr ) ) return btrue;
@@ -6515,7 +6525,7 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
     if ( HAS_SOME_BITS( mad_instance::get_framefx( &( pchr->mad_inst ) ), MADFX_INVICTUS ) )
     {
         // I Frame
-        direction -= pcap->iframefacing;
+        loc_direction -= pcap->iframefacing;
         left       = FACING_T( int( 0x00010000L ) - int( pcap->iframeangle ) );
         right      = pcap->iframeangle;
 
@@ -6550,14 +6560,14 @@ bool_t is_invictus_direction( FACING_T direction, const CHR_REF & character, Uin
     else
     {
         // N Frame
-        direction -= pcap->nframefacing;
+        loc_direction -= pcap->nframefacing;
         left       = FACING_T( int( 0x00010000L ) - int( pcap->nframeangle ) );
         right      = pcap->nframeangle;
     }
 
-    // Check that direction
+    // Check that loc_direction
     is_invictus = bfalse;
-    if ( direction <= left && direction <= right )
+    if ( loc_direction <= left && loc_direction <= right )
     {
         is_invictus = btrue;
     }
@@ -6659,7 +6669,7 @@ void init_slot_idsz()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_ai_state::add_order( ego_ai_state * pai, Uint32 value, Uint16 counter )
+bool_t ego_ai_state::add_order( ego_ai_state * pai, const Uint32 value, const Uint16 counter )
 {
     bool_t retval;
 
@@ -6676,7 +6686,7 @@ bool_t ego_ai_state::add_order( ego_ai_state * pai, Uint32 value, Uint16 counter
 }
 
 //--------------------------------------------------------------------------------------------
-BBOARD_REF chr_add_billboard( const CHR_REF & ichr, Uint32 lifetime_secs )
+BBOARD_REF chr_add_billboard( const CHR_REF & ichr, const Uint32 lifetime_secs )
 {
     /// \author BB
     /// \details  Attach a basic billboard to a character. You set the billboard texture
@@ -6711,7 +6721,7 @@ BBOARD_REF chr_add_billboard( const CHR_REF & ichr, Uint32 lifetime_secs )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char * txt, SDL_Color text_color, GLXvector4f tint, int lifetime_secs, BIT_FIELD opt_bits )
+ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char * txt, const SDL_Color text_color, const GLXvector4f tint, const int lifetime_secs, const BIT_FIELD opt_bits )
 {
     ego_chr            * pchr;
     ego_billboard_data * pbb;
@@ -6745,17 +6755,17 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
         if ( HAS_SOME_BITS( opt_bits, bb_opt_randomize_pos ) )
         {
             // make a random offset from the character
-            pbb->offset[XX] = ((( rand() << 1 ) - RAND_MAX ) / ( float )RAND_MAX ) * GRID_SIZE / 5.0f;
-            pbb->offset[YY] = ((( rand() << 1 ) - RAND_MAX ) / ( float )RAND_MAX ) * GRID_SIZE / 5.0f;
-            pbb->offset[ZZ] = ((( rand() << 1 ) - RAND_MAX ) / ( float )RAND_MAX ) * GRID_SIZE / 5.0f;
+            pbb->offset[XX] = ((( rand() << 1 ) - RAND_MAX ) / ( const float )RAND_MAX ) * GRID_SIZE / 5.0f;
+            pbb->offset[YY] = ((( rand() << 1 ) - RAND_MAX ) / ( const float )RAND_MAX ) * GRID_SIZE / 5.0f;
+            pbb->offset[ZZ] = ((( rand() << 1 ) - RAND_MAX ) / ( const float )RAND_MAX ) * GRID_SIZE / 5.0f;
         }
 
         if ( HAS_SOME_BITS( opt_bits, bb_opt_randomize_vel ) )
         {
             // make the text fly away in a random direction
-            pbb->offset_add[XX] += ((( rand() << 1 ) - RAND_MAX ) / ( float )RAND_MAX ) * 2.0f * GRID_SIZE / lifetime_secs / TARGET_UPS;
-            pbb->offset_add[YY] += ((( rand() << 1 ) - RAND_MAX ) / ( float )RAND_MAX ) * 2.0f * GRID_SIZE / lifetime_secs / TARGET_UPS;
-            pbb->offset_add[ZZ] += ((( rand() << 1 ) - RAND_MAX ) / ( float )RAND_MAX ) * 2.0f * GRID_SIZE / lifetime_secs / TARGET_UPS;
+            pbb->offset_add[XX] += ((( rand() << 1 ) - RAND_MAX ) / ( const float )RAND_MAX ) * 2.0f * GRID_SIZE / lifetime_secs / TARGET_UPS;
+            pbb->offset_add[YY] += ((( rand() << 1 ) - RAND_MAX ) / ( const float )RAND_MAX ) * 2.0f * GRID_SIZE / lifetime_secs / TARGET_UPS;
+            pbb->offset_add[ZZ] += ((( rand() << 1 ) - RAND_MAX ) / ( const float )RAND_MAX ) * 2.0f * GRID_SIZE / lifetime_secs / TARGET_UPS;
         }
 
         if ( HAS_SOME_BITS( opt_bits, bb_opt_fade ) )
@@ -6792,7 +6802,7 @@ ego_billboard_data * chr_make_text_billboard( const CHR_REF & ichr, const char *
 }
 
 //--------------------------------------------------------------------------------------------
-const char * ego_chr::get_name( const CHR_REF & ichr, Uint32 bits )
+const char * ego_chr::get_name( const CHR_REF & ichr, const Uint32 bits )
 {
     static STRING szName;
 
@@ -6859,17 +6869,19 @@ const char * ego_chr::get_name( const CHR_REF & ichr, Uint32 bits )
 }
 
 //--------------------------------------------------------------------------------------------
-const char * ego_chr::get_gender_possessive( const CHR_REF & ichr, char buffer[], size_t buffer_len )
+const char * ego_chr::get_gender_possessive( const CHR_REF & ichr, char buffer[], const size_t src_buffer_len )
 {
     static STRING szTmp = EMPTY_CSTR;
     ego_chr * pchr;
 
+    size_t dst_buffer_len = src_buffer_len;
+
     if ( NULL == buffer )
     {
         buffer = szTmp;
-        buffer_len = SDL_arraysize( szTmp );
+        dst_buffer_len = SDL_arraysize( szTmp );
     }
-    if ( 0 == buffer_len ) return buffer;
+    if ( 0 == dst_buffer_len ) return buffer;
 
     if ( !DEFINED_CHR( ichr ) )
     {
@@ -6880,32 +6892,34 @@ const char * ego_chr::get_gender_possessive( const CHR_REF & ichr, char buffer[]
 
     if ( GENDER_FEMALE == pchr->gender )
     {
-        SDL_snprintf( buffer, buffer_len, "her" );
+        SDL_snprintf( buffer, dst_buffer_len, "her" );
     }
     else if ( GENDER_MALE == pchr->gender )
     {
-        SDL_snprintf( buffer, buffer_len, "his" );
+        SDL_snprintf( buffer, dst_buffer_len, "his" );
     }
     else
     {
-        SDL_snprintf( buffer, buffer_len, "its" );
+        SDL_snprintf( buffer, dst_buffer_len, "its" );
     }
 
     return buffer;
 }
 
 //--------------------------------------------------------------------------------------------
-const char * ego_chr::get_gender_name( const CHR_REF & ichr, char buffer[], size_t buffer_len )
+const char * ego_chr::get_gender_name( const CHR_REF & ichr, char buffer[], const size_t src_buffer_len )
 {
     static STRING szTmp = EMPTY_CSTR;
     ego_chr * pchr;
 
+    size_t dst_buffer_len = src_buffer_len;
+
     if ( NULL == buffer )
     {
         buffer = szTmp;
-        buffer_len = SDL_arraysize( szTmp );
+        dst_buffer_len = SDL_arraysize( szTmp );
     }
-    if ( 0 == buffer_len ) return buffer;
+    if ( 0 == dst_buffer_len ) return buffer;
 
     if ( !DEFINED_CHR( ichr ) )
     {
@@ -6916,15 +6930,15 @@ const char * ego_chr::get_gender_name( const CHR_REF & ichr, char buffer[], size
 
     if ( GENDER_FEMALE == pchr->gender )
     {
-        SDL_snprintf( buffer, buffer_len, "female " );
+        SDL_snprintf( buffer, dst_buffer_len, "female " );
     }
     else if ( GENDER_MALE == pchr->gender )
     {
-        SDL_snprintf( buffer, buffer_len, "male " );
+        SDL_snprintf( buffer, dst_buffer_len, "male " );
     }
     else
     {
-        SDL_snprintf( buffer, buffer_len, " " );
+        SDL_snprintf( buffer, dst_buffer_len, " " );
     }
 
     return buffer;
@@ -6968,7 +6982,7 @@ const char * ego_chr::get_dir_name( const CHR_REF & ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
+egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, const bool_t update_matrix )
 {
     ///< \details BB@> use this function to update the pchr->prt_cv and  pchr->chr_min_cv with
     ///<       values that reflect the best possible collision volume
@@ -7116,7 +7130,7 @@ egoboo_rv ego_chr::update_collision_size( ego_chr * pchr, bool_t update_matrix )
 }
 
 //--------------------------------------------------------------------------------------------
-const char* describe_value( float value, float maxval, int * rank_ptr )
+const char* describe_value( const float value, const float maxval, int * rank_ptr )
 {
     /// \author ZF
     /// \details  This converts a stat number into a more descriptive word
@@ -7130,7 +7144,7 @@ const char* describe_value( float value, float maxval, int * rank_ptr )
 
     if ( cfg.feedback == FEEDBACK_NUMBER )
     {
-        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( int )value ) );
+        SDL_snprintf( retval, SDL_arraysize( retval ), "%2.1f", SFP8_TO_FLOAT(( const int )value ) );
         return retval;
     }
 
@@ -7157,7 +7171,7 @@ const char* describe_value( float value, float maxval, int * rank_ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-const char* describe_damage( float value, float maxval, int * rank_ptr )
+const char* describe_damage( const float value, const float maxval, int * rank_ptr )
 {
     /// \author ZF
     /// \details  This converts a damage value into a more descriptive word
@@ -7194,7 +7208,7 @@ const char* describe_damage( float value, float maxval, int * rank_ptr )
 }
 
 //--------------------------------------------------------------------------------------------
-const char* describe_wounds( float max, float current )
+const char* describe_wounds( const float max, const float current )
 {
     /// \author ZF
     /// \details  This tells us how badly someone is injured
@@ -7374,7 +7388,7 @@ void reset_teams()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_teleport( const CHR_REF & ichr, float x, float y, float z, FACING_T facing_z )
+bool_t chr_teleport( const CHR_REF & ichr, const float x, const float y, const float z, const FACING_T facing_z )
 {
     /// \author BB
     /// \details  Determine whether the character can be teleported to the specified location
@@ -7485,7 +7499,7 @@ bool_t ego_ai_state::set_changed( ego_ai_state * pai )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::matrix_valid( ego_chr * pchr )
+bool_t ego_chr::matrix_valid( const ego_chr * pchr )
 {
     /// \author BB
     /// \details  Determine whether the character has a valid matrix
@@ -7498,7 +7512,7 @@ bool_t ego_chr::matrix_valid( ego_chr * pchr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t apply_reflection_matrix( gfx_mad_instance * pgfx_inst, float grid_level )
+bool_t apply_reflection_matrix( gfx_mad_instance * pgfx_inst, const float grid_level )
 {
     /// \author BB
     /// \details  Generate the extra data needed to display a reflection for this character
@@ -7544,7 +7558,7 @@ egoboo_rv ego_chr::matrix_data_needs_update( ego_chr * pchr, gfx_mad_matrix_data
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::update_matrix( ego_chr * pchr, bool_t update_size )
+egoboo_rv ego_chr::update_matrix( ego_chr * pchr, const bool_t update_size )
 {
     /// \author BB
     /// \details  Do everything necessary to set the current matrix for this character.
@@ -7644,7 +7658,7 @@ bool_t ego_ai_state::set_bumplast( ego_ai_state * pself, const CHR_REF & ichr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-CHR_REF chr_has_inventory_idsz( const CHR_REF & ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last )
+CHR_REF chr_has_inventory_idsz( const CHR_REF & ichr, const IDSZ idsz, const bool_t equipped, CHR_REF * pack_last )
 {
     /// \author BB
     /// \details  check the pack a matching item
@@ -7681,7 +7695,7 @@ CHR_REF chr_has_inventory_idsz( const CHR_REF & ichr, IDSZ idsz, bool_t equipped
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF chr_holding_idsz( const CHR_REF & ichr, IDSZ idsz )
+CHR_REF chr_holding_idsz( const CHR_REF & ichr, const IDSZ idsz )
 {
     /// \author BB
     /// \details  check the character's hands for a matching item
@@ -7724,7 +7738,7 @@ CHR_REF chr_holding_idsz( const CHR_REF & ichr, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF chr_has_item_idsz( const CHR_REF & ichr, IDSZ idsz, bool_t equipped, CHR_REF * pack_last )
+CHR_REF chr_has_item_idsz( const CHR_REF & ichr, const IDSZ idsz, const bool_t equipped, CHR_REF * pack_last )
 {
     /// \author BB
     /// \details  is ichr holding an item matching idsz, or is such an item in his pack?
@@ -7833,7 +7847,7 @@ int ego_chr::get_price( const CHR_REF & ichr )
     if ( !LOADED_CAP( icap ) ) return 0;
     pcap = CapStack + icap;
 
-    price = ( float ) pcap->skincost[iskin];
+    price = ( const float ) pcap->skincost[iskin];
 
     // Items spawned in shops are more valuable
     if ( !pchr->isshopitem ) price *= 0.5f;
@@ -7847,7 +7861,7 @@ int ego_chr::get_price( const CHR_REF & ichr )
     {
         if ( 0 != pchr->ammo )
         {
-            price *= ( float ) pchr->ammo / ( float ) pchr->ammo_max;
+            price *= ( const float ) pchr->ammo / ( const float ) pchr->ammo_max;
         }
     }
 
@@ -7855,7 +7869,7 @@ int ego_chr::get_price( const CHR_REF & ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_enviro_grid_level( ego_chr * pchr, float level )
+void ego_chr::set_enviro_grid_level( ego_chr * pchr, const float level )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7868,7 +7882,7 @@ void ego_chr::set_enviro_grid_level( ego_chr * pchr, float level )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_redshift( ego_chr * pchr, int rs )
+void ego_chr::set_redshift( ego_chr * pchr, const int rs )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7878,7 +7892,7 @@ void ego_chr::set_redshift( ego_chr * pchr, int rs )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_grnshift( ego_chr * pchr, int gs )
+void ego_chr::set_grnshift( ego_chr * pchr, const int gs )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7888,7 +7902,7 @@ void ego_chr::set_grnshift( ego_chr * pchr, int gs )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_blushift( ego_chr * pchr, int bs )
+void ego_chr::set_blushift( ego_chr * pchr, const int bs )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7898,7 +7912,7 @@ void ego_chr::set_blushift( ego_chr * pchr, int bs )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_sheen( ego_chr * pchr, int sheen )
+void ego_chr::set_sheen( ego_chr * pchr, const int sheen )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7908,7 +7922,7 @@ void ego_chr::set_sheen( ego_chr * pchr, int sheen )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_alpha( ego_chr * pchr, int alpha )
+void ego_chr::set_alpha( ego_chr * pchr, const int alpha )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7918,7 +7932,7 @@ void ego_chr::set_alpha( ego_chr * pchr, int alpha )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_light( ego_chr * pchr, int light )
+void ego_chr::set_light( ego_chr * pchr, const int light )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7928,7 +7942,7 @@ void ego_chr::set_light( ego_chr * pchr, int light )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_fly_height( ego_chr * pchr, float height )
+void ego_chr::set_fly_height( ego_chr * pchr, const float height )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7936,7 +7950,7 @@ void ego_chr::set_fly_height( ego_chr * pchr, float height )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr_data::set_fly_height( ego_chr_data * pchr, float height )
+void ego_chr_data::set_fly_height( ego_chr_data * pchr, const float height )
 {
     if ( NULL == pchr ) return;
 
@@ -7946,7 +7960,7 @@ void ego_chr_data::set_fly_height( ego_chr_data * pchr, float height )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr::set_jump_number_reset( ego_chr * pchr, int number )
+void ego_chr::set_jump_number_reset( ego_chr * pchr, const int number )
 {
     if ( !DEFINED_PCHR( pchr ) ) return;
 
@@ -7954,7 +7968,7 @@ void ego_chr::set_jump_number_reset( ego_chr * pchr, int number )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_chr_data::set_jump_number_reset( ego_chr_data * pchr, int number )
+void ego_chr_data::set_jump_number_reset( ego_chr_data * pchr, const int number )
 {
     if ( NULL == pchr ) return;
 
@@ -7964,7 +7978,7 @@ void ego_chr_data::set_jump_number_reset( ego_chr_data * pchr, int number )
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF ego_chr::get_lowest_attachment( const CHR_REF & ichr, bool_t non_item )
+CHR_REF ego_chr::get_lowest_attachment( const CHR_REF & ichr, const bool_t non_item )
 {
     /// \author BB
     /// \details  Find the lowest attachment for a given object.
@@ -8017,10 +8031,10 @@ bool_t character_physics_get_mass_pair( ego_chr * pchr_a, ego_chr * pchr_b, floa
     if ( NULL == wtb ) wtb = &loc_wtb;
 
     infinite_weight = ( pchr_a->platform && pchr_a->is_flying_platform ) || ( INFINITE_WEIGHT == pchr_a->phys.weight );
-    *wta = infinite_weight ? -( float )INFINITE_WEIGHT : pchr_a->phys.weight;
+    *wta = infinite_weight ? -( const float )INFINITE_WEIGHT : pchr_a->phys.weight;
 
     infinite_weight = ( pchr_b->platform && pchr_b->is_flying_platform ) || ( INFINITE_WEIGHT == pchr_b->phys.weight );
-    *wtb = infinite_weight ? -( float )INFINITE_WEIGHT : pchr_b->phys.weight;
+    *wtb = infinite_weight ? -( const float )INFINITE_WEIGHT : pchr_b->phys.weight;
 
     if ( 0.0f == *wta && 0.0f == *wtb )
     {
@@ -8029,12 +8043,12 @@ bool_t character_physics_get_mass_pair( ego_chr * pchr_a, ego_chr * pchr_b, floa
     else if ( 0.0f == *wta )
     {
         *wta = 1;
-        *wtb = -( float )INFINITE_WEIGHT;
+        *wtb = -( const float )INFINITE_WEIGHT;
     }
     else if ( 0.0f == *wtb )
     {
         *wtb = 1;
-        *wta = -( float )INFINITE_WEIGHT;
+        *wta = -( const float )INFINITE_WEIGHT;
     }
 
     if ( 0.0f == pchr_a->phys.bumpdampen && 0.0f == pchr_b->phys.bumpdampen )
@@ -8044,18 +8058,18 @@ bool_t character_physics_get_mass_pair( ego_chr * pchr_a, ego_chr * pchr_b, floa
     else if ( 0.0f == pchr_a->phys.bumpdampen )
     {
         // make the weight infinite
-        *wta = -( float )INFINITE_WEIGHT;
+        *wta = -( const float )INFINITE_WEIGHT;
     }
     else if ( 0.0f == pchr_b->phys.bumpdampen )
     {
         // make the weight infinite
-        *wtb = -( float )INFINITE_WEIGHT;
+        *wtb = -( const float )INFINITE_WEIGHT;
     }
     else
     {
         // adjust the weights to respect bumpdampen
-        if ( -( float )INFINITE_WEIGHT != *wta ) *wta /= pchr_a->phys.bumpdampen;
-        if ( -( float )INFINITE_WEIGHT != *wtb ) *wtb /= pchr_b->phys.bumpdampen;
+        if ( -( const float )INFINITE_WEIGHT != *wta ) *wta /= pchr_a->phys.bumpdampen;
+        if ( -( const float )INFINITE_WEIGHT != *wtb ) *wtb /= pchr_b->phys.bumpdampen;
     }
 
     return btrue;
@@ -8126,7 +8140,7 @@ egoboo_rv chr_invalidate_instances( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::set_action( ego_chr * pchr, int new_action, bool_t new_ready, bool_t override_action )
+egoboo_rv ego_chr::set_action( ego_chr * pchr, const int new_action, const bool_t new_ready, const bool_t override_action )
 {
     egoboo_rv retval;
 
@@ -8141,7 +8155,7 @@ egoboo_rv ego_chr::set_action( ego_chr * pchr, int new_action, bool_t new_ready,
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::start_anim( ego_chr * pchr, int new_action, bool_t new_ready, bool_t override_action )
+egoboo_rv ego_chr::start_anim( ego_chr * pchr, const int new_action, const bool_t new_ready, const bool_t override_action )
 {
     egoboo_rv retval;
 
@@ -8186,7 +8200,7 @@ egoboo_rv ego_chr::increment_frame( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::play_action( ego_chr * pchr, int new_action, bool_t new_ready )
+egoboo_rv ego_chr::play_action( ego_chr * pchr, const int new_action, const bool_t new_ready )
 {
     egoboo_rv retval;
 
@@ -8287,7 +8301,7 @@ bool_t chr_update_pos( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::set_pos( ego_chr * pchr, fvec3_base_t pos )
+bool_t ego_chr::set_pos( ego_chr * pchr, const fvec3_base_t pos )
 {
     bool_t retval = bfalse;
 
@@ -8306,7 +8320,7 @@ bool_t ego_chr::set_pos( ego_chr * pchr, fvec3_base_t pos )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::set_maxaccel( ego_chr * pchr, float new_val )
+bool_t ego_chr::set_maxaccel( ego_chr * pchr, const float new_val )
 {
     bool_t retval = bfalse;
     float ftmp;
@@ -8382,7 +8396,7 @@ ego_chr_bundle__validate_fail:
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_bundle_chr::set( ego_chr * pchr )
+egoboo_rv ego_bundle_chr::set( const ego_chr * pchr )
 {
     // blank out old data
     if ( NULL == ctor_this( this ) ) return rv_error;
@@ -8390,7 +8404,7 @@ egoboo_rv ego_bundle_chr::set( ego_chr * pchr )
     if ( NULL == pchr ) return rv_success;
 
     // set the particle pointer
-    _chr_ptr = pchr;
+    _chr_ptr = ( ego_chr * )pchr;
 
     return validate();
 }
@@ -8406,13 +8420,13 @@ void character_physics_initialize_all()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_mesh_attached( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_mesh_attached( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
 {
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_mesh( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_mesh( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
 {
     ego_chr             * loc_pchr;
     ego_cap             * loc_pcap;
@@ -8485,13 +8499,13 @@ bool_t chr_bump_mesh( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_grid_attached( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_grid_attached( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
 {
     return bfalse;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_bump_grid( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, float dt )
+bool_t chr_bump_grid( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
 {
     ego_chr             * loc_pchr;
     ego_cap             * loc_pcap;
@@ -8740,7 +8754,7 @@ bool_t chr_bump_grid( ego_bundle_chr & bdl, fvec3_t test_pos, fvec3_t test_vel, 
 }
 
 //--------------------------------------------------------------------------------------------
-void character_physics_finalize_one( ego_bundle_chr & bdl, float dt )
+void character_physics_finalize_one( ego_bundle_chr & bdl, const float dt )
 {
     bool_t bumped_mesh = bfalse, bumped_grid  = bfalse, needs_update = bfalse;
 
@@ -8830,7 +8844,7 @@ void character_physics_finalize_one( ego_bundle_chr & bdl, float dt )
 }
 
 //--------------------------------------------------------------------------------------------
-void character_physics_finalize_all( float dt )
+void character_physics_finalize_all( const float dt )
 {
     // accumulate the accumulators
     CHR_BEGIN_LOOP_PROCESSING( ichr, pchr )
@@ -8861,24 +8875,26 @@ bool_t ego_chr::update_breadcrumb_raw( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::update_breadcrumb( ego_chr * pchr, bool_t force )
+bool_t ego_chr::update_breadcrumb( ego_chr * pchr, const bool_t force )
 {
     Uint32 new_grid;
     bool_t retval = bfalse;
     bool_t needs_update = bfalse;
     ego_breadcrumb * bc_ptr, bc;
 
+    bool_t loc_force = force;
+
     if ( !VALID_PCHR( pchr ) ) return bfalse;
 
     bc_ptr = breadcrumb_list_last_valid( &( pchr->crumbs ) );
     if ( NULL == bc_ptr )
     {
-        force  = btrue;
+        loc_force  = btrue;
         bc_ptr = &bc;
         breadcrumb_init_chr( bc_ptr, pchr );
     }
 
-    if ( force )
+    if ( loc_force )
     {
         needs_update = btrue;
     }
@@ -8943,7 +8959,7 @@ bool_t ego_chr::update_safe_raw( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::update_safe( ego_chr * pchr, bool_t force )
+bool_t ego_chr::update_safe( ego_chr * pchr, const bool_t force )
 {
     Uint32 new_grid;
     bool_t retval = bfalse;
@@ -9122,7 +9138,7 @@ bool_t pack_validate( ego_pack * ppack )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
+bool_t pack_add_item( ego_pack * ppack, const CHR_REF & item )
 {
     ego_chr  * pitem;
     ego_pack * pitem_pack;
@@ -9170,7 +9186,7 @@ bool_t pack_add_item( ego_pack * ppack, CHR_REF item )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t pack_remove_item( ego_pack * ppack, CHR_REF iparent, CHR_REF iitem )
+bool_t pack_remove_item( ego_pack * ppack, const CHR_REF & iparent, const CHR_REF & iitem )
 {
     CHR_REF old_next;
     ego_chr * pitem, * pparent;
@@ -9270,7 +9286,7 @@ bool_t chr_inventory_add_item( const CHR_REF & item, const CHR_REF & character )
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF chr_inventory_remove_item( const CHR_REF & ichr, grip_offset_t grip_off, bool_t ignorekurse )
+CHR_REF chr_inventory_remove_item( const CHR_REF & ichr, const grip_offset_t grip_off, const bool_t ignorekurse )
 {
     ego_chr * pchr;
     CHR_REF iitem;
@@ -9480,7 +9496,7 @@ bool_t chr_pack_add_item( const CHR_REF & item, const CHR_REF & character )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem )
+bool_t chr_pack_remove_item( const CHR_REF & ichr, const CHR_REF & iparent, const CHR_REF & iitem )
 {
     ego_chr  * pchr;
     ego_pack * pchr_pack;
@@ -9504,7 +9520,7 @@ bool_t chr_pack_remove_item( CHR_REF ichr, CHR_REF iparent, CHR_REF iitem )
 }
 
 //--------------------------------------------------------------------------------------------
-CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, grip_offset_t grip_off, bool_t ignorekurse )
+CHR_REF chr_pack_get_item( const CHR_REF & chr_ref, const grip_offset_t grip_off, const bool_t ignorekurse )
 {
     /// \author ZZ
     /// \details  This function takes the last item in the chrcharacter's pack and puts
@@ -9638,7 +9654,7 @@ float calc_dismount_lerp( const ego_chr * pchr_a, const ego_chr * pchr_b )
     dismount_lerp_a = 1.0f;
     if ( pchr_a->dismount_timer > 0 && pchr_a->dismount_object == ichr_b )
     {
-        dismount_lerp_a = ( float )pchr_a->dismount_timer / ( float )PHYS_DISMOUNT_TIME;
+        dismount_lerp_a = ( const float )pchr_a->dismount_timer / ( const float )PHYS_DISMOUNT_TIME;
         dismount_lerp_a = 1.0f - CLIP( dismount_lerp_a, 0.0f, 1.0f );
         found = ( 1.0f != dismount_lerp_a );
     }
@@ -9646,7 +9662,7 @@ float calc_dismount_lerp( const ego_chr * pchr_a, const ego_chr * pchr_b )
     dismount_lerp_b = 1.0f;
     if ( pchr_b->dismount_timer > 0 && pchr_b->dismount_object == ichr_a )
     {
-        dismount_lerp_b = ( float )pchr_b->dismount_timer / ( float )PHYS_DISMOUNT_TIME;
+        dismount_lerp_b = ( const float )pchr_b->dismount_timer / ( const float )PHYS_DISMOUNT_TIME;
         dismount_lerp_b = 1.0f - CLIP( dismount_lerp_b, 0.0f, 1.0f );
         found = ( 1.0f != dismount_lerp_b );
     }
@@ -9655,12 +9671,13 @@ float calc_dismount_lerp( const ego_chr * pchr_a, const ego_chr * pchr_b )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t chr_copy_enviro( ego_chr * chr_psrc, ego_chr * chr_pdst )
+bool_t chr_copy_enviro( const ego_chr * chr_psrc, ego_chr * chr_pdst )
 {
     /// \author BB
     /// \details do a deep copy on the character's enviro data
 
-    ego_chr_environment * psrc, * pdst;
+    const ego_chr_environment * psrc;
+    ego_chr_environment * pdst;
 
     if ( NULL == chr_psrc || NULL == chr_pdst ) return bfalse;
 
@@ -9675,7 +9692,7 @@ bool_t chr_copy_enviro( ego_chr * chr_psrc, ego_chr * chr_pdst )
 
     // now just copy the other data.
     // use SDL_memmove() in the odd case the regions overlap
-    SDL_memmove( psrc, pdst, sizeof( *psrc ) );
+    SDL_memmove( pdst, psrc, sizeof( *psrc ) );
 
     return btrue;
 }
@@ -10074,7 +10091,7 @@ ego_chr_cap_data::ego_chr_cap_data() :
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::download_cap( ego_chr * pchr, ego_cap * pcap )
+bool_t ego_chr::download_cap( ego_chr * pchr, const ego_cap * pcap )
 {
     if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
 
@@ -10084,14 +10101,16 @@ bool_t ego_chr::download_cap( ego_chr * pchr, ego_cap * pcap )
 
     if ( rv )
     {
-        /* add something here */
+        // this must be done after ego_chr_data::download_cap() so that the
+        // more complicatd collision volumes will be updated
+        ego_chr::update_collision_size( pchr, btrue );
     }
 
     return rv;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr_data::download_cap( ego_chr_data * pchr, ego_cap * pcap )
+bool_t ego_chr_data::download_cap( ego_chr_data * pchr, const ego_cap * pcap )
 {
     bool_t rv = ego_chr_cap_data::download_cap( pchr, pcap );
 
@@ -10233,7 +10252,7 @@ bool_t ego_chr_data::download_cap( ego_chr_data * pchr, ego_cap * pcap )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr_cap_data::download_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
+bool_t ego_chr_cap_data::download_cap( ego_chr_cap_data * pchr, const ego_cap * pcap )
 {
     /// \author BB
     /// \details  grab all of the data from the data.txt file
@@ -10376,7 +10395,7 @@ bool_t ego_chr_cap_data::download_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr::upload_cap( ego_chr * pchr, ego_cap * pcap )
+bool_t ego_chr::upload_cap( const ego_chr * pchr, ego_cap * pcap )
 {
     if ( !ALLOCATED_PCHR( pchr ) ) return bfalse;
 
@@ -10386,18 +10405,11 @@ bool_t ego_chr::upload_cap( ego_chr * pchr, ego_cap * pcap )
 
     bool_t rv = ego_chr_data::upload_cap( pchr, pcap );
 
-    if ( rv )
-    {
-        // this must be done after ego_chr_data::upload_cap() so that the
-        // more complicatd collision volumes will be updated
-        ego_chr::update_collision_size( pchr, btrue );
-    }
-
     return rv;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr_data::upload_cap( ego_chr_data * pchr, ego_cap * pcap )
+bool_t ego_chr_data::upload_cap( const ego_chr_data * pchr, ego_cap * pcap )
 {
     /// \author BB
     /// \details  prepare a character profile for exporting, by uploading some special values into the
@@ -10519,7 +10531,7 @@ bool_t ego_chr_data::upload_cap( ego_chr_data * pchr, ego_cap * pcap )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_chr_cap_data::upload_cap( ego_chr_cap_data * pchr, ego_cap * pcap )
+bool_t ego_chr_cap_data::upload_cap( const ego_chr_cap_data * pchr, ego_cap * pcap )
 {
     /// \author BB
     /// \details  prepare a character profile for exporting, by uploading some special values into the
@@ -11144,7 +11156,7 @@ bool_t ego_obj_chr::request_terminate( ego_bundle_chr & bdl )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::set_frame( ego_chr * pchr, int frame, int ilip )
+egoboo_rv ego_chr::set_frame( ego_chr * pchr, const int frame, const int ilip )
 {
     /// \author ZZ
     /// \details  This function sets the frame for a character explicitly.
@@ -11163,7 +11175,7 @@ egoboo_rv ego_chr::set_frame( ego_chr * pchr, int frame, int ilip )
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv ego_chr::set_anim( ego_chr * pchr, int action, int frame, int ilip )
+egoboo_rv ego_chr::set_anim( ego_chr * pchr, const int src_action, const int frame, const int ilip )
 {
     /// \author ZZ
     /// \details  This function sets a frame and an action explicitly
@@ -11182,11 +11194,11 @@ egoboo_rv ego_chr::set_anim( ego_chr * pchr, int action, int frame, int ilip )
     pmad = MadStack + pmad_inst->imad;
 
     // grab the correct action
-    action = mad_get_action( pmad_inst->imad, action );
+    int dst_action = mad_get_action( pmad_inst->imad, src_action );
 
     // set the action and frame
     retval = rv_fail;
-    if ( rv_success == ego_chr::set_action( pchr, action, btrue, btrue ) )
+    if ( rv_success == ego_chr::set_action( pchr, dst_action, btrue, btrue ) )
     {
         retval = ego_chr::set_frame( pchr, frame, ilip );
     }
@@ -11196,7 +11208,7 @@ egoboo_rv ego_chr::set_anim( ego_chr * pchr, int action, int frame, int ilip )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset )
+int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, const int vrt_offset )
 {
     /// \author BB
     /// \details  Fill the grip_verts[] array from the mount's data.
@@ -11252,7 +11264,7 @@ int get_grip_verts( Uint16 grip_verts[], const CHR_REF & imount, int vrt_offset 
 }
 
 //--------------------------------------------------------------------------------------------
-int convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_t dst_point[] )
+int convert_grip_to_local_points( ego_chr * pholder, const Uint16 grip_verts[], fvec4_t dst_point[] )
 {
     /// \author ZZ
     /// \details  a helper function for gfx_mad_matrix_data::generate_weapon_matrix()
@@ -11307,7 +11319,7 @@ int convert_grip_to_local_points( ego_chr * pholder, Uint16 grip_verts[], fvec4_
 }
 
 //--------------------------------------------------------------------------------------------
-int convert_grip_to_global_points( const CHR_REF & iholder, Uint16 grip_verts[], fvec4_t   dst_point[] )
+int convert_grip_to_global_points( const CHR_REF & iholder, const Uint16 grip_verts[], fvec4_t dst_point[] )
 {
     /// \author ZZ
     /// \details  a helper function for gfx_mad_matrix_data::generate_weapon_matrix()

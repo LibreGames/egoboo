@@ -250,7 +250,7 @@ bool_t unlink_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz )
+bool_t remove_all_enchants_with_idsz( const CHR_REF & ichr, const IDSZ remove_idsz )
 {
     /// \author ZF
     /// \details  This function removes all enchants with the character that has the specified
@@ -428,7 +428,7 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
 }
 
 //--------------------------------------------------------------------------------------------
-ENC_REF ego_enc::value_filled( const ENC_REF &  ienc, int value_idx )
+ENC_REF ego_enc::value_filled( const ENC_REF & ienc, const int value_idx )
 {
     /// \author ZZ
     /// \details  This function returns MAX_ENC if the enchantment's target has no conflicting
@@ -466,7 +466,7 @@ ENC_REF ego_enc::value_filled( const ENC_REF &  ienc, int value_idx )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & profile )
+void ego_enc::apply_set( const ENC_REF & ienc, const int value_idx, const PRO_REF & profile )
 {
     /// \author ZZ
     /// \details  This function sets and saves one of the character's stats
@@ -646,7 +646,7 @@ void ego_enc::apply_set( const ENC_REF &  ienc, int value_idx, const PRO_REF & p
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_enc::apply_add( const ENC_REF & ienc, int value_idx, const EVE_REF & ieve )
+void ego_enc::apply_add( const ENC_REF & ienc, const int value_idx, const EVE_REF & ieve )
 {
     /// \author ZZ
     /// \details  This function does cumulative modification to character stats
@@ -1347,7 +1347,7 @@ EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF & ie
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
+void ego_enc::remove_set( const ENC_REF & ienc, const int value_idx )
 {
     /// \author ZZ
     /// \details  This function unsets a set value
@@ -1467,7 +1467,7 @@ void ego_enc::remove_set( const ENC_REF & ienc, int value_idx )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_enc::remove_add( const ENC_REF & ienc, int value_idx )
+void ego_enc::remove_add( const ENC_REF & ienc, const int value_idx )
 {
     /// \author ZZ
     /// \details  This function undoes cumulative modification to character stats

@@ -40,11 +40,11 @@ TX_REF           meshlasttexture = TX_REF( INVALID_TX_TEXTURE );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile );
+static bool_t animate_tile( ego_mpd * pmesh, const Uint32 itile );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void animate_all_tiles( ego_mpd   * pmesh )
+void animate_all_tiles( ego_mpd * pmesh )
 {
     Uint32 cnt;
     Uint32 tile_count;
@@ -60,7 +60,7 @@ void animate_all_tiles( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
+bool_t animate_tile( ego_mpd * pmesh, const Uint32 itile )
 {
     /// \author BB
     /// \details animate a given tile
@@ -109,7 +109,7 @@ bool_t animate_tile( ego_mpd   * pmesh, Uint32 itile )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_fan( ego_mpd   * pmesh, Uint32 itile )
+void render_fan( const ego_mpd * pmesh, const Uint32 itile )
 {
     /// \author ZZ
     /// \details  This function draws a mesh itile
@@ -122,8 +122,8 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
     Uint8  type;
     int    texture;
 
-    ego_tile_mem  * ptmem;
-    ego_tile_info * ptile;
+    const ego_tile_mem  * ptmem;
+    const ego_tile_info * ptile;
 
     if ( NULL == pmesh ) return;
     ptmem  = &( pmesh->tmem );
@@ -197,7 +197,7 @@ void render_fan( ego_mpd   * pmesh, Uint32 itile )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
+void render_hmap_fan( ego_mpd * pmesh, const Uint32 itile )
 {
     /// \author ZZ
     /// \details  This function draws a mesh itile
@@ -279,7 +279,7 @@ void render_hmap_fan( ego_mpd   * pmesh, Uint32 itile )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
+void render_water_fan( ego_mpd * pmesh, const Uint32 itile, const Uint8 layer )
 {
     /// \author ZZ
     /// \details  This function draws a water itile
@@ -298,19 +298,21 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
     float x1, y1, fx_off[4], fy_off[4];
     float falpha;
 
-    ego_mpd_info * pinfo;
-    ego_tile_mem     * ptmem;
-    ego_grid_mem     * pgmem;
-    ego_tile_info    * ptile;
+    const ego_mpd_info * pinfo;
+    const ego_tile_mem     * ptmem;
+    const ego_grid_mem     * pgmem;
+    const ego_tile_info    * ptile;
     oglx_texture_t   * ptex;
+
+    Uint32 loc_itile = itile;
 
     if ( NULL == pmesh ) return;
     pinfo = &( pmesh->info );
     ptmem = &( pmesh->tmem );
     pgmem = &( pmesh->gmem );
 
-    if ( !ego_mpd::grid_is_valid( pmesh, itile ) ) return;
-    ptile = ptmem->tile_list + itile;
+    if ( !ego_mpd::grid_is_valid( pmesh, loc_itile ) ) return;
+    ptile = ptmem->tile_list + loc_itile;
 
     falpha = FF_TO_FLOAT( water.layer[layer].alpha );
     falpha = CLIP( falpha, 0.0f, 1.0f );
@@ -318,11 +320,11 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
     /// \note BB@> the water info is for TILES, not for vertices, so ignore all vertex info and just draw the water
     ///            tile where it's supposed to go
 
-    ix = itile % pinfo->tiles_x;
-    iy = itile / pinfo->tiles_x;
+    ix = loc_itile % pinfo->tiles_x;
+    iy = loc_itile / pinfo->tiles_x;
 
     // To make life easier
-    type  = 0;                                         // Command type ( index to points in itile )
+    type  = 0;                                         // Command type ( index to points in loc_itile )
     offu  = water.layer[layer].tx.x;                   // Texture offsets
     offv  = water.layer[layer].tx.y;
     frame = water.layer[layer].frame;                  // Frame
@@ -333,8 +335,8 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
 
     ptex = TxTexture_get_ptr( texture );
 
-    x1 = ( float ) oglx_texture_GetTextureWidth( ptex ) / ( float ) oglx_texture_GetImageWidth( ptex );
-    y1 = ( float ) oglx_texture_GetTextureHeight( ptex ) / ( float ) oglx_texture_GetImageHeight( ptex );
+    x1 = ( const float ) oglx_texture_GetTextureWidth( ptex ) / ( const float ) oglx_texture_GetImageWidth( ptex );
+    y1 = ( const float ) oglx_texture_GetTextureHeight( ptex ) / ( const float ) oglx_texture_GetImageHeight( ptex );
 
     for ( cnt = 0; cnt < 4; cnt ++ )
     {
@@ -385,8 +387,8 @@ void render_water_fan( ego_mpd   * pmesh, Uint32 itile, Uint8 layer )
             v[cnt].tex[TT] = fy_off[cnt] + offv;
 
             // get the lighting info from the grid
-            itile = ego_mpd::get_tile_int( pmesh, jx, jy );
-            if ( ego_mpd::grid_light_one_corner( pmesh, itile, v[cnt].pos[ZZ], nrm, &dlight ) )
+            loc_itile = ego_mpd::get_tile_int( pmesh, jx, jy );
+            if ( ego_mpd::grid_light_one_corner( pmesh, loc_itile, v[cnt].pos[ZZ], nrm, &dlight ) )
             {
                 // take the v[cnt].color from the tnc vertices so that it is oriented prroperly
                 v[cnt].col[RR] = dlight * INV_FF + alight;

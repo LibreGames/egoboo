@@ -55,7 +55,7 @@ void fs_init()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void fs_removeDirectoryAndContents( const char *dirname, int recursive )
+void fs_removeDirectoryAndContents( const char *dirname, const int recursive )
 {
     /// \author ZZ
     /// \details  This function deletes all files in a directory,
@@ -332,7 +332,7 @@ FILE * fs_openConfigDirectoryFile( const char * relative_pathname, const char * 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fs_ensureUserFile( const char * relative_filename, bool_t required )
+bool_t fs_ensureUserFile( const char * relative_filename, const bool_t required )
 {
     /// \author BB
     /// \details  if the file does not exist in the user data directory, it is copied from the

@@ -34,7 +34,7 @@ struct ego_hash_node
     void          * data;
 
     static ego_hash_node * create( void * data, ego_hash_node * src = NULL );
-    static bool_t          destroy( ego_hash_node **, bool_t own_ptr );
+    static bool_t          destroy( ego_hash_node **, const bool_t own_ptr );
     static ego_hash_node * ctor_this( ego_hash_node * n, void * data );
     static bool_t          dtor_this( ego_hash_node * n );
     static ego_hash_node * insert_after( ego_hash_node lst[], ego_hash_node * n );
@@ -54,35 +54,35 @@ struct ego_hash_list
 
         static iterator * ctor_this( iterator * it );
         static void     * ptr( iterator * it );
-        static bool_t     set_begin( iterator * it, ego_hash_list * hlst );
-        static bool_t     done( iterator * it, ego_hash_list * hlst );
-        static bool_t     next( iterator * it, ego_hash_list * hlst );
+        static bool_t     set_begin( iterator * it, const ego_hash_list * hlst );
+        static bool_t     done( const iterator * it, const ego_hash_list * hlst );
+        static bool_t     next( iterator * it, const ego_hash_list * hlst );
     };
 
-    static ego_hash_list * create( int size, ego_hash_list * ptr = NULL );
-    static bool_t          destroy( ego_hash_list **, bool_t own_ptr = btrue );
+    static ego_hash_list * create( const int size, ego_hash_list * ptr = NULL );
+    static bool_t          destroy( ego_hash_list **, const bool_t own_ptr = btrue );
 
     static bool_t          dealloc( ego_hash_list * lst );
-    static bool_t          alloc( ego_hash_list * lst, int size );
+    static bool_t          alloc( ego_hash_list * lst, const int size );
     static bool_t          renew( ego_hash_list * lst );
 
     static size_t          count_nodes( ego_hash_list *plst );
     static int             get_allocd( ego_hash_list *plst );
-    static size_t          get_count( ego_hash_list *plst, int i );
-    static ego_hash_node * get_node( ego_hash_list *plst, int i );
+    static size_t          get_count( ego_hash_list *plst, const int i );
+    static ego_hash_node * get_node( ego_hash_list *plst, const int i );
 
-    static bool_t          set_allocd( ego_hash_list *plst,        int );
-    static bool_t          set_count( ego_hash_list *plst, int i, size_t );
-    static bool_t          set_node( ego_hash_list *plst, int i, ego_hash_node * );
+    static bool_t          set_allocd( ego_hash_list *plst, const int i );
+    static bool_t          set_count( ego_hash_list *plst, const int i, const size_t );
+    static bool_t          set_node( ego_hash_list *plst, const int i, ego_hash_node * );
 
-    static bool_t          insert_unique( ego_hash_list * phash, ego_hash_node * pnode );
+    static bool_t          insert_unique( ego_hash_list * phash, const ego_hash_node * pnode );
 
 protected:
 
-    static ego_hash_list * ctor_this( ego_hash_list * lst, int size );
+    static ego_hash_list * ctor_this( ego_hash_list * lst, const int size );
     static ego_hash_list * dtor_this( ego_hash_list * lst );
 
-    ego_hash_list( int size = -1 ) { _init(); ctor_this( this, size ); }
+    ego_hash_list( const int size = -1 ) { _init(); ctor_this( this, size ); }
     ~ego_hash_list() { dtor_this( this ); _init(); }
 
 private:

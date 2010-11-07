@@ -32,7 +32,7 @@ float            light_nrm[3] = {0.0f, 0.0f, 0.0f};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static bool_t lighting_sum_project( ego_lighting_cache * dst, ego_lighting_cache * src, fvec3_t vec, int dir );
+static bool_t lighting_sum_project( ego_lighting_cache * dst, ego_lighting_cache * src, fvec3_t vec, const int dir );
 
 static float  lighting_evaluate_cache_base( ego_lighting_cache_base * lvec, fvec3_base_t nrm, float * amb );
 
@@ -82,7 +82,7 @@ void lighting_vector_evaluate( lighting_vector_t lvec, fvec3_base_t nrm, float *
 }
 
 //--------------------------------------------------------------------------------------------
-void lighting_vector_sum( lighting_vector_t lvec, fvec3_base_t nrm, float direct, float ambient )
+void lighting_vector_sum( lighting_vector_t lvec, fvec3_base_t nrm, const float direct, const float ambient )
 {
     if ( nrm[kX] > 0.0f )
     {
@@ -145,7 +145,7 @@ bool_t lighting_cache_base_max_light( ego_lighting_cache_base * cache )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t lighting_cache_base_blend( ego_lighting_cache_base * cold, ego_lighting_cache_base * cnew, float keep )
+bool_t lighting_cache_base_blend( ego_lighting_cache_base * cold, ego_lighting_cache_base * cnew, const float keep )
 {
     int tnc;
     float max_delta;
@@ -219,7 +219,7 @@ bool_t lighting_cache_max_light( ego_lighting_cache * cache )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t lighting_cache_blend( ego_lighting_cache * cache, ego_lighting_cache * cnew, float keep )
+bool_t lighting_cache_blend( ego_lighting_cache * cache, ego_lighting_cache * cnew, const float keep )
 {
     if ( NULL == cache || NULL == cnew ) return bfalse;
 
@@ -271,7 +271,7 @@ bool_t lighting_project_cache( ego_lighting_cache * dst, ego_lighting_cache * sr
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache * src[], float u, float v )
+bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache * src[], const float u, const float v )
 {
     int   tnc;
     float wt_sum;
@@ -280,14 +280,15 @@ bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache 
 
     if ( NULL == lighting_cache_init( dst ) ) return bfalse;
 
-    u = CLIP( u, 0.0f, 1.0f );
-    v = CLIP( v, 0.0f, 1.0f );
+    float loc_u = u, loc_v = v;
+    loc_u = CLIP( loc_u, 0.0f, 1.0f );
+    loc_v = CLIP( loc_v, 0.0f, 1.0f );
 
     wt_sum = 0.0f;
 
     if ( NULL != src[0] )
     {
-        float wt = ( 1.0f - u ) * ( 1.0f - v );
+        float wt = ( 1.0f - loc_u ) * ( 1.0f - loc_v );
         for ( tnc = 0; tnc < LIGHTING_VEC_SIZE; tnc++ )
         {
             dst->low.lighting[tnc] += src[0]->low.lighting[tnc] * wt;
@@ -298,7 +299,7 @@ bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache 
 
     if ( NULL != src[1] )
     {
-        float wt = u * ( 1.0f - v );
+        float wt = loc_u * ( 1.0f - loc_v );
         for ( tnc = 0; tnc < LIGHTING_VEC_SIZE; tnc++ )
         {
             dst->low.lighting[tnc] += src[1]->low.lighting[tnc] * wt;
@@ -309,7 +310,7 @@ bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache 
 
     if ( NULL != src[2] )
     {
-        float wt = ( 1.0f - u ) * v;
+        float wt = ( 1.0f - loc_u ) * loc_v;
         for ( tnc = 0; tnc < LIGHTING_VEC_SIZE; tnc++ )
         {
             dst->low.lighting[tnc] += src[2]->low.lighting[tnc] * wt;
@@ -320,7 +321,7 @@ bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache 
 
     if ( NULL != src[3] )
     {
-        float wt = u * v;
+        float wt = loc_u * loc_v;
         for ( tnc = 0; tnc < LIGHTING_VEC_SIZE; tnc++ )
         {
             dst->low.lighting[tnc] += src[3]->low.lighting[tnc] * wt;
@@ -348,7 +349,7 @@ bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache 
 }
 
 //--------------------------------------------------------------------------------------------
-float lighting_cache_test( ego_lighting_cache * src[], float u, float v, float * low_delta, float * hgh_delta )
+float lighting_cache_test( ego_lighting_cache * src[], const float u, const float v, float * low_delta, float * hgh_delta )
 {
     /// \author BB
     /// \details  estimate the maximum change in the lighting at this point from the
@@ -365,14 +366,15 @@ float lighting_cache_test( ego_lighting_cache * src[], float u, float v, float *
     if ( NULL == low_delta ) low_delta = &loc_low_delta;
     if ( NULL == hgh_delta ) hgh_delta = &loc_hgh_delta;
 
-    u = CLIP( u, 0.0f, 1.0f );
-    v = CLIP( v, 0.0f, 1.0f );
+    float loc_u = u, loc_v = v;
+    loc_u = CLIP( loc_u, 0.0f, 1.0f );
+    loc_v = CLIP( loc_v, 0.0f, 1.0f );
 
     wt_sum = 0.0f;
 
     if ( NULL != src[0] )
     {
-        float wt = ( 1.0f - u ) * ( 1.0f - v );
+        float wt = ( 1.0f - loc_u ) * ( 1.0f - loc_v );
 
         delta      += wt * src[0]->max_delta;
         *low_delta += wt * src[0]->low.max_delta;
@@ -383,7 +385,7 @@ float lighting_cache_test( ego_lighting_cache * src[], float u, float v, float *
 
     if ( NULL != src[1] )
     {
-        float wt = u * ( 1.0f - v );
+        float wt = loc_u * ( 1.0f - loc_v );
 
         delta      += wt * src[1]->max_delta;
         *low_delta += wt * src[1]->low.max_delta;
@@ -394,7 +396,7 @@ float lighting_cache_test( ego_lighting_cache * src[], float u, float v, float *
 
     if ( NULL != src[2] )
     {
-        float wt = ( 1.0f - u ) * v;
+        float wt = ( 1.0f - loc_u ) * loc_v;
 
         delta      += wt * src[2]->max_delta;
         *low_delta += wt * src[2]->low.max_delta;
@@ -405,7 +407,7 @@ float lighting_cache_test( ego_lighting_cache * src[], float u, float v, float *
 
     if ( NULL != src[3] )
     {
-        float wt = u * v;
+        float wt = loc_u * loc_v;
 
         delta      += wt * src[3]->max_delta;
         *low_delta += wt * src[3]->low.max_delta;
@@ -425,7 +427,7 @@ float lighting_cache_test( ego_lighting_cache * src[], float u, float v, float *
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t lighting_sum_project( ego_lighting_cache * dst, ego_lighting_cache * src, fvec3_t vec, int dir )
+bool_t lighting_sum_project( ego_lighting_cache * dst, ego_lighting_cache * src, fvec3_t vec, const int dir )
 {
     if ( NULL == src || NULL == dst ) return bfalse;
 
@@ -518,7 +520,7 @@ float lighting_evaluate_cache_base( ego_lighting_cache_base * lcache, fvec3_base
 }
 
 //--------------------------------------------------------------------------------------------
-float lighting_evaluate_cache( ego_lighting_cache * src, fvec3_base_t nrm, float z, ego_aabb bbox, float * light_amb, float * light_dir )
+float lighting_evaluate_cache( ego_lighting_cache * src, fvec3_base_t nrm, const float z, const ego_aabb & bbox, float * light_amb, float * light_dir )
 {
     float loc_light_amb = 0.0f, loc_light_dir = 0.0f;
     float light_tot;

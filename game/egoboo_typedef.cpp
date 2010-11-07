@@ -55,7 +55,7 @@ const char * undo_idsz( IDSZ idsz )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst )
+bool_t frect_union( const frect_t * src1, const frect_t * src2, frect_t * dst )
 {
     if ( NULL == dst ) return bfalse;
 
@@ -65,11 +65,11 @@ bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst )
     }
     else if ( NULL == src1 )
     {
-        SDL_memmove( src2, dst, sizeof( frect_t ) );
+        SDL_memmove( dst, src2, sizeof( frect_t ) );
     }
     else if ( NULL == src2 )
     {
-        SDL_memmove( src1, dst, sizeof( frect_t ) );
+        SDL_memmove( dst, src1, sizeof( frect_t ) );
     }
     else
     {
@@ -102,7 +102,7 @@ bool_t frect_union( frect_t * src1, frect_t * src2, frect_t * dst )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t irect_point_inside( ego_irect_t * prect, int   ix, int   iy )
+bool_t irect_point_inside( ego_irect_t * prect, const int   ix, const int   iy )
 {
     if ( NULL == prect ) return bfalse;
 
@@ -113,7 +113,7 @@ bool_t irect_point_inside( ego_irect_t * prect, int   ix, int   iy )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t frect_point_inside( ego_frect_t * prect, float fx, float fy )
+bool_t frect_point_inside( ego_frect_t * prect, const float fx, const float fy )
 {
     if ( NULL == prect ) return bfalse;
 
@@ -134,7 +134,7 @@ void latch_input_init( latch_input_t * platch )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void pair_to_range( IPair pair, FRange * prange )
+void pair_to_range( const IPair pair, FRange * prange )
 {
     /// \author ZZ
     /// \details  convert from a pair to a range
@@ -162,7 +162,7 @@ void pair_to_range( IPair pair, FRange * prange )
 }
 
 //--------------------------------------------------------------------------------------------
-void range_to_pair( FRange range, IPair * ppair )
+void range_to_pair( const FRange range, IPair * ppair )
 {
     /// \author ZZ
     /// \details  convert from a range to a pair
@@ -185,7 +185,7 @@ void range_to_pair( FRange range, IPair * ppair )
 }
 
 //--------------------------------------------------------------------------------------------
-void ints_to_range( int ibase, int irand, FRange * prange )
+void ints_to_range( const int ibase, const int irand, FRange * prange )
 {
     IPair pair_tmp;
 
@@ -196,7 +196,7 @@ void ints_to_range( int ibase, int irand, FRange * prange )
 }
 
 //--------------------------------------------------------------------------------------------
-void floats_to_pair( float vmin, float vmax, IPair * ppair )
+void floats_to_pair( const float vmin, const float vmax, IPair * ppair )
 {
     FRange range_tmp;
 

@@ -77,7 +77,7 @@ static ego_link_stack_entry link_stack[LINK_STACK_MAX];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t link_follow_modname( const char * modname, bool_t push_current_module )
+bool_t link_follow_modname( const char * modname, const bool_t push_current_module )
 {
     /// \author BB
     /// \details  This causes the game to follow a link, given the module name

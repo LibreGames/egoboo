@@ -154,7 +154,7 @@ struct ego_input_device
 };
 
 void input_device_init( ego_input_device * pdevice );
-void input_device_add_latch( ego_input_device * pdevice, latch_input_t latch );
+void input_device_add_latch( ego_input_device * pdevice, const latch_input_t latch );
 
 //--------------------------------------------------------------------------------------------
 #define INVALID_PLAYER MAX_PLAYER
@@ -393,7 +393,7 @@ extern Uint32                  randsave;                  ///< Used in network t
 const net_instance * net_get_instance();
 bool_t               net_initialized();
 bool_t               net_get_host_active();
-bool_t               net_set_host_active( bool_t state );
+bool_t               net_set_host_active( const bool_t state );
 bool_t               net_waiting_for_players();
 void                 net_dispatch_packets();
 
@@ -423,12 +423,12 @@ int cl_joinGame( const char *hostname );
 void find_open_sessions();
 void sv_letPlayersJoin();
 void stop_players_from_joining();
-// int create_player(int host);
-// void turn_on_service(int service);
+// int create_player(const int host);
+// void turn_on_service(const int service);
 
 void net_reset_players();
 
-void tlatch_ary_init( ego_time_latch ary[], size_t len );
+void tlatch_ary_init( ego_time_latch ary[], const size_t len );
 
 ego_chr    * pla_get_pchr( const ego_player & rplayer );
 ego_player * net_get_ppla( const CHR_REF & ichr );

@@ -50,10 +50,10 @@ ego_camera gCamera;
 void ego_camera::rotmesh_init()
 {
     // Matrix init stuff (from remove.c)
-    rotmeshtopside    = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_TOPSIDE / ( 1.33333f );
-    rotmeshbottomside = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_BOTTOMSIDE / ( 1.33333f );
-    rotmeshup         = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_UP / ( 1.33333f );
-    rotmeshdown       = (( float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_DOWN / ( 1.33333f );
+    rotmeshtopside    = (( const float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_TOPSIDE / ( 1.33333f );
+    rotmeshbottomside = (( const float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_BOTTOMSIDE / ( 1.33333f );
+    rotmeshup         = (( const float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_UP / ( 1.33333f );
+    rotmeshdown       = (( const float )sdl_scr.x / sdl_scr.y ) * CAM_ROTMESH_DOWN / ( 1.33333f );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -84,12 +84,12 @@ ego_camera * ego_camera::ctor_this( ego_camera * pcam )
     pcam->ori.facing_z = FACING_T( pcam->turn_z_one * float( 0x00010000L ) );
     pcam->turnadd      =  0;
     pcam->sustain      =  0.60f;
-    pcam->turnupdown   = ( float )( PI / 4.0f );
+    pcam->turnupdown   = ( const float )( PI / 4.0f );
     pcam->roll         =  0;
     pcam->motion_blur  =  0;
 
     pcam->mView       = pcam->mViewSave = ViewMatrix( t1.v, t2.v, t3.v, 0 );
-    pcam->mProjection = ProjectionMatrix( .001f, 2000.0f, ( float )( CAM_FOV * PI / 180 ) ); // 60 degree CAM_FOV
+    pcam->mProjection = ProjectionMatrix( .001f, 2000.0f, ( const float )( CAM_FOV * PI / 180 ) ); // 60 degree CAM_FOV
     pcam->mProjection = MatrixMult( Translate( 0, 0, -0.999996f ), pcam->mProjection ); // Fix Z value...
     pcam->mProjection = MatrixMult( ScaleXYZ( -1, -1, 100000 ), pcam->mProjection );  // HUK // ...'cause it needs it
 
@@ -125,7 +125,7 @@ void dump_matrix( fmat_4x4_t a )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void ego_camera::look_at( ego_camera * pcam, float x, float y )
+void ego_camera::look_at( ego_camera * pcam, const float x, const float y )
 {
     /// \author ZZ
     /// \details  This function makes the camera turn to face the character
@@ -208,15 +208,18 @@ void ego_camera::make_matrix( ego_camera * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_camera::adjust_angle( ego_camera * pcam, float height )
+void ego_camera::adjust_angle( ego_camera * pcam, const float height )
 {
     /// \author ZZ
     /// \details  This function makes the camera look downwards as it is raised up
 
     float percentmin, percentmax;
-    if ( height < CAM_ZADD_MIN )  height = CAM_ZADD_MIN;
 
-    percentmax = ( height - CAM_ZADD_MIN ) / ( float )( CAM_ZADD_MAX - CAM_ZADD_MIN );
+    float loc_height = height;
+
+    if ( loc_height < CAM_ZADD_MIN )  loc_height = CAM_ZADD_MIN;
+
+    percentmax = ( loc_height - CAM_ZADD_MIN ) / ( const float )( CAM_ZADD_MAX - CAM_ZADD_MIN );
     percentmin = 1.0f - percentmax;
 
     pcam->turnupdown = (( CAM_UPDOWN_MIN * percentmin ) + ( CAM_UPDOWN_MAX * percentmax ) );
@@ -224,7 +227,7 @@ void ego_camera::adjust_angle( ego_camera * pcam, float height )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
+void ego_camera::move( ego_camera * pcam, const ego_mpd * pmesh )
 {
     /// \author ZZ
     /// \details  This function moves the camera
@@ -467,7 +470,7 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
             if ( control_is_pressed( INPUT_DEVICE_MOUSE,  CONTROL_CAMERA ) )
             {
                 pcam->turnadd += ( mous.x / 3.0f );
-                pcam->zaddgoto += ( float ) mous.y / 3.0f;
+                pcam->zaddgoto += ( const float ) mous.y / 3.0f;
                 if ( pcam->zaddgoto < CAM_ZADD_MIN )  pcam->zaddgoto = CAM_ZADD_MIN;
                 if ( pcam->zaddgoto > CAM_ZADD_MAX )  pcam->zaddgoto = CAM_ZADD_MAX;
 
@@ -521,8 +524,8 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
         }
     }
 
-    pcam->pos.x -= ( float )( pcam->mView.CNV( 0, 0 ) ) * pcam->turnadd; // xgg
-    pcam->pos.y += ( float )( pcam->mView.CNV( 1, 0 ) ) * -pcam->turnadd;
+    pcam->pos.x -= ( const float )( pcam->mView.CNV( 0, 0 ) ) * pcam->turnadd; // xgg
+    pcam->pos.y += ( const float )( pcam->mView.CNV( 1, 0 ) ) * -pcam->turnadd;
 
     // Center on target for doing rotation...
     if ( pcam->turn_time != 0 )
@@ -584,8 +587,8 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
 
     // Finish up the camera
     ego_camera::look_at( pcam, pcam->center.x, pcam->center.y );
-    pcam->pos.x = ( float ) pcam->center.x + ( pcam->zoom * SIN( pcam->turn_z_rad ) );
-    pcam->pos.y = ( float ) pcam->center.y + ( pcam->zoom * COS( pcam->turn_z_rad ) );
+    pcam->pos.x = ( const float ) pcam->center.x + ( pcam->zoom * SIN( pcam->turn_z_rad ) );
+    pcam->pos.y = ( const float ) pcam->center.y + ( pcam->zoom * COS( pcam->turn_z_rad ) );
 
     ego_camera::adjust_angle( pcam, pcam->pos.z );
 
@@ -596,7 +599,7 @@ void ego_camera::move( ego_camera * pcam, ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_camera::reset( ego_camera * pcam, ego_mpd   * pmesh )
+void ego_camera::reset( ego_camera * pcam, const ego_mpd * pmesh )
 {
     /// \author ZZ
     /// \details  This function makes sure the camera starts in a suitable position
@@ -628,7 +631,7 @@ void ego_camera::reset( ego_camera * pcam, ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_camera::reset_target( ego_camera * pcam, ego_mpd   * pmesh )
+bool_t ego_camera::reset_target( ego_camera * pcam, const ego_mpd * pmesh )
 {
     // \details BB@> Force the camera to focus in on the players. Should be called any time there is
     //               a "change of scene". With the new velocity-tracking of the camera, this would include

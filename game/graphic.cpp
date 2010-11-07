@@ -218,8 +218,8 @@ static void gfx_init_SDL_graphics();
 static void _flip_pages();
 static void _debug_print( const char *text );
 static int  _debug_vprintf( const char *format, va_list args );
-static int  _va_draw_string( float x, float y, const char *format, va_list args );
-static int  _draw_string_raw( float x, float y, const char *format, ... );
+static int  _va_draw_string( const float x, const float y, const char *format, va_list args );
+static int  _draw_string_raw( const float x, const float y, const char *format, ... );
 
 static void project_view( ego_camera * pcam );
 
@@ -228,7 +228,7 @@ static void init_bar_data();
 static void init_blip_data();
 static void init_map_data();
 
-static bool_t render_billboard( struct ego_camera * pcam, ego_billboard_data * pbb, float scale );
+static bool_t render_billboard( const ego_camera * pcam, ego_billboard_data * pbb, const float scale );
 
 static void gfx_update_timers();
 
@@ -246,7 +246,7 @@ static void render_water( ego_renderlist * prlist );
 
 static void gfx_make_dynalist( ego_camera * pcam );
 
-static void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const ego_frect_t & tx_rect, bool_t use_alpha = bfalse );
+static void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const ego_frect_t & tx_rect, const bool_t use_alpha = bfalse );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -305,21 +305,24 @@ int _debug_vprintf( const char *format, va_list args )
 }
 
 //--------------------------------------------------------------------------------------------
-int _va_draw_string( float x, float y, const char *format, va_list args )
+int _va_draw_string( const float x, const float y, const char *format, va_list args )
 {
     int cnt = 1;
     int x_stt;
     STRING szText;
     Uint8 cTmp;
 
+    float new_x = x;
+    float new_y = y;
+
     if ( SDL_vsnprintf( szText, SDL_arraysize( szText ) - 1, format, args ) <= 0 )
     {
-        return y;
+        return new_y;
     }
 
     gfx_begin_text();
     {
-        x_stt = x;
+        x_stt = new_x;
         cnt = 0;
         cTmp = szText[cnt];
         while ( CSTR_END != cTmp )
@@ -328,19 +331,19 @@ int _va_draw_string( float x, float y, const char *format, va_list args )
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                x = (( int( x ) ) & TABAND ) + TABADD;
+                new_x = (( int( new_x ) ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
-                x  = x_stt;
-                y += fontyspacing;
+                new_x  = x_stt;
+                new_y += fontyspacing;
             }
             else
             {
                 // Normal letter
                 cTmp = asciitofont[cTmp];
-                draw_one_font( cTmp, x, y );
-                x += fontxspacing[cTmp];
+                draw_one_font( cTmp, new_x, new_y );
+                new_x += fontxspacing[cTmp];
             }
 
             cnt++;
@@ -349,13 +352,13 @@ int _va_draw_string( float x, float y, const char *format, va_list args )
     }
     gfx_end_text();
 
-    y += fontyspacing;
+    new_y += fontyspacing;
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int _draw_string_raw( float x, float y, const char *format, ... )
+int _draw_string_raw( const float x, const float y, const char *format, ... )
 {
     /// \author BB
     /// \details  the same as draw string, but it does not use the gfx_begin_2d() ... gfx_end_2d()
@@ -363,11 +366,13 @@ int _draw_string_raw( float x, float y, const char *format, ... )
 
     va_list args;
 
+    float new_y = y;
+
     va_start( args, format );
-    y = _va_draw_string( x, y, format, args );
+    new_y = _va_draw_string( x, new_y, format, args );
     va_end( args );
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -579,7 +584,7 @@ void gfx_init_SDL_graphics()
     }
     else
     {
-        GFX_WIDTH = ( float )GFX_HEIGHT / ( float )sdl_vparam.height * ( float )sdl_vparam.width;
+        GFX_WIDTH = ( const float )GFX_HEIGHT / ( const float )sdl_vparam.height * ( const float )sdl_vparam.width;
         log_message( "Success!\n" );
     }
 
@@ -593,8 +598,8 @@ bool_t gfx_set_virtual_screen( gfx_config_data_t * pgfx )
 
     if ( NULL == pgfx ) return bfalse;
 
-    kx = ( float )GFX_WIDTH  / ( float )sdl_scr.x;
-    ky = ( float )GFX_HEIGHT / ( float )sdl_scr.y;
+    kx = ( const float )GFX_WIDTH  / ( const float )sdl_scr.x;
+    ky = ( const float )GFX_HEIGHT / ( const float )sdl_scr.y;
 
     if ( kx == ky )
     {
@@ -621,7 +626,7 @@ bool_t gfx_set_virtual_screen( gfx_config_data_t * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_config( gfx_config_data_t * pgfx, struct s_config_data * pcfg )
+bool_t gfx_synch_config( gfx_config_data_t * pgfx, const struct s_config_data * pcfg )
 {
     // call ego_gfx_config::init(), even if the config data is invalid
     if ( !gfx_config_data_init( pgfx ) ) return bfalse;
@@ -692,7 +697,7 @@ bool_t ego_gfx_config::init( ego_gfx_config * pgfx )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, struct s_config_data * pcfg )
+bool_t gfx_synch_oglx_texture_parameters( struct s_oglx_texture_parameters * ptex, const struct s_config_data * pcfg )
 {
     /// \author BB
     /// \details  synch the texture parameters with the video mode
@@ -730,7 +735,7 @@ int debug_printf( const char *format, ... )
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map )
+void draw_blip( const float sizeFactor, const Uint8 color, const float x, const float y, const bool_t mini_map )
 {
     /// \author ZZ
     /// \details  This function draws a single blip
@@ -759,10 +764,10 @@ void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map
 
         oglx_texture_Bind( ptex );
 
-        txrect.xmin = ( float )bliprect[color].xmin / ( float )oglx_texture_GetTextureWidth( ptex );
-        txrect.xmax = ( float )bliprect[color].xmax / ( float )oglx_texture_GetTextureWidth( ptex );
-        txrect.ymin = ( float )bliprect[color].ymin / ( float )oglx_texture_GetTextureHeight( ptex );
-        txrect.ymax = ( float )bliprect[color].ymax / ( float )oglx_texture_GetTextureHeight( ptex );
+        txrect.xmin = ( const float )bliprect[color].xmin / ( const float )oglx_texture_GetTextureWidth( ptex );
+        txrect.xmax = ( const float )bliprect[color].xmax / ( const float )oglx_texture_GetTextureWidth( ptex );
+        txrect.ymin = ( const float )bliprect[color].ymin / ( const float )oglx_texture_GetTextureHeight( ptex );
+        txrect.ymax = ( const float )bliprect[color].ymax / ( const float )oglx_texture_GetTextureHeight( ptex );
 
         width  = bliprect[color].xmax - bliprect[color].xmin;
         height = bliprect[color].ymax - bliprect[color].ymin;
@@ -782,7 +787,7 @@ void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
+void draw_one_icon( const TX_REF & icontype, const float x, const float y, const Uint8 sparkle )
 {
     /// \author ZZ
     /// \details  This function draws an icon
@@ -791,10 +796,10 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
     float   width, height;
     ego_frect_t txrect;
 
-    txrect.xmin = ( float )iconrect.xmin / ( float )ICON_SIZE;
-    txrect.xmax = ( float )iconrect.xmax / ( float )ICON_SIZE;
-    txrect.ymin = ( float )iconrect.ymin / ( float )ICON_SIZE;
-    txrect.ymax = ( float )iconrect.ymax / ( float )ICON_SIZE;
+    txrect.xmin = ( const float )iconrect.xmin / ( const float )ICON_SIZE;
+    txrect.xmax = ( const float )iconrect.xmax / ( const float )ICON_SIZE;
+    txrect.ymin = ( const float )iconrect.ymin / ( const float )ICON_SIZE;
+    txrect.ymax = ( const float )iconrect.ymax / ( const float )ICON_SIZE;
 
     width  = iconrect.xmax - iconrect.xmin;
     height = iconrect.ymax - iconrect.ymin;
@@ -851,18 +856,20 @@ void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle )
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_font( int fonttype, float x, float y )
+void draw_one_font( const int fonttype, const float x, const float y )
 {
     /// \author ZZ
     /// \details  This function draws a letter or number
     /// \note GAC@> Very nasty version for starters.  Lots of room for improvement.
 
     GLfloat dx, dy, fx1, fx2, fy1, fy2, border;
-    GLuint x2, y2;
+    GLfloat x_min, y_min;
+    GLfloat x_max, y_max;
 
-    y  += fontoffset;
-    x2  = x + fontrect[fonttype].w;
-    y2  = y - fontrect[fonttype].h;
+    x_min = x;
+    y_max = y + fontoffset;
+    x_max = x + fontrect[fonttype].w;
+    y_min = y_max - fontrect[fonttype].h;
 
     dx = 2.0f / 512.0f;
     dy = 1.0f / 256.0f;
@@ -875,19 +882,20 @@ void draw_one_font( int fonttype, float x, float y )
 
     GL_DEBUG_BEGIN( GL_QUADS );
     {
-        GL_DEBUG( glTexCoord2f )( fx1, fy2 );   GL_DEBUG( glVertex2f )( x, y );
-        GL_DEBUG( glTexCoord2f )( fx2, fy2 );   GL_DEBUG( glVertex2f )( x2, y );
-        GL_DEBUG( glTexCoord2f )( fx2, fy1 );   GL_DEBUG( glVertex2f )( x2, y2 );
-        GL_DEBUG( glTexCoord2f )( fx1, fy1 );   GL_DEBUG( glVertex2f )( x, y2 );
+        GL_DEBUG( glTexCoord2f )( fx1, fy2 );   GL_DEBUG( glVertex2f )( x_min, y_max );
+        GL_DEBUG( glTexCoord2f )( fx2, fy2 );   GL_DEBUG( glVertex2f )( x_max, y_max );
+        GL_DEBUG( glTexCoord2f )( fx2, fy1 );   GL_DEBUG( glVertex2f )( x_max, y_min );
+        GL_DEBUG( glTexCoord2f )( fx1, fy1 );   GL_DEBUG( glVertex2f )( x_min, y_min );
     }
     GL_DEBUG_END();
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_map_texture( float x, float y )
+void draw_map_texture( const float x, const float y )
 {
     /// \author ZZ
     /// \details  This function draws the map
+
     gfx_enable_texturing();
 
     oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_MAP ) ) );
@@ -903,7 +911,7 @@ void draw_map_texture( float x, float y )
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_one_xp_bar( float x, float y, Uint8 ticks )
+float draw_one_xp_bar( const float x, const float y, const Uint8 ticks )
 {
     /// \author ZF
     /// \details  This function draws a xp bar and returns the y position for the next one
@@ -912,7 +920,10 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
     Uint8 cnt;
     ego_frect_t txrect;
 
-    ticks = SDL_min( ticks, NUMTICK );
+    Uint8 loc_ticks = SDL_min( ticks, NUMTICK );
+
+    float new_x = x;
+    float new_y = y;
 
     gfx_enable_texturing();               // Enable texture mapping
     GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -930,13 +941,13 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
 
     GL_DEBUG_BEGIN( GL_QUADS );
     {
-        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( x,         y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( x + width, y + height );
-        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( x + width, y );
-        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )( x,         y );
+        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )( new_x,         new_y + height );
+        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )( new_x + width, new_y + height );
+        GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )( new_x + width, new_y );
+        GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )( new_x,         new_y );
     }
     GL_DEBUG_END();
-    x += 16;
+    new_x += 16;
 
     // Draw the filled ones
     txrect.xmin   = 0.0f;
@@ -947,15 +958,15 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
     width  = XPTICK;
     height = XPTICK;
 
-    for ( cnt = 0; cnt < ticks; cnt++ )
+    for ( cnt = 0; cnt < loc_ticks; cnt++ )
     {
         oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_XP_BAR ) ) );
         GL_DEBUG_BEGIN( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )(( cnt * width ) + x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )(( cnt * width ) + x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + new_x,         new_y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + new_x + width, new_y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )(( cnt * width ) + new_x + width, new_y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )(( cnt * width ) + new_x,         new_y );
         }
         GL_DEBUG_END();
     }
@@ -974,19 +985,19 @@ int draw_one_xp_bar( float x, float y, Uint8 ticks )
         oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_XP_BAR ) ) );
         GL_DEBUG_BEGIN( GL_QUADS );
         {
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x,         y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + x + width, y + height );
-            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )(( cnt * width ) + x + width, y );
-            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )(( cnt * width ) + x,         y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + new_x,         new_y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymax ); GL_DEBUG( glVertex2f )(( cnt * width ) + new_x + width, new_y + height );
+            GL_DEBUG( glTexCoord2f )( txrect.xmax, txrect.ymin ); GL_DEBUG( glVertex2f )(( cnt * width ) + new_x + width, new_y );
+            GL_DEBUG( glTexCoord2f )( txrect.xmin, txrect.ymin ); GL_DEBUG( glVertex2f )(( cnt * width ) + new_x,         new_y );
         }
         GL_DEBUG_END();
     }
 
-    return y + XPTICK;
+    return new_y + XPTICK;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
+float draw_one_bar( const Uint8 bartype, const float x, const float y, const int ticks, const int maxticks )
 {
     /// \author ZZ
     /// \details  This function draws a bar and returns the y position for the next one
@@ -995,6 +1006,9 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     float   width, height;
     ego_frect_t tx_rect, sc_rect;
     oglx_texture_t * ptex;
+
+    float new_x = x;
+    float new_y = y;
 
     if ( maxticks <= 0 || ticks < 0 || bartype > NUMBAR ) return y;
 
@@ -1009,21 +1023,24 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
     width  = tabrect[bartype].xmax - tabrect[bartype].xmin;
     height = tabrect[bartype].ymax - tabrect[bartype].ymin;
 
-    sc_rect.xmin = x;
-    sc_rect.xmax = x + width;
-    sc_rect.ymin = y;
-    sc_rect.ymax = y + height;
+    sc_rect.xmin = new_x;
+    sc_rect.xmax = new_x + width;
+    sc_rect.ymin = new_y;
+    sc_rect.ymax = new_y + height;
 
     draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
     // Error check
-    if ( maxticks > MAXTICK ) maxticks = MAXTICK;
-    if ( ticks > maxticks ) ticks = maxticks;
+    int loc_maxticks = maxticks;
+    if ( loc_maxticks > MAXTICK ) loc_maxticks = MAXTICK;
 
-    // Draw the full rows of ticks
-    x += TABX;
+    int loc_ticks = ticks;
+    if ( loc_ticks > loc_maxticks ) loc_ticks = loc_maxticks;
 
-    while ( ticks >= NUMTICK )
+    // Draw the full rows of loc_ticks
+    new_x += TABX;
+
+    while ( loc_ticks >= NUMTICK )
     {
         barrect[bartype].xmax = BARX;
 
@@ -1035,23 +1052,23 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width  = barrect[bartype].xmax - barrect[bartype].xmin;
         height = barrect[bartype].ymax - barrect[bartype].ymin;
 
-        sc_rect.xmin = x;
-        sc_rect.xmax = x + width;
-        sc_rect.ymin = y;
-        sc_rect.ymax = y + height;
+        sc_rect.xmin = new_x;
+        sc_rect.xmax = new_x + width;
+        sc_rect.ymin = new_y;
+        sc_rect.ymax = new_y + height;
 
         draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
-        y += BARY;
-        ticks -= NUMTICK;
-        maxticks -= NUMTICK;
+        new_y += BARY;
+        loc_ticks -= NUMTICK;
+        loc_maxticks -= NUMTICK;
     }
 
-    // Draw any partial rows of ticks
-    if ( maxticks > 0 )
+    // Draw any partial rows of loc_ticks
+    if ( loc_maxticks > 0 )
     {
         // Draw the filled ones
-        barrect[bartype].xmax = ( ticks << 3 ) + TABX;
+        barrect[bartype].xmax = ( loc_ticks << 3 ) + TABX;
 
         tx_rect.xmin   = barrect[bartype].xmin   / 128.0f;
         tx_rect.xmax  = barrect[bartype].xmax  / 128.0f;
@@ -1061,16 +1078,16 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width = barrect[bartype].xmax - barrect[bartype].xmin;
         height = barrect[bartype].ymax - barrect[bartype].ymin;
 
-        sc_rect.xmin = x;
-        sc_rect.xmax = x + width;
-        sc_rect.ymin = y;
-        sc_rect.ymax = y + height;
+        sc_rect.xmin = new_x;
+        sc_rect.xmax = new_x + width;
+        sc_rect.ymin = new_y;
+        sc_rect.ymax = new_y + height;
 
         draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
         // Draw the empty ones
-        noticks = maxticks - ticks;
-        if ( noticks > ( NUMTICK - ticks ) ) noticks = ( NUMTICK - ticks );
+        noticks = loc_maxticks - loc_ticks;
+        if ( noticks > ( NUMTICK - loc_ticks ) ) noticks = ( NUMTICK - loc_ticks );
 
         barrect[0].xmax = ( noticks << 3 ) + TABX;
         oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
@@ -1083,19 +1100,19 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width  = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        sc_rect.xmin = x;
-        sc_rect.xmax = x + width;
-        sc_rect.ymin = y;
-        sc_rect.ymax = y + height;
+        sc_rect.xmin = new_x;
+        sc_rect.xmax = new_x + width;
+        sc_rect.ymin = new_y;
+        sc_rect.ymax = new_y + height;
 
         draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
-        maxticks -= NUMTICK;
-        y += BARY;
+        loc_maxticks -= NUMTICK;
+        new_y += BARY;
     }
 
-    // Draw full rows of empty ticks
-    while ( maxticks >= NUMTICK )
+    // Draw full rows of empty loc_ticks
+    while ( loc_maxticks >= NUMTICK )
     {
         barrect[0].xmax = BARX;
 
@@ -1107,21 +1124,21 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width  = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        sc_rect.xmin = x;
-        sc_rect.xmax = x + width;
-        sc_rect.ymin = y;
-        sc_rect.ymax = y + height;
+        sc_rect.xmin = new_x;
+        sc_rect.xmax = new_x + width;
+        sc_rect.ymin = new_y;
+        sc_rect.ymax = new_y + height;
 
         draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
-        y += BARY;
-        maxticks -= NUMTICK;
+        new_y += BARY;
+        loc_maxticks -= NUMTICK;
     }
 
     // Draw the last of the empty ones
-    if ( maxticks > 0 )
+    if ( loc_maxticks > 0 )
     {
-        barrect[0].xmax = ( maxticks << 3 ) + TABX;
+        barrect[0].xmax = ( loc_maxticks << 3 ) + TABX;
         oglx_texture_Bind( TxTexture_get_ptr( TX_REF( TX_BARS ) ) );
 
         tx_rect.xmin   = barrect[0].xmin   / 128.0f;
@@ -1132,22 +1149,22 @@ int draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks )
         width = barrect[0].xmax - barrect[0].xmin;
         height = barrect[0].ymax - barrect[0].ymin;
 
-        sc_rect.xmin = x;
-        sc_rect.xmax = x + width;
-        sc_rect.ymin = y;
-        sc_rect.ymax = y + height;
+        sc_rect.xmin = new_x;
+        sc_rect.xmax = new_x + width;
+        sc_rect.ymin = new_y;
+        sc_rect.ymax = new_y + height;
 
         draw_one_quad( ptex, sc_rect, tx_rect, btrue );
 
-        maxticks -= NUMTICK;
-        y += BARY;
+        loc_maxticks -= NUMTICK;
+        new_y += BARY;
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_string( float x, float y, const char *format, ... )
+float draw_string( const float x, const float y, const char *format, ... )
 {
     /// \author ZZ
     /// \details  This function spits a line of null terminated text onto the backbuffer
@@ -1158,48 +1175,52 @@ int draw_string( float x, float y, const char *format, ... )
 
     va_list args;
 
+    float new_y = y;
+
     gfx_begin_2d();
     {
         va_start( args, format );
-        y = _va_draw_string( x, y, format, args );
+        new_y = _va_draw_string( x, new_y, format, args );
         va_end( args );
     }
     gfx_end_2d();
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_wrap_string( const char *szText, float x, float y, int maxx )
+float draw_wrap_string( const char *szText, const float x, const float y, const int maxx )
 {
     /// \author ZZ
     /// \details  This function spits a line of null terminated text onto the backbuffer,
     ///    wrapping over the right side and returning the new y value
 
-    int stt_x = x;
     Uint8 cTmp = szText[0];
-    int newy = y + fontyspacing;
     Uint8 newword = btrue;
     int cnt = 1;
 
     gfx_begin_text();
 
-    maxx = maxx + stt_x;
+    float new_x = x;
+    float new_y = y;
+    float stt_x = x;
+    float max_x = maxx + stt_x;
+    float max_y    = new_y + fontyspacing;
 
     while ( cTmp != 0 )
     {
         // Check each new word for wrapping
         if ( newword )
         {
-            int endx = x + font_bmp_length_of_word( szText + cnt - 1 );
+            int endx = new_x + font_bmp_length_of_word( szText + cnt - 1 );
 
             newword = bfalse;
-            if ( endx > maxx )
+            if ( endx > max_x )
             {
                 // Wrap the end and cut off spaces and tabs
-                x = stt_x + fontyspacing;
-                y += fontyspacing;
-                newy += fontyspacing;
+                new_x = stt_x + fontyspacing;
+                new_y += fontyspacing;
+                max_y += fontyspacing;
 
                 while ( ' ' == cTmp || '~' == cTmp )
                 {
@@ -1213,20 +1234,20 @@ int draw_wrap_string( const char *szText, float x, float y, int maxx )
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                x = (( int( x ) ) & TABAND ) + TABADD;
+                new_x = (( int( new_x ) ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
-                x = stt_x;
-                y += fontyspacing;
-                newy += fontyspacing;
+                new_x = stt_x;
+                new_y += fontyspacing;
+                max_y += fontyspacing;
             }
             else
             {
                 // Normal letter
                 cTmp = asciitofont[cTmp];
-                draw_one_font( cTmp, x, y );
-                x += fontxspacing[cTmp];
+                draw_one_font( cTmp, new_x, new_y );
+                new_x += fontxspacing[cTmp];
             }
 
             cTmp = szText[cnt];
@@ -1238,13 +1259,13 @@ int draw_wrap_string( const char *szText, float x, float y, int maxx )
             cnt++;
         }
     }
-
     gfx_end_text();
-    return newy;
+
+    return max_y;
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t draw_ammo )
+void draw_one_character_icon( const CHR_REF & item, const float x, const float y, const bool_t draw_ammo )
 {
     /// \author BB
     /// \details  Draw an icon for the given item at the position <x,y>.
@@ -1253,6 +1274,9 @@ void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t dra
     TX_REF icon_ref;
     Uint8  draw_sparkle;
 
+    float new_x = x;
+    float new_y = y;
+
     ego_chr * pitem = !INGAME_CHR( item ) ? NULL : ChrObjList.get_data_ptr( item );
 
     // grab the icon reference
@@ -1260,7 +1284,7 @@ void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t dra
 
     // draw the icon
     draw_sparkle = ( NULL == pitem ) ? NOSPARKLE : pitem->sparkle;
-    draw_one_icon( icon_ref, x, y, draw_sparkle );
+    draw_one_icon( icon_ref, new_x, new_y, draw_sparkle );
 
     // draw the ammo, if requested
     if ( draw_ammo && ( NULL != pitem ) )
@@ -1272,14 +1296,14 @@ void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t dra
             if (( NULL != pitem_cap && !pitem_cap->isstackable ) || pitem->ammo > 1 )
             {
                 // Show amount of ammo left
-                _draw_string_raw( x, y - 8, "%2d", pitem->ammo );
+                _draw_string_raw( new_x, new_y - 8, "%2d", pitem->ammo );
             }
         }
     }
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_character_xp_bar( const CHR_REF & character, float x, float y )
+int draw_character_xp_bar( const CHR_REF & character, const float x, const float y )
 {
     ego_chr * pchr;
     ego_cap * pcap;
@@ -1290,6 +1314,8 @@ int draw_character_xp_bar( const CHR_REF & character, float x, float y )
     pcap = pro_get_pcap( pchr->profile_ref );
     if ( NULL == pcap ) return y;
 
+    float new_y = y;
+
     // Draw the small XP progress bar
     if ( pchr->experience_level < MAXLEVEL )
     {
@@ -1297,17 +1323,17 @@ int draw_character_xp_bar( const CHR_REF & character, float x, float y )
         Uint32 xplastlevel = pcap->experience_forlevel[curlevel-1];
         Uint32 xpneed      = pcap->experience_forlevel[curlevel];
 
-        float fraction = ( float )SDL_max( pchr->experience - xplastlevel, 0 ) / ( float )SDL_max( xpneed - xplastlevel, 1 );
+        float fraction = ( const float )SDL_max( pchr->experience - xplastlevel, 0 ) / ( const float )SDL_max( xpneed - xplastlevel, 1 );
         int   numticks = fraction * NUMTICK;
 
-        y = draw_one_xp_bar( x, y, numticks );
+        new_y = draw_one_xp_bar( x, new_y, numticks );
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_status( const CHR_REF & character, float x, float y )
+float draw_status( const CHR_REF & character, const float x, const float y )
 {
     /// \author ZZ
     /// \details  This function shows a character's icon, status and inventory
@@ -1323,11 +1349,13 @@ int draw_status( const CHR_REF & character, float x, float y )
     ego_chr * pchr;
     ego_cap * pcap;
 
+    float new_y = y;
+
     pchr = ChrObjList.get_allocated_data_ptr( character );
-    if ( !INGAME_PCHR( pchr ) || !pchr->draw_stats ) return y;
+    if ( !INGAME_PCHR( pchr ) || !pchr->draw_stats ) return new_y;
 
     pcap = ego_chr::get_pcap( character );
-    if ( NULL == pcap ) return y;
+    if ( NULL == pcap ) return new_y;
 
     life     = SFP8_TO_SINT( pchr->life );
     life_max  = SFP8_TO_SINT( pchr->life_max );
@@ -1355,59 +1383,61 @@ int draw_status( const CHR_REF & character, float x, float y )
     generictext[7] = CSTR_END;
 
     // draw the name
-    y = _draw_string_raw( x + 8, y, generictext );
+    new_y = _draw_string_raw( x + 8, new_y, generictext );
 
     // draw the character's money
-    y = _draw_string_raw( x + 8, y, "$%4d", pchr->money ) + 8;
+    new_y = _draw_string_raw( x + 8, new_y, "$%4d", pchr->money ) + 8;
 
     // draw the character's main icon
-    draw_one_character_icon( character, x + 40, y, bfalse );
+    draw_one_character_icon( character, x + 40, new_y, bfalse );
 
     // draw the left hand item icon
-    draw_one_character_icon( pchr->holdingwhich[SLOT_LEFT], x + 8, y, btrue );
+    draw_one_character_icon( pchr->holdingwhich[SLOT_LEFT], x + 8, new_y, btrue );
 
     // draw the right hand item icon
-    draw_one_character_icon( pchr->holdingwhich[SLOT_RIGHT], x + 72, y, btrue );
+    draw_one_character_icon( pchr->holdingwhich[SLOT_RIGHT], x + 72, new_y, btrue );
 
     // skip to the next row
-    y += 32;
+    new_y += 32;
 
     // Draw the small XP progress bar
-    y = draw_character_xp_bar( character, x + 16, y );
+    new_y = draw_character_xp_bar( character, x + 16, new_y );
 
     // Draw the life bar
     if ( pchr->alive )
     {
-        y = draw_one_bar( pchr->life_color, x, y, life, life_max );
+        new_y = draw_one_bar( pchr->life_color, x, new_y, life, life_max );
     }
     else
     {
-        y = draw_one_bar( 0, x, y, 0, life_max );  // Draw a black bar
+        new_y = draw_one_bar( 0, x, new_y, 0, life_max );  // Draw a black bar
     }
 
     // Draw the mana bar
     if ( mana_max > 0 )
     {
-        y = draw_one_bar( pchr->mana_color, x, y, mana, mana_max );
+        new_y = draw_one_bar( pchr->mana_color, x, new_y, mana, mana_max );
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_all_status( int y )
+float draw_all_status( const float y )
 {
     int cnt;
 
+    float new_y = y;
+
     if ( StatList.on )
     {
-        for ( cnt = 0; cnt < StatList.count && y < sdl_scr.y; cnt++ )
+        for ( cnt = 0; cnt < StatList.count && new_y < sdl_scr.y; cnt++ )
         {
-            y = draw_status( StatList[cnt], sdl_scr.x - BARX, y );
+            new_y = draw_status( StatList[cnt], sdl_scr.x - BARX, new_y );
         }
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1420,7 +1450,6 @@ void draw_map()
 
     ATTRIB_PUSH( "draw_map()", GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT );
     {
-
         GL_DEBUG( glEnable )( GL_BLEND );                               // GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT
         GL_DEBUG( glBlendFunc )( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );  // GL_COLOR_BUFFER_BIT
 
@@ -1499,146 +1528,151 @@ void draw_map()
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_fps( int y )
+float draw_fps( const float y )
 {
     // FPS text
 
+    float new_y = y;
+
     if ( net_stats.out_of_sync )
     {
-        y = _draw_string_raw( 0, y, "OUT OF SYNC" );
+        new_y = _draw_string_raw( 0, new_y, "OUT OF SYNC" );
     }
 
     if ( parseerror )
     {
-        y = _draw_string_raw( 0, y, "SCRIPT ERROR ( see \"/debug/log.txt\" )" );
+        new_y = _draw_string_raw( 0, new_y, "SCRIPT ERROR ( see \"/debug/log.txt\" )" );
     }
 
     if ( fpson )
     {
-        y = _draw_string_raw( 0, y, "%2.3f FPS, %2.3f UPS, Update lag = %d", stabilized_fps, stabilized_ups, update_lag );
+        new_y = _draw_string_raw( 0, new_y, "%2.3f FPS, %2.3f UPS, Update lag = %d", stabilized_fps, stabilized_ups, update_lag );
     }
 
 #    if defined(BSP_INFO)
-    y = _draw_string_raw( 0, y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtObjList.free_count() );
-    y = _draw_string_raw( 0, y, "BSP collisions %d", collision_system::hash_nodes_inserted );
-    y = _draw_string_raw( 0, y, "chr-mesh tests %04d - prt-mesh tests %04d", ego_chr::stoppedby_tests + ego_chr::pressure_tests, ego_prt::stoppedby_tests + ego_prt::pressure_tests );
+    new_y = _draw_string_raw( 0, new_y, "BSP chr %d/%d - BSP prt %d/%d", ego_obj_BSP::chr_count, MAX_CHR - chr_count_free(), ego_obj_BSP::prt_count, maxparticles - PrtObjList.free_count() );
+    new_y = _draw_string_raw( 0, new_y, "BSP collisions %d", collision_system::hash_nodes_inserted );
+    new_y = _draw_string_raw( 0, new_y, "chr-mesh tests %04d - prt-mesh tests %04d", ego_chr::stoppedby_tests + ego_chr::pressure_tests, ego_prt::stoppedby_tests + ego_prt::pressure_tests );
 #    endif
 
 #if defined(RENDERLIST_INFO)
-    y = _draw_string_raw( 0, y, "Renderlist tiles %d/%d", renderlist.all_count, PMesh->info.tiles_count );
+    new_y = _draw_string_raw( 0, new_y, "Renderlist tiles %d/%d", renderlist.all_count, PMesh->info.tiles_count );
 #endif
 
 #if defined(PROFILE_RENDER) && PROFILE_DISPLAY
-    y = _draw_string_raw( 0, y, "estimated max FPS %2.3f UPS %4.2f GFX %4.2f", est_max_fps, est_max_ups, est_max_gfx );
-    y = _draw_string_raw( 0, y, "gfx:total %2.4g, render:total %2.4g", est_render_time, time_draw_scene );
-    y = _draw_string_raw( 0, y, "render:init %2.4g,  render:mesh %2.4g", time_render_scene_init, time_render_scene_mesh );
-    y = _draw_string_raw( 0, y, "render:solid %2.4g, render:water %2.4g", time_render_scene_solid, time_render_scene_water );
-    y = _draw_string_raw( 0, y, "render:trans %2.4g", time_render_scene_trans );
+    new_y = _draw_string_raw( 0, new_y, "estimated max FPS %2.3f UPS %4.2f GFX %4.2f", est_max_fps, est_max_ups, est_max_gfx );
+    new_y = _draw_string_raw( 0, new_y, "gfx:total %2.4g, render:total %2.4g", est_render_time, time_draw_scene );
+    new_y = _draw_string_raw( 0, new_y, "render:init %2.4g,  render:mesh %2.4g", time_render_scene_init, time_render_scene_mesh );
+    new_y = _draw_string_raw( 0, new_y, "render:solid %2.4g, render:water %2.4g", time_render_scene_solid, time_render_scene_water );
+    new_y = _draw_string_raw( 0, new_y, "render:trans %2.4g", time_render_scene_trans );
 #endif
 
 #if defined(PROFILE_MESH) && PROFILE_DISPLAY
-    y = _draw_string_raw( 0, y, "mesh:total %2.4g", time_render_scene_mesh );
-    y = _draw_string_raw( 0, y, "mesh:dolist_sort %2.4g, mesh:ndr %2.4g", time_render_scene_mesh_dolist_sort , time_render_scene_mesh_ndr );
-    y = _draw_string_raw( 0, y, "mesh:drf_back %2.4g, mesh:ref %2.4g", time_render_scene_mesh_drf_back, time_render_scene_mesh_ref );
-    y = _draw_string_raw( 0, y, "mesh:ref_chr %2.4g, mesh:drf_solid %2.4g", time_render_scene_mesh_ref_chr, time_render_scene_mesh_drf_solid );
-    y = _draw_string_raw( 0, y, "mesh:render_shadows %2.4g", time_render_scene_mesh_render_shadows );
+    new_y = _draw_string_raw( 0, new_y, "mesh:total %2.4g", time_render_scene_mesh );
+    new_y = _draw_string_raw( 0, new_y, "mesh:dolist_sort %2.4g, mesh:ndr %2.4g", time_render_scene_mesh_dolist_sort , time_render_scene_mesh_ndr );
+    new_y = _draw_string_raw( 0, new_y, "mesh:drf_back %2.4g, mesh:ref %2.4g", time_render_scene_mesh_drf_back, time_render_scene_mesh_ref );
+    new_y = _draw_string_raw( 0, new_y, "mesh:ref_chr %2.4g, mesh:drf_solid %2.4g", time_render_scene_mesh_ref_chr, time_render_scene_mesh_drf_solid );
+    new_y = _draw_string_raw( 0, new_y, "mesh:render_shadows %2.4g", time_render_scene_mesh_render_shadows );
 #endif
 
 #if defined(PROFILE_INIT) && PROFILE_DISPLAY
-    y = _draw_string_raw( 0, y, "init:total %2.4g", time_render_scene_init );
-    y = _draw_string_raw( 0, y, "init:renderlist_make %2.4g, init:dolist_make %2.4g", time_render_scene_init_renderlist_make, time_render_scene_init_dolist_make );
-    y = _draw_string_raw( 0, y, "init:do_grid_lighting %2.4g, init:light_fans %2.4g", time_render_scene_init_do_grid_dynalight, time_render_scene_init_light_fans );
-    y = _draw_string_raw( 0, y, "init:update_all_chr_instance %2.4g", time_render_scene_init_update_all_chr_instance );
-    y = _draw_string_raw( 0, y, "init:update_all_prt_instance %2.4g", time_render_scene_init_update_all_prt_instance );
+    new_y = _draw_string_raw( 0, new_y, "init:total %2.4g", time_render_scene_init );
+    new_y = _draw_string_raw( 0, new_y, "init:renderlist_make %2.4g, init:dolist_make %2.4g", time_render_scene_init_renderlist_make, time_render_scene_init_dolist_make );
+    new_y = _draw_string_raw( 0, new_y, "init:do_grid_lighting %2.4g, init:light_fans %2.4g", time_render_scene_init_do_grid_dynalight, time_render_scene_init_light_fans );
+    new_y = _draw_string_raw( 0, new_y, "init:update_all_chr_instance %2.4g", time_render_scene_init_update_all_chr_instance );
+    new_y = _draw_string_raw( 0, new_y, "init:update_all_prt_instance %2.4g", time_render_scene_init_update_all_prt_instance );
 #endif
-
 
     return y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_help( int y )
+float draw_help( const float y )
 {
+    float new_y = y;
+
     if ( SDLKEYDOWN( SDLK_F1 ) )
     {
         // In-Game help
-        y = _draw_string_raw( 0, y, "!!!MOUSE HELP!!!" );
-        y = _draw_string_raw( 0, y, "~~Go to input settings to change" );
-        y = _draw_string_raw( 0, y, "Default settings" );
-        y = _draw_string_raw( 0, y, "~~Left Click to use an item" );
-        y = _draw_string_raw( 0, y, "~~Left and Right Click to grab" );
-        y = _draw_string_raw( 0, y, "~~Middle Click to jump" );
-        y = _draw_string_raw( 0, y, "~~A and S keys do stuff" );
-        y = _draw_string_raw( 0, y, "~~Right Drag to move camera" );
+        new_y = _draw_string_raw( 0, new_y, "!!!MOUSE HELP!!!" );
+        new_y = _draw_string_raw( 0, new_y, "~~Go to input settings to change" );
+        new_y = _draw_string_raw( 0, new_y, "Default settings" );
+        new_y = _draw_string_raw( 0, new_y, "~~Left Click to use an item" );
+        new_y = _draw_string_raw( 0, new_y, "~~Left and Right Click to grab" );
+        new_y = _draw_string_raw( 0, new_y, "~~Middle Click to jump" );
+        new_y = _draw_string_raw( 0, new_y, "~~A and S keys do stuff" );
+        new_y = _draw_string_raw( 0, new_y, "~~Right Drag to move camera" );
     }
     if ( SDLKEYDOWN( SDLK_F2 ) )
     {
         // In-Game help
-        y = _draw_string_raw( 0, y, "!!!JOYSTICK HELP!!!" );
-        y = _draw_string_raw( 0, y, "~~Go to input settings to change." );
-        y = _draw_string_raw( 0, y, "~~Hit the buttons" );
-        y = _draw_string_raw( 0, y, "~~You'll figure it out" );
+        new_y = _draw_string_raw( 0, new_y, "!!!JOYSTICK HELP!!!" );
+        new_y = _draw_string_raw( 0, new_y, "~~Go to input settings to change." );
+        new_y = _draw_string_raw( 0, new_y, "~~Hit the buttons" );
+        new_y = _draw_string_raw( 0, new_y, "~~You'll figure it out" );
     }
     if ( SDLKEYDOWN( SDLK_F3 ) )
     {
         // In-Game help
-        y = _draw_string_raw( 0, y, "!!!KEYBOARD HELP!!!" );
-        y = _draw_string_raw( 0, y, "~~Go to input settings to change." );
-        y = _draw_string_raw( 0, y, "Default settings" );
-        y = _draw_string_raw( 0, y, "~~TGB control left hand" );
-        y = _draw_string_raw( 0, y, "~~YHN control right hand" );
-        y = _draw_string_raw( 0, y, "~~Keypad to move and jump" );
-        y = _draw_string_raw( 0, y, "~~Number keys for stats" );
+        new_y = _draw_string_raw( 0, new_y, "!!!KEYBOARD HELP!!!" );
+        new_y = _draw_string_raw( 0, new_y, "~~Go to input settings to change." );
+        new_y = _draw_string_raw( 0, new_y, "Default settings" );
+        new_y = _draw_string_raw( 0, new_y, "~~TGB control left hand" );
+        new_y = _draw_string_raw( 0, new_y, "~~YHN control right hand" );
+        new_y = _draw_string_raw( 0, new_y, "~~Keypad to move and jump" );
+        new_y = _draw_string_raw( 0, new_y, "~~Number keys for stats" );
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_debug_character( CHR_REF ichr, int y )
+float draw_debug_character( const CHR_REF & ichr, const float y )
 {
-    ego_chr   *pchr;
-
-    pchr = ChrObjList.get_allocated_data_ptr( ichr );
+    ego_chr * pchr = ChrObjList.get_allocated_data_ptr( ichr );
     if ( !DEFINED_PCHR( pchr ) ) return y;
 
     return y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_debug_player( PLA_REF ipla, int y )
+float draw_debug_player( const PLA_REF & ipla, const float y )
 {
     ego_player * ppla = PlaDeque.find_by_ref( ipla );
     if ( NULL == ppla || !ppla->valid ) return y;
+
+    float new_y = y;
 
     if ( DEFINED_CHR( ppla->index ) )
     {
         CHR_REF ichr = ppla->index;
         ego_chr  *pchr = ChrObjList.get_data_ptr( ichr );
 
-        y = _draw_string_raw( 0, y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", ipla.get_value(),
-                              GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
-                              GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_CRUSH] ),
-                              GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_POKE ] ),
-                              GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_HOLY ] ),
-                              GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_EVIL ] ),
-                              GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_FIRE ] ),
-                              GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ICE  ] ),
-                              GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ZAP  ] ) );
+        new_y = _draw_string_raw( 0, new_y, "~~PLA%d DEF %d %d %d %d %d %d %d %d", ipla.get_value(),
+                                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_SLASH] ),
+                                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_CRUSH] ),
+                                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_POKE ] ),
+                                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_HOLY ] ),
+                                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_EVIL ] ),
+                                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_FIRE ] ),
+                                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ICE  ] ),
+                                  GET_DAMAGE_RESIST( pchr->damagemodifier[DAMAGE_ZAP  ] ) );
 
-        y = _draw_string_raw( 0, y, "~~PLA%d %5.1f %5.1f", ipla.get_value(), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
+        new_y = _draw_string_raw( 0, new_y, "~~PLA%d %5.1f %5.1f", ipla.get_value(), pchr->pos.x / GRID_SIZE, pchr->pos.y / GRID_SIZE );
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_debug( int y )
+float draw_debug( const float y )
 {
     //PLA_REF ipla;
     //ego_player * ppla;
 
     if ( !cfg.dev_mode ) return y;
+
+    float new_y = y;
 
     // draw the character's speed
     //ppla = PlaDeque.find_by_ref( PLA_REF( 0 ) );
@@ -1647,27 +1681,27 @@ int draw_debug( int y )
     //    ego_chr * pchr = ChrObjList.get_allocated_data_ptr( ppla->index );
     //    if ( DEFINED_PCHR( pchr ) )
     //    {
-    //        y = _draw_string_raw( 0, y, "PLA%d hspeed %2.4f vspeed %2.4f %s", ipla.get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
+    //        new_y = _draw_string_raw( 0, new_y, "PLA%d hspeed %2.4f vspeed %2.4f %s", ipla.get_value(), fvec2_length( pchr->vel.v ), pchr->vel.z, pchr->enviro.is_slipping ? " - slipping" : "" );
     //    }
     //}
 
     if ( SDLKEYDOWN( SDLK_F5 ) )
     {
-        y = _draw_string_raw( 0, y, "!!!DEBUG MODE-5!!!" );
-        y = draw_debug_player( PLA_REF( 0 ), y );
-        y = draw_debug_player( PLA_REF( 1 ), y );
-        y = draw_debug_player( PLA_REF( 2 ), y );
+        new_y = _draw_string_raw( 0, new_y, "!!!DEBUG MODE-5!!!" );
+        new_y = draw_debug_player( PLA_REF( 0 ), new_y );
+        new_y = draw_debug_player( PLA_REF( 1 ), new_y );
+        new_y = draw_debug_player( PLA_REF( 2 ), new_y );
     }
 
     if ( SDLKEYDOWN( SDLK_F6 ) )
     {
         // More debug information
 
-        y = _draw_string_raw( 0, y, "!!!DEBUG MODE-6!!!" );
-        y = _draw_string_raw( 0, y, "~~FREE CHR : %d", ChrObjList.free_count() );
-        y = _draw_string_raw( 0, y, "~~FREE ENC : %d", EncObjList.free_count() );
-        y = _draw_string_raw( 0, y, "~~FREE PRT : %d", PrtObjList.free_count() );
-        y = _draw_string_raw( 0, y, "~~PASS CNT : %d/%d", ShopStack.count, PassageStack.count );
+        new_y = _draw_string_raw( 0, new_y, "!!!DEBUG MODE-6!!!" );
+        new_y = _draw_string_raw( 0, new_y, "~~FREE CHR : %d", ChrObjList.free_count() );
+        new_y = _draw_string_raw( 0, new_y, "~~FREE ENC : %d", EncObjList.free_count() );
+        new_y = _draw_string_raw( 0, new_y, "~~FREE PRT : %d", PrtObjList.free_count() );
+        new_y = _draw_string_raw( 0, new_y, "~~PASS CNT : %d/%d", ShopStack.count, PassageStack.count );
 
         const net_instance * pnet = net_get_instance();
         if ( NULL != pnet )
@@ -1677,40 +1711,44 @@ int draw_debug( int y )
             if ( 0 == pnet->machine_type ) strncpy( sz_machine_type, "HOST ID=0", SDL_arraysize( sz_machine_type ) );
             else SDL_snprintf( sz_machine_type, SDL_arraysize( sz_machine_type ), "REMOTE ID=%d", pnet->machine_type );
 
-            y = _draw_string_raw( 0, y, "~~MACHINE : %s", sz_machine_type );
-            y = _draw_string_raw( 0, y, "~~NET PLA : %d", pnet->player_count );
+            new_y = _draw_string_raw( 0, new_y, "~~MACHINE : %s", sz_machine_type );
+            new_y = _draw_string_raw( 0, new_y, "~~NET PLA : %d", pnet->player_count );
         }
 
-        y = _draw_string_raw( 0, y, "~~DAMAGE   : %d", damagetile.parttype );
-        y = _draw_string_raw( 0, y, "~~EXPORT   : %s", PMod->exportvalid ? "TRUE" : "FALSE" );
-        // y = _draw_string_raw( 0, y, "~~FOGAFF %d", fog_data.affects_water );
+        new_y = _draw_string_raw( 0, new_y, "~~DAMAGE   : %d", damagetile.parttype );
+        new_y = _draw_string_raw( 0, new_y, "~~EXPORT   : %s", PMod->exportvalid ? "TRUE" : "FALSE" );
+        // new_y = _draw_string_raw( 0, new_y, "~~FOGAFF %d", fog_data.affects_water );
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_timer( int y )
+float draw_timer( const float y )
 {
     int fifties, seconds, minutes;
+
+    float new_y = y;
 
     if ( timeron )
     {
         fifties = ( timervalue % 50 ) << 1;
         seconds = (( timervalue / 50 ) % 60 );
         minutes = ( timervalue / 3000 );
-        y = _draw_string_raw( 0, y, "=%d:%02d:%02d=", minutes, seconds, fifties );
+        new_y = _draw_string_raw( 0, new_y, "=%d:%02d:%02d=", minutes, seconds, fifties );
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_game_status( int y )
+float draw_game_status( const float y )
 {
+    float new_y = y;
+
     if ( net_waiting_for_players() )
     {
-        y = _draw_string_raw( 0, y, "Waiting for players... " );
+        new_y = _draw_string_raw( 0, new_y, "Waiting for players... " );
     }
     else if ( net_stats.pla_count_total > 0 )
     {
@@ -1718,30 +1756,32 @@ int draw_game_status( int y )
         {
             if ( PMod->respawnvalid && cfg.difficulty < GAME_HARD )
             {
-                y = _draw_string_raw( 0, y, "PRESS SPACE TO RESPAWN" );
+                new_y = _draw_string_raw( 0, new_y, "PRESS SPACE TO RESPAWN" );
             }
             else
             {
-                y = _draw_string_raw( 0, y, "PRESS ESCAPE TO QUIT" );
+                new_y = _draw_string_raw( 0, new_y, "PRESS ESCAPE TO QUIT" );
             }
         }
         else if ( PMod->beat )
         {
-            y = _draw_string_raw( 0, y, "VICTORY!  PRESS ESCAPE" );
+            new_y = _draw_string_raw( 0, new_y, "VICTORY!  PRESS ESCAPE" );
         }
     }
     else
     {
-        y = _draw_string_raw( 0, y, "ERROR: MISSING PLAYERS" );
+        new_y = _draw_string_raw( 0, new_y, "ERROR: MISSING PLAYERS" );
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_messages( int y )
+float draw_messages( const float y )
 {
     int cnt, tnc;
+
+    float new_y = y;
 
     // Messages
     if ( messageon )
@@ -1752,7 +1792,7 @@ int draw_messages( int y )
         {
             if ( DisplayMsg.ary[tnc].time > 0 )
             {
-                y = draw_wrap_string( DisplayMsg.ary[tnc].textdisplay, 0, y, sdl_scr.x - wraptolerance );
+                new_y = draw_wrap_string( DisplayMsg.ary[tnc].textdisplay, 0, new_y, sdl_scr.x - wraptolerance );
                 if ( DisplayMsg.ary[tnc].time > msgtimechange )
                 {
                     DisplayMsg.ary[tnc].time -= msgtimechange;
@@ -1769,7 +1809,7 @@ int draw_messages( int y )
         msgtimechange = 0;
     }
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1778,7 +1818,7 @@ void draw_text()
     /// \author ZZ
     /// \details  draw in-game heads up display
 
-    int y;
+    float y;
 
     gfx_begin_2d();
     {
@@ -1934,7 +1974,7 @@ void project_view( ego_camera * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_shadow_sprite( float intensity, ego_GLvertex v[] )
+void render_shadow_sprite( const float intensity, ego_GLvertex v[] )
 {
     int i;
 
@@ -2142,21 +2182,21 @@ void render_bad_shadow( const CHR_REF & character )
 
     size = pchr->shadow_size * height_factor;
 
-    v[0].pos[XX] = ( float ) x + size;
-    v[0].pos[YY] = ( float ) y - size;
-    v[0].pos[ZZ] = ( float ) level;
+    v[0].pos[XX] = ( const float ) x + size;
+    v[0].pos[YY] = ( const float ) y - size;
+    v[0].pos[ZZ] = ( const float ) level;
 
-    v[1].pos[XX] = ( float ) x + size;
-    v[1].pos[YY] = ( float ) y + size;
-    v[1].pos[ZZ] = ( float ) level;
+    v[1].pos[XX] = ( const float ) x + size;
+    v[1].pos[YY] = ( const float ) y + size;
+    v[1].pos[ZZ] = ( const float ) level;
 
-    v[2].pos[XX] = ( float ) x - size;
-    v[2].pos[YY] = ( float ) y + size;
-    v[2].pos[ZZ] = ( float ) level;
+    v[2].pos[XX] = ( const float ) x - size;
+    v[2].pos[YY] = ( const float ) y + size;
+    v[2].pos[ZZ] = ( const float ) level;
 
-    v[3].pos[XX] = ( float ) x - size;
-    v[3].pos[YY] = ( float ) y - size;
-    v[3].pos[ZZ] = ( float ) level;
+    v[3].pos[XX] = ( const float ) x - size;
+    v[3].pos[YY] = ( const float ) y - size;
+    v[3].pos[ZZ] = ( const float ) level;
 
     // Choose texture and matrix
     itex = TX_PARTICLE_LIGHT;
@@ -2199,7 +2239,7 @@ void update_all_chr_instance()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_fans_by_list( ego_mpd   * pmesh, Uint32 list[], size_t list_size )
+bool_t render_fans_by_list( ego_mpd * pmesh, const Uint32 list[], const size_t list_size )
 {
     Uint32 cnt;
     TX_REF tx;
@@ -2234,7 +2274,7 @@ bool_t render_fans_by_list( ego_mpd   * pmesh, Uint32 list[], size_t list_size )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_scene_init( ego_mpd   * pmesh, ego_camera * pcam )
+void render_scene_init( ego_mpd * pmesh, ego_camera * pcam )
 {
 
     PROFILE_BEGIN( renderlist_make );
@@ -2299,7 +2339,7 @@ void render_scene_mesh( ego_renderlist * prlist )
 
     size_t      cnt;
     ego_sint    rcnt;
-    ego_mpd   * pmesh;
+    ego_mpd * pmesh;
 
     if ( NULL == prlist ) return;
 
@@ -2636,7 +2676,7 @@ void render_scene_trans()
 }
 
 //--------------------------------------------------------------------------------------------
-void render_scene( ego_mpd   * pmesh, ego_camera * pcam )
+void render_scene( ego_mpd * pmesh, ego_camera * pcam )
 {
     /// \author ZZ
     /// \details  This function draws 3D objects
@@ -2742,8 +2782,8 @@ void render_world_background( const TX_REF & texture )
     z0 = 1500;
 
     // clip the waterlayer uv offset
-    ilayer->tx.x = ilayer->tx.x - ( float )FLOOR( ilayer->tx.x );
-    ilayer->tx.y = ilayer->tx.y - ( float )FLOOR( ilayer->tx.y );
+    ilayer->tx.x = ilayer->tx.x - ( const float )FLOOR( ilayer->tx.x );
+    ilayer->tx.y = ilayer->tx.y - ( const float )FLOOR( ilayer->tx.y );
 
     // determine the constants for the x-coordinate
     xmag = water.backgroundrepeat / 4 / ( 1.0f + z0 * ilayer->dist.x ) / GRID_SIZE;
@@ -3153,7 +3193,7 @@ void clear_messages()
 }
 
 //--------------------------------------------------------------------------------------------
-float calc_light_rotation( int rotation, int normal )
+float calc_light_rotation( const int rotation, const int normal )
 {
     /// \author ZZ
     /// \details  This function helps make_lighttable
@@ -3175,7 +3215,7 @@ float calc_light_rotation( int rotation, int normal )
 }
 
 //--------------------------------------------------------------------------------------------
-float calc_light_global( int rotation, int normal, float lx, float ly, float lz )
+float calc_light_global( const int rotation, const int normal, const float lx, const float ly, const float lz )
 {
     /// \author ZZ
     /// \details  This function helps make_lighttable
@@ -3224,7 +3264,7 @@ void make_enviro( void )
 }
 
 //--------------------------------------------------------------------------------------------
-float grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff )
+float grid_lighting_test( const ego_mpd * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff )
 {
     int ix, iy, cnt;
     Uint32 fan[4];
@@ -3260,7 +3300,7 @@ float grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t grid_lighting_interpolate( ego_mpd   * pmesh, ego_lighting_cache * dst, float fx, float fy )
+bool_t grid_lighting_interpolate( ego_mpd * pmesh, ego_lighting_cache * dst, const float fx, const float fy )
 {
     int ix, iy, cnt;
     Uint32 fan[4];
@@ -3359,7 +3399,7 @@ void gfx_update_timers()
 
     if ( fps_clk.frame_cnt > 0 && fps_clk.tick_cnt > 0 )
     {
-        stabilized_fps_sum    = fold * stabilized_fps_sum    + fnew * ( float ) fps_clk.frame_cnt / (( float ) fps_clk.tick_cnt / TICKS_PER_SEC );
+        stabilized_fps_sum    = fold * stabilized_fps_sum    + fnew * ( const float ) fps_clk.frame_cnt / (( const float ) fps_clk.tick_cnt / TICKS_PER_SEC );
         stabilized_fps_weight = fold * stabilized_fps_weight + fnew;
 
         // blank these every so often (once every 10 seconds?) so that the numbers don't overflow
@@ -3607,7 +3647,7 @@ void BillboardList_free_all()
 }
 
 //--------------------------------------------------------------------------------------------
-size_t BillboardList_get_free( Uint32 lifetime_secs )
+size_t BillboardList_get_free( const Uint32 lifetime_secs )
 {
     TX_REF             itex = TX_REF( INVALID_TX_TEXTURE );
     size_t             ibb  = INVALID_BILLBOARD;
@@ -3649,7 +3689,7 @@ size_t BillboardList_get_free( Uint32 lifetime_secs )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t BillboardList_free_one( size_t ibb )
+bool_t BillboardList_free_one( const size_t ibb )
 {
     ego_billboard_data * pbb;
 
@@ -3684,7 +3724,7 @@ bool_t BillboardList_free_one( size_t ibb )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF &  ibb )
+ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF & ibb )
 {
     if ( !VALID_BILLBOARD( ibb ) ) return NULL;
 
@@ -3693,7 +3733,7 @@ ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF &  ibb )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t render_billboard( ego_camera * pcam, ego_billboard_data * pbb, float scale )
+bool_t render_billboard( const ego_camera * pcam, ego_billboard_data * pbb, const float scale )
 {
     int i;
     ego_GLvertex vtlist[4];
@@ -3715,8 +3755,8 @@ bool_t render_billboard( ego_camera * pcam, ego_billboard_data * pbb, float scal
     w = oglx_texture_GetImageWidth( ptex );
     h = oglx_texture_GetImageHeight( ptex );
 
-    x1 = w  / ( float ) oglx_texture_GetTextureWidth( ptex );
-    y1 = h  / ( float ) oglx_texture_GetTextureHeight( ptex );
+    x1 = w  / ( const float ) oglx_texture_GetTextureWidth( ptex );
+    y1 = h  / ( const float ) oglx_texture_GetTextureHeight( ptex );
 
     vector_right.x =  pcam->mView.CNV( 0, 0 ) * w * scale * pbb->size;
     vector_right.y =  pcam->mView.CNV( 1, 0 ) * w * scale * pbb->size;
@@ -3795,7 +3835,7 @@ bool_t render_billboard( ego_camera * pcam, ego_billboard_data * pbb, float scal
 }
 
 //--------------------------------------------------------------------------------------------
-void render_all_billboards( ego_camera * pcam )
+void render_all_billboards( const ego_camera * pcam )
 {
     BBOARD_REF cnt;
 
@@ -3957,7 +3997,7 @@ bool_t render_aabb( ego_aabb * pbbox )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond )
+bool_t render_oct_bb( const ego_oct_bb * bb, const bool_t draw_square, const bool_t draw_diamond )
 {
     bool_t retval = bfalse;
 
@@ -4105,7 +4145,7 @@ bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond
 //--------------------------------------------------------------------------------------------
 // GRAPHICS OPTIMIZATIONS
 //--------------------------------------------------------------------------------------------
-bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr )
+bool_t dolist_add_chr( const ego_mpd * pmesh, const CHR_REF & ichr )
 {
     /// \author ZF
     /// \details This function puts a character in the list
@@ -4159,7 +4199,7 @@ bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt )
+bool_t dolist_add_prt( const ego_mpd * pmesh, const PRT_REF & iprt )
 {
     /// \author ZF
     /// \details This function puts a character in the list
@@ -4187,7 +4227,7 @@ bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void dolist_make( ego_mpd   * pmesh )
+void dolist_make( const ego_mpd * pmesh )
 {
     /// \author ZZ
     /// \details  This function finds the characters that need to be drawn and puts them in the list
@@ -4232,7 +4272,7 @@ void dolist_make( ego_mpd   * pmesh )
 }
 
 //--------------------------------------------------------------------------------------------
-void dolist_sort( ego_camera * pcam, bool_t do_reflect )
+void dolist_sort( const ego_camera * pcam, const bool_t do_reflect )
 {
     /// \author ZZ
     /// \details  This function orders the dolist based on distance from camera,
@@ -4365,7 +4405,7 @@ void renderlist_reset()
 }
 
 //--------------------------------------------------------------------------------------------
-void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam )
+void renderlist_make( ego_mpd * pmesh, ego_camera * pcam )
 {
     /// \author ZZ
     /// \details  This function figures out which mesh fans to draw
@@ -4996,7 +5036,7 @@ void do_chr_flashing()
 }
 
 //--------------------------------------------------------------------------------------------
-void flash_character( const CHR_REF & character, Uint8 value )
+void flash_character( const CHR_REF & character, const Uint8 value )
 {
     /// \author ZZ
     /// \details  This function sets a character's lighting
@@ -5056,7 +5096,7 @@ void gfx_disable_texturing()
 }
 
 //--------------------------------------------------------------------------------------------
-void gfx_begin_3d( ego_camera * pcam )
+void gfx_begin_3d( const ego_camera * pcam )
 {
     GL_DEBUG( glMatrixMode )( GL_PROJECTION );
     GL_DEBUG( glPushMatrix )();
@@ -5099,7 +5139,7 @@ void gfx_end_2d( void )
 }
 
 //--------------------------------------------------------------------------------------------
-void gfx_reshape_viewport( int w, int h )
+void gfx_reshape_viewport( const int w, const int h )
 {
     GL_DEBUG( glViewport )( 0, 0, w, h );
 }
@@ -5556,7 +5596,7 @@ void gfx_make_dynalist( ego_camera * pcam )
 }
 
 //--------------------------------------------------------------------------------------------
-void do_grid_lighting( ego_mpd   * pmesh, ego_camera * pcam )
+void do_grid_lighting( ego_mpd * pmesh, ego_camera * pcam )
 {
     /// \author ZZ
     /// \details  Do all tile lighting, dynamic and global
@@ -5795,7 +5835,7 @@ void gfx_reload_all_textures()
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const ego_frect_t & tx_rect, bool_t use_alpha )
+void draw_one_quad( oglx_texture_t * ptex, const ego_frect_t & scr_rect, const ego_frect_t & tx_rect, const bool_t use_alpha )
 {
     ATTRIB_PUSH( __FUNCTION__, GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT )
     {

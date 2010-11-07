@@ -131,16 +131,16 @@ static const GLfloat ui_active_color2[] = {0.00f, 0.45f, 0.45f, 0.60f};
 static const GLfloat ui_hot_color2[]    = {0.00f, 0.28f, 0.28f, 1.00f};
 static const GLfloat ui_normal_color2[] = {0.33f, 0.00f, 0.33f, 0.60f};
 
-static void ui_virtual_to_screen_abs( float vx, float vy, float *rx, float *ry );
-static void ui_screen_to_virtual_abs( float rx, float ry, float *vx, float *vy );
+static void ui_virtual_to_screen_abs( const float vx, const float vy, float *rx, float *ry );
+static void ui_screen_to_virtual_abs( const float rx, const float ry, float *vx, float *vy );
 
-static void ui_virtual_to_screen_rel( float vx, float vy, float *rx, float *ry );
-static void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy );
+static void ui_virtual_to_screen_rel( const float vx, const float vy, float *rx, float *ry );
+static void ui_screen_to_virtual_rel( const float rx, const float ry, float *vx, float *vy );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // Core functions
-int ui_begin( const char *default_font, int default_font_size )
+int ui_begin( const char *default_font, const int default_font_size )
 {
     // initialize the font handler
     fnt_init();
@@ -236,7 +236,7 @@ bool_t ui_handleSDLEvent( SDL_Event *evt )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_beginFrame( float deltaTime )
+void ui_beginFrame( const float deltaTime )
 {
     ATTRIB_PUSH( "ui_beginFrame", GL_ENABLE_BIT );
     GL_DEBUG( glDisable )( GL_DEPTH_TEST );
@@ -379,7 +379,7 @@ void ui_endFrame()
 
 //--------------------------------------------------------------------------------------------
 // Utility functions
-int ui_mouseInside( float vx, float vy, float vwidth, float vheight )
+int ui_mouseInside( const float vx, const float vy, const float vwidth, const float vheight )
 {
     float vright, vbottom;
 
@@ -465,7 +465,7 @@ TTF_Font* ui_setFont( TTF_Font * font )
 
 //--------------------------------------------------------------------------------------------
 // Behaviors
-ui_buttonValues ui_buttonBehavior( ui_id_t id, float vx, float vy, float vwidth, float vheight )
+ui_buttonValues ui_buttonBehavior( ui_id_t id, const float vx, const float vy, const float vwidth, const float vheight )
 {
     ui_buttonValues result = BUTTON_NOCHANGE;
 
@@ -543,7 +543,7 @@ ui_buttonValues ui_Widget::Behavior( ui_Widget * pWidget )
 
 //--------------------------------------------------------------------------------------------
 // Drawing
-void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight, const GLXvector4f pcolor )
+void ui_drawButton( ui_id_t id, const float vx, const float vy, const float vwidth, const float vheight, const GLXvector4f pcolor )
 {
     float x1, x2, y1, y2;
 
@@ -590,7 +590,7 @@ void ui_drawButton( ui_id_t id, float vx, float vy, float vwidth, float vheight,
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight, const GLXvector4f image_tint )
+void ui_drawImage( const ui_id_t id, oglx_texture_t *img, const float vx, const float vy, const float vwidth, const float vheight, const GLXvector4f image_tint )
 {
     GLXvector4f tmp_tint = {1, 1, 1, 1};
 
@@ -614,8 +614,8 @@ void ui_drawImage( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vw
             vh = vheight;
         }
 
-        tx = ( float ) oglx_texture_GetImageWidth( img )  / ( float ) oglx_texture_GetTextureWidth( img );
-        ty = ( float ) oglx_texture_GetImageHeight( img ) / ( float ) oglx_texture_GetTextureHeight( img );
+        tx = ( const float ) oglx_texture_GetImageWidth( img )  / ( const float ) oglx_texture_GetTextureWidth( img );
+        ty = ( const float ) oglx_texture_GetImageHeight( img ) / ( const float ) oglx_texture_GetTextureHeight( img );
 
         // convert the virtual coordinates to screen coordinates
         ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
@@ -760,7 +760,7 @@ egoboo_rv ui_Widget::drawText( ui_Widget * pw )
  */
 
 //--------------------------------------------------------------------------------------------
-float ui_drawTextBoxImmediate( TTF_Font * ttf_ptr, float vx, float vy, float spacing, const char *format, ... )
+int ui_drawTextBoxImmediate( const TTF_Font * ttf_ptr, const float vx, const float vy, const float spacing, const char *format, ... )
 {
     display_list_t * tmp_tx_lst = NULL;
     va_list args;
@@ -770,6 +770,7 @@ float ui_drawTextBoxImmediate( TTF_Font * ttf_ptr, float vx, float vy, float spa
     tmp_tx_lst = ui_vupdateTextBox( tmp_tx_lst, ttf_ptr, vx, vy, spacing, format, args );
     va_end( args );
 
+    float new_vy = vy;
     if ( NULL != tmp_tx_lst )
     {
         float x1, y1;
@@ -779,25 +780,25 @@ float ui_drawTextBoxImmediate( TTF_Font * ttf_ptr, float vx, float vy, float spa
 
         // set the texture position
         display_list_pbound( tmp_tx_lst, &bound );
-        ui_virtual_to_screen_abs( vx, vy, &x1, &y1 );
+        ui_virtual_to_screen_abs( vx, new_vy, &x1, &y1 );
         display_list_adjust_bound( tmp_tx_lst, x1 - bound.x, y1 - bound.y );
 
         // output the lines
         line_count = display_list_draw( tmp_tx_lst );
 
         // adjust the vertical position
-        vy += spacing * line_count;
+        new_vy += spacing * line_count;
 
         // get rid of the temporary list
         tmp_tx_lst = display_list_dtor( tmp_tx_lst, btrue );
     }
 
     // return the new vertical position
-    return vy;
+    return new_vy;
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * ui_vupdateText( display_item_t * tx_ptr, TTF_Font * ttf_ptr, float vx, float vy, const char *format, va_list args )
+display_item_t * ui_vupdateText( display_item_t * tx_ptr, const TTF_Font * ttf_ptr, const float vx, const float vy, const char *format, va_list args )
 {
     float  x1, y1;
     bool_t local_dspl;
@@ -835,7 +836,7 @@ display_item_t * ui_vupdateText( display_item_t * tx_ptr, TTF_Font * ttf_ptr, fl
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * ui_updateText( display_item_t * tx_ptr, TTF_Font * ttf_ptr, float vx, float vy, const char *format, ... )
+display_item_t * ui_updateText( display_item_t * tx_ptr, const TTF_Font * ttf_ptr, const float vx, const float vy, const char *format, ... )
 {
     va_list args;
 
@@ -853,7 +854,7 @@ display_item_t * ui_updateText( display_item_t * tx_ptr, TTF_Font * ttf_ptr, flo
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_drawText( display_item_t * tx_ptr, float vx, float vy )
+bool_t ui_drawText( display_item_t * tx_ptr, const float vx, const float vy )
 {
     float x1, y1;
 
@@ -867,7 +868,7 @@ bool_t ui_drawText( display_item_t * tx_ptr, float vx, float vy )
 }
 
 //--------------------------------------------------------------------------------------------
-display_list_t * ui_updateTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, float vx, float vy, float vspacing, const char * text )
+display_list_t * ui_updateTextBox_literal( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float vx, const float vy, const float vspacing, const char * text )
 {
     float   x1, y1;
     float   spacing;
@@ -916,7 +917,7 @@ display_list_t * ui_updateTextBox_literal( display_list_t * tx_lst, TTF_Font * t
 }
 
 //--------------------------------------------------------------------------------------------
-display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, float vx, float vy, float vspacing, const char * format, va_list args )
+display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float vx, const float vy, const float vspacing, const char * format, va_list args )
 {
     display_list_t * retval;
     int vsnprintf_rv;
@@ -945,7 +946,7 @@ display_list_t * ui_vupdateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr,
 }
 
 //--------------------------------------------------------------------------------------------
-display_list_t * ui_updateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, float vx, float vy, float vspacing, const char * format, ... )
+display_list_t * ui_updateTextBox( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float vx, const float vy, const float vspacing, const char * format, ... )
 {
     // the normal entry function for ui_vupdateTextBox()
 
@@ -959,7 +960,7 @@ display_list_t * ui_updateTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, 
 }
 
 //--------------------------------------------------------------------------------------------
-int ui_drawTextBox( display_list_t * tx_lst, float vx, float vy, float vwidth, float vheight )
+int ui_drawTextBox( display_list_t * tx_lst, const float vx, const float vy, const float vwidth, const float vheight )
 {
     int rv = 0;
     float x1, x2, y1, y2;
@@ -1006,7 +1007,7 @@ int ui_drawTextBox( display_list_t * tx_lst, float vx, float vy, float vwidth, f
 
 //--------------------------------------------------------------------------------------------
 // Controls
-ui_buttonValues ui_doButton( ui_id_t id, display_item_t * tx_ptr, const char *text, float vx, float vy, float vwidth, float vheight )
+ui_buttonValues ui_doButton( ui_id_t id, display_item_t * tx_ptr, const char *text, const float vx, const float vy, const float vwidth, const float vheight )
 {
     ui_buttonValues result;
     bool_t          convert_rv = bfalse;
@@ -1066,7 +1067,7 @@ ui_buttonValues ui_doButton( ui_id_t id, display_item_t * tx_ptr, const char *te
 }
 
 //--------------------------------------------------------------------------------------------
-ui_buttonValues ui_doImageButton( ui_id_t id, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight, GLXvector3f image_tint )
+ui_buttonValues ui_doImageButton( ui_id_t id, oglx_texture_t *img, const float vx, const float vy, const float vwidth, const float vheight, GLXvector3f image_tint )
 {
     ui_buttonValues result;
 
@@ -1083,7 +1084,7 @@ ui_buttonValues ui_doImageButton( ui_id_t id, oglx_texture_t *img, float vx, flo
 }
 
 //--------------------------------------------------------------------------------------------
-ui_buttonValues ui_doImageButtonWithText( ui_id_t id, display_item_t * tx_ptr, oglx_texture_t *img, const char *text, float vx, float vy, float vwidth, float vheight )
+ui_buttonValues ui_doImageButtonWithText( ui_id_t id, display_item_t * tx_ptr, oglx_texture_t *img, const char *text, const float vx, const float vy, const float vwidth, const float vheight )
 {
     ui_buttonValues result;
 
@@ -1185,7 +1186,7 @@ bool_t ui_Widget::copy( ui_Widget * pdst, ui_Widget * psrc )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::shrink( ui_Widget * pw2, ui_Widget * pw1, float pixels )
+bool_t ui_Widget::shrink( ui_Widget * pw2, ui_Widget * pw1, const float pixels )
 {
     if ( NULL == pw2 || NULL == pw1 ) return bfalse;
 
@@ -1203,7 +1204,7 @@ bool_t ui_Widget::shrink( ui_Widget * pw2, ui_Widget * pw1, float pixels )
 }
 
 //--------------------------------------------------------------------------------------------
-//bool_t ui_Widget::init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, float vx, float vy, float vwidth, float vheight )
+//bool_t ui_Widget::init( ui_Widget * pw, ui_id_t id, TTF_Font * ttf_ptr, const char *text, oglx_texture_t *img, const float vx, const float vy, const float vwidth, const float vheight )
 //{
 //    if ( NULL == pw ) return bfalse;
 //
@@ -1382,7 +1383,7 @@ bool_t ui_Widget::update_bound( ui_Widget * pw, frect_t * pbound )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::set_bound( ui_Widget * pw, float x, float y, float w, float h )
+bool_t ui_Widget::set_bound( ui_Widget * pw, const float x, const float y, const float w, const float h )
 {
     /// \author BB
     /// \details  render the text string to a SDL_Surface
@@ -1421,7 +1422,7 @@ bool_t ui_Widget::set_bound( ui_Widget * pw, float x, float y, float w, float h 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::set_button( ui_Widget * pw, float x, float y, float w, float h )
+bool_t ui_Widget::set_button( ui_Widget * pw, const float x, const float y, const float w, const float h )
 {
     bool_t rv;
 
@@ -1438,7 +1439,7 @@ bool_t ui_Widget::set_button( ui_Widget * pw, float x, float y, float w, float h
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::set_pos( ui_Widget * pw, float x, float y )
+bool_t ui_Widget::set_pos( ui_Widget * pw, const float x, const float y )
 {
     float  dx, dy;
 
@@ -1467,7 +1468,7 @@ bool_t ui_Widget::set_id( ui_Widget * pw, ui_id_t id )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::set_img( ui_Widget * pw, const ego_ui_Just & just, oglx_texture_t *img, bool_t own )
+bool_t ui_Widget::set_img( ui_Widget * pw, const ego_ui_Just & just, oglx_texture_t *img, const  bool_t own )
 {
     if ( NULL == pw ) return bfalse;
 
@@ -1670,7 +1671,7 @@ bool_t ui_Widget::dealloc( ui_Widget * pw )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * ttf_ptr, const char * format, va_list args )
+bool_t ui_Widget::set_vtext( ui_Widget * pw, const ego_ui_Just just, const TTF_Font * ttf_ptr, const char * format, va_list args )
 {
     int lines = 0;
 
@@ -1722,7 +1723,7 @@ bool_t ui_Widget::set_vtext( ui_Widget * pw, const ego_ui_Just just, TTF_Font * 
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font * ttf_ptr, const char * format, ... )
+bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just & just, const TTF_Font * ttf_ptr, const char * format, ... )
 {
     /// \author BB
     /// \details  render the text string to a ogl texture
@@ -1759,7 +1760,7 @@ bool_t ui_Widget::set_text( ui_Widget * pw, const ego_ui_Just & just, TTF_Font *
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void ui_virtual_to_screen_abs( float vx, float vy, float * rx, float * ry )
+void ui_virtual_to_screen_abs( const float vx, const float vy, float * rx, float * ry )
 {
     /// \author BB
     /// \details  convert "virtual" screen positions into "real" space
@@ -1769,7 +1770,7 @@ void ui_virtual_to_screen_abs( float vx, float vy, float * rx, float * ry )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_screen_to_virtual_abs( float rx, float ry, float *vx, float *vy )
+void ui_screen_to_virtual_abs( const float rx, const float ry, float *vx, float *vy )
 {
     /// \author BB
     /// \details  convert "real" mouse positions into "virtual" space
@@ -1779,7 +1780,7 @@ void ui_screen_to_virtual_abs( float rx, float ry, float *vx, float *vy )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_virtual_to_screen_rel( float vx, float vy, float * rx, float * ry )
+void ui_virtual_to_screen_rel( const float vx, const float vy, float * rx, float * ry )
 {
     /// \author BB
     /// \details  convert "virtual" screen positions into "real" space
@@ -1789,7 +1790,7 @@ void ui_virtual_to_screen_rel( float vx, float vy, float * rx, float * ry )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy )
+void ui_screen_to_virtual_rel( const float rx, const float ry, float *vx, float *vy )
 {
     /// \author BB
     /// \details  convert "real" mouse positions into "virtual" space
@@ -1799,7 +1800,7 @@ void ui_screen_to_virtual_rel( float rx, float ry, float *vx, float *vy )
 }
 
 //--------------------------------------------------------------------------------------------
-void ui_set_virtual_screen( float vw, float vh, float ww, float wh )
+void ui_set_virtual_screen( const float vw, const float vh, const float ww, const float wh )
 {
     /// \author BB
     /// \details  set up the ui's virtual screen
@@ -1842,7 +1843,7 @@ void ui_set_virtual_screen( float vw, float vh, float ww, float wh )
 }
 
 //--------------------------------------------------------------------------------------------
-TTF_Font * ui_loadFont( const char * font_name, float vpointSize )
+TTF_Font * ui_loadFont( const char * font_name, const float vpointSize )
 {
     float pointSize;
 
@@ -1974,7 +1975,7 @@ bool_t ui_joy_set( SDL_JoyAxisEvent * evt_ptr )
 
         // update the info
         old_diff = pctrl->scr[evt_ptr->axis];
-        new_diff = ( float )value / ( float )( 0x8000 - dead_zone ) * sensitivity;
+        new_diff = ( const float )value / ( const float )( 0x8000 - dead_zone ) * sensitivity;
         pctrl->scr[evt_ptr->axis] = new_diff;
 
         updated = ( old_diff != new_diff );

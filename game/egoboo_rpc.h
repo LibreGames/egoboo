@@ -45,11 +45,11 @@ struct ego_rpc
     void * data;       ///< a pointer to the "inherited" data
 
     static bool_t get_valid( ego_rpc * prpc )              { return ( NULL != prpc ) && prpc->allocated; }
-    static bool_t get_matches( ego_rpc * prpc, int guid )  { return ( NULL != prpc ) && prpc->allocated && ( guid == prpc->guid ); }
-    static bool_t get_finished( ego_rpc * prpc, int guid ) { return !ego_rpc::get_matches( prpc, guid ) || ( prpc->finished ); }
-    static bool_t set_abort( ego_rpc * prpc, int guid )    { if ( !ego_rpc::get_matches( prpc, guid ) ) return bfalse; prpc->abort = btrue; return btrue; }
+    static bool_t get_matches( ego_rpc * prpc, const int guid )  { return ( NULL != prpc ) && prpc->allocated && ( guid == prpc->guid ); }
+    static bool_t get_finished( ego_rpc * prpc, const int guid ) { return !ego_rpc::get_matches( prpc, guid ) || ( prpc->finished ); }
+    static bool_t set_abort( ego_rpc * prpc, const int guid )    { if ( !ego_rpc::get_matches( prpc, guid ) ) return bfalse; prpc->abort = btrue; return btrue; }
 
-    static ego_rpc * ctor_this( ego_rpc * prpc, int data_type, void * data ) ;
+    static ego_rpc * ctor_this( ego_rpc * prpc, const int data_type, void * data ) ;
     static ego_rpc * dtor_this( ego_rpc * prpc );
 
 private:
@@ -72,10 +72,10 @@ struct ego_tx_request : public ego_rpc
     // the function call return value(s)
     TX_REF ret_index;    /// the return value of the function
 
-    static ego_tx_request * ctor_this( ego_tx_request * preq, int type );
+    static ego_tx_request * ctor_this( ego_tx_request * preq, const int type );
     static ego_tx_request * dtor_this( ego_tx_request * preq );
 
-    static ego_tx_request * load_TxTexture( const char *filename, int itex_src, Uint32 key );
+    static ego_tx_request * load_TxTexture( const char *filename, const int itex_src, const Uint32 key );
     static ego_tx_request * load_TxTitleImage( const char *filename );
 
     static ego_rpc * get_rpc( ego_tx_request * ptr ) { return static_cast<ego_rpc *>( ptr ); }

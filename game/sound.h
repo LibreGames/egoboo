@@ -70,29 +70,29 @@ void   sound_restart();
 
 Mix_Chunk * sound_load_chunk_vfs( const char * szFileName );
 Mix_Music * sound_load_music( const char * szFileName );
-bool_t      sound_load( snd_mix_ptr * pptr, const char * szFileName, snd_mix_type type );
+bool_t      sound_load( snd_mix_ptr * pptr, const char * szFileName, const snd_mix_type type );
 
-int     sound_play_mix( fvec3_t pos, snd_mix_ptr * pptr );
-int     sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, int loops, const CHR_REF & object );
+int     sound_play_mix( const fvec3_t pos, snd_mix_ptr * pptr );
+int     sound_play_chunk_looped( fvec3_t pos, Mix_Chunk * pchunk, const int loops, const CHR_REF & object );
 #define sound_play_chunk( pos, pchunk ) sound_play_chunk_looped( pos, pchunk, 0, CHR_REF(MAX_CHR) )
-void    sound_play_song( int songnumber, Uint16 fadetime, int loops );
-void    sound_finish_song( Uint16 fadetime );
+void    sound_play_song( const int songnumber, const Uint16 fadetime, const int loops );
+void    sound_finish_song( const Uint16 fadetime );
 int     sound_play_chunk_full( Mix_Chunk * pchunk );
 
 void    sound_fade_all();
 void    fade_in_music( Mix_Music * music );
 
-void    sound_stop_channel( int whichchannel );
+void    sound_stop_channel( const int whichchannel );
 void    sound_stop_song();
 
 void    load_global_waves( void );
 void    load_all_music_sounds_vfs();
 
-bool_t looped_stop_object_sounds( const CHR_REF &  ichr );
+bool_t looped_stop_object_sounds( const CHR_REF & ichr );
 void   looped_update_all_sound();
 
 void   sound_finish_sound();
 void   sound_free_chunk( Mix_Chunk * pchunk );
 
 int get_current_song_playing();
-bool_t LoopedList_remove( int channel );
+bool_t LoopedList_remove( const int channel );

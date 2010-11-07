@@ -319,7 +319,7 @@ bool_t save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplat
 
     template_put_bool( filetemp, filewrite, peve->setyesno[SETMISSILETREATMENT] );
 
-    switch (( int )peve->setvalue[SETMISSILETREATMENT] )
+    switch (( const int )peve->setvalue[SETMISSILETREATMENT] )
     {
         case MISSILE_NORMAL : template_put_char( filetemp, filewrite, 'N' ); break;
         case MISSILE_DEFLECT: template_put_char( filetemp, filewrite, 'D' ); break;

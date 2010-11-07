@@ -72,7 +72,7 @@ int luaopen_ego( lua_State* L );
 static SDL_bool lua_console_run( egoboo_console_t * pcon, void * data );
 
 static int lua_console_print( lua_State * L );
-static int lua_console_report( lua_console_t * pcon, int status );
+static int lua_console_report( lua_console_t * pcon, const int status );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ egoboo_console_t * lua_console_get_base( lua_console_t * pcon )
 }
 
 //--------------------------------------------------------------------------------------------
-int lua_console_report( lua_console_t * pcon, int status )
+int lua_console_report( lua_console_t * pcon, const int status )
 {
     if ( status && !lua_isnil( pcon->L, -1 ) )
     {

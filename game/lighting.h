@@ -45,7 +45,7 @@ enum
 typedef float lighting_vector_t[LIGHTING_VEC_SIZE];
 
 void lighting_vector_evaluate( lighting_vector_t lvec, fvec3_base_t nrm, float * direct, float * amb );
-void lighting_vector_sum( lighting_vector_t lvec, fvec3_base_t nrm, float direct, float ambient );
+void lighting_vector_sum( lighting_vector_t lvec, fvec3_base_t nrm,  const float direct, const float ambient );
 
 //--------------------------------------------------------------------------------------------
 struct ego_lighting_cache_base
@@ -72,7 +72,7 @@ private:
 
 ego_lighting_cache_base * lighting_cache_base_init( ego_lighting_cache_base * pdata );
 bool_t                  lighting_cache_base_max_light( ego_lighting_cache_base * cache );
-bool_t                  lighting_cache_base_blend( ego_lighting_cache_base * cache, ego_lighting_cache_base * cnew, float keep );
+bool_t                  lighting_cache_base_blend( ego_lighting_cache_base * cache, ego_lighting_cache_base * cnew, const float keep );
 
 //--------------------------------------------------------------------------------------------
 struct ego_lighting_cache
@@ -88,7 +88,7 @@ struct ego_lighting_cache
 
 ego_lighting_cache * lighting_cache_init( ego_lighting_cache * pdata );
 bool_t             lighting_cache_max_light( ego_lighting_cache * cache );
-bool_t             lighting_cache_blend( ego_lighting_cache * cache, ego_lighting_cache * cnew, float keep );
+bool_t             lighting_cache_blend( ego_lighting_cache * cache, ego_lighting_cache * cnew, const float keep );
 //--------------------------------------------------------------------------------------------
 #define MAXDYNADIST                     2700        // Leeway for offscreen lights
 #define MAX_DYNA                    64          // Absolute max number of dynamic lights
@@ -109,9 +109,9 @@ extern float  light_a, light_d, light_nrm[3];
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t lighting_project_cache( ego_lighting_cache * dst, ego_lighting_cache * src, fmat_4x4_t mat );
-bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache * src[], float u, float v );
-float lighting_cache_test( ego_lighting_cache * src[], float u, float v, float * low_max_diff, float * hgh_max_diff );
+bool_t lighting_cache_interpolate( ego_lighting_cache * dst, ego_lighting_cache * src[], const float u, const float v );
+float lighting_cache_test( ego_lighting_cache * src[], const float u, const float v, float * low_max_diff, float * hgh_max_diff );
 
-float lighting_evaluate_cache( ego_lighting_cache * src, fvec3_base_t nrm, float z, ego_aabb bbox, float * light_amb, float * light_dir );
+float lighting_evaluate_cache( ego_lighting_cache * src, fvec3_base_t nrm, const float z, const ego_aabb & bbox, float * light_amb, float * light_dir );
 
 bool_t sum_dyna_lighting( ego_dynalight * pdyna, lighting_vector_t lighting, fvec3_base_t nrm );

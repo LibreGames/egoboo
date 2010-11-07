@@ -33,14 +33,14 @@
 INLINE CAP_REF pro_get_icap( const PRO_REF & iobj );
 INLINE MAD_REF pro_get_imad( const PRO_REF & iobj );
 INLINE EVE_REF pro_get_ieve( const PRO_REF & iobj );
-INLINE PIP_REF pro_get_ipip( const PRO_REF & iobj, int ipip );
-INLINE IDSZ    pro_get_idsz( const PRO_REF & iobj, int type );
+INLINE PIP_REF pro_get_ipip( const PRO_REF & iobj, const int ipip );
+INLINE IDSZ    pro_get_idsz( const PRO_REF & iobj, const int type );
 
 INLINE ego_cap *     pro_get_pcap( const PRO_REF & iobj );
 INLINE ego_mad *     pro_get_pmad( const PRO_REF & iobj );
 INLINE ego_eve *     pro_get_peve( const PRO_REF & iobj );
-INLINE ego_pip *     pro_get_ppip( const PRO_REF & iobj, int pip_index );
-INLINE Mix_Chunk * pro_get_chunk( const PRO_REF & iobj, int index );
+INLINE ego_pip *     pro_get_ppip( const PRO_REF & iobj, const int pip_index );
+INLINE Mix_Chunk * pro_get_chunk( const PRO_REF & iobj, const int index );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ INLINE EVE_REF pro_get_ieve( const PRO_REF & iobj )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE PIP_REF pro_get_ipip( const PRO_REF & iobj, int pip_index )
+INLINE PIP_REF pro_get_ipip( const PRO_REF & iobj, const int pip_index )
 {
     ego_pro * pobj;
     PIP_REF found_pip, global_pip;
@@ -112,7 +112,7 @@ INLINE PIP_REF pro_get_ipip( const PRO_REF & iobj, int pip_index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE IDSZ pro_get_idsz( const PRO_REF & iobj, int type )
+INLINE IDSZ pro_get_idsz( const PRO_REF & iobj, const int type )
 {
     ego_cap * pcap;
 
@@ -164,7 +164,7 @@ INLINE ego_eve * pro_get_peve( const PRO_REF & iobj )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_pip * pro_get_ppip( const PRO_REF & iobj, int pip_index )
+INLINE ego_pip * pro_get_ppip( const PRO_REF & iobj, const int pip_index )
 {
     ego_pro * pobj;
     PIP_REF global_pip, local_pip;
@@ -197,7 +197,7 @@ INLINE ego_pip * pro_get_ppip( const PRO_REF & iobj, int pip_index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Mix_Chunk * pro_get_chunk( const PRO_REF & iobj, int index )
+INLINE Mix_Chunk * pro_get_chunk( const PRO_REF & iobj, const int index )
 {
     ego_pro * pobj;
 

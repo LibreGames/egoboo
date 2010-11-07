@@ -45,20 +45,20 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void draw_points( ego_chr * pchr, int vrt_offset, size_t verts );
-static void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, int slot );
-static void draw_one_grip( gfx_mad_instance * pinst, ego_mad * pmad, int slot );
+static void draw_points( ego_chr * pchr, const int vrt_offset, const size_t verts );
+static void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, const int slot );
+static void draw_one_grip( gfx_mad_instance * pinst, ego_mad * pmad, const int slot );
 static void chr_draw_grips( ego_chr * pchr );
 static void chr_draw_attached_grip( ego_chr * pchr );
 static void render_chr_bbox( ego_chr * pchr );
 static void render_chr_grips( ego_chr * pchr );
 static void render_chr_points( ego_chr * pchr );
 static bool_t render_chr_mount_cv( ego_chr * pchr );
-static bool_t render_chr_grip_cv( ego_chr * pchr, int grip_offset );
+static bool_t render_chr_grip_cv( ego_chr * pchr, const int grip_offset );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
+bool_t render_one_mad_enviro( const CHR_REF & character, const GLXvector4f tint, const BIT_FIELD bits )
 {
     /// \author ZZ
     /// \details  This function draws an environment mapped model
@@ -235,7 +235,7 @@ else
 */
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
+bool_t render_one_mad_tex( const CHR_REF & character, const GLXvector4f tint, const BIT_FIELD bits )
 {
     /// \author ZZ
     /// \details  This function draws a model
@@ -407,7 +407,7 @@ bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, BIT_FIEL
 */
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits )
+bool_t render_one_mad( const CHR_REF & character, const GLXvector4f tint, const BIT_FIELD bits )
 {
     /// \author ZZ
     /// \details  This function picks the actual function to use
@@ -595,7 +595,7 @@ bool_t render_chr_mount_cv( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t render_chr_grip_cv( ego_chr * pchr, int grip_offset )
+bool_t render_chr_grip_cv( ego_chr * pchr, const int grip_offset )
 {
     bool_t retval;
 
@@ -631,7 +631,7 @@ void render_chr_points( ego_chr * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_points( ego_chr * pchr, int vrt_offset, size_t verts )
+void draw_points( ego_chr * pchr, const int vrt_offset, const size_t verts )
 {
     /// \author BB
     /// \details  a function that will draw some of the vertices of the given character.
@@ -651,7 +651,7 @@ void draw_points( ego_chr * pchr, int vrt_offset, size_t verts )
     vmax = vmin + verts;
 
     if ( vmin < 0 || vmax < 0 ) return;
-    if (( size_t )vmin > pchr->gfx_inst.vrt_count || ( size_t )vmax > pchr->gfx_inst.vrt_count ) return;
+    if (( const size_t )vmin > pchr->gfx_inst.vrt_count || ( const size_t )vmax > pchr->gfx_inst.vrt_count ) return;
 
     texture_1d_enabled = GL_DEBUG( glIsEnabled )( GL_TEXTURE_1D );
     texture_2d_enabled = GL_DEBUG( glIsEnabled )( GL_TEXTURE_2D );
@@ -682,7 +682,7 @@ void draw_points( ego_chr * pchr, int vrt_offset, size_t verts )
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_grip( gfx_mad_instance * pinst, ego_mad * pmad, int slot )
+void draw_one_grip( gfx_mad_instance * pinst, ego_mad * pmad, const int slot )
 {
     GLboolean texture_1d_enabled, texture_2d_enabled;
 
@@ -708,7 +708,7 @@ void draw_one_grip( gfx_mad_instance * pinst, ego_mad * pmad, int slot )
 }
 
 //--------------------------------------------------------------------------------------------
-void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, int slot )
+void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, const int slot )
 {
     int vmin, vmax, cnt;
 
@@ -726,7 +726,7 @@ void _draw_one_grip_raw( gfx_mad_instance * pinst, ego_mad * pmad, int slot )
     vmin = ego_sint( pinst->vrt_count ) - ego_sint( slot_to_grip_offset(( slot_t )slot ) );
     vmax = vmin + GRIP_VERTS;
 
-    if ( vmin >= 0 && vmax >= 0 && ( size_t )vmax <= pinst->vrt_count )
+    if ( vmin >= 0 && vmax >= 0 && ( const size_t )vmax <= pinst->vrt_count )
     {
         fvec3_t   src, dst, diff;
 
@@ -829,7 +829,7 @@ void chr_draw_grips( ego_chr * pchr )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void gfx_mad_instance::update_lighting_base( gfx_mad_instance * pinst, ego_chr * pchr, bool_t force )
+void gfx_mad_instance::update_lighting_base( gfx_mad_instance * pinst, ego_chr * pchr, const bool_t force )
 {
     /// \author BB
     /// \details  determine the basic per-vertex lighting
@@ -840,25 +840,27 @@ void gfx_mad_instance::update_lighting_base( gfx_mad_instance * pinst, ego_chr *
 
     ego_GLvertex * vrt_lst;
 
+    bool_t loc_force = force;
+
     if ( NULL == pinst || NULL == pchr ) return;
     vrt_lst = pinst->vrt_lst;
 
-    // force this function to be evaluated the 1st time through
-    if ( 0 == update_wld && 0 == frame_all ) force = btrue;
+    // loc_force this function to be evaluated the 1st time through
+    if ( 0 == update_wld && 0 == frame_all ) loc_force = btrue;
 
     // has this already been calculated this update?
-    if ( !force && pinst->lighting_update_wld >= update_wld ) return;
+    if ( !loc_force && pinst->lighting_update_wld >= update_wld ) return;
     pinst->lighting_update_wld = update_wld;
 
     // make sure the matrix is valid
     ego_chr::update_matrix( pchr, btrue );
 
     // has this already been calculated this frame?
-    if ( !force && pinst->lighting_frame_all >= frame_all ) return;
+    if ( !loc_force && pinst->lighting_frame_all >= frame_all ) return;
 
     // reduce the amount of updates to an average of about 1 every 2 frames, but dither
     // the updating so that not all objects update on the same frame
-    pinst->lighting_frame_all = frame_all + (( frame_all + ego_chr::get_obj_ref( *pchr ).get_id() ) & 0x03 );
+    pinst->lighting_frame_all = frame_all + (( frame_all + ego_chr::cget_obj_ref( *pchr ).get_id() ) & 0x03 );
 
     // interpolate the lighting for the origin of the object
     grid_lighting_interpolate( PMesh, &global_light, pchr->pos.x, pchr->pos.y );
@@ -1122,7 +1124,7 @@ egoboo_rv gfx_mad_instance::update_vertices( gfx_mad_instance * pgfx_inst, const
         log_error( "%s - md2 model has negative number of vertices.... is it corrupted?\n", __FUNCTION__ );
     }
 
-    if ( pgfx_inst->vrt_count != ( size_t )md2_vertices )
+    if ( pgfx_inst->vrt_count != ( const size_t )md2_vertices )
     {
         log_error( "%s - character instance vertex data does not match its md2\n", __FUNCTION__ );
     }
@@ -1244,7 +1246,7 @@ egoboo_rv gfx_mad_instance::update_vertices( gfx_mad_instance * pgfx_inst, const
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv gfx_mad_instance::update_vlst_cache( gfx_mad_instance * pgfx_inst, const pose_data & p_new, const gfx_range & r_new, bool_t force, bool_t vertices_match, bool_t frames_match )
+egoboo_rv gfx_mad_instance::update_vlst_cache( gfx_mad_instance * pgfx_inst, const pose_data & p_new, const gfx_range & r_new, const bool_t force, const bool_t vertices_match, const bool_t frames_match )
 {
     // this is getting a bit ugly...
     // we need to do this calculation as little as possible, so it is important that the
@@ -1351,7 +1353,7 @@ egoboo_rv gfx_mad_instance::update_vlst_cache( gfx_mad_instance * pgfx_inst, con
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv gfx_mad_instance::update_grip_verts( gfx_mad_instance * pinst, Uint16 vrt_lst[], size_t vrt_count )
+egoboo_rv gfx_mad_instance::update_grip_verts( gfx_mad_instance * pinst, const Uint16 vrt_lst[], const size_t vrt_count )
 {
     gfx_range r_new( 0xFFFF, 0 );
     Uint32 cnt;
@@ -1502,7 +1504,7 @@ bool_t gfx_mad_instance::dealloc( gfx_mad_instance * pgfx_inst )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_mad_instance::alloc( gfx_mad_instance * pgfx_inst, size_t vlst_size )
+bool_t gfx_mad_instance::alloc( gfx_mad_instance * pgfx_inst, const size_t vlst_size )
 {
     if ( NULL == pgfx_inst ) return bfalse;
 
@@ -1520,7 +1522,7 @@ bool_t gfx_mad_instance::alloc( gfx_mad_instance * pgfx_inst, size_t vlst_size )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_mad_instance::update_ref( gfx_mad_instance * pgfx_inst, float grid_level, bool_t need_matrix )
+bool_t gfx_mad_instance::update_ref( gfx_mad_instance * pgfx_inst, const float grid_level, const bool_t need_matrix )
 {
     int trans_temp;
 
@@ -1561,7 +1563,7 @@ bool_t gfx_mad_instance::update_ref( gfx_mad_instance * pgfx_inst, float grid_le
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t gfx_mad_instance::spawn( gfx_mad_instance * pgfx_inst, const PRO_REF & profile, Uint8 skin )
+bool_t gfx_mad_instance::spawn( gfx_mad_instance * pgfx_inst, const PRO_REF & profile, const Uint8 skin )
 {
     Sint8 greensave = 0, redsave = 0, bluesave = 0;
 
@@ -1603,7 +1605,7 @@ bool_t gfx_mad_instance::spawn( gfx_mad_instance * pgfx_inst, const PRO_REF & pr
 }
 
 //--------------------------------------------------------------------------------------------
-void gfx_mad_instance::get_tint( gfx_mad_instance * pgfx_inst, GLfloat * tint, BIT_FIELD bits )
+void gfx_mad_instance::get_tint( const gfx_mad_instance * pgfx_inst, GLfloat * tint, const BIT_FIELD bits )
 {
     int i;
     float weight_sum;

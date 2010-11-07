@@ -86,11 +86,11 @@ protected:
     ego_mad * make_actions( ego_mad * pmad );
     ego_mad * finalize( ego_mad * pmad );
     ego_mad * heal_actions( ego_mad * pmad, const char * loadname );
-    ego_mad * make_framefx( ego_mad * pmad, const char * cFrameName, int frame );
+    ego_mad * make_framefx( ego_mad * pmad, const char * cFrameName, const int frame );
     ego_mad * make_walk_lip( ego_mad * pmad, const int lip, const int action );
-    ego_mad * make_frame_lip( ego_mad * pmad, int action );
+    ego_mad * make_frame_lip( ego_mad * pmad, const int action );
     ego_mad * apply_copy_file_vfs( ego_mad * pmad, const char* loadname );
-    ego_mad * copy_action_correct( ego_mad * pmad, int actiona, int actionb );
+    ego_mad * copy_action_correct( ego_mad * pmad, const int actiona, const int actionb );
     int       get_action_index( const char * cFrameName );
 
 };
@@ -214,17 +214,17 @@ struct mad_instance
 
     static mad_instance * clear( mad_instance * ptr );
 
-    static egoboo_rv set_action( mad_instance * pinst, int next_action, bool_t next_ready, bool_t override_action );
-    static egoboo_rv start_anim( mad_instance * pinst, int next_action, bool_t next_ready, bool_t override_action );
-    static egoboo_rv set_frame( mad_instance * pinst, int frame, int ilip = 0 );
+    static egoboo_rv set_action( mad_instance * pinst, const int next_action, const bool_t next_ready, const bool_t override_action );
+    static egoboo_rv start_anim( mad_instance * pinst, const int next_action, const bool_t next_ready, const bool_t override_action );
+    static egoboo_rv set_frame( mad_instance * pinst, const int frame, const int ilip = 0 );
 
     static egoboo_rv increment_action( mad_instance * pinst );
-    static egoboo_rv increment_frame( mad_instance * pinst, bool_t mounted = bfalse );
-    static egoboo_rv play_action( mad_instance * pinst, int action, bool_t actionready );
+    static egoboo_rv increment_frame( mad_instance * pinst, const bool_t mounted = bfalse );
+    static egoboo_rv play_action( mad_instance * pinst, const int action, const bool_t actionready );
 
     static bool_t    set_mad( mad_instance * pinst, const MAD_REF & imad );
 
-    static BIT_FIELD update_animation( mad_instance * pinst, float dt );
+    static BIT_FIELD update_animation( mad_instance * pinst, const float dt );
     static BIT_FIELD update_animation_one( mad_instance * pmad_inst );
     static BIT_FIELD get_framefx( mad_instance * pinst );
 
@@ -248,6 +248,6 @@ void   load_action_names_vfs( const char* loadname );
 
 void   mad_make_equally_lit( const MAD_REF & imad );
 
-int       mad_get_action( const MAD_REF & imad, int action );
-BIT_FIELD mad_get_actionfx( const MAD_REF & imad, int action );
-int       mad_randomize_action( int action, int slot );
+int       mad_get_action( const MAD_REF & imad, const int action );
+BIT_FIELD mad_get_actionfx( const MAD_REF & imad, const int action );
+int       mad_randomize_action( const int action, const int slot );

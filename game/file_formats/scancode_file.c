@@ -124,26 +124,29 @@ int scantag_get_value( const char *string )
 }
 
 //--------------------------------------------------------------------------------------------
-const char* scantag_get_string( Sint32 device, int tag, bool_t is_key )
+const char* scantag_get_string( const Sint32 device, const int tag, const bool_t is_key )
 {
     /// \author ZF
     /// \details  This translates a input tag value to a string
 
     int cnt;
 
-    if ( device >= INPUT_DEVICE_JOY ) device = INPUT_DEVICE_JOY;
-    if ( device == INPUT_DEVICE_KEYBOARD ) is_key = btrue;
+    Sint32 loc_device = device;
+    bool_t loc_is_key = is_key;
+
+    if ( loc_device >= INPUT_DEVICE_JOY ) loc_device = INPUT_DEVICE_JOY;
+    if ( loc_device == INPUT_DEVICE_KEYBOARD ) loc_is_key = btrue;
 
     for ( cnt = 0; cnt < scantag_count; cnt++ )
     {
         // do not search invalid keys
-        if ( is_key )
+        if ( loc_is_key )
         {
             if ( 'K' != scantag[cnt].name[0] ) continue;
         }
         else
         {
-            switch ( device )
+            switch ( loc_device )
             {
                 case INPUT_DEVICE_MOUSE:
                     if ( 'M' != scantag[cnt].name[0] ) continue;

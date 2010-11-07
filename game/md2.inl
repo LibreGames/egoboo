@@ -33,9 +33,9 @@
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-static INLINE const ego_MD2_SkinName  *md2_get_Skin( ego_MD2_Model * m, int index );
-static INLINE const ego_MD2_Frame     *md2_get_Frame( ego_MD2_Model * m, int index );
-static INLINE const ego_MD2_Triangle  *md2_get_Triangle( ego_MD2_Model * m, int index );
+static INLINE const ego_MD2_SkinName  *md2_get_Skin( ego_MD2_Model * m, const int index );
+static INLINE const ego_MD2_Frame     *md2_get_Frame( ego_MD2_Model * m, const int index );
+static INLINE const ego_MD2_Triangle  *md2_get_Triangle( ego_MD2_Model * m, const int index );
 
 static INLINE int md2_get_numVertices( ego_MD2_Model * m );
 static INLINE int md2_get_numTexCoords( ego_MD2_Model * m );
@@ -67,7 +67,7 @@ INLINE ego_MD2_GLCommand *md2_get_Commands( ego_MD2_Model * m ) { return m->m_co
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-INLINE const ego_MD2_SkinName *md2_get_Skin( ego_MD2_Model * m, int index )
+INLINE const ego_MD2_SkinName *md2_get_Skin( ego_MD2_Model * m, const int index )
 {
     if ( index >= 0 && index < m->m_numSkins )
     {
@@ -77,7 +77,7 @@ INLINE const ego_MD2_SkinName *md2_get_Skin( ego_MD2_Model * m, int index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const ego_MD2_Frame *md2_get_Frame( ego_MD2_Model * m, int index )
+INLINE const ego_MD2_Frame *md2_get_Frame( ego_MD2_Model * m, const int index )
 {
     if ( index >= 0 && index < m->m_numFrames )
     {
@@ -87,7 +87,7 @@ INLINE const ego_MD2_Frame *md2_get_Frame( ego_MD2_Model * m, int index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE const ego_MD2_Triangle  *md2_get_Triangle( ego_MD2_Model * m, int index )
+INLINE const ego_MD2_Triangle  *md2_get_Triangle( ego_MD2_Model * m, const int index )
 {
     if ( index >= 0 && index < m->m_numTriangles )
     {

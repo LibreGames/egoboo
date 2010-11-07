@@ -55,11 +55,11 @@ struct s_ClockState
     int frameHistoryHead;
 };
 
-static ClockState_t * clk_ctor( ClockState_t * cs, const char * name, int size );
+static ClockState_t * clk_ctor( ClockState_t * cs, const char * name, const int size );
 static bool_t         clk_dtor( ClockState_t * cs );
 
 //static void   clk_initTime( ClockState_t * cs );
-static void   clk_setFrameHistoryWindow( ClockState_t * cs, int size );
+static void   clk_setFrameHistoryWindow( ClockState_t * cs, const int size );
 static void   clk_addToFrameHistory( ClockState_t * cs, double frame );
 static double clk_getExactLastFrameDuration( ClockState_t * cs );
 static double clk_guessFrameDuration( ClockState_t * cs );
@@ -103,7 +103,7 @@ void clk_shutdown()
 }
 
 //--------------------------------------------------------------------------------------------
-ClockState_t * clk_create( const char * name, int size )
+ClockState_t * clk_create( const char * name, const int size )
 {
     ClockState_t * cs;
 
@@ -126,9 +126,11 @@ bool_t clk_destroy( ClockState_t ** pcs )
 }
 
 //--------------------------------------------------------------------------------------------
-ClockState_t * clk_ctor( ClockState_t * cs, const char * name, int window_size )
+ClockState_t * clk_ctor( ClockState_t * cs, const char * name, const int window_size )
 {
     clock_source_ptr_t psrc;
+
+    int loc_window_size = window_size;
 
     if ( NULL == cs ) return cs;
 
@@ -141,7 +143,8 @@ ClockState_t * clk_ctor( ClockState_t * cs, const char * name, int window_size )
     cs->maximumFrameTime = 0.2F;
     cs->name = name;
 
-    if ( window_size < 0 ) window_size = 1;
+    if ( loc_window_size < 0 ) loc_window_size = 1;
+
     clk_setFrameHistoryWindow( cs, window_size );
 
     return cs;
@@ -173,7 +176,7 @@ ClockState_t * clk_renew( ClockState_t * cs )
 }
 
 //--------------------------------------------------------------------------------------------
-void clk_setFrameHistoryWindow( ClockState_t * cs, int size )
+void clk_setFrameHistoryWindow( ClockState_t * cs, const int size )
 {
     double *history;
     int oldSize, newSize;
@@ -317,7 +320,7 @@ Uint32 clk_getFrameNumber( ClockState_t * cs )
 //--------------------------------------------------------------------------------------------
 float clk_getFrameRate( ClockState_t * cs )
 {
-    return ( float )( 1.0F / cs->frameTime );
+    return ( const float )( 1.0F / cs->frameTime );
 }
 
 //--------------------------------------------------------------------------------------------

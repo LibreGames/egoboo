@@ -38,12 +38,12 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 // wrapper for uploading texture information
 
-    void oglx_set_filtering( GLenum target, GLint min_f, GLint mag_f, GLfloat anisotropy );
-    void oglx_set_wrapping( GLenum target, GLint wrap_s, GLint wrap_t );
+    void oglx_set_filtering( const GLenum target, const GLint min_f, const GLint mag_f, const GLfloat anisotropy );
+    void oglx_set_wrapping( const GLenum target, const GLint wrap_s, const GLint wrap_t );
 
-    void oglx_upload_1d( GLboolean use_alpha, GLsizei w, const GLvoid * data );
-    void oglx_upload_2d( GLboolean use_alpha, GLsizei w, GLsizei h, const GLvoid * data );
-    void oglx_upload_2d_mipmap( GLboolean use_alpha, GLsizei w, GLsizei h, const GLvoid * data );
+    void oglx_upload_1d( const GLboolean use_alpha, GLsizei w, const GLvoid * data );
+    void oglx_upload_2d( const GLboolean use_alpha, GLsizei w, GLsizei h, const GLvoid * data );
+    void oglx_upload_2d_mipmap( const GLboolean use_alpha, const GLsizei w, const GLsizei h, const GLvoid * data );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

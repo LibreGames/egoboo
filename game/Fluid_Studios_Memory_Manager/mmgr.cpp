@@ -754,7 +754,7 @@ static	void	resetGlobals()
 // memory tracking routines.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-void	*operator new(size_t reportedSize)
+void	*operator new(const size_t reportedSize)
 {
 	#ifdef TEST_MEMORY_MANAGER
 	log("[D] ENTER: new");
@@ -812,7 +812,7 @@ void	*operator new(size_t reportedSize)
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-void	*operator new[](size_t reportedSize)
+void	*operator new[](const size_t reportedSize)
 {
 	#ifdef TEST_MEMORY_MANAGER
 	log("[D] ENTER: new[]");
@@ -876,7 +876,7 @@ void	*operator new[](size_t reportedSize)
 // our memory tracking routines.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-void	*operator new(size_t reportedSize, const char *sourceFile, int sourceLine)
+void	*operator new(const size_t reportedSize, const char *sourceFile, const int sourceLine)
 {
 	#ifdef TEST_MEMORY_MANAGER
 	log("[D] ENTER: new");
@@ -928,7 +928,7 @@ void	*operator new(size_t reportedSize, const char *sourceFile, int sourceLine)
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-void	*operator new[](size_t reportedSize, const char *sourceFile, int sourceLine)
+void	*operator new[](const size_t reportedSize, const char *sourceFile, const int sourceLine)
 {
 	#ifdef TEST_MEMORY_MANAGER
 	log("[D] ENTER: new[]");

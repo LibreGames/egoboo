@@ -131,8 +131,8 @@ struct ego_object_process_state_data
     //---- static accessors
     // use static functions as accessors so the program won't crash on an accidental NULL pointer
 
-    static bool_t set_valid( its_type * ptr, bool_t val );
-    static bool_t set_action( its_type * ptr, ego_obj_actions_t action ) { if ( NULL == ptr ) return bfalse; bool_t rv = ( action != ptr->action ); ptr->action = action; return rv; }
+    static bool_t set_valid( its_type * ptr, const bool_t val );
+    static bool_t set_action( its_type * ptr, const ego_obj_actions_t action ) { if ( NULL == ptr ) return bfalse; bool_t rv = ( action != ptr->action ); ptr->action = action; return rv; }
 
     static bool_t get_valid( const its_type * ptr )       { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, valid_bit )        && has_no_bits( ptr, killed_bit ); }
     static bool_t get_initialized( const its_type * ptr ) { return ( NULL == ptr ) ? bfalse : has_all_bits( ptr, full_initialized ) && has_no_bits( ptr, killed_bit ); }
@@ -150,7 +150,7 @@ struct ego_object_process_state_data
 
     //---- non-static accessors
 
-    bool_t set_valid( bool_t val );
+    bool_t set_valid( const bool_t val );
     bool_t set_action( ego_obj_actions_t act ) { bool_t rv = ( action != act ); action = act; return rv; }
 
     bool_t get_valid()       const { return has_all_bits( this, valid_bit )        && has_no_bits( this, killed_bit ); }
@@ -172,7 +172,7 @@ protected:
     explicit ego_object_process_state_data( ego_obj_actions_t state = ego_obj_nothing ) { ctor_this( this, state ); }
     ~ego_object_process_state_data() { dtor_this( this ); }
 
-    static ego_object_process_state_data * ctor_this( ego_object_process_state_data * ptr, ego_obj_actions_t state = ego_obj_nothing )
+    static ego_object_process_state_data * ctor_this( ego_object_process_state_data * ptr, const ego_obj_actions_t state = ego_obj_nothing )
     {
         if ( NULL == ptr ) return ptr;
 
@@ -234,7 +234,7 @@ protected:
         return old != ptr->state_flags;
     }
 
-    static bool_t set_on( its_type * ptr, bool_t val )
+    static bool_t set_on( its_type * ptr, const bool_t val )
     {
         bool_t rv = bfalse;
 
@@ -330,18 +330,18 @@ struct ego_object_process : public i_ego_object_process, public ego_object_reque
 
     ego_object_process * get_object_process() { return this; }
 
-    static egoboo_rv validate( ego_object_process * ptr, bool_t val = btrue );
+    static egoboo_rv validate( ego_object_process * ptr, const bool_t val = btrue );
 
-    egoboo_rv proc_req_on( bool_t val );
-    egoboo_rv proc_req_pause( bool_t val );
+    egoboo_rv proc_req_on( const bool_t val );
+    egoboo_rv proc_req_pause( const bool_t val );
     egoboo_rv proc_req_terminate();
 
     egoboo_rv proc_set_wait();
     egoboo_rv proc_set_process();
-    egoboo_rv proc_set_killed( bool_t val );
-    egoboo_rv proc_set_on( bool_t val );
+    egoboo_rv proc_set_killed( const bool_t val );
+    egoboo_rv proc_set_on( const bool_t val );
     egoboo_rv proc_do_on();
-    egoboo_rv proc_set_spawning( bool_t val );
+    egoboo_rv proc_set_spawning( const bool_t val );
 };
 
 //--------------------------------------------------------------------------------------------
@@ -373,7 +373,7 @@ struct ego_obj_data
     ego_oct_bb        max_cv;                      ///< largest possible collision volume for this object
 
     //---- constructors
-    ego_obj_data( Uint32 guid ) : _id( guid ) { clear(); ctor_this( this ); }
+    ego_obj_data( const Uint32 guid ) : _id( guid ) { clear(); ctor_this( this ); }
     ~ego_obj_data()
     {
         dtor_this( this );
@@ -384,7 +384,7 @@ struct ego_obj_data
     }
 
     //---- accessors
-    const Uint32 get_id() { return _id; }
+    const Uint32 get_id() const { return _id; }
 
 private:
 
@@ -441,7 +441,7 @@ struct ego_obj : public i_ego_obj, public ego_obj_data, public ego_object_proces
     }
 
     // process initialization
-    static ego_obj * validate( ego_obj *, bool_t val = btrue );
+    static ego_obj * validate( ego_obj *, const bool_t val = btrue );
 
     static ego_obj * begin_processing( ego_obj * , const char * name = "*UNKNOWN*" );
 
@@ -451,7 +451,7 @@ struct ego_obj : public i_ego_obj, public ego_obj_data, public ego_object_proces
     // functions for granting requests
     static ego_obj * grant_terminate( ego_obj * pobj );
     static ego_obj * grant_on( ego_obj * pobj );
-    static ego_obj * set_spawning( ego_obj * pobj, bool_t val );
+    static ego_obj * set_spawning( ego_obj * pobj, const bool_t val );
 
     static Uint32    get_spawn_depth()       { return spawn_depth; };
     static Uint32    increment_spawn_depth() { return ++spawn_depth; };
@@ -507,11 +507,11 @@ struct ego_object_engine
 {
     static ego_obj * run( ego_obj * );
 
-    template <typename _ty> static _ty * run_construct( _ty * pobj, int max_iterations );
-    template <typename _ty> static _ty * run_initialize( _ty * pobj, int max_iterations );
-    template <typename _ty> static _ty * run_activate( _ty * pobj, int max_iterations );
-    template <typename _ty> static _ty * run_deinitialize( _ty * pobj, int max_iterations );
-    template <typename _ty> static _ty * run_deconstruct( _ty * pobj, int max_iterations );
+    template <typename _ty> static _ty * run_construct( _ty * pobj, const int max_iterations );
+    template <typename _ty> static _ty * run_initialize( _ty * pobj, const int max_iterations );
+    template <typename _ty> static _ty * run_activate( _ty * pobj, const int max_iterations );
+    template <typename _ty> static _ty * run_deinitialize( _ty * pobj, const int max_iterations );
+    template <typename _ty> static _ty * run_deconstruct( _ty * pobj, const int max_iterations );
 };
 
 extern ego_object_engine obj_engine;

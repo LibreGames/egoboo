@@ -56,7 +56,7 @@ tile_definition_t tile_dict[MAXMESHTYPE];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void tile_dictionary_load_vfs( const char * filename, tile_definition_t dict[], size_t dict_size )
+void tile_dictionary_load_vfs( const char * filename, tile_definition_t dict[], const size_t dict_size )
 {
     /// \author ZZ
     /// \details  This function loads fan types for the terrain
@@ -218,7 +218,7 @@ mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
     }
 
     fread( &itmp, 4, 1, fileread );
-    if ( MAPID != ( Uint32 )ENDIAN_INT32( itmp ) )
+    if ( MAPID != ( const Uint32 )ENDIAN_INT32( itmp ) )
     {
         log_warning( "%s - this is not a valid level.mpd!!\n", __FUNCTION__ );
         fclose( fileread );
@@ -226,10 +226,10 @@ mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
     }
 
     // Read the number of vertices
-    fread( &itmp, 4, 1, fileread );  pinfo->vertcount   = ( size_t )ENDIAN_INT32( itmp );
+    fread( &itmp, 4, 1, fileread );  pinfo->vertcount   = ( const size_t )ENDIAN_INT32( itmp );
 
     // grab the tiles in x and y
-    fread( &itmp, 4, 1, fileread );  pinfo->tiles_x = ( int )ENDIAN_INT32( itmp );
+    fread( &itmp, 4, 1, fileread );  pinfo->tiles_x = ( const int )ENDIAN_INT32( itmp );
     if ( pinfo->tiles_x >= MAXMESHTILEY )
     {
         mpd_dtor( pmesh );
@@ -238,7 +238,7 @@ mpd_t * mpd_load( const char *loadname, mpd_t * pmesh )
         return NULL;
     }
 
-    fread( &itmp, 4, 1, fileread );  pinfo->tiles_y = ( int )ENDIAN_INT32( itmp );
+    fread( &itmp, 4, 1, fileread );  pinfo->tiles_y = ( const int )ENDIAN_INT32( itmp );
     if ( pinfo->tiles_y >= MAXMESHTILEY )
     {
         mpd_dtor( pmesh );
@@ -406,26 +406,29 @@ bool_t mpd_mem_free( mpd_mem_t * pmem )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-Uint8 cartman_get_twist( int x, int y )
+Uint8 cartman_get_twist( const int x, const int y )
 {
     Uint8 twist;
 
-    // x and y should be from -7 to 8
-    if ( x < -7 ) x = -7;
-    if ( x > 8 ) x = 8;
-    if ( y < -7 ) y = -7;
-    if ( y > 8 ) y = 8;
+    int tmp_x = x;
+    int tmp_y = y;
+
+    // tmp_x and tmp_y should be from -7 to 8
+    if ( tmp_x < -7 ) tmp_x = -7;
+    if ( tmp_x > 8 ) tmp_x = 8;
+    if ( tmp_y < -7 ) tmp_y = -7;
+    if ( tmp_y > 8 ) tmp_y = 8;
 
     // Now between 0 and 15
-    x = x + 7;
-    y = y + 7;
-    twist = ( y << 4 ) + x;
+    tmp_x = tmp_x + 7;
+    tmp_y = tmp_y + 7;
+    twist = ( tmp_y << 4 ) + tmp_x;
 
     return twist;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t twist_to_normal( Uint8 twist, float v[], float slide )
+bool_t twist_to_normal( const Uint8 twist, float v[], const float slide )
 {
     int ix, iy;
     float dx, dy;
@@ -441,8 +444,8 @@ bool_t twist_to_normal( Uint8 twist, float v[], float slide )
     ix -= 7;
     iy -= 7;
 
-    dx = -ix / ( float )CARTMAN_FIXNUM * ( float )CARTMAN_SLOPE;
-    dy = iy / ( float )CARTMAN_FIXNUM * ( float )CARTMAN_SLOPE;
+    dx = -ix / ( const float )CARTMAN_FIXNUM * ( const float )CARTMAN_SLOPE;
+    dy = iy / ( const float )CARTMAN_FIXNUM * ( const float )CARTMAN_SLOPE;
 
     // determine the square of the z normal
     nz2 =  diff_xy * diff_xy / ( dx * dx + dy * dy + diff_xy * diff_xy );

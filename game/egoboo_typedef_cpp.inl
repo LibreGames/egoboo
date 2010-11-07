@@ -33,7 +33,7 @@
 //--------------------------------------------------------------------------------------------
 // template t_list<>
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 _ty * t_list< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
 {
     if ( !in_range_ref( ref ) ) return NULL;
@@ -42,7 +42,7 @@ _ty * t_list< _ty, _sz >::get_ptr( const t_reference<_ty> & ref )
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _ty, size_t _sz>
+template <typename _ty, const size_t _sz>
 size_t t_list< _ty, _sz >::get_free()
 {
     /// \author ZZ
@@ -75,7 +75,7 @@ size_t t_list< _ty, _sz >::get_free()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 egoboo_rv t_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
 {
     if ( !in_range_ref( ref ) ) return rv_error;
@@ -118,7 +118,7 @@ egoboo_rv t_list< _ty, _sz >::add_free( const t_reference<_ty> & ref )
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 int t_list< _ty, _sz >::get_free_list_index( const t_reference<_ty> & ref )
 {
     int    retval = -1;
@@ -144,8 +144,8 @@ int t_list< _ty, _sz >::get_free_list_index( const t_reference<_ty> & ref )
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
-bool_t t_list< _ty, _sz >::remove_free_index( int idx )
+template < typename _ty, const size_t _sz >
+bool_t t_list< _ty, _sz >::remove_free_index( const int idx )
 {
     t_reference<_ty> ref;
 
@@ -153,7 +153,7 @@ bool_t t_list< _ty, _sz >::remove_free_index( int idx )
     if ( used_count > _sz ) used_count = _sz;
 
     // was it found?
-    if ( idx < 0 || ( size_t )idx >= free_count ) return bfalse;
+    if ( idx < 0 || ( const size_t )idx >= free_count ) return bfalse;
 
     // make sure that there is a valid value on the top of the list
     shrink_free();
@@ -177,7 +177,7 @@ bool_t t_list< _ty, _sz >::remove_free_index( int idx )
     free_count--;
 
     // swap the blank element with the highest
-    if (( size_t )idx < free_count )
+    if (( const size_t )idx < free_count )
     {
         // swap the last element for the deleted element
         //SWAP( size_t, free_ref[idx], free_ref[free_count] );
@@ -187,7 +187,7 @@ bool_t t_list< _ty, _sz >::remove_free_index( int idx )
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 bool_t    t_list< _ty, _sz >::remove_free( const t_reference<_ty> & ref )
 {
     // find the object in the free list
@@ -198,7 +198,7 @@ bool_t    t_list< _ty, _sz >::remove_free( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 egoboo_rv t_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
 {
     egoboo_rv retval;
@@ -246,7 +246,7 @@ egoboo_rv t_list< _ty, _sz >::add_used( const t_reference<_ty> & ref )
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 int t_list< _ty, _sz >::get_used_list_index( const t_reference<_ty> & ref )
 {
     int    retval = -1;
@@ -272,8 +272,8 @@ int t_list< _ty, _sz >::get_used_list_index( const t_reference<_ty> & ref )
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
-bool_t t_list< _ty, _sz >::remove_used_index( int index )
+template < typename _ty, const size_t _sz >
+bool_t t_list< _ty, _sz >::remove_used_index( const int index )
 {
     t_reference<_ty> ref;
 
@@ -281,7 +281,7 @@ bool_t t_list< _ty, _sz >::remove_used_index( int index )
     if ( used_count > _sz ) used_count = _sz;
 
     // was it found?
-    if ( index < 0 || ( size_t )index >= used_count ) return bfalse;
+    if ( index < 0 || ( const size_t )index >= used_count ) return bfalse;
 
     // make sure that there is a valid value on the top of the list
     shrink_used();
@@ -305,7 +305,7 @@ bool_t t_list< _ty, _sz >::remove_used_index( int index )
     used_count--;
 
     // swap the blank element with the highest
-    if (( size_t )index < used_count )
+    if (( const size_t )index < used_count )
     {
         // swap the last element for the deleted element
         //SWAP( size_t, used_ref[index], used_ref[used_count] );
@@ -315,7 +315,7 @@ bool_t t_list< _ty, _sz >::remove_used_index( int index )
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 bool_t    t_list< _ty, _sz >::remove_used( const t_reference<_ty> & ref )
 {
     // find the object in the used list
@@ -326,7 +326,7 @@ bool_t    t_list< _ty, _sz >::remove_used( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 egoboo_rv t_list< _ty, _sz >::free_one( const t_reference<_ty> & ref )
 {
     egoboo_rv retval = rv_error;
@@ -354,7 +354,7 @@ egoboo_rv t_list< _ty, _sz >::free_one( const t_reference<_ty> & ref )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template <typename _ty, size_t _sz>
+template <typename _ty, const size_t _sz>
 void t_list< _ty, _sz >::shrink_used()
 {
     t_reference<_ty> ref;
@@ -375,7 +375,7 @@ void t_list< _ty, _sz >::shrink_used()
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _ty, size_t _sz>
+template <typename _ty, const size_t _sz>
 void t_list< _ty, _sz >::shrink_free()
 {
     t_reference<_ty> ref;
@@ -397,7 +397,7 @@ void t_list< _ty, _sz >::shrink_free()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template <typename _ty, size_t _sz>
+template <typename _ty, const size_t _sz>
 void t_list< _ty, _sz >::compact_used()
 {
     t_reference<_ty> ref;
@@ -422,7 +422,7 @@ void t_list< _ty, _sz >::compact_used()
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _ty, size_t _sz>
+template <typename _ty, const size_t _sz>
 void t_list< _ty, _sz >::compact_free()
 {
     t_reference<_ty> ref;
@@ -568,7 +568,7 @@ bool_t t_deque<_ty, _ity>::remove( const t_reference<_ty> & ref )
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
-bool_t   t_dary<_ty>::alloc( t_dary<_ty> * pary, size_t sz )
+bool_t   t_dary<_ty>::alloc( t_dary<_ty> * pary, const size_t sz )
 {
     if ( NULL == pary ) return bfalse;
 

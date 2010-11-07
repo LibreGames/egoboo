@@ -111,7 +111,7 @@ void print_gl_command()
 }
 
 //--------------------------------------------------------------------------------------------
-void gl_grab_texture_state( GLenum target, GLint level, gl_texture_t * pi )
+void gl_grab_texture_state( const GLenum target, const GLint level, gl_texture_t * pi )
 {
     GLint itmp;
 
@@ -309,7 +309,7 @@ void gl_grab_stencil_state( gl_stencil_t * ps )
 }
 
 //--------------------------------------------------------------------------------------------
-void gl_grab_clip_plane_state( gl_clip_plane_t * ps, GLint which )
+void gl_grab_clip_plane_state( gl_clip_plane_t * ps, const GLint which )
 {
     ps->enabled = GL_DEBUG( glIsEnabled )( GL_CLIP_PLANE0 + which );
     GL_DEBUG( glGetClipPlane )( GL_CLIP_PLANE0 + which, ps->coeffs );

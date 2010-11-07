@@ -465,7 +465,7 @@ egoboo_rv ego_main_process::do_finishing()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int SDL_main( int argc, char **argv )
+int SDL_main( const int argc, char **argv )
 {
     /// \author ZZ
     /// \details  This is where the program starts and all the high level stuff happens
@@ -705,7 +705,7 @@ void _quit_game( ego_main_process * pgame )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_main_process * ego_main_process::init( ego_main_process * eproc, int argc, char **argv )
+ego_main_process * ego_main_process::init( ego_main_process * eproc, const int argc, char **argv )
 {
     if ( NULL == eproc ) return NULL;
 
@@ -823,7 +823,7 @@ void ego_local_stats::init()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void picked_module_info::init( int idx )
+void picked_module_info::init( const int idx )
 {
     ready         = bfalse;
     index         = idx;

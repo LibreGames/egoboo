@@ -92,7 +92,7 @@ struct ego_clock
         tick_cnt += tick_dif;
     }
 
-    void update_ticks( Sint32 dif )
+    void update_ticks( const Sint32 dif )
     {
         tick_old  = tick_new;
         tick_new += dif;
@@ -138,9 +138,9 @@ struct picked_module_info
     STRING          name;               ///< The picked module's short name
     STRING          write_path;         ///< The picked module's path name relative to the userdata directory
 
-    picked_module_info( int idx = -1 ) { init( idx ); }
+    picked_module_info( const int idx = -1 ) { init( idx ); }
 
-    void init( int idx = -1 );
+    void init( const int idx = -1 );
 };
 
 extern picked_module_info pickedmodule;
@@ -188,7 +188,7 @@ struct ego_main_process : public ego_main_process_data, public ego_process
 {
     ego_main_process() { ctor_this( this ); }
 
-    static ego_main_process * init( ego_main_process * eproc, int argc, char **argv );
+    static ego_main_process * init( ego_main_process * eproc, const int argc, char **argv );
 
     static ego_main_process * ctor_this( ego_main_process * ptr )
     {
@@ -207,7 +207,7 @@ struct ego_main_process : public ego_main_process_data, public ego_process
         return ptr;
     }
 
-    static int Run( ego_main_process * eproc, double frameDuration );
+    static int Run( ego_main_process * eproc, const double frameDuration );
 
     virtual egoboo_rv do_beginning();
     virtual egoboo_rv do_running();

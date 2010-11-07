@@ -36,7 +36,7 @@
 //--------------------------------------------------------------------------------------------
 // grab a container
 //--------------------------------------------------------------------------------------------
-//template < typename _d, size_t _sz >
+//template < typename _d, const size_t _sz >
 //INLINE t_ego_obj_container<_d, _sz> & t_obj_lst_map<_d, _sz>::get_ref( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    if ( !in_range_ref( ref ) )
@@ -49,7 +49,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template < typename _d, size_t _sz >
+//template < typename _d, const size_t _sz >
 //INLINE t_ego_obj_container<_d, _sz> * t_obj_lst_map<_d, _sz>::get_ptr( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    if ( !in_range_ref( ref ) ) return NULL;
@@ -58,7 +58,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template < typename _d, size_t _sz >
+//template < typename _d, const size_t _sz >
 //INLINE t_ego_obj_container<_d, _sz> * t_obj_lst_map<_d, _sz>::get_allocated_ptr( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    t_ego_obj_container<_d, _sz> * pobj = get_ptr( ref );
@@ -70,14 +70,14 @@
 //--------------------------------------------------------------------------------------------
 // grab a container's data
 //--------------------------------------------------------------------------------------------
-//template < typename _d, size_t _sz >
+//template < typename _d, const size_t _sz >
 //INLINE typename t_ego_obj_container<_d, _sz>::data_type & t_obj_lst_map<_d, _sz>::get_data_ref( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    return container_type::get_data_ref( get_ref( ref ) );
 //}
 
 //--------------------------------------------------------------------------------------------
-//template < typename _d, size_t _sz >
+//template < typename _d, const size_t _sz >
 //INLINE typename t_ego_obj_container<_d, _sz>::data_type * t_obj_lst_map<_d, _sz>::get_data_ptr( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    container_type * ptr = get_ptr( ref );
@@ -88,7 +88,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template < typename _d, size_t _sz >
+//template < typename _d, const size_t _sz >
 //INLINE typename t_ego_obj_container<_d, _sz>::data_type * t_obj_lst_map<_d, _sz>::get_allocated_data_ptr( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    container_type * ptr = get_allocated_ptr( ref );
@@ -99,14 +99,14 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //void t_obj_lst_map<_d, _sz>::clear_free_list()
 //{
 //    while ( !free_queue.empty() ) free_queue.pop();
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //void t_obj_lst_map<_d, _sz>::reinit()
 //{
 //    // reinitialize the free list so that no more objects beyond _max_len
@@ -115,7 +115,7 @@
 //    // clear the free list, but do nothing to the used list
 //    //clear_free_list();
 //
-//    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
+//    for (  size_t cnt = 0; cnt < _max_len; cnt++ )
 //    {
 //        if ( !FLAG_ALLOCATED_PCONT( container_type,  ary + cnt ) )
 //        {
@@ -125,13 +125,13 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //void t_obj_lst_map<_d, _sz>::init()
 //{
 //    //clear_free_list();
 //    used_map.clear();
 //
-//    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
+//    for (  size_t cnt = 0; cnt < _max_len; cnt++ )
 //    {
 //        container_type * pobj = ary + cnt;
 //
@@ -143,7 +143,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //void t_obj_lst_map<_d, _sz>::deinit()
 //{
 //    size_t cnt;
@@ -161,7 +161,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //bool_t t_obj_lst_map<_d, _sz>::free_raw( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    // grab a pointer to the container, if the reference is in a valid range
@@ -185,7 +185,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //void t_obj_lst_map<_d, _sz>::update_used()
 //{
 //    lst_reference ref;
@@ -212,7 +212,7 @@
 //#if defined(DEBUG_LIST) && EGO_DEBUG
 //    // go through the object array and see if (God forbid) there is an
 //    // object that is marked as allocated, but is not in the used map
-//    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
+//    for (  size_t cnt = 0; cnt < _max_len; cnt++ )
 //    {
 //        container_type * pcont = ary + cnt;
 //
@@ -231,7 +231,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //egoboo_rv t_obj_lst_map<_d, _sz>::free_one( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    /// \author ZZ
@@ -268,7 +268,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //typename t_obj_lst_map<_d, _sz>::lst_reference t_obj_lst_map<_d, _sz>::get_free()
 //{
 //    /// \author BB
@@ -291,7 +291,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //void t_obj_lst_map<_d, _sz>::free_all()
 //{
 //    typename t_obj_lst_map<_d, _sz>::lst_reference cnt;
@@ -303,7 +303,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //typename t_obj_lst_map<_d, _sz>::lst_reference t_obj_lst_map<_d, _sz>::allocate( const typename t_obj_lst_map<_d, _sz>::lst_reference & override )
 //{
 //    lst_reference ref( _sz );
@@ -347,7 +347,7 @@
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //void t_obj_lst_map<_d, _sz>::cleanup()
 //{
 //    // go through the list and activate all the characters that
@@ -376,7 +376,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //egoboo_rv t_obj_lst_map<_d, _sz>::add_activation( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    // put this object into the activation list so that it can be activated right after
@@ -396,7 +396,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //egoboo_rv t_obj_lst_map<_d, _sz>::add_termination( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    egoboo_rv retval = rv_fail;
@@ -416,8 +416,8 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _data, size_t _sz>
-//bool_t t_obj_lst_map<_data, _sz>::set_length( size_t len )
+//template <typename _data, const size_t _sz>
+//bool_t t_obj_lst_map<_data, _sz>::set_length( const size_t len )
 //{
 //    size_t old_len = _max_len;
 //    bool_t changed = bfalse;
@@ -439,7 +439,7 @@
 //--------------------------------------------------------------------------------------------
 // t_obj_lst_map - activate and deactivate elements
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //typename t_obj_lst_map<_d, _sz>::lst_reference t_obj_lst_map<_d, _sz>::activate_element( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //    bool_t needs_free = bfalse;
@@ -476,7 +476,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //typename t_obj_lst_map<_d, _sz>::lst_reference t_obj_lst_map<_d, _sz>::deactivate_element( const typename t_obj_lst_map<_d, _sz>::lst_reference & ref )
 //{
 //
@@ -496,7 +496,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //_d * t_obj_lst_map<_d, _sz>::activate_data_raw( _d * pdata, const typename t_obj_lst_map<_d, _sz>::container_type * pcont )
 //{
 //    if ( NULL == pdata ) return pdata;
@@ -514,8 +514,8 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
-//typename t_obj_lst_map<_d, _sz>::container_type * t_obj_lst_map<_d, _sz>::activate_container_raw( typename t_obj_lst_map<_d, _sz>::container_type * pcont, size_t index )
+//template <typename _d, const size_t _sz>
+//typename t_obj_lst_map<_d, _sz>::container_type * t_obj_lst_map<_d, _sz>::activate_container_raw( typename t_obj_lst_map<_d, _sz>::container_type * pcont, const size_t index )
 //{
 //    if ( NULL == pcont ) return pcont;
 //
@@ -529,7 +529,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //typename t_obj_lst_map<_d, _sz>::container_type * t_obj_lst_map<_d, _sz>::deactivate_container_raw( typename t_obj_lst_map<_d, _sz>::container_type * pcont )
 //{
 //    if ( NULL == pcont ) return pcont;
@@ -541,7 +541,7 @@
 //}
 
 //--------------------------------------------------------------------------------------------
-//template <typename _d, size_t _sz>
+//template <typename _d, const size_t _sz>
 //_d * t_obj_lst_map<_d, _sz>::deactivate_data_raw( _d * pdata )
 //{
 //    if ( NULL == pdata ) return pdata;
@@ -561,7 +561,7 @@
 //--------------------------------------------------------------------------------------------
 // grab a container
 //--------------------------------------------------------------------------------------------
-template < typename _d, size_t _sz >
+template < typename _d, const size_t _sz >
 INLINE t_ego_obj_container<_d, _sz> & t_obj_lst_deque<_d, _sz>::get_ref( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     if ( !valid_index_range( ref.get_value() ) )
@@ -574,14 +574,14 @@ INLINE t_ego_obj_container<_d, _sz> & t_obj_lst_deque<_d, _sz>::get_ref( const t
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _d, size_t _sz >
+template < typename _d, const size_t _sz >
 INLINE t_ego_obj_container<_d, _sz> * t_obj_lst_deque<_d, _sz>::get_ptr( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     return get_element_ptr_raw( ref.get_value() );
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _d, size_t _sz >
+template < typename _d, const size_t _sz >
 INLINE t_ego_obj_container<_d, _sz> * t_obj_lst_deque<_d, _sz>::get_allocated_ptr( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     return get_element_ptr( ref.get_value() );
@@ -590,14 +590,14 @@ INLINE t_ego_obj_container<_d, _sz> * t_obj_lst_deque<_d, _sz>::get_allocated_pt
 //--------------------------------------------------------------------------------------------
 // grab a container's data
 //--------------------------------------------------------------------------------------------
-template < typename _d, size_t _sz >
+template < typename _d, const size_t _sz >
 INLINE typename t_ego_obj_container<_d, _sz>::data_type & t_obj_lst_deque<_d, _sz>::get_data_ref( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     return container_type::get_data_ref( get_ref( ref ) );
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _d, size_t _sz >
+template < typename _d, const size_t _sz >
 INLINE typename t_ego_obj_container<_d, _sz>::data_type * t_obj_lst_deque<_d, _sz>::get_data_ptr( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     container_type * ptr = get_ptr( ref );
@@ -608,7 +608,7 @@ INLINE typename t_ego_obj_container<_d, _sz>::data_type * t_obj_lst_deque<_d, _s
 }
 
 //--------------------------------------------------------------------------------------------
-template < typename _d, size_t _sz >
+template < typename _d, const size_t _sz >
 INLINE typename t_ego_obj_container<_d, _sz>::data_type * t_obj_lst_deque<_d, _sz>::get_allocated_data_ptr( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     container_type * ptr = get_allocated_ptr( ref );
@@ -618,7 +618,7 @@ INLINE typename t_ego_obj_container<_d, _sz>::data_type * t_obj_lst_deque<_d, _s
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 void t_obj_lst_deque<_d, _sz>::reinit()
 {
     // reinitialize the free list so that no more objects beyond _max_len
@@ -632,7 +632,7 @@ void t_obj_lst_deque<_d, _sz>::reinit()
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 void t_obj_lst_deque<_d, _sz>::init()
 {
     used_deque.clear();
@@ -641,7 +641,7 @@ void t_obj_lst_deque<_d, _sz>::init()
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 void t_obj_lst_deque<_d, _sz>::deinit()
 {
     size_t cnt;
@@ -663,7 +663,7 @@ void t_obj_lst_deque<_d, _sz>::deinit()
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 bool_t t_obj_lst_deque<_d, _sz>::free_raw( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     // grab a pointer to the container, if the reference is in a valid range
@@ -688,7 +688,7 @@ bool_t t_obj_lst_deque<_d, _sz>::free_raw( const typename t_obj_lst_deque<_d, _s
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 void t_obj_lst_deque<_d, _sz>::update_used()
 {
     lst_reference ref;
@@ -715,7 +715,7 @@ void t_obj_lst_deque<_d, _sz>::update_used()
 //#if defined(DEBUG_LIST) && EGO_DEBUG
 //    // go through the object array and see if (God forbid) there is an
 //    // object that is marked as allocated, but is not in the used deque
-//    for ( size_t cnt = 0; cnt < _max_len; cnt++ )
+//    for (  size_t cnt = 0; cnt < _max_len; cnt++ )
 //    {
 //        container_type * pcont = ary + cnt;
 //
@@ -734,7 +734,7 @@ void t_obj_lst_deque<_d, _sz>::update_used()
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 egoboo_rv t_obj_lst_deque<_d, _sz>::free_one( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     /// \author ZZ
@@ -771,7 +771,7 @@ egoboo_rv t_obj_lst_deque<_d, _sz>::free_one( const typename t_obj_lst_deque<_d,
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::get_free()
 {
     /// \author BB
@@ -785,7 +785,7 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::get_f
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 void t_obj_lst_deque<_d, _sz>::free_all()
 {
     lst_reference ref;
@@ -814,7 +814,7 @@ void t_obj_lst_deque<_d, _sz>::free_all()
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::allocate( const typename t_obj_lst_deque<_d, _sz>::lst_reference & override )
 {
     lst_reference ref( _sz );
@@ -860,7 +860,7 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::alloc
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 void t_obj_lst_deque<_d, _sz>::cleanup()
 {
     if ( loop_depth > 0 ) return;
@@ -905,7 +905,7 @@ void t_obj_lst_deque<_d, _sz>::cleanup()
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 egoboo_rv t_obj_lst_deque<_d, _sz>::add_activation( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     // put this object into the activation list so that it can be activated right after
@@ -925,7 +925,7 @@ egoboo_rv t_obj_lst_deque<_d, _sz>::add_activation( const typename t_obj_lst_deq
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 egoboo_rv t_obj_lst_deque<_d, _sz>::add_termination( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     egoboo_rv retval = rv_fail;
@@ -945,8 +945,8 @@ egoboo_rv t_obj_lst_deque<_d, _sz>::add_termination( const typename t_obj_lst_de
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
-bool_t t_obj_lst_deque<_data, _sz>::set_length( size_t len )
+template <typename _data, const size_t _sz>
+bool_t t_obj_lst_deque<_data, _sz>::set_length( const size_t len )
 {
     size_t old_len = _max_len;
     bool_t changed = bfalse;
@@ -968,7 +968,7 @@ bool_t t_obj_lst_deque<_data, _sz>::set_length( size_t len )
 //--------------------------------------------------------------------------------------------
 // t_obj_lst_deque - activate and deactivate elements
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::activate_element( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
     bool_t needs_free = bfalse;
@@ -1004,7 +1004,7 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::activ
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _d, size_t _sz>
+template <typename _d, const size_t _sz>
 typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::deactivate_element( const typename t_obj_lst_deque<_d, _sz>::lst_reference & ref )
 {
 
@@ -1031,7 +1031,7 @@ typename t_obj_lst_deque<_d, _sz>::lst_reference t_obj_lst_deque<_d, _sz>::deact
 //--------------------------------------------------------------------------------------------
 // t_obj_lst_deque<> - special iterator methods
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 typename  t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iterator_begin_allocated()
 {
     /// proper method of accessing the used_deque::begin() function
@@ -1047,7 +1047,7 @@ typename  t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::ite
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iterator_begin_defined()
 {
     const ego_object_process_state_data * pstate;
@@ -1074,7 +1074,7 @@ typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iter
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iterator_begin_processing()
 {
     const ego_object_process_state_data * pstate;
@@ -1102,7 +1102,7 @@ typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iter
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iterator_begin_ingame()
 {
     const ego_object_process_state_data * pstate;
@@ -1140,7 +1140,7 @@ typename t_obj_lst_deque<_data, _sz>::iterator t_obj_lst_deque<_data, _sz>::iter
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 bool_t t_obj_lst_deque<_data, _sz>::iterator_finished( typename t_obj_lst_deque<_data, _sz>::iterator & it )
 {
     bool_t retval = used_deque.iterator_end( it.deque_iterator() );
@@ -1155,7 +1155,7 @@ bool_t t_obj_lst_deque<_data, _sz>::iterator_finished( typename t_obj_lst_deque<
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::iterator_increment_allocated( typename t_obj_lst_deque<_data, _sz>::iterator & it )
 {
     // blank out the old data
@@ -1176,7 +1176,7 @@ typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::it
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::iterator_increment_defined( typename t_obj_lst_deque<_data, _sz>::iterator & it )
 {
     // increments the iterator through all DEFINED data == (ALLOCATED and VALID)
@@ -1201,7 +1201,7 @@ typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::it
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::iterator_increment_processing( typename t_obj_lst_deque<_data, _sz>::iterator & it )
 {
     // increments the iterator through all PROCESSING data == (ALLOCATED and VALID and state is processing)
@@ -1225,7 +1225,7 @@ typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::it
 }
 
 //--------------------------------------------------------------------------------------------
-template <typename _data, size_t _sz>
+template <typename _data, const size_t _sz>
 typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::iterator_increment_ingame( typename t_obj_lst_deque<_data, _sz>::iterator & it )
 {
     // increments the iterator through all INGAME data

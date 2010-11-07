@@ -131,7 +131,7 @@ mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod )
 }
 
 //--------------------------------------------------------------------------------------------
-int module_has_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, char * buffer )
+int module_has_idsz_vfs( const char *szModName, const IDSZ idsz, const size_t buffer_len, char * buffer )
 {
     /// \author ZZ
     /// \details  This function returns btrue if the named module has the required IDSZ
@@ -203,7 +203,7 @@ int module_has_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, ch
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, const char * buffer )
+bool_t module_add_idsz_vfs( const char *szModName, const IDSZ idsz, const size_t buffer_len, const char * buffer )
 {
     /// \author ZZ
     /// \details  This function appends an IDSZ to the module's menu.txt file

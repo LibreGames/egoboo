@@ -46,42 +46,42 @@ extern "C"
 //--------------------------------------------------------------------------------------------
     extern int      fnt_init();
 
-    extern TTF_Font * fnt_loadFont( const char *fileName, int pointSize );
+    extern TTF_Font * fnt_loadFont( const char *fileName, const int pointSize );
     extern void       fnt_freeFont( TTF_Font *font );
 
 /// Convert the formatted text to an ogl texture
-    extern display_item_t * fnt_convertText( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *format, ... );
+    extern display_item_t * fnt_convertText( display_item_t *tx_ptr, const TTF_Font * ttf_ptr, const char *format, ... );
 /// The variable argument version of fnt_convertText()
-    extern display_item_t * fnt_vconvertText( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *format, va_list args );
+    extern display_item_t * fnt_vconvertText( display_item_t *tx_ptr, const TTF_Font * ttf_ptr, const char *format, va_list args );
 /// The not formatted version of fnt_convertText()
-    extern display_item_t * fnt_convertText_literal( display_item_t *tx_ptr, TTF_Font * ttf_ptr, const char *text );
+    extern display_item_t * fnt_convertText_literal( display_item_t *tx_ptr, const TTF_Font * ttf_ptr, const char *text );
 
 /// Convert the formatted text to an ogl texture for each line of the text
-    extern int fnt_convertTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, int width, int height, int spacing, const char *format, ... );
+    extern int fnt_convertTextBox( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float width, const float height, const float spacing, const char *format, ... );
 /// The variable argument version of fnt_convertTextBox()
-    extern int fnt_vconvertTextBox( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, va_list args );
+    extern int fnt_vconvertTextBox( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float x, const float y, const float spacing, const char *format, va_list args );
 /// Convert un-formatted text to an ogl texture for each line of the text
-    extern int fnt_convertTextBox_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int width, int height, int spacing, const char *text );
+    extern int fnt_convertTextBox_literal( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const float width, const float height, const float spacing, const char *text );
 
 /// Only works properly on a single line of text
-    extern const char * fnt_getTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, ... );
+    extern const char * fnt_getTextSize( const TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, ... );
 /// The variable argument version of fnt_getTextSize()
-    extern const char * fnt_vgetTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, va_list args );
+    extern const char * fnt_vgetTextSize( const TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, va_list args );
 
 /// Works for multiple-line strings, using the user-supplied spacing
-    extern const char * fnt_getTextBoxSize( TTF_Font * ttf_ptr, int spacing, int *pwidth, int *pheight, const char *format, ... );
+    extern const char * fnt_getTextBoxSize( const TTF_Font * ttf_ptr, const float spacing, float *pwidth, float *pheight, const char *format, ... );
 /// The variable argument version of fnt_getTextBoxSize()
-    extern const char * fnt_vgetTextBoxSize( TTF_Font * ttf_ptr, int spacing, int *pwidth, int *pheight, const char *format, va_list args );
+    extern const char * fnt_vgetTextBoxSize( const TTF_Font * ttf_ptr, const float spacing, float *pwidth, float *pheight, const char *format, va_list args );
 
 /// handle variable arguments to print text to a GL texture
-    extern display_item_t * fnt_vprintf( display_item_t * tx_ptr, TTF_Font * ttf_ptr, SDL_Color color, const char *format, va_list args );
+    extern display_item_t * fnt_vprintf( display_item_t * tx_ptr, const TTF_Font * ttf_ptr, const SDL_Color color, const char *format, va_list args );
 
 /// handle print text to a GL texture
-    extern display_item_t * fnt_print( display_item_t * tx_ptr, TTF_Font * ttf_ptr, SDL_Color color, const char *text );
+    extern display_item_t * fnt_print( display_item_t * tx_ptr, const TTF_Font * ttf_ptr, const SDL_Color color, const char *text );
 
-    extern display_list_t * fnt_vappend_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, va_list args );
-    extern display_list_t * fnt_append_text( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *format, ... );
-    extern display_list_t * fnt_append_text_literal( display_list_t * tx_lst, TTF_Font * ttf_ptr, int x, int y, const char *text );
+    extern display_list_t * fnt_vappend_text( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const int x, const int y, const char *format, va_list args );
+    extern display_list_t * fnt_append_text( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const int x, const int y, const char *format, ... );
+    extern display_list_t * fnt_append_text_literal( display_list_t * tx_lst, const TTF_Font * ttf_ptr, const int x, const int y, const char *text );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

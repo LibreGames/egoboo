@@ -44,7 +44,7 @@ struct mpd_BSP
     ego_BSP_tree     tree;
 
     mpd_BSP()                    { /* nothing */ }
-    mpd_BSP( ego_mpd   * pmesh ) { ctor_this( this, pmesh ); }
+    mpd_BSP( ego_mpd * pmesh ) { ctor_this( this, pmesh ); }
     ~mpd_BSP()                   { dtor_this( this ); }
 
     static mpd_BSP root;

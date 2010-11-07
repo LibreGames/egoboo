@@ -41,20 +41,20 @@ extern "C"
 #endif
 
 // conversion functions
-    static INLINE FACING_T vec_to_facing( float dx, float dy );
+    static INLINE FACING_T vec_to_facing( const float dx, const float dy );
     static INLINE void     facing_to_vec( FACING_T facing, float * dx, float * dy );
 
 // rotation functions
-    static INLINE int terp_dir( FACING_T majordir, FACING_T minordir, int weight );
+    static INLINE int terp_dir( FACING_T majordir, FACING_T minordir, const int weight );
 
 // limiting functions
-    static INLINE void getadd( int min, int value, int max, int* valuetoadd );
-    static INLINE void fgetadd( float min, float value, float max, float* valuetoadd );
+    static INLINE void getadd( const int min, const int value, const int max, int* valuetoadd );
+    static INLINE void fgetadd( const float min, const float value, const float max, float* valuetoadd );
 
 // random functions
     static INLINE int generate_irand_pair( IPair num );
     static INLINE int generate_irand_range( FRange num );
-    static INLINE int generate_randmask( int base, int mask );
+    static INLINE int generate_randmask( const int base, const int mask );
 
 // vector functions
     static INLINE bool_t  fvec2_self_clear( fvec2_base_t A );
@@ -75,7 +75,7 @@ extern "C"
     static INLINE bool_t  fvec3_self_scale( fvec3_base_t A, const float B );
     static INLINE bool_t  fvec3_self_sum( fvec3_base_t A, const fvec3_base_t B );
     static INLINE bool_t  fvec3_self_normalize( fvec3_base_t A );
-    static INLINE bool_t  fvec3_self_normalize_to( fvec3_base_t A, float B );
+    static INLINE bool_t  fvec3_self_normalize_to( fvec3_base_t A, const float B );
     static INLINE float   fvec3_length_2( const fvec3_base_t A );
     static INLINE float   fvec3_length( const fvec3_base_t A );
     static INLINE float   fvec3_length_abs( const fvec3_base_t A );
@@ -120,7 +120,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 // CONVERSION FUNCTIONS
 //--------------------------------------------------------------------------------------------
-static INLINE FACING_T vec_to_facing( float dx, float dy )
+static INLINE FACING_T vec_to_facing( const float dx, const float dy )
 {
     return ( FACING_T )(( ATAN2( dy, dx ) + PI ) * RAD_TO_TURN );
 }
@@ -144,7 +144,7 @@ static INLINE void facing_to_vec( FACING_T facing, float * dx, float * dy )
 //--------------------------------------------------------------------------------------------
 // ROTATION FUNCTIONS
 //--------------------------------------------------------------------------------------------
-static INLINE int terp_dir( FACING_T majordir, FACING_T minordir, int weight )
+static INLINE int terp_dir( FACING_T majordir, FACING_T minordir, const int weight )
 {
     /// \author ZZ
     /// \details  This function returns a direction between the major and minor ones, closer
@@ -153,15 +153,15 @@ static INLINE int terp_dir( FACING_T majordir, FACING_T minordir, int weight )
     int diff;
 
     // Align major direction with 0
-    diff = ( int )minordir - ( int )majordir;
+    diff = ( const int )minordir - ( const int )majordir;
 
-    if ( diff <= -( int )0x8000L )
+    if ( diff <= -( const int )0x8000L )
     {
-        diff += ( int )0x00010000L;
+        diff += ( const int )0x00010000L;
     }
-    else if ( diff >= ( int )0x8000L )
+    else if ( diff >= ( const int )0x8000L )
     {
-        diff -= ( int )0x00010000L;
+        diff -= ( const int )0x00010000L;
     }
 
     return diff / weight;
@@ -170,7 +170,7 @@ static INLINE int terp_dir( FACING_T majordir, FACING_T minordir, int weight )
 //--------------------------------------------------------------------------------------------
 // LIMITING FUNCTIONS
 //--------------------------------------------------------------------------------------------
-static INLINE void getadd( int min, int value, int max, int* valuetoadd )
+static INLINE void getadd( const int min, const int value, const int max, int* valuetoadd )
 {
     /// \author ZZ
     /// \details  This function figures out what value to add should be in order
@@ -196,7 +196,7 @@ static INLINE void getadd( int min, int value, int max, int* valuetoadd )
 }
 
 //--------------------------------------------------------------------------------------------
-static INLINE void fgetadd( float min, float value, float max, float* valuetoadd )
+static INLINE void fgetadd( const float min, const float value, const float max, float* valuetoadd )
 {
     /// \author ZZ
     /// \details  This function figures out what value to add should be in order
@@ -255,7 +255,7 @@ static INLINE int generate_irand_range( FRange num )
 }
 
 //--------------------------------------------------------------------------------------------
-static INLINE int generate_randmask( int base, int mask )
+static INLINE int generate_randmask( const int base, const int mask )
 {
     /// \author ZZ
     /// \details  This function generates a random number
@@ -573,7 +573,7 @@ static INLINE bool_t  fvec3_self_normalize( fvec3_base_t A )
 }
 
 //--------------------------------------------------------------------------------------------
-static INLINE bool_t fvec3_self_normalize_to( fvec3_base_t vec, float B )
+static INLINE bool_t fvec3_self_normalize_to( fvec3_base_t vec, const float B )
 {
     if ( NULL == vec ) return bfalse;
 

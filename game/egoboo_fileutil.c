@@ -117,7 +117,7 @@ bool_t fcopy_line( vfs_FILE * fileread, vfs_FILE * filewrite )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t goto_delimiter( char * buffer, vfs_FILE* fileread, char delim, bool_t optional )
+bool_t goto_delimiter( char * buffer, vfs_FILE* fileread, const char delim, const bool_t optional )
 {
     /// \author ZZ
     /// \details  This function moves a file read pointer to the next delimiter char cTmp;
@@ -157,7 +157,7 @@ bool_t goto_delimiter( char * buffer, vfs_FILE* fileread, char delim, bool_t opt
 }
 
 //--------------------------------------------------------------------------------------------
-char goto_delimiter_list( char * buffer, vfs_FILE* fileread, const char * delim_list, bool_t optional )
+char goto_delimiter_list( char * buffer, vfs_FILE* fileread, const char * delim_list, const bool_t optional )
 {
     /// \author ZZ
     /// \details  This function moves a file read pointer to the next colon char cTmp;
@@ -217,7 +217,7 @@ char goto_delimiter_list( char * buffer, vfs_FILE* fileread, const char * delim_
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t goto_colon( char * buffer, vfs_FILE* fileread, bool_t optional )
+bool_t goto_colon( char * buffer, vfs_FILE* fileread, const bool_t optional )
 {
     /// \author BB
     /// \details  the two functions goto_colon and goto_colon_yesno have been combined
@@ -226,7 +226,7 @@ bool_t goto_colon( char * buffer, vfs_FILE* fileread, bool_t optional )
 }
 
 //--------------------------------------------------------------------------------------------
-char * goto_colon_mem( char * buffer, char * pmem, char * pmem_end, bool_t optional )
+const char * goto_colon_mem( char * buffer, const char * pmem, const char * pmem_end, const bool_t optional )
 {
     /// \author ZZ
     /// \details  This function moves a file read pointer to the next colon char *pmem;
@@ -283,7 +283,7 @@ char fget_first_letter( vfs_FILE* fileread )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_name( vfs_FILE* fileread,  char *szName, size_t max_len )
+bool_t fget_name( vfs_FILE* fileread, char *szName, const size_t max_len )
 {
     /// \author ZZ
     /// \details  This function loads a string of up to MAXCAPNAMESIZE characters, parsing
@@ -316,7 +316,7 @@ bool_t fget_name( vfs_FILE* fileread,  char *szName, size_t max_len )
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_int( vfs_FILE* filewrite, const char* text, int ival )
+void fput_int( vfs_FILE* filewrite, const char* text, const int ival )
 {
     /// \author ZZ
     /// \details  This function kinda mimics fprintf for integers
@@ -325,7 +325,7 @@ void fput_int( vfs_FILE* filewrite, const char* text, int ival )
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_float( vfs_FILE* filewrite, const char* text, float fval )
+void fput_float( vfs_FILE* filewrite, const char* text, const float fval )
 {
     /// \author ZZ
     /// \details  This function kinda mimics fprintf for integers
@@ -334,7 +334,7 @@ void fput_float( vfs_FILE* filewrite, const char* text, float fval )
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_bool( vfs_FILE* filewrite, const char* text, bool_t truth )
+void fput_bool( vfs_FILE* filewrite, const char* text, const bool_t truth )
 {
     /// \author ZZ
     /// \details  This function kinda mimics vfs_printf for the output of
@@ -346,7 +346,7 @@ void fput_bool( vfs_FILE* filewrite, const char* text, bool_t truth )
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_damage_type( vfs_FILE* filewrite, const char* text, Uint8 damagetype )
+void fput_damage_type( vfs_FILE* filewrite, const char* text, const Uint8 damagetype )
 {
     /// \author ZZ
     /// \details  This function kinda mimics vfs_printf for the output of
@@ -373,7 +373,7 @@ void fput_damage_type( vfs_FILE* filewrite, const char* text, Uint8 damagetype )
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_action( vfs_FILE* filewrite, const char* text, Uint8 action )
+void fput_action( vfs_FILE* filewrite, const char* text, const Uint8 action )
 {
     /// \author ZZ
     /// \details  This function kinda mimics vfs_printf for the output of
@@ -402,7 +402,7 @@ void fput_action( vfs_FILE* filewrite, const char* text, Uint8 action )
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_gender( vfs_FILE* filewrite, const char* text, Uint8 gender )
+void fput_gender( vfs_FILE* filewrite, const char* text, const Uint8 gender )
 {
     /// \author ZZ
     /// \details  This function kinda mimics vfs_printf for the output of
@@ -420,13 +420,13 @@ void fput_gender( vfs_FILE* filewrite, const char* text, Uint8 gender )
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_range_raw( vfs_FILE* filewrite, FRange val )
+void fput_range_raw( vfs_FILE* filewrite, const FRange val )
 {
     if ( val.from == val.to )
     {
         if ( val.from == FLOOR( val.from ) )
         {
-            vfs_printf( filewrite, "%d", ( int )val.from );
+            vfs_printf( filewrite, "%d", ( const int )val.from );
         }
         else
         {
@@ -441,13 +441,13 @@ void fput_range_raw( vfs_FILE* filewrite, FRange val )
         }
         else
         {
-            vfs_printf( filewrite, "%d-%d", ( int )val.from, ( int )val.to );
+            vfs_printf( filewrite, "%d-%d", ( const int )val.from, ( const int )val.to );
         }
     }
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_range( vfs_FILE* filewrite, const char* text, FRange val )
+void fput_range( vfs_FILE* filewrite, const char* text, const FRange val )
 {
     /// \author ZZ
     /// \details  This function mimics vfs_printf in spitting out
@@ -461,7 +461,7 @@ void fput_range( vfs_FILE* filewrite, const char* text, FRange val )
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_pair( vfs_FILE* filewrite, const char* text, IPair val )
+void fput_pair( vfs_FILE* filewrite, const char* text, const IPair val )
 {
     /// \author ZZ
     /// \details  This function mimics vfs_printf in spitting out
@@ -508,14 +508,14 @@ void fput_string_under( vfs_FILE* filewrite, const char* text, const char* usena
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_idsz( vfs_FILE* filewrite, const char* text, IDSZ idsz )
+void fput_idsz( vfs_FILE* filewrite, const char* text, const IDSZ idsz )
 {
     vfs_printf( filewrite, "%s", text );
     vfs_printf( filewrite, "[%s]\n", undo_idsz( idsz ) );
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_expansion( vfs_FILE* filewrite, const char* text, IDSZ idsz, int value )
+void fput_expansion( vfs_FILE* filewrite, const char* text, const IDSZ idsz, const int value )
 {
     /// \author ZZ
     /// \details  This function mimics vfs_printf in spitting out
@@ -525,7 +525,7 @@ void fput_expansion( vfs_FILE* filewrite, const char* text, IDSZ idsz, int value
 }
 
 //--------------------------------------------------------------------------------------------
-void fput_expansion_float( vfs_FILE* filewrite, const char* text, IDSZ idsz, float value )
+void fput_expansion_float( vfs_FILE* filewrite, const char* text, const IDSZ idsz, const float value )
 {
     /// \author ZF
     /// \details  This function mimics vfs_printf in spitting out
@@ -608,7 +608,7 @@ bool_t fget_pair( vfs_FILE* fileread, IPair * ppair )
 }
 
 //--------------------------------------------------------------------------------------------
-void make_newloadname( const char *modname, const char *appendname,  char *newloadname )
+void make_newloadname( const char *modname, const char *appendname, char *newloadname )
 {
     /// \author ZZ
     /// \details  This function takes some names and puts 'em together
@@ -719,7 +719,7 @@ int fget_version( vfs_FILE* fileread )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fput_version( vfs_FILE* filewrite, int file_version )
+bool_t fput_version( vfs_FILE* filewrite, const int file_version )
 {
     if ( vfs_error( filewrite ) ) return bfalse;
 
@@ -727,7 +727,7 @@ bool_t fput_version( vfs_FILE* filewrite, int file_version )
 }
 
 //--------------------------------------------------------------------------------------------
-char * copy_mem_to_delimiter( char * pmem, char * pmem_end, vfs_FILE * filewrite, int delim, char * user_buffer, size_t user_buffer_len )
+const char * copy_mem_to_delimiter( const char * pmem, const char * pmem_end, vfs_FILE * filewrite, const int delim, char * user_buffer, const size_t user_buffer_len )
 {
     /// \author BB
     /// \details  copy data from one file to another until the delimiter delim has been found
@@ -814,7 +814,7 @@ int fget_next_int( vfs_FILE * fileread )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_string( vfs_FILE * fileread, char * str, size_t str_len )
+bool_t fget_string( vfs_FILE * fileread, char * str, const size_t str_len )
 {
     int fields;
     STRING format_str;
@@ -831,7 +831,7 @@ bool_t fget_string( vfs_FILE * fileread, char * str, size_t str_len )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_next_string( vfs_FILE * fileread, char * str, size_t str_len )
+bool_t fget_next_string( vfs_FILE * fileread, char * str, const size_t str_len )
 {
     goto_colon( NULL, fileread, bfalse );
 
@@ -858,7 +858,7 @@ float  fget_next_float( vfs_FILE * fileread )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t fget_next_name( vfs_FILE * fileread, char * name, size_t name_len )
+bool_t fget_next_name( vfs_FILE * fileread, char * name, const size_t name_len )
 {
     goto_colon( NULL, fileread, bfalse );
 
@@ -976,7 +976,7 @@ void GLSetup_SupportedFormats()
 }
 
 //--------------------------------------------------------------------------------------------
-Uint32  ego_texture_load_vfs( oglx_texture_t *texture, const char *filename, Uint32 key )
+Uint32  ego_texture_load_vfs( oglx_texture_t *texture, const char *filename, const Uint32 key )
 {
     STRING fullname;
     Uint32 retval;

@@ -36,8 +36,8 @@ struct ego_chr;
 // helper functions
 //--------------------------------------------------------------------------------------------
 
-Uint8  _display_message( const CHR_REF & ichr, const PRO_REF & iprofile, int message, ego_script_state * pstate );
-bool_t _break_passage( int mesh_fx_or, int become, int frames, int starttile, const PASS_REF & passage, int *ptilex, int *ptiley );
+Uint8  _display_message( const CHR_REF & ichr, const PRO_REF & iprofile, const int message, ego_script_state * pstate );
+bool_t _break_passage( const int mesh_fx_or, const int become, const int frames, const int starttile, const PASS_REF & passage, int *ptilex, int *ptiley );
 Uint8  _find_grid_in_passage( const int x0, const int y0, const int tiletype, const PASS_REF & passage, int *px1, int *py1 );
 
 Uint8   _append_end_text( ego_chr * pchr, const int message, ego_script_state * pstate );

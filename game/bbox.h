@@ -70,11 +70,11 @@ struct ego_oct_vec
 
     ego_oct_vec( fvec3_t & vec ) { clear( this ); ctor_this( this, vec ); }
 
-    float & operator []( size_t index ) { return v[index]; }
+    float & operator []( const size_t index ) { return v[index]; }
 
-    const float & operator []( size_t index ) const  { return v[index]; }
+    const float & operator []( const size_t index ) const  { return v[index]; }
 
-    static ego_oct_vec * ctor_this( ego_oct_vec * ovec, fvec3_t pos );
+    static ego_oct_vec * ctor_this( ego_oct_vec * ovec, const fvec3_t pos );
 
 private:
 
@@ -113,8 +113,6 @@ struct ego_oct_bb
     static egoboo_rv intersect_index( const int index, const ego_oct_bb & src1, const ego_oct_vec & opos1, const ego_oct_vec & ovel1, const ego_oct_bb & src2, const ego_oct_vec & opos2, const ego_oct_vec & ovel2, float *tmin, float *tmax );
     static egoboo_rv intersect_index_close( const int index, const ego_oct_bb & src1, const ego_oct_vec & opos1, const ego_oct_vec & ovel1, const ego_oct_bb & src2, const ego_oct_vec & opos2, const ego_oct_vec & ovel2, float *tmin, float *tmax );
 
-
-
 private:
 
     static ego_oct_bb * ctor_this( ego_oct_bb * pobb );
@@ -149,7 +147,7 @@ struct ego_aabb_lst
     static const ego_aabb_lst   * ctor_this( ego_aabb_lst   * lst );
     static const ego_aabb_lst   * dtor_this( ego_aabb_lst   * lst );
     static const ego_aabb_lst   * renew( ego_aabb_lst   * lst );
-    static const ego_aabb_lst   * alloc( ego_aabb_lst   * lst, int count );
+    static const ego_aabb_lst   * alloc( ego_aabb_lst   * lst, const int count );
 
 private:
 
@@ -175,7 +173,7 @@ struct ego_aabb_ary
     static ego_aabb_ary * ctor_this( ego_aabb_ary * ary ) { ary = dtor_this( ary ); ary = clear( ary ); return ary; }
     static ego_aabb_ary * dtor_this( ego_aabb_ary * ary );
     static ego_aabb_ary * renew( ego_aabb_ary * ary );
-    static ego_aabb_ary * alloc( ego_aabb_ary * ary, int count );
+    static ego_aabb_ary * alloc( ego_aabb_ary * ary, const int count );
 
 private:
     static ego_aabb_ary * clear( ego_aabb_ary * ptr )
@@ -191,7 +189,7 @@ private:
 //--------------------------------------------------------------------------------------------
 
 /// \details A convex poly representation of an object volume
-struct ego_OVolume
+struct OctVolume
 {
     int      lod;             ///< the level of detail (LOD) of this volume
     bool_t   needs_shape;     ///< is the shape data valid?
@@ -199,17 +197,17 @@ struct ego_OVolume
 
     ego_oct_bb   oct;
 
-    ego_OVolume() { clear( this ); }
+    OctVolume() { clear( this ); }
 
-    static ego_OVolume do_merge( ego_OVolume * pv1, ego_OVolume * pv2 );
-    static ego_OVolume do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 );
-    static bool_t      draw( ego_OVolume * cv, bool_t draw_square, bool_t draw_diamond );
-    static bool_t      shift( ego_OVolume * cv_src, fvec3_t * pos_src, ego_OVolume *cv_dst );
-    static bool_t      unshift( ego_OVolume * cv_src, fvec3_t * pos_src, ego_OVolume *cv_dst );
-    static bool_t      refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolume );
+    static OctVolume do_merge( const OctVolume * pv1, const OctVolume * pv2 );
+    static OctVolume do_intersect( const OctVolume * pv1, const OctVolume * pv2 );
+    static bool_t      draw( const OctVolume * cv, const bool_t draw_square, const bool_t draw_diamond );
+    static bool_t      shift( const OctVolume * cv_src, const fvec3_t * pos_src, OctVolume *cv_dst );
+    static bool_t      unshift( const OctVolume * cv_src, const fvec3_t * pos_src, OctVolume *cv_dst );
+    static bool_t      refine( OctVolume * pov, fvec3_t * pcenter, float * pvolume );
 
 private:
-    static ego_OVolume * clear( ego_OVolume * ptr )
+    static OctVolume * clear( OctVolume * ptr )
     {
         if ( NULL == ptr ) return NULL;
 
@@ -223,32 +221,32 @@ private:
 //--------------------------------------------------------------------------------------------
 struct ego_OTree
 {
-    ego_OVolume leaf[8];
+    OctVolume leaf[8];
 };
 
 //--------------------------------------------------------------------------------------------
 
 /// \details A convex polygon representation of the collision of two objects
-struct ego_CVolume
+struct CoVolume
 {
     float          volume;
     fvec3_t        center;
-    ego_OVolume    ov;
+    OctVolume    ov;
     ego_OTree    * tree;
 
-    static bool_t ctor_this( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume * pvb );
-    static bool_t refine( ego_CVolume * pcv );
+    static bool_t ctor_this( CoVolume * pcv, const OctVolume * pva, const OctVolume * pvb );
+    static bool_t refine( CoVolume * pcv );
 };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // type conversion routines
 
-bool_t bumper_to_oct_bb_0( ego_bumper src, ego_oct_bb   * pdst );
-bool_t bumper_to_oct_bb_1( ego_bumper src, fvec3_t vel, ego_oct_bb   * pdst );
+bool_t bumper_to_oct_bb_0( const ego_bumper & src, ego_oct_bb   * pdst );
+bool_t bumper_to_oct_bb_1( const ego_bumper & src, const fvec3_t vel, ego_oct_bb   * pdst );
 
-int    oct_bb_to_points( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count );
-void   points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count );
+int    oct_bb_to_points( const ego_oct_bb * pbmp, fvec4_t pos[], const size_t pos_count );
+void   points_to_oct_bb( ego_oct_bb * pbmp, const fvec4_t pos[], const size_t pos_count );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

@@ -229,14 +229,14 @@ int ProList_search_free( const PRO_REF & iobj )
 }
 
 //--------------------------------------------------------------------------------------------
-size_t ProList_pop_free( int idx )
+size_t ProList_pop_free( const int idx )
 {
     /// \author BB
     /// \details  pop off whatever object exists at the free list index idx
 
     size_t retval;
 
-    if ( idx >= 0 && ( size_t )idx < ProList._free_count )
+    if ( idx >= 0 && ( const size_t )idx < ProList._free_count )
     {
         // move the index idx to the top
         int idx_top, idx_bottom;
@@ -720,7 +720,7 @@ bool_t obj_verify_file_vfs( const char * tmploadname )
 }
 
 //--------------------------------------------------------------------------------------------
-int pro_get_slot_vfs( const char * tmploadname, int slot_override )
+int pro_get_slot_vfs( const char * tmploadname, const int slot_override )
 {
     int slot;
 
@@ -756,7 +756,7 @@ int pro_get_slot_vfs( const char * tmploadname, int slot_override )
 }
 
 //--------------------------------------------------------------------------------------------
-int load_one_profile_vfs( const char* tmploadname, int slot_override )
+int load_one_profile_vfs( const char* tmploadname, const int slot_override )
 {
     /// \author ZZ
     /// \details  This function loads one object and returns the object slot

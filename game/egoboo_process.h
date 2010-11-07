@@ -142,7 +142,7 @@ private:
 struct ego_process_engine
 {
     /// the entry point for running a process
-    static int run( ego_process *, double dt = 1.0f );
+    static int run( ego_process *, const double dt = 1.0f );
 
 protected:
 

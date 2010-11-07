@@ -83,7 +83,7 @@ extern "C"
     typedef struct s_gl_texture gl_texture_t;
 
     /// Grab the OpenGL textire state
-    void gl_grab_texture_state( GLenum target, GLint level, gl_texture_t * pi );
+    void gl_grab_texture_state( const GLenum target, const GLint level, gl_texture_t * pi );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ extern "C"
     typedef struct s_gl_clip_plane gl_clip_plane_t;
 
     /// Grab the OpenGL clip plane state
-    void gl_grab_clip_plane_state( gl_clip_plane_t * ps, GLint which );
+    void gl_grab_clip_plane_state( gl_clip_plane_t * ps, const GLint which );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

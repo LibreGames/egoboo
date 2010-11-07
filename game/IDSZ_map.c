@@ -159,7 +159,7 @@ IDSZ_node_t* idsz_map_iterate( const IDSZ_node_t idsz_map[], const size_t idsz_m
     step = *iterator_ptr;
 
     // Reached the end of the list without finding a matching idsz
-    if ( step < 0  || ( size_t )step >= idsz_map_len ) return NULL;
+    if ( step < 0  || ( const size_t )step >= idsz_map_len ) return NULL;
 
     // Found the end of the list?
     if ( IDSZ_NONE == idsz_map[step].id )

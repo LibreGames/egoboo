@@ -146,7 +146,7 @@ struct gfx_range
 {
     int      vmin, vmax;
 
-    gfx_range( int mi = -1, int ma = -2 ) { init(); vmin = mi; vmax = ma; }
+    gfx_range( const int mi = -1, const int ma = -2 ) { init(); vmin = mi; vmax = ma; }
 
     void init()
     {
@@ -288,9 +288,9 @@ struct gfx_mad_instance
     static egoboo_rv update_bbox( gfx_mad_instance * pinst );
     static egoboo_rv needs_update( gfx_mad_instance * pgfx_inst, const pose_data & p_new, const gfx_range & r_new, bool_t *verts_match, bool_t *frames_match );
     static egoboo_rv update_vertices( gfx_mad_instance * pgfx_inst, const pose_data & p_new, const gfx_range & r_new, const bool_t force = bfalse );
-    static egoboo_rv update_grip_verts( gfx_mad_instance * pinst, Uint16 vrt_lst[], const size_t vrt_count );
+    static egoboo_rv update_grip_verts( gfx_mad_instance * pinst, const Uint16 vrt_lst[], const size_t vrt_count );
 
-    static void      get_tint( gfx_mad_instance * pinst, GLfloat tint[], BIT_FIELD bits );
+    static void      get_tint( const gfx_mad_instance * pinst, GLfloat tint[], const BIT_FIELD bits );
 
     static void      clear_cache( gfx_mad_instance * pinst );
 
@@ -303,24 +303,24 @@ struct gfx_mad_instance
 protected:
     static gfx_mad_instance * ctor_this( gfx_mad_instance * pinst );
     static gfx_mad_instance * dtor_this( gfx_mad_instance * pinst );
-    static bool_t             alloc( gfx_mad_instance * pinst, size_t vlst_size );
+    static bool_t             alloc( gfx_mad_instance * pinst, const size_t vlst_size );
     static bool_t             dealloc( gfx_mad_instance * pinst );
-    static bool_t             spawn( gfx_mad_instance * pinst, const PRO_REF & profile, Uint8 skin );
+    static bool_t             spawn( gfx_mad_instance * pinst, const PRO_REF & profile, const Uint8 skin );
     static bool_t             set_mad( gfx_mad_instance * pinst, const MAD_REF & imad );
 
-    static void               update_lighting_base( gfx_mad_instance * pinst, ego_chr * pchr, bool_t force );
+    static void               update_lighting_base( gfx_mad_instance * pinst, ego_chr * pchr, const bool_t force );
 
-    static egoboo_rv          update_vlst_cache( gfx_mad_instance * pinst, const pose_data & p_new, const gfx_range & r_new, bool_t force, bool_t vertices_match, bool_t frames_match );
-    static bool_t             update_ref( gfx_mad_instance * pinst, float grid_level, bool_t need_matrix );
+    static egoboo_rv          update_vlst_cache( gfx_mad_instance * pinst, const pose_data & p_new, const gfx_range & r_new, const bool_t force, const bool_t vertices_match, const bool_t frames_match );
+    static bool_t             update_ref( gfx_mad_instance * pinst, const float grid_level, const bool_t need_matrix );
 
 private:
     static gfx_mad_instance * clear( gfx_mad_instance * ptr );
 };
 
 //--------------------------------------------------------------------------------------------
-bool_t render_one_mad_enviro( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits );
-bool_t render_one_mad_tex( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits );
-bool_t render_one_mad( const CHR_REF & character, GLXvector4f tint, BIT_FIELD bits );
+bool_t render_one_mad_enviro( const CHR_REF & character, const GLXvector4f tint, const BIT_FIELD bits );
+bool_t render_one_mad_tex( const CHR_REF & character, const GLXvector4f tint, const BIT_FIELD bits );
+bool_t render_one_mad( const CHR_REF & character, const GLXvector4f tint, const BIT_FIELD bits );
 bool_t render_one_mad_ref( const CHR_REF & tnc );
 
 void      update_all_chr_instance();

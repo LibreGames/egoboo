@@ -88,8 +88,8 @@ extern "C"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-    int    module_has_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, char * buffer );
-    bool_t module_add_idsz_vfs( const char *szModName, IDSZ idsz, size_t buffer_len, const char * buffer );
+    int    module_has_idsz_vfs( const char *szModName, const IDSZ idsz, const size_t buffer_len, char * buffer );
+    bool_t module_add_idsz_vfs( const char *szModName, const IDSZ idsz, const size_t buffer_len, const char * buffer );
 
     mod_file_t * module_load_info_vfs( const char * szLoadName, mod_file_t * pmod );
 

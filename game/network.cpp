@@ -119,12 +119,12 @@ struct net_packet
     Uint8   buffer[MAXSENDSIZE];              ///< The data packet
 
     static void start_new( net_packet * pkt );
-    static void add_UnsignedByte( net_packet *, Uint8 uc );
-    static void add_SignedByte( net_packet *, Sint8 sc );
-    static void add_UnsignedShort( net_packet *, Uint16 us );
-    static void add_SignedShort( net_packet *, Sint16 ss );
-    static void add_UnsignedInt( net_packet *, Uint32 ui );
-    static void add_SignedInt( net_packet *, Sint32 si );
+    static void add_UnsignedByte( net_packet *, const Uint8 uc );
+    static void add_SignedByte( net_packet *, const Sint8 sc );
+    static void add_UnsignedShort( net_packet *, const Uint16 us );
+    static void add_SignedShort( net_packet *, const Sint16 ss );
+    static void add_UnsignedInt( net_packet *, const Uint32 ui );
+    static void add_SignedInt( net_packet *, const Sint32 si );
     static void add_String( net_packet *, const char *string );
 };
 
@@ -134,7 +134,7 @@ static void net_sendPacketToHost( net_packet * );
 static void net_sendPacketToAllPlayers( net_packet * );
 static void net_sendPacketToHostGuaranteed( net_packet * );
 static void net_sendPacketToAllPlayersGuaranteed( net_packet * );
-static void net_sendPacketToOnePlayerGuaranteed( net_packet *, int player );
+static void net_sendPacketToOnePlayerGuaranteed( net_packet *, const int player );
 static void net_sendPacketToPeer( net_packet *, ENetPeer *peer );
 static void net_sendPacketToPeerGuaranteed( net_packet *, ENetPeer *peer );
 
@@ -227,7 +227,7 @@ bool_t net_get_host_active()
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t net_set_host_active( bool_t state )
+bool_t net_set_host_active( const bool_t state )
 {
     if ( !_network_system_init ) return bfalse;
 
@@ -315,7 +315,7 @@ void net_packet::start_new( net_packet * pkt )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void net_packet::add_UnsignedByte( net_packet * pkt, Uint8 uc )
+void net_packet::add_UnsignedByte( net_packet * pkt, const Uint8 uc )
 {
     /// \author ZZ
     /// \details  This function appends an Uint8 to the packet
@@ -328,7 +328,7 @@ void net_packet::add_UnsignedByte( net_packet * pkt, Uint8 uc )
 }
 
 //--------------------------------------------------------------------------------------------
-void net_packet::add_SignedByte( net_packet * pkt, Sint8 sc )
+void net_packet::add_SignedByte( net_packet * pkt, const Sint8 sc )
 {
     /// \author ZZ
     /// \details  This function appends a Sint8 to the packet
@@ -341,7 +341,7 @@ void net_packet::add_SignedByte( net_packet * pkt, Sint8 sc )
 }
 
 //--------------------------------------------------------------------------------------------
-void net_packet::add_UnsignedShort( net_packet * pkt, Uint16 us )
+void net_packet::add_UnsignedShort( net_packet * pkt, const Uint16 us )
 {
     /// \author ZZ
     /// \details  This function appends an Uint16 to the packet
@@ -355,7 +355,7 @@ void net_packet::add_UnsignedShort( net_packet * pkt, Uint16 us )
 }
 
 //--------------------------------------------------------------------------------------------
-void net_packet::add_SignedShort( net_packet * pkt, Sint16 ss )
+void net_packet::add_SignedShort( net_packet * pkt, const Sint16 ss )
 {
     /// \author ZZ
     /// \details  This function appends a Sint16 to the packet
@@ -370,7 +370,7 @@ void net_packet::add_SignedShort( net_packet * pkt, Sint16 ss )
 }
 
 //--------------------------------------------------------------------------------------------
-void net_packet::add_UnsignedInt( net_packet * pkt, Uint32 ui )
+void net_packet::add_UnsignedInt( net_packet * pkt, const Uint32 ui )
 {
     /// \author ZZ
     /// \details  This function appends an Uint32 to the packet
@@ -385,7 +385,7 @@ void net_packet::add_UnsignedInt( net_packet * pkt, Uint32 ui )
 }
 
 //--------------------------------------------------------------------------------------------
-void net_packet::add_SignedInt( net_packet * pkt, Sint32 si )
+void net_packet::add_SignedInt( net_packet * pkt, const Sint32 si )
 {
     /// \author ZZ
     /// \details  This function appends a Sint32 to the packet
@@ -437,7 +437,7 @@ void packet_doneReading( enet_pkt & pkt )
 }
 
 //--------------------------------------------------------------------------------------------
-void packet_readString( enet_pkt & pkt, char *buffer, int maxLen )
+void packet_readString( enet_pkt & pkt, char *buffer, const int maxLen )
 {
     /// \author ZZ
     /// \details  This function reads a null terminated string from the packet
@@ -608,7 +608,7 @@ void net_sendPacketToAllPlayersGuaranteed( net_packet * pkt )
 }
 
 //--------------------------------------------------------------------------------------------
-void net_sendPacketToOnePlayerGuaranteed( net_packet * pkt, int player )
+void net_sendPacketToOnePlayerGuaranteed( net_packet * pkt, const int player )
 {
     /// \author ZZ
     /// \details  This function sends a packet to one of the players
@@ -1177,7 +1177,7 @@ void sv_talkToRemotes()
 }
 
 //--------------------------------------------------------------------------------------------
-void pla_add_tlatch( ego_player & rpla, Uint32 time, latch_input_t net_latch )
+void pla_add_tlatch( ego_player & rpla, const Uint32 time, latch_input_t net_latch )
 {
     if ( !rpla.valid ) return;
 
@@ -1372,7 +1372,7 @@ void net_handlePacket( ENetEvent *event )
 
         case NET_NUM_FILES_TO_SEND:
             log_info( "NET_NUM_FILES_TO_SEND\n" );
-            numfileexpected = ( int )packet_readUnsignedShort( net_read );
+            numfileexpected = ( const int )packet_readUnsignedShort( net_read );
             break;
 
         case TO_HOST_FILE:
@@ -1796,12 +1796,12 @@ void unbuffer_one_player_latch_do_network( ego_player & rpla )
         _gnet.timed_latch_count = SDL_max( _gnet.timed_latch_count, latch_count );
         if ( weight_sum > 0.0f )
         {
-            tmp_latch.raw[kX] /= ( float )weight_sum;
-            tmp_latch.raw[kY] /= ( float )weight_sum;
+            tmp_latch.raw[kX] /= ( const float )weight_sum;
+            tmp_latch.raw[kY] /= ( const float )weight_sum;
 
-            tmp_latch.dir[kX] /= ( float )weight_sum;
-            tmp_latch.dir[kY] /= ( float )weight_sum;
-            tmp_latch.dir[kZ] /= ( float )weight_sum;
+            tmp_latch.dir[kX] /= ( const float )weight_sum;
+            tmp_latch.dir[kY] /= ( const float )weight_sum;
+            tmp_latch.dir[kZ] /= ( const float )weight_sum;
         }
 
         //log_info( "<<%1.4f, %1.4f>, 0x%x>, %d, multiple latches for %s\n", tmp_latch.x, tmp_latch.y, tmp_latch.b, latch_count, ChrObjList.get_data_ref(rpla.index).name );
@@ -2153,7 +2153,7 @@ int sv_hostGame()
 }
 
 //--------------------------------------------------------------------------------------------
-/*void turn_on_service( int service )
+/*void turn_on_service( const int service )
 {
     /// \author ZZ
     /// \details This function turns on a network service ( IPX, TCP, serial, modem )
@@ -2346,7 +2346,7 @@ void net_reset_players()
 }
 
 //--------------------------------------------------------------------------------------------
-void tlatch_ary_init( ego_time_latch ary[], size_t len )
+void tlatch_ary_init( ego_time_latch ary[], const size_t len )
 {
     size_t cnt;
 

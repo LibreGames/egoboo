@@ -51,7 +51,7 @@ extern "C"
     void clk_shutdown( void );                             ///< Shut down the clock module
 //void clk_setTimeSource( clock_source_ptr_t tsrc );   ///< Specify where the clock gets its time values from
 
-    ClockState_t * clk_create( const char * name, int size );
+    ClockState_t * clk_create( const char * name, const int size );
     bool_t         clk_destroy( ClockState_t ** cs );
     ClockState_t * clk_renew( ClockState_t * cs );
 

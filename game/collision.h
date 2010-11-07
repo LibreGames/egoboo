@@ -76,7 +76,7 @@ private:
     bool_t assign( const PRT_REF & ref ) { bool_t retval = bfalse; invalidate(); if ( ref.get_value() < MAX_PRT ) { _assign_base( type_prt, ref.get_value() ); retval = btrue; } return retval; }
     bool_t assign( const Uint32  & ref ) { bool_t retval = bfalse; invalidate(); if ( INVALID_TILE != ref ) { _assign_base( type_tile, ref ); retval = btrue; } return retval; }
 
-    void _assign_base( _ref_type type, REF_T ref ) { _type = type; _ref = ref; }
+    void _assign_base( const _ref_type type, const REF_T ref ) { _type = type; _ref = ref; }
 
     _ref_type _type;
     REF_T     _ref;
@@ -164,10 +164,10 @@ struct collision_hash_list : public ego_hash_list
 {
     friend struct collision_system;
 
-    static collision_hash_list * create( int size, collision_hash_list * ptr = NULL );
-    static bool_t                destroy( collision_hash_list ** ppchlst, bool_t own_ptr = btrue );
+    static collision_hash_list * create( const int size, collision_hash_list * ptr = NULL );
+    static bool_t                destroy( collision_hash_list ** ppchlst, const bool_t own_ptr = btrue );
 
-    static collision_hash_list * retor_all( collision_hash_list * ptr, int size = -1 )
+    static collision_hash_list * retor_all( collision_hash_list * ptr, const int size = -1 )
     {
         ptr = dtor_all( ptr );
         ptr = ctor_all( ptr, size );
@@ -180,12 +180,12 @@ protected:
     static bool_t insert_unique( collision_hash_list *, collision_node * pdata, collision_node_ary & cdata, hash_node_ary & hnlst );
 
     // hide these here so that we must create/destroy them?
-    explicit collision_hash_list( int size ) : ego_hash_list( size ), inserted( 0 ) {};
+    explicit collision_hash_list( const int size ) : ego_hash_list( size ), inserted( 0 ) {};
     ~collision_hash_list() {};
 
 private:
 
-    static collision_hash_list * ctor_all( collision_hash_list *ptr, int size = -1 ) { if ( NULL != ptr ) ptr = new( ptr ) collision_hash_list( size ); return ptr; }
+    static collision_hash_list * ctor_all( collision_hash_list *ptr, const int size = -1 ) { if ( NULL != ptr ) ptr = new( ptr ) collision_hash_list( size ); return ptr; }
     static collision_hash_list * dtor_all( collision_hash_list *ptr ) { if ( NULL != ptr ) ptr->~collision_hash_list(); return ptr; }
 
     int inserted;
@@ -218,7 +218,7 @@ protected:
     static leaf_child_list_t       _coll_leaf_lst;
     static collision_node_ary      _coll_node_lst;
 
-    static collision_hash_list * get_hash_ptr( int size );
+    static collision_hash_list * get_hash_ptr( const int size );
 
     static bool_t fill_bumplists( ego_obj_BSP * pbsp );
     static bool_t fill_interaction_list( collision_hash_list * pchlst, collision_node_ary & cn_lst, hash_node_ary & hn_lst );
@@ -238,7 +238,7 @@ protected:
 bool_t detach_character_from_platform( ego_chr * pchr );
 bool_t detach_particle_from_platform( ego_prt * pprt );
 
-bool_t calc_grip_cv( ego_chr * pmount, int grip_offset, ego_oct_bb   * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary );
+bool_t calc_grip_cv( ego_chr * pmount, const int grip_offset, ego_oct_bb * grip_cv_ptr, fvec3_base_t grip_origin_ary, fvec3_base_t grip_up_ary );
 
 void update_all_platform_attachments();
 

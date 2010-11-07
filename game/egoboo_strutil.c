@@ -71,7 +71,7 @@ void str_trim( char *pStr )
 }
 
 //--------------------------------------------------------------------------------------------
-char * str_decode( char *strout, size_t insize, const char * strin )
+char * str_decode( char *strout, const size_t insize, const char * strin )
 {
     /// \author BB
     /// \details  str_decode converts a string from "storage mode" to an actual string
@@ -94,7 +94,7 @@ char * str_decode( char *strout, size_t insize, const char * strin )
 }
 
 //--------------------------------------------------------------------------------------------
-char * str_encode( char *strout, size_t insize, const char * strin )
+char * str_encode( char *strout, const size_t insize, const char * strin )
 {
     /// \author BB
     /// \details  str_encode converts an actual string to "storage mode"
@@ -147,7 +147,7 @@ char * str_encode( char *strout, size_t insize, const char * strin )
 }
 
 //--------------------------------------------------------------------------------------------
-char * str_clean_path( char * str, size_t size )
+char * str_clean_path( char * str, const size_t size )
 {
     /// \author BB
     /// \details  remove any accidentally doubled slash characters from the stream
@@ -188,7 +188,7 @@ char * str_clean_path( char * str, size_t size )
 }
 
 //--------------------------------------------------------------------------------------------
-char * str_convert_slash_net( char * str, size_t size )
+char * str_convert_slash_net( char * str, const size_t size )
 {
     /// \author BB
     /// \details  converts the slashes in a string to those appropriate for the Net
@@ -217,7 +217,7 @@ char * str_convert_slash_net( char * str, size_t size )
 }
 
 //--------------------------------------------------------------------------------------------
-char * str_convert_slash_sys( char * str, size_t size )
+char * str_convert_slash_sys( char * str, const size_t size )
 {
     /// \author BB
     /// \details  converts the slashes in a string to those appropriate this system
@@ -246,7 +246,7 @@ char * str_convert_slash_sys( char * str, size_t size )
 }
 
 //--------------------------------------------------------------------------------------------
-char * str_append_slash_net( char * str, size_t size )
+char * str_append_slash_net( char * str, const size_t size )
 {
     /// \author BB
     /// \details  appends a network-type slash to a string, if it does not already have one
@@ -265,7 +265,7 @@ char * str_append_slash_net( char * str, size_t size )
 }
 
 //--------------------------------------------------------------------------------------------
-char * str_append_slash( char * str, size_t size )
+char * str_append_slash( char * str, const size_t size )
 {
     /// \author BB
     /// \details  appends this system's slash to a string, if it does not already have one
@@ -320,7 +320,7 @@ char * str_encode_path( const char *szName )
 }
 
 //--------------------------------------------------------------------------------------------
-void str_add_linebreaks( char * text, size_t text_len, size_t line_len )
+void str_add_linebreaks( char * text, const size_t text_len, const size_t line_len )
 {
     char * text_end, * text_break, * text_stt;
 
@@ -352,7 +352,7 @@ void str_add_linebreaks( char * text, size_t text_len, size_t line_len )
 
         // until the line is too long, then insert
         // replace the last good ' ' with '\n'
-        if ((( size_t )text - ( size_t )text_break ) > line_len )
+        if ((( const size_t )text - ( const size_t )text_break ) > line_len )
         {
             if ( ' ' != *text_break )
             {

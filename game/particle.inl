@@ -57,7 +57,7 @@ INLINE ego_pip * ego_prt::get_ppip( const PRT_REF & iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t ego_prt::set_size( ego_prt * pprt, int size )
+INLINE bool_t ego_prt::set_size( ego_prt * pprt, const int size )
 {
     ego_pip *ppip;
 
@@ -116,7 +116,7 @@ INLINE bool_t ego_prt::set_size( ego_prt * pprt, int size )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE CHR_REF ego_prt::get_iowner( const PRT_REF & iprt, int depth )
+INLINE CHR_REF ego_prt::get_iowner( const PRT_REF & iprt, const int depth )
 {
     /// \author BB
     /// \brief A helper function for determining the owner of a particle

@@ -173,6 +173,7 @@ public:
     // an ego_object can be interfaced with in the same way
 
     static       ego_obj_enc &  get_obj_ref( ego_enc & ref ) { return *(( ego_obj_enc * )ref._obj_ptr ); }
+    static const ego_obj_enc &  get_obj_ref( const ego_enc & ref ) { return *(( ego_obj_enc * )ref._obj_ptr ); }
     static       ego_obj_enc *  get_obj_ptr( ego_enc * ptr ) { return ( NULL == ptr ) ? NULL : ( ego_obj_enc * )ptr->_obj_ptr; }
     static const ego_obj_enc * cget_obj_ptr( const ego_enc * ptr ) { return ( NULL == ptr ) ? NULL : ptr->_obj_ptr; }
 
@@ -187,11 +188,11 @@ public:
 
     //---- generic enchant functions
 
-    static ENC_REF value_filled( const ENC_REF & enchant_idx, int value_idx );
-    static void    apply_set( const ENC_REF &  enchant_idx, int value_idx, const PRO_REF & profile );
-    static void    apply_add( const ENC_REF &  enchant_idx, int value_idx, const EVE_REF & enchanttype );
-    static void    remove_set( const ENC_REF &  enchant_idx, int value_idx );
-    static void    remove_add( const ENC_REF &  enchant_idx, int value_idx );
+    static ENC_REF value_filled( const ENC_REF & enchant_idx, const int value_idx );
+    static void    apply_set( const ENC_REF & enchant_idx, const int value_idx, const PRO_REF & profile );
+    static void    apply_add( const ENC_REF & enchant_idx, const int value_idx, const EVE_REF & enchanttype );
+    static void    remove_set( const ENC_REF & enchant_idx, const int value_idx );
+    static void    remove_add( const ENC_REF & enchant_idx, const int value_idx );
 
     static INLINE PRO_REF   get_ipro( const ENC_REF & ienc );
     static INLINE ego_pro * get_ppro( const ENC_REF & ienc );
@@ -314,8 +315,8 @@ void    update_all_enchants();
 void    cleanup_all_enchants();
 
 void    increment_all_enchant_update_counters( void );
-bool_t  remove_enchant( const ENC_REF &  enchant_idx, ENC_REF *  enchant_parent );
-bool_t  remove_all_enchants_with_idsz( CHR_REF ichr, IDSZ remove_idsz );
+bool_t  remove_enchant( const ENC_REF & enchant_idx, ENC_REF *  enchant_parent );
+bool_t  remove_all_enchants_with_idsz( const CHR_REF & ichr, const IDSZ remove_idsz );
 
 ENC_REF spawn_one_enchant( const CHR_REF & owner, const CHR_REF & target, const CHR_REF & spawner, const ENC_REF & ego_enc_override, const PRO_REF & modeloptional );
 EVE_REF load_one_enchant_profile_vfs( const char* szLoadName, const EVE_REF & profile );

@@ -136,14 +136,14 @@ static void                   _vfs_exit( void );
 static vfs_search_context_t * _vfs_search( vfs_search_context_t ** ctxt );
 static int                    _vfs_vfscanf( FILE * file, const char * format, va_list args );
 
-static int          _vfs_ensure_write_directory( const char * filename, bool_t is_directory );
+static int          _vfs_ensure_write_directory( const char * filename, const bool_t is_directory );
 static bool_t       _vfs_ensure_destination_file( const char * filename );
 
 static void         _vfs_translate_error( vfs_FILE * pfile );
 
 static bool_t       _vfs_mount_info_add( const char * mount_point, const char * root_path, const char * relative_path );
 static int          _vfs_mount_info_matches( const char * mount_point, const char * local_path );
-static bool_t       _vfs_mount_info_remove( int cnt );
+static bool_t       _vfs_mount_info_remove( const int cnt );
 static int          _vfs_mount_info_search( const char * some_path );
 
 static const char * _vfs_strip_path( const char * some_path );
@@ -659,7 +659,7 @@ vfs_FILE * vfs_openRead( const char * filename )
 }
 
 //--------------------------------------------------------------------------------------------
-int _vfs_ensure_write_directory( const char * filename, bool_t is_directory )
+int _vfs_ensure_write_directory( const char * filename, const bool_t is_directory )
 {
     /// \author BB
     /// \details
@@ -1065,7 +1065,7 @@ int vfs_isDirectory( const char *fname )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-size_t vfs_read( void * buffer, size_t size, size_t count, vfs_FILE * pfile )
+size_t vfs_read( void * buffer, const size_t size, const size_t count, vfs_FILE * pfile )
 {
     bool_t error = bfalse;
     size_t read_length;
@@ -1095,7 +1095,7 @@ size_t vfs_read( void * buffer, size_t size, size_t count, vfs_FILE * pfile )
 }
 
 //--------------------------------------------------------------------------------------------
-size_t vfs_write( void * buffer, size_t size, size_t count, vfs_FILE * pfile )
+size_t vfs_write( void * buffer, const size_t size, const size_t count, vfs_FILE * pfile )
 {
     size_t retval;
 
@@ -1130,7 +1130,7 @@ int vfs_read_Sint16( vfs_FILE * pfile, Sint16 * val )
     if ( vfs_cfile == pfile->type )
     {
         Uint16 itmp;
-        retval = fread( &itmp, 1, sizeof( Uint16 ), pfile->ptr.c );
+        retval = fread( &itmp, 1, sizeof( const Uint16 ), pfile->ptr.c );
 
         error = ( 1 != retval );
 
@@ -1162,7 +1162,7 @@ int vfs_read_Uint16( vfs_FILE * pfile, Uint16 * val )
     if ( vfs_cfile == pfile->type )
     {
         Uint16 itmp;
-        retval = fread( &itmp, 1, sizeof( Uint16 ), pfile->ptr.c );
+        retval = fread( &itmp, 1, sizeof( const Uint16 ), pfile->ptr.c );
 
         error = ( 1 != retval );
 
@@ -1194,7 +1194,7 @@ int vfs_read_Sint32( vfs_FILE * pfile, Sint32 * val )
     if ( vfs_cfile == pfile->type )
     {
         Uint32 itmp;
-        retval = fread( &itmp, 1, sizeof( Uint32 ), pfile->ptr.c );
+        retval = fread( &itmp, 1, sizeof( const Uint32 ), pfile->ptr.c );
 
         error = ( 1 != retval );
 
@@ -1226,7 +1226,7 @@ int vfs_read_Uint32( vfs_FILE * pfile, Uint32 * val )
     if ( vfs_cfile == pfile->type )
     {
         Uint32 itmp;
-        retval = fread( &itmp, 1, sizeof( Uint32 ), pfile->ptr.c );
+        retval = fread( &itmp, 1, sizeof( const Uint32 ), pfile->ptr.c );
 
         error = ( 1 != retval );
 
@@ -1322,7 +1322,7 @@ int vfs_read_float( vfs_FILE * pfile, float * val )
     if ( vfs_cfile == pfile->type )
     {
         float ftmp;
-        retval = fread( &ftmp, 1, sizeof( float ), pfile->ptr.c );
+        retval = fread( &ftmp, 1, sizeof( const float ), pfile->ptr.c );
 
         error = ( 1 != retval );
 
@@ -1733,7 +1733,7 @@ _vfs_search_file_error:
 }
 
 //--------------------------------------------------------------------------------------------
-vfs_search_context_t * vfs_findFirst( const char * search_path, const char * search_extension, Uint32 search_bits )
+vfs_search_context_t * vfs_findFirst( const char * search_path, const char * search_extension, const Uint32 search_bits )
 {
     vfs_search_context_t * ctxt;
 
@@ -1819,7 +1819,7 @@ void vfs_findClose( vfs_search_context_t ** ctxt )
 }
 
 //--------------------------------------------------------------------------------------------
-int vfs_removeDirectoryAndContents( const char * dirname, int recursive )
+int vfs_removeDirectoryAndContents( const char * dirname, const int recursive )
 {
     // buffer the directory delete through PHYSFS, so that we so not access functions that
     // we have no right to! :)
@@ -2029,7 +2029,7 @@ int vfs_getc( vfs_FILE * pfile )
 }
 
 //--------------------------------------------------------------------------------------------
-int vfs_putc( int c, vfs_FILE * pfile )
+int vfs_putc( const int c, vfs_FILE * pfile )
 {
     int retval = 0;
 
@@ -2274,7 +2274,7 @@ const char * vfs_getError()
 }
 
 //--------------------------------------------------------------------------------------------
-int vfs_add_mount_point( const char * root_path, const char * relative_path, const char * mount_point, int append )
+int vfs_add_mount_point( const char * root_path, const char * relative_path, const char * mount_point, const int append )
 {
     /// \author BB
     /// \details  a wrapper for PHYSFS_mount
@@ -2588,7 +2588,7 @@ bool_t _vfs_mount_info_add( const char * mount_point, const char * root_path, co
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t _vfs_mount_info_remove( int cnt )
+bool_t _vfs_mount_info_remove( const int cnt )
 {
     BAIL_IF_NOT_INIT();
 

@@ -85,7 +85,7 @@ int fnt_init()
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-TTF_Font * fnt_loadFont( const char *fileName, int pointSize )
+TTF_Font * fnt_loadFont( const char *fileName, const int pointSize )
 {
     TTF_Font *retval = NULL;
 
@@ -113,7 +113,7 @@ void fnt_freeFont( TTF_Font *font )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-display_list_t * fnt_vappend_text( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, const char *format, va_list args )
+display_list_t * fnt_vappend_text( display_list_t * dlst_ptr, const TTF_Font * ttf_ptr, const int x, const int y, const char *format, va_list args )
 {
     display_item_t * pitem = NULL;
 
@@ -139,7 +139,7 @@ display_list_t * fnt_vappend_text( display_list_t * dlst_ptr, TTF_Font * ttf_ptr
 }
 
 //--------------------------------------------------------------------------------------------
-display_list_t * fnt_append_text( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, const char *format, ... )
+display_list_t * fnt_append_text( display_list_t * dlst_ptr, const TTF_Font * ttf_ptr, const int x, const int y, const char *format, ... )
 {
     va_list args;
     display_list_t * ret;
@@ -152,7 +152,7 @@ display_list_t * fnt_append_text( display_list_t * dlst_ptr, TTF_Font * ttf_ptr,
 }
 
 //--------------------------------------------------------------------------------------------
-display_list_t * fnt_append_append_text_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, const char *text )
+display_list_t * fnt_append_append_text_literal( display_list_t * dlst_ptr, const TTF_Font * ttf_ptr, const int x, const int y, const char *text )
 {
     display_item_t * pitem = NULL;
 
@@ -182,7 +182,7 @@ display_list_t * fnt_append_append_text_literal( display_list_t * dlst_ptr, TTF_
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_print_raw( display_item_t * pitem, TTF_Font * ttf_ptr, SDL_Color color, const char * szText )
+display_item_t * fnt_print_raw( display_item_t * pitem, const TTF_Font * ttf_ptr, const SDL_Color color, const char * szText )
 {
     bool_t print_error       = bfalse;
     bool_t display_ptr_local = bfalse;
@@ -204,7 +204,7 @@ display_item_t * fnt_print_raw( display_item_t * pitem, TTF_Font * ttf_ptr, SDL_
     }
 
     // create the text on the temporary surface
-    tmp_surface = TTF_RenderText_Blended( ttf_ptr, szText, color );
+    tmp_surface = TTF_RenderText_Blended(( TTF_Font * )ttf_ptr, szText, color );
 
     if ( NULL == tmp_surface )
     {
@@ -253,7 +253,7 @@ fnt_print_raw_finish:
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_vprintf( display_item_t * pitem, TTF_Font * ttf_ptr, SDL_Color color, const char *format, va_list args )
+display_item_t * fnt_vprintf( display_item_t * pitem, const TTF_Font * ttf_ptr, const SDL_Color color, const char *format, va_list args )
 {
     int rv;
     STRING szText = EMPTY_CSTR;
@@ -274,7 +274,7 @@ display_item_t * fnt_vprintf( display_item_t * pitem, TTF_Font * ttf_ptr, SDL_Co
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_drawText_raw( display_item_t *pitem, TTF_Font * font_ptr, int x, int y, const char *text )
+display_item_t * fnt_drawText_raw( display_item_t *pitem, const TTF_Font * font_ptr, const int x, const int y, const char *text )
 {
     SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
 
@@ -297,7 +297,7 @@ display_item_t * fnt_drawText_raw( display_item_t *pitem, TTF_Font * font_ptr, i
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_vconvertText( display_item_t *pitem, TTF_Font * ttf_ptr, const char *format, va_list args )
+display_item_t * fnt_vconvertText( display_item_t *pitem, const TTF_Font * ttf_ptr, const char *format, va_list args )
 {
     SDL_Color color = { 0xFF, 0xFF, 0xFF, 0 };
 
@@ -305,7 +305,7 @@ display_item_t * fnt_vconvertText( display_item_t *pitem, TTF_Font * ttf_ptr, co
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_convertText_literal( display_item_t *pitem, TTF_Font * ttf_ptr, const char *text )
+display_item_t * fnt_convertText_literal( display_item_t *pitem, const TTF_Font * ttf_ptr, const char *text )
 {
     //bool_t null_tx_ptr;
 
@@ -325,7 +325,7 @@ display_item_t * fnt_convertText_literal( display_item_t *pitem, TTF_Font * ttf_
 }
 
 //--------------------------------------------------------------------------------------------
-display_item_t * fnt_convertText( display_item_t *pitem, TTF_Font * ttf_ptr, const char *format, ... )
+display_item_t * fnt_convertText( display_item_t *pitem, const TTF_Font * ttf_ptr, const char *format, ... )
 {
     va_list args;
 
@@ -337,7 +337,7 @@ display_item_t * fnt_convertText( display_item_t *pitem, TTF_Font * ttf_ptr, con
 }
 
 //--------------------------------------------------------------------------------------------
-const char * fnt_vgetTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, va_list args )
+const char * fnt_vgetTextSize( const TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, va_list args )
 {
     static char text[4096] = EMPTY_CSTR;
 
@@ -359,13 +359,13 @@ const char * fnt_vgetTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, co
     if ( NULL == pwidth ) pwidth  = &loc_width;
     if ( NULL == pheight ) pheight = &loc_height;
 
-    TTF_SizeText( ttf_ptr, text, pwidth, pheight );
+    TTF_SizeText(( TTF_Font * )ttf_ptr, text, pwidth, pheight );
 
     return text;
 }
 
 //--------------------------------------------------------------------------------------------
-const char * fnt_getTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, ... )
+const char * fnt_getTextSize( const TTF_Font * ttf_ptr, int *pwidth, int *pheight, const char *format, ... )
 {
     const char * rv;
     va_list args;
@@ -391,7 +391,7 @@ const char * fnt_getTextSize( TTF_Font * ttf_ptr, int *pwidth, int *pheight, con
  * \var spacing - Amount of space to move down between lines. (usually close to your font size)
  */
 
-int fnt_vconvertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, va_list args )
+int fnt_vconvertTextBox( display_list_t * dlst_ptr, const TTF_Font * ttf_ptr, const float x, const float y, const float spacing, const char *format, va_list args )
 {
     int retval;
     int vsnprintf_rv;
@@ -415,7 +415,7 @@ int fnt_vconvertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, i
 }
 
 //--------------------------------------------------------------------------------------------
-int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *text )
+int fnt_convertTextBox_literal( display_list_t * dlst_ptr, const TTF_Font * ttf_ptr, const float x, const float y, const float spacing, const char *text )
 {
     size_t cnt = 0;
     size_t len;
@@ -423,6 +423,8 @@ int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, i
     display_item_t * loc_display_ptr = NULL;
     size_t texture_lst_size;
     bool_t local_tex_lst;
+
+    float new_y = y;
 
     // free all resources that are about to be replaced
     dlst_ptr = display_list_dealloc( dlst_ptr );
@@ -465,8 +467,8 @@ int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, i
     cnt = 0;
     while ( NULL != line && '\0' != line[0] && cnt < texture_lst_size )
     {
-        fnt_append_append_text_literal( dlst_ptr, ttf_ptr, x, y, line );
-        y += spacing;
+        fnt_append_append_text_literal( dlst_ptr, ttf_ptr, x, new_y, line );
+        new_y += spacing;
 
         line = strtok( NULL, "\n" );
         cnt++;
@@ -476,10 +478,10 @@ int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, i
     while ( NULL != line && '\0' != line[0] )
     {
         loc_display_ptr = fnt_convertText_literal( loc_display_ptr, ttf_ptr, line );
-        //display_item_set_pos( loc_display_ptr, x, y );
+        //display_item_set_pos( loc_display_ptr, x, new_y );
         loc_display_ptr = display_item_free( loc_display_ptr, GL_TRUE );
 
-        y += spacing;
+        new_y += spacing;
         line = strtok( NULL, "\n" );
         cnt++;
     }
@@ -495,7 +497,7 @@ int fnt_convertTextBox_literal( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, i
 }
 
 //--------------------------------------------------------------------------------------------
-int fnt_convertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, int y, int spacing, const char *format, ... )
+int fnt_convertTextBox( display_list_t * dlst_ptr, const TTF_Font * ttf_ptr, const float x, const float y, const float spacing, const char *format, ... )
 {
     va_list args;
     int cnt;
@@ -508,7 +510,7 @@ int fnt_convertTextBox( display_list_t * dlst_ptr, TTF_Font * ttf_ptr, int x, in
 }
 
 //--------------------------------------------------------------------------------------------
-const char * fnt_vgetTextBoxSize( TTF_Font *ttf_ptr, int spacing, int *pwidth, int *pheight, const char *format, va_list args )
+const char * fnt_vgetTextBoxSize( const TTF_Font *ttf_ptr, const float spacing, float *pwidth, float *pheight, const char *format, va_list args )
 {
     int rv;
     static char text[4096] = EMPTY_CSTR;
@@ -517,7 +519,7 @@ const char * fnt_vgetTextBoxSize( TTF_Font *ttf_ptr, int spacing, int *pwidth, i
 
     char *buffer, *line;
     size_t len;
-    int loc_width = 0, loc_height = 0;
+    float loc_width = 0, loc_height = 0;
 
     // clear the string
     text[0] = CSTR_END;
@@ -553,7 +555,7 @@ const char * fnt_vgetTextBoxSize( TTF_Font *ttf_ptr, int spacing, int *pwidth, i
     {
         int tmp_w, tmp_h;
 
-        TTF_SizeText( ttf_ptr, line, &tmp_w, &tmp_h );
+        TTF_SizeText(( TTF_Font * )ttf_ptr, line, &tmp_w, &tmp_h );
 
         *pwidth = ( *pwidth > tmp_w ) ? *pwidth : tmp_w;
         *pheight += spacing;
@@ -569,7 +571,7 @@ const char * fnt_vgetTextBoxSize( TTF_Font *ttf_ptr, int spacing, int *pwidth, i
 }
 
 //--------------------------------------------------------------------------------------------
-const char * fnt_getTextBoxSize( TTF_Font *ttf_ptr, int spacing, int *pwidth, int *pheight, const char *format, ... )
+const char * fnt_getTextBoxSize( const TTF_Font *ttf_ptr, const float spacing, float *pwidth, float *pheight, const char *format, ... )
 {
     const char * rv;
     va_list      args;

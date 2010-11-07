@@ -48,7 +48,7 @@ class LargeIntHasher
     public:
         size_t operator()( _ty * ptr ) const
         {
-            return h(( size_t ) ptr );
+            return h(( const size_t ) ptr );
         };
 
     private:
@@ -112,7 +112,7 @@ struct mnu_module;
 struct ego_tx_request;
 
 // forward declaration of the template
-template< typename _data, size_t _sz > struct t_ego_obj_container;
+template< typename _data, const size_t _sz > struct t_ego_obj_container;
 
 struct ego_obj_chr;
 struct ego_obj_enc;
@@ -149,7 +149,7 @@ struct debug_profiler
 
     double         keep_amt, new_amt;
 
-    debug_profiler( bool_t used, const char * name = "DEFAULT_NAME" )
+    debug_profiler( const bool_t used, const char * name = "DEFAULT_NAME" )
     {
         on    = used;
         state = clk_create( name, -1 );
@@ -311,7 +311,7 @@ protected:
 
 public:
 
-    explicit t_reference( REF_T v = REF_T( -1 ) /*, _ty * p = NULL*/ ) : ref( v ) /* , ptr( p ) */ {};
+    explicit t_reference( const REF_T v = REF_T( -1 ) /*, _ty * p = NULL*/ ) : ref( v ) /* , ptr( p ) */ {};
 
     t_reference<_ty> & operator = ( const REF_T & rhs )
     {
@@ -342,10 +342,10 @@ public:
     friend bool operator < ( const t_reference<_ty> & lhs, const t_reference<_ty> & rhs )  { return lhs.ref <  rhs.ref; }
     friend bool operator > ( const t_reference<_ty> & lhs, const t_reference<_ty> & rhs )  { return lhs.ref >  rhs.ref; }
 
-    t_reference<_ty> & operator ++ ( int ) { ref++; return *this; }
+    t_reference<_ty> & operator ++ ( const int ) { ref++; return *this; }
     t_reference<_ty> & operator ++ ()      { ++ref; return *this; }
 
-    t_reference<_ty> & operator -- ( int ) { if ( 0 == ref ) CPP_EGOBOO_ASSERT( NULL == "t_reference()::operator -- underflow" ); ref--; return *this; }
+    t_reference<_ty> & operator -- ( const int ) { if ( 0 == ref ) CPP_EGOBOO_ASSERT( NULL == "t_reference()::operator -- underflow" ); ref--; return *this; }
     t_reference<_ty> & operator -- ()      { if ( 0 == ref ) CPP_EGOBOO_ASSERT( NULL == "t_reference()::operator -- underflow" ); --ref; return *this; }
 };
 
@@ -353,7 +353,7 @@ public:
 //--------------------------------------------------------------------------------------------
 // a simple array template
 
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 struct t_ary
 {
 private:
@@ -439,7 +439,7 @@ struct t_allocator_dynamic
 
     //---- construction and destruction
 
-    t_allocator_dynamic( size_t creation_size, size_t heap_size ) :
+    t_allocator_dynamic( const size_t creation_size, const size_t heap_size ) :
             creation_limit( creation_size ),
             heap_limit( heap_size )
     {
@@ -470,14 +470,14 @@ struct t_allocator_dynamic
     //---- accessors
 
     /// do not store more than this amount of element on the heap
-    void set_heap_limit( size_t limit )
+    void set_heap_limit( const size_t limit )
     {
         garbage_collect( limit );
         heap_limit = limit;
     }
 
     /// do not create more than this number of elements
-    void set_creation_limit( size_t limit )
+    void set_creation_limit( const size_t limit )
     {
         creation_limit = limit;
     }
@@ -629,7 +629,7 @@ private:
     }
 
     /// get rid of "useless" data
-    void garbage_collect( size_t size )
+    void garbage_collect( const size_t size )
     {
         heap_iterator it;
         _ty * tmp_ptr = NULL;
@@ -662,7 +662,7 @@ private:
 /// an allocator that will simulate buffered creation and deletion using
 /// a statically allocated array
 
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 struct t_allocator_static
 {
 #if defined(USE_HASH) && defined(__GNUC__)
@@ -679,7 +679,7 @@ struct t_allocator_static
 
     //---- construction and destruction
 
-    t_allocator_static( size_t creation_size = _sz ) :
+    t_allocator_static( const size_t creation_size = _sz ) :
             creation_limit( creation_size )
     { init(); }
 
@@ -735,7 +735,7 @@ struct t_allocator_static
     //---- accessors
 
     /// do not create more than this number of elements
-    void set_creation_limit( size_t limit )
+    void set_creation_limit( const size_t limit )
     {
         limit = std::min( _sz, limit );
         creation_limit = limit;
@@ -967,7 +967,7 @@ private:
     }
 
     /// get rid of "useless" data
-    void garbage_collect( size_t size )
+    void garbage_collect( const size_t size )
     {
         heap_iterator it;
         _ty *         tmp_ptr = NULL;
@@ -1070,7 +1070,7 @@ public:
 
     t_map() { _id = ego_uint( ~0L ); }
 
-    ego_uint get_id() { return _id; }
+    ego_uint get_id() const { return _id; }
 
     _ty *    get_ptr( const reference_type & ref );
     bool_t   has_ref( const reference_type & ref );
@@ -1218,7 +1218,7 @@ public:
 
     t_deque() : _id( invalid_id ) {}
 
-    ego_uint get_id() { return _id; }
+    ego_uint get_id() const { return _id; }
 
     cache_iterator find_ref( const reference_type & ref );
     bool_t         has_ref( const reference_type & ref );
@@ -1319,7 +1319,7 @@ private:
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 struct t_list
 {
     ego_uint update_guid;
@@ -1365,15 +1365,15 @@ protected:
     int get_used_list_index( const t_reference<_ty> & ref );
     int get_free_list_index( const t_reference<_ty> & ref );
 
-    bool_t remove_free_index( int index );
-    bool_t remove_used_index( int index );
+    bool_t remove_free_index( const int index );
+    bool_t remove_used_index( const int index );
 };
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // a simple stack template
 
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 struct t_stack
 {
     ego_uint update_guid;
@@ -1425,29 +1425,29 @@ struct t_dary : public std::vector< _ty >
 
     size_t top;
 
-    t_dary( size_t sz = 0 )
+    t_dary( const size_t sz = 0 )
     {
         top = 0;
         if ( 0 != sz ) std::vector< _ty >::resize( sz );
     }
 
-    static bool_t   alloc( t_dary * pary, size_t sz );
+    static bool_t   alloc( t_dary * pary, const size_t sz );
     static bool_t   dealloc( t_dary * pary );
 
     static size_t   get_top( t_dary * pary );
     static size_t   get_size( t_dary * pary );
 
     static _ty *    pop_back( t_dary * pary );
-    static bool_t   push_back( t_dary * pary, _ty val );
+    static bool_t   push_back( t_dary * pary, const _ty val );
     static void     clear( t_dary * pary );
 
-    _ty & operator []( size_t offset )
+    _ty & operator []( const size_t offset )
     {
         CPP_EGOBOO_ASSERT( offset < size() );
         return std::vector<_ty>::operator []( offset );
     }
 
-    _ty * operator + ( size_t offset )
+    _ty * operator + ( const size_t offset )
     {
         if ( offset > size() ) return NULL;
 
@@ -1459,7 +1459,7 @@ struct t_dary : public std::vector< _ty >
 //--------------------------------------------------------------------------------------------
 
 /// a template-like declaration of a statically allocated array
-template < typename _ty, size_t _sz >
+template < typename _ty, const size_t _sz >
 struct t_sary
 {
     int count;

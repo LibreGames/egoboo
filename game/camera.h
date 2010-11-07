@@ -117,13 +117,13 @@ struct ego_camera
 
     static ego_camera * ctor_this( ego_camera * pcam );
 
-    static void         reset( ego_camera * pcam, ego_mpd * pmesh );
-    static void         adjust_angle( ego_camera * pcam, float height );
-    static void         move( ego_camera * pcam, ego_mpd * pmesh );
+    static void         reset( ego_camera * pcam, const ego_mpd * pmesh );
+    static void         adjust_angle( ego_camera * pcam, const float height );
+    static void         move( ego_camera * pcam, const ego_mpd * pmesh );
     static void         make_matrix( ego_camera * pcam );
-    static void         look_at( ego_camera * pcam, float x, float y );
+    static void         look_at( ego_camera * pcam, const float x, const float y );
 
-    static bool_t       reset_target( ego_camera * pcam, ego_mpd * pmesh );
+    static bool_t       reset_target( ego_camera * pcam, const ego_mpd * pmesh );
     static void         rotmesh_init();
 
 private:

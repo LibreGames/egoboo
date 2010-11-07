@@ -79,8 +79,8 @@ void set_prt_texture_params( const TX_REF & itex )
 
     ptex_w[index] = ptex->imgW;
     ptex_h[index] = ptex->imgH;
-    ptex_wscale[index] = ( float )ptex->imgW / ( float )ptex->base.width;
-    ptex_hscale[index] = ( float )ptex->imgH / ( float )ptex->base.height;
+    ptex_wscale[index] = ( const float )ptex->imgW / ( const float )ptex->base.width;
+    ptex_hscale[index] = ( const float )ptex->imgH / ( const float )ptex->base.height;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -95,11 +95,11 @@ struct ego_prt_registry_entity
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 trans, bool_t do_lighting );
-static void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, float size, bool_t do_reflect );
+static void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, const Uint8 trans, const bool_t do_lighting );
+static void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, const float size, const bool_t do_reflect );
 static int  cmp_prt_registry_entity( const void * vlhs, const void * vrhs );
 
-static void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vrt_offset );
+static void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, const int vrt_offset );
 static void prt_draw_attached_point( const ego_bundle_prt & bdl_prt );
 
 static void render_prt_bbox( const ego_bundle_prt & bdl_prt );
@@ -136,7 +136,7 @@ int cmp_prt_registry_entity( const void * vlhs, const void * vrhs )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], size_t reg_count )
+size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], const size_t reg_count )
 {
     fvec3_t vfwd, vcam;
     size_t  numparticle;
@@ -245,7 +245,7 @@ bool_t render_one_prt_solid( const PRT_REF & iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_all_prt_solid( ego_camera * pcam, ego_prt_registry_entity reg[], size_t numparticle )
+void render_all_prt_solid( ego_camera * pcam, ego_prt_registry_entity reg[], const size_t numparticle )
 {
     /// \author BB
     /// \details  do solid sprites first
@@ -364,7 +364,7 @@ bool_t render_one_prt_trans( const PRT_REF & iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_all_prt_trans( ego_camera * pcam, ego_prt_registry_entity reg[], size_t numparticle )
+void render_all_prt_trans( ego_camera * pcam, ego_prt_registry_entity reg[], const size_t numparticle )
 {
     /// \author BB
     /// \details  do all kinds of transparent sprites next
@@ -401,7 +401,7 @@ void render_all_particles( ego_camera * pcam )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[], size_t reg_count )
+size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[], const size_t reg_count )
 {
     fvec3_t vfwd, vcam;
     size_t  numparticle;
@@ -550,7 +550,7 @@ bool_t render_one_prt_ref( const PRT_REF & iprt )
 }
 
 //--------------------------------------------------------------------------------------------
-void render_all_prt_ref( ego_camera * pcam, ego_prt_registry_entity reg[], size_t numparticle )
+void render_all_prt_ref( ego_camera * pcam, ego_prt_registry_entity reg[], const size_t numparticle )
 {
     size_t cnt;
     PRT_REF prt;
@@ -584,7 +584,7 @@ void render_prt_ref( ego_camera * pcam )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, float size, bool_t do_reflect )
+void calc_billboard_verts( ego_GLvertex vlst[], ego_prt_instance * pinst, const float size, const bool_t do_reflect )
 {
     // Calculate the position of the four corners of the billboard
     // used to display the particle.
@@ -680,7 +680,7 @@ void render_all_prt_bbox()
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, int vrt_offset )
+void draw_one_attachment_point( gfx_mad_instance * pinst, ego_mad * pmad, const int vrt_offset )
 {
     /// \author BB
     /// \details  a function that will draw some of the vertices of the given character.
@@ -1122,7 +1122,7 @@ fmat_4x4_t prt_instance_make_matrix( ego_prt_instance * pinst )
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_instance_update_lighting( ego_prt_instance * pinst, ego_prt * pprt, Uint8 trans, bool_t do_lighting )
+void prt_instance_update_lighting( ego_prt_instance * pinst, ego_prt * pprt, const Uint8 trans, const bool_t do_lighting )
 {
     Uint32 alpha;
     Sint16  self_light;
@@ -1172,7 +1172,7 @@ void prt_instance_update_lighting( ego_prt_instance * pinst, ego_prt * pprt, Uin
 }
 
 //--------------------------------------------------------------------------------------------
-void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, Uint8 trans, bool_t do_lighting )
+void prt_instance_update( ego_camera * pcam, const PRT_REF & particle, const Uint8 trans, const bool_t do_lighting )
 {
     ego_prt * pprt;
     ego_prt_instance * pinst;

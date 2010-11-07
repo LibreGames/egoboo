@@ -102,7 +102,7 @@ private:
 // Which tiles are to be drawn, arranged by MPDFX_* bits
 struct ego_renderlist
 {
-    ego_mpd   * pmesh;
+    ego_mpd * pmesh;
 
     int     all_count;                               ///< Number to render, total
     int     ref_count;                               ///< ..., is reflected in the floor
@@ -198,7 +198,7 @@ enum e_bb_opt
     bb_opt_randomize_vel = ( 1 << 1 ),      // Randomize the velocity of the bb. Enough to move it by 2 tiles within its lifetime.
     bb_opt_fade          = ( 1 << 2 ),      // Make the billboard fade out
     bb_opt_burn          = ( 1 << 3 ),      // Make the tint fully saturate over time.
-    bb_opt_all           = ego_uint( ~0 )   // Enum doesn't support unsigned integers, size_t is also unsigned.
+    bb_opt_all           = ego_uint( ~0 )   // Enum doesn't support unsigned integers, const size_t is also unsigned.
 };
 
 /// Description of a generic bilboarded object.
@@ -240,9 +240,9 @@ extern t_list< ego_billboard_data, BILLBOARD_COUNT  > BillboardList;
 void               BillboardList_init_all();
 void               BillboardList_update_all();
 void               BillboardList_free_all();
-size_t             BillboardList_get_free( Uint32 lifetime_secs );
-bool_t             BillboardList_free_one( size_t ibb );
-ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF &  ibb );
+size_t             BillboardList_get_free( const Uint32 lifetime_secs );
+bool_t             BillboardList_free_one( const size_t ibb );
+ego_billboard_data * BillboardList_get_ptr( const BBOARD_REF & ibb );
 
 #define VALID_BILLBOARD_RANGE( IBB ) ( ( (IBB) >= 0 ) && ( (IBB) < BILLBOARD_COUNT ) )
 #define VALID_BILLBOARD( IBB )       ( VALID_BILLBOARD_RANGE( IBB ) && BillboardList.lst[IBB].valid )
@@ -297,7 +297,7 @@ void   gfx_system_end();
 
 int    ogl_init();
 void   gfx_main();
-void   gfx_begin_3d( ego_camera * pcam );
+void   gfx_begin_3d( const ego_camera * pcam );
 void   gfx_end_3d();
 void   gfx_reload_all_textures();
 
@@ -307,30 +307,30 @@ bool_t flip_pages_requested();
 void   request_flip_pages();
 void   do_flip_pages();
 
-void   dolist_sort( ego_camera * pcam, bool_t do_reflect );
-void   dolist_make( ego_mpd   * pmesh );
-bool_t dolist_add_chr( ego_mpd   * pmesh, const CHR_REF & ichr );
-bool_t dolist_add_prt( ego_mpd   * pmesh, const PRT_REF & iprt );
+void   dolist_sort( const ego_camera * pcam, const bool_t do_reflect );
+void   dolist_make( const ego_mpd * pmesh );
+bool_t dolist_add_chr( const ego_mpd * pmesh, const CHR_REF & ichr );
+bool_t dolist_add_prt( const ego_mpd * pmesh, const PRT_REF & iprt );
 
-void draw_one_icon( const TX_REF & icontype, float x, float y, Uint8 sparkle );
-void draw_one_font( int fonttype, float x, float y );
-void draw_map_texture( float x, float y );
-int  draw_one_bar( Uint8 bartype, float x, float y, int ticks, int maxticks );
-int  draw_string( float x, float y, const char *format, ... );
-int  draw_wrap_string( const char *szText, float x, float y, int maxx );
-int  draw_status( const CHR_REF & character, float x, float y );
-void draw_text();
-void draw_one_character_icon( const CHR_REF & item, float x, float y, bool_t draw_ammo );
-void draw_blip( float sizeFactor, Uint8 color, float x, float y, bool_t mini_map );
-void draw_all_lines( ego_camera * pcam );
+void  draw_one_icon( const TX_REF & icontype, const float x, const float y, const Uint8 sparkle );
+void  draw_one_font( const int fonttype, const float x, const float y );
+void  draw_map_texture( const float x, const float y );
+float draw_one_bar( const Uint8 bartype, const float x, const float y, const int ticks, const int maxticks );
+float draw_string( const float x, const float y, const char *format, ... );
+float draw_wrap_string( const char *szText, const float x, const float y, const int maxx );
+float draw_status( const CHR_REF & character, const float x, const float y );
+void  draw_text();
+void  draw_one_character_icon( const CHR_REF & item, const float x, const float y, const bool_t draw_ammo );
+void  draw_blip( const float sizeFactor, const Uint8 color, const float x, const float y, const bool_t mini_map );
+void  draw_all_lines( ego_camera * pcam );
 
-void   render_world( ego_camera * pcam );
+void   render_world( const ego_camera * pcam );
 void   render_shadow( const CHR_REF & character );
 void   render_bad_shadow( const CHR_REF & character );
-void   render_scene( ego_mpd   * pmesh, ego_camera * pcam );
-bool_t render_oct_bb( ego_oct_bb   * bb, bool_t draw_square, bool_t draw_diamond );
-bool_t render_aabb( ego_aabb * pbbox );
-void   render_all_billboards( ego_camera * pcam );
+void   render_scene( const ego_mpd * pmesh, const ego_camera * pcam );
+bool_t render_oct_bb( const ego_oct_bb * bb, const bool_t draw_square, const bool_t draw_diamond );
+bool_t render_aabb( const ego_aabb * pbbox );
+void   render_all_billboards( const ego_camera * pcam );
 
 void   make_enviro();
 void   clear_messages();
@@ -342,10 +342,10 @@ int  DisplayMsg_get_free();
 int debug_printf( const char *format, ... );
 
 void renderlist_reset();
-void renderlist_make( ego_mpd   * pmesh, ego_camera * pcam );
+void renderlist_make( ego_mpd * pmesh, ego_camera * pcam );
 
-bool_t grid_lighting_interpolate( ego_mpd   * pmesh, ego_lighting_cache * dst, float fx, float fy );
-float  grid_lighting_test( ego_mpd   * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff );
+bool_t grid_lighting_interpolate( ego_mpd * pmesh, ego_lighting_cache * dst, const float fx, const float fy );
+float  grid_lighting_test( const ego_mpd * pmesh, GLXvector3f pos, float * low_diff, float * hgh_diff );
 
 int  get_free_line();
 

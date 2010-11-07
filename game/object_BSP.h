@@ -47,13 +47,13 @@ struct ego_obj_BSP
     static bool_t ctor_this( ego_obj_BSP * pbsp, mpd_BSP * pmesh_bsp );
     static bool_t dtor_this( ego_obj_BSP * pbsp );
 
-    static bool_t alloc( ego_obj_BSP * pbsp, int depth );
+    static bool_t alloc( ego_obj_BSP * pbsp, const int depth );
     static bool_t dealloc( ego_obj_BSP * pbsp );
 
     static bool_t fill( ego_obj_BSP * pbsp );
     static bool_t empty( ego_obj_BSP * pbsp );
 
-    //bool_t insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pnode, int depth, int address_x[], int address_y[], int address_z[] );
+    //bool_t insert_leaf( ego_obj_BSP * pbsp, ego_BSP_leaf * pnode, const int depth, const int address_x[], const int address_y[], const int address_z[] );
     static bool_t insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr );
     static bool_t insert_prt( ego_obj_BSP * pbsp, const ego_bundle_prt & bdl_prt );
 

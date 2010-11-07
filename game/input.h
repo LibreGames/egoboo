@@ -117,9 +117,9 @@ enum e_input_bits
 void   input_init();
 void   input_read();
 
-Uint32 input_get_buttonmask( Uint32 idevice );
+Uint32 input_get_buttonmask( const Uint32 idevice );
 
-bool_t control_is_pressed( Uint32 idevice, Uint8 icontrol );
+bool_t control_is_pressed( const Uint32 idevice, const Uint8 icontrol );
 
 void   cursor_reset();
 void   cursor_finish_wheel_event();

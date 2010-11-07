@@ -204,7 +204,7 @@ void template_put_char( vfs_FILE* filetemp, vfs_FILE* filewrite, char cval )
 }
 
 //--------------------------------------------------------------------------------------------
-void template_put_int( vfs_FILE* filetemp, vfs_FILE* filewrite, int ival )
+void template_put_int( vfs_FILE* filetemp, vfs_FILE* filewrite, const int ival )
 {
     if ( template_copy_to_marker( filetemp, filewrite, "#%" ) )
     {
@@ -213,7 +213,7 @@ void template_put_int( vfs_FILE* filetemp, vfs_FILE* filewrite, int ival )
 }
 
 //--------------------------------------------------------------------------------------------
-void template_put_float( vfs_FILE* filetemp, vfs_FILE* filewrite, float fval )
+void template_put_float( vfs_FILE* filetemp, vfs_FILE* filewrite, const float fval )
 {
     if ( template_copy_to_marker( filetemp, filewrite, "#%" ) )
     {
@@ -222,7 +222,7 @@ void template_put_float( vfs_FILE* filetemp, vfs_FILE* filewrite, float fval )
 }
 
 //--------------------------------------------------------------------------------------------
-void template_put_bool( vfs_FILE* filetemp, vfs_FILE* filewrite, bool_t truth )
+void template_put_bool( vfs_FILE* filetemp, vfs_FILE* filewrite, const bool_t truth )
 {
     if ( template_copy_to_marker( filetemp, filewrite, "#%" ) )
     {
@@ -231,7 +231,7 @@ void template_put_bool( vfs_FILE* filetemp, vfs_FILE* filewrite, bool_t truth )
 }
 
 //--------------------------------------------------------------------------------------------
-void template_put_damage_type( vfs_FILE* filetemp, vfs_FILE* filewrite, Uint8 damagetype )
+void template_put_damage_type( vfs_FILE* filetemp, vfs_FILE* filewrite, const Uint8 damagetype )
 {
     if ( template_copy_to_marker( filetemp, filewrite, "#%" ) )
     {
@@ -253,7 +253,7 @@ void template_put_damage_type( vfs_FILE* filetemp, vfs_FILE* filewrite, Uint8 da
 }
 
 //--------------------------------------------------------------------------------------------
-void template_put_action( vfs_FILE* filetemp, vfs_FILE* filewrite, Uint8 action )
+void template_put_action( vfs_FILE* filetemp, vfs_FILE* filewrite, const Uint8 action )
 {
     if ( template_copy_to_marker( filetemp, filewrite, "#%" ) )
     {
@@ -279,7 +279,7 @@ void template_put_action( vfs_FILE* filetemp, vfs_FILE* filewrite, Uint8 action 
 }
 
 //--------------------------------------------------------------------------------------------
-void template_put_gender( vfs_FILE* filetemp, vfs_FILE* filewrite, Uint8 gender )
+void template_put_gender( vfs_FILE* filetemp, vfs_FILE* filewrite, const Uint8 gender )
 {
     if ( template_copy_to_marker( filetemp, filewrite, "#%" ) )
     {
@@ -337,7 +337,7 @@ void template_put_idsz( vfs_FILE* filetemp, vfs_FILE* filewrite, IDSZ idsz )
 }
 
 //--------------------------------------------------------------------------------------------
-void template_put_damage_modifier( vfs_FILE* filetemp, vfs_FILE* filewrite, Uint8 mod )
+void template_put_damage_modifier( vfs_FILE* filetemp, vfs_FILE* filewrite, const Uint8 mod )
 {
     // this eats two '#'s in the template file
 

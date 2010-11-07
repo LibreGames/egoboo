@@ -42,7 +42,7 @@ float ego_MD2_Model::kNormals[EGO_NORMAL_COUNT][3] =
 //--------------------------------------------------------------------------------------------
 ego_MD2_Frame::ego_MD2_Frame()              { ego_MD2_Frame::clear( this ); }
 //--------------------------------------------------------------------------------------------
-ego_MD2_Frame::ego_MD2_Frame( size_t size ) { ego_MD2_Frame::ctor_this( this, size ); }
+ego_MD2_Frame::ego_MD2_Frame( const size_t size ) { ego_MD2_Frame::ctor_this( this, size ); }
 //--------------------------------------------------------------------------------------------
 ego_MD2_Frame::~ego_MD2_Frame()             { ego_MD2_Frame::dtor_this( this ); }
 
@@ -57,7 +57,7 @@ ego_MD2_Frame * ego_MD2_Frame::clear( ego_MD2_Frame * pframe )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_Frame * ego_MD2_Frame::ctor_this( ego_MD2_Frame * pframe, size_t size )
+ego_MD2_Frame * ego_MD2_Frame::ctor_this( ego_MD2_Frame * pframe, const size_t size )
 {
     if ( NULL == pframe ) return pframe;
 
@@ -141,7 +141,7 @@ ego_MD2_GLCommand * ego_MD2_GLCommand::create()
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand * ego_MD2_GLCommand::new_vector( int n )
+ego_MD2_GLCommand * ego_MD2_GLCommand::new_vector( const int n )
 {
     int i;
     ego_MD2_GLCommand * v = EGOBOO_NEW_ARY( ego_MD2_GLCommand, n );
@@ -160,7 +160,7 @@ void ego_MD2_GLCommand::destroy( ego_MD2_GLCommand ** m )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_GLCommand * ego_MD2_GLCommand::delete_list( ego_MD2_GLCommand * command_ptr, int command_count )
+ego_MD2_GLCommand * ego_MD2_GLCommand::delete_list( ego_MD2_GLCommand * command_ptr, const int command_count )
 {
     int cnt;
 
@@ -249,7 +249,7 @@ ego_MD2_Model * ego_MD2_Model::create()
 }
 
 //--------------------------------------------------------------------------------------------
-ego_MD2_Model * ego_MD2_Model::new_vector( int n )
+ego_MD2_Model * ego_MD2_Model::new_vector( const int n )
 {
     int i;
     ego_MD2_Model * v = EGOBOO_NEW_ARY( ego_MD2_Model, n );
@@ -268,7 +268,7 @@ void ego_MD2_Model::destroy( ego_MD2_Model ** m )
 }
 
 //--------------------------------------------------------------------------------------------
-void ego_MD2_Model::delete_vector( ego_MD2_Model * v, int n )
+void ego_MD2_Model::delete_vector( ego_MD2_Model * v, const int n )
 {
     int i;
     if ( NULL == v || 0 == n ) return;
@@ -278,7 +278,7 @@ void ego_MD2_Model::delete_vector( ego_MD2_Model * v, int n )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void ego_MD2_Model::scale( ego_MD2_Model * pmd2, float scale_x, float scale_y, float scale_z )
+void ego_MD2_Model::scale( ego_MD2_Model * pmd2, const float scale_x, const float scale_y, const float scale_z )
 {
     /// \author BB
     /// \details  scale every vertex in the md2 by the given amount
@@ -418,8 +418,8 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
         tc.s = ENDIAN_INT16( tc.s );
         tc.t = ENDIAN_INT16( tc.t );
 
-        model->m_texCoords[i].tex.s = tc.s / ( float )md2_header.skinwidth;
-        model->m_texCoords[i].tex.t = tc.t / ( float )md2_header.skinheight;
+        model->m_texCoords[i].tex.s = tc.s / ( const float )md2_header.skinwidth;
+        model->m_texCoords[i].tex.t = tc.t / ( const float )md2_header.skinheight;
     }
 
     // Load triangles from the file.  I use the same memory layout as the file
@@ -532,8 +532,8 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
         {
             Sint32 commands;
 
-            fread( &commands, sizeof( Sint32 ), 1, f );
-            cmd_size += sizeof( Sint32 ) / sizeof( Uint32 );
+            fread( &commands, sizeof( const Sint32 ), 1, f );
+            cmd_size += sizeof( const Sint32 ) / sizeof( const Uint32 );
 
             // auto-convert the byte ordering
             commands = ENDIAN_INT32( commands );
@@ -559,7 +559,7 @@ ego_MD2_Model* ego_MD2_Model::load( const char * szFilename, ego_MD2_Model* mdl 
 
             // read in the data
             fread( cmd->data, sizeof( id_glcmd_packed_t ), cmd->command_count, f );
-            cmd_size += ( sizeof( id_glcmd_packed_t ) * cmd->command_count ) / sizeof( Uint32 );
+            cmd_size += ( sizeof( id_glcmd_packed_t ) * cmd->command_count ) / sizeof( const Uint32 );
 
             // translate the data, if necessary
 #if SDL_BYTEORDER != SDL_LIL_ENDIAN

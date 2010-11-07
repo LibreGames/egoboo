@@ -77,15 +77,15 @@ extern "C"
     };
     typedef struct s_oglx_texture oglx_texture_t;
 
-    GLuint  oglx_texture_Convert( oglx_texture_t *texture, SDL_Surface * pimage, Uint32 key );
-    GLuint  oglx_texture_Load( oglx_texture_t *texture, const char *filename, Uint32 key );
-    GLuint  oglx_texture_GetTextureID( oglx_texture_t *texture );
-    GLsizei oglx_texture_GetImageHeight( oglx_texture_t *texture );
-    GLsizei oglx_texture_GetImageWidth( oglx_texture_t *texture );
-    GLfloat oglx_texture_GetTextureWidth( oglx_texture_t *texture );
-    GLfloat oglx_texture_GetTextureHeight( oglx_texture_t *texture );
-    void    oglx_texture_SetAlpha( oglx_texture_t *texture, GLfloat alpha );
-    GLfloat oglx_texture_GetAlpha( oglx_texture_t *texture );
+    GLuint  oglx_texture_Convert( oglx_texture_t *texture, SDL_Surface * pimage, const Uint32 key );
+    GLuint  oglx_texture_Load( oglx_texture_t *texture, const char *filename, const Uint32 key );
+    GLuint  oglx_texture_GetTextureID( const oglx_texture_t *texture );
+    GLsizei oglx_texture_GetImageHeight( const oglx_texture_t *texture );
+    GLsizei oglx_texture_GetImageWidth( const oglx_texture_t *texture );
+    GLfloat oglx_texture_GetTextureWidth( const oglx_texture_t *texture );
+    GLfloat oglx_texture_GetTextureHeight( const oglx_texture_t *texture );
+    void    oglx_texture_SetAlpha( oglx_texture_t *texture, const GLfloat alpha );
+    GLfloat oglx_texture_GetAlpha( const oglx_texture_t *texture );
     void    oglx_texture_Release( oglx_texture_t *texture );
 
     void    oglx_texture_Bind( oglx_texture_t * texture );
@@ -108,13 +108,13 @@ extern "C"
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
-    void      oglx_grab_texture_state( GLenum target, GLint level, oglx_texture_t * texture );
+    void      oglx_grab_texture_state( const GLenum target, const GLint level, oglx_texture_t * texture );
     GLboolean oglx_texture_valid( oglx_texture_t *ptex );
 
-    GLuint    oglx_bind_default( GLuint binding, GLenum target, GLint wrap_s, GLint wrap_t );
+    GLuint    oglx_bind_default( const GLuint binding, const GLenum target, const GLint wrap_s, const GLint wrap_t );
     void      oglx_default_filtering( GLenum target );
 
-    void      ErrorImage_bind( GLenum target, GLuint id );
+    void      ErrorImage_bind( const GLenum target, const GLuint id );
     GLuint    ErrorImage_get_binding();
 
 #if defined(__cplusplus)

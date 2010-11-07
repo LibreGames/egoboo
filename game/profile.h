@@ -136,7 +136,7 @@ struct ego_pro
 
 extern t_list< ego_pro, MAX_PROFILE  > ProList;
 
-int          pro_get_slot_vfs( const char * tmploadname, int slot_override );
+int          pro_get_slot_vfs( const char * tmploadname, const int slot_override );
 const char * pro_create_chop( const PRO_REF & profile_ref );
 bool_t       pro_load_chop_vfs( const PRO_REF & profile_ref, const char *szLoadname );
 
@@ -177,7 +177,7 @@ void   release_all_local_pips();
 bool_t release_one_pro( const PRO_REF & object_ref );
 bool_t release_one_local_pips( const PRO_REF & object_ref );
 
-int load_one_profile_vfs( const char* tmploadname, int slot_override );
+int load_one_profile_vfs( const char* tmploadname, const int slot_override );
 
 void reset_messages();
 

@@ -38,7 +38,7 @@ device_controls_t controls[INPUT_DEVICE_END + MAXJOYSTICK];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-static void export_control( vfs_FILE * filewrite, const char * text, Sint32 device, control_t * pcontrol )
+static void export_control( vfs_FILE * filewrite, const char * text, const Sint32 device, control_t * pcontrol )
 {
     STRING buffer;
 

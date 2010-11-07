@@ -31,7 +31,7 @@
 //--------------------------------------------------------------------------------------------
 
 static Uint32      cv_list_count = 0;
-static ego_OVolume cv_list[1000];
+static OctVolume cv_list[1000];
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ const ego_aabb_lst   * ego_aabb_lst::renew( ego_aabb_lst   * lst )
 }
 
 //--------------------------------------------------------------------------------------------
-const ego_aabb_lst   * ego_aabb_lst::alloc( ego_aabb_lst   * lst, int count )
+const ego_aabb_lst   * ego_aabb_lst::alloc( ego_aabb_lst * lst, const int count )
 {
     if ( NULL == lst ) return NULL;
 
@@ -130,7 +130,7 @@ ego_aabb_ary * ego_aabb_ary::renew( ego_aabb_ary * ary )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_aabb_ary * ego_aabb_ary::alloc( ego_aabb_ary * ary, int count )
+ego_aabb_ary * ego_aabb_ary::alloc( ego_aabb_ary * ary, const int count )
 {
     if ( NULL == ary ) return NULL;
 
@@ -138,7 +138,7 @@ ego_aabb_ary * ego_aabb_ary::alloc( ego_aabb_ary * ary, int count )
 
     if ( count > 0 )
     {
-        ary->list = EGOBOO_NEW_ARY( ego_aabb_lst  , count );
+        ary->list = EGOBOO_NEW_ARY( ego_aabb_lst, count );
         if ( NULL != ary->list )
         {
             ary->count = count;
@@ -150,9 +150,9 @@ ego_aabb_ary * ego_aabb_ary::alloc( ego_aabb_ary * ary, int count )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_OVolume ego_OVolume::do_merge( ego_OVolume * pv1, ego_OVolume * pv2 )
+OctVolume OctVolume::do_merge( const OctVolume * pv1, const OctVolume * pv2 )
 {
-    ego_OVolume rv;
+    OctVolume rv;
 
     if ( NULL == pv1 && NULL == pv2 )
     {
@@ -212,9 +212,9 @@ ego_OVolume ego_OVolume::do_merge( ego_OVolume * pv1, ego_OVolume * pv2 )
 }
 
 //--------------------------------------------------------------------------------------------
-ego_OVolume ego_OVolume::do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 )
+OctVolume OctVolume::do_intersect( const OctVolume * pv1, const OctVolume * pv2 )
 {
-    ego_OVolume rv;
+    OctVolume rv;
 
     if ( NULL == pv1 || NULL == pv2 )
     {
@@ -304,7 +304,7 @@ ego_OVolume ego_OVolume::do_intersect( ego_OVolume * pv1, ego_OVolume * pv2 )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolume )
+bool_t OctVolume::refine( OctVolume * pov, fvec3_t * pcenter, float * pvolume )
 {
     /// \author BB
     /// \details  determine which of the 16 possible intersection points are within both
@@ -430,9 +430,9 @@ bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolum
     if ( count < 3 ) return bfalse;
 
     // find the centroid
-    center.x *= 1.0f / ( float )count;
-    center.y *= 1.0f / ( float )count;
-    center.z *= 1.0f / ( float )count;
+    center.x *= 1.0f / ( const float )count;
+    center.y *= 1.0f / ( const float )count;
+    center.z *= 1.0f / ( const float )count;
 
     // move the valid points to the beginning of the list
     for ( cnt = 0, tnc = 0; cnt < 16 && tnc < count; cnt++ )
@@ -548,16 +548,16 @@ bool_t ego_OVolume::refine( ego_OVolume * pov, fvec3_t * pcenter, float * pvolum
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-bool_t ego_CVolume::ctor_this( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume * pvb )
+bool_t CoVolume::ctor_this( CoVolume * pcv, const OctVolume * pva, const OctVolume * pvb )
 {
     bool_t retval;
-    ego_CVolume cv;
+    CoVolume cv;
 
     if ( pva->lod < 0 || pvb->lod < 0 ) return bfalse;
 
     //---- do the preliminary collision test ----
 
-    cv.ov = ego_OVolume::do_intersect( pva, pvb );
+    cv.ov = OctVolume::do_intersect( pva, pvb );
     if ( cv.ov.lod < 0 )
     {
         return bfalse;
@@ -566,7 +566,7 @@ bool_t ego_CVolume::ctor_this( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume
     //---- refine the collision volume ----
 
     cv.ov.lod = SDL_min( pva->lod, pvb->lod );
-    retval = ego_CVolume::refine( &cv );
+    retval = CoVolume::refine( &cv );
 
     if ( NULL != pcv )
     {
@@ -577,7 +577,7 @@ bool_t ego_CVolume::ctor_this( ego_CVolume * pcv, ego_OVolume * pva, ego_OVolume
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t ego_CVolume::refine( ego_CVolume * pcv )
+bool_t CoVolume::refine( CoVolume * pcv )
 {
     /// \author BB
     /// \details  determine which of the 16 possible intersection points are within both
@@ -592,7 +592,7 @@ bool_t ego_CVolume::refine( ego_CVolume * pcv )
         return bfalse;
     }
 
-    return ego_OVolume::refine( &( pcv->ov ), &( pcv->center ), &( pcv->volume ) );
+    return OctVolume::refine( &( pcv->ov ), &( pcv->center ), &( pcv->volume ) );
 }
 
 //--------------------------------------------------------------------------------------------
@@ -612,7 +612,7 @@ static int cv_point_data_cmp( const void * pleft, const void * pright )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-int oct_bb_to_points( ego_oct_bb   * pbmp, fvec4_t   pos[], size_t pos_count )
+int oct_bb_to_points( const ego_oct_bb * pbmp, fvec4_t   pos[], const size_t pos_count )
 {
     /// \author BB
     /// \details  convert the corners of the level 1 bounding box to a point cloud
@@ -874,7 +874,7 @@ int oct_bb_to_points( ego_oct_bb   * pbmp, fvec4_t   pos[], size_t pos_count )
 }
 
 //--------------------------------------------------------------------------------------------
-void points_to_oct_bb( ego_oct_bb   * pbmp, fvec4_t pos[], size_t pos_count )
+void points_to_oct_bb( ego_oct_bb * pbmp, const fvec4_t pos[], const size_t pos_count )
 {
     /// \author BB
     /// \details  convert the new point cloud into a level 1 bounding box using a fvec4_t
@@ -932,7 +932,7 @@ ego_oct_vec * ego_oct_vec::ctor_this( ego_oct_vec * ovec , fvec3_t pos )
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t bumper_to_oct_bb_0( ego_bumper src, ego_oct_bb   * pdst )
+bool_t bumper_to_oct_bb_0( const ego_bumper & src, ego_oct_bb * pdst )
 {
     if ( NULL == pdst ) return bfalse;
 

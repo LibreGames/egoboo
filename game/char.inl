@@ -180,7 +180,7 @@ INLINE EVE_REF ego_chr::get_ieve( const CHR_REF & ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE PIP_REF ego_chr::get_ipip( const CHR_REF & ichr, int ipip )
+INLINE PIP_REF ego_chr::get_ipip( const CHR_REF & ichr, const int ipip )
 {
     ego_chr * pchr;
 
@@ -256,7 +256,7 @@ INLINE ego_eve * ego_chr::get_peve( const CHR_REF & ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE ego_pip * ego_chr::get_ppip( const CHR_REF & ichr, int ipip )
+INLINE ego_pip * ego_chr::get_ppip( const CHR_REF & ichr, const int ipip )
 {
     ego_chr * pchr;
 
@@ -267,7 +267,7 @@ INLINE ego_pip * ego_chr::get_ppip( const CHR_REF & ichr, int ipip )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Mix_Chunk * ego_chr::get_chunk( const CHR_REF & ichr, int index )
+INLINE Mix_Chunk * ego_chr::get_chunk( const CHR_REF & ichr, const int index )
 {
     ego_chr * pchr;
 
@@ -278,7 +278,7 @@ INLINE Mix_Chunk * ego_chr::get_chunk( const CHR_REF & ichr, int index )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE Mix_Chunk * ego_chr::get_chunk_ptr( ego_chr * pchr, int index )
+INLINE Mix_Chunk * ego_chr::get_chunk_ptr( ego_chr * pchr, const int index )
 {
     if ( !DEFINED_PCHR( pchr ) ) return NULL;
 
@@ -334,7 +334,7 @@ INLINE gfx_mad_instance * ego_chr::get_pinstance( const CHR_REF & ichr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE IDSZ ego_chr::get_idsz( const CHR_REF & ichr, int type )
+INLINE IDSZ ego_chr::get_idsz( const CHR_REF & ichr, const int type )
 {
     ego_cap * pcap;
 
@@ -450,7 +450,7 @@ INLINE bool_t ego_chr::get_MatRight( ego_chr *pchr, fvec3_t   *pvec )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE bool_t ego_chr::get_MatForward( ego_chr *pchr, fvec3_t   *pvec )
+INLINE bool_t ego_chr::get_MatForward( ego_chr *pchr, fvec3_t *pvec )
 {
     /// \author BB
     /// \details  MAKE SURE the value it calculated relative to a valid matrix
@@ -532,7 +532,7 @@ INLINE void ego_chr_data::update_size( ego_chr_data * pchr )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void ego_chr_data::init_size( ego_chr_data * pchr, ego_cap * pcap )
+INLINE void ego_chr_data::init_size( ego_chr_data * pchr, const ego_cap * pcap )
 {
     /// \author BB
     /// \details  initialize the character size info
@@ -556,7 +556,7 @@ INLINE void ego_chr_data::init_size( ego_chr_data * pchr, ego_cap * pcap )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void ego_chr::init_size( ego_chr * pchr, ego_cap * pcap )
+INLINE void ego_chr::init_size( ego_chr * pchr, const ego_cap * pcap )
 {
     /// \author BB
     /// \details  initialize the character size info
@@ -580,7 +580,7 @@ INLINE void ego_chr::init_size( ego_chr * pchr, ego_cap * pcap )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void ego_chr::set_size( ego_chr * pchr, float size )
+INLINE void ego_chr::set_size( ego_chr * pchr, const float size )
 {
     /// \author BB
     /// \details  scale the entire character so that the size matches the given value
@@ -600,7 +600,7 @@ INLINE void ego_chr::set_size( ego_chr * pchr, float size )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void ego_chr::set_width( ego_chr * pchr, float width )
+INLINE void ego_chr::set_width( ego_chr * pchr, const float width )
 {
     /// \author BB
     /// \details  update the base character "width". This also modifies the shadow size
@@ -619,7 +619,7 @@ INLINE void ego_chr::set_width( ego_chr * pchr, float width )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void ego_chr::set_shadow( ego_chr * pchr, float width )
+INLINE void ego_chr::set_shadow( ego_chr * pchr, const float width )
 {
     /// \author BB
     /// \details  update the base shadow size
@@ -632,7 +632,7 @@ INLINE void ego_chr::set_shadow( ego_chr * pchr, float width )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void ego_chr::set_fat( ego_chr * pchr, float fat )
+INLINE void ego_chr::set_fat( ego_chr * pchr, const float fat )
 {
     /// \author BB
     /// \details  update all the character size info by specifying the fat value
@@ -645,16 +645,17 @@ INLINE void ego_chr::set_fat( ego_chr * pchr, float fat )
 }
 
 //--------------------------------------------------------------------------------------------
-INLINE void ego_chr::set_height( ego_chr * pchr, float height )
+INLINE void ego_chr::set_height( ego_chr * pchr, const float height )
 {
     /// \author BB
     /// \details  update the base character height
 
     if ( !DEFINED_PCHR( pchr ) ) return;
 
-    if ( height < 0 ) height = 0;
+    float loc_height = height;
+    if ( loc_height < 0 ) loc_height = 0;
 
-    pchr->bump_save.height = height;
+    pchr->bump_save.height = loc_height;
 
     ego_chr::update_size( pchr );
 }

@@ -122,11 +122,11 @@ extern const float ice_friction;            ///< estimte if the friction on ice
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 bool_t phys_expand_oct_bb( const ego_oct_bb & src, const fvec3_t vel, const float tmin, const float tmax, ego_oct_bb & dst );
-bool_t phys_expand_chr_bb( ego_chr * pchr, const float tmin, float tmax, ego_oct_bb & dst );
-bool_t phys_expand_prt_bb( ego_prt * pprt, const float tmin, float tmax, ego_oct_bb & dst );
+bool_t phys_expand_chr_bb( ego_chr * pchr, const float tmin, const float tmax, ego_oct_bb & dst );
+bool_t phys_expand_prt_bb( ego_prt * pprt, const float tmin, const float tmax, ego_oct_bb & dst );
 
-bool_t phys_estimate_chr_chr_normal( ego_oct_vec & opos_a, ego_oct_vec & opos_b, ego_oct_vec & odepth, float exponent, fvec3_base_t nrm );
-bool_t phys_intersect_oct_bb( ego_oct_bb & src1, fvec3_t pos1, fvec3_t vel1, ego_oct_bb & src2, fvec3_t pos2, fvec3_t vel2, int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax );
+bool_t phys_estimate_chr_chr_normal( const ego_oct_vec & opos_a, const ego_oct_vec & opos_b, ego_oct_vec & odepth, const float exponent, fvec3_base_t nrm );
+bool_t phys_intersect_oct_bb( const ego_oct_bb & src1, const fvec3_t pos1, const fvec3_t vel1, const ego_oct_bb & src2, const fvec3_t pos2, const fvec3_t vel2, const int test_platform, ego_oct_bb   * pdst, float *tmin, float *tmax );
 
-bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, ego_phys_data * pdata, float dt );
-bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, float para_factor, float perp_factor, fvec3_t * pnrm_acc );
+bool_t phys_data_integrate_accumulators( fvec3_t * ppos, fvec3_t * pvel, ego_phys_data * pdata, const float dt );
+bool_t phys_data_apply_normal_acceleration( ego_phys_data * pphys, fvec3_t nrm, const float para_factor, const float perp_factor, fvec3_t * pnrm_acc );

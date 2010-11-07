@@ -37,7 +37,7 @@ void make_turntosin( void )
     /// \author ZZ
     /// \details  This function makes the lookup table for chrturn...
     int cnt;
-    float ftmp = TWO_PI / ( float )TRIG_TABLE_SIZE;
+    float ftmp = TWO_PI / ( const float )TRIG_TABLE_SIZE;
 
     for ( cnt = 0; cnt < TRIG_TABLE_SIZE; cnt++ )
     {

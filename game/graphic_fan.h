@@ -35,9 +35,9 @@ extern TX_REF          meshlasttexture;             ///< Last texture used
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void animate_all_tiles( ego_mpd * pmesh );
-void render_fan( ego_mpd * pmesh, Uint32 fan );
-void render_hmap_fan( ego_mpd * pmesh, Uint32 fan );
-void render_water_fan( ego_mpd * pmesh, Uint32 fan, Uint8 layer );
+void render_fan( const ego_mpd * pmesh, const Uint32 fan );
+void render_hmap_fan( const ego_mpd * pmesh, const Uint32 fan );
+void render_water_fan( ego_mpd * pmesh, const Uint32 fan, const Uint8 layer );
 
 void animate_tiles( void );
 

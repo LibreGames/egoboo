@@ -89,7 +89,7 @@ extern "C"
 //--------------------------------------------------------------------------------------------
     snd_config_data_t * snd_get_config();
 
-    bool_t snd_config_synch( snd_config_data_t * psnd, struct s_config_data * pcfg );
+    bool_t snd_config_synch( snd_config_data_t * psnd, const struct s_config_data * pcfg );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
