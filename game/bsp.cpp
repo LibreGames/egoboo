@@ -127,10 +127,10 @@ ego_BSP_aabb * ego_BSP_aabb::dealloc( ego_BSP_aabb * pbb )
 {
     if ( NULL == pbb ) return pbb;
 
-    pbb->mins.clear();
-    pbb->mids.clear();
-    pbb->maxs.clear();
-
+    pbb->mins.resize(0);
+    pbb->mids.resize(0);
+    pbb->maxs.resize(0);
+	
     pbb->dim = 0;
 
     return pbb;

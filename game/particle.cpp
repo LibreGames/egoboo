@@ -2095,8 +2095,6 @@ void cleanup_all_particles()
 
     PRT_BEGIN_LOOP_DEFINED_BDL( iprt, bdl )
     {
-        bool_t time_out;
-
         // don't bother with particles that are not allocated
         ego_obj_prt * pobj = ego_prt::get_obj_ptr( bdl.prt_ptr() );
         if ( NULL == pobj ) continue;

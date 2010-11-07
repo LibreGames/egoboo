@@ -1321,7 +1321,7 @@ void game_update_network()
 //--------------------------------------------------------------------------------------------
 egoboo_rv ego_game_process::do_running()
 {
-    static was_in_game = bfalse;
+    static bool_t was_in_game = bfalse;
 
     int update_loops = 0;
 

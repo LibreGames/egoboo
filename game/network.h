@@ -215,7 +215,8 @@ struct ego_player : public ego_player_data
 
     ego_uint get_id() const { return _id; }
 
-private:
+//ZF> Seems the Visual Studio 2010 compiler complains if the constructor is private or protected
+public:
 
     /// this constructor can only be called by player_deque for the purpose
     /// of setting up the std::deque< ego_player >

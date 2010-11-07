@@ -43,9 +43,6 @@
     <ClInclude Include="include\enet\enet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\enet\enet_time.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\enet\list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -65,6 +62,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\enet\unix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\enet\time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

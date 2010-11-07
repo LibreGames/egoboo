@@ -39,7 +39,7 @@ extern "C"
 #    define EQ(x)
 #endif
 
-#define VERSION "2.8.1"                            ///< Version of the game
+#define VERSION "2.9.0"                            ///< Version of the game
 
 #define SPELLBOOK           127                     ///< The spellbook model
 
