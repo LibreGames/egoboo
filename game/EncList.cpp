@@ -21,10 +21,7 @@
 /// \brief Implementation of the EncList_* functions
 /// \details
 
-#include "EncList.h"
-
-#include "enchant.inl"
-#include "egoboo_object_list.inl"
+#include "EncList.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

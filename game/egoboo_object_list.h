@@ -475,14 +475,6 @@ struct t_obj_lst_deque : public t_allocator_static< t_ego_obj_container<_data, _
     /// increments the iterator through all INGAME data
     iterator & iterator_increment_ingame( iterator & it );
 
-    // increments the iterator through all BSP data
-    // must be implemented in the list whose container has bsp data
-    //iterator & iterator_increment_bsp( iterator & it ) { return used_deque.iterator_increment( it ); }
-
-    // increments the iterator through all LIMBO data
-    // implemented for particles
-    //iterator & iterator_increment_limbo( iterator & it ) { return used_deque.iterator_increment( it ); }
-
     /// how many elements are allocated?
     int   get_loop_depth()       { return loop_depth; }
     int   increment_loop_depth()

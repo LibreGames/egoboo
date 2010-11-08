@@ -22,11 +22,12 @@
 #include "egoboo_typedef_cpp.inl"
 
 #include "particle.h"
-#include "PrtList.h"
-#include "ChrList.h"
 
-#include "char.inl"
-#include "egoboo_object_list.inl"
+#include "PrtList.inl"
+#include "ChrList.inl"
+
+/// \note Do not include "particle.inl" in "profile.inl", otherwise there is a bootstrapping problem.
+#include "profile.inl"
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION

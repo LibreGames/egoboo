@@ -25,12 +25,11 @@
 
 #include "enchant.h"
 
-#include "EncList.h"
-#include "ChrList.h"
+#include "EncList.inl"
+#include "ChrList.inl"
 
-#include "char.inl"
+/// \note Do not include "enchant.inl" in "profile.inl", otherwise there is a bootstrapping problem.
 #include "profile.inl"
-#include "egoboo_object_list.inl"
 
 //--------------------------------------------------------------------------------------------
 // IMPLEMENTATION

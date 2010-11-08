@@ -22,27 +22,26 @@
 
 #include "particle.inl"
 
-#include "PrtList.h"
-
 #include "log.h"
 #include "sound.h"
 #include "camera.h"
 #include "game.h"
 #include "mesh.h"
 #include "network.h"
+#include "mad.h"
 
+#include "char.inl"
+#include "enchant.inl"
+#include "profile.inl"
+#include "physics.inl"
+#include "mesh.inl"
+#include "PrtList.inl"
+
+#include "egoboo_mem.h"
 #include "egoboo_setup.h"
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
 #include "egoboo.h"
-
-#include "egoboo_mem.h"
-
-#include "enchant.inl"
-#include "mad.h"
-#include "profile.inl"
-#include "physics.inl"
-#include "mesh.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -1005,7 +1004,7 @@ void update_all_particles()
     ///               Converted all the update functions to the ego_obj_prt::run() paradigm.
 
     // activate any particles might have been generated last update in an in-active state
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, bdl )
+    PRT_BEGIN_LOOP_DEFINED_BDL( iprt, bdl )
     {
         prt_update( bdl );
     }
@@ -1573,7 +1572,7 @@ void move_all_particles( void )
     ego_prt::stoppedby_tests = 0;
 
     // move every particle
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, prt_bdl )
+    PRT_BEGIN_LOOP_DEFINED_BDL( cnt, prt_bdl )
     {
         // prime the environment
         prt_bdl_ptr->enviro.air_friction = air_friction;
@@ -2825,7 +2824,7 @@ egoboo_rv ego_bundle_prt::set( ego_prt * pprt )
     if ( NULL == this ) return rv_error;
 
     // blank out old data
-    if( rv_error == invalidate() ) return rv_error;
+    if ( rv_error == invalidate() ) return rv_error;
 
     if ( NULL == pprt ) return rv_fail;
 
@@ -2839,7 +2838,7 @@ egoboo_rv ego_bundle_prt::set( ego_prt * pprt )
 //--------------------------------------------------------------------------------------------
 void particle_physics_initialize_all()
 {
-    PRT_BEGIN_LOOP_ALLOCATED( cnt, pprt )
+    PRT_BEGIN_LOOP_DEFINED( cnt, pprt )
     {
         phys_data_blank_accumulators( &( pprt->phys ) );
     }
@@ -3396,14 +3395,14 @@ egoboo_rv particle_physics_finalize_one( const ego_bundle_prt & bdl, const float
     bumped_mesh = bfalse;
     if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) )
     {
-        if( NULL == prt_bump_mesh_attached( &bdl, test_pos, test_vel, dt ) )
+        if ( NULL == prt_bump_mesh_attached( &bdl, test_pos, test_vel, dt ) )
         {
             return rv_success;
         }
     }
     else
     {
-        if( NULL == prt_bump_mesh( &bdl, test_pos, test_vel, dt, &bumped_mesh ) )
+        if ( NULL == prt_bump_mesh( &bdl, test_pos, test_vel, dt, &bumped_mesh ) )
         {
             return rv_success;
         }
@@ -3421,14 +3420,14 @@ egoboo_rv particle_physics_finalize_one( const ego_bundle_prt & bdl, const float
     bumped_grid = bfalse;
     if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) )
     {
-        if( NULL == prt_bump_grid_attached( &bdl, test_pos, test_vel, dt ) )
+        if ( NULL == prt_bump_grid_attached( &bdl, test_pos, test_vel, dt ) )
         {
             return rv_success;
         }
     }
     else
     {
-        if( NULL == prt_bump_grid( &bdl, test_pos, test_vel, dt, &bumped_grid ) )
+        if ( NULL == prt_bump_grid( &bdl, test_pos, test_vel, dt, &bumped_grid ) )
         {
             return rv_success;
         }

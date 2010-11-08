@@ -551,6 +551,9 @@
 				RelativePath=".\char.inl">
 			</File>
 			<File
+				RelativePath=".\ChrList.inl">
+			</File>
+			<File
 				RelativePath=".\egoboo_object.inl">
 			</File>
 			<File
@@ -558,6 +561,9 @@
 			</File>
 			<File
 				RelativePath=".\enchant.inl">
+			</File>
+			<File
+				RelativePath=".\EncList.inl">
 			</File>
 			<File
 				RelativePath=".\md2.inl">
@@ -573,6 +579,9 @@
 			</File>
 			<File
 				RelativePath=".\profile.inl">
+			</File>
+			<File
+				RelativePath=".\PrtList.inl">
 			</File>
 		</Filter>
 		<Filter

@@ -26,13 +26,7 @@
 #    error egoboo_typedef_cpp.inl should only be included if you are compling as c++
 #endif
 
-#if !defined(_egoboo_object_h)
-#   error this file should not be included directly. Access it through egoboo_object.h
-#endif
-
-#include "char.inl"
-#include "enchant.inl"
-#include "particle.inl"
+#include "egoboo_object.h"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

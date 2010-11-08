@@ -603,7 +603,7 @@ bool_t collision_system::bump_all_platforms( collision_node_ary * pcn_ary )
     }
     CHR_END_LOOP();
 
-    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
+    PRT_BEGIN_LOOP_DEFINED( iprt, pprt )
     {
         if ( MAX_CHR != pprt->onwhichplatform_ref && pprt->onwhichplatform_update < update_wld )
         {

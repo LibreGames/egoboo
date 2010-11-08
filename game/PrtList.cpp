@@ -23,12 +23,9 @@
 
 #include "egoboo_typedef_cpp.inl"
 
-#include "PrtList.h"
 #include "egoboo_setup.h"
 
-#include "particle.inl"
-
-#include "egoboo_object_list.inl"
+#include "PrtList.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -192,3 +189,74 @@ PRT_REF ego_particle_list::allocate( const bool_t force, const PRT_REF & overrid
     return iprt;
 }
 
+//--------------------------------------------------------------------------------------------
+// custom iterator of limbo particles
+//--------------------------------------------------------------------------------------------
+
+ego_particle_list::iterator   ego_particle_list::iterator_begin_limbo()
+{
+    const ego_object_process_state_data * pstate;
+
+    iterator tmp = iterator_begin_allocated();
+
+    // find the first valid iterator
+    while ( !iterator_finished( tmp ) )
+    {
+        if ( NULL != tmp.pdata && PRT_LIMBO_RAW( tmp.pdata ) ) break;
+
+        iterator_increment_allocated( tmp );
+    }
+
+    return tmp;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_particle_list::iterator & ego_particle_list::iterator_increment_limbo( ego_particle_list::iterator & it )
+{
+    // increments the iterator through all LIMBO data
+
+    while ( !iterator_finished( it ) )
+    {
+        it = iterator_increment_allocated( it );
+
+        if ( NULL != it.pdata && PRT_LIMBO_RAW( it.pdata ) ) break;
+    }
+
+    return it;
+}
+
+//--------------------------------------------------------------------------------------------
+// custom iterator of display particles
+//--------------------------------------------------------------------------------------------
+
+ego_particle_list::iterator   ego_particle_list::iterator_begin_display()
+{
+    const ego_object_process_state_data * pstate;
+
+    iterator tmp = iterator_begin_allocated();
+
+    // find the first valid iterator
+    while ( !iterator_finished( tmp ) )
+    {
+        if ( NULL != tmp.pdata && PRT_LIMBO_RAW( tmp.pdata ) ) break;
+
+        iterator_increment_allocated( tmp );
+    }
+
+    return tmp;
+}
+
+//--------------------------------------------------------------------------------------------
+ego_particle_list::iterator & ego_particle_list::iterator_increment_display( ego_particle_list::iterator & it )
+{
+    // increments the iterator through all DISPLAY data
+
+    while ( !iterator_finished( it ) )
+    {
+        it = iterator_increment_allocated( it );
+
+        if ( NULL != it.pdata && PRT_DISPLAY_RAW( it.pdata ) ) break;
+    }
+
+    return it;
+}

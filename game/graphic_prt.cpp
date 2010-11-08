@@ -148,7 +148,7 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], c
 
     // Original points
     numparticle = 0;
-    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
+    PRT_BEGIN_LOOP_DEFINED( iprt, pprt )
     {
         ego_prt_instance * pinst;
 
@@ -413,7 +413,7 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
 
     // Original points
     numparticle = 0;
-    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
+    PRT_BEGIN_LOOP_DEFINED( iprt, pprt )
     {
         ego_prt_instance * pinst;
 
@@ -662,7 +662,7 @@ void render_all_prt_attachment()
 {
     GL_DEBUG( glDisable )( GL_BLEND );
 
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_DEFINED_BDL( iprt, prt_bdl )
     {
         prt_draw_attached_point( prt_bdl );
     }
@@ -672,7 +672,7 @@ void render_all_prt_attachment()
 //--------------------------------------------------------------------------------------------
 void render_all_prt_bbox()
 {
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_DEFINED_BDL( iprt, prt_bdl )
     {
         render_prt_bbox( prt_bdl );
     }
@@ -759,7 +759,7 @@ void update_all_prt_instance( ego_camera * pcam )
     if ( gfx_prt_instance_update_count == update_wld ) return;
     gfx_prt_instance_update_count = update_wld;
 
-    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
+    PRT_BEGIN_LOOP_DEFINED( iprt, pprt )
     {
         // get the parent object
         ego_obj_prt * pobj = ego_prt::get_obj_ptr( pprt );

@@ -4262,7 +4262,7 @@ void dolist_make( const ego_mpd * pmesh )
     }
     CHR_END_LOOP();
 
-    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
+    PRT_BEGIN_LOOP_DEFINED( iprt, pprt )
     {
         if ( ego_mpd::grid_is_valid( pmesh, pprt->onwhichgrid ) )
         {
@@ -5531,7 +5531,7 @@ void gfx_make_dynalist( ego_camera * pcam )
     // Don't really make a list, just set to visible or not
     dyna_list_count = 0;
     dyna_distancetobeat = 1e12;
-    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
+    PRT_BEGIN_LOOP_DEFINED( iprt, pprt )
     {
         pprt->inview = bfalse;
 

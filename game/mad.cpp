@@ -26,7 +26,6 @@
 #include "md2.inl"
 
 #include "file_formats/cap_file.h"
-#include "particle.inl"
 
 #include "log.h"
 #include "script_compile.h"
@@ -37,6 +36,9 @@
 #include "egoboo_setup.h"
 #include "egoboo_fileutil.h"
 #include "egoboo_strutil.h"
+
+#include "particle.inl"
+#include "egoboo_math.inl"
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

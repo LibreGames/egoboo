@@ -22,7 +22,7 @@
 /// \details
 
 #include "char.inl"
-#include "ChrList.h"
+#include "ChrList.inl"
 
 #include "mad.h"
 

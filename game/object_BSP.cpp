@@ -287,7 +287,7 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
 
     // insert the particles
     ego_obj_BSP::prt_count = 0;
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
     {
         // reset a couple of things here
         prt_bdl_ptr->targetplatform_ref     = CHR_REF( MAX_CHR );

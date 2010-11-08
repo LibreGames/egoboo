@@ -124,7 +124,7 @@ struct ego_object_process_state_data
         full_constructed = valid_bit | constructed_bit,
         full_initialized = valid_bit | constructed_bit | initialized_bit,
         full_on          = valid_bit | constructed_bit | initialized_bit | on_bit,
-        full_active      = valid_bit | constructed_bit | initialized_bit | on_bit | active_bit,
+        full_active      = valid_bit | constructed_bit | initialized_bit | active_bit,
         full_spawning    = valid_bit | spawning_bit
     };
 
@@ -167,6 +167,41 @@ struct ego_object_process_state_data
 
     its_type * invalidate() { return dtor_this( this ); }
 
+    static bool_t has_all_bits( const its_type* ptr, const ego_uint flags )
+    {
+        if ( NULL == ptr ) return bfalse;
+
+        return flags == ( flags & ptr->state_flags );
+    }
+
+    static bool_t has_no_bits( const its_type* ptr, const ego_uint flags )
+    {
+        if ( NULL == ptr ) return bfalse;
+
+        return 0 == ( flags & ptr->state_flags );
+    }
+
+    bool_t require_action( ego_obj_actions_t req_action ) const
+    {
+        if ( NULL == this ) return bfalse;
+
+        return req_action == action;
+    }
+
+    bool_t require_bits( const ego_uint flags ) const
+    {
+        if ( NULL == this ) return bfalse;
+
+        return flags == ( flags & state_flags );
+    }
+
+    bool_t reject_bits( const ego_uint flags ) const
+    {
+        if ( NULL == this ) return bfalse;
+
+        return 0 == ( flags & state_flags );
+    }
+
 protected:
 
     explicit ego_object_process_state_data( ego_obj_actions_t state = ego_obj_nothing ) { ctor_this( this, state ); }
@@ -196,20 +231,6 @@ protected:
         ptr->state_flags = ego_obj_nothing;
 
         return ptr;
-    }
-
-    static bool_t has_all_bits( const its_type* ptr, const ego_uint flags )
-    {
-        if ( NULL == ptr ) return bfalse;
-
-        return flags == ( flags & ptr->state_flags );
-    }
-
-    static bool_t has_no_bits( const its_type* ptr, const ego_uint flags )
-    {
-        if ( NULL == ptr ) return bfalse;
-
-        return 0 == ( flags & ptr->state_flags );
     }
 
     static bool_t add_bits( its_type* ptr, const ego_uint flags )

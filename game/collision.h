@@ -23,6 +23,8 @@
 
 #include "egoboo_math.h"
 
+#include "file_formats/mpd_file.h"
+
 #include "hash.h"
 #include "bbox.h"
 #include "bsp.h"

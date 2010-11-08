@@ -30,12 +30,13 @@
 #include "enchant.inl"
 #include "particle.inl"
 
-/// \note include "profile.inl" here.
-///  Do not include "char.inl" in "profile.inl", otherwise there is a bootstrapping problem.
-#include "profile.inl"
+#include "ChrList.inl"
 
 #include "egoboo_math.inl"
 #include "egoboo_object_list.inl"
+
+/// \note Do not include "char.inl" in "profile.inl", otherwise there is a bootstrapping problem.
+#include "profile.inl"
 
 //--------------------------------------------------------------------------------------------
 // FORWARD DECLARARIONS

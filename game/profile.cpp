@@ -23,9 +23,6 @@
 
 #include "profile.inl"
 
-#include "ChrList.h"
-#include "PrtList.h"
-
 #include "texture.h"
 #include "log.h"
 #include "script_compile.h"

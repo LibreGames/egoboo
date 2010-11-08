@@ -3791,7 +3791,7 @@ void attach_all_particles()
     /// \details  This function attaches particles to their characters so everything gets
     ///    drawn right
 
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, prt_bdl )
+    PRT_BEGIN_LOOP_DEFINED_BDL( cnt, prt_bdl )
     {
         attach_one_particle( prt_bdl );
     }
