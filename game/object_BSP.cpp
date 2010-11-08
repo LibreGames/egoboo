@@ -133,8 +133,9 @@ bool_t ego_obj_BSP::insert_chr( ego_obj_BSP * pbsp, ego_chr * pchr )
     if ( NULL == pbsp ) return bfalse;
     ptree = &( pbsp->tree );
 
+    if ( !PROCESSING_PCHR( pchr ) ) return bfalse;
+
     ego_obj_chr * loc_pobj = ego_chr::get_obj_ptr( pchr );
-    if ( !PROCESSING_PBASE( loc_pobj ) ) return bfalse;
 
     pleaf = &( loc_pobj->bsp_leaf );
 

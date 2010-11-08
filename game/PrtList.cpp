@@ -238,7 +238,7 @@ ego_particle_list::iterator   ego_particle_list::iterator_begin_display()
     // find the first valid iterator
     while ( !iterator_finished( tmp ) )
     {
-        if ( NULL != tmp.pdata && PRT_LIMBO_RAW( tmp.pdata ) ) break;
+        if ( NULL != tmp.pdata && PRT_DISPLAY_RAW( tmp.pdata ) ) break;
 
         iterator_increment_allocated( tmp );
     }

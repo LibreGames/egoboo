@@ -34,23 +34,6 @@
 #include "egoboo_object.inl"
 
 //--------------------------------------------------------------------------------------------
-// MACROS
-//--------------------------------------------------------------------------------------------
-
-// object flags
-#define OBJ_VALID_RAW(pobj)           ( pobj->require_bits( ego_obj::valid_bit ) )
-#define OBJ_DEFINED_RAW(pobj)         ( pobj->require_bits( ego_obj::valid_bit ) && pobj->reject_bits( ego_obj::killed_bit ) )
-#define OBJ_TERMINATED_RAW(pobj)      ( pobj->require_bits( ego_obj::valid_bit ) && pobj->require_bits( ego_obj::killed_bit ) )
-
-// object states
-#define OBJ_CONSTRUCTING_RAW(pobj)    ( pobj->require_bits( ego_obj::valid_bit        ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_constructing   ) )
-#define OBJ_INITIALIZING_RAW(pobj)    ( pobj->require_bits( ego_obj::full_constructed ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_initializing   ) )
-#define OBJ_PROCESSING_RAW(pobj)      ( pobj->require_bits( ego_obj::full_on          ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_processing     ) )
-#define OBJ_DEINITIALIZING_RAW(pobj)  ( pobj->require_bits( ego_obj::full_constructed ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_deinitializing ) )
-#define OBJ_DESTRUCTING_RAW(pobj)     ( pobj->require_bits( ego_obj::valid_bit        ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_destructing    ) )
-#define OBJ_WAITING_RAW(pobj)         ( pobj->require_bits( ego_obj::valid_bit        ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_waiting        ) )
-
-//--------------------------------------------------------------------------------------------
 // grab a container
 //--------------------------------------------------------------------------------------------
 template < typename _d, const size_t _sz >
@@ -232,7 +215,7 @@ egoboo_rv t_obj_lst_deque<_d, _sz>::free_one( const typename t_obj_lst_deque<_d,
     /// \author ZZ
     /// \details  This function sticks a object back on the free object stack
     ///
-    /// \note Tying ALLOCATED_*() and POBJ_TERMINATE() to t_obj_lst_deque<>::free_one()
+    /// \note Tying ALLOCATED_*() and ego_obj::grant_terminate() to t_obj_lst_deque<>::free_one()
     /// should be enough to ensure that no object is freed more than once
 
     egoboo_rv retval = rv_fail;
@@ -924,7 +907,7 @@ typename t_obj_lst_deque<_data, _sz>::iterator & t_obj_lst_deque<_data, _sz>::it
 //    /// \author ZZ
 //    /// \details  This function sticks a object back on the free object stack
 //    ///
-//    /// \note Tying ALLOCATED_*() and POBJ_TERMINATE() to t_obj_lst_map<>::free_one()
+//    /// \note Tying ALLOCATED_*() and ego_obj::grant_terminate() to t_obj_lst_map<>::free_one()
 //    /// should be enough to ensure that no object is freed more than once
 //
 //    egoboo_rv retval = rv_fail;

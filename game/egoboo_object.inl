@@ -29,13 +29,48 @@
 #include "egoboo_object.h"
 
 //--------------------------------------------------------------------------------------------
+// MACROS
+//--------------------------------------------------------------------------------------------
+
+//---- object flags
+
+/// Has the object been allocated?
+#define OBJ_VALID_RAW(pobj)           ( pobj->require_bits( ego_obj::valid_bit ) )
+
+/// Has the object been allocated and constructed?
+#define OBJ_DEFINED_RAW(pobj)         ( pobj->require_bits( ego_obj::valid_bit ) && pobj->reject_bits( ego_obj::killed_bit ) )
+
+/// Has the object been marked as terminated?
+#define OBJ_TERMINATED_RAW(pobj)      ( pobj->require_bits( ego_obj::valid_bit ) && pobj->require_bits( ego_obj::killed_bit ) )
+
+//---- object states
+
+/// Has the object been created yet?
+#define OBJ_CONSTRUCTING_RAW(pobj)    ( pobj->require_bits( ego_obj::valid_bit        ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_constructing   ) )
+
+/// Is the object being initialized right now?
+#define OBJ_INITIALIZING_RAW(pobj)    ( pobj->require_bits( ego_obj::full_constructed ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_initializing   ) )
+
+/// Is the object actually doing something right now?
+#define OBJ_PROCESSING_RAW(pobj)      ( pobj->require_bits( ego_obj::full_on          ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_processing     ) )
+
+/// Is the object being deinitialized right now?
+#define OBJ_DEINITIALIZING_RAW(pobj)  ( pobj->require_bits( ego_obj::full_constructed ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_deinitializing ) )
+
+/// Is the object being deinitialized right now?
+#define OBJ_DESTRUCTING_RAW(pobj)     ( pobj->require_bits( ego_obj::valid_bit        ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_destructing    ) )
+
+/// Is the object "waiting to die" state?
+#define OBJ_WAITING_RAW(pobj)         ( pobj->require_bits( ego_obj::valid_bit        ) && pobj->reject_bits( ego_obj::killed_bit ) && pobj->require_action( ego_obj_waiting        ) )
+
+//--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 template<typename _ty>
 _ty * ego_object_engine::run_construct( _ty * pdata, const int max_iterations )
 {
     int iterations;
 
-    if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
+    if ( !ego_obj::get_valid( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
     if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_constructing + 1 ) )
@@ -62,11 +97,10 @@ _ty * ego_object_engine::run_initialize( _ty * pdata, const int max_iterations )
 {
     int iterations;
 
-    typename _ty::object_type * pobj = _ty::get_obj_ptr( pdata );
-    if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
+    if ( !ego_obj::get_valid( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
-    if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_initializing + 1 ) )
+    if ( ego_obj::get_action( * pdata ) > ( const int )( ego_obj_initializing + 1 ) )
     {
         _ty * tmp_chr = ego_object_engine::run_deconstruct( pdata, max_iterations );
         if ( tmp_chr == pdata ) return NULL;
@@ -87,9 +121,9 @@ _ty * ego_object_engine::run_initialize( _ty * pdata, const int max_iterations )
 template<typename _ty>
 _ty * ego_object_engine::run_activate( _ty * pdata, const int max_iterations )
 {
-    int                 iterations;
+    int iterations;
 
-    if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
+    if ( !ego_obj::get_valid( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, deconstruct it and start over
     if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_processing + 1 ) )
@@ -115,8 +149,7 @@ _ty * ego_object_engine::run_deinitialize( _ty * pdata, const int max_iterations
 {
     int iterations;
 
-    typename _ty::object_type * pobj = _ty::get_obj_ptr( pdata );
-    if ( !FLAG_VALID_PBASE( pobj ) ) return NULL;
+    if ( !ego_obj::get_valid( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, deinitialize it
     if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_deinitializing + 1 ) )
@@ -145,7 +178,7 @@ _ty * ego_object_engine::run_deconstruct( _ty * pdata, const int max_iterations 
 {
     int iterations;
 
-    if ( !FLAG_VALID_PBASE( pdata ) ) return NULL;
+    if ( !ego_obj::get_valid( pdata ) ) return NULL;
 
     // if the character is already beyond this stage, do nothing
     if ( ego_obj::get_action( pdata ) > ( const int )( ego_obj_destructing + 1 ) )

@@ -2049,7 +2049,7 @@ bool_t _prt_request_terminate_ref( const PRT_REF & iprt )
 
     if ( !VALID_PRT( iprt ) || TERMINATED_PRT( iprt ) ) return bfalse;
 
-    POBJ_REQUEST_TERMINATE( PrtObjList.get_allocated_data_ptr( iprt ) );
+    ego_obj::req_terminate( PrtObjList.get_allocated_data_ptr( iprt ) );
 
     return btrue;
 }
@@ -2108,13 +2108,13 @@ void cleanup_all_particles()
         ego_obj_prt * pobj = ego_prt::get_obj_ptr( bdl.prt_ptr() );
         if ( NULL == pobj ) continue;
 
-        if ( FLAG_TERMINATED_PBASE( pobj ) )
+        if ( ego_obj::get_killed( pobj ) )
         {
             // the memory area is marked as invalid,
             // but it has not been "killed" yet
             PrtObjList.free_one( iprt );
         }
-        else if ( STATE_WAITING_PBASE( pobj ) )
+        else if ( pobj->require_action( ego_obj_waiting ) )
         {
             // the object is waiting to be killed, so
             // do all of the end of life care for the particle
@@ -2443,15 +2443,12 @@ const ego_bundle_prt * prt_update_ingame( const ego_bundle_prt * pbdl )
     /// \details  update everything about a particle that does not depend on collisions
     ///               or interactions with characters
 
-    ego_obj * pbase;
-    ego_prt * loc_pprt;
-    ego_pip * loc_ppip;
-
     if ( NULL == pbdl->prt_ptr() ) return pbdl;
-    loc_pprt = pbdl->prt_ptr();
-    loc_ppip = pbdl->pip_ptr();
+    ego_prt * loc_pprt = pbdl->prt_ptr();
+    ego_pip * loc_ppip = pbdl->pip_ptr();
 
-    pbase = PDATA_GET_PBASE( ego_prt, loc_pprt );
+    ego_obj_prt * pbase = ego_prt::get_obj_ptr( loc_pprt );
+    if ( NULL == pbase ) return pbdl;
 
     // if the object is not "on", it is no longer "in game" but still needs to be displayed
     if ( !INGAME_PPRT( loc_pprt ) )
@@ -2512,7 +2509,7 @@ const ego_bundle_prt * prt_update_ingame( const ego_bundle_prt * pbdl )
     // If the particle is done updating, send it to limbo
     if ( !loc_pprt->is_eternal && ( pbase->update_count > 0 && 0 == loc_pprt->life_timer ) )
     {
-        ego_obj_prt::set_limbo( PDATA_GET_POBJ( ego_prt, loc_pprt ), btrue );
+        ego_obj_prt::set_limbo( pbase, btrue );
     }
 
     return pbdl;
@@ -2536,10 +2533,9 @@ const ego_bundle_prt * prt_update_limbo( const ego_bundle_prt * pbdl )
     loc_pprt = pbdl->prt_ptr();
     loc_ppip = pbdl->pip_ptr();
 
-    pbase = PDATA_GET_PBASE( ego_prt, pbdl->prt_ptr() );
-    if ( !FLAG_VALID_PBASE( pbase ) ) return pbdl;
+    pbase = ego_prt::get_obj_ptr( loc_pprt );
 
-    request_terminate = FLAG_REQ_TERMINATION_PBASE( pbase );
+    request_terminate = ego_obj::get_kill_me( pbase );
     if ( !loc_pprt->is_eternal )
     {
         if ( 0 == loc_pprt->frames_remaining ) request_terminate = btrue;
@@ -2547,7 +2543,7 @@ const ego_bundle_prt * prt_update_limbo( const ego_bundle_prt * pbdl )
     }
 
     // if the object has been around for more than one frame, there is no need to keep it as a "limbo particle"
-    prt_display = !ego_obj::get_on( pbase ) && ( 0 == pbase->frame_count );
+    prt_display = !pbase->require_bits( ego_obj::on_bit ) && ( 0 == pbase->frame_count );
     if ( request_terminate && !prt_display )
     {
         ego_obj_prt::request_terminate( *pbdl );
@@ -2573,10 +2569,10 @@ const ego_bundle_prt * prt_update_limbo( const ego_bundle_prt * pbdl )
     if ( 0 == update_wld ) return pbdl;
 
     pbdl = prt_update_animation( pbdl );
-    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    if ( NULL == loc_pprt ) return pbdl;
 
     pbdl = prt_update_dynalight( pbdl );
-    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    if ( NULL == loc_pprt ) return pbdl;
 
     if ( !loc_pprt->is_hidden )
     {
@@ -2757,7 +2753,7 @@ ego_obj_prt * ego_obj_prt::set_limbo( ego_obj_prt * pobj, const bool_t val )
     // An analogy to the ego_obj_set_*() functions, but with the extra particle data in
     // obj_base_display
 
-    if ( NULL == pobj || !FLAG_VALID_PBASE( pobj ) || FLAG_TERMINATED_PBASE( pobj ) ) return pobj;
+    if ( NULL == pobj || !OBJ_DEFINED_RAW( pobj ) ) return pobj;
 
     pobj->obj_base_display = val;
 

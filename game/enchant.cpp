@@ -1753,7 +1753,7 @@ void cleanup_all_enchants()
         peve = EveStack + penc->eve_ref;
 
         do_remove = bfalse;
-        if ( WAITING_PBASE( pobj ) )
+        if ( WAITING_PENC( penc ) )
         {
             // the enchant has been marked for removal
             do_remove = btrue;

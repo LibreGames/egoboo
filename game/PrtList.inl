@@ -51,11 +51,6 @@
 #define ALLOCATED_PRT( IPRT )      FLAG_ALLOCATED_PCONT(ego_prt_container,  IPRT_GET_PCONT(IPRT) )
 #define ALLOCATED_PPRT( PPRT )     FLAG_ALLOCATED_PCONT(ego_prt_container,  PPRT_CGET_PCONT(PPRT) )
 
-/// Is the particle flagged as being in limbo?
-#define FLAG_DISPLAY_PPRT_OBJ( PPRT_OBJ )  ( (PPRT_OBJ)->obj_base_display )
-/// Is the particle object in limbo?
-#define STATE_LIMBO_PPRT_OBJ( PPRT_OBJ ) (STATE_PROCESSING_PBASE(PBASE) || STATE_WAITING_PBASE(PBASE))
-
 //--------------------------------------------------------------------------------------------
 // Macros to automate looping through a PrtObjList. Based on generic code for
 // looping through a t_obj_lst_map<>

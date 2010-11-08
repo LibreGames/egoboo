@@ -764,9 +764,6 @@ void update_all_prt_instance( ego_camera * pcam )
         // get the parent object
         ego_obj_prt * pobj = ego_prt::get_obj_ptr( pprt );
 
-        // only do frame counting for particles that are fully activated!
-        if ( !FLAG_VALID_PBASE( pobj ) ) continue;
-
         // hidden particles do absolutely nothing
         if ( pobj->is_hidden ) continue;
 

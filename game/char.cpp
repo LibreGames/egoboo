@@ -1715,7 +1715,7 @@ void character_swipe( const CHR_REF & ichr, slot_t slot )
             {
                 // Poof the item
                 detach_character_from_mount( iweapon, btrue, bfalse );
-                POBJ_REQUEST_TERMINATE( ego_chr::get_obj_ptr( pweapon ) );
+                ego_obj::req_terminate( ego_chr::get_obj_ptr( pweapon ) );
             }
             else
             {
@@ -2500,7 +2500,7 @@ void kill_character( const CHR_REF & ichr, const CHR_REF & killer, const bool_t 
     cleanup_one_character( pchr );
 
     // If it's a player, let it die properly before enabling respawn
-    if ( IS_PLAYER_PCHR( pchr ) ) timer_revive = ONESECOND; // 1 second
+    if ( IS_PLAYER_PCHR( pchr ) ) revive_timer = ONESECOND; // 1 second
 
     // Let its AI script run one last time
     pchr->ai.timer = update_wld + 1;            // Prevent IfTimeOut in scr_run_chr_script()
@@ -6462,11 +6462,11 @@ void cleanup_all_characters()
     {
         bool_t time_out;
 
+        time_out = ( pchr->ai.poof_time >= 0 ) && ( Uint32( pchr->ai.poof_time ) <= update_wld );
+        if ( !WAITING_PCHR( pchr ) && !time_out ) continue;
+
         ego_obj_chr * pobj = ego_chr::get_obj_ptr( pchr );
         if ( NULL == pobj ) continue;
-
-        time_out = ( pchr->ai.poof_time >= 0 ) && ( Uint32( pchr->ai.poof_time ) <= update_wld );
-        if ( !WAITING_PBASE( pobj ) && !time_out ) continue;
 
         // detach the character from the game
         cleanup_one_character( pchr );

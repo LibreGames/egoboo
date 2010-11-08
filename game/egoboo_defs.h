@@ -111,9 +111,9 @@ extern "C"
     EXTERN ego_sint        update_lag  EQ( 0 );             ///< the number of updated that occured the last time the update counter tried to catch up to the true_update
 
 // timers
-    EXTERN ego_sint        timer_heartbeat EQ( 0 );         ///< For game updates that happen once a second (should time ot immediately)
-    EXTERN Uint32          timer_pit   EQ( 0 );             ///< For pit kills
-    EXTERN int             timer_revive EQ( 0 );            ///< Respawning
+    EXTERN ego_sint        heartbeat_timer EQ( 0 );         ///< For game updates that happen once a second (should time ot immediately)
+    EXTERN Uint32          pit_timer   EQ( 0 );             ///< For pit kills
+    EXTERN int             revive_timer EQ( 0 );            ///< Respawning
 
 // KEYBOARD
     EXTERN bool_t console_mode EQ( bfalse );                   ///< Input text from keyboard?

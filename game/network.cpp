@@ -1874,7 +1874,7 @@ void unbuffer_one_player_latch_do_respawn( ego_player & rpla )
 
     if ( cfg.difficulty < GAME_HARD && HAS_SOME_BITS( pchr->latch.trans.b, LATCHBUTTON_RESPAWN ) && PMod->respawnvalid )
     {
-        if ( !pchr->alive && 0 == timer_revive )
+        if ( !pchr->alive && 0 == revive_timer )
         {
             ego_chr::respawn( rpla.index );
             TeamStack[pchr->team].leader = rpla.index;

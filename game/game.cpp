@@ -807,7 +807,7 @@ void game_update_local_respawn()
 
         if ( !pchr->alive )
         {
-            if ( cfg.difficulty < GAME_HARD && ( 0 == net_stats.pla_count_total_alive ) && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == timer_revive )
+            if ( cfg.difficulty < GAME_HARD && ( 0 == net_stats.pla_count_total_alive ) && SDLKEYDOWN( SDLK_SPACE ) && PMod->respawnvalid && 0 == revive_timer )
             {
                 ego_chr::respawn( ichr );
                 pchr->experience *= EXPKEEP;        // Apply xp Penalty
@@ -828,13 +828,13 @@ void game_update_heartbeat()
     // This stuff doesn't happen so often
 
     // down the timer
-    if ( timer_heartbeat > 0 ) timer_heartbeat--;
+    if ( heartbeat_timer > 0 ) heartbeat_timer--;
 
     // throttle the execution of this function
-    if ( 0 != timer_heartbeat ) return;
+    if ( 0 != heartbeat_timer ) return;
 
     // automatically reset the timer
-    timer_heartbeat = ONESECOND;
+    heartbeat_timer = ONESECOND;
 
     // update the respawning of local players
     game_update_local_respawn();
@@ -943,7 +943,7 @@ int game_update()
             // Timers
 
             // down the revive timer
-            if ( timer_revive > 0 ) timer_revive--;
+            if ( revive_timer > 0 ) revive_timer--;
 
             // Clocks
             clock_wld += UPDATE_SKIP;
@@ -1098,8 +1098,8 @@ void reset_timers()
     clock_chr_stat  = 0;
 
     // all of the timers
-    timer_heartbeat = 0;        /// \note ZF@> This one should timeout on module startup so start at 0
-    timer_pit = PIT_DELAY;
+    heartbeat_timer = 0;        /// \note ZF@> This one should timeout on module startup so start at 0
+    pit_timer = PIT_DELAY;
 
     // all of the counters
     update_wld  = 0;
@@ -1904,19 +1904,24 @@ void game_update_pits()
     if ( pits.kill || pits.teleport )
     {
         // Decrease the timer
-        if ( timer_pit > 0 ) timer_pit--;
+        if ( pit_timer > 0 ) pit_timer--;
 
-        if ( timer_pit == 0 )
+        if ( pit_timer == 0 )
         {
             // Reset timer
-            timer_pit = PIT_DELAY;
+            pit_timer = PIT_DELAY;
 
             // Kill any particles that fell in a pit, if they die in water...
-            PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
+            PRT_BEGIN_LOOP_PROCESSING( iprt, pprt )
             {
-                if ( prt_bdl.prt_ptr()->pos.z < PITDEPTH && prt_bdl.pip_ptr()->end_water )
+                if ( pprt->pos.z < PITDEPTH )
                 {
-                    ego_obj_prt::request_terminate( prt_bdl );
+                    ego_pip * ppip = ego_prt::get_ppip( iprt );
+
+                    if ( NULL != ppip && ppip->end_water )
+                    {
+                        ego_obj_prt::request_terminate( pprt );
+                    }
                 }
             }
             PRT_END_LOOP();
@@ -3380,11 +3385,11 @@ void disaffirm_attached_particles( const CHR_REF & character )
     /// \author ZZ
     /// \details  This function makes sure a character has no attached particles
 
-    PRT_BEGIN_LOOP_PROCESSING_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_PROCESSING( iprt, pprt )
     {
-        if ( prt_bdl.prt_ptr()->attachedto_ref == character )
+        if ( character == pprt->attachedto_ref )
         {
-            ego_obj_prt::request_terminate( prt_bdl );
+            ego_obj_prt::request_terminate( pprt );
         }
     }
     PRT_END_LOOP();
