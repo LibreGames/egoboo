@@ -1793,10 +1793,7 @@ void increment_all_enchant_update_counters()
 {
     ENC_BEGIN_LOOP_PROCESSING( cnt, penc )
     {
-        ego_obj * pbase = ego_enc::get_obj_ptr( penc );
-        if ( NULL == pbase ) continue;
-
-        pbase->update_count++;
+        penc_obj->update_count++;
     }
     ENC_END_LOOP();
 }

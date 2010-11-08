@@ -305,15 +305,15 @@ int _debug_vprintf( const char *format, va_list args )
 }
 
 //--------------------------------------------------------------------------------------------
-int _va_draw_string( const float x, const float y, const char *format, va_list args )
+int _va_draw_string( const float old_x, const float old_y, const char *format, va_list args )
 {
     int cnt = 1;
     int x_stt;
     STRING szText;
     Uint8 cTmp;
 
-    float new_x = x;
-    float new_y = y;
+    float new_x = old_x;
+    float new_y = old_y;
 
     if ( SDL_vsnprintf( szText, SDL_arraysize( szText ) - 1, format, args ) <= 0 )
     {
@@ -358,7 +358,7 @@ int _va_draw_string( const float x, const float y, const char *format, va_list a
 }
 
 //--------------------------------------------------------------------------------------------
-int _draw_string_raw( const float x, const float y, const char *format, ... )
+int _draw_string_raw( const float old_x, const float old_y, const char *format, ... )
 {
     /// \author BB
     /// \details  the same as draw string, but it does not use the gfx_begin_2d() ... gfx_end_2d()
@@ -366,10 +366,10 @@ int _draw_string_raw( const float x, const float y, const char *format, ... )
 
     va_list args;
 
-    float new_y = y;
+    float new_y = old_y;
 
     va_start( args, format );
-    new_y = _va_draw_string( x, new_y, format, args );
+    new_y = _va_draw_string( old_x, new_y, format, args );
     va_end( args );
 
     return new_y;
@@ -911,10 +911,10 @@ void draw_map_texture( const float x, const float y )
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_one_xp_bar( const float x, const float y, const Uint8 ticks )
+float draw_one_xp_bar( const float old_x, const float old_y, const Uint8 ticks )
 {
     /// \author ZF
-    /// \details  This function draws a xp bar and returns the y position for the next one
+    /// \details  This function draws a xp bar and returns the old_y position for the next one
 
     float width, height;
     Uint8 cnt;
@@ -922,8 +922,8 @@ float draw_one_xp_bar( const float x, const float y, const Uint8 ticks )
 
     Uint8 loc_ticks = SDL_min( ticks, NUMTICK );
 
-    float new_x = x;
-    float new_y = y;
+    float new_x = old_x;
+    float new_y = old_y;
 
     gfx_enable_texturing();               // Enable texture mapping
     GL_DEBUG( glColor4f )( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -997,20 +997,20 @@ float draw_one_xp_bar( const float x, const float y, const Uint8 ticks )
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_one_bar( const Uint8 bartype, const float x, const float y, const int ticks, const int maxticks )
+float draw_one_bar( const Uint8 bartype, const float old_x, const float old_y, const int ticks, const int maxticks )
 {
     /// \author ZZ
-    /// \details  This function draws a bar and returns the y position for the next one
+    /// \details  This function draws a bar and returns the old_y position for the next one
 
     int     noticks;
     float   width, height;
     ego_frect_t tx_rect, sc_rect;
     oglx_texture_t * ptex;
 
-    float new_x = x;
-    float new_y = y;
+    float new_x = old_x;
+    float new_y = old_y;
 
-    if ( maxticks <= 0 || ticks < 0 || bartype > NUMBAR ) return y;
+    if ( maxticks <= 0 || ticks < 0 || bartype > NUMBAR ) return new_y;
 
     ptex = TxTexture_get_ptr( TX_REF( TX_BARS ) );
 
@@ -1164,7 +1164,7 @@ float draw_one_bar( const Uint8 bartype, const float x, const float y, const int
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_string( const float x, const float y, const char *format, ... )
+float draw_string( const float old_x, const float old_y, const char *format, ... )
 {
     /// \author ZZ
     /// \details  This function spits a line of null terminated text onto the backbuffer
@@ -1175,12 +1175,12 @@ float draw_string( const float x, const float y, const char *format, ... )
 
     va_list args;
 
-    float new_y = y;
+    float new_y = old_y;
 
     gfx_begin_2d();
     {
         va_start( args, format );
-        new_y = _va_draw_string( x, new_y, format, args );
+        new_y = _va_draw_string( old_x, new_y, format, args );
         va_end( args );
     }
     gfx_end_2d();
@@ -1189,11 +1189,11 @@ float draw_string( const float x, const float y, const char *format, ... )
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_wrap_string( const char *szText, const float x, const float y, const int maxx )
+float draw_wrap_string( const char *szText, const float old_x, const float old_y, const int maxx )
 {
     /// \author ZZ
     /// \details  This function spits a line of null terminated text onto the backbuffer,
-    ///    wrapping over the right side and returning the new y value
+    ///    wrapping over the right side and returning the new old_y value
 
     Uint8 cTmp = szText[0];
     Uint8 newword = btrue;
@@ -1201,25 +1201,25 @@ float draw_wrap_string( const char *szText, const float x, const float y, const 
 
     gfx_begin_text();
 
-    float new_x = x;
-    float new_y = y;
-    float stt_x = x;
+    float min_x = old_x;
+    float min_y = old_y;
+    float stt_x = old_x;
     float max_x = maxx + stt_x;
-    float max_y    = new_y + fontyspacing;
+    float max_y = min_y + fontyspacing;
 
     while ( cTmp != 0 )
     {
         // Check each new word for wrapping
         if ( newword )
         {
-            int endx = new_x + font_bmp_length_of_word( szText + cnt - 1 );
+            int endx = min_x + font_bmp_length_of_word( szText + cnt - 1 );
 
             newword = bfalse;
             if ( endx > max_x )
             {
                 // Wrap the end and cut off spaces and tabs
-                new_x = stt_x + fontyspacing;
-                new_y += fontyspacing;
+                min_x = stt_x + fontyspacing;
+                min_y += fontyspacing;
                 max_y += fontyspacing;
 
                 while ( ' ' == cTmp || '~' == cTmp )
@@ -1234,20 +1234,20 @@ float draw_wrap_string( const char *szText, const float x, const float y, const 
             if ( '~' == cTmp )
             {
                 // Use squiggle for tab
-                new_x = (( int( new_x ) ) & TABAND ) + TABADD;
+                min_x = (( int( min_x ) ) & TABAND ) + TABADD;
             }
             else if ( '\n' == cTmp )
             {
-                new_x = stt_x;
-                new_y += fontyspacing;
+                min_x = stt_x;
+                min_y += fontyspacing;
                 max_y += fontyspacing;
             }
             else
             {
                 // Normal letter
                 cTmp = asciitofont[cTmp];
-                draw_one_font( cTmp, new_x, new_y );
-                new_x += fontxspacing[cTmp];
+                draw_one_font( cTmp, min_x, min_y );
+                min_x += fontxspacing[cTmp];
             }
 
             cTmp = szText[cnt];
@@ -1265,17 +1265,17 @@ float draw_wrap_string( const char *szText, const float x, const float y, const 
 }
 
 //--------------------------------------------------------------------------------------------
-void draw_one_character_icon( const CHR_REF & item, const float x, const float y, const bool_t draw_ammo )
+void draw_one_character_icon( const CHR_REF & item, const float old_x, const float old_y, const bool_t draw_ammo )
 {
     /// \author BB
-    /// \details  Draw an icon for the given item at the position <x,y>.
+    /// \details  Draw an icon for the given item at the position <old_x,old_y>.
     ///     If the object is invalid, draw the null icon instead of failing
 
     TX_REF icon_ref;
     Uint8  draw_sparkle;
 
-    float new_x = x;
-    float new_y = y;
+    float new_x = old_x;
+    float new_y = old_y;
 
     ego_chr * pitem = !INGAME_CHR( item ) ? NULL : ChrObjList.get_data_ptr( item );
 
@@ -1303,18 +1303,18 @@ void draw_one_character_icon( const CHR_REF & item, const float x, const float y
 }
 
 //--------------------------------------------------------------------------------------------
-int draw_character_xp_bar( const CHR_REF & character, const float x, const float y )
+float draw_character_xp_bar( const CHR_REF & character, const float old_x, const float old_y )
 {
     ego_chr * pchr;
     ego_cap * pcap;
 
+    float new_y = old_y;
+
     pchr = ChrObjList.get_allocated_data_ptr( character );
-    if ( !INGAME_PCHR( pchr ) ) return y;
+    if ( !INGAME_PCHR( pchr ) ) return new_y;
 
     pcap = pro_get_pcap( pchr->profile_ref );
-    if ( NULL == pcap ) return y;
-
-    float new_y = y;
+    if ( NULL == pcap ) return new_y;
 
     // Draw the small XP progress bar
     if ( pchr->experience_level < MAXLEVEL )
@@ -1326,18 +1326,18 @@ int draw_character_xp_bar( const CHR_REF & character, const float x, const float
         float fraction = ( const float )SDL_max( pchr->experience - xplastlevel, 0 ) / ( const float )SDL_max( xpneed - xplastlevel, 1 );
         int   numticks = fraction * NUMTICK;
 
-        new_y = draw_one_xp_bar( x, new_y, numticks );
+        new_y = draw_one_xp_bar( old_x, new_y, numticks );
     }
 
     return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_status( const CHR_REF & character, const float x, const float y )
+float draw_status( const CHR_REF & character, const float old_x, const float old_y )
 {
     /// \author ZZ
     /// \details  This function shows a character's icon, status and inventory
-    ///    The x,y coordinates are the top left point of the image to draw
+    ///    The old_x,old_y coordinates are the top left point of the image to draw
 
     int cnt;
     char cTmp;
@@ -1349,7 +1349,7 @@ float draw_status( const CHR_REF & character, const float x, const float y )
     ego_chr * pchr;
     ego_cap * pcap;
 
-    float new_y = y;
+    float new_y = old_y;
 
     pchr = ChrObjList.get_allocated_data_ptr( character );
     if ( !INGAME_PCHR( pchr ) || !pchr->draw_stats ) return new_y;
@@ -1383,51 +1383,51 @@ float draw_status( const CHR_REF & character, const float x, const float y )
     generictext[7] = CSTR_END;
 
     // draw the name
-    new_y = _draw_string_raw( x + 8, new_y, generictext );
+    new_y = _draw_string_raw( old_x + 8, new_y, generictext );
 
     // draw the character's money
-    new_y = _draw_string_raw( x + 8, new_y, "$%4d", pchr->money ) + 8;
+    new_y = _draw_string_raw( old_x + 8, new_y, "$%4d", pchr->money ) + 8;
 
     // draw the character's main icon
-    draw_one_character_icon( character, x + 40, new_y, bfalse );
+    draw_one_character_icon( character, old_x + 40, new_y, bfalse );
 
     // draw the left hand item icon
-    draw_one_character_icon( pchr->holdingwhich[SLOT_LEFT], x + 8, new_y, btrue );
+    draw_one_character_icon( pchr->holdingwhich[SLOT_LEFT], old_x + 8, new_y, btrue );
 
     // draw the right hand item icon
-    draw_one_character_icon( pchr->holdingwhich[SLOT_RIGHT], x + 72, new_y, btrue );
+    draw_one_character_icon( pchr->holdingwhich[SLOT_RIGHT], old_x + 72, new_y, btrue );
 
     // skip to the next row
     new_y += 32;
 
     // Draw the small XP progress bar
-    new_y = draw_character_xp_bar( character, x + 16, new_y );
+    new_y = draw_character_xp_bar( character, old_x + 16, new_y );
 
     // Draw the life bar
     if ( pchr->alive )
     {
-        new_y = draw_one_bar( pchr->life_color, x, new_y, life, life_max );
+        new_y = draw_one_bar( pchr->life_color, old_x, new_y, life, life_max );
     }
     else
     {
-        new_y = draw_one_bar( 0, x, new_y, 0, life_max );  // Draw a black bar
+        new_y = draw_one_bar( 0, old_x, new_y, 0, life_max );  // Draw a black bar
     }
 
     // Draw the mana bar
     if ( mana_max > 0 )
     {
-        new_y = draw_one_bar( pchr->mana_color, x, new_y, mana, mana_max );
+        new_y = draw_one_bar( pchr->mana_color, old_x, new_y, mana, mana_max );
     }
 
     return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_all_status( const float y )
+float draw_all_status( const float old_y )
 {
     int cnt;
 
-    float new_y = y;
+    float new_y = old_y;
 
     if ( StatList.on )
     {
@@ -1528,11 +1528,11 @@ void draw_map()
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_fps( const float y )
+float draw_fps( const float old_y )
 {
     // FPS text
 
-    float new_y = y;
+    float new_y = old_y;
 
     if ( net_stats.out_of_sync )
     {
@@ -1583,13 +1583,13 @@ float draw_fps( const float y )
     new_y = _draw_string_raw( 0, new_y, "init:update_all_prt_instance %2.4g", time_render_scene_init_update_all_prt_instance );
 #endif
 
-    return y;
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_help( const float y )
+float draw_help( const float old_y )
 {
-    float new_y = y;
+    float new_y = old_y;
 
     if ( SDLKEYDOWN( SDLK_F1 ) )
     {
@@ -1627,21 +1627,23 @@ float draw_help( const float y )
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_debug_character( const CHR_REF & ichr, const float y )
+float draw_debug_character( const CHR_REF & ichr, const float old_y )
 {
-    ego_chr * pchr = ChrObjList.get_allocated_data_ptr( ichr );
-    if ( !DEFINED_PCHR( pchr ) ) return y;
+    float new_y = old_y;
 
-    return y;
+    ego_chr * pchr = ChrObjList.get_allocated_data_ptr( ichr );
+    if ( !DEFINED_PCHR( pchr ) ) return new_y;
+
+    return new_y;
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_debug_player( const PLA_REF & ipla, const float y )
+float draw_debug_player( const PLA_REF & ipla, const float old_y )
 {
-    ego_player * ppla = PlaDeque.find_by_ref( ipla );
-    if ( NULL == ppla || !ppla->valid ) return y;
+    float new_y = old_y;
 
-    float new_y = y;
+    ego_player * ppla = PlaDeque.find_by_ref( ipla );
+    if ( NULL == ppla || !ppla->valid ) return new_y;
 
     if ( DEFINED_CHR( ppla->index ) )
     {
@@ -1665,14 +1667,14 @@ float draw_debug_player( const PLA_REF & ipla, const float y )
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_debug( const float y )
+float draw_debug( const float old_y )
 {
     //PLA_REF ipla;
     //ego_player * ppla;
 
-    if ( !cfg.dev_mode ) return y;
+    float new_y = old_y;
 
-    float new_y = y;
+    if ( !cfg.dev_mode ) return new_y;
 
     // draw the character's speed
     //ppla = PlaDeque.find_by_ref( PLA_REF( 0 ) );
@@ -1724,11 +1726,11 @@ float draw_debug( const float y )
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_timer( const float y )
+float draw_timer( const float old_y )
 {
     int fifties, seconds, minutes;
 
-    float new_y = y;
+    float new_y = old_y;
 
     if ( timeron )
     {
@@ -1742,9 +1744,9 @@ float draw_timer( const float y )
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_game_status( const float y )
+float draw_game_status( const float old_y )
 {
-    float new_y = y;
+    float new_y = old_y;
 
     if ( net_waiting_for_players() )
     {
@@ -1777,11 +1779,11 @@ float draw_game_status( const float y )
 }
 
 //--------------------------------------------------------------------------------------------
-float draw_messages( const float y )
+float draw_messages( const float old_y )
 {
     int cnt, tnc;
 
-    float new_y = y;
+    float new_y = old_y;
 
     // Messages
     if ( messageon )
@@ -4260,12 +4262,12 @@ void dolist_make( const ego_mpd * pmesh )
     }
     CHR_END_LOOP();
 
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
     {
-        if ( ego_mpd::grid_is_valid( pmesh, prt_bdl.prt_ptr()->onwhichgrid ) )
+        if ( ego_mpd::grid_is_valid( pmesh, pprt->onwhichgrid ) )
         {
             // Add the character
-            dolist_add_prt( pmesh, prt_bdl.prt_ref() );
+            dolist_add_prt( pmesh, iprt );
         }
     }
     PRT_END_LOOP();
@@ -5529,18 +5531,18 @@ void gfx_make_dynalist( ego_camera * pcam )
     // Don't really make a list, just set to visible or not
     dyna_list_count = 0;
     dyna_distancetobeat = 1e12;
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
     {
-        prt_bdl.prt_ptr()->inview = bfalse;
+        pprt->inview = bfalse;
 
-        if ( !ego_mpd::grid_is_valid( PMesh, prt_bdl.prt_ptr()->onwhichgrid ) ) continue;
+        if ( !ego_mpd::grid_is_valid( PMesh, pprt->onwhichgrid ) ) continue;
 
-        prt_bdl.prt_ptr()->inview = PMesh->tmem.tile_list[prt_bdl.prt_ptr()->onwhichgrid].inrenderlist;
+        pprt->inview = PMesh->tmem.tile_list[pprt->onwhichgrid].inrenderlist;
 
         // Set up the lights we need
-        if ( !prt_bdl.prt_ptr()->dynalight.on ) continue;
+        if ( !pprt->dynalight.on ) continue;
 
-        vdist = fvec3_sub( ego_prt::get_pos_v( prt_bdl.prt_ptr() ), pcam->track_pos.v );
+        vdist = fvec3_sub( ego_prt::get_pos_v( pprt ), pcam->track_pos.v );
 
         distance = vdist.x * vdist.x + vdist.y * vdist.y + vdist.z * vdist.z;
         if ( distance < dyna_distancetobeat )
@@ -5586,9 +5588,9 @@ void gfx_make_dynalist( ego_camera * pcam )
 
             if ( found )
             {
-                dyna_list[slot].pos     = ego_prt::get_pos( prt_bdl.prt_ptr() );
-                dyna_list[slot].level   = prt_bdl.prt_ptr()->dynalight.level;
-                dyna_list[slot].falloff = prt_bdl.prt_ptr()->dynalight.falloff;
+                dyna_list[slot].pos     = ego_prt::get_pos( pprt );
+                dyna_list[slot].level   = pprt->dynalight.level;
+                dyna_list[slot].falloff = pprt->dynalight.falloff;
             }
         }
     }

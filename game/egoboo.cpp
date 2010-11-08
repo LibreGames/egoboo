@@ -501,7 +501,7 @@ int SDL_main( const int argc, char **argv )
         do_flip_pages();
 
         // let the OS breathe. It may delay as long as 10ms
-        SDL_Delay( 1 );
+        //SDL_Delay( 1 );
     }
 
     // terminate the game and menu processes

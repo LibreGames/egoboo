@@ -370,6 +370,7 @@ struct ego_obj_prt : public ego_obj, public ego_prt
     static const data_type * cget_data_ptr( const its_type * ptr ) { return NULL == ptr ? NULL : static_cast<const data_type *>( ptr ); }
 
     static bool_t request_terminate( const reference_type & iprt );
+    static bool_t request_terminate( const ego_bundle_prt & bdl_prt );
     static bool_t request_terminate( ego_bundle_prt & bdl_prt );
     static bool_t request_terminate( its_type * pprt );
 
@@ -523,6 +524,6 @@ bool_t    prt_is_over_water( const PRT_REF & particle );
 PIP_REF load_one_particle_profile_vfs( const char *szLoadName, const PIP_REF & pip_override );
 void    reset_particles();
 
-ego_bundle_prt & prt_calc_environment( ego_bundle_prt & bdl );
+const ego_bundle_prt * prt_calc_environment( const ego_bundle_prt * bdl );
 
 #define _particle_h

@@ -2975,7 +2975,7 @@ CHR_REF spawn_one_character( fvec3_t pos, const PRO_REF & profile, const TEAM_RE
     }
 
     icap = pro_get_icap( profile );
-    if ( LOADED_CAP( icap ) )
+    if ( !LOADED_CAP( icap ) )
     {
         log_warning( "%s - trying to spawn using unknown character profile (data.txt) %d\n", __FUNCTION__, icap.get_value() );
 
@@ -6440,15 +6440,15 @@ void move_all_characters( void )
     CHR_END_LOOP();
 
     // The following functions need to be called any time you actually change a charcter's position
-    PROFILE_DECLARE( keep_weapons_with_holders );
+    PROFILE_BEGIN( keep_weapons_with_holders );
     keep_weapons_with_holders();
     PROFILE_END2( keep_weapons_with_holders );
 
-    PROFILE_DECLARE( attach_all_particles );
+    PROFILE_BEGIN( attach_all_particles );
     attach_all_particles();
     PROFILE_END2( attach_all_particles );
 
-    PROFILE_DECLARE( make_all_character_matrices );
+    PROFILE_BEGIN( make_all_character_matrices );
     make_all_character_matrices( update_wld != 0 );
     PROFILE_END2( make_all_character_matrices );
 }
@@ -6485,10 +6485,7 @@ void increment_all_character_update_counters()
 {
     CHR_BEGIN_LOOP_PROCESSING( cnt, pchr )
     {
-        ego_obj * pbase = ego_chr::get_obj_ptr( pchr );
-        if ( NULL == pbase ) continue;
-
-        pbase->update_count++;
+        pchr_obj->update_count++;
     }
     CHR_END_LOOP();
 }

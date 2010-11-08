@@ -290,8 +290,8 @@ bool_t ego_obj_BSP::fill( ego_obj_BSP * pbsp )
     PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
     {
         // reset a couple of things here
-        prt_bdl.prt_ptr()->targetplatform_ref     = CHR_REF( MAX_CHR );
-        prt_bdl.prt_ptr()->targetplatform_overlap = 0.0f;
+        prt_bdl_ptr->targetplatform_ref     = CHR_REF( MAX_CHR );
+        prt_bdl_ptr->targetplatform_overlap = 0.0f;
 
         // make sure the leaf is not marked as inserted
         prt_bdl_ptr_obj->bsp_leaf.inserted = bfalse;

@@ -60,28 +60,41 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
 #define ALLOCATED_PRT( IPRT )    FLAG_ALLOCATED_PCONT(ego_prt_container,  IPRT_GET_PCONT(IPRT) )
 #define ALLOCATED_PPRT( PPRT )   FLAG_ALLOCATED_PCONT(ego_prt_container,  PPRT_CGET_PCONT(PPRT) )
 
-#define VALID_PRT( IPRT )          ( ALLOCATED_PRT(IPRT) && FLAG_VALID_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define DEFINED_PRT( IPRT )        ( VALID_PRT(IPRT)     && !FLAG_TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define TERMINATED_PRT( IPRT )     ( VALID_PRT(IPRT)     && FLAG_TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define CONSTRUCTING_PRT( IPRT )   ( ALLOCATED_PRT(IPRT) && CONSTRUCTING_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define INITIALIZING_PRT( IPRT )   ( ALLOCATED_PRT(IPRT) && INITIALIZING_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define PROCESSING_PRT( IPRT )     ( ALLOCATED_PRT(IPRT) && PROCESSING_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define DEINITIALIZING_PRT( IPRT ) ( ALLOCATED_PRT(IPRT) && DEINITIALIZING_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define WAITING_PRT( IPRT )        ( ALLOCATED_PRT(IPRT) && WAITING_PBASE(IPRT_GET_POBJ(IPRT)) )
-
-#define VALID_PPRT( PPRT )          ( ALLOCATED_PPRT(PPRT) && FLAG_VALID_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define DEFINED_PPRT( PPRT )        ( VALID_PPRT(PPRT)     && !FLAG_TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define TERMINATED_PPRT( PPRT )     ( VALID_PPRT(PPRT)     && FLAG_TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define CONSTRUCTING_PPRT( PPRT )   ( ALLOCATED_PPRT(PPRT) && CONSTRUCTING_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define INITIALIZING_PPRT( PPRT )   ( ALLOCATED_PPRT(PPRT) && INITIALIZING_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define PROCESSING_PPRT( PPRT )     ( ALLOCATED_PPRT(PPRT) && PROCESSING_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define DEINITIALIZING_PPRT( PPRT ) ( ALLOCATED_PPRT(PPRT) && DEINITIALIZING_PBASE(PPRT_CGET_POBJ(PPRT)) )
-#define WAITING_PPRT( PPRT )        ( ALLOCATED_PPRT(PPRT) && WAITING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+//#define VALID_PRT( IPRT )          ( ALLOCATED_PRT(IPRT) && FLAG_VALID_PBASE(IPRT_GET_POBJ(IPRT)) )
+//#define DEFINED_PRT( IPRT )        ( VALID_PRT(IPRT)     && !FLAG_TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
+//#define TERMINATED_PRT( IPRT )     ( VALID_PRT(IPRT)     && FLAG_TERMINATED_PBASE(IPRT_GET_POBJ(IPRT)) )
+//#define CONSTRUCTING_PRT( IPRT )   ( ALLOCATED_PRT(IPRT) && CONSTRUCTING_PBASE(IPRT_GET_POBJ(IPRT)) )
+//#define INITIALIZING_PRT( IPRT )   ( ALLOCATED_PRT(IPRT) && INITIALIZING_PBASE(IPRT_GET_POBJ(IPRT)) )
+//#define PROCESSING_PRT( IPRT )     ( ALLOCATED_PRT(IPRT) && PROCESSING_PBASE(IPRT_GET_POBJ(IPRT)) )
+//#define DEINITIALIZING_PRT( IPRT ) ( ALLOCATED_PRT(IPRT) && DEINITIALIZING_PBASE(IPRT_GET_POBJ(IPRT)) )
+//#define WAITING_PRT( IPRT )        ( ALLOCATED_PRT(IPRT) && WAITING_PBASE(IPRT_GET_POBJ(IPRT)) )
+//
+//#define VALID_PPRT( PPRT )          ( ALLOCATED_PPRT(PPRT) && FLAG_VALID_PBASE(PPRT_CGET_POBJ(PPRT)) )
+//#define DEFINED_PPRT( PPRT )        ( VALID_PPRT(PPRT)     && !FLAG_TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
+//#define TERMINATED_PPRT( PPRT )     ( VALID_PPRT(PPRT)     && FLAG_TERMINATED_PBASE(PPRT_CGET_POBJ(PPRT)) )
+//#define CONSTRUCTING_PPRT( PPRT )   ( ALLOCATED_PPRT(PPRT) && CONSTRUCTING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+//#define INITIALIZING_PPRT( PPRT )   ( ALLOCATED_PPRT(PPRT) && INITIALIZING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+//#define PROCESSING_PPRT( PPRT )     ( ALLOCATED_PPRT(PPRT) && PROCESSING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+//#define DEINITIALIZING_PPRT( PPRT ) ( ALLOCATED_PPRT(PPRT) && DEINITIALIZING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+//#define WAITING_PPRT( PPRT )        ( ALLOCATED_PPRT(PPRT) && WAITING_PBASE(PPRT_CGET_POBJ(PPRT)) )
 
 /// Is the particle flagged as being in limbo?
 #define FLAG_DISPLAY_PPRT_OBJ( PPRT_OBJ )  ( (PPRT_OBJ)->obj_base_display )
 /// Is the particle object in limbo?
 #define STATE_LIMBO_PPRT_OBJ( PPRT_OBJ ) (STATE_PROCESSING_PBASE(PBASE) || STATE_WAITING_PBASE(PBASE))
+
+
+//--------------------------------------------------------------------------------------------
+// Macros to determine whether the particle is in the game or not.
+// If objects are being spawned, then any object that is just "defined" is treated as "in game"
+
+//#define INGAME_PRT(IPRT)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PRT(IPRT) : ALLOCATED_PRT(IPRT) && PROCESSING_PBASE(IPRT_GET_POBJ(IPRT)) )
+//#define INGAME_PPRT(PPRT)           ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PPRT(PPRT) : ALLOCATED_PPRT(PPRT) && PROCESSING_PBASE(PPRT_CGET_POBJ(PPRT)) )
+
+// the same as INGAME_*_BASE except that the particle does not have to be "on"
+// visible particles stick around in the active state (but off) until they have been displayed at least once
+#define LIMBO_PRT(IPRT)            ( FLAG_INITIALIZED_PBASE(IPRT_GET_POBJ(IPRT)) && !FLAG_ON_PBASE(IPRT_GET_POBJ(IPRT)) && FLAG_DISPLAY_PPRT_OBJ( IPRT_GET_POBJ(IPRT) ) )
+#define LIMBO_PPRT(PPRT)           ( FLAG_INITIALIZED_PBASE(PDATA_GET_POBJ(ego_prt, PPRT)) && !FLAG_ON_PBASE(PDATA_GET_POBJ(ego_prt, PPRT)) && FLAG_DISPLAY_PPRT_OBJ( PDATA_GET_POBJ(ego_prt, PPRT) ) )
 
 //--------------------------------------------------------------------------------------------
 // Macros to automate looping through a PrtObjList. Based on generic code for
@@ -161,18 +174,6 @@ typedef t_ego_obj_container< ego_obj_prt, MAX_PRT >  ego_prt_container;
     OBJ_LIST_END_LOOP(PrtObjList)
 
 //--------------------------------------------------------------------------------------------
-// Macros to determine whether the particle is in the game or not.
-// If objects are being spawned, then any object that is just "defined" is treated as "in game"
-
-#define INGAME_PRT(IPRT)            ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PRT(IPRT) : ALLOCATED_PRT(IPRT) && PROCESSING_PBASE(IPRT_GET_POBJ(IPRT)) )
-#define INGAME_PPRT(PPRT)           ( (ego_obj::get_spawn_depth()) > 0 ? DEFINED_PPRT(PPRT) : ALLOCATED_PPRT(PPRT) && PROCESSING_PBASE(PPRT_CGET_POBJ(PPRT)) )
-
-// the same as INGAME_*_BASE except that the particle does not have to be "on"
-// visible particles stick around in the active state (but off) until they have been displayed at least once
-#define LIMBO_PRT(IPRT)            ( FLAG_INITIALIZED_PBASE(IPRT_GET_POBJ(IPRT)) && !FLAG_ON_PBASE(IPRT_GET_POBJ(IPRT)) && FLAG_DISPLAY_PPRT_OBJ( IPRT_GET_POBJ(IPRT) ) )
-#define LIMBO_PPRT(PPRT)           ( FLAG_INITIALIZED_PBASE(PDATA_GET_POBJ(ego_prt, PPRT)) && !FLAG_ON_PBASE(PDATA_GET_POBJ(ego_prt, PPRT)) && FLAG_DISPLAY_PPRT_OBJ( PDATA_GET_POBJ(ego_prt, PPRT) ) )
-
-//--------------------------------------------------------------------------------------------
 // list definition
 //--------------------------------------------------------------------------------------------
 struct ego_particle_list : public t_obj_lst_deque<ego_obj_prt, MAX_PRT>
@@ -196,5 +197,276 @@ extern PrtObjList_t PrtObjList;
 //--------------------------------------------------------------------------------------------
 // Function prototypes
 //--------------------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------------
+// Function prototypes
+//--------------------------------------------------------------------------------------------
+
+static INLINE bool_t VALID_PRT( const PRT_REF & iprt )
+{
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    return ego_object_process_state_data::get_valid( pobj );
+}
+
+static INLINE bool_t DEFINED_PRT( const PRT_REF & iprt )
+{
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj );
+}
+
+static INLINE bool_t TERMINATED_PRT( const PRT_REF & iprt )
+{
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && ego_obj::get_killed( pobj );
+}
+
+static INLINE bool_t CONSTRUCTING_PRT( const PRT_REF & iprt )
+{
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_constructing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t INITIALIZING_PRT( const PRT_REF & iprt )
+{
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_constructed( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_initializing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t PROCESSING_PRT( const PRT_REF & iprt )
+{
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_obj::get_on( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_processing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t DEINITIALIZING_PRT( const PRT_REF & iprt )
+{
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_constructed( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_deinitializing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t WAITING_PRT( const PRT_REF & iprt )
+{
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_waiting == ego_object_process_state_data::get_action( pobj ) );
+}
+
+static INLINE bool_t VALID_PPRT( const ego_prt * pprt )
+{
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj );
+}
+
+static INLINE bool_t DEFINED_PPRT( const ego_prt * pprt )
+{
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj );
+}
+
+static INLINE bool_t TERMINATED_PPRT( const ego_prt * pprt )
+{
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && ego_obj::get_killed( pobj );
+}
+
+static INLINE bool_t CONSTRUCTING_PPRT( const ego_prt * pprt )
+{
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_constructing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t INITIALIZING_PPRT( const ego_prt * pprt )
+{
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_constructed( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_initializing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t PROCESSING_PPRT( const ego_prt * pprt )
+{
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    return
+        ego_obj::get_on( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_processing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t DEINITIALIZING_PPRT( const ego_prt * pprt )
+{
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_constructed( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_deinitializing == ego_obj::get_action( pobj ) );
+}
+
+static INLINE bool_t WAITING_PPRT( const ego_prt * pprt )
+{
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    return
+        ego_object_process_state_data::get_valid( pobj )
+        && !ego_obj::get_killed( pobj )
+        && ( ego_obj_waiting == ego_object_process_state_data::get_action( pobj ) );
+}
+
+static INLINE bool_t INGAME_PRT( const PRT_REF & iprt )
+{
+    bool_t retval = bfalse;
+
+    const ego_prt_container * pcont = PrtObjList.get_allocated_ptr( iprt );
+    if ( NULL == pcont ) return bfalse;
+
+    const ego_obj_prt * pobj = IPRT_GET_POBJ( iprt );
+    if ( NULL == pobj ) return bfalse;
+
+    if ( ego_obj::get_spawn_depth() > 0 )
+    {
+        retval =
+            ego_object_process_state_data::get_valid( pobj )
+            && !ego_obj::get_killed( pobj );
+    }
+    else
+    {
+        retval = ego_obj::get_on( pobj ) &&
+                 !ego_obj::get_killed( pobj ) &&
+                 ( ego_obj_processing == ego_obj::get_action( pobj ) );
+    }
+
+    return retval;
+}
+
+static INLINE bool_t INGAME_PPRT( const ego_prt * pprt )
+{
+    bool_t retval = bfalse;
+
+    const ego_obj_prt * pobj = PPRT_CGET_POBJ( pprt );
+    if ( NULL == pobj ) return bfalse;
+
+    const ego_prt_container * pcont = POBJ_PRT_CGET_PCONT( pobj );
+    if ( !allocator_client::has_valid_id( pcont ) ) return bfalse;
+
+    if ( ego_obj::get_spawn_depth() > 0 )
+    {
+        retval =
+            ego_object_process_state_data::get_valid( pobj )
+            && !ego_obj::get_killed( pobj );
+    }
+    else
+    {
+        retval = ego_obj::get_on( pobj ) &&
+                 !ego_obj::get_killed( pobj ) &&
+                 ( ego_obj_processing == ego_obj::get_action( pobj ) );
+    }
+
+    return retval;
+}
 
 #define _PrtList_h

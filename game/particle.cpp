@@ -63,23 +63,25 @@ t_stack< ego_pip, MAX_PIP  > PipStack;
 static int prt_do_end_spawn( const PRT_REF & iprt );
 static int prt_do_contspawn( const ego_bundle_prt & bdl_prt );
 
-static ego_bundle_prt & prt_do_bump_damage( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & prt_update_animation( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & prt_update_dynalight( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & prt_update_timers( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & prt_update_do_water( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & prt_update_ingame( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & prt_update_limbo( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & prt_update( ego_bundle_prt & bdl_prt );
+static egoboo_rv prt_update( const ego_bundle_prt & bdl_prt );
 
-static ego_bundle_prt & move_one_particle_get_environment( ego_bundle_prt & bdl_prt, ego_prt_environment * penviro );
-static ego_bundle_prt & move_one_particle_do_fluid_friction( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & move_one_particle_do_homing( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & move_one_particle_do_z_motion( ego_bundle_prt & bdl_prt );
-static ego_bundle_prt & move_one_particle_do_floor( ego_bundle_prt & bdl_prt );
+static const ego_bundle_prt * prt_do_bump_damage( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * prt_update_animation( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * prt_update_dynalight( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * prt_update_timers( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * prt_update_do_water( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * prt_update_ingame( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * prt_update_limbo( const ego_bundle_prt * bdl_prt );
+
+static const ego_bundle_prt * move_one_particle_get_environment( const ego_bundle_prt * bdl_prt, ego_prt_environment * penviro );
+static const ego_bundle_prt * move_one_particle_do_fluid_friction( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * move_one_particle_do_homing( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * move_one_particle_do_z_motion( const ego_bundle_prt * bdl_prt );
+static const ego_bundle_prt * move_one_particle_do_floor( const ego_bundle_prt * bdl_prt );
 
 // private functions to request the "deletion" of particles
 static bool_t    _prt_request_terminate( ego_bundle_prt & bdl_prt );
+static bool_t    _prt_request_terminate( const ego_bundle_prt & bdl_prt );
 static bool_t    _prt_request_terminate_ref( const PRT_REF & iprt );
 
 //--------------------------------------------------------------------------------------------
@@ -1038,13 +1040,13 @@ void ego_prt::set_level( ego_prt * pprt, const float level )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_calc_environment( ego_bundle_prt & bdl )
+const ego_bundle_prt * prt_calc_environment( const ego_bundle_prt * pbdl )
 {
-    return move_one_particle_get_environment( bdl, NULL );
+    return move_one_particle_get_environment( pbdl, NULL );
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & move_one_particle_get_environment( ego_bundle_prt & bdl_prt, ego_prt_environment * penviro )
+const ego_bundle_prt * move_one_particle_get_environment( const ego_bundle_prt * pbdl, ego_prt_environment * penviro )
 {
     /// \author BB
     /// \details  A helper function that gets all of the information about the particle's
@@ -1056,8 +1058,8 @@ ego_bundle_prt & move_one_particle_get_environment( ego_bundle_prt & bdl_prt, eg
 
     ego_prt * loc_pprt;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
 
     // handle the optional parameter
     if ( NULL == penviro ) penviro = &( loc_pprt->enviro );
@@ -1159,11 +1161,11 @@ ego_bundle_prt & move_one_particle_get_environment( ego_bundle_prt & bdl_prt, eg
         }
     }
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & move_one_particle_do_fluid_friction( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * move_one_particle_do_fluid_friction( const ego_bundle_prt * pbdl )
 {
     /// \author BB
     /// \details  A helper function that computes particle friction with the floor
@@ -1180,14 +1182,14 @@ ego_bundle_prt & move_one_particle_do_fluid_friction( ego_bundle_prt & bdl_prt )
 
     fvec3_t fluid_acc;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt    = bdl_prt.prt_ptr();
-    loc_ppip    = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt    = pbdl->prt_ptr();
+    loc_ppip    = pbdl->pip_ptr();
     loc_penviro = &( loc_pprt->enviro );
     loc_pphys   = &( loc_pprt->phys );
 
     // if the particle is homing in on something, ignore friction
-    if ( loc_pprt->is_homing ) return bdl_prt;
+    if ( loc_pprt->is_homing ) return pbdl;
 
     // assume no acceleration
     fvec3_self_clear( fluid_acc.v );
@@ -1211,11 +1213,11 @@ ego_bundle_prt & move_one_particle_do_fluid_friction( ego_bundle_prt & bdl_prt )
 
     phys_data_accumulate_avel( loc_pphys, fluid_acc.v );
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & move_one_particle_do_homing( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * move_one_particle_do_homing( const ego_bundle_prt * pbdl )
 {
     ego_chr * ptarget;
 
@@ -1225,14 +1227,14 @@ ego_bundle_prt & move_one_particle_do_homing( ego_bundle_prt & bdl_prt )
     ego_prt_environment * loc_penviro;
     ego_phys_data       * loc_pphys;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt    = bdl_prt.prt_ptr();
-    loc_iprt    = bdl_prt.prt_ref();
-    loc_ppip    = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt    = pbdl->prt_ptr();
+    loc_iprt    = pbdl->prt_ref();
+    loc_ppip    = pbdl->pip_ptr();
     loc_penviro = &( loc_pprt->enviro );
     loc_pphys   = &( loc_pprt->phys );
 
-    if ( !loc_pprt->is_homing || !INGAME_CHR( loc_pprt->target_ref ) ) return bdl_prt;
+    if ( !loc_pprt->is_homing || !INGAME_CHR( loc_pprt->target_ref ) ) return pbdl;
 
     if ( !INGAME_CHR( loc_pprt->target_ref ) )
     {
@@ -1306,17 +1308,17 @@ ego_bundle_prt & move_one_particle_do_homing( ego_bundle_prt & bdl_prt )
         }
     }
 
-    return bdl_prt;
+    return pbdl;
 
 move_one_particle_do_homing_fail:
 
-    ego_obj_prt::request_terminate( bdl_prt );
+    ego_obj_prt::request_terminate( *pbdl );
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & move_one_particle_do_z_motion( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * move_one_particle_do_z_motion( const ego_bundle_prt * pbdl )
 {
     /// \author BB
     /// \details  A helper function that does gravitational acceleration and buoyancy
@@ -1329,10 +1331,10 @@ ego_bundle_prt & move_one_particle_do_z_motion( ego_bundle_prt & bdl_prt )
     ego_prt_environment * loc_penviro;
     ego_phys_data       * loc_pphys;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt    = bdl_prt.prt_ptr();
-    loc_iprt    = bdl_prt.prt_ref();
-    loc_ppip    = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt    = pbdl->prt_ptr();
+    loc_iprt    = pbdl->prt_ref();
+    loc_ppip    = pbdl->pip_ptr();
     loc_penviro = &( loc_pprt->enviro );
     loc_pphys   = &( loc_pprt->phys );
 
@@ -1340,7 +1342,7 @@ ego_bundle_prt & move_one_particle_do_z_motion( ego_bundle_prt & bdl_prt )
     ///            to move forward in a straight line without being dragged down into the dust!
     /// \note BB@> however, the fireball particle is light, and without gravity it will never bounce on the
     ///            ground as it is supposed to
-    if ( /* loc_pprt->type == SPRITE_LIGHT || */ loc_pprt->is_homing || INGAME_CHR( loc_pprt->attachedto_ref ) ) return bdl_prt;
+    if ( /* loc_pprt->type == SPRITE_LIGHT || */ loc_pprt->is_homing || INGAME_CHR( loc_pprt->attachedto_ref ) ) return pbdl;
 
     loc_zlerp = CLIP( loc_penviro->floor_lerp, 0.0f, 1.0f );
 
@@ -1373,11 +1375,11 @@ ego_bundle_prt & move_one_particle_do_z_motion( ego_bundle_prt & bdl_prt )
     // do gravity
     phys_data_accumulate_avel_index( loc_pphys,  loc_zlerp * gravity, kZ );
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & move_one_particle_do_floor( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * move_one_particle_do_floor( const ego_bundle_prt * pbdl )
 {
     /// \author BB
     /// \details  A helper function that computes particle friction with the floor
@@ -1395,14 +1397,14 @@ ego_bundle_prt & move_one_particle_do_floor( ego_bundle_prt & bdl_prt )
     ego_prt_environment * loc_penviro;
     ego_phys_data       * loc_pphys;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt     = bdl_prt.prt_ptr();
-    loc_ppip     = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt     = pbdl->prt_ptr();
+    loc_ppip     = pbdl->pip_ptr();
     loc_penviro  = &( loc_pprt->enviro );
     loc_pphys    = &( loc_pprt->phys );
 
     // no friction for attached particles
-    if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) ) return bdl_prt;
+    if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) ) return pbdl;
 
     // determine the surface normal for the particle's "floor"
     if ( INGAME_CHR( loc_pprt->onwhichplatform_ref ) )
@@ -1502,11 +1504,11 @@ ego_bundle_prt & move_one_particle_do_floor( ego_bundle_prt & bdl_prt )
         phys_data_apply_normal_acceleration( loc_pphys, vup, 1.0f, loc_penviro->floor_lerp, NULL );
     }
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-bool_t move_one_particle( ego_bundle_prt & bdl_prt )
+bool_t move_one_particle( const ego_bundle_prt * pbdl )
 {
     /// \author BB
     /// \details  The master function for controlling a particle's motion
@@ -1514,8 +1516,8 @@ bool_t move_one_particle( ego_bundle_prt & bdl_prt )
     ego_prt             * loc_pprt;
     ego_prt_environment * loc_penviro;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bfalse;
-    loc_pprt     = bdl_prt.prt_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return bfalse;
+    loc_pprt     = pbdl->prt_ptr();
     loc_penviro  = &( loc_pprt->enviro );
 
     if ( !INGAME_PPRT( loc_pprt ) ) return bfalse;
@@ -1537,27 +1539,27 @@ bool_t move_one_particle( ego_bundle_prt & bdl_prt )
     }
 
     // what is the local environment like?
-    bdl_prt = move_one_particle_get_environment( bdl_prt, NULL );
-    if ( NULL == bdl_prt.prt_ptr() ) return bfalse;
+    pbdl = move_one_particle_get_environment( pbdl, NULL );
+    if ( NULL == pbdl->prt_ptr() ) return bfalse;
 
     // wind, current, and other fluid friction effects
-    bdl_prt = move_one_particle_do_fluid_friction( bdl_prt );
-    if ( NULL == bdl_prt.prt_ptr() ) return bfalse;
+    pbdl = move_one_particle_do_fluid_friction( pbdl );
+    if ( NULL == pbdl->prt_ptr() ) return bfalse;
 
     // particle homing effects
-    bdl_prt = move_one_particle_do_homing( bdl_prt );
-    if ( NULL == bdl_prt.prt_ptr() ) return bfalse;
+    pbdl = move_one_particle_do_homing( pbdl );
+    if ( NULL == pbdl->prt_ptr() ) return bfalse;
 
     // gravity effects
-    bdl_prt = move_one_particle_do_z_motion( bdl_prt );
-    if ( NULL == bdl_prt.prt_ptr() ) return bfalse;
+    pbdl = move_one_particle_do_z_motion( pbdl );
+    if ( NULL == pbdl->prt_ptr() ) return bfalse;
 
     // do friction with the floor last so we can guess about slipping
-    bdl_prt = move_one_particle_do_floor( bdl_prt );
-    if ( NULL == bdl_prt.prt_ptr() ) return bfalse;
+    pbdl = move_one_particle_do_floor( pbdl );
+    if ( NULL == pbdl->prt_ptr() ) return bfalse;
 
-    //bdl_prt = move_one_particle_integrate_motion( bdl_prt );
-    //if( NULL == bdl_prt.prt_ptr() ) return bfalse;
+    //pbdl = move_one_particle_integrate_motion( pbdl );
+    //if( NULL == pbdl->prt_ptr() ) return bfalse;
 
     return btrue;
 }
@@ -1574,10 +1576,10 @@ void move_all_particles( void )
     PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, prt_bdl )
     {
         // prime the environment
-        prt_bdl.prt_ptr()->enviro.air_friction = air_friction;
-        prt_bdl.prt_ptr()->enviro.ice_friction = ice_friction;
+        prt_bdl_ptr->enviro.air_friction = air_friction;
+        prt_bdl_ptr->enviro.ice_friction = ice_friction;
 
-        move_one_particle( prt_bdl );
+        move_one_particle( &prt_bdl );
     }
     PRT_END_LOOP();
 }
@@ -2029,6 +2031,14 @@ bool_t _prt_request_terminate( ego_bundle_prt & bdl_prt )
 }
 
 //--------------------------------------------------------------------------------------------
+bool_t _prt_request_terminate( const ego_bundle_prt & bdl_prt )
+{
+    if ( NULL == bdl_prt.prt_ptr() ) return bfalse;
+
+    return  _prt_request_terminate_ref( bdl_prt.prt_ref() );
+}
+
+//--------------------------------------------------------------------------------------------
 bool_t _prt_request_terminate_ref( const PRT_REF & iprt )
 {
     /// \author BB
@@ -2123,19 +2133,16 @@ void cleanup_all_particles()
 //--------------------------------------------------------------------------------------------
 void increment_all_particle_update_counters()
 {
-    PRT_BEGIN_LOOP_DEFINED_BDL( cnt, bdl )
+    PRT_BEGIN_LOOP_DEFINED( cnt, pprt )
     {
-        ego_obj * pbase = ego_prt::get_obj_ptr( bdl.prt_ptr() );
-        if ( NULL == pbase ) continue;
-
-        pbase->update_count++;
+        pprt_obj->update_count++;
     }
     PRT_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_do_bump_damage( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * prt_do_bump_damage( const ego_bundle_prt * pbdl )
 {
     // apply damage from attached bump particles (about once a second)
 
@@ -2146,13 +2153,13 @@ ego_bundle_prt & prt_do_bump_damage( ego_bundle_prt & bdl_prt )
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
-    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_ppip = pbdl->pip_ptr();
 
     // wait until the right time
     update_count = update_wld + ego_prt::get_obj_ref( *loc_pprt ).get_id();
-    if ( 0 != ( update_count & 31 ) ) return bdl_prt;
+    if ( 0 != ( update_count & 31 ) ) return pbdl;
 
     // do nothing if the particle is hidden
     /// \note ZF@> This is already checked in prt_update_ingame()
@@ -2160,14 +2167,14 @@ ego_bundle_prt & prt_do_bump_damage( ego_bundle_prt & bdl_prt )
 
     // we must be attached to something
     ichr = loc_pprt->attachedto_ref;
-    if ( !INGAME_CHR( ichr ) ) return bdl_prt;
+    if ( !INGAME_CHR( ichr ) ) return pbdl;
 
     // find out who is holding the owner of this object
     iholder = ego_chr::get_lowest_attachment( ichr, btrue );
     if ( MAX_CHR == iholder ) iholder = ichr;
 
     // do nothing if you are attached to your owner
-    if (( MAX_CHR != loc_pprt->owner_ref ) && ( iholder == loc_pprt->owner_ref || ichr == loc_pprt->owner_ref ) ) return bdl_prt;
+    if (( MAX_CHR != loc_pprt->owner_ref ) && ( iholder == loc_pprt->owner_ref || ichr == loc_pprt->owner_ref ) ) return pbdl;
 
     // Attached particle damage ( Burning )
     if ( loc_ppip->allowpush && 0 == loc_ppip->vel_hrz_pair.base )
@@ -2189,11 +2196,11 @@ ego_bundle_prt & prt_do_bump_damage( ego_bundle_prt & bdl_prt )
 
     damage_character( ichr, ATK_BEHIND, local_damage, loc_pprt->damagetype, loc_pprt->team, loc_pprt->owner_ref, loc_ppip->damfx, bfalse );
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-int prt_do_contspawn( const ego_bundle_prt & bdl_prt )
+int prt_do_contspawn( const ego_bundle_prt * pbdl )
 {
     /// Spawn new particles if continually spawning
 
@@ -2202,9 +2209,9 @@ int prt_do_contspawn( const ego_bundle_prt & bdl_prt )
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return spawn_count;
-    loc_pprt = bdl_prt.prt_ptr();
-    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return spawn_count;
+    loc_pprt = pbdl->prt_ptr();
+    loc_ppip = pbdl->pip_ptr();
 
     if ( loc_ppip->contspawn_amount <= 0 || -1 == loc_ppip->contspawn_pip )
     {
@@ -2223,7 +2230,7 @@ int prt_do_contspawn( const ego_bundle_prt & bdl_prt )
         for ( tnc = 0; tnc < loc_ppip->contspawn_amount; tnc++ )
         {
             PRT_REF prt_child = spawn_one_particle( ego_prt::get_pos( loc_pprt ), facing, loc_pprt->profile_ref, loc_ppip->contspawn_pip,
-                                                    CHR_REF( MAX_CHR ), GRIP_LAST, loc_pprt->team, loc_pprt->owner_ref, bdl_prt.prt_ref(), tnc, loc_pprt->target_ref );
+                                                    CHR_REF( MAX_CHR ), GRIP_LAST, loc_pprt->team, loc_pprt->owner_ref, pbdl->prt_ref(), tnc, loc_pprt->target_ref );
 
             if ( VALID_PRT( prt_child ) )
             {
@@ -2254,7 +2261,7 @@ int prt_do_contspawn( const ego_bundle_prt & bdl_prt )
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_update_do_water( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * prt_update_do_water( const ego_bundle_prt * pbdl )
 {
     /// handle the particle interaction with water
 
@@ -2264,9 +2271,9 @@ ego_bundle_prt & prt_update_do_water( ego_bundle_prt & bdl_prt )
     ego_pip             * loc_ppip;
     ego_prt_environment * penviro;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
-    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_ppip = pbdl->pip_ptr();
     penviro  = &( loc_pprt->enviro );
 
     inwater = ( loc_pprt->pos.z < water.surface_level ) && ( 0 != ego_mpd::test_fx( PMesh, loc_pprt->onwhichgrid, MPDFX_WATER ) );
@@ -2282,8 +2289,8 @@ ego_bundle_prt & prt_update_do_water( ego_bundle_prt & bdl_prt )
         else
         {
             // destroy the particle without ever activating it
-            _prt_request_terminate( bdl_prt );
-            return bdl_prt;
+            _prt_request_terminate( *pbdl );
+            return pbdl;
         }
     }
     else if ( inwater )
@@ -2342,20 +2349,20 @@ ego_bundle_prt & prt_update_do_water( ego_bundle_prt & bdl_prt )
         loc_pprt->inwater = bfalse;
     }
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_update_animation( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * prt_update_animation( const ego_bundle_prt * pbdl )
 {
     /// animate the particle
 
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
-    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_ppip = pbdl->pip_ptr();
 
     loc_pprt->image = loc_pprt->image + loc_pprt->image_add;
     if ( loc_pprt->image >= loc_pprt->image_max ) loc_pprt->image = 0;
@@ -2378,18 +2385,18 @@ ego_bundle_prt & prt_update_animation( ego_bundle_prt & bdl_prt )
     // spin the particle
     loc_pprt->facing += loc_ppip->facingadd;
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_update_dynalight( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * prt_update_dynalight( const ego_bundle_prt * pbdl )
 {
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
-    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_ppip = pbdl->pip_ptr();
 
     // Change dyna light values
     if ( loc_pprt->dynalight.level > 0 )
@@ -2410,16 +2417,16 @@ ego_bundle_prt & prt_update_dynalight( ego_bundle_prt & bdl_prt )
 
     loc_pprt->dynalight.falloff += loc_ppip->dynalight.falloff_add;
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_update_timers( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * prt_update_timers( const ego_bundle_prt * pbdl )
 {
     ego_prt             * loc_pprt;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
 
     // down the remaining lifetime of the particle
     if ( loc_pprt->life_timer > 0 ) loc_pprt->life_timer--;
@@ -2427,11 +2434,11 @@ ego_bundle_prt & prt_update_timers( ego_bundle_prt & bdl_prt )
     // down the continuous spawn timer
     if ( loc_pprt->contspawn_timer > 0 ) loc_pprt->contspawn_timer--;
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_update_ingame( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * prt_update_ingame( const ego_bundle_prt * pbdl )
 {
     /// \author BB
     /// \details  update everything about a particle that does not depend on collisions
@@ -2441,16 +2448,16 @@ ego_bundle_prt & prt_update_ingame( ego_bundle_prt & bdl_prt )
     ego_prt * loc_pprt;
     ego_pip * loc_ppip;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
-    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_ppip = pbdl->pip_ptr();
 
     pbase = PDATA_GET_PBASE( ego_prt, loc_pprt );
 
     // if the object is not "on", it is no longer "in game" but still needs to be displayed
     if ( !INGAME_PPRT( loc_pprt ) )
     {
-        return bdl_prt;
+        return pbdl;
     }
 
     // clear out the attachment if the attached character doesn't exist
@@ -2470,32 +2477,32 @@ ego_bundle_prt & prt_update_ingame( ego_bundle_prt & bdl_prt )
         loc_pprt->is_homing = loc_ppip->homing && !INGAME_CHR( loc_pprt->attachedto_ref ) && INGAME_CHR( loc_pprt->target_ref );
     }
 
-    // figure out where the particle is on the mesh and update bdl_prt.prt_ref() states
+    // figure out where the particle is on the mesh and update pbdl->prt_ref() states
     if ( !loc_pprt->is_hidden )
     {
-        bdl_prt = prt_update_do_water( bdl_prt );
-        if ( NULL == bdl_prt.prt_ptr() || NULL == loc_pprt ) return bdl_prt;
+        pbdl = prt_update_do_water( pbdl );
+        if ( NULL == pbdl->prt_ptr() || NULL == loc_pprt ) return pbdl;
     }
 
     //---- the following functions should not be done the first time through the update loop
-    if ( 0 == update_wld ) return bdl_prt;
+    if ( 0 == update_wld ) return pbdl;
 
     // hidden particles really don't do much of anything
     if ( !loc_pprt->is_hidden )
     {
-        bdl_prt = prt_update_animation( bdl_prt );
-        if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
+        pbdl = prt_update_animation( pbdl );
+        if ( NULL == pbdl->prt_ptr() ) return pbdl;
 
-        bdl_prt = prt_update_dynalight( bdl_prt );
-        if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
+        pbdl = prt_update_dynalight( pbdl );
+        if ( NULL == pbdl->prt_ptr() ) return pbdl;
 
-        bdl_prt = prt_update_timers( bdl_prt );
-        if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
+        pbdl = prt_update_timers( pbdl );
+        if ( NULL == pbdl->prt_ptr() ) return pbdl;
 
-        prt_do_contspawn( bdl_prt );
+        prt_do_contspawn( pbdl );
 
-        bdl_prt = prt_do_bump_damage( bdl_prt );
-        if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
+        pbdl = prt_do_bump_damage( pbdl );
+        if ( NULL == pbdl->prt_ptr() ) return pbdl;
     }
 
     if ( !loc_pprt->is_hidden )
@@ -2509,11 +2516,11 @@ ego_bundle_prt & prt_update_ingame( ego_bundle_prt & bdl_prt )
         ego_obj_prt::set_limbo( PDATA_GET_POBJ( ego_prt, loc_pprt ), btrue );
     }
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_update_limbo( ego_bundle_prt & bdl_prt )
+const ego_bundle_prt * prt_update_limbo( const ego_bundle_prt * pbdl )
 {
     /// \author BB
     /// \details  handle the case where the particle is still being diaplayed, but is no longer
@@ -2526,12 +2533,12 @@ ego_bundle_prt & prt_update_limbo( ego_bundle_prt & bdl_prt )
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
-    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_ppip = pbdl->pip_ptr();
 
-    pbase = PDATA_GET_PBASE( ego_prt, bdl_prt.prt_ptr() );
-    if ( !FLAG_VALID_PBASE( pbase ) ) return bdl_prt;
+    pbase = PDATA_GET_PBASE( ego_prt, pbdl->prt_ptr() );
+    if ( !FLAG_VALID_PBASE( pbase ) ) return pbdl;
 
     request_terminate = FLAG_REQ_TERMINATION_PBASE( pbase );
     if ( !loc_pprt->is_eternal )
@@ -2544,8 +2551,8 @@ ego_bundle_prt & prt_update_limbo( ego_bundle_prt & bdl_prt )
     prt_display = !ego_obj::get_on( pbase ) && ( 0 == pbase->frame_count );
     if ( request_terminate && !prt_display )
     {
-        ego_obj_prt::request_terminate( bdl_prt );
-        return bdl_prt;
+        ego_obj_prt::request_terminate( *pbdl );
+        return pbdl;
     }
 
     // clear out the attachment if the character doesn't exist at all
@@ -2554,7 +2561,7 @@ ego_bundle_prt & prt_update_limbo( ego_bundle_prt & bdl_prt )
         loc_pprt->attachedto_ref = CHR_REF( MAX_CHR );
     }
 
-    // determine whether the bdl_prt.prt_ref() is hidden
+    // determine whether the pbdl->prt_ref() is hidden
     loc_pprt->is_hidden = bfalse;
     if ( INGAME_CHR( loc_pprt->attachedto_ref ) )
     {
@@ -2564,70 +2571,64 @@ ego_bundle_prt & prt_update_limbo( ego_bundle_prt & bdl_prt )
     loc_pprt->is_homing = loc_ppip->homing && !INGAME_CHR( loc_pprt->attachedto_ref ) && INGAME_CHR( loc_pprt->target_ref );
 
     // the following functions should not be done the first time through the update loop
-    if ( 0 == update_wld ) return bdl_prt;
+    if ( 0 == update_wld ) return pbdl;
 
-    bdl_prt = prt_update_animation( bdl_prt );
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
+    pbdl = prt_update_animation( pbdl );
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
 
-    bdl_prt = prt_update_dynalight( bdl_prt );
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
+    pbdl = prt_update_dynalight( pbdl );
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
 
     if ( !loc_pprt->is_hidden )
     {
         pbase->update_count++;
     }
 
-    return bdl_prt;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_update( ego_bundle_prt & bdl_prt )
+egoboo_rv prt_update( const ego_bundle_prt & bdl )
 {
     ego_prt             * loc_pprt;
     ego_pip             * loc_ppip;
     ego_prt_environment * penviro;
 
-    if ( NULL == bdl_prt.prt_ptr() ) return bdl_prt;
-    loc_pprt = bdl_prt.prt_ptr();
-    loc_ppip = bdl_prt.pip_ptr();
+    if ( NULL == bdl.prt_ptr() ) return rv_error;
+
+    loc_pprt = bdl.prt_ptr();
+    loc_ppip = bdl.pip_ptr();
     penviro  = &( loc_pprt->enviro );
 
-    ego_obj * pobj = ego_prt::get_obj_ptr( bdl_prt.prt_ptr() );
+    ego_obj * pobj = ego_prt::get_obj_ptr( bdl.prt_ptr() );
 
     // do the next step in the particle configuration
-    ego_obj * tmp_pobj = ego_object_engine::run( pobj );
-    if ( NULL == tmp_pobj )
+    ego_obj * run_rv = ego_object_engine::run( pobj );
+    if ( NULL == run_rv )
     {
         // particle was destroyed. clean up and go home.
-        bdl_prt.invalidate();
-        return bdl_prt;
+        return rv_success;
     }
 
-    if ( tmp_pobj != pobj )
-    {
-        // "new" particle, so re-validate the bundle
-        bdl_prt.set( tmp_pobj->get_obj_prt_ptr() );
-    }
-
-    // if the bundle is no longer valid, return
-    if ( NULL == bdl_prt.prt_ptr() || NULL == bdl_prt.pip_ptr() ) return bdl_prt;
+    // when could we get back a different pointer than we sent in?
+    if ( run_rv != pobj ) return rv_fail;
 
     // if the particle is no longer allocated, return
-    if ( !VALID_PPRT( bdl_prt.prt_ptr() ) ) return bdl_prt;
+    if ( !VALID_PPRT( bdl.prt_ptr() ) ) return rv_success;
 
     // handle different particle states differently
-    if ( LIMBO_PPRT( bdl_prt.prt_ptr() ) )
+    if ( LIMBO_PPRT( bdl.prt_ptr() ) )
     {
         // the particle is in limbo
-        bdl_prt = prt_update_limbo( bdl_prt );
+        prt_update_limbo( &bdl );
     }
     else
     {
         // the particle is on
-        bdl_prt = prt_update_ingame( bdl_prt );
+        prt_update_ingame( &bdl );
     }
 
-    return bdl_prt;
+    return rv_success;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -2823,12 +2824,10 @@ egoboo_rv ego_bundle_prt::set( ego_prt * pprt )
 {
     if ( NULL == this ) return rv_error;
 
-    if ( NULL == _prt_ptr ) return rv_fail;
-
     // blank out old data
-    invalidate();
+    if( rv_error == invalidate() ) return rv_error;
 
-    if ( NULL == _prt_ptr || NULL == pprt ) return rv_fail;
+    if ( NULL == pprt ) return rv_fail;
 
     // set the particle pointer
     _prt_ptr = pprt;
@@ -2840,15 +2839,15 @@ egoboo_rv ego_bundle_prt::set( ego_prt * pprt )
 //--------------------------------------------------------------------------------------------
 void particle_physics_initialize_all()
 {
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, bdl_prt )
+    PRT_BEGIN_LOOP_ALLOCATED( cnt, pprt )
     {
-        phys_data_blank_accumulators( &( bdl_prt.prt_ptr()->phys ) );
+        phys_data_blank_accumulators( &( pprt->phys ) );
     }
     PRT_END_LOOP();
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_bump_mesh_attached( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
+const ego_bundle_prt * prt_bump_mesh_attached( const ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
 {
     /// \author BB
     /// \details  A helper function that figures out the next valid position of the particle.
@@ -2861,17 +2860,17 @@ ego_bundle_prt & prt_bump_mesh_attached( ego_bundle_prt & bdl, fvec3_t test_pos,
     ego_pip             * loc_ppip;
     ego_prt_environment * loc_penviro;
 
-    if ( NULL == bdl.prt_ptr() ) return bdl;
-    loc_iprt = bdl.prt_ref();
-    loc_pprt = bdl.prt_ptr();
-    loc_ppip = bdl.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_iprt = pbdl->prt_ref();
+    loc_pprt = pbdl->prt_ptr();
+    loc_ppip = pbdl->pip_ptr();
     loc_penviro  = &( loc_pprt->enviro );
 
     // if the particle is not still in "display mode" there is no point in going on
-    if ( !INGAME_PPRT( loc_pprt ) ) return bdl;
+    if ( !INGAME_PPRT( loc_pprt ) ) return pbdl;
 
     // only deal with attached particles
-    if ( MAX_CHR == loc_pprt->attachedto_ref ) return bdl;
+    if ( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl;
 
     // Move the particle
     hit_a_mesh = bfalse;
@@ -2889,15 +2888,14 @@ ego_bundle_prt & prt_bump_mesh_attached( ego_bundle_prt & bdl, fvec3_t test_pos,
     // handle the collision
     if ( hit_a_mesh && loc_ppip->end_ground )
     {
-        ego_obj_prt::request_terminate( bdl );
-        return bdl;
+        return NULL;
     }
 
-    return bdl;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & prt_bump_grid_attached( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
+const ego_bundle_prt * prt_bump_grid_attached( const ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_t test_vel, const float dt )
 {
     /// \author BB
     /// \details  A helper function that figures out the next valid position of the particle.
@@ -2912,17 +2910,17 @@ ego_bundle_prt & prt_bump_grid_attached( ego_bundle_prt & bdl, fvec3_t test_pos,
     ego_pip             * loc_ppip;
     ego_prt_environment * loc_penviro;
 
-    if ( NULL == bdl.prt_ptr() ) return bdl;
-    loc_pprt = bdl.prt_ptr();
-    loc_iprt = bdl.prt_ref();
-    loc_ppip = bdl.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_iprt = pbdl->prt_ref();
+    loc_ppip = pbdl->pip_ptr();
     loc_penviro  = &( loc_pprt->enviro );
 
     // if the particle is not still in "display mode" there is no point in going on
-    if ( !INGAME_PPRT( loc_pprt ) ) return bdl;
+    if ( !INGAME_PPRT( loc_pprt ) ) return pbdl;
 
     // only deal with attached particles
-    if ( MAX_CHR == loc_pprt->attachedto_ref ) return bdl;
+    if ( MAX_CHR == loc_pprt->attachedto_ref ) return pbdl;
 
     hit_a_grid  = bfalse;
     fvec3_self_clear( nrm_total.v );
@@ -2961,15 +2959,14 @@ ego_bundle_prt & prt_bump_grid_attached( ego_bundle_prt & bdl, fvec3_t test_pos,
     // handle the collision
     if ( hit_a_grid && ( loc_ppip->end_wall || loc_ppip->end_bump ) )
     {
-        ego_obj_prt::request_terminate( bdl );
-        return bdl;
+        return NULL;
     }
 
-    return bdl;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt &  prt_bump_mesh( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt, bool_t * pbumped_mesh )
+const ego_bundle_prt * prt_bump_mesh( const ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_t test_vel, const float dt, bool_t * pbumped_mesh )
 {
     /// \author BB
     /// \details  A helper function that figures out the next valid position of the particle.
@@ -2995,20 +2992,20 @@ ego_bundle_prt &  prt_bump_mesh( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
     if ( NULL == pbumped_mesh ) pbumped_mesh = &loc_bumped_mesh;
     *pbumped_mesh = bfalse;
 
-    if ( NULL == bdl.prt_ptr() ) return bdl;
-    loc_pprt = bdl.prt_ptr();
-    loc_iprt = bdl.prt_ref();
-    loc_ppip = bdl.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_iprt = pbdl->prt_ref();
+    loc_ppip = pbdl->pip_ptr();
     loc_penviro  = &( loc_pprt->enviro );
     loc_pphys    = &( loc_pprt->phys );
 
     // if the particle is not still in "display mode" there is no point in going on
-    if ( !INGAME_PPRT( loc_pprt ) ) return bdl;
+    if ( !INGAME_PPRT( loc_pprt ) ) return pbdl;
 
     // no point in doing this if the particle thinks it's attached
     if ( MAX_CHR != loc_pprt->attachedto_ref )
     {
-        return prt_bump_mesh_attached( bdl, test_pos, test_vel, dt );
+        return prt_bump_mesh_attached( pbdl, test_pos, test_vel, dt );
     }
 
     // save some parameters
@@ -3086,8 +3083,7 @@ ego_bundle_prt &  prt_bump_mesh( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
     // handle the collision
     if ( touch_a_mesh && loc_ppip->end_ground )
     {
-        ego_obj_prt::request_terminate( bdl );
-        return bdl;
+        return NULL;
     }
 
     // do the reflections off the walls and floors
@@ -3164,11 +3160,11 @@ ego_bundle_prt &  prt_bump_mesh( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
     *pbumped_mesh = ( fvec3_dist_abs( save_apos_plat.v, loc_pphys->apos_plat.v ) != 0.0f ) ||
                     ( fvec3_dist_abs( save_avel.v, loc_pphys->avel.v ) * dt != 0.0f ) ;
 
-    return bdl;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt &  prt_bump_grid( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t test_vel, const float dt, bool_t * pbumped_grid )
+const ego_bundle_prt *  prt_bump_grid( const ego_bundle_prt * pbdl, fvec3_t test_pos, fvec3_t test_vel, const float dt, bool_t * pbumped_grid )
 {
     /// \author BB
     /// \details  A helper function that figures out the next valid position of the particle.
@@ -3198,20 +3194,20 @@ ego_bundle_prt &  prt_bump_grid( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
     if ( NULL == pbumped_grid ) pbumped_grid = &loc_bumped_grid;
     *pbumped_grid = bfalse;
 
-    if ( NULL == bdl.prt_ptr() ) return bdl;
-    loc_pprt = bdl.prt_ptr();
-    loc_iprt = bdl.prt_ref();
-    loc_ppip = bdl.pip_ptr();
+    if ( NULL == pbdl->prt_ptr() ) return pbdl;
+    loc_pprt = pbdl->prt_ptr();
+    loc_iprt = pbdl->prt_ref();
+    loc_ppip = pbdl->pip_ptr();
     loc_penviro  = &( loc_pprt->enviro );
     loc_pphys    = &( loc_pprt->phys );
 
     // if the particle is not still in "display mode" there is no point in going on
-    if ( !INGAME_PPRT( loc_pprt ) ) return bdl;
+    if ( !INGAME_PPRT( loc_pprt ) ) return pbdl;
 
     // no point in doing this if the particle thinks it's attached
     if ( MAX_CHR != loc_pprt->attachedto_ref )
     {
-        return prt_bump_grid_attached( bdl, test_pos, test_vel, dt );
+        return prt_bump_grid_attached( pbdl, test_pos, test_vel, dt );
     }
 
     // save some parameters
@@ -3235,7 +3231,7 @@ ego_bundle_prt &  prt_bump_grid( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
     if ( !prt_test_wall( loc_pprt, test_pos.v ) )
     {
         // no detected interaction
-        return bdl;
+        return pbdl;
     }
 
     // how is the character hitting the wall?
@@ -3264,8 +3260,7 @@ ego_bundle_prt &  prt_bump_grid( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
     // handle the collision
     if ( touch_a_grid && ( loc_ppip->end_wall || loc_ppip->end_bump ) )
     {
-        ego_obj_prt::request_terminate( bdl );
-        return bdl;
+        return NULL;
     }
 
     // do the reflections off the walls and floors
@@ -3362,11 +3357,11 @@ ego_bundle_prt &  prt_bump_grid( ego_bundle_prt & bdl, fvec3_t test_pos, fvec3_t
     *pbumped_grid = ( fvec3_dist_abs( save_apos_plat.v, loc_pphys->apos_plat.v ) != 0.0f ) ||
                     ( fvec3_dist_abs( save_avel.v, loc_pphys->avel.v ) * dt != 0.0f ) ;
 
-    return bdl;
+    return pbdl;
 }
 
 //--------------------------------------------------------------------------------------------
-egoboo_rv particle_physics_finalize_one( ego_bundle_prt & bdl, const float dt )
+egoboo_rv particle_physics_finalize_one( const ego_bundle_prt & bdl, const float dt )
 {
     ego_prt             * loc_pprt;
     PRT_REF             loc_iprt;
@@ -3401,13 +3396,18 @@ egoboo_rv particle_physics_finalize_one( ego_bundle_prt & bdl, const float dt )
     bumped_mesh = bfalse;
     if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) )
     {
-        bdl = prt_bump_mesh_attached( bdl, test_pos, test_vel, dt );
+        if( NULL == prt_bump_mesh_attached( &bdl, test_pos, test_vel, dt ) )
+        {
+            return rv_success;
+        }
     }
     else
     {
-        bdl = prt_bump_mesh( bdl, test_pos, test_vel, dt, &bumped_mesh );
+        if( NULL == prt_bump_mesh( &bdl, test_pos, test_vel, dt, &bumped_mesh ) )
+        {
+            return rv_success;
+        }
     }
-    if ( NULL == bdl.prt_ptr() ) return rv_success;
 
     // if the particle hit the mesh, re-do the "integration" of the accumulators again,
     // to make sure that it does not go through the mesh
@@ -3421,13 +3421,18 @@ egoboo_rv particle_physics_finalize_one( ego_bundle_prt & bdl, const float dt )
     bumped_grid = bfalse;
     if ( PROCESSING_CHR( loc_pprt->attachedto_ref ) )
     {
-        bdl = prt_bump_grid_attached( bdl, test_pos, test_vel, dt );
+        if( NULL == prt_bump_grid_attached( &bdl, test_pos, test_vel, dt ) )
+        {
+            return rv_success;
+        }
     }
     else
     {
-        bdl = prt_bump_grid( bdl, test_pos, test_vel, dt, &bumped_grid );
+        if( NULL == prt_bump_grid( &bdl, test_pos, test_vel, dt, &bumped_grid ) )
+        {
+            return rv_success;
+        }
     }
-    if ( NULL == bdl.prt_ptr() ) return rv_success;
 
     // if the particle hit the grid, re-do the "integration" of the accumulators again,
     // to make sure that it does not go through the grid
@@ -3552,6 +3557,14 @@ bool_t ego_obj_prt::request_terminate( ego_obj_prt * pobj )
     set_limbo( pobj , btrue );
 
     return btrue;
+}
+
+//--------------------------------------------------------------------------------------------
+bool_t ego_obj_prt::request_terminate( const ego_bundle_prt & bdl_prt )
+{
+    if ( NULL == bdl_prt.prt_ptr() ) return bfalse;
+
+    return ego_obj_prt::request_terminate( bdl_prt.prt_ref() );
 }
 
 //--------------------------------------------------------------------------------------------

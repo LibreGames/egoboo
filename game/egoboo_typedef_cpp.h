@@ -288,10 +288,10 @@ private:
 
 #if (PROFILE_LEVEL > 0)
 #   define PROFILE_INIT_STRUCT(NAME)    dbg_pro(btrue, #NAME)
-#   define PROFILE_DECLARE(NAME)        debug_profiler dbg_pro_##NAME(btrue, #NAME);
+#   define PROFILE_DECLARE(NAME)        extern debug_profiler dbg_pro_##NAME(btrue, #NAME);
 #else
 #   define PROFILE_INIT_STRUCT(NAME)    dbg_pro(bfalse, #NAME)
-#   define PROFILE_DECLARE(NAME)        debug_profiler dbg_pro_##NAME(bfalse, #NAME);
+#   define PROFILE_DECLARE(NAME)        extern debug_profiler dbg_pro_##NAME(bfalse, #NAME);
 #endif
 
 #define PROFILE_FREE(NAME)

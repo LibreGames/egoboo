@@ -148,15 +148,15 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], c
 
     // Original points
     numparticle = 0;
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
     {
         ego_prt_instance * pinst;
 
         if ( numparticle >= reg_count ) break;
 
-        pinst = &( prt_bdl.prt_ptr()->inst );
+        pinst = &( pprt->inst );
 
-        if ( !prt_bdl.prt_ptr()->inview || prt_bdl.prt_ptr()->is_hidden ) continue;
+        if ( !pprt->inview || pprt->is_hidden ) continue;
 
         if ( 0 != pinst->size )
         {
@@ -171,7 +171,7 @@ size_t render_all_prt_begin( ego_camera * pcam, ego_prt_registry_entity reg[], c
 
             if ( dist > 0 )
             {
-                reg[numparticle].index = prt_bdl.prt_ref().get_value();
+                reg[numparticle].index = iprt.get_value();
                 reg[numparticle].dist  = dist;
                 numparticle++;
             }
@@ -413,15 +413,15 @@ size_t render_all_prt_ref_begin( ego_camera * pcam, ego_prt_registry_entity reg[
 
     // Original points
     numparticle = 0;
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
     {
         ego_prt_instance * pinst;
 
         if ( numparticle >= reg_count ) break;
 
-        pinst = &( prt_bdl.prt_ptr()->inst );
+        pinst = &( pprt->inst );
 
-        if ( !prt_bdl.prt_ptr()->inview || prt_bdl.prt_ptr()->is_hidden ) continue;
+        if ( !pprt->inview || pprt->is_hidden ) continue;
 
         if ( pinst->size != 0 )
         {
@@ -759,10 +759,10 @@ void update_all_prt_instance( ego_camera * pcam )
     if ( gfx_prt_instance_update_count == update_wld ) return;
     gfx_prt_instance_update_count = update_wld;
 
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, prt_bdl )
+    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
     {
         // get the parent object
-        ego_obj_prt * pobj = ego_prt::get_obj_ptr( prt_bdl.prt_ptr() );
+        ego_obj_prt * pobj = ego_prt::get_obj_ptr( pprt );
 
         // only do frame counting for particles that are fully activated!
         if ( !FLAG_VALID_PBASE( pobj ) ) continue;

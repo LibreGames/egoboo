@@ -123,7 +123,7 @@ static bool_t do_chr_prt_collision_init( ego_chr * pchr, ego_prt * pprt, ego_chr
 static bool_t do_chr_prt_collision( collision_node * d );
 
 static bool_t update_chr_platform_attachment( ego_chr * pchr );
-static ego_bundle_prt & update_prt_platform_attachment( ego_bundle_prt & bdl );
+static const ego_bundle_prt & update_prt_platform_attachment( const ego_bundle_prt & bdl );
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -603,11 +603,11 @@ bool_t collision_system::bump_all_platforms( collision_node_ary * pcn_ary )
     }
     CHR_END_LOOP();
 
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( iprt, bdl_prt )
+    PRT_BEGIN_LOOP_ALLOCATED( iprt, pprt )
     {
-        if ( MAX_CHR != bdl_prt.prt_ptr()->onwhichplatform_ref && bdl_prt.prt_ptr()->onwhichplatform_update < update_wld )
+        if ( MAX_CHR != pprt->onwhichplatform_ref && pprt->onwhichplatform_update < update_wld )
         {
-            detach_particle_from_platform( bdl_prt.prt_ptr() );
+            detach_particle_from_platform( pprt );
         }
     }
     PRT_END_LOOP();
@@ -1539,7 +1539,7 @@ bool_t attach_prt_to_platform( ego_prt * pprt, ego_chr * pplat )
 
         pprt->onwhichplatform_ref = GET_REF_PCHR( pplat );
 
-        prt_calc_environment( bdl );
+        prt_calc_environment( &bdl );
     }
 
     // blank the targetplatform_* stuff so we know we are done searching
@@ -1571,7 +1571,7 @@ bool_t detach_particle_from_platform( ego_prt * pprt )
     pprt->targetplatform_overlap   = 0.0f;
 
     // get the correct particle environment
-    prt_calc_environment( bdl_prt );
+    prt_calc_environment( &bdl_prt );
 
     return btrue;
 }
@@ -3190,7 +3190,7 @@ void update_all_chr_platform_attachments()
 }
 
 //--------------------------------------------------------------------------------------------
-ego_bundle_prt & update_prt_platform_attachment( ego_bundle_prt & bdl )
+const ego_bundle_prt & update_prt_platform_attachment( const ego_bundle_prt & bdl )
 {
     ego_chr * pplat;
     ego_prt * loc_pprt;
@@ -3208,7 +3208,7 @@ ego_bundle_prt & update_prt_platform_attachment( ego_bundle_prt & bdl )
 //--------------------------------------------------------------------------------------------
 void update_all_prt_platform_attachments()
 {
-    PRT_BEGIN_LOOP_ALLOCATED_BDL( cnt, bdl )
+    PRT_BEGIN_LOOP_PROCESSING_BDL( cnt, bdl )
     {
         update_prt_platform_attachment( bdl );
     }
@@ -3222,7 +3222,9 @@ void update_all_platform_attachments()
     /// \details do all the platform-related stuff that must be done every update
 
     update_all_chr_platform_attachments();
-    update_all_prt_platform_attachments();
+
+    // this function doesn't do anything (but waste time) at the moment
+    //update_all_prt_platform_attachments();
 }
 
 //--------------------------------------------------------------------------------------------
