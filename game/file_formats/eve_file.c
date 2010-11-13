@@ -194,8 +194,11 @@ eve_data_t * load_one_enchant_file_vfs( const char* szLoadName, eve_data_t * pev
         else if ( MAKE_IDSZ( 'S', 'E', 'N', 'D' ) == idsz ) peve->endsound_index = fget_int( fileread );
         else if ( MAKE_IDSZ( 'S', 'T', 'A', 'Y' ) == idsz ) peve->stayifnoowner = ( 0 != fget_int( fileread ) );
         else if ( MAKE_IDSZ( 'O', 'V', 'E', 'R' ) == idsz ) peve->spawn_overlay = ( 0 != fget_int( fileread ) );
-        else if ( MAKE_IDSZ( 'C', 'K', 'U', 'R' ) == idsz ) peve->seekurse = ( 0 != fget_int( fileread ) );
         else if ( MAKE_IDSZ( 'D', 'E', 'A', 'D' ) == idsz ) peve->stayiftargetdead = ( 0 != fget_int( fileread ) );
+		
+		//Give additional skills
+		else if ( MAKE_IDSZ( 'C', 'K', 'U', 'R' ) == idsz ) peve->seekurse = fget_int( fileread );
+		else if ( MAKE_IDSZ( 'D', 'A', 'R', 'K' ) == idsz ) peve->darkvision = fget_int( fileread );
     }
 
     // All done ( finally )
@@ -389,12 +392,12 @@ bool_t save_one_enchant_file_vfs( const char* szLoadName, const char * szTemplat
 
     if ( peve->seekurse )
     {
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'C', 'K', 'U', 'R' ), 1 );
+        fput_expansion( filewrite, "", MAKE_IDSZ( 'C', 'K', 'U', 'R' ), peve->seekurse );
     }
 
     if ( peve->stayiftargetdead )
     {
-        fput_expansion( filewrite, "", MAKE_IDSZ( 'D', 'E', 'A', 'D' ), 1 );
+        fput_expansion( filewrite, "", MAKE_IDSZ( 'D', 'E', 'A', 'D' ), peve->darkvision );
     }
 
     // dump the rest of the template file

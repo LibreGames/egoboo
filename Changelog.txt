@@ -1,9 +1,10 @@
-Credits to Penguinflyer5234, Seth, Khaos89 and Octagon this release!
-Version 2.8.1 (??.??.2010)
-- New Feature: Added special camera effects whenever a player gets dazed or grogged.
-- Update: Optimized menu rendering using pre-chaching. Menus should no longer lag or cause slowdowns.
+Version 2.9.x (??.??.201?)
 - Update: Added the ability to use a gamepad to control the cursor in the menu screens
 - Update: Complete rewrite of the Physics engine that fixed numerous physics issues.
+- Update: Optimized menu rendering using pre-chaching. Menus should no longer lag or cause slowdowns.
+
+Version 2.8.1 (??.11.2010)
+- New Feature: Added special camera effects whenever a player gets dazed or grogged.
 - Update: Complete rewrite of the Quest System. The quest system is much more stable and efficient now.
 - Update: Rust Eaters now get sick if they eat Kursed items.
 - Update: Homing particles will now try to target riders instead of their mounts.

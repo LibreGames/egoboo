@@ -1672,7 +1672,7 @@ bool_t check_target( ego_chr * psrc, const CHR_REF & ichr_test, IDSZ idsz, BIT_F
     if ( !chr_can_see_object( GET_REF_PCHR( psrc ), ichr_test ) ) return bfalse;
 
     // Need specific skill? ([NONE] always passes)
-    if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 != ego_chr_data::get_skill( ptst, idsz ) ) return bfalse;
+    if ( HAS_SOME_BITS( targeting_bits, TARGET_SKILL ) && 0 == ego_chr_data::get_skill( ptst, idsz ) ) return bfalse;
 
     // Require player to have specific quest?
     ego_player * ppla = PlaDeque.find_by_ref( ptst->is_which_player );

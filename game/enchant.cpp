@@ -394,15 +394,23 @@ bool_t remove_enchant( const ENC_REF & ienc, ENC_REF * ego_enc_parent )
             spawn_poof( penc->target_ref, penc->profile_ref );
         }
 
-        // Remove see kurse enchant
+		//Remove any gained skills
         if ( INGAME_CHR( itarget ) )
         {
             ego_chr * ptarget = ChrObjList.get_data_ptr( penc->target_ref );
 
-            if ( peve->seekurse && !ego_chr_data::get_skill( ptarget, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) ) )
+			//Restore default see kurse level
+            if ( peve->seekurse != 0 )
             {
-                ptarget->see_kurse_level = bfalse;
+                ptarget->see_kurse_level = ego_chr_data::get_skill( ptarget, MAKE_IDSZ( 'C', 'K', 'U', 'R' ) );
             }
+
+			//Reset to default darkvision
+			if ( peve->darkvision != 0 )
+			{
+				ptarget->darkvision_level = ego_chr_data::get_skill( ptarget, MAKE_IDSZ( 'D', 'A', 'R', 'K' ) );
+			}
+
         }
     }
 
@@ -964,11 +972,22 @@ ego_enc * ego_enc::do_initializing( ego_enc * penc )
         }
     }
 
-    // Allow them to see kurses?
-    if ( peve->seekurse && NULL != ptarget )
-    {
-        ptarget->see_kurse_level = btrue;
-    }
+	//Give new skills gained by this enchant
+	if( NULL != ptarget )
+	{
+		// Allow them to see kurses?
+		if ( 0 != peve->seekurse )
+		{
+			ptarget->see_kurse_level = peve->seekurse;
+		}
+
+		// Allow them to see in darkness (or blindness if negative)
+		if ( 0 != peve->seekurse )
+		{
+			ptarget->darkvision_level = peve->darkvision;
+		}
+
+	}
 
     // call the parent's virtual function
     get_obj_ptr( penc )->ego_obj::do_initializing();

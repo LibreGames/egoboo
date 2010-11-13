@@ -150,7 +150,8 @@ extern "C"
         float   addvalue[MAX_ENCHANT_ADD];    ///< The values to add
 
         // other values that are enchanted
-        bool_t  seekurse;                    ///< Allow target to see kurses
+        int  seekurse;                    ///< Allow target to see kurses
+		int  darkvision;                  ///< Allow target to see in darkness
     };
     typedef struct s_eve_data eve_data_t;
 
