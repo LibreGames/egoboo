@@ -374,7 +374,7 @@
     <ClCompile Include="Fluid_Studios_Memory_Manager\mmgr.cpp">
       <Filter>mmgr</Filter>
     </ClCompile>
-    <ClCompile Include="file_formats\treasure_table_file.cpp">
+    <ClCompile Include="file_formats\treasure_table_file.c">
       <Filter>file formats\randomtreasure.txt</Filter>
     </ClCompile>
   </ItemGroup>

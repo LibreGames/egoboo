@@ -21,7 +21,12 @@
 
 /// @file treasure_tables.h
 #include "egoboo_typedef.h"
-#include "char.h"
+
+#if defined(__cplusplus)
+extern "C"
+{
+#endif
+
 
 #define MAX_TABLES				32				//< Max number of tables
 #define TREASURE_TABLE_SIZE		128				//< Max number of objects per table
@@ -44,5 +49,8 @@ static treasure_table_t treasureTableList[MAX_TABLES];
 egoboo_rv init_random_treasure_tables_vfs( const char* filepath );
 void get_random_treasure( char* pStr );
 
-#define TREASURE_TABLES_H
+#if defined(__cplusplus)
+}
+#endif
 
+#define TREASURE_TABLES_H

@@ -26,7 +26,6 @@
 
 #include "egoboo_math.inl"		//For randomization
 #include "egoboo_fileutil.h"
-#include "egoboo_strutil.h"
 
 //Private functions
 static void load_one_treasure_table_vfs( vfs_FILE* fileread, treasure_table_t* new_table );
@@ -124,7 +123,7 @@ void get_random_treasure( char* pStr )
 	int treasure_index;
 
 	//Trap invalid strings
-	if ( INVALID_CSTR( pStr ) )	return;
+	if ( NULL == pStr )	return;
 
 	//Iterate through every treasure table until we find the one we want
 	for( i = 0; i < MAX_TABLES; i++ )

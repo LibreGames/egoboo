@@ -3164,6 +3164,130 @@ activate_spawn_file_spawn_exit:
 //--------------------------------------------------------------------------------------------
 void activate_spawn_file_vfs()
 {
+	/// @details ZZ@> This function sets up character data, loaded from "SPAWN.TXT"
+	const char       *newloadname;
+	vfs_FILE         *fileread;
+	spawn_file_info_t sp_info;
+
+	// Turn some back on
+	newloadname = "mp_data/spawn.txt";
+	fileread = vfs_openRead( newloadname );
+
+    PlaDeque.reinit();
+	sp_info.parent = MAX_CHR;
+	if ( NULL == fileread )
+	{
+		log_error( "Cannot read file: %s\n", newloadname );
+	}
+	else
+	{
+		spawn_file_info_t dynamic_list[MAX_PROFILE];		//These need to be dynamically loaded later
+		STRING loaded_objects[MAX_PROFILE];					//This is a list of all objects already loaded
+		size_t i, dynamic_count = 0;						//The length of dynamic_list
+
+		//Empty the list of loaded objects
+		memset( loaded_objects, CSTR_END, SDL_arraysize( loaded_objects) );
+
+		sp_info.parent = MAX_CHR;
+		while ( spawn_file_scan( fileread, &sp_info ) )
+		{
+			int save_slot = sp_info.slot;
+
+			// check to see if the slot is valid
+			if ( sp_info.slot >= MAX_PROFILE )
+			{
+				log_warning( "Invalid slot %d for \"%s\" in file \"%s\"\n", sp_info.slot, sp_info.spawn_coment, newloadname );
+				continue;
+			}
+
+			// If it is a dynamic slot, then wait with loading it until we have load all the static slot numbers
+			if ( sp_info.slot == -1 )
+			{
+				dynamic_list[dynamic_count] = sp_info;
+				dynamic_count++;
+				continue;
+			}
+
+			// If nothing is already in that slot, try to load it.
+			if ( !LOADED_PRO( (PRO_REF) sp_info.slot ) )
+			{
+				if( activate_spawn_file_load_object( &sp_info ) )
+				{
+					// successfully loaded the object
+					strncpy( loaded_objects[sp_info.slot], sp_info.spawn_coment, SDL_arraysize(loaded_objects[sp_info.slot]) );
+				}
+				else
+				{
+					// no, give a warning if it is useful
+					if ( save_slot > PMod->importamount * MAXIMPORTPERPLAYER )
+					{
+						log_warning( "The object \"%s\"(slot %d) in file \"%s\" does not exist on this machine\n", sp_info.spawn_coment, save_slot, newloadname );
+					}
+					continue;
+				}
+			}
+
+			if( !LOADED_PRO( (PRO_REF) sp_info.slot ) ) log_error( "This should not happen %s uses slot %i\n", sp_info.spawn_coment, sp_info.slot );
+
+			// we only reach this if everything was loaded properly
+			activate_spawn_file_spawn( &sp_info );
+		}
+
+		//Now finally do dynamic slot numbers
+		for( i = 0; i < dynamic_count; i++ )
+		{
+			bool_t already_loaded = bfalse;
+			sp_info = dynamic_list[i];
+
+			//First check if this object is already loaded before, no need to reload it then
+			for( sp_info.slot = MAXIMPORTPERPLAYER*4; sp_info.slot < MAX_PROFILE; sp_info.slot++ )
+			{
+				if( strcmp( loaded_objects[sp_info.slot], sp_info.spawn_coment ) == 0 )
+				{
+					already_loaded = btrue;
+					break;
+				}
+			}
+
+			// It wasn't loaded yet so we need to do it here for the first time
+			if( !already_loaded )
+			{
+				//Find first free slot and load the object in there
+				sp_info.slot = MAXIMPORTPERPLAYER*4;
+				while( LOADED_PRO( ( PRO_REF ) sp_info.slot ) ) sp_info.slot++;
+
+				if( activate_spawn_file_load_object( &sp_info ) )
+				{
+					// successfully loaded the object into a dynamic slot number
+					strncpy( loaded_objects[sp_info.slot], sp_info.spawn_coment, SDL_arraysize(loaded_objects[sp_info.slot]) );
+				}
+				else
+				{
+					//something went wrong
+					log_warning("Could not load object (%s) into dynamic slot number %i\n", sp_info.spawn_coment, sp_info.slot);
+					continue;
+				}
+			}
+
+			// we only reach this if everything was loaded properly
+			activate_spawn_file_spawn( &sp_info );
+		}
+
+		vfs_close( fileread );
+	}
+
+	clear_messages();
+
+	// Make sure local players are displayed first
+	sort_stat_list();
+
+	// Fix tilting trees problem
+	tilt_characters_to_terrain();
+}
+
+//--------------------------------------------------------------------------------------------
+void activate_spawn_file_vfs2()
+{
     /// \author ZZ
     /// \details  This function sets up character data, loaded from "SPAWN.TXT"
 
