@@ -50,6 +50,7 @@
 #include "mesh.inl"
 #include "texture.h"
 #include "wawalite_file.h"
+#include "treasure_table_file.h"
 #include "clock.h"
 #include "spawn_file.h"
 #include "camera.h"
@@ -2860,6 +2861,13 @@ bool_t activate_spawn_file_load_object( spawn_file_info_t * psp_info )
     // trim any excess spaces off the psp_info->spawn_coment
     str_trim( psp_info->spawn_coment );
 
+	//If it is a reference to a random treasure table then get a random object from that table
+	if ( '%' == psp_info->spawn_coment[0]  )
+	{
+		get_random_treasure( psp_info->spawn_coment );
+	}
+
+	//Make sure it ends with .obj
     if ( NULL == strstr( psp_info->spawn_coment, ".obj" ) )
     {
         strcat( psp_info->spawn_coment, ".obj" );

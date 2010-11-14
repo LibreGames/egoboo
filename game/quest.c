@@ -116,7 +116,7 @@ egoboo_rv quest_log_download_vfs( IDSZ_node_t quest_log[], size_t quest_log_len,
 
     // try to open the file
     fileread = vfs_openRead( newloadname );
-    if ( NULL == fileread ) return rv_success;
+    if ( NULL == fileread ) return rv_error;
 
     // Load each IDSZ
     retval = rv_success;

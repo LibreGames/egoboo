@@ -59,6 +59,7 @@
     <ClCompile Include="file_formats\SDL_md2.c" />
     <ClCompile Include="file_formats\spawn_file.c" />
     <ClCompile Include="file_formats\template.c" />
+    <ClCompile Include="file_formats\treasure_table_file.c" />
     <ClCompile Include="file_formats\wawalite_file.c" />
     <ClCompile Include="font_bmp.c" />
     <ClCompile Include="font_ttf.c" />
@@ -161,6 +162,7 @@
     <ClInclude Include="file_formats\SDL_md2.h" />
     <ClInclude Include="file_formats\spawn_file.h" />
     <ClInclude Include="file_formats\template.h" />
+    <ClInclude Include="file_formats\treasure_table_file.h" />
     <ClInclude Include="file_formats\wawalite_file.h" />
     <ClInclude Include="font_bmp.h" />
     <ClInclude Include="font_ttf.h" />
@@ -281,7 +283,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>enetd.lib; shlwapi.lib; SHFolder.lib; Shell32.lib; SDLd.lib; SDLmaind.lib; opengl32.lib; glu32.lib; ws2_32.lib; SDL_ttf.lib; SDL_mixerd.lib; SDL_imaged.lib; lua5.1.lib; physfs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>enet.lib;shlwapi.lib;SHFolder.lib;Shell32.lib;SDL.lib;SDLmain.lib;opengl32.lib;glu32.lib;ws2_32.lib;SDL_ttf_d.lib;SDL_mixer_d.lib;SDL_image_d.lib;lua5.1.lib;physfs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>2.8.1</Version>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>

@@ -77,6 +77,7 @@ char * str_decode( char *strout, size_t insize, const char * strin )
     char *pin = ( char * )strin, *pout = strout, *plast = pout + insize;
 
     if ( NULL == strin || NULL == strout || 0 == insize ) return NULL;
+
     while ( pout < plast && CSTR_END != *pin )
     {
         *pout = *pin;

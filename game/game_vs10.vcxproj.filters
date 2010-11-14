@@ -279,6 +279,9 @@
     <ClCompile Include="egoboo_display_list.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="file_formats\treasure_table_file.c">
+      <Filter>File System\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bbox.h">
@@ -532,6 +535,9 @@
     </ClInclude>
     <ClInclude Include="egoboo_display_list.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_formats\treasure_table_file.h">
+      <Filter>File System\Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
