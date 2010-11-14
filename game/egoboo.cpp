@@ -43,6 +43,7 @@
 
 #include "file_formats/scancode_file.h"
 #include "file_formats/controls_file.h"
+#include "file_formats/treasure_table_file.h"
 
 #include "extensions/SDL_extensions.h"
 
@@ -147,6 +148,9 @@ egoboo_rv ego_main_process::do_beginning()
     // initialize the sound system
     sound_initialize();
     load_all_music_sounds_vfs();
+
+	// initialize the random treasure system
+	init_random_treasure_tables_vfs( "mp_data/randomtreasure.txt" );
 
     // make sure that a bunch of stuff gets initialized properly
     object_systems_begin();

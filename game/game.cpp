@@ -30,6 +30,7 @@
 
 #include "file_formats/controls_file.h"
 #include "file_formats/scancode_file.h"
+#include "file_formats/treasure_table_file.h"
 
 #include "physics.inl"
 #include "clock.h"
@@ -3004,6 +3005,12 @@ bool_t activate_spawn_file_load_object( spawn_file_info_t * psp_info )
     // trim any excess spaces off the psp_info->spawn_coment
     str_trim( psp_info->spawn_coment );
 
+	//If it is a reference to a random treasure table then get a random object from that table
+	if ( '%' == psp_info->spawn_coment[0]  )
+	{
+		get_random_treasure( psp_info->spawn_coment );
+	}
+
     if ( NULL == SDL_strstr( psp_info->spawn_coment, ".obj" ) )
     {
         strcat( psp_info->spawn_coment, ".obj" );
@@ -3182,13 +3189,28 @@ void activate_spawn_file_vfs()
             int save_slot = sp_info.slot;
 
             // check to see if the slot is valid
-            if ( -1 == sp_info.slot || sp_info.slot >= MAX_PROFILE )
+            if ( sp_info.slot >= MAX_PROFILE )
             {
                 log_warning( "Invalid slot %d for \"%s\" in file \"%s\"\n", sp_info.slot, sp_info.spawn_coment, newloadname );
                 continue;
             }
 
-            // If nothing is in that slot, try to load it
+			// Dynamic load this into a random slot number
+			if ( -1 == sp_info.slot )
+			{
+				//Go backwards from the last slot number and find the first free slot number
+				int dynamic_slot;
+				for( dynamic_slot = MAX_PROFILE-1; dynamic_slot > 36; dynamic_slot-- )
+				{
+					if( LOADED_PRO(( PRO_REF )sp_info.slot ) ) continue;
+
+					//Found a free slot, stop here and assign it to us
+					sp_info.slot = dynamic_slot;
+					break;
+				}
+			}
+
+            // If nothing is already in that slot, try to load it
             if ( sp_info.slot >= 0 && !LOADED_PRO( PRO_REF( sp_info.slot ) ) )
             {
                 activate_spawn_file_load_object( &sp_info );

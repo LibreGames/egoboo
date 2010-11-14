@@ -583,9 +583,9 @@ bool_t ego_passage::close( ego_passage * ppass )
             {
                 if ( ego_passage::object_is_in( ppass, pchr->pos.x, pchr->pos.y, pchr->bump_1.size ) )
                 {
-                    if ( !pchr->canbecrushed )
+                    if ( !pchr->canbecrushed && pchr->openstuff )
                     {
-                        // Someone is blocking, stop here
+                        // Someone is blocking who can open stuff, stop here
                         is_closed  = bfalse;
                         numcrushed = 0;
                         break;
