@@ -416,8 +416,6 @@ void free_one_character_in_game( const CHR_REF & character )
     // Remove from stat list
     if ( pchr->draw_stats )
     {
-        bool_t stat_found;
-
         pchr->draw_stats = bfalse;
 
         StatList.remove( character );

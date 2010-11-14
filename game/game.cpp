@@ -2997,7 +2997,7 @@ bool_t activate_spawn_file_load_object( spawn_file_info_t * psp_info )
     STRING filename;
     PRO_REF ipro;
 
-    if ( NULL == psp_info || psp_info->slot < 0 ) return bfalse;
+    if ( NULL == psp_info || psp_info->slot < -1 ) return bfalse;
 
     ipro = psp_info->slot;
     if ( LOADED_PRO( ipro ) ) return bfalse;
@@ -3195,29 +3195,14 @@ void activate_spawn_file_vfs()
                 continue;
             }
 
-			// Dynamic load this into a random slot number
-			if ( -1 == sp_info.slot )
-			{
-				//Go backwards from the last slot number and find the first free slot number
-				int dynamic_slot;
-				for( dynamic_slot = MAX_PROFILE-1; dynamic_slot > 36; dynamic_slot-- )
-				{
-					if( LOADED_PRO(( PRO_REF )sp_info.slot ) ) continue;
-
-					//Found a free slot, stop here and assign it to us
-					sp_info.slot = dynamic_slot;
-					break;
-				}
-			}
-
             // If nothing is already in that slot, try to load it
-            if ( sp_info.slot >= 0 && !LOADED_PRO( PRO_REF( sp_info.slot ) ) )
+            if ( !LOADED_PRO( PRO_REF( sp_info.slot ) ) )
             {
                 activate_spawn_file_load_object( &sp_info );
             }
 
             // do we have a valid profile, yet?
-            if ( sp_info.slot >= 0 && !LOADED_PRO( PRO_REF( sp_info.slot ) ) )
+            if ( !LOADED_PRO( PRO_REF( sp_info.slot ) ) )
             {
                 // no, give a warning if it is useful
                 if ( save_slot > PMod->importamount * MAXIMPORTPERPLAYER )
@@ -3585,6 +3570,7 @@ bool_t game_setup_vfs_paths( const char * mod_path )
 
     //---- add the "/basicdat/globalobjects/*" directories to mp_objects
     // The global objects are last. The order should not matter, since the objects should be unique
+	//ZF> TODO: Maybe we should dynamically search for all folders in this directory and add them as valid mount points?
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "items",            "mp_objects", 1 );
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "magic",            "mp_objects", 1 );
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "magic_item",       "mp_objects", 1 );
@@ -3597,6 +3583,7 @@ bool_t game_setup_vfs_paths( const char * mod_path )
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "work_in_progress", "mp_objects", 1 );
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "traps",            "mp_objects", 1 );
     vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "pets",             "mp_objects", 1 );
+	vfs_add_mount_point( fs_getDataDirectory(), "basicdat" SLASH_STR "globalobjects" SLASH_STR "scrolls",          "mp_objects", 1 );
 
     //---- add the "/modules/*.mod/gamedat" directory to mp_data
     SDL_snprintf( tmpDir, sizeof( tmpDir ), "modules" SLASH_STR "%s" SLASH_STR "gamedat",  mod_dir_string );

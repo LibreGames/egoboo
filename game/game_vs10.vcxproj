@@ -234,6 +234,7 @@
     <ClCompile Include="egoboo_setup.c" />
     <ClCompile Include="egoboo_strutil.c" />
     <ClCompile Include="egoboo_typedef.cpp" />
+    <ClCompile Include="file_formats\treasure_table_file.cpp" />
     <ClCompile Include="font_bmp.cpp" />
     <ClCompile Include="font_ttf.cpp" />
     <ClCompile Include="hash.cpp" />
@@ -423,6 +424,7 @@
     <ClInclude Include="egoboo_strutil.h" />
     <ClInclude Include="egoboo_typedef.h" />
     <ClInclude Include="egoboo_typedef_cpp.h" />
+    <ClInclude Include="file_formats\treasure_table_file.h" />
     <ClInclude Include="font_bmp.h" />
     <ClInclude Include="font_ttf.h" />
     <ClInclude Include="hash.h" />

@@ -719,17 +719,25 @@ bool_t obj_verify_file_vfs( const char * tmploadname )
 //--------------------------------------------------------------------------------------------
 int pro_get_slot_vfs( const char * tmploadname, const int slot_override )
 {
-    int slot;
+    int slot = -1;
 
-    slot = -1;
+	// just use the slot that was provided
     if ( VALID_PRO_RANGE( slot_override ) )
     {
-        // just use the slot that was provided
         slot = slot_override;
     }
+
+	// Dynamic load this into a random slot number
+	else if( slot_override == -1 )
+	{
+		//Go backwards from the last valid slot number and find the first free slot number
+		slot = MAX_PROFILE-1;
+		while( LOADED_PRO(( PRO_REF )slot ) ) slot--;
+	}
+
+	// grab the slot from the file
     else
     {
-        // grab the slot from the file
         int tmp_slot = obj_read_slot_vfs( tmploadname );
 
         // set the slot slot
