@@ -41,7 +41,7 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.1"
+#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.2"
 
 #define EDITOR_MAXFLD   60
 
@@ -110,7 +110,7 @@ static char EditorActDlg = 0;           /* Number of actual dialog opened   */
 
 static SDLGL_CONFIG SdlGlConfig = {
 
-    0,
+    EDITOR_CAPTION,
     800, 600,           /* scrwidth, scrheight: Size of screen  */
     24,                 /* colordepth: Colordepth of screen     */
     0,                  /* wireframe                            */
@@ -174,7 +174,7 @@ static SDLGL_CMDKEY EditorCmd[] = {
 
 static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
     { SDLGL_TYPE_STD,   {   0, 584, 800,  16 } },            /* Status bar       */
-    { EDITOR_DRAW2DMAP, { 0, 16, 256, 256 }, EDITOR_2DMAP, EDITOR_2DMAP_CHOOSEFAN }, /* Map-Rectangle    */
+    { EDITOR_DRAW2DMAP, {   0, 16, 256, 256 }, EDITOR_2DMAP, EDITOR_2DMAP_CHOOSEFAN }, /* Map-Rectangle    */
     /* 'Code' needed in menu-background' for support of 'mouse-over'    */
     { SDLGL_TYPE_STD,   {   0, 0, 800, 16 }, -1 },           /* Menu-Background  */
     { SDLGL_TYPE_MENU,  {   4, 4, 32, 8 }, EDITOR_FILE,     0, "File" },
@@ -808,6 +808,11 @@ static void editorStart(void)
                             SDLGL_FRECT_SCRWIDTH);
     /* Edit-Menu */
     sprintf(EditTypeStr, "%s", EditTypeNames[EDITMAIN_EDIT_NONE]);
+    /* -------- Initialize the 3D-Stuff --------------- */
+    sdlgl3dInitCamera(0, 310, 0, 90, 0.75);
+    /* Init Camera +Z is up, -Y is near plane, X is left/right */
+    sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
+    
     /* -------- Now create the output screen ---------- */
     sdlglInputNew(editorDrawFunc,
                   editorInputHandler,     /* Handler for input    */
@@ -839,14 +844,7 @@ int main(int argc, char **argv)
     /* Read configuration from file */
     sdlglcfgReadSimple("data/editor.cfg", CfgValues);
 
-    SdlGlConfig.wincaption = EDITOR_CAPTION;
-
-    sdlglInit(&SdlGlConfig);  
-
-
-    sdlgl3dInitCamera(0, 310, 0, 90, 0.75);
-    /* Init Camera +Z is up, -Y is near plane, X is left/right */
-    sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
+    sdlglInit(&SdlGlConfig);    
 
     /* Set the input handlers and do other stuff before  */
     editorStart();

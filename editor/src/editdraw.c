@@ -1322,7 +1322,6 @@ void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big)
     x2 = x + part_size;
     y2 = y + part_size;
     glBegin(GL_LINE_LOOP);
-    glBegin(GL_QUADS);
         glVertex2i(x, y);
         glVertex2i(x, y2);
         glVertex2i(x2, y2);

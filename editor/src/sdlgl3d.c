@@ -88,6 +88,7 @@ typedef struct {
 static int MapW = 32;
 static int MapH = 32;
 static float TileSize = 128.0;      /* For tiles visible in FOV */
+
 /* This are the cameras. 0: Standard camera */
 static SDLGL3D_CAMERA Camera[4] = {
     { SDLGL3D_CAMERATYPE_THIRDPERSON,
@@ -257,6 +258,7 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
     }
 
     rotz = obj -> rot[2];
+    
     camx = obj -> pos[0];
     camy = obj -> pos[1];
 
@@ -273,10 +275,10 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
     cam -> f.ny[2] = cos(DEG2RAD(rotz));
 
     /* ------ Calculate the bounding rectangle of the frustum -------- */
-    nx1 = cam -> f.nx[0] * cam -> f.zmax;
-    ny1 = cam -> f.ny[0] * cam -> f.zmax;
-    nx2 = cam -> f.nx[1] * cam -> f.zmax;
-    ny2 = cam -> f.ny[1] * cam -> f.zmax;
+    nx1 = camx + (cam -> f.nx[0] * cam -> f.zmax);
+    ny1 = camy + (cam -> f.ny[0] * cam -> f.zmax);
+    nx2 = camx + (cam -> f.nx[1] * cam -> f.zmax);
+    ny2 = camy + (cam -> f.ny[1] * cam -> f.zmax);
 
     minx = MIN(nx1, nx2);
     miny = MIN(ny1, ny2);
