@@ -1501,7 +1501,7 @@ SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field)
 {
 
     unsigned char *textcolor;
-    
+
     
     ActFont = ActualStyle.fontno;
     
@@ -1519,11 +1519,19 @@ SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field)
                 sdlglstrIString(&field -> rect, field -> pdata, textcolor, textcolor);
                 break;
 
-            /*
-            case SDLGL_TYPE_STRING:
-                sdlglstrIString(pos, text, textcolor, textcolor);
+            case SDLGL_TYPE_STD:
+            case SDLGL_TYPE_BUTTON:
+                sdlglstrDrawButton(&field -> rect, 0, 0);
                 break;
-            */
+                
+            case SDLGL_TYPE_VALUE:
+                sdlglstrPrintValue(&field -> rect, field -> pdata, field -> code);
+                break;
+
+            case SDLGL_TYPE_LABEL:
+                sdlglstrStringToRect(&field -> rect, field -> pdata);
+                break;
+                
             default:
                 /* Unknown type, to be drawn by caller  */
                 return field;

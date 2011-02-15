@@ -37,15 +37,13 @@
 *******************************************************************************/
 
 #define SDLGL3D_CAMERA_EXTENT  15.0
-#define SDLGL3D_I_CAMERA_FOV 60.0 /* Instead of 90.0 degrees */ 
+#define SDLGL3D_I_CAMERA_FOV   90.0 
 
 /* ------- */
 #define SDLGL3D_I_MAXVISITILES 128
 
-#define SDLGL3D_VISITILEDEPTH 5         /* Number of squares visible in depth */
-
-#define SDLGL3D_I_VIEWMINWIDTH  96      /* For zoom...              */
-#define SDLGL3D_I_VIEWWIDTH     128     
+#define SDLGL3D_I_VIEWMINWIDTH  60.0    /* For zoom...              */
+#define SDLGL3D_I_VIEWWIDTH     96.0     
 #define SDLGL3D_I_ASPECTRATIO   0.75    /* Handed over by caller    */
 
 #define SDLGL3D_I_ZMIN   48.0   
@@ -246,7 +244,8 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
     SDLGL3D_OBJECT *obj;
     int rotz;
     float minx, miny, maxx, maxy;
-    float nx1, ny1, nx2, ny2, camx, camy;
+    float nx[4], ny[4];
+    int i;
 
 
     if (cam -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
@@ -259,11 +258,12 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
 
     rotz = obj -> rot[2];
     
-    camx = obj -> pos[0];
-    camy = obj -> pos[1];
+    /* --- Third point is the cameras positon */
+    nx[2] = obj -> pos[0];
+    ny[2] = obj -> pos[1];
 
-    cam -> f.rightangle = rotz - cam -> f.fov/2;
-    cam -> f.leftangle  = rotz + cam -> f.fov/2;
+    cam -> f.rightangle = rotz - cam -> f.fov / 2;
+    cam -> f.leftangle  = rotz + cam -> f.fov / 2;
 
     cam -> f.nx[0] = sin(DEG2RAD(cam -> f.rightangle));
     cam -> f.ny[0] = cos(DEG2RAD(cam -> f.rightangle));
@@ -274,27 +274,32 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
     cam -> f.nx[2] = sin(DEG2RAD(rotz));
     cam -> f.ny[2] = cos(DEG2RAD(rotz));
 
-    /* ------ Calculate the bounding rectangle of the frustum -------- */
-    nx1 = camx + (cam -> f.nx[0] * cam -> f.zmax);
-    ny1 = camy + (cam -> f.ny[0] * cam -> f.zmax);
-    nx2 = camx + (cam -> f.nx[1] * cam -> f.zmax);
-    ny2 = camy + (cam -> f.ny[1] * cam -> f.zmax);
+    /* ------ Calculate the bounding rectangle of the frustum, assume FOV = 90 degrees -------- */
+    nx[0] = nx[2] + (cam -> f.nx[0] * cam -> f.zmax * 1.5);
+    ny[0] = ny[2] + (cam -> f.ny[0] * cam -> f.zmax * 1.5);
+    nx[1] = nx[2] + (cam -> f.nx[1] * cam -> f.zmax * 1.5);
+    ny[1] = ny[2] + (cam -> f.ny[1] * cam -> f.zmax * 1.5);
+    /* --- Assume basic values --- */
+    minx = nx[0];
+    miny = ny[0];
+    maxx = nx[0];
+    maxy = ny[0];
 
-    minx = MIN(nx1, nx2);
-    miny = MIN(ny1, ny2);
-    /* And now theres the position of the camer itself  */
-    minx = MIN(minx, camx);
-    miny = MIN(miny, camy);
+    for (i = 1; i < 3; i++) {
+        /* -- Get the minimum extent -- */
+        minx = MIN(minx, nx[i]);
+        miny = MIN(miny, ny[i]);
+        /* -- Get the maximum extent -- */
+        maxx = MAX(maxx, nx[i]);
+        maxy = MAX(maxy, ny[i]);
+    }
 
-    maxx = MAX(nx1, nx2);
-    maxy = MAX(ny1, ny2);
-    maxx = MAX(maxx, camx);
-    maxy = MAX(maxy, camy);
-    /* ------ And now writ it into the frustum info after binding to map --- */
+    /* --- Clamp to map size --- */
     if (minx < 0) minx = 0;
     if (miny < 0) miny = 0;
     if (maxx > (MapW * TileSize)) maxx = (MapW * TileSize);
-    if (maxy > (MapH * TileSize)) maxx = (MapH * TileSize);
+    if (maxy > (MapH * TileSize)) maxy = (MapH * TileSize);
+    /* --- And now write it into the frustum --- */
     cam -> f.vx1 = minx;
     cam -> f.vy1 = miny;
     cam -> f.vx2 = maxx;

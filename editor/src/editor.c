@@ -58,15 +58,17 @@
 #define EDITOR_FANDLG   ((char)107)         /* Result of fan dialog         */
 #define EDITOR_CAMERA   ((char)108)         /* Movement of camera           */
 #define EDITOR_MAPDLG   ((char)109)         /* Settings for new map         */
-#define EDITOR_FANPROPERTY  ((char)110)     /* Properties of chosen fan(s)  */
-#define EDITOR_SHOWMAP      ((char)111)
+#define EDITOR_FANPROPERTY ((char)110)     /* Properties of chosen fan(s)  */
+#define EDITOR_SHOWMAP     ((char)111)
 #define EDITOR_PASSAGE  ((char)113)
 #define EDITOR_SPAWNPT  ((char)114)
+#define EDITOR_3DMAP    ((char)115)
+#define EDITOR_DIALOG   ((char)116)         /* 'block_sign' for general dialog   */
 
 /* Sub-Commands */
 #define EDITOR_FILE_LOAD  ((char)1)
 #define EDITOR_FILE_SAVE  ((char)2)
-#define EDITOR_FILE_NEW   ((char)3) 
+#define EDITOR_FILE_NEW   ((char)3)
 #define EDITOR_FILE_EXIT  ((char)4)
 
 #define EDITOR_2DMAP_CHOOSEFAN  ((char)1)
@@ -95,9 +97,17 @@
 #define EDITOR_TOOL_SPAWN       ((char)3)
 #define EDITOR_TOOL_WAWALITE    ((char)4)
 
+/* ------------ General dialog codes ---- */
+#define EDITOR_DLG_PREV  ((char)1)
+#define EDITOR_DLG_NEXT  ((char)2)
+#define EDITOR_DLG_NEW   ((char)3)
+#define EDITOR_DLG_SAVE  ((char)4)
+#define EDITOR_DLG_CLOSE ((char)5)
+
 /* ------- Drawing types ----- */
-#define EDITOR_DRAW2DMAP    ((char)SDLGL_TYPE_MENU + 10)
-#define EDITOR_DRAWTEXTURE  ((char)SDLGL_TYPE_MENU + 11)
+#define EDITOR_DRAW2DMAP   ((char)SDLGL_TYPE_MENU + 10)
+#define EDITOR_DRAWTEXTURE ((char)SDLGL_TYPE_MENU + 11)
+#define EDITOR_DRAW3DMAP   ((char)SDLGL_TYPE_MENU + 12)
 
 /*******************************************************************************
 * DATA									                                       *
@@ -106,7 +116,7 @@
 static SDLGL_RECT DragRect;
 static int  EditorMapSize = 32;         /* Inital mapsize for new maps      */
 static char EditorWorkDir[256];
-static char EditorActDlg = 0;           /* Number of actual dialog opened   */
+static char EditorActDlg = 0; 
 
 static SDLGL_CONFIG SdlGlConfig = {
 
@@ -173,10 +183,11 @@ static SDLGL_CMDKEY EditorCmd[] = {
 };
 
 static SDLGL_FIELD MainMenu[EDITOR_MAXFLD + 2] = {
-    { SDLGL_TYPE_STD,   {   0, 584, 800,  16 } },            /* Status bar       */
+    { EDITOR_DRAW3DMAP, {   0,   0, 800, 600 }, EDITOR_3DMAP }, /* 3D-View      */
+    { SDLGL_TYPE_STD,   {   0, 584, 800,  16 } },               /* Status bar   */
     { EDITOR_DRAW2DMAP, {   0, 16, 256, 256 }, EDITOR_2DMAP, EDITOR_2DMAP_CHOOSEFAN }, /* Map-Rectangle    */
     /* 'Code' needed in menu-background' for support of 'mouse-over'    */
-    { SDLGL_TYPE_STD,   {   0, 0, 800, 16 }, -1 },           /* Menu-Background  */
+    { SDLGL_TYPE_STD,   {   0, 0, 800, 16 }, -1 },          /* Menu-Background  */
     { SDLGL_TYPE_MENU,  {   4, 4, 32, 8 }, EDITOR_FILE,     0, "File" },
     { SDLGL_TYPE_MENU,  {  44, 4, 64, 8 }, EDITOR_SETTINGS, 0, "Settings" },
     { SDLGL_TYPE_MENU,  { 116, 4, 40, 8 }, EDITOR_TOOLS,    0, "Tools" },
@@ -191,24 +202,24 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_MENU, {   4, 20, 64,  8 }, EDITOR_FILE, EDITOR_FILE_LOAD, "Load..." },
     { SDLGL_TYPE_MENU, {   4, 36, 64,  8 }, EDITOR_FILE, EDITOR_FILE_SAVE, "Save" },
     { SDLGL_TYPE_MENU, {   4, 52, 64,  8 }, EDITOR_FILE, EDITOR_FILE_NEW, "New..." },
-    { SDLGL_TYPE_MENU, {   4, 68, 64,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },   
+    { SDLGL_TYPE_MENU, {   4, 68, 64,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },
     /* Settings menu for view */
     { SDLGL_TYPE_STD,  {  40, 16, 136, 56 }, EDITOR_SETTINGS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, {  44, 20, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_SOLID,    "[ ] Draw Solid" },
     { SDLGL_TYPE_MENU, {  44, 36, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_TEXTURED, "[ ] Draw Texture"  },
     { SDLGL_TYPE_MENU, {  44, 52, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_LIGHTMAX, "[ ] Max Light" },
     /* Tools-Menu */
-    { SDLGL_TYPE_STD,  { 116, 16, 128, 16 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_STD,  { 116, 16, 128, 56 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, { 124, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE, "Tile Properties" },
     { SDLGL_TYPE_MENU, { 124, 36, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passages" },
-    { SDLGL_TYPE_MENU, { 124, 36, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_SPAWN, "Spawn Points" },
+    { SDLGL_TYPE_MENU, { 124, 52, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_SPAWN, "Spawn Points" },
     { 0 }
 };
 
 /* Prepared Dialog for changing of Flags of a fan. TODO: Make it dynamic */
 static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_BUTTON,   {   0,  16, 320, 224  }, 0, 0, EditTypeStr },
-    { SDLGL_TYPE_STRING,   {   0,  32, 320, 224  }, 0, 0, EditActFanName },
+    { SDLGL_TYPE_LABEL,   {   0,  32, 320, 224  }, 0, 0, EditActFanName },
     { SDLGL_TYPE_CHECKBOX, {   8,  56, 120, 8 }, EDITOR_FANFX, MPDFX_SHA,     "Reflective" },
     { SDLGL_TYPE_CHECKBOX, {   8,  72, 120, 8 }, EDITOR_FANFX, MPDFX_DRAWREF, "Draw Reflection" },
     { SDLGL_TYPE_CHECKBOX, {   8,  88, 120, 8 }, EDITOR_FANFX, MPDFX_ANIM,    "Animated" },
@@ -229,12 +240,82 @@ static SDLGL_FIELD FanInfoDlg[] = {
 
 /* Prepared dialog for setting values for maps */
 static SDLGL_FIELD MapDlg[] = {
-    { SDLGL_TYPE_BUTTON,   {   0,  16, 240, 112 }, 0, 0, "New Map" },
-    { SDLGL_TYPE_EDIT,     {   8,  72,  40,  16 }, EDITOR_MAPDLG, 0, "Size" },
-    { SDLGL_TYPE_SLI_AL,   {   8,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_DECSIZE },
-    { SDLGL_TYPE_SLI_AR,   { 120,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_INCSIZE },
-    { SDLGL_TYPE_BUTTON,   {   8,  88,  56,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_CANCEL, "Cancel"  },
-    { SDLGL_TYPE_BUTTON,   { 112,  88,  24,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_OK, "Ok" },
+    { SDLGL_TYPE_BUTTON, {   0,   0, 240, 112 }, 0, 0, "New Map" },
+    { SDLGL_TYPE_EDIT,   {   8,  72,  40,  16 }, EDITOR_MAPDLG, 0, "Size" },
+    { SDLGL_TYPE_SLI_AL, {   8,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_DECSIZE },
+    { SDLGL_TYPE_SLI_AR, { 120,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_INCSIZE },
+    { SDLGL_TYPE_BUTTON, {   8,  88,  56,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_CANCEL, "Cancel"  },
+    { SDLGL_TYPE_BUTTON, { 112,  88,  24,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_OK, "Ok" },
+    { 0 }
+};
+
+/* Prepared dialog for spawn points and passages */
+static SDLGL_FIELD PassageDlg[] = {
+    { SDLGL_TYPE_BUTTON, {   0,   0, 450, 150 }, 0, 0, "Passage" },
+    { SDLGL_TYPE_LABEL,  {   8,  16,  48,   8 }, 0, 0, "Name:" },
+    { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, 0, "(Name of Passage)" },
+    { SDLGL_TYPE_LABEL,  {   8,  32, 112,   8 }, 0, 0, "Top left:" },
+    { SDLGL_TYPE_LABEL,  { 120,  32,  24,   8 }, 0, 0, "X:" },
+    { SDLGL_TYPE_LABEL,  { 144,  32,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 208,  32,  24,   8 }, 0, 0, "Y:" },
+    { SDLGL_TYPE_LABEL,  { 240,  32,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8,  48, 112,   8 }, 0, 0, "Bottom right:" },
+    { SDLGL_TYPE_LABEL,  { 120,  48,  24,   8 }, 0, 0, "X:" },
+    { SDLGL_TYPE_LABEL,  { 144,  48,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 208,  48,  24,   8 }, 0, 0, "Y:" },
+    { SDLGL_TYPE_LABEL,  { 240,  48,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8,  64,  48,   8 }, 0, 0, "Open:" },
+    { SDLGL_TYPE_LABEL,  {  56,  64,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8,  80, 120,   8 }, 0, 0, "Shoot Through:" },
+    { SDLGL_TYPE_LABEL,  { 128,  80,  64,   8 }, 0, 0, "(Value):" },
+    { SDLGL_TYPE_LABEL,  {   8,  96, 120,   8 }, 0, 0, "Slippy Close:" },
+    { SDLGL_TYPE_LABEL,  { 128,  96,  64,   8 }, 0, 0, "(Value):" },
+    { SDLGL_TYPE_BUTTON, {   8, 130,  72,  16 }, EDITOR_PASSAGE, EDITOR_DLG_PREV, "Previous"  },
+    { SDLGL_TYPE_BUTTON, {  88, 130,  40,  16 }, EDITOR_PASSAGE, EDITOR_DLG_NEXT, "Next"  },
+    { SDLGL_TYPE_BUTTON, { 136, 130,  32,  16 }, EDITOR_PASSAGE, EDITOR_DLG_NEW, "New"   },
+    { SDLGL_TYPE_BUTTON, { 176, 130,  40,  16 }, EDITOR_PASSAGE, EDITOR_DLG_SAVE, "Save"  },
+    { SDLGL_TYPE_BUTTON, { 224, 130,  48,  16 }, EDITOR_PASSAGE, EDITOR_DLG_CLOSE, "Close" },
+    { 0 }
+};
+
+static SDLGL_FIELD SpawnPtDlg[] = {
+    { SDLGL_TYPE_BUTTON, {   0,   0, 450, 260 }, 0, 0, "Spawn Point" },
+    { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Object:" },
+    { SDLGL_TYPE_LABEL,  {  72,  16, 192,   8 }, 0, 0, "(Object-Name)" },
+    { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Name:" },
+    { SDLGL_TYPE_LABEL,  {  72,  32,  96,   8 }, 0, 0, "(Game-Name [NONE])" },
+    { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
+    { SDLGL_TYPE_LABEL,  {  72,  48,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8,  64,  80,   8 }, 0, 0, "Position:" },
+    { SDLGL_TYPE_LABEL,  {  88,  64,  24,   8 }, 0, 0, "X:" },
+    { SDLGL_TYPE_LABEL,  { 112,  64,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 176,  64,  24,   8 }, 0, 0, "Y:" },
+    { SDLGL_TYPE_LABEL,  { 200,  64,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 264,  64,  24,   8 }, 0, 0, "Z:" },
+    { SDLGL_TYPE_LABEL,  { 288,  64,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8,  80,  88,   8 }, 0, 0, "Direction:" },
+    { SDLGL_TYPE_LABEL,  {  96,  80,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8,  96,  88,   8 }, 0, 0, "Money:" },
+    { SDLGL_TYPE_LABEL,  {  96,  96,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 112,  88,   8 }, 0, 0, "Skin:" },
+    { SDLGL_TYPE_LABEL,  {  96, 112,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 128,  88,   8 }, 0, 0, "Passage:" },
+    { SDLGL_TYPE_LABEL,  {  96, 128,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 144,  88,   8 }, 0, 0, "Content:" },
+    { SDLGL_TYPE_LABEL,  {  96, 144,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },
+    { SDLGL_TYPE_LABEL,  {  96, 160,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Status-Bar:" },
+    { SDLGL_TYPE_LABEL,  { 104, 176,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Ghost:" },
+    { SDLGL_TYPE_LABEL,  { 104, 192,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 208,  96,   8 }, 0, 0, "Team:" },
+    { SDLGL_TYPE_LABEL,  { 104, 208,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_BUTTON, {   8, 240,  72,  16 }, EDITOR_SPAWNPT, EDITOR_DLG_PREV, "Previous" },
+    { SDLGL_TYPE_BUTTON, {  88, 240,  40,  16 }, EDITOR_SPAWNPT, EDITOR_DLG_NEXT, "Next"  },
+    { SDLGL_TYPE_BUTTON, { 136, 240,  32,  16 }, EDITOR_SPAWNPT, EDITOR_DLG_NEW, "New"   },
+    { SDLGL_TYPE_BUTTON, { 176, 240,  40,  16 }, EDITOR_SPAWNPT, EDITOR_DLG_SAVE, "Save"  },
+    { SDLGL_TYPE_BUTTON, { 224, 240,  48,  16 }, EDITOR_SPAWNPT, EDITOR_DLG_CLOSE, "Close" },
     { 0 }
 };
 
@@ -255,29 +336,34 @@ static void editorSetDialog(char which, char open)
 {
 
     SDLGL_FIELD *dlg;
-    
-    
-    switch(which) {
-        case EDITOR_MAPDLG:
-            dlg = &MapDlg[0];
-            break;
-        case EDITOR_FANPROPERTY:
-            dlg = &FanInfoDlg[0];
-            break;
-            /* TODO: Add dialogs for Passages and Spawn Points */
 
-        case EDITOR_PASSAGE:
-        case EDITOR_SPAWNPT:
-        default:
-            return;
-    }
 
     if (open) {
-        sdlglInputAdd(which, dlg, 20, 20);
-        EditorActDlg = which;
+        switch(which) {
+            case EDITOR_MAPDLG:
+                dlg = &MapDlg[0];
+                break;
+            case EDITOR_FANDLG:
+                dlg = &FanInfoDlg[0];
+                break;
+                /* TODO: Add dialogs for Passages and Spawn Points */
+            case EDITOR_PASSAGE:
+                dlg = &PassageDlg[0];
+                break;
+            case EDITOR_SPAWNPT:
+                dlg = &SpawnPtDlg[0];
+                break;
+            default:
+                return;
+        }
+
+        /* TODO: Close possible opened menu */
+        sdlglInputAdd(EDITOR_DIALOG, dlg, 20, 20);
+        EditorActDlg = EDITOR_DIALOG;
+
     }
     else {
-        sdlglInputRemove(which);
+        sdlglInputRemove(EDITOR_DIALOG);
         EditorActDlg = 0;
     }
 
@@ -310,7 +396,7 @@ static void editorSetMenu(char which)
     if (EditorActDlg > 0) {
         return;
     }
-    
+
     if (MenuActualOpen != which) {
 
         sdlglInputRemove(MenuActualOpen);
@@ -467,7 +553,7 @@ static void editor2DMap(SDLGL_EVENT *event)
  * Input:
  *     which: Menu-Point to translate
  * Output:
- *     Result for SDLGL-Handler  
+ *     Result for SDLGL-Handler
  */
 static int editorFileMenu(char which)
 {
@@ -479,7 +565,7 @@ static int editorFileMenu(char which)
         case EDITOR_FILE_LOAD:
             editmainMap(EDITMAIN_LOADMAP);
             break;
-            
+
         case EDITOR_FILE_SAVE:
             editmainMap(EDITMAIN_SAVEMAP);
             break;
@@ -488,10 +574,10 @@ static int editorFileMenu(char which)
             /* TODO: Open Dialog for map size */
             /*
             if (Map2DState & event -> sub_code) {
-                sdlglInputAdd(EDITOR_MAPDLG, MapDlg, 20, 20);
+                editorSetDialog(EDITOR_MAPDLG, 1);
             }
             else {
-                sdlglInputRemove(EDITOR_FANDLG);
+                editorSetDialog(EDITOR_MAPDLG, 0);
             }
             */
             if (! editmainMap(EDITMAIN_NEWMAP)) {
@@ -508,13 +594,99 @@ static int editorFileMenu(char which)
                 editmainFanTypeName(EditActFanName);
             }
             break;
-            
+
         case EDITOR_FILE_EXIT:
             return SDLGL_INPUT_EXIT;
 
     }
 
     return SDLGL_INPUT_OK;
+
+}
+
+/*
+ * Name:
+ *     editorSpawnDlg
+ * Description:
+ *     Handles the input of the editors file menu
+ * Input:
+ *     which: Menu-Point to translate
+ * Output:
+ *     Result for SDLGL-Handler
+ */
+static int editorSpawnDlg(SDLGL_EVENT *event)
+{
+
+    switch(event -> sub_code) {
+        case EDITOR_DLG_PREV:
+        case EDITOR_DLG_NEXT:
+        case EDITOR_DLG_NEW:
+        case EDITOR_DLG_SAVE:
+            break;
+        case EDITOR_DLG_CLOSE:
+            editorSetDialog(0, 0);
+            break;
+    }
+    return SDLGL_INPUT_OK;
+
+}
+
+/*
+ * Name:
+ *     editorPassageDlg
+ * Description:
+ *     Handles the input of the editors file menu
+ * Input:
+ *     which: Menu-Point to translate
+ * Output:
+ *     Result for SDLGL-Handler
+ */
+static int editorPassageDlg(SDLGL_EVENT *event)
+{
+
+    switch(event -> sub_code) {
+        case EDITOR_DLG_PREV:
+        case EDITOR_DLG_NEXT:
+        case EDITOR_DLG_NEW:
+        case EDITOR_DLG_SAVE:
+            break;
+        case EDITOR_DLG_CLOSE:
+            editorSetDialog(0, 0);
+            break;
+    }
+
+    return SDLGL_INPUT_OK;
+
+}
+
+/*
+ * Name:
+ *     editorToolMenu
+ * Description:
+ *     Handles the input of the editors tool menu
+ * Input:
+ *     which: Menu-Point to translate
+ * Output:
+ *     Result for SDLGL-Handler
+ */
+static void editorToolMenu(char which)
+{
+
+    switch(which) {
+
+        case EDITOR_TOOL_TILE:
+             editorSetDialog(EDITOR_FANDLG, 1);
+             break;
+
+        case EDITOR_TOOL_PASSAGE:
+            editorSetDialog(EDITOR_PASSAGE, 1);
+            break;
+
+        case EDITOR_TOOL_SPAWN:
+            editorSetDialog(EDITOR_SPAWNPT, 1);
+            break;
+
+    }
 
 }
 
@@ -542,7 +714,7 @@ static void editorDrawCheckBox(SDLGL_FIELD *field)
             state = pEditState -> ft.fx & field -> sub_code ? SDLGLSTR_FBUTTONSTATE : 0;
             break;
 
-    }  
+    }
 
     sdlglstrDrawSpecial(&field -> rect, field -> pdata, SDLGL_TYPE_CHECKBOX, state);
 
@@ -606,7 +778,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
                 sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_STD, 0);
                 break;
 
-            case SDLGL_TYPE_STRING:
+            case SDLGL_TYPE_LABEL:
                 sdlglstrSetColorNo(SDLGL_COL_WHITE);
                 sdlglstrString(&fields -> rect, fields -> pdata);
                 break;
@@ -659,7 +831,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     }
 
     /* Draw the string in the status bar */
-    sdlglstrDrawButton(&MainMenu[0].rect, StatusBar, 0);
+    sdlglstrDrawButton(&MainMenu[1].rect, StatusBar, 0);
 
     if (! mouse_over) {
 
@@ -703,7 +875,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
 
             case EDITOR_FILE:
                 return editorFileMenu(event -> sub_code);
-                
+
             case EDITOR_SHOWMAP:
                 pEditState -> display_flags ^= EDITMAIN_SHOW2DMAP;
                 break;
@@ -755,15 +927,16 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 /* TODO: Handle map dialog input */
                 break;
             case EDITOR_PASSAGE:
-                /* TODO: Handle passage dialog input */
+                /* Handle passage dialog input */
+                editorPassageDlg(event);
                 break;
             case EDITOR_SPAWNPT:
-                /* TODO: Handle spawn point dialog input */
+                /* Handle spawn point dialog input */
+                editorSpawnDlg(event);
                 break;
             case EDITOR_TOOLS:
                 /* Add this Dialog at position */
-                Map2DState |= event -> sub_code;
-                sdlglInputAdd(EDITOR_FANDLG, FanInfoDlg, 20, 20);
+                editorToolMenu(event -> sub_code);
                 break;
                 
             case EDITOR_EXITPROGRAM:
@@ -793,18 +966,22 @@ static void editorStart(void)
     
     /* Display initally chosen values */    
     editorSetMenuViewToggle();
+    /* Get the screen size for the 3D-View  */
+    sdlglAdjustRectToScreen(&MainMenu[0].rect,
+                            0,
+                            (SDLGL_FRECT_SCRWIDTH | SDLGL_FRECT_SCRHEIGHT));
     /* -------- Adjust the menu bar sizes to screen ------- */
     /* Status-Bar   */
-    sdlglAdjustRectToScreen(&MainMenu[0].rect,
-                            &MainMenu[0].rect,
+    sdlglAdjustRectToScreen(&MainMenu[1].rect,
+                            0,
                             (SDLGL_FRECT_SCRWIDTH | SDLGL_FRECT_SCRBOTTOM));
     /* Map-Rectangle    */
-    sdlglAdjustRectToScreen(&MainMenu[1].rect,
-                            &MainMenu[1].rect,
+    sdlglAdjustRectToScreen(&MainMenu[2].rect,
+                            0,
                             SDLGL_FRECT_SCRRIGHT);
     /* Menu-Bar     */
-    sdlglAdjustRectToScreen(&MainMenu[2].rect,
-                            &MainMenu[2].rect,
+    sdlglAdjustRectToScreen(&MainMenu[3].rect,
+                            0,
                             SDLGL_FRECT_SCRWIDTH);
     /* Edit-Menu */
     sprintf(EditTypeStr, "%s", EditTypeNames[EDITMAIN_EDIT_NONE]);
