@@ -114,9 +114,15 @@
 *******************************************************************************/
 
 static SDLGL_RECT DragRect;
-static int  EditorMapSize = 32;         /* Inital mapsize for new maps      */
+static int  EditorMapSize = 32;             /* Inital mapsize for new maps      */
 static char EditorWorkDir[256];
 static char EditorActDlg = 0; 
+static EDITMAIN_PASSAGE_T ActPassage = {    /* Holds data about chosen passage  */
+    "Passage-Name"
+};
+static EDITMAIN_SPAWNPT_T ActSpawnPt = {    /* Holds data about chosen spawn point  */
+    "Object-Name"
+};
 
 static SDLGL_CONFIG SdlGlConfig = {
 
@@ -210,9 +216,9 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_MENU, {  44, 52, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_LIGHTMAX, "[ ] Max Light" },
     /* Tools-Menu */
     { SDLGL_TYPE_STD,  { 116, 16, 128, 56 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
-    { SDLGL_TYPE_MENU, { 124, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE, "Tile Properties" },
-    { SDLGL_TYPE_MENU, { 124, 36, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passages" },
-    { SDLGL_TYPE_MENU, { 124, 52, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_SPAWN, "Spawn Points" },
+    { SDLGL_TYPE_MENU, { 120, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE, "Tile Properties" },
+    { SDLGL_TYPE_MENU, { 120, 36, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passages" },
+    { SDLGL_TYPE_MENU, { 120, 52, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_SPAWN, "Spawn Points" },
     { 0 }
 };
 
@@ -253,10 +259,10 @@ static SDLGL_FIELD MapDlg[] = {
 static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_BUTTON, {   0,   0, 450, 150 }, 0, 0, "Passage" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  48,   8 }, 0, 0, "Name:" },
-    { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, 0, "(Name of Passage)" },
+    { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActPassage.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32, 112,   8 }, 0, 0, "Top left:" },
     { SDLGL_TYPE_LABEL,  { 120,  32,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_LABEL,  { 144,  32,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 144,  32,  64,   8 }, 0, 0, "(Value)" }, /* SDLGL_TYPE_VALUE */
     { SDLGL_TYPE_LABEL,  { 208,  32,  24,   8 }, 0, 0, "Y:" },
     { SDLGL_TYPE_LABEL,  { 240,  32,  64,   8 }, 0, 0, "(Value)" },
     { SDLGL_TYPE_LABEL,  {   8,  48, 112,   8 }, 0, 0, "Bottom right:" },
@@ -281,7 +287,7 @@ static SDLGL_FIELD PassageDlg[] = {
 static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_BUTTON, {   0,   0, 450, 260 }, 0, 0, "Spawn Point" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Object:" },
-    { SDLGL_TYPE_LABEL,  {  72,  16, 192,   8 }, 0, 0, "(Object-Name)" },
+    { SDLGL_TYPE_VALUE,  {  72,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActSpawnPt.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Name:" },
     { SDLGL_TYPE_LABEL,  {  72,  32,  96,   8 }, 0, 0, "(Game-Name [NONE])" },
     { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
@@ -322,58 +328,6 @@ static SDLGL_FIELD SpawnPtDlg[] = {
 /*******************************************************************************
 * CODE									                                       *
 *******************************************************************************/
-
-/*
- * Name:
- *     editorSetDialog
- * Description:
- *     Opens/Closes dialog with given number.
- * Input:
- *     which: Which dialog to open/close
- *     open:  Open it yes/no
- */
-static void editorSetDialog(char which, char open)
-{
-
-    SDLGL_FIELD *dlg;
-
-
-    if (open) {
-        switch(which) {
-            case EDITOR_MAPDLG:
-                dlg = &MapDlg[0];
-                break;
-            case EDITOR_FANDLG:
-                dlg = &FanInfoDlg[0];
-                break;
-                /* TODO: Add dialogs for Passages and Spawn Points */
-            case EDITOR_PASSAGE:
-                dlg = &PassageDlg[0];
-                break;
-            case EDITOR_SPAWNPT:
-                dlg = &SpawnPtDlg[0];
-                break;
-            default:
-                return;
-        }
-
-        /* TODO: Close possible opened menu */
-        sdlglInputAdd(EDITOR_DIALOG, dlg, 20, 20);
-        EditorActDlg = EDITOR_DIALOG;
-
-    }
-    else {
-        sdlglInputRemove(EDITOR_DIALOG);
-        EditorActDlg = 0;
-    }
-
-}
-
-/* =================== Map-Settings-Dialog ================ */
-
-
-
-/* =================== Main-Screen ======================== */
 
 /*
  * Name:
@@ -444,6 +398,62 @@ static void editorSetMenu(char which)
     }
 
 }
+
+/*
+ * Name:
+ *     editorSetDialog
+ * Description:
+ *     Opens/Closes dialog with given number.
+ * Input:
+ *     which: Which dialog to open/close
+ *     open:  Open it yes/no
+ */
+static void editorSetDialog(char which, char open)
+{
+
+    SDLGL_FIELD *dlg;
+
+
+    if (open) {
+        switch(which) {
+            case EDITOR_MAPDLG:
+                dlg = &MapDlg[0];
+                break;
+            case EDITOR_FANDLG:
+                dlg = &FanInfoDlg[0];
+                break;
+                /* TODO: Add dialogs for Passages and Spawn Points */
+            case EDITOR_PASSAGE:
+                dlg = &PassageDlg[0];
+                break;
+            case EDITOR_SPAWNPT:
+                dlg = &SpawnPtDlg[0];
+                break;
+            default:
+                return;
+        }
+
+        /* Close possible opened menu  */
+        editorSetMenu(0);
+        /* Now open the dialog */
+        sdlglInputAdd(EDITOR_DIALOG, dlg, 20, 20);
+        EditorActDlg = EDITOR_DIALOG;
+
+    }
+    else {
+        sdlglInputRemove(EDITOR_DIALOG);
+        EditorActDlg = 0;
+    }
+
+}
+
+/* =================== Map-Settings-Dialog ================ */
+
+
+
+/* =================== Main-Screen ======================== */
+
+
 
 /*
  * Name:
@@ -686,6 +696,9 @@ static void editorToolMenu(char which)
             editorSetDialog(EDITOR_SPAWNPT, 1);
             break;
 
+        default:
+            return;
+
     }
 
 }
@@ -735,7 +748,6 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 {
 
     int color;
-    char mouse_over;
 
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -751,21 +763,27 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     glShadeModel(GL_FLAT);		            /* No smoothing	of edges    */
     glFrontFace(GL_CCW);                    /* Draws counterclockwise   */
 
-    /* Draw the menu -- open/close dropdown, if needed */
-    mouse_over = 0;
-
     sdlglstrSetFont(SDLGLSTR_FONT8);
 
     while (fields -> sdlgl_type > 0) {
 
         if (fields -> fstate & SDLGL_FSTATE_MOUSEOVER) {
 
-            mouse_over = 1;
-            if (fields -> sdlgl_type == SDLGL_TYPE_MENU
-                && fields -> code > 0
-                && fields -> sub_code == 0) {
+            /* Draw the menu -- open/close dropdown, if needed */
+            if (fields -> code == EDITOR_3DMAP) {
 
-                editorSetMenu(fields -> code);
+                editorSetMenu(0);
+
+            }
+            else {
+
+                if (fields -> sdlgl_type == SDLGL_TYPE_MENU
+                    && fields -> code > 0
+                    && fields -> sub_code == 0) {
+
+                    editorSetMenu(fields -> code);
+
+                }
 
             }
 
@@ -781,6 +799,11 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
             case SDLGL_TYPE_LABEL:
                 sdlglstrSetColorNo(SDLGL_COL_WHITE);
                 sdlglstrString(&fields -> rect, fields -> pdata);
+                break;
+
+            case SDLGL_TYPE_VALUE:
+                /* Uses subcode, because maincode generates mouse-event */
+                sdlglstrPrintValue(&fields -> rect, fields -> pdata, fields -> sub_code);
                 break;
 
             case SDLGL_TYPE_MENU:
@@ -833,12 +856,6 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     /* Draw the string in the status bar */
     sdlglstrDrawButton(&MainMenu[1].rect, StatusBar, 0);
 
-    if (! mouse_over) {
-
-        editorSetMenu(0);
-
-    }
-
 }
 
 /*
@@ -855,7 +872,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
     SDLGL_FIELD *field;
     char edit_mode;
 
-    
+
     if (event -> code > 0) {
 
         switch(event -> code) {

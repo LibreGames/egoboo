@@ -1493,25 +1493,30 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
  * Description:
  *     Draw standard fields for SDLGL. Uses the colors defined in 'SDLGLSTR_STYLE'   
  * Input:
- *     field * : Pointer on fields to print 
+ *     field * :     Pointer on fields to print
+ *     mouse_over *: Where to return the code of the mouse over for menu functions
+ *                   Including sub-code
  * Output:
- *     Pointer on next field which is not an SDLGL_TYPE_... 
+ *     Pointer on next field which is not an SDLGL_TYPE_...
  */
-SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field)
+SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field, char *mouse_over)
 {
 
     unsigned char *textcolor;
 
-    
+
     ActFont = ActualStyle.fontno;
-    
+
     while(field -> sdlgl_type != 0) {
 
         switch(field -> sdlgl_type) {
-        
+
             case SDLGL_TYPE_MENU:
                 if (field -> fstate & SDLGL_FSTATE_MOUSEOVER) {
                     textcolor = ActualStyle.texthi;
+                    mouse_over[0] = SDLGL_TYPE_MENU;
+                    mouse_over[1] = field -> code;
+                    mouse_over[2] = field -> sub_code;
                 }
                 else {
                     textcolor = ActualStyle.textlo;
@@ -1523,9 +1528,10 @@ SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field)
             case SDLGL_TYPE_BUTTON:
                 sdlglstrDrawButton(&field -> rect, 0, 0);
                 break;
-                
+
             case SDLGL_TYPE_VALUE:
-                sdlglstrPrintValue(&field -> rect, field -> pdata, field -> code);
+                /* Uses subcode, because maincode generates mouse-event */
+                sdlglstrPrintValue(&field -> rect, field -> pdata, field -> sub_code);
                 break;
 
             case SDLGL_TYPE_LABEL:
