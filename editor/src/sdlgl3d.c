@@ -36,18 +36,19 @@
 * DEFINES							                                           *
 *******************************************************************************/
 
+#define SDLGL3D_MAX_CAMERA     4
 #define SDLGL3D_CAMERA_EXTENT  15.0
-#define SDLGL3D_I_CAMERA_FOV   90.0 
+#define SDLGL3D_I_CAMERA_FOV   90.0
 
 /* ------- */
 #define SDLGL3D_I_MAXVISITILES 128
 
 #define SDLGL3D_I_VIEWMINWIDTH  60.0    /* For zoom...              */
-#define SDLGL3D_I_VIEWWIDTH     96.0     
+#define SDLGL3D_I_VIEWWIDTH     96.0
 #define SDLGL3D_I_ASPECTRATIO   0.75    /* Handed over by caller    */
 
-#define SDLGL3D_I_ZMIN   48.0   
-#define SDLGL3D_I_ZMAX 1385.0   
+#define SDLGL3D_I_ZMIN   48.0
+#define SDLGL3D_I_ZMAX 1385.0
 
 /* ------- GRID_DATA ------ */
 #define SDLGL3D_TILESIZE     128.0
@@ -68,35 +69,38 @@ typedef struct {
 
     /* Type of camera and size of frustum for zooming */
     int   type;
+
     SDLGL3D_FRUSTUM f;          /* Frustum data, including info for visibility */
+
     float cameradist;           /* Distance behind object for third person camera */
+    int   map_w, map_h;         /* Size of Map in tiles                           */
+    float tile_size;            /* Size of tile square                            */
     SDLGL3D_OBJECT *object;     /* The object the camera is attached to           */
     SDLGL3D_OBJECT campos;
     /* Frustum data for calculation of visibility */
     char  bound;                /* Camera is bound to an x,y-rectangle  */
-    float bx, by, bx2, by2;    
-    
+    float bx, by, bx2, by2;
+
 } SDLGL3D_CAMERA;
 
 /*****************************************************************************
 * DATA								             *
 *****************************************************************************/
 
-/* ---- Additional info to calculate visbility on base of tiles */
-static int MapW = 32;
-static int MapH = 32;
-static float TileSize = 128.0;      /* For tiles visible in FOV */
-
 /* This are the cameras. 0: Standard camera */
-static SDLGL3D_CAMERA Camera[4] = {
+static SDLGL3D_CAMERA Camera[SDLGL3D_MAX_CAMERA] = {
+
     { SDLGL3D_CAMERATYPE_THIRDPERSON,
       {
-        SDLGL3D_I_CAMERA_FOV, /* Field of view */
+        SDLGL3D_I_CAMERA_FOV,           /* Field of view               */
         SDLGL3D_I_VIEWWIDTH,
-        SDLGL3D_I_ASPECTRATIO, /* Aspect ration of view-plane */
+        SDLGL3D_I_ASPECTRATIO,          /* Aspect ration of view-plane */
 	    SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
  	  },
- 	  800.0
+ 	  800.0,
+      /* ---- Additional info to calculate visbility on base of tiles */
+      32, 32,
+      128
     }
 
 };
@@ -178,32 +182,32 @@ static char CheckBoxAgainstFrustum(int cx, int cy, int HalfSize,
  *     sdlgl3dGetVisiTiles
  * Description:
  *     Calculates the tiles visible in FOV.
- *     Fills in the array 'Visi_Tiles' 
+ *     Fills in the array 'Visi_Tiles'
  * Input:
- *     f *: Pointer on frustum to calc visible tiles for
+ *     cam *: Pointer on camera with  frustum
  * Output:
- *     Number of visible tiles in frustum 
+ *     Number of visible tiles in frustum
  */
-static int sdlgl3dGetVisiTiles(SDLGL3D_FRUSTUM *f) 
+static int sdlgl3dGetVisiTiles(SDLGL3D_CAMERA *cam)
 {
 
-    int tx1, ty1, tx2, ty2, ltx;         
-    
-    
+    int tx1, ty1, tx2, ty2, ltx;
+
+
     NumVisiTiles = 0;
-    
-    tx1 = f -> vx1 / TileSize;
-    tx2 = f -> vx2 / TileSize;
-    ty1 = f -> vy1 / TileSize;
-    ty2 = f -> vy2 / TileSize;
-    
+
+    tx1 = cam -> f.vx1 / cam -> tile_size;
+    tx2 = cam -> f.vx2 / cam -> tile_size;
+    ty1 = cam -> f.vy1 / cam -> tile_size;
+    ty2 = cam -> f.vy2 / cam -> tile_size;
+
     while(ty1 <= ty2) {
         ltx = tx1;
         while(ltx <= tx2) {
-            
-            Visi_Tiles[NumVisiTiles].no    = (ty1 * MapW) + ltx;
-            Visi_Tiles[NumVisiTiles].mid_x = (ltx * TileSize) + 64;
-            Visi_Tiles[NumVisiTiles].mid_y = (ty1 * TileSize) + 64;;
+
+            Visi_Tiles[NumVisiTiles].no    = (ty1 * cam -> map_w) + ltx;
+            Visi_Tiles[NumVisiTiles].mid_x = (ltx * cam -> tile_size) + 64;
+            Visi_Tiles[NumVisiTiles].mid_y = (ty1 * cam -> tile_size) + 64;
             NumVisiTiles++;
             if (NumVisiTiles >= (SDLGL3D_I_MAXVISITILES - 1)) {
                 Visi_Tiles[NumVisiTiles].no = -1;    /* Sign end of list */
@@ -219,7 +223,7 @@ static int sdlgl3dGetVisiTiles(SDLGL3D_FRUSTUM *f)
     /* 
         TODO: 
             1. Only use tiles which are checked by 'CheckBoxAgainstFrustum()'
-            2. Sort tiles by distance from camx, camy ==> Far to Near   
+            2. Sort tiles by distance from camx, camy ==> Far to Near
     */
     
     return NumVisiTiles;
@@ -250,15 +254,14 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
 
     if (cam -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
         obj = cam -> object;
-
     }
     else {
         obj = &cam -> campos;
     }
 
     rotz = obj -> rot[2];
-    
-    /* --- Third point is the cameras positon */
+
+    /* --- Third point is the cameras position */
     nx[2] = obj -> pos[0];
     ny[2] = obj -> pos[1];
 
@@ -297,15 +300,19 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
     /* --- Clamp to map size --- */
     if (minx < 0) minx = 0;
     if (miny < 0) miny = 0;
-    if (maxx > (MapW * TileSize)) maxx = (MapW * TileSize);
-    if (maxy > (MapH * TileSize)) maxy = (MapH * TileSize);
+    if (maxx > (cam -> map_w * cam -> tile_size)) {
+        maxx = (cam -> map_w * cam -> tile_size);
+    }
+    if (maxy > (cam -> map_h * cam -> tile_size)) {
+        maxy = (cam -> map_h * cam -> tile_size);
+    }
     /* --- And now write it into the frustum --- */
     cam -> f.vx1 = minx;
     cam -> f.vy1 = miny;
     cam -> f.vx2 = maxx;
     cam -> f.vy2 = maxy;
     /* ---------- Set up visible tiles ----- */
-    cam -> f.num_visi_tile = sdlgl3dGetVisiTiles(&cam -> f);
+    cam -> f.num_visi_tile = sdlgl3dGetVisiTiles(cam);
 
 }
 
@@ -366,8 +373,8 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
         case SDLGL3D_MOVE_FORWARD:        
             speed = moveobj -> speed * move_dir * moveobj -> speed_modifier;
             /* Only in x/y plane */
-            moveobj -> pos[0] += (moveobj -> direction[0] * speed * secondspassed);
-            moveobj -> pos[1] += (moveobj -> direction[1] * speed * secondspassed);
+            moveobj -> pos[0] += (moveobj -> dir[0] * speed * secondspassed);
+            moveobj -> pos[1] += (moveobj -> dir[1] * speed * secondspassed);
             break;
 
         case SDLGL3D_MOVE_LEFT:
@@ -375,8 +382,8 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
         case SDLGL3D_MOVE_RIGHT:
             speed = moveobj -> speed * move_dir * moveobj -> speed_modifier;
             /* Only in x/y plane */
-            moveobj -> pos[0] -= (moveobj -> direction[1] * speed * secondspassed);
-            moveobj -> pos[1] += (moveobj -> direction[0] * speed * secondspassed);
+            moveobj -> pos[0] -= (moveobj -> dir[1] * speed * secondspassed);
+            moveobj -> pos[1] += (moveobj -> dir[0] * speed * secondspassed);
             break;
 
         case SDLGL3D_MOVE_DOWN:
@@ -403,13 +410,13 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
 
             }
 
-            moveobj -> direction[0] = sin(DEG2RAD(moveobj -> rot[SDLGL3D_Z]));
-            moveobj -> direction[1] = cos(DEG2RAD(moveobj -> rot[SDLGL3D_Z]));
+            moveobj -> dir[0] = sin(DEG2RAD(moveobj -> rot[SDLGL3D_Z]));
+            moveobj -> dir[1] = cos(DEG2RAD(moveobj -> rot[SDLGL3D_Z]));
             break;
             
         case SDLGL3D_MOVE_3D:
-            moveobj -> pos[0] += (moveobj -> direction[0] * moveobj -> speed * secondspassed);
-            moveobj -> pos[1] += (moveobj -> direction[1] * moveobj -> speed * secondspassed);
+            moveobj -> pos[0] += (moveobj -> dir[0] * moveobj -> speed * secondspassed);
+            moveobj -> pos[1] += (moveobj -> dir[1] * moveobj -> speed * secondspassed);
             moveobj -> pos[SDLGL3D_Z] += (moveobj -> zspeed * secondspassed);
             break;
 
@@ -447,8 +454,9 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
 
         case SDLGL3D_MOVE_ZOOMOUT:
             Camera[0].f.viewwidth  += (5.0 * secondspassed);
+            Camera[0].f.zmin = Camera[0].f.viewwidth / 2;   /* Keep FOV */
             /* TODO: Set a maximum for zoom out */
-            break;   
+            break;
         case SDLGL3D_MOVE_ZOOMIN:
             /* Zoom in: Reduce size of view */
             Camera[0].f.viewwidth  -= (5.0 * secondspassed);
@@ -457,6 +465,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
                 Camera[0].f.viewwidth = SDLGL3D_I_VIEWMINWIDTH;
 
             }
+            Camera[0].f.zmin = Camera[0].f.viewwidth / 2;
             break;
         
         case SDLGL3D_MOVE_CAMDIST:
@@ -505,7 +514,7 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
     /* Set the view mode */
     viewwidth  = Camera[camera_no].f.viewwidth / 2;
     viewheight = (viewwidth * Camera[camera_no].f.aspect_ratio);
-    
+
     glFrustum(viewwidth, -viewwidth, -viewheight, viewheight, Camera[camera_no].f.zmin, Camera[camera_no].f.zmax);
 
     glMatrixMode(GL_MODELVIEW);
@@ -592,9 +601,9 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
         Camera[0].cameradist = distance;
 
         Camera[0].campos.pos[0] = Camera[0].object -> pos[0]
-                                  - (Camera[0].object -> direction[0] * distance);
+                                  - (Camera[0].object -> dir[0] * distance);
         Camera[0].campos.pos[1] = Camera[0].object -> pos[1]
-                                  - (Camera[0].object -> direction[1] * distance);
+                                  - (Camera[0].object -> dir[1] * distance);
         Camera[0].campos.pos[2] = SDLGL3D_TILESIZE;
 
         Camera[0].campos.rot[2] = 30.0;
@@ -617,7 +626,7 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
  * Input:
  *      camera_no:        Initialize this camera  
  *      rotx, roty, rotz: Roatation in each axis
- *      aspect_ratio:     Of screen for 3D-View   
+ *      aspect_ratio:     Of screen for 3D-View
  */
 void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio)
 {
@@ -630,12 +639,12 @@ void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect
     Camera[camera_no].campos.rot[1] = roty;
     Camera[camera_no].campos.rot[SDLGL3D_Z] = rotz;
 
-    Camera[camera_no].campos.direction[0] = sin(DEG2RAD(rotz));
-    Camera[camera_no].campos.direction[1] = cos(DEG2RAD(rotz));
+    Camera[camera_no].campos.dir[0] = sin(DEG2RAD(rotz));
+    Camera[camera_no].campos.dir[1] = cos(DEG2RAD(rotz));
 
     Camera[camera_no].campos.speed   = 300.0;  /* Speed of camera in units / second    */
     Camera[camera_no].campos.turnvel =  60.0;  /* Degrees per second                   */
-    
+
     Camera[camera_no].f.aspect_ratio = aspect_ratio;
     Camera[camera_no].f.fov = SDLGL3D_I_CAMERA_FOV; /* TODO: To be set by caller.. */
     /* If the camera was moved, set the frustum normals... */
@@ -698,8 +707,8 @@ void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
 {
 
     /* ------- Create the direction vector -------- */
-    moveobj -> direction[0] = sin(DEG2RAD(moveobj -> rot[2]));
-    moveobj -> direction[1] = cos(DEG2RAD(moveobj -> rot[2]));
+    moveobj -> dir[0] = sin(DEG2RAD(moveobj -> rot[2]));
+    moveobj -> dir[1] = cos(DEG2RAD(moveobj -> rot[2]));
 
 }
 
@@ -762,8 +771,8 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
         Camera[camera_no].campos.pos[0] = x;
         Camera[camera_no].campos.pos[1] = y;
         /* TODO: Move back 'cameradist' from chosen position */
-        Camera[camera_no].campos.pos[0] -= Camera[camera_no].campos.direction[0] * cameradist;
-        Camera[camera_no].campos.pos[1] -= Camera[camera_no].campos.direction[1] * cameradist;
+        Camera[camera_no].campos.pos[0] -= Camera[camera_no].campos.dir[0] * cameradist;
+        Camera[camera_no].campos.pos[1] -= Camera[camera_no].campos.dir[1] * cameradist;
 
     }
     else {
@@ -894,35 +903,103 @@ void sdlgl3dMoveObjects(float secondspassed)
  * Name:
  *     sdlgl3dInitVisiMap
  * Description:
- *     To check visibility by map squares, the visibility infos have to be handed over 
+ *     To check visibility by map squares, the visibility infos have to be handed over
  * Input:
- *      map_w, map_h: Size of map in tiles 
- *      tile_size:    Size of single tile in units 
+ *      map_w, map_h: Size of map in tiles
+ *      tile_size:    Size of single tile in units
  */
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size)
 {
 
-    MapW     = map_w;
-    MapH     = map_h;
-    TileSize = tile_size;      /* For tiles visible in FOV */
-    
+    int i;
+
+
+    for (i = 0; i < SDLGL3D_MAX_CAMERA; i++) {
+
+        Camera[i].map_w     = map_w;
+        Camera[i].map_h     = map_h;
+        Camera[i].tile_size = tile_size;
+
+    }
+
+}
+
+/*
+ * Name:
+ *     sdlgl3dMouse
+ * Description:
+ *     Fills in the data in the frustum structure for given camera with
+ *     values for visibility checking.
+ *     The info generated can be fetched by 'sdlgl3dGetCameraInfo()'
+ * Input:
+ *      camera_no:    Use this camera
+ *      scrw, scrh:   Extent of screen
+ *      moux, mouy:   Position of mouse
+ */
+void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy)
+{
+
+    SDLGL3D_OBJECT *obj;
+    SDLGL3D_CAMERA *cam;
+    SDLGL3D_V3D m_ray;
+    float left, top, vh;
+    float mx, my;
+
+
+    cam = &Camera[camera_no];
+
+    left  = -(cam -> f.viewwidth / 2);
+    vh    = cam -> f.viewwidth * cam -> f.aspect_ratio;
+    top   = -(vh / 2);
+
+    mx = moux * cam -> f.viewwidth / scrw;
+    my = mouy * vh / scrh;
+
+    /* ---- Position at 0, 0, 0 ----- */
+    m_ray[0] = -(left + mx);
+    m_ray[1] = cam -> f.zmin;
+    m_ray[2] = top + my;
+
+    cam -> f.m_ray2d[0] = m_ray[0];
+    cam -> f.m_ray2d[1] = m_ray[1];
+    cam -> f.m_ray2d[2] = 0;
+
+    PT_NORMALIZE(cam -> f.m_ray2d);
+
+    /* ---- Now rotate the point by camera position --- */
+    if (cam -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
+        obj = cam -> object;
+    }
+    else {
+        obj = &cam -> campos;
+    }
+
+    /* And now create the ray in 3D for collision tests */
+    cam -> f.mouse_ray[0] = m_ray[0];
+    cam -> f.mouse_ray[1] = m_ray[1];
+    cam -> f.mouse_ray[2] = m_ray[2];
+
+    PT_NORMALIZE(cam -> f.mouse_ray);
+
+    /* TODO: Rotate this one correct */
+
 }
 
 /*
  * Name:
  *     sdlgl3dGetVisiTileList
  * Description:
- *     Returns the list of tiles visible in FOV 
+ *     Returns the list of tiles visible in FOV
  * Input:
- *      num_tile *:   Where to return the number of tiles in list   
+ *      num_tile *:   Where to return the number of tiles in list
  * Output:
  *      Pointer on list of visible tiles
  */
 SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile)
 {
-    
+
     *num_tile = NumVisiTiles;
-    
+
     return &Visi_Tiles[0];
-    
+
 }

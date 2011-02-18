@@ -248,7 +248,7 @@
 * TYPEDEFS                                                                     *
 *******************************************************************************/
 
-typedef float SDLGL3D_VECTOR[3];  /* For X, Y, Z coordinates of vector.  */
+typedef float SDLGL3D_V3D[3];  /* For X, Y, Z coordinates of vector.  */
 
 typedef struct {
 
@@ -260,10 +260,10 @@ typedef struct {
     float   bradius;           /* Radius of Bounding box               */ 
     /* -------- Object info ------------------------------------------ */ 
     int     tags;              /* Visible and so on                    */
-    SDLGL3D_VECTOR pos;        /* Position                             */
-    SDLGL3D_VECTOR direction;  /* Actual direction, unit vector        */
-    SDLGL3D_VECTOR rot;        /* Rotation angles                      */
-    int     move_cmd;          /* Commands for movement (combined)     */  
+    SDLGL3D_V3D pos;           /* Position                             */
+    SDLGL3D_V3D dir;           /* Actual direction, unit vector        */
+    SDLGL3D_V3D rot;           /* Rotation angles                      */
+    int     move_cmd;          /* Commands for movement (combined)     */
     float   speed;             /* Ahead speed in units/second          */
     float   zspeed;            /* Z-Movement: -towards bottom          */
                                /*             +towards ceiling         */
@@ -271,9 +271,9 @@ typedef struct {
     float   turnvel;           /* Rotation velocity in degrees/second  */
     /* Link for object list in collision - detection                   */
     int     on_tile;           /* Object is on this tile               */
-    char    visi_code;         /* Visibility ob object in frustum      */ 
-    char    speed_modifier;    /* Multiply speed with this one, if > 0 */ 
-    
+    char    visi_code;         /* Visibility ob object in frustum      */
+    char    speed_modifier;    /* Multiply speed with this one, if > 0 */
+
 } SDLGL3D_OBJECT;
 
 typedef struct {
@@ -281,16 +281,21 @@ typedef struct {
     float fov;
     float viewwidth;
     float aspect_ratio;         /* For zoom and setup of frustum        */
-    float zmin, zmax;           
-    float nx[3], ny[3];              
+    float zmin, zmax;
+    /* ------ Info for internal use ------ */
+    float nx[3], ny[3];
+    SDLGL3D_V3D mouse_ray;      /* Set by mouse code, used for drawing  */
+    SDLGL3D_V3D m_ray2d;
     float leftangle, rightangle;
     int   vx1, vy1, vx2, vy2;   /* Bounding rectangle of field of view  */
     int   num_visi_tile;        /* Number of tiles visible in FOV       */
+    int   mouse_tiles[15];      /* Numbers of tiles hit bei 'mouse_ray' */
+    float mou_angle;
 
 } SDLGL3D_FRUSTUM;
 
 typedef struct {
-    
+
     int mid_x, mid_y;   /* Of tile, for distance sorting            */
     int no;             /* Number of tile, for display by caller    */
 
@@ -304,7 +309,7 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid);
 void sdlgl3dEnd(void);
 void sdlgl3dAttachCameraToObj(int obj_no, char camtype);
 void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio);
-void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2); 
+void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2);
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f);
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
 void sdlgl3dManageCamera(int camera_no, char move_cmd, char set, char speed_modifier);
@@ -312,11 +317,12 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
 void sdlgl3dManageObject(int obj_no, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);
+void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy);
 SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile);
 /* TODO:
     --- List of objects for drawing by caller, sorted from farest to nearest ---
     int sdlgl3dVisibleObjects(SDLGL3D_OBJECT **objects);
-    --- return-value: Number ob objects in list ---    
+    --- return-value: Number ob objects in list ---
     --- add/remove (if object_no) object from list ---
     int sdlgl3dSetObject(SDLGL3D_OBJECT *object, int int object_no);
 */
