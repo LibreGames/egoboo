@@ -75,7 +75,8 @@ typedef struct {
     float cameradist;           /* Distance behind object for third person camera */
     int   map_w, map_h;         /* Size of Map in tiles                           */
     float tile_size;            /* Size of tile square                            */
-    SDLGL3D_OBJECT *object;     /* The object the camera is attached to           */
+    SDLGL3D_OBJECT *obj;        /* The object the camera is attached to           */
+                                /* Can be camera itself ('campos')                */
     SDLGL3D_OBJECT campos;
     /* Frustum data for calculation of visibility */
     char  bound;                /* Camera is bound to an x,y-rectangle  */
@@ -253,7 +254,7 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
 
 
     if (cam -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
-        obj = cam -> object;
+        obj = cam -> obj;
     }
     else {
         obj = &cam -> campos;
@@ -327,13 +328,13 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
 static void sdlgl3dIMoveAttachedCamera(SDLGL3D_CAMERA *camera)
 {
 
-    if (camera -> object) {
+    if (camera -> obj) {
 
         /* If attached to an object, move it */
         if (camera -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
 
             /* Camera has same position as object */
-            memcpy(&camera -> campos, camera -> object, sizeof(SDLGL3D_OBJECT));
+            memcpy(&camera -> campos, camera -> obj, sizeof(SDLGL3D_OBJECT));
 
         }
         else if (camera -> type == SDLGL3D_CAMERATYPE_THIRDPERSON) {
@@ -345,7 +346,6 @@ static void sdlgl3dIMoveAttachedCamera(SDLGL3D_CAMERA *camera)
     }
 
 }
-
 
 /*
  * Name:
@@ -370,7 +370,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
 
         case SDLGL3D_MOVE_BACKWARD:
             move_dir = -1;
-        case SDLGL3D_MOVE_FORWARD:        
+        case SDLGL3D_MOVE_FORWARD:
             speed = moveobj -> speed * move_dir * moveobj -> speed_modifier;
             /* Only in x/y plane */
             moveobj -> pos[0] += (moveobj -> dir[0] * speed * secondspassed);
@@ -474,7 +474,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
 
     }
 
-    if (Camera[0].object == moveobj) {
+    if (Camera[0].obj == moveobj) {
 
         /* FIXME: Move camera according to movement of attached object */
         sdlgl3dIMoveAttachedCamera(&Camera[0]);
@@ -485,6 +485,42 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
 
     }
 
+}
+
+/*
+ * Name:
+ *     sdlgl3dITilesOnLine
+ * Description:
+ *     Fills in the List in frustum with the numbers of tiles hit by the
+ *     mouse-ray
+ * Input:
+ *      camera_no: For this camera
+ */
+static void sdlgl3dITilesOnLine(int camera_no)
+{
+
+
+    SDLGL3D_OBJECT *obj;
+    SDLGL3D_CAMERA *cam;
+    int x1, y1, x2, y2;
+    int tile_no;
+
+
+    cam = &Camera[camera_no];
+    obj = cam -> obj;
+
+    x1 = obj -> pos[0] / cam -> tile_size;
+    y1 = obj -> pos[1] / cam -> tile_size;
+    x2 = x1 + (cam -> f.m_ray2d[0] * cam -> f.zmax / cam -> tile_size);
+    y2 = y1 + (cam -> f.m_ray2d[0] * cam -> f.zmax / cam -> tile_size);
+
+    tile_no = 0;
+
+    cam -> f.mou_tiles[tile_no] = (y1 *  cam -> map_w) + x1;
+    tile_no++;
+    
+    cam -> f.mou_tiles[tile_no] = -1;    /* Sign end of list */
+    
 }
 
 /* ========================================================================== */
@@ -523,7 +559,7 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
 
     if (Camera[camera_no].type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
 
-        viewobj = Camera[camera_no].object;
+        viewobj = Camera[camera_no].obj;
         if (viewobj == 0) {
 
             /* Play it save */
@@ -587,7 +623,7 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
     float distance;
 
 
-    Camera[0].object = &Object_List[object_no];    /* Attach object to camera */
+    Camera[0].obj = &Object_List[object_no];    /* Attach object to camera */
 
     if (camtype == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
 
@@ -600,10 +636,10 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
         distance = 2 * SDLGL3D_TILESIZE;
         Camera[0].cameradist = distance;
 
-        Camera[0].campos.pos[0] = Camera[0].object -> pos[0]
-                                  - (Camera[0].object -> dir[0] * distance);
-        Camera[0].campos.pos[1] = Camera[0].object -> pos[1]
-                                  - (Camera[0].object -> dir[1] * distance);
+        Camera[0].campos.pos[0] = Camera[0].obj -> pos[0]
+                                  - (Camera[0].obj -> dir[0] * distance);
+        Camera[0].campos.pos[1] = Camera[0].obj -> pos[1]
+                                  - (Camera[0].obj -> dir[1] * distance);
         Camera[0].campos.pos[2] = SDLGL3D_TILESIZE;
 
         Camera[0].campos.rot[2] = 30.0;
@@ -631,22 +667,30 @@ void sdlgl3dAttachCameraToObj(int object_no, char camtype)
 void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio)
 {
 
-    Camera[camera_no].campos.pos[0] = 0;
-    Camera[camera_no].campos.pos[1] = 0;
-    Camera[camera_no].campos.pos[SDLGL3D_Z] = 0;
+    SDLGL3D_CAMERA *cam;
 
-    Camera[camera_no].campos.rot[0] = rotx;
-    Camera[camera_no].campos.rot[1] = roty;
-    Camera[camera_no].campos.rot[SDLGL3D_Z] = rotz;
 
-    Camera[camera_no].campos.dir[0] = sin(DEG2RAD(rotz));
-    Camera[camera_no].campos.dir[1] = cos(DEG2RAD(rotz));
+    cam = &Camera[camera_no];
 
-    Camera[camera_no].campos.speed   = 300.0;  /* Speed of camera in units / second    */
-    Camera[camera_no].campos.turnvel =  60.0;  /* Degrees per second                   */
+    cam -> campos.pos[0] = 0;
+    cam -> campos.pos[1] = 0;
+    cam -> campos.pos[SDLGL3D_Z] = 0;
 
-    Camera[camera_no].f.aspect_ratio = aspect_ratio;
-    Camera[camera_no].f.fov = SDLGL3D_I_CAMERA_FOV; /* TODO: To be set by caller.. */
+    cam -> campos.rot[0] = rotx;
+    cam -> campos.rot[1] = roty;
+    cam -> campos.rot[SDLGL3D_Z] = rotz;
+
+    cam -> campos.dir[0] = sin(DEG2RAD(rotz));
+    cam -> campos.dir[1] = cos(DEG2RAD(rotz));
+
+    cam -> campos.speed   = 300.0;  /* Speed of camera in units / second    */
+    cam -> campos.turnvel =  60.0;  /* Degrees per second                   */
+
+    cam -> f.aspect_ratio = aspect_ratio;
+    cam -> f.fov = SDLGL3D_I_CAMERA_FOV; /* TODO: To be set by caller.. */
+
+    cam -> obj = &cam -> campos;
+
     /* If the camera was moved, set the frustum normals... */
     sdlgl3dSetupFrustumNormals(&Camera[camera_no]);
 
@@ -656,7 +700,7 @@ void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect
  * Name:
  *     sdlgl3dBindCamera
  * Description:
- *     Sets the maximum movement in x,y- direction for the camera 
+ *     Sets the maximum movement in x,y- direction for the camera
  * Input:
  *      camera_no:        Set bounding for this camera 
  *      x, ,y, x2, y2:       Position of camera  
@@ -944,6 +988,7 @@ void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy)
     SDLGL3D_V3D m_ray;
     float left, top, vh;
     float mx, my;
+    float angle;
 
 
     cam = &Camera[camera_no];
@@ -966,22 +1011,26 @@ void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy)
 
     PT_NORMALIZE(cam -> f.m_ray2d);
 
-    /* ---- Now rotate the point by camera position --- */
-    if (cam -> type == SDLGL3D_CAMERATYPE_FIRSTPERSON) {
-        obj = cam -> object;
-    }
-    else {
-        obj = &cam -> campos;
-    }
+    obj = cam -> obj;
+
+    angle = DEG2RAD(obj -> rot[2]) + atan2(m_ray[0], m_ray[1]);
+
+    cam -> f.m_ray2d[0] = sin(angle);
+    cam -> f.m_ray2d[1] = cos(angle);
+
+    cam -> f.mou_angle = RAD2DEG(angle);
 
     /* And now create the ray in 3D for collision tests */
-    cam -> f.mouse_ray[0] = m_ray[0];
-    cam -> f.mouse_ray[1] = m_ray[1];
+    cam -> f.mouse_ray[0] = cam -> f.m_ray2d[0] * m_ray[0];
+    cam -> f.mouse_ray[1] = cam -> f.m_ray2d[1] * m_ray[1];
     cam -> f.mouse_ray[2] = m_ray[2];
 
     PT_NORMALIZE(cam -> f.mouse_ray);
 
     /* TODO: Rotate this one correct */
+
+    /* Generate tile numbers hit by mouse */
+    sdlgl3dITilesOnLine(camera_no);
 
 }
 

@@ -289,7 +289,7 @@ typedef struct {
     float leftangle, rightangle;
     int   vx1, vy1, vx2, vy2;   /* Bounding rectangle of field of view  */
     int   num_visi_tile;        /* Number of tiles visible in FOV       */
-    int   mouse_tiles[15];      /* Numbers of tiles hit bei 'mouse_ray' */
+    int   mou_tiles[15];        /* Numbers of tiles hit bei 'mouse_ray' */
     float mou_angle;
 
 } SDLGL3D_FRUSTUM;
