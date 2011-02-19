@@ -1604,6 +1604,10 @@ void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which)
             sprintf(val_str, "%f", *(float *)pdata);
             break;
 
+        case SDLGL_VAL_ONECHAR:
+            val_str[0] = *pdata;
+            val_str[1] = 0;
+            break;
         default:
             return;
 

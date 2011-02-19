@@ -24,7 +24,9 @@
 *******************************************************************************/
 
 #include <stdio.h>
+#include <memory.h>
 
+#include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
 
 #include "editfile.h"     /* Own header */
 
@@ -37,11 +39,61 @@
 #define EDITFILE_ZADJUST    16.0        /* Read/Write Z-Value   */
                                         /* Cartman uses 4 bit fixed point for Z */
                                         
+/* ======= Maximum-Values for files ======= */
+#define EDITFILE_MAXSPAWN    500        /* Maximum Lines in spawn list  */
+#define EDITFILE_MAXPASSAGE   50
+                                        
 /*******************************************************************************
 * DATA 								                                           *
 *******************************************************************************/
 
 static char EditFileWorkDir[256] = "module/";
+
+/* -------------Data for Spawn-Points ---------------- */
+static EDITFILE_SPAWNPT_T SpawnObjects[EDITFILE_MAXSPAWN + 2];
+
+static SDLGLCFG_VALUE SpawnVal[] = {
+	{ SDLGLCFG_VAL_STRING,  &SpawnObjects[0].line_name, 24 },
+	{ SDLGLCFG_VAL_STRING,  &SpawnObjects[0].item_name, 20 },
+	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].slot_no },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].x_pos },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].y_pos },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].z_pos },
+	{ SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].view_dir },
+	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].money },
+	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].skin },
+	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].pas },
+	{ 0 }
+};
+
+static SDLGLCFG_LINEINFO SpawnRec = {
+	&SpawnObjects[0],
+	EDITFILE_MAXSPAWN,
+	sizeof(EDITFILE_SPAWNPT_T),
+	&SpawnVal[0]
+};
+
+/* ------------ Data for passages -------------------- */
+static EDITFILE_PASSAGE_T Passages[EDITFILE_MAXPASSAGE + 2];
+
+static SDLGLCFG_VALUE PassageVal[] = {
+	{ SDLGLCFG_VAL_STRING,  &Passages[0].line_name, 24 },
+	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft[0] },
+	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft[1] },
+	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright[0] },
+	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright[1] },
+	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].open },
+	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].shoot_trough },
+	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].slippy_close },
+	{ 0 }
+};
+
+static SDLGLCFG_LINEINFO PassageRec = {
+	&Passages[0],
+	EDITFILE_MAXPASSAGE,
+	sizeof(EDITFILE_PASSAGE_T),
+	&PassageVal[0]
+};
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -348,25 +400,106 @@ int  editfileMapMesh(MESH_T *mesh, char *msg, char save)
 
 /*
  * Name:
- *     editfileText
+ *     editfileSpawn
  * Description:
- *     Load an egoboo-type text-file 
+ *     Load/Save spawn data from 'spawn.txt' in actual work directory
  * Input:
- *     dir_no:     Which directory to use for read/write
- *     filename *: Name of file itself
- *     lineinfo *: Description, how to read/write the data
- *     write:      Write it yes/no
+ *     action: What to do
+ *     rec_no: Number of record to read/write from buffer
+ *     spt *:  Pointer on buffer for spawn point 
  * Output:
- *     None
+ *     Success yes/no
  */
-void editfileText(int dir_no, char *filename, SDLGLCFG_LINEINFO *lineinfo, char write)
+int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
 {
 
-    if (write) {
+    char *fname;
+
+
+    fname = editfileMakeFileName(EDITFILE_WORKDIR, "spawn.txt");
+
+    switch(action) {
+    
+        case EDITFILE_ACT_LOAD:
+            /* ------- Load the data from file ---- */
+            sdlglcfgEgoboo(fname, &SpawnRec, 0);
+            /* ----- Return the data from the first record --- */
+            memcpy(spt, &SpawnObjects[rec_no], sizeof(EDITFILE_SPAWNPT_T));
+            break;
+        case EDITFILE_ACT_SAVE:
+            /* -------- Write data to file -------- */
+            sdlglcfgEgoboo(fname, &SpawnRec, 1);
+            break;
+        case EDITFILE_ACT_GETDATA:  /* In given buffer      */
+            if (rec_no < 0) {
+                rec_no = 1;
+                while(SpawnObjects[rec_no + 1].line_name[0] > 0) {
+                    rec_no++;
+                }
+            }
+            memcpy(spt, &SpawnObjects[rec_no], sizeof(EDITFILE_SPAWNPT_T));
+            break;
+        case EDITFILE_ACT_SETDATA:
+            if (rec_no > 0 && rec_no < EDITFILE_MAXSPAWN) {
+                memcpy(&SpawnObjects[rec_no], spt, sizeof(EDITFILE_SPAWNPT_T));
+            }
+            break;
+            
+    }
+
+    return 1;
+   
+}
+
+/*
+ * Name:
+ *     editfilePassage
+ * Description:
+ *     Load/Save passages data from 'passage.txt' in actual work directory
+ * Input:
+ *     action: What to do
+ *     rec_no: Number of record to read/write from buffer
+ *     psg *:  Pointer on buffer for spawn point 
+ * Output:
+ *     Success yes/no
+ */
+int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
+{
+
+    char *fname;
+
+
+    fname = editfileMakeFileName(EDITFILE_WORKDIR, "passage.txt");
+
+    switch(action) {
+
+        case EDITFILE_ACT_LOAD:
+            sdlglcfgEgoboo(fname, &PassageRec, 0);
+            /* ----- Return the data from the first record --- */
+            memcpy(psg, &Passages[rec_no], sizeof(EDITFILE_PASSAGE_T));
+            break;
+        case EDITFILE_ACT_SAVE:
+            /* -------- Write data to file -------- */
+            sdlglcfgEgoboo(fname, &PassageRec, 1);
+            break;
+        case EDITFILE_ACT_GETDATA:  /* In given buffer      */
+            if (rec_no < 0) {
+                rec_no = 1;
+                while(Passages[rec_no + 1].line_name[0] > 0) {
+                    rec_no++;
+                }
+            }
+            memcpy(psg, &Passages[rec_no], sizeof(EDITFILE_PASSAGE_T));
+            break;
+        case EDITFILE_ACT_SETDATA:
+            if (rec_no > 0 && rec_no < EDITFILE_MAXPASSAGE) {
+                memcpy(&Passages[rec_no], psg, sizeof(EDITFILE_PASSAGE_T));
+            }
+            break;
 
     }
-    else {
-        sdlglcfgReadEgoboo(editfileMakeFileName(dir_no, filename), lineinfo);
-    }
+
+    return 1;
 
 }
+

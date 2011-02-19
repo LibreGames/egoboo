@@ -98,6 +98,6 @@ void sdlglcfgReadSimple(char *filename, SDLGLCFG_NAMEDVALUE *vallist);
 void sdlglcfgLoadFile(char *dir_name, SDLGLCFG_FILE *fdesc);
 void sdlglcfgFreeFile(SDLGLCFG_FILE *fdesc);
 
-void sdlglcfgReadEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo);
+void sdlglcfgEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo, int write);
 
 #endif

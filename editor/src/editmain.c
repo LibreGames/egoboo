@@ -55,9 +55,6 @@
 #define EDITMAIN_SOUTH  0x02
 #define EDITMAIN_WEST   0x03
 
-#define EDITMAIN_MAXSPAWN    500        /* Maximum Lines in spawn list  */
-#define EDITMAIN_MAXPASSAGE   50
-
 #define EDITMAIN_MAXLIGHT    100        /* Maximum number of lights     */  
 #define EDITMAIN_FADEBORDER   64        /* Darkness at the edge of map  */
   
@@ -79,52 +76,6 @@ static EDITMAIN_STATE_T EditState;
 
 static int PassageFan[EDITMAIN_MAXSELECT + 2];  /* List of fans of actual chosen passage */
 static int SpawnFan[EDITMAIN_MAXSELECT + 2];    /* List of fans of actual chosen spawn point */
-
-/* -------------Data for Spawn-Points ---------------- */
-static EDITMAIN_SPAWNPT_T SpawnObjects[EDITMAIN_MAXSPAWN + 2];
-
-static SDLGLCFG_VALUE SpawnVal[] = {
-	{ SDLGLCFG_VAL_STRING,  &SpawnObjects[0].line_name, 24 },
-	{ SDLGLCFG_VAL_STRING,  &SpawnObjects[0].item_name, 20 },
-	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].slot_no },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].x_pos },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].y_pos },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].z_pos },
-	{ SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].view_dir },
-	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].money },
-	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].skin },
-	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].pas },
-	{ 0 }
-};
-
-static SDLGLCFG_LINEINFO SpawnRec = {
-	&SpawnObjects[0],
-	EDITMAIN_MAXSPAWN,
-	sizeof(EDITMAIN_SPAWNPT_T),
-	&SpawnVal[0]
-};
-
-/* ------------ Data for passages -------------------- */
-static EDITMAIN_PASSAGE_T Passages[EDITMAIN_MAXPASSAGE + 2];
-
-static SDLGLCFG_VALUE PassageVal[] = {
-	{ SDLGLCFG_VAL_STRING,  &Passages[0].line_name, 24 },
-	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft.x },
-	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft.y },
-	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright.x },
-	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright.y },
-	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].open },
-	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].shoot_trough },
-	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].slippy_close },
-	{ 0 }
-};
-
-static SDLGLCFG_LINEINFO PassageRec = {
-	&Passages[0],
-	EDITMAIN_MAXPASSAGE,
-	sizeof(EDITMAIN_PASSAGE_T),
-	&PassageVal[0]
-};
 
 /* --- Definition of preset tiles for 'simple' mode -- */
 static FANDATA_T PresetTiles[] = {
@@ -783,39 +734,6 @@ static void editmainTranslateWallMakeInfo(MESH_T *mesh, WALLMAKER_INFO_T *wi, in
 
 /*
  * Name:
- *     editmainLoadAdditionalData
- * Description:
- *     Loads additional data needed for map. SPAWN-Points an Passages 
- * Input:
- *     mesh*: Pointer on mesh to get the info from
- *     wi *:  Array from wallmaker to create walls from
- *
- */
-static void editmainLoadAdditionalData(void)
-{   
-	
-	editfileText(EDITFILE_WORKDIR, "passage.txt", &PassageRec, 0);
-	editfileText(EDITFILE_WORKDIR, "spawn.txt", &SpawnRec, 0);
-	/* --- Set flag, if passages / spawn points are loaded at all   */
-	if (Passages[1].line_name[0] > 0) {
-		EditState.psg_no = 1;
-	}
-	else {
-		EditState.psg_no = 0;
-	}
-	
-	if (SpawnObjects[1].line_name[0] > 0) {
-		EditState.spawnpos_no = 1;
-	}
-	else {
-		EditState.spawnpos_no = 0;
-	}          
-
-}
-
-
-/*
- * Name:
  *     editmainUpdateChosenFreeFan
  * Description:
  *     Sets the data for the chosen tile type for 'free' mode  
@@ -1014,8 +932,6 @@ int editmainMap(int command)
 
 				editmainCompleteMapData(&Mesh);
 				sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
-				/* -------- Now read the data for spawn points and passages */
-				editmainLoadAdditionalData();                
 				return 1;
 
 			}
@@ -1421,120 +1337,3 @@ void editmainChooseTex(int cx, int cy, int w, int h)
   
 }
 
-/*
- * Name:
- *     editmainPassage
- * Description:
- *     Handles 'Passage'-Data, depending on given command.
- *     A copy of the actual chosen passage has to be given/is returned
- *     in 'psg'.
- * Input:
- *     cmd:    What to do
- *     psg *:  Pointer on a copy data to handle
- *     info:   Additional info for action, if needed
- */
-void editmainPassage(char cmd, EDITMAIN_PASSAGE_T *psg, int info)
-{
-
-	switch(cmd) {
-		case EDITMAIN_TFILE_START:
-			if (EditState.psg_no > 0) {
-				EditState.psg_no = 1;
-				memcpy(psg, &Passages[EditState.psg_no], sizeof(EDITMAIN_PASSAGE_T));
-				/* TODO: Fill the list of fan numbers for this passage */
-				PassageFan[0] = -1;
-			}
-			break;
-		case EDITMAIN_TFILE_CHOOSE:
-			if (EditState.psg_no > 0) {
-				/* If a passage at all --> Write the update to list */
-				memcpy(&Passages[EditState.psg_no], psg, sizeof(EDITMAIN_PASSAGE_T));
-				if (info > 0) {
-					if (Passages[EditState.psg_no + 1].line_name[0] > 0) {
-						EditState.psg_no++;
-					}
-				}
-				else if (info < 0) {
-					if (EditState.psg_no > 1) {
-						EditState.psg_no--;
-					}
-				}
-				if (info != 0) {
-					/* Hand copy over to caller for editing */
-					memcpy(psg, &Passages[EditState.psg_no], sizeof(EDITMAIN_PASSAGE_T));
-					/* TODO: Fill the list of fan numbers for this passage */
-					PassageFan[0] = -1;
-				}
-				return;
-			}
-			PassageFan[0] = -1;
-			break;
-		case EDITMAIN_TFILE_UPDATE:
-			/* Write the update to list */
-			memcpy(&Passages[EditState.psg_no], psg, sizeof(EDITMAIN_PASSAGE_T));
-			break;
-		case EDITMAIN_TFILE_SAVE:
-			/* TODO: Save the changes to file */
-			editfileText(EDITFILE_WORKDIR, "passage.txt", &PassageRec, 1);
-			break;
-	}
-
-}
-
-/*
- * Name:
- *     editmainSpawnPt
- * Description:
- *     Handles 'SpawnPoint'-Data, depending on given command.
- *     A copy of the actual chosen passage has to be given/is returned
- *     in 'psg'.
- * Input:
- *     cmd:     What to do
- *     spawn *: Pointer on a copy of data to handle
- *     info:    Additional info for action, if needed
- */
-void editmainSpawnPt(char cmd, EDITMAIN_SPAWNPT_T *spawn, int info)
-{
-
-	switch(cmd) {
-		case EDITMAIN_TFILE_START:
-			if (EditState.spawnpos_no > 0) {
-				EditState.spawnpos_no = 1;
-				memcpy(spawn, &SpawnObjects[EditState.spawnpos_no], sizeof(EDITMAIN_SPAWNPT_T));
-				/* TODO: Fill the list of fan numbers for this spawn pos */
-				SpawnFan[0] = -1;
-			}
-			break;
-		case EDITMAIN_TFILE_CHOOSE:
-			if (EditState.spawnpos_no > 0) {
-				/* If a spawn point at all */
-				memcpy(&SpawnObjects[EditState.spawnpos_no], spawn, sizeof(EDITMAIN_SPAWNPT_T));
-				if (info > 0) {
-					if (SpawnObjects[EditState.spawnpos_no + 1].line_name[0] > 0) {
-						EditState.spawnpos_no++;
-					}
-				}
-				else if (info < 0) {
-					if (EditState.spawnpos_no > 1) {
-						EditState.spawnpos_no--;
-					}
-				}
-				if (info != 0) {
-					/* TODO: Fill the list of fan numbers for this spawn pos */
-					memcpy(spawn, &SpawnObjects[EditState.spawnpos_no], sizeof(EDITMAIN_SPAWNPT_T));
-					SpawnFan[0] = -1;       /* No fan at all */
-				}
-				return;
-			}
-			SpawnFan[0] = -1;       /* No fan at all */
-			break;
-		case EDITMAIN_TFILE_UPDATE:
-			memcpy(spawn, &SpawnObjects[EditState.spawnpos_no], sizeof(EDITMAIN_SPAWNPT_T));
-			break;
-		case EDITMAIN_TFILE_SAVE:
-			/* TODO: Save the changes to file */
-			editfileText(EDITFILE_WORKDIR, "spawn.txt", &SpawnRec, 1);
-			break;
-	}
-
-}

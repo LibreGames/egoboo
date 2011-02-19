@@ -35,12 +35,55 @@
 
 #define EDITFILE_WORKDIR    1    /* Main directory  */
 
+#define EDITFILE_LASTREC    -1  /* Get last record in data list */    
+
+#define EDITFILE_ACT_LOAD    1
+#define EDITFILE_ACT_SAVE    2
+#define EDITFILE_ACT_GETDATA 3  /* In given buffer      */
+#define EDITFILE_ACT_SETDATA 4  /* From given buffer    */      
+
+
+/*******************************************************************************
+* TYPEDEFS 								                                       *
+*******************************************************************************/
+
+/* ====== The different file types ===== */
+typedef struct {
+
+    char line_name[25];         /* Only for information purposes */
+    int topleft[2];
+    int bottomright[2];
+    char open;
+    char shoot_trough;
+    char slippy_close;
+    
+} EDITFILE_PASSAGE_T;
+
+typedef struct {
+
+    char line_name[25];     /* Name of object to load   */
+    char item_name[20+1];
+    int  slot_no;           /* Use it for coloring the bounding boxes */
+    float x_pos, y_pos, z_pos;
+    char view_dir;
+    int  money;
+    int  skin;
+    int  pas;
+    int  con;
+    int  lvl;
+    char stt;
+    char gho;
+    char team;
+    
+} EDITFILE_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
 void editfileSetWorkDir(char *dir_name);
 int  editfileMapMesh(MESH_T *mesh, char *msg, char save);
-void editfileText(int dir_no, char *filename, SDLGLCFG_LINEINFO *lineinfo, char save);
+int  editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt);
+int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg);
 
 #endif  /* _EDITFILE_H_ */

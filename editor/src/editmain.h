@@ -52,14 +52,7 @@
 #define EDITMAIN_EDIT_FX        0x03    /* Edit FX-Flags of chosen fan(s)       */
 #define EDITMAIN_EDIT_TEXTURE   0x04    /* Edit the textures of chosen fan(s)   */
 #define EDITMAIN_EDIT_MAX       0x04    /* Maximum number of edit states        */
-/* -- Edit-States for text files -- */
-#define EDITMAIN_EDIT_PASSAGE   0x0A
-#define EDITMAIN_EDIT_SPAWNPT   0x0B 
 
-#define EDITMAIN_TFILE_START  ((char)1)      
-#define EDITMAIN_TFILE_CHOOSE ((char)2)
-#define EDITMAIN_TFILE_UPDATE ((char)3) /* Do update of single record   */
-#define EDITMAIN_TFILE_SAVE   ((char)4) /* Write changes to file        */
 
 /* --------- Other values ------- */
 #define EDITMAIN_MAX_MAPSIZE  64
@@ -103,35 +96,6 @@ typedef struct {
 
 } EDITMAIN_XY;
 
-typedef struct {
-
-    char line_name[25];         /* Only for information purposes */
-    EDITMAIN_XY topleft;
-    EDITMAIN_XY bottomright;
-    char open;
-    char shoot_trough;
-    char slippy_close;
-    
-} EDITMAIN_PASSAGE_T;
-
-typedef struct {
-
-    char line_name[25];
-    char item_name[20+1];
-    int  slot_no;           /* Use it for coloring the bounding boxes */
-    float x_pos, y_pos, z_pos;
-    char view_dir;
-    int  money;
-    int  skin;
-    int  pas;
-    int  con;
-    int  lvl;
-    char stt;
-    char gho;
-    char team;
-    
-} EDITMAIN_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
-
 /* TODO: Add struct for 'menu.txt' */
 
 typedef struct {
@@ -156,8 +120,6 @@ void editmainFanTypeName(char *fan_name);
 void editmainChooseFanType(int dir, char *fan_name);
 void editmain2DTex(int x, int y, int w, int h);
 void editmainChooseTex(int cx, int cy, int w, int h);
-void editmainPassage(char cmd, EDITMAIN_PASSAGE_T *psg, int info);
-void editmainSpawnPt(char cmd, EDITMAIN_SPAWNPT_T *spawn, int info); 
 
 #endif /* _EDITMAIN_H_	*/
 

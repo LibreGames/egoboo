@@ -36,6 +36,7 @@
 #include "sdlgl3d.h"
 #include "editor.h"
 #include "editmain.h"
+#include "editfile.h"       /* Description of Spawn-Points and passages */
 
 /*******************************************************************************
 * DEFINES								                                       *
@@ -117,10 +118,10 @@ static SDLGL_RECT DragRect;
 static int  EditorMapSize = 32;             /* Inital mapsize for new maps      */
 static char EditorWorkDir[256];
 static char EditorActDlg = 0; 
-static EDITMAIN_PASSAGE_T ActPassage = {    /* Holds data about chosen passage  */
+static EDITFILE_PASSAGE_T ActPassage = {    /* Holds data about chosen passage  */
     "Passage-Name"
 };
-static EDITMAIN_SPAWNPT_T ActSpawnPt = {    /* Holds data about chosen spawn point  */
+static EDITFILE_SPAWNPT_T ActSpawnPt = {    /* Holds data about chosen spawn point  */
     "Object-Name"
 };
 
@@ -262,20 +263,20 @@ static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActPassage.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32, 112,   8 }, 0, 0, "Top left:" },
     { SDLGL_TYPE_LABEL,  { 120,  32,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_LABEL,  { 144,  32,  64,   8 }, 0, 0, "(Value)" }, /* SDLGL_TYPE_VALUE */
+    { SDLGL_TYPE_VALUE,  { 144,  32,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.topleft[0] },
     { SDLGL_TYPE_LABEL,  { 208,  32,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_LABEL,  { 240,  32,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_VALUE,  { 240,  32,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.topleft[1] },
     { SDLGL_TYPE_LABEL,  {   8,  48, 112,   8 }, 0, 0, "Bottom right:" },
     { SDLGL_TYPE_LABEL,  { 120,  48,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_LABEL,  { 144,  48,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_VALUE,  { 144,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.bottomright[0] },
     { SDLGL_TYPE_LABEL,  { 208,  48,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_LABEL,  { 240,  48,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_VALUE,  { 240,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.bottomright[1] },
     { SDLGL_TYPE_LABEL,  {   8,  64,  48,   8 }, 0, 0, "Open:" },
-    { SDLGL_TYPE_LABEL,  {  56,  64,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.open },
     { SDLGL_TYPE_LABEL,  {   8,  80, 120,   8 }, 0, 0, "Shoot Through:" },
-    { SDLGL_TYPE_LABEL,  { 128,  80,  64,   8 }, 0, 0, "(Value):" },
+    { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.shoot_trough },
     { SDLGL_TYPE_LABEL,  {   8,  96, 120,   8 }, 0, 0, "Slippy Close:" },
-    { SDLGL_TYPE_LABEL,  { 128,  96,  64,   8 }, 0, 0, "(Value):" },
+    { SDLGL_TYPE_VALUE,  { 128,  96,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.slippy_close },
     { SDLGL_TYPE_BUTTON, {   8, 130,  72,  16 }, EDITOR_PASSAGE, EDITOR_DLG_PREV, "Previous"  },
     { SDLGL_TYPE_BUTTON, {  88, 130,  40,  16 }, EDITOR_PASSAGE, EDITOR_DLG_NEXT, "Next"  },
     { SDLGL_TYPE_BUTTON, { 136, 130,  32,  16 }, EDITOR_PASSAGE, EDITOR_DLG_NEW, "New"   },
@@ -289,7 +290,7 @@ static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Object:" },
     { SDLGL_TYPE_VALUE,  {  72,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActSpawnPt.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Name:" },
-    { SDLGL_TYPE_LABEL,  {  72,  32,  96,   8 }, 0, 0, "(Game-Name [NONE])" },
+    { SDLGL_TYPE_LABEL,  {  72,  32,  96,   8 }, 0, SDLGL_VAL_STRING, "(Game-Name [NONE])" },
     { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
     { SDLGL_TYPE_LABEL,  {  72,  48,  64,   8 }, 0, 0, "(Value)" },
     { SDLGL_TYPE_LABEL,  {   8,  64,  80,   8 }, 0, 0, "Position:" },
@@ -574,6 +575,9 @@ static int editorFileMenu(char which)
     switch(which) {
         case EDITOR_FILE_LOAD:
             editmainMap(EDITMAIN_LOADMAP);
+            /* Load additional data for this module */
+            editfileSpawn(EDITFILE_ACT_LOAD, 1, &ActSpawnPt);
+            editfilePassage(EDITFILE_ACT_LOAD, 1, &ActPassage);
             break;
 
         case EDITOR_FILE_SAVE:
