@@ -258,19 +258,19 @@ static SDLGL_FIELD MapDlg[] = {
 
 /* Prepared dialog for spawn points and passages */
 static SDLGL_FIELD PassageDlg[] = {
-    { SDLGL_TYPE_BUTTON, {   0,   0, 450, 150 }, 0, 0, "Passage" },
+    { SDLGL_TYPE_BUTTON, {   0,   0, 280, 150 }, 0, 0, "Passage" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  48,   8 }, 0, 0, "Name:" },
     { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActPassage.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32, 112,   8 }, 0, 0, "Top left:" },
     { SDLGL_TYPE_LABEL,  { 120,  32,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 144,  32,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.topleft[0] },
-    { SDLGL_TYPE_LABEL,  { 208,  32,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 240,  32,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.topleft[1] },
+    { SDLGL_TYPE_VALUE,  { 144,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.topleft[0] },
+    { SDLGL_TYPE_LABEL,  { 176,  32,  24,   8 }, 0, 0, "Y:" },
+    { SDLGL_TYPE_VALUE,  { 208,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.topleft[1] },
     { SDLGL_TYPE_LABEL,  {   8,  48, 112,   8 }, 0, 0, "Bottom right:" },
     { SDLGL_TYPE_LABEL,  { 120,  48,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 144,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.bottomright[0] },
-    { SDLGL_TYPE_LABEL,  { 208,  48,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 240,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.bottomright[1] },
+    { SDLGL_TYPE_VALUE,  { 144,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.bottomright[0] },
+    { SDLGL_TYPE_LABEL,  { 176,  48,  24,   8 }, 0, 0, "Y:" },
+    { SDLGL_TYPE_VALUE,  { 208,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.bottomright[1] },
     { SDLGL_TYPE_LABEL,  {   8,  64,  48,   8 }, 0, 0, "Open:" },
     { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.open },
     { SDLGL_TYPE_LABEL,  {   8,  80, 120,   8 }, 0, 0, "Shoot Through:" },
@@ -286,7 +286,7 @@ static SDLGL_FIELD PassageDlg[] = {
 };
 
 static SDLGL_FIELD SpawnPtDlg[] = {
-    { SDLGL_TYPE_BUTTON, {   0,   0, 450, 260 }, 0, 0, "Spawn Point" },
+    { SDLGL_TYPE_BUTTON, {   0,   0, 350, 260 }, 0, 0, "Spawn Point" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Object:" },
     { SDLGL_TYPE_VALUE,  {  72,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActSpawnPt.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Name:" },
@@ -302,16 +302,16 @@ static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_LABEL,  { 288,  64,  64,   8 }, 0, 0, "(Value)" },
     { SDLGL_TYPE_LABEL,  {   8,  80,  88,   8 }, 0, 0, "Direction:" },
     { SDLGL_TYPE_LABEL,  {  96,  80,  16,   8 }, 0, 0, "(Value)" },
-    { SDLGL_TYPE_LABEL,  {   8,  96,  88,   8 }, 0, 0, "Money:" },
+    { SDLGL_TYPE_LABEL,  {   8,  96,  88,   8 }, 0, 0, "Money:" },  /* 0 .. 9999 */
     { SDLGL_TYPE_LABEL,  {  96,  96,  16,   8 }, 0, 0, "(Value)" },
-    { SDLGL_TYPE_LABEL,  {   8, 112,  88,   8 }, 0, 0, "Skin:" },
-    { SDLGL_TYPE_LABEL,  {  96, 112,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 112,  88,   8 }, 0, 0, "Skin:" },   /* 0 .. 5 (5: Random) */
+    { SDLGL_TYPE_LABEL,  {  96, 112,  16,   8 }, 0, 0, "(Value)" }, 
     { SDLGL_TYPE_LABEL,  {   8, 128,  88,   8 }, 0, 0, "Passage:" },
     { SDLGL_TYPE_LABEL,  {  96, 128,  16,   8 }, 0, 0, "(Value)" },
     { SDLGL_TYPE_LABEL,  {   8, 144,  88,   8 }, 0, 0, "Content:" },
     { SDLGL_TYPE_LABEL,  {  96, 144,  16,   8 }, 0, 0, "(Value)" },
-    { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },
-    { SDLGL_TYPE_LABEL,  {  96, 160,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
+    { SDLGL_TYPE_LABEL,  {  96, 160,  16,   8 }, 0, 0, "(Value)" }, 
     { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Status-Bar:" },
     { SDLGL_TYPE_LABEL,  { 104, 176,  16,   8 }, 0, 0, "(Value)" },
     { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Ghost:" },
@@ -514,6 +514,7 @@ static void editor2DMap(SDLGL_EVENT *event)
                 DragRect.w = 0;
                 DragRect.h = 0;
                 editmainChooseFan(event -> mou.x, event -> mou.y, 1);
+                /* TODO: Check for special info (passages ( spawn points), if switched on */
             }   /* Choose dragging mouse */
             else if (event -> sdlcode == SDLGL_KEY_MOULDRAG) {
                 DragRect.w += event -> mou.w;
@@ -570,6 +571,7 @@ static int editorFileMenu(char which)
 {
 
     int edit_mode;
+    int rec_no;
 
 
     switch(which) {
@@ -578,6 +580,32 @@ static int editorFileMenu(char which)
             /* Load additional data for this module */
             editfileSpawn(EDITFILE_ACT_LOAD, 1, &ActSpawnPt);
             editfilePassage(EDITFILE_ACT_LOAD, 1, &ActPassage);
+            /* Write the data about passages and spawn points to editor  */
+            rec_no = 1;
+            do {
+                editmainSetMapInfo(MAP_INFO_SPAWN,
+                                   ActSpawnPt.x_pos,
+                                   ActSpawnPt.y_pos,
+                                   ActSpawnPt.x_pos,
+                                   ActSpawnPt.y_pos);
+                rec_no++;
+
+            }
+            while(editfileSpawn(EDITFILE_ACT_GETDATA, rec_no, &ActSpawnPt));
+            rec_no = 1;
+            do {
+                editmainSetMapInfo(MAP_INFO_PASSAGE,
+                                   ActPassage.topleft[0],
+                                   ActPassage.topleft[1],
+                                   ActPassage.bottomright[0],
+                                   ActPassage.bottomright[1]);
+                rec_no++;
+            }
+            while(editfilePassage(EDITFILE_ACT_GETDATA, rec_no, &ActPassage));
+
+            /* -------- Now get info about the first one again */
+            editfileSpawn(EDITFILE_ACT_GETDATA, 1, &ActSpawnPt);
+            editfilePassage(EDITFILE_ACT_GETDATA, 1, &ActPassage);
             break;
 
         case EDITOR_FILE_SAVE:
@@ -630,11 +658,24 @@ static int editorFileMenu(char which)
  */
 static int editorSpawnDlg(SDLGL_EVENT *event)
 {
-
+    
+    static int act_rec = 0;
+    
+    
     switch(event -> sub_code) {
         case EDITOR_DLG_PREV:
+            if (act_rec > 1) {
+                act_rec--;
+            }
+            /* --- TODO: Get it from 'editfile...' --- */
+            break;
         case EDITOR_DLG_NEXT:
+            act_rec++;
+            /* --- TODO: Get it from 'editfile...' --- */
+            break;
         case EDITOR_DLG_NEW:
+            /* --- TODO: Get it from 'editfile...' --- */
+            break;
         case EDITOR_DLG_SAVE:
             break;
         case EDITOR_DLG_CLOSE:
@@ -658,11 +699,25 @@ static int editorSpawnDlg(SDLGL_EVENT *event)
 static int editorPassageDlg(SDLGL_EVENT *event)
 {
 
+    static int act_rec = 0;
+    
+    
     switch(event -> sub_code) {
         case EDITOR_DLG_PREV:
+            if (act_rec > 1) {
+                act_rec--;
+            }
+            /* --- TODO: Get it from 'editfile...' --- */
+            break;
         case EDITOR_DLG_NEXT:
+            act_rec++;
+            /* --- TODO: Get it from 'editfile...' --- */
+            break;
         case EDITOR_DLG_NEW:
+            /* --- TODO: Get it from 'editfile...' --- */
+            break;
         case EDITOR_DLG_SAVE:
+            /* --- TODO: Get it from 'editfile...' --- */
             break;
         case EDITOR_DLG_CLOSE:
             editorSetDialog(0, 0);
@@ -751,9 +806,6 @@ static void editorDrawCheckBox(SDLGL_FIELD *field)
 static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 {
 
-    int color;
-
-
     glClear(GL_COLOR_BUFFER_BIT);
 
     /* First move the camera */
@@ -793,64 +845,33 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
         }
 
-        switch(fields -> sdlgl_type) {
+        if (! sdlglstrDrawField(fields)) {
+        
+            switch(fields -> sdlgl_type) {                         
 
-            case SDLGL_TYPE_STD:
-                /* Draw the background of the menu and the status bar */
-                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_STD, 0);
-                break;
+                case EDITOR_DRAW2DMAP:
+                    editmainDrawMap2D(fields -> rect.x, fields -> rect.y);
+                    break;
 
-            case SDLGL_TYPE_LABEL:
-                sdlglstrSetColorNo(SDLGL_COL_WHITE);
-                sdlglstrString(&fields -> rect, fields -> pdata);
-                break;
+                case EDITOR_DRAWTEXTURE:
+                    editmain2DTex(fields -> rect.x, fields -> rect.y,
+                                  fields -> rect.w, fields -> rect.h);
+                    break;
 
-            case SDLGL_TYPE_VALUE:
-                /* Uses subcode, because maincode generates mouse-event */
-                sdlglstrPrintValue(&fields -> rect, fields -> pdata, fields -> sub_code);
-                break;
+                case SDLGL_TYPE_CHECKBOX:
+                    editorDrawCheckBox(fields);
+                    break;
 
-            case SDLGL_TYPE_MENU:
-                if (fields -> fstate & SDLGL_FSTATE_MOUSEOVER) {
+                case SDLGL_TYPE_SLI_AL:
+                    sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_SLI_AL, 0);
+                    break;
 
-                    color = SDLGL_COL_RED;
+                case SDLGL_TYPE_SLI_AR:
+                    sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_SLI_AR, 0);
+                    break;
 
-                }
-                else {
-
-                    color = SDLGL_COL_WHITE;
-
-                }
-
-                sdlglstrSetColorNo(color);
-                sdlglstrString(&fields -> rect, fields -> pdata);
-                break;
-
-            case EDITOR_DRAW2DMAP:
-                editmainDrawMap2D(fields -> rect.x, fields -> rect.y);
-                break;
-
-            case EDITOR_DRAWTEXTURE:
-                editmain2DTex(fields -> rect.x, fields -> rect.y,
-                              fields -> rect.w, fields -> rect.h);
-                break;
-
-            case SDLGL_TYPE_CHECKBOX:
-                editorDrawCheckBox(fields);
-                break;
-
-            case SDLGL_TYPE_BUTTON:
-                sdlglstrDrawButton(&fields -> rect, fields -> pdata, 0);
-                break;
-
-            case SDLGL_TYPE_SLI_AL:
-                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_SLI_AL, 0);
-                break;
-
-            case SDLGL_TYPE_SLI_AR:
-                sdlglstrDrawSpecial(&fields -> rect, 0, SDLGL_TYPE_SLI_AR, 0);
-                break;
-
+            }
+        
         }
 
         fields++;

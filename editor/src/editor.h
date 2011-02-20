@@ -63,7 +63,13 @@
 #define EDIT_MODE_SOLID     0x01        /* Draw solid, yes/no       */
 #define EDIT_MODE_TEXTURED  0x02        /* Draw textured, yes/no    */
 #define EDIT_MODE_LIGHTMAX  0x04        /* Is drawn all white       */    
-                                            
+
+/* ---- For MAP_INFO_T: Kind of additional info ---- */
+#define MAP_INFO_NONE       0x00
+#define MAP_INFO_SPAWN      0x01
+#define MAP_INFO_PASSAGE    0x02
+#define MAP_INFO_CHOSEN     0x40        /* TODO: These fans are chosen  */ 
+
 /*******************************************************************************
 * TYPEDEFS							                                           *
 *******************************************************************************/
@@ -139,6 +145,13 @@ typedef struct {
     int  vrtstart[MAXMESHFAN];                      // First vertex of given fan  
 
 } MESH_T;
+
+typedef struct {
+
+    char type;          /* Type of map_info: MAP_INFO_NONE, MAP_INFO_SPAWN  MAP_INFO_PASSAGE */
+    short int number;   /* Number of spawn point / passage chosen           */    
+
+} MAP_INFO_T;   /* Information about spawn points an passages for chossing and display */
 
 /*******************************************************************************
 * CODE 								                                           *

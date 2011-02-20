@@ -108,7 +108,7 @@ void sdlglstrStringToRect(SDLGL_RECT *rect, char *string);
 void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags);
 void sdlglstrDrawEditField(SDLGL_RECT *rect, char *text, int curpos);
 void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int flags);
-SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field, char *mouse_over);
+int  sdlglstrDrawField(SDLGL_FIELD *field);
 void sdlglstrPrintValue(SDLGL_RECT *rect, void *value, int which); 
 
 /* Additional function for user defined fonts and styles */

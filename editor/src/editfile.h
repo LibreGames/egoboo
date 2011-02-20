@@ -41,6 +41,7 @@
 #define EDITFILE_ACT_SAVE    2
 #define EDITFILE_ACT_GETDATA 3  /* In given buffer      */
 #define EDITFILE_ACT_SETDATA 4  /* From given buffer    */      
+#define EDITFILE_ACT_NEW     5  /* Return empty record  */   
 
 
 /*******************************************************************************

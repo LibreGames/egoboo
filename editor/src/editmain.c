@@ -74,8 +74,7 @@ static COMMAND_T *pCommands;
 
 static EDITMAIN_STATE_T EditState;
 
-static int PassageFan[EDITMAIN_MAXSELECT + 2];  /* List of fans of actual chosen passage */
-static int SpawnFan[EDITMAIN_MAXSELECT + 2];    /* List of fans of actual chosen spawn point */
+static MAP_INFO_T Map_Info[MAXMESHFAN + 10];    /* Info a about spawnpoints and passages */
 
 /* --- Definition of preset tiles for 'simple' mode -- */
 static FANDATA_T PresetTiles[] = {
@@ -838,6 +837,41 @@ static int editmainFanSet(int fan_no, int is_floor)
 	return 0;
 }
 
+/*
+ * Name:
+ *     editmainSetChosenFans
+ * Description:
+ *     Writes the chosen fans to the info-map 
+ * Input:
+ *     None 
+ */
+static void editmainSetChosenFans(void)
+{
+
+    int i;
+    int *fan_no;
+    
+    
+    for (i = 0; i < Mesh.numfan; i++) {
+    
+        if (Map_Info[i].type == MAP_INFO_CHOSEN) {
+                        
+            Map_Info[i].type = 0;  /* Clear existing chosen fans */
+            
+        }
+    
+    }
+    
+    fan_no = &EditState.fan_selected[0];
+    while(*fan_no >= 0) {
+    
+        Map_Info[*fan_no].type = MAP_INFO_CHOSEN;
+        fan_no++;
+        
+    }
+    
+}
+
 /* ========================================================================== */
 /* ========================= PUBLIC FUNCTIONS =============================== */
 /* ========================================================================== */
@@ -866,11 +900,8 @@ EDITMAIN_STATE_T *editmainInit(int map_size, int minimap_w, int minimap_h)
 	EditState.map_size        = map_size;
 	EditState.minimap_w       = minimap_w;
 	EditState.minimap_h       = minimap_h;
-	EditState.draw_mode       = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);
-
-	/* Additional fans, that can be chosen */
-	PassageFan[0] = -1;
-	SpawnFan[0]   = -1;
+	EditState.draw_mode       = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);     
+    EditState.map_info        = 0;     /* Display no map info   */   
 
 	return &EditState;
 	
@@ -908,10 +939,8 @@ int editmainMap(int command)
 	switch(command) {
 
 		case EDITMAIN_DRAWMAP:
-			editdraw3DView(&Mesh, &EditState.ft, &EditState.fd,
-						   EditState.fan_selected,
-						   PassageFan,
-						   SpawnFan);
+            editmainSetChosenFans();
+			editdraw3DView(&Mesh, &EditState.ft, &EditState.fd, Map_Info);
 			return 1;
 
 		case EDITMAIN_NEWMAP:
@@ -921,6 +950,8 @@ int editmainMap(int command)
 				sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
 				/* Maybe initialize here the  chosen fan to
 				   none or 0 instead by caller */
+                /* Initialize the 'sub-map' for additional info */
+                memset(Map_Info, 0, (MAXMESHFAN * sizeof(MAP_INFO_T)));
 				return 1;
 
 			}
@@ -932,6 +963,7 @@ int editmainMap(int command)
 
 				editmainCompleteMapData(&Mesh);
 				sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
+                memset(Map_Info, 0, (MAXMESHFAN * sizeof(MAP_INFO_T)));
 				return 1;
 
 			}
@@ -973,10 +1005,10 @@ void editmainDrawMap2D(int x, int y)
 		Mesh.minimap_w = EditState.minimap_w;
 		Mesh.minimap_h = EditState.minimap_h;
 
-		editdraw2DMap(&Mesh, x, y,
-					  EditState.fan_selected,
-					  PassageFan,
-					  SpawnFan);
+        editmainSetChosenFans();
+        
+		editdraw2DMap(&Mesh, x, y, Map_Info); 
+
 	}
 
 }
@@ -1337,3 +1369,55 @@ void editmainChooseTex(int cx, int cy, int w, int h)
   
 }
 
+/*
+ * Name:
+ *     editmainSetMapInfo
+ * Description:
+ *     Fills in the map info based on the data given
+ * Input:
+ *     which:   Kind of data (spawn point, passage
+ *     x, y,
+ *     x2, y2:  Extent on map in tiles
+ */
+void editmainSetMapInfo(char which, int x, int y, int x2, int y2)
+{
+
+    int x_count, y_count;
+    int tile_no;
+    
+
+    if (x > 0 && y > 0) {
+    
+        for (y_count = y; y_count <= y2; y_count++) {
+
+            for (x_count = x; x_count <= x2; x_count++) {
+
+                tile_no = (y_count * Mesh.tiles_x) + x_count;
+                Map_Info[tile_no].type = which;
+                Map_Info[tile_no].type = (short int)tile_no;
+                
+            }
+
+        }
+        
+    }
+
+}
+
+/*
+ * Name:
+ *     editmainGetMapInfo
+ * Description:
+ *     Fills in the map info based on the data given
+ * Input:
+ *     tile_x, tile_y: Chosen position
+ *     info *:         Pointer to fill with info about chosen tile
+ */
+void editmainGetMapInfo(int tile_x, int tile_y, EDITMAIN_INFO_T *info)
+{
+
+    info -> fan_no   = (tile_y * Mesh.tiles_x) + tile_x;
+    info -> type     = Map_Info[info -> fan_no].type;
+    info -> t_number = Map_Info[info -> fan_no].number; 
+
+}

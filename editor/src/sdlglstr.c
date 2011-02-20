@@ -1494,12 +1494,10 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
  *     Draw standard fields for SDLGL. Uses the colors defined in 'SDLGLSTR_STYLE'   
  * Input:
  *     field * :     Pointer on fields to print
- *     mouse_over *: Where to return the code of the mouse over for menu functions
- *                   Including sub-code
  * Output:
- *     Pointer on next field which is not an SDLGL_TYPE_...
+ *     Field was drawn by function 
  */
-SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field, char *mouse_over)
+int sdlglstrDrawField(SDLGL_FIELD *field)
 {
 
     unsigned char *textcolor;
@@ -1507,48 +1505,39 @@ SDLGL_FIELD *sdlglstrDrawField(SDLGL_FIELD *field, char *mouse_over)
 
     ActFont = ActualStyle.fontno;
 
-    while(field -> sdlgl_type != 0) {
+    switch(field -> sdlgl_type) {
 
-        switch(field -> sdlgl_type) {
+        case SDLGL_TYPE_MENU:
+            if (field -> fstate & SDLGL_FSTATE_MOUSEOVER) {
+                textcolor = ActualStyle.texthi;
+            }
+            else {
+                textcolor = ActualStyle.textlo;
+            }
+            sdlglstrIString(&field -> rect, field -> pdata, textcolor, textcolor);
+            break;
 
-            case SDLGL_TYPE_MENU:
-                if (field -> fstate & SDLGL_FSTATE_MOUSEOVER) {
-                    textcolor = ActualStyle.texthi;
-                    mouse_over[0] = SDLGL_TYPE_MENU;
-                    mouse_over[1] = field -> code;
-                    mouse_over[2] = field -> sub_code;
-                }
-                else {
-                    textcolor = ActualStyle.textlo;
-                }
-                sdlglstrIString(&field -> rect, field -> pdata, textcolor, textcolor);
-                break;
+        case SDLGL_TYPE_STD:
+        case SDLGL_TYPE_BUTTON:
+            sdlglstrDrawButton(&field -> rect, field -> pdata, 0);
+            break;
 
-            case SDLGL_TYPE_STD:
-            case SDLGL_TYPE_BUTTON:
-                sdlglstrDrawButton(&field -> rect, 0, 0);
-                break;
+        case SDLGL_TYPE_VALUE:
+            /* Uses subcode, because maincode generates mouse-event */
+            sdlglstrPrintValue(&field -> rect, field -> pdata, field -> sub_code);
+            break;
 
-            case SDLGL_TYPE_VALUE:
-                /* Uses subcode, because maincode generates mouse-event */
-                sdlglstrPrintValue(&field -> rect, field -> pdata, field -> sub_code);
-                break;
+        case SDLGL_TYPE_LABEL:            
+            sdlglstrStringToRect(&field -> rect, field -> pdata);
+            break;
 
-            case SDLGL_TYPE_LABEL:
-                sdlglstrStringToRect(&field -> rect, field -> pdata);
-                break;
-                
-            default:
-                /* Unknown type, to be drawn by caller  */
-                return field;
-                
-        }
-        
-        field++;
-    
+        default:
+            /* Unknown type, to be drawn by caller  */
+            return 0;
+            
     }
     
-    return field;
+    return 1;
 }
 
 /*

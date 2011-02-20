@@ -53,7 +53,6 @@
 #define EDITMAIN_EDIT_TEXTURE   0x04    /* Edit the textures of chosen fan(s)   */
 #define EDITMAIN_EDIT_MAX       0x04    /* Maximum number of edit states        */
 
-
 /* --------- Other values ------- */
 #define EDITMAIN_MAX_MAPSIZE  64
 #define EDITMAIN_MAXSELECT    25        /* Maximum fans to be selected  */
@@ -87,6 +86,7 @@ typedef struct {
     COMMAND_T fd;       /* Extent data for new fan type     */
     char msg[256];      /* Possible message from editor     */
     int map_size;       /* Map-Size chosen by user          */
+    char map_info;      /* Which kind of additional map info to draw    */
 
 } EDITMAIN_STATE_T;
 
@@ -105,6 +105,14 @@ typedef struct {
     int           radius;
 } LIGHT_T;
 
+typedef struct {
+
+    int  fan_no;
+    char type;
+    int  t_number; 
+
+} EDITMAIN_INFO_T;
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
@@ -120,6 +128,8 @@ void editmainFanTypeName(char *fan_name);
 void editmainChooseFanType(int dir, char *fan_name);
 void editmain2DTex(int x, int y, int w, int h);
 void editmainChooseTex(int cx, int cy, int w, int h);
+void editmainSetMapInfo(char which, int x, int y, int x2, int y2);
+void editmainGetMapInfo(int tile_x, int tile_y, EDITMAIN_INFO_T *info);  
 
 #endif /* _EDITMAIN_H_	*/
 
