@@ -1781,6 +1781,15 @@ void sdlglInputAdd(char block_sign, SDLGL_FIELD *psrc, int x, int y)
         if (y < 0) {
             y = center_pos.y;
         }
+        
+        /* Prevent from going off screen  */
+        if (x + psrc -> rect.w > mainConfig.displaywidth) {
+            x -= psrc -> rect.w;          
+        }
+        
+        if (y + psrc -> rect.h >  mainConfig.displayheight) { 
+            y -= psrc -> rect.h;          
+        }    
     
         pend = sdlglIFindTypeInAreas(0, pdest);
         

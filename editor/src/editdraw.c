@@ -711,7 +711,7 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T 
                         col_no = SDLGL_COL_RED;
                     }
                     else if (f_type == MAP_INFO_PASSAGE) {
-                        col_no = SDLGL_COL_GREEN;
+                        col_no = SDLGL_COL_MAGENTA;
                     }
                     else if (f_type == MAP_INFO_CHOSEN) {
                         col_no = SDLGL_COL_YELLOW;
@@ -785,7 +785,7 @@ static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no, char add_type, un
         col_no = SDLGL_COL_RED;
     }
     else if (add_type == MAP_INFO_PASSAGE) {
-        col_no = SDLGL_COL_GREEN;
+        col_no = SDLGL_COL_MAGENTA;
     }
     else if (add_type == MAP_INFO_CHOSEN) {
         col_no = SDLGL_COL_YELLOW;

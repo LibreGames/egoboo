@@ -128,8 +128,10 @@ void editmainFanTypeName(char *fan_name);
 void editmainChooseFanType(int dir, char *fan_name);
 void editmain2DTex(int x, int y, int w, int h);
 void editmainChooseTex(int cx, int cy, int w, int h);
-void editmainSetMapInfo(char which, int x, int y, int x2, int y2);
-void editmainGetMapInfo(int tile_x, int tile_y, EDITMAIN_INFO_T *info);  
+
+void editmainClearMapInfo(void);
+void editmainSetMapInfo(char which, int number, int x, int y, int x2, int y2);
+void editmainGetMiniMapInfo(int mou_x, int mou_y, EDITMAIN_INFO_T *info);  
 
 #endif /* _EDITMAIN_H_	*/
 

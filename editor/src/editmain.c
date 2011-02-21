@@ -843,29 +843,29 @@ static int editmainFanSet(int fan_no, int is_floor)
  * Description:
  *     Writes the chosen fans to the info-map 
  * Input:
- *     None 
+ *     None
  */
 static void editmainSetChosenFans(void)
 {
 
     int i;
     int *fan_no;
-    
-    
+
+
     for (i = 0; i < Mesh.numfan; i++) {
-    
-        if (Map_Info[i].type == MAP_INFO_CHOSEN) {
-                        
-            Map_Info[i].type = 0;  /* Clear existing chosen fans */
-            
+
+        if (Map_Info[i].type & MAP_INFO_CHOSEN) {
+
+            Map_Info[i].type &= (char)~MAP_INFO_CHOSEN;  /* Clear existing chosen fans */
+
         }
-    
+
     }
-    
+
     fan_no = &EditState.fan_selected[0];
     while(*fan_no >= 0) {
-    
-        Map_Info[*fan_no].type = MAP_INFO_CHOSEN;
+
+        Map_Info[*fan_no].type |= MAP_INFO_CHOSEN;
         fan_no++;
         
     }
@@ -1375,49 +1375,84 @@ void editmainChooseTex(int cx, int cy, int w, int h)
  * Description:
  *     Fills in the map info based on the data given
  * Input:
- *     which:   Kind of data (spawn point, passage
+ *     which:  Kind of data (spawn point, passage
+ *     number: Number of info to set
  *     x, y,
- *     x2, y2:  Extent on map in tiles
+ *     x2, y2: Extent on map in tiles
  */
-void editmainSetMapInfo(char which, int x, int y, int x2, int y2)
+void editmainSetMapInfo(char which, int number, int x, int y, int x2, int y2)
 {
 
     int x_count, y_count;
     int tile_no;
-    
+
 
     if (x > 0 && y > 0) {
-    
+
         for (y_count = y; y_count <= y2; y_count++) {
 
             for (x_count = x; x_count <= x2; x_count++) {
 
                 tile_no = (y_count * Mesh.tiles_x) + x_count;
-                Map_Info[tile_no].type = which;
-                Map_Info[tile_no].type = (short int)tile_no;
-                
+                Map_Info[tile_no].type   = which;
+                Map_Info[tile_no].number = (short int)number;
+
             }
 
         }
-        
+
     }
 
 }
 
 /*
  * Name:
- *     editmainGetMapInfo
+ *     editmainClearMapInfo
  * Description:
- *     Fills in the map info based on the data given
+ *     Clears the whole and-ed with given flags
  * Input:
- *     tile_x, tile_y: Chosen position
- *     info *:         Pointer to fill with info about chosen tile
+ *     None
  */
-void editmainGetMapInfo(int tile_x, int tile_y, EDITMAIN_INFO_T *info)
+void editmainClearMapInfo(void)
 {
 
-    info -> fan_no   = (tile_y * Mesh.tiles_x) + tile_x;
+    int tile_no;
+
+
+    for (tile_no = 0; tile_no < Mesh.numfan; tile_no++) {
+
+        Map_Info[tile_no].type   = 0;
+        Map_Info[tile_no].number = 0;
+
+    }
+
+}
+
+/*
+ * Name:
+ *     editmainGetMiniMapInfo
+ * Description:
+ *     Calculates the fan number based on the mouse position on minimap
+ "     and returns the data about chosen tile
+ *     Fills in the map info based on the data given
+ * Input:
+ *     mou_x, mou_x: Chosen position on minimap from left top
+ *     info *:       Pointer to fill with info about chosen tile
+ */
+void editmainGetMiniMapInfo(int mou_x, int mou_y, EDITMAIN_INFO_T *info)
+{
+
+    int tw, th;
+    int tx, ty;
+
+    tw = Mesh.minimap_w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
+	th = Mesh.minimap_h / Mesh.tiles_y;
+
+    tx = mou_x / tw;
+	ty = mou_y / th;
+
+    info -> fan_no   = (ty * Mesh.tiles_x) + tx;
     info -> type     = Map_Info[info -> fan_no].type;
-    info -> t_number = Map_Info[info -> fan_no].number; 
+    info -> t_number = Map_Info[info -> fan_no].number;
 
 }

@@ -432,16 +432,9 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
         case EDITFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
             sdlglcfgEgoboo(fname, &SpawnRec, 1);
-            return rec_no;
-            
+            return 1;
+
         case EDITFILE_ACT_GETDATA:  /* In given buffer      */
-            if (rec_no < 0) {
-                rec_no = 1;
-                while(SpawnObjects[rec_no + 1].line_name[0] > 0) {
-                    rec_no++;
-                }
-                return rec_no;
-            }
             if (SpawnObjects[rec_no].line_name[0] > 0) {
                 memcpy(spt, &SpawnObjects[rec_no], sizeof(EDITFILE_SPAWNPT_T));
             }
@@ -450,13 +443,13 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
                 return 0;
             }
             break;
-            
+
         case EDITFILE_ACT_SETDATA:
             if (rec_no > 0 && rec_no < EDITFILE_MAXSPAWN) {
                 memcpy(&SpawnObjects[rec_no], spt, sizeof(EDITFILE_SPAWNPT_T));
             }
-            return rec_no;
-            
+            break;
+
         case EDITFILE_ACT_NEW:
             new_rec_no = 1;
             while(Passages[rec_no].line_name[0] > 0) {
@@ -464,15 +457,15 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
                 if (new_rec_no >= EDITFILE_MAXPASSAGE) {
                     /* No space left for new passage */
                     return 0;
-                }                    
+                }
             }
             rec_no = new_rec_no;
             break;
-            
+
     }
 
     return rec_no;
-   
+
 }
 
 /*
@@ -508,16 +501,9 @@ int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
         case EDITFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
             sdlglcfgEgoboo(fname, &PassageRec, 1);
-            break;
-            
+            return 1;
+
         case EDITFILE_ACT_GETDATA:  /* In given buffer      */
-            if (rec_no < 0) {
-                rec_no = 1;
-                while(Passages[rec_no + 1].line_name[0] > 0) {
-                    rec_no++;
-                }
-                return rec_no;
-            }            
             if (Passages[rec_no].line_name[0] > 0) {
                 memcpy(psg, &Passages[rec_no], sizeof(EDITFILE_PASSAGE_T));
             }
@@ -542,6 +528,7 @@ int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
                     return 0;
                 }                    
             }
+            rec_no = new_rec_no;
             break;
 
     }
