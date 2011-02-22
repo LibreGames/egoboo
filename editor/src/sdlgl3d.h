@@ -223,9 +223,10 @@
 #define SDLGL3D_MOVE_MAXCMD     0x0F
 
 /* ----- Camera types ------- */
-#define SDLGL3D_CAMERATYPE_STANDARD     0x00
-#define SDLGL3D_CAMERATYPE_FIRSTPERSON  0x01
-#define SDLGL3D_CAMERATYPE_THIRDPERSON  0x02
+#define SDLGL3D_CAM_MODESTD     0x00    /* Move camera itself           */
+#define SDLGL3D_CAM_FOLLOW      0x01    /* Follow an object             */
+#define SDLGL3D_CAM_LOOKAT      0x02    /* Attached to a position       */
+#define SDLGL3D_CAM_FIRSTPERS   0x03    /* Move with position of object */
 
 /* -------- Object-Types ------ */
 #define SDLGL3D_OBJ_NONE     0
@@ -289,8 +290,7 @@ typedef struct {
     float leftangle, rightangle;
     int   vx1, vy1, vx2, vy2;   /* Bounding rectangle of field of view  */
     int   num_visi_tile;        /* Number of tiles visible in FOV       */
-    int   mou_tiles[15];        /* Numbers of tiles hit bei 'mouse_ray' */
-    float mou_angle;
+    int   mou_tiles[30];        /* Numbers of tiles hit bei 'mouse_ray' */
 
 } SDLGL3D_FRUSTUM;
 
@@ -307,7 +307,7 @@ typedef struct {
 
 SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid);
 void sdlgl3dEnd(void);
-void sdlgl3dAttachCameraToObj(int obj_no, char camtype);
+void sdlgl3dSetCameraMode(int camera_no, char mode, int obj_no, float x, float y);
 void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio);
 void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2);
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f);

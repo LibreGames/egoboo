@@ -42,9 +42,9 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.2"
+#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.3"
 
-#define EDITOR_MAXFLD   60
+#define EDITOR_MAXFLD   100
 
 /* --------- The different commands -------- */
 #define EDITOR_EXITPROGRAM    ((char)100)
@@ -59,7 +59,7 @@
 #define EDITOR_TOOL_TILE ((char)107)         /* Result of fan dialog         */
 #define EDITOR_CAMERA   ((char)108)         /* Movement of camera           */
 #define EDITOR_MAPDLG   ((char)109)         /* Settings for new map         */
-#define EDITOR_FANPROPERTY ((char)110)     /* Properties of chosen fan(s)  */
+#define EDITOR_FANPROPERTY ((char)110)      /* Properties of chosen fan(s)  */
 #define EDITOR_SHOWMAP     ((char)111)
 #define EDITOR_TOOL_PASSAGE  ((char)113)
 #define EDITOR_TOOL_OBJECT  ((char)114)
@@ -277,9 +277,7 @@ static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.shoot_trough },
     { SDLGL_TYPE_LABEL,  {   8,  96, 120,   8 }, 0, 0, "Slippy Close:" },
     { SDLGL_TYPE_VALUE,  { 128,  96,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.slippy_close },
-    { SDLGL_TYPE_BUTTON, {   8, 130,  72,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_PREV, "Previous"  },
-    { SDLGL_TYPE_BUTTON, {  88, 130,  40,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_NEXT, "Next"  },
-    { SDLGL_TYPE_BUTTON, { 136, 130,  32,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_NEW, "New"   },
+    { SDLGL_TYPE_BUTTON, {   8, 130,  32,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_NEW, "New"   },
     { SDLGL_TYPE_BUTTON, { 176, 130,  40,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_SAVE, "Save"  },
     { SDLGL_TYPE_BUTTON, { 224, 130,  48,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_CLOSE, "Close" },
     { 0 }
@@ -292,35 +290,33 @@ static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Name:" },
     { SDLGL_TYPE_LABEL,  {  72,  32,  96,   8 }, 0, SDLGL_VAL_STRING, "(Game-Name [NONE])" },
     { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
-    { SDLGL_TYPE_LABEL,  {  72,  48,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {  72,  48,  64,   8 }, 0, 0, "(Val 1)" },
     { SDLGL_TYPE_LABEL,  {   8,  64,  80,   8 }, 0, 0, "Position:" },
     { SDLGL_TYPE_LABEL,  {  88,  64,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_LABEL,  { 112,  64,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 112,  64,  64,   8 }, 0, 0, "(Val 2)" },
     { SDLGL_TYPE_LABEL,  { 176,  64,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_LABEL,  { 200,  64,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 200,  64,  64,   8 }, 0, 0, "(Val 3)" },
     { SDLGL_TYPE_LABEL,  { 264,  64,  24,   8 }, 0, 0, "Z:" },
-    { SDLGL_TYPE_LABEL,  { 288,  64,  64,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 288,  64,  64,   8 }, 0, 0, "(Val 4)" },
     { SDLGL_TYPE_LABEL,  {   8,  80,  88,   8 }, 0, 0, "Direction:" },
-    { SDLGL_TYPE_LABEL,  {  96,  80,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {  96,  80,  16,   8 }, 0, 0, "(Val 5)" },
     { SDLGL_TYPE_LABEL,  {   8,  96,  88,   8 }, 0, 0, "Money:" },  /* 0 .. 9999 */
-    { SDLGL_TYPE_LABEL,  {  96,  96,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {  96,  96,  16,   8 }, 0, 0, "(Val 6)" },
     { SDLGL_TYPE_LABEL,  {   8, 112,  88,   8 }, 0, 0, "Skin:" },   /* 0 .. 5 (5: Random) */
-    { SDLGL_TYPE_LABEL,  {  96, 112,  16,   8 }, 0, 0, "(Value)" }, 
+    { SDLGL_TYPE_LABEL,  {  96, 112,  16,   8 }, 0, 0, "(Val 7)" },
     { SDLGL_TYPE_LABEL,  {   8, 128,  88,   8 }, 0, 0, "Passage:" },
-    { SDLGL_TYPE_LABEL,  {  96, 128,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {  96, 128,  16,   8 }, 0, 0, "(Val 8)" },
     { SDLGL_TYPE_LABEL,  {   8, 144,  88,   8 }, 0, 0, "Content:" },
-    { SDLGL_TYPE_LABEL,  {  96, 144,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  {  96, 144,  16,   8 }, 0, 0, "(Val 9)" },
     { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
-    { SDLGL_TYPE_LABEL,  {  96, 160,  16,   8 }, 0, 0, "(Value)" }, 
+    { SDLGL_TYPE_LABEL,  {  96, 160,  16,   8 }, 0, 0, "(Val 10)" },
     { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Status-Bar:" },
-    { SDLGL_TYPE_LABEL,  { 104, 176,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 104, 176,  16,   8 }, 0, 0, "(Val 11)" },
     { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Ghost:" },
-    { SDLGL_TYPE_LABEL,  { 104, 192,  16,   8 }, 0, 0, "(Value)" },
+    { SDLGL_TYPE_LABEL,  { 104, 192,  16,   8 }, 0, 0, "(Val 12)" },
     { SDLGL_TYPE_LABEL,  {   8, 208,  96,   8 }, 0, 0, "Team:" },
-    { SDLGL_TYPE_LABEL,  { 104, 208,  16,   8 }, 0, 0, "(Value)" },
-    { SDLGL_TYPE_BUTTON, {   8, 240,  72,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_PREV, "Previous" },
-    { SDLGL_TYPE_BUTTON, {  88, 240,  40,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_NEXT, "Next"  },
-    { SDLGL_TYPE_BUTTON, { 136, 240,  32,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_NEW, "New"   },
+    { SDLGL_TYPE_LABEL,  { 104, 208,  16,   8 }, 0, 0, "(Val 13)" },
+    { SDLGL_TYPE_BUTTON, {   8, 240,  32,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_NEW, "New"   },
     { SDLGL_TYPE_BUTTON, { 176, 240,  40,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_SAVE, "Save"  },
     { SDLGL_TYPE_BUTTON, { 224, 240,  48,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_CLOSE, "Close" },
     { 0 }
@@ -454,8 +450,6 @@ static void editorSetDialog(char which, char open)
 
 
 /* =================== Main-Screen ======================== */
-
-
 
 /*
  * Name:
