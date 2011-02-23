@@ -288,9 +288,10 @@ typedef struct {
     SDLGL3D_V3D mouse_ray;      /* Set by mouse code, used for drawing  */
     SDLGL3D_V3D m_ray2d;
     float leftangle, rightangle;
-    int   vx1, vy1, vx2, vy2;   /* Bounding rectangle of field of view  */
     int   num_visi_tile;        /* Number of tiles visible in FOV       */
     int   mou_tiles[30];        /* Numbers of tiles hit bei 'mouse_ray' */
+    int   bx[4], by[4];         /* New bounding rectangle of frustum    */ 
+                                /* Left/right backplane, L/R front plane */
 
 } SDLGL3D_FRUSTUM;
 

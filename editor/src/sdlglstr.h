@@ -86,10 +86,6 @@ typedef struct {
 * ROUTINES								      								  *
 ******************************************************************************/
 
-/* Initializing an shutdown */
-int  sdlglstrInit(void);
-void sdlglstrShutdown(void);
-
 /* Size and calc functions */
 void sdlglstrGetStringSize(char *text, SDLGL_RECT *rect);
 void sdlglstrGetButtonSize(char *string, SDLGL_RECT *rect);
@@ -106,15 +102,11 @@ void sdlglstrStringPos(SDLGL_RECT *rect, char *text, int flags);
 void sdlglstrStringStyle(SDLGL_RECT *pos, char *text, int highlight);
 void sdlglstrStringToRect(SDLGL_RECT *rect, char *string);
 void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags);
-void sdlglstrDrawEditField(SDLGL_RECT *rect, char *text, int curpos);
 void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int flags);
 int  sdlglstrDrawField(SDLGL_FIELD *field);
-void sdlglstrPrintValue(SDLGL_RECT *rect, void *value, int which); 
 
 /* Additional function for user defined fonts and styles */
 int  sdlglstrSetFont(int fontno);
-void sdlglstrSetColorNo(int colorno);
-void sdlglstrSetColor(unsigned char r, unsigned char g, unsigned char b);
 void sdlglstrAddFont(unsigned char *font, int fontw, int fonth, int fontno);
 void sdlglstrSetDrawStyle(SDLGLSTR_STYLE *style);
 

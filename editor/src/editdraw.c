@@ -614,6 +614,42 @@ static GLuint WallTex[EDITDRAW_MAXWALLTEX];
 *******************************************************************************/
 
 /*
+ * Name:
+ *     editmainSetTransColor
+ * Description:
+ *     Sets the transparent color for given 'f_type'.
+ * Input:
+ *     f_type:  To set color for 
+ *     trans:   Transparency-Value 
+ */
+static void editmainSetTransColor(char f_type, char trans)
+{
+
+    int col_no;
+    unsigned char color[5];
+    
+    
+    if (f_type == MAP_INFO_SPAWN) {
+        col_no = SDLGL_COL_RED;
+    }
+    else if (f_type == MAP_INFO_PASSAGE) {
+        col_no = SDLGL_COL_MAGENTA;
+    }
+    else if (f_type == MAP_INFO_CHOSEN) {
+        col_no = SDLGL_COL_YELLOW;
+    }
+    else {
+        col_no = SDLGL_COL_BLUE;
+    }
+
+    sdlglGetColor(col_no, color);
+    color[3] = trans;
+    
+    glColor4ubv(color);
+    
+}
+
+/*
  *  Name:
  *	    editdrawChosenFanType
  *  Description:
@@ -681,16 +717,12 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T 
     int fan_no, w, h;
     int rx2, ry2;
     char f_type;
-    int col_no;
-    unsigned char color[4];
-
             
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glPolygonMode(GL_FRONT, GL_FILL);       
-        
-    color[3] = trans;
+    glPolygonMode(GL_FRONT, GL_FILL);            
+    
 
     fan_no = 0;
 
@@ -705,24 +737,11 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T 
             for (w = 0; w < mesh -> tiles_x; w++) {
 
                 f_type = mi[fan_no].type;
+                
                 if (f_type > 0) {
 
-                    if (f_type == MAP_INFO_SPAWN) {
-                        col_no = SDLGL_COL_RED;
-                    }
-                    else if (f_type == MAP_INFO_PASSAGE) {
-                        col_no = SDLGL_COL_MAGENTA;
-                    }
-                    else if (f_type == MAP_INFO_CHOSEN) {
-                        col_no = SDLGL_COL_YELLOW;
-                    }
-                    else {
-                        col_no = SDLGL_COL_BLUE;
-                    }
-
-                    sdlglGetColor(col_no, color);
-                    glColor4ubv(color);
-                
+                    editmainSetTransColor(f_type, trans);   
+                                    
                     rx2 = draw_rect.x + draw_rect.w;
                     ry2 = draw_rect.y + draw_rect.h;
 
@@ -730,8 +749,6 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T 
                     glVertex2i(rx2, ry2);
                     glVertex2i(rx2, draw_rect.y);
                     glVertex2i(draw_rect.x, draw_rect.y);
-
-
                     
                 }
 
@@ -772,27 +789,13 @@ static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no, char add_type, un
     int vert_base;
     char type;
     int actvertex;
-    int col_no;
-    unsigned char color[4];
 
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);     
-    glPolygonMode(GL_FRONT, GL_FILL);  
-    
-   
-    if (add_type == MAP_INFO_SPAWN) {
-        col_no = SDLGL_COL_RED;
-    }
-    else if (add_type == MAP_INFO_PASSAGE) {
-        col_no = SDLGL_COL_MAGENTA;
-    }
-    else if (add_type == MAP_INFO_CHOSEN) {
-        col_no = SDLGL_COL_YELLOW;
-    }
-    else {
-        col_no = SDLGL_COL_BLUE;
-    }   
+    glPolygonMode(GL_FRONT, GL_FILL);     
+  
+    editmainSetTransColor(add_type, trans);   
     
     type = (char)(mesh -> fan[fan_no].type & 0x1F);  /* Maximum 31 fan types */
                                                      /* Others are flags     */
@@ -803,12 +806,7 @@ static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no, char add_type, un
 
     vert_x = &mesh -> vrtx[vert_base];
     vert_y = &mesh -> vrty[vert_base];
-    vert_z = &mesh -> vrtz[vert_base];
-
-    sdlglGetColor(col_no, color);
-
-    color[3] = trans;
-    glColor4ubv(color);
+    vert_z = &mesh -> vrtz[vert_base];   
 
     entry    = 0;
     vertexno = mc -> vertexno;

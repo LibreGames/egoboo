@@ -194,15 +194,23 @@ static char CheckBoxAgainstFrustum(int cx, int cy, int HalfSize,
 static int sdlgl3dGetVisiTiles(SDLGL3D_CAMERA *cam)
 {
 
+    /*
     int tx1, ty1, tx2, ty2, ltx;
+    int w_add[2], h_add[2];
+    */
 
 
     NumVisiTiles = 0;
 
-    tx1 = cam -> f.vx1 / cam -> tile_size;
-    tx2 = cam -> f.vx2 / cam -> tile_size;
-    ty1 = cam -> f.vy1 / cam -> tile_size;
-    ty2 = cam -> f.vy2 / cam -> tile_size;
+    /*
+        TODO: New function to get the tile-numbers:
+        From left to right, from back to front   
+     */
+    /*
+    tx1 = cam -> f.bx[0] / cam -> tile_size;
+    tx2 = cam -> f.bx[3] / cam -> tile_size;
+    ty1 = cam -> f.by[0] / cam -> tile_size;
+    ty2 = cam -> f.by[3] / cam -> tile_size;
 
     while(ty1 <= ty2) {
         ltx = tx1;
@@ -213,13 +221,14 @@ static int sdlgl3dGetVisiTiles(SDLGL3D_CAMERA *cam)
             Visi_Tiles[NumVisiTiles].mid_y = (ty1 * cam -> tile_size) + 64;
             NumVisiTiles++;
             if (NumVisiTiles >= (SDLGL3D_I_MAXVISITILES - 1)) {
-                Visi_Tiles[NumVisiTiles].no = -1;    /* Sign end of list */
+                Visi_Tiles[NumVisiTiles].no = -1;    // Sign end of list
                 return NumVisiTiles;
             }
             ltx++;
         }
         ty1++;
     }
+    */
 
     Visi_Tiles[NumVisiTiles].no = -1;      /* Sign end of array */
 
@@ -228,7 +237,7 @@ static int sdlgl3dGetVisiTiles(SDLGL3D_CAMERA *cam)
             1. Only use tiles which are checked by 'CheckBoxAgainstFrustum()'
             2. Sort tiles by distance from camx, camy ==> Far to Near
     */
-    
+
     return NumVisiTiles;
 
 }
@@ -250,9 +259,8 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
 
     SDLGL3D_OBJECT *obj;
     int rotz;
-    float minx, miny, maxx, maxy;
-    float nx[4], ny[4];
-    int i;
+    float povx, povy;
+    float vx_down, vy_down;
 
 
     obj = cam -> obj;
@@ -267,8 +275,8 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
     rotz = obj -> rot[2];
 
     /* --- Third point is the cameras position */
-    nx[2] = obj -> pos[0];
-    ny[2] = obj -> pos[1];
+    povx = obj -> pos[0];
+    povy = obj -> pos[1];
 
     cam -> f.rightangle = rotz - cam -> f.fov / 2;
     cam -> f.leftangle  = rotz + cam -> f.fov / 2;
@@ -282,40 +290,21 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
     cam -> f.nx[2] = sin(DEG2RAD(rotz));
     cam -> f.ny[2] = cos(DEG2RAD(rotz));
 
-    /* ------ Calculate the bounding rectangle of the frustum, assume FOV = 90 degrees -------- */
-    nx[0] = nx[2] + (cam -> f.nx[0] * cam -> f.zmax * 1.5);
-    ny[0] = ny[2] + (cam -> f.ny[0] * cam -> f.zmax * 1.5);
-    nx[1] = nx[2] + (cam -> f.nx[1] * cam -> f.zmax * 1.5);
-    ny[1] = ny[2] + (cam -> f.ny[1] * cam -> f.zmax * 1.5);
-    /* --- Assume basic values --- */
-    minx = nx[0];
-    miny = ny[0];
-    maxx = nx[0];
-    maxy = ny[0];
+    /* -- Calculate the bounding rectangle for calculation of visible tiles -- */
+    /* assume FOV = 90 degrees TODO: Calculate with any angle                  */
+    /* --- Edges of backplane: Left / Right --- */
+    cam -> f.bx[0] = povx + (cam -> f.nx[0] * cam -> f.zmax * 1.5);
+    cam -> f.by[0] = povy + (cam -> f.ny[0] * cam -> f.zmax * 1.5);
+    cam -> f.bx[1] = povx + (cam -> f.nx[1] * cam -> f.zmax * 1.5);
+    cam -> f.by[1] = povy + (cam -> f.ny[1] * cam -> f.zmax * 1.5);
+    vx_down = -cam -> f.nx[2] * cam -> f.zmax;
+    vy_down = -cam -> f.ny[2] * cam -> f.zmax;
+    /* --- Edges of front plane, left / right --- */
+    cam -> f.bx[2] = cam -> f.bx[0] + vx_down;
+    cam -> f.by[2] = cam -> f.by[0] + vy_down;
+    cam -> f.bx[3] = cam -> f.bx[1] + vx_down;
+    cam -> f.by[3] = cam -> f.by[1] + vy_down;
 
-    for (i = 1; i < 3; i++) {
-        /* -- Get the minimum extent -- */
-        minx = MIN(minx, nx[i]);
-        miny = MIN(miny, ny[i]);
-        /* -- Get the maximum extent -- */
-        maxx = MAX(maxx, nx[i]);
-        maxy = MAX(maxy, ny[i]);
-    }
-
-    /* --- Clamp to map size --- */
-    if (minx < 0) minx = 0;
-    if (miny < 0) miny = 0;
-    if (maxx > (cam -> map_w * cam -> tile_size)) {
-        maxx = (cam -> map_w * cam -> tile_size);
-    }
-    if (maxy > (cam -> map_h * cam -> tile_size)) {
-        maxy = (cam -> map_h * cam -> tile_size);
-    }
-    /* --- And now write it into the frustum --- */
-    cam -> f.vx1 = minx;
-    cam -> f.vy1 = miny;
-    cam -> f.vx2 = maxx;
-    cam -> f.vy2 = maxy;
     /* ---------- Set up visible tiles ----- */
     cam -> f.num_visi_tile = sdlgl3dGetVisiTiles(cam);
 
@@ -432,7 +421,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
         case SDLGL3D_MOVE_ZOOMOUT:
             /* TODO: Adjust far plane, Set a maximum for zoom out */
             /* Do zoom by changing of distance */
-            dist_add = (5.0 * secondspassed);
+            dist_add = (100.0 * secondspassed);
             if (moveobj -> pos[2] < 600.0) {
 
                 moveobj -> pos[0] += (dist_add * moveobj -> dir[0]);
@@ -443,7 +432,7 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
             break;
         case SDLGL3D_MOVE_ZOOMIN:
             /* Do zoom by changing of distance */
-            dist_add = (5.0 * secondspassed);
+            dist_add = (100.0 * secondspassed);
             if (moveobj -> pos[2] > 200.0) {
 
                 moveobj -> pos[0] -= (dist_add * moveobj -> dir[0]);
@@ -978,7 +967,8 @@ void sdlgl3dMoveObjects(float secondspassed)
                 for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1) {
 
                     if (flags & Camera[0].campos.move_cmd) {
-                        /* Move command is active */  
+                        /* Move command is active */ 
+                                    
                         sdlgl3dIMoveSingleObj(&Camera[0].campos, move_cmd, secondspassed);
 
                     }

@@ -482,7 +482,7 @@ static SDLGLSTR_STYLE BasicStyle = {
 
 };
 
-static SDLGLSTR_STYLE ActualStyle = {
+static SDLGLSTR_STYLE ActStyle = {
 
       SDLGLSTR_FONT8,
       {  64, 157, 201 },        /* Color of buttons mid            */
@@ -721,40 +721,116 @@ static void sdlglstrIDrawShadowedRect(SDLGL_RECT *rect, SDLGLSTR_STYLE *style, i
 
 }
 
+/*
+ * Name:
+ *     sdlglstrPrintValue
+ * Description:
+ *     Prints a value given in 'value *' in format 'which'
+ * Input:
+ *     rect *:    Position where to print
+ *     data *:    Pointer on value to print
+ *     which:     Type of value to print 'SDLGL_VAL_...'
+ */ 
+static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which)
+{
+    
+    char val_str[100];
+    char *pdata;
+    int value;
+
+
+    pdata = (char *)data;
+    if (! pdata) {
+        /* play it save */
+        return;
+    }
+    
+    val_str[0] = 0;
+    
+    switch(which) {
+
+        case SDLGL_VAL_NONE:
+        case SDLGL_VAL_STRING:
+            /* Print given string */
+            sdlglstrIString(rect, pdata, ActStyle.textlo, ActStyle.textlo);
+            return;               
+
+        case SDLGL_VAL_CHAR:
+            value  = *pdata;
+            sprintf(val_str, "%d", value);
+            break;
+
+        case SDLGL_VAL_SHORT:
+            value = *(short int *)pdata;       /* Extend to bigger value */
+            sprintf(val_str, "%d", value);
+            break;
+
+        case SDLGL_VAL_INT:
+            value = *(int *)pdata;
+            sprintf(val_str, "%d", value);
+            break;
+
+        case SDLGL_VAL_FLOAT:
+            sprintf(val_str, "%f", *(float *)pdata);
+            break;
+
+        default:
+            return;
+
+    }
+
+    sdlglstrIString(rect, val_str, ActStyle.textlo, ActStyle.textlo);
+
+}
+
+/*
+ * Name:
+ *     sdlglstrDrawEditField
+ * Description:
+ *     Draws an "EditField "button" with the given text. The text starts
+ *     half font size form left and half font size from top from he given
+ *     rectangle.
+ *     Draws a "shadowed" background with black chars on white background
+ *     in it. If "curpos" is >= 0, the an underscore is drawn at the position
+ *     of the cursor "curpos" chars from left.
+ *     Always FONT8 is used.
+ *     curpos:  Where to draw the cursor (char position !) 
+ * Input:
+ *     field *: Description of edit-field to print   
+ */
+static void sdlglstrDrawEditField(SDLGL_FIELD *field)
+{
+
+    SDLGL_RECT sizerect;
+    SDLGLSTR_STYLE *style = &ActStyle;
+
+
+    /* First draw the background */
+    sdlglstrIDrawShadowedRect(&field -> rect, style, SDLGLSTR_FINVERTED);  /* Draw it inverted */
+
+    memcpy(&sizerect, &field -> rect, sizeof(SDLGL_RECT));
+
+    sizerect.x += SDLGLSTR_FIELDBORDER;
+    sizerect.y += SDLGLSTR_FIELDBORDER;
+    ActFont = style -> fontno;
+
+    /* Draw the edited value -- Sub-Code: Kind of edited value in 'pdata' */
+    sdlglstrPrintValue(&sizerect, field -> pdata, field -> sub_code);
+
+    /* Now draw the cursor, if needed */
+    if (field -> edit_cursor >= 0) {
+
+        sizerect.x += (_wFonts[style -> fontno].fontw * field -> edit_cursor);
+        sizerect.y += 1;
+        sdlglstrIString(&sizerect, "_", style -> textlo, style -> textlo);
+
+    }
+
+}
 
 /* ========================================================================= */
 /* ============================= THE PUBLIC ROUTINES ======================= */
 /* ========================================================================= */
-
-/*
- * Name:
- *     sdlglstrInit
- * Description:
- *     Initializes the SDLGLSTR-Module
- * Input:
- *     None
- * Output:
- *     Success yes/no
- */
-int sdlglstrInit(void)
-{
-    return 1;
-}
-
-/*
- * Name:
- *     sdlglstrShutdown
- * Description:
- *     Cleans up the SDLGLSTR-Module
- * Input:
- *     None
- * Output:
- *     Success yes/no
- */
-void sdlglstrShutdown(void)
-{
-
-}
 
 /*
  * Name:
@@ -1015,7 +1091,7 @@ void sdlglstrStringToRect(SDLGL_RECT *rect, char *string)
     }
 
 
-    style = &ActualStyle;
+    style = &ActStyle;
     ActFont = style -> fontno;
 
 
@@ -1147,7 +1223,6 @@ void sdlglstrStringPos(SDLGL_RECT *rect, char *text, int flags)
 
     memcpy(&sizerect, rect, sizeof(SDLGL_RECT));
 
-
     if (flags & (SDLGLSTR_FCENTERED | SDLGLSTR_FRIGHTADJUST)) {
 
         /* Get the size of the string in pixels */
@@ -1197,7 +1272,7 @@ void sdlglstrStringPos(SDLGL_RECT *rect, char *text, int flags)
 void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags)
 {
 
-    SDLGLSTR_STYLE *style = &ActualStyle;
+    SDLGLSTR_STYLE *style = &ActStyle;
     SDLGL_RECT sizerect;      /* int width, height; -> Size of string in pixels */
     unsigned char *textcolor,
          	      *hotkeycolor;
@@ -1282,57 +1357,11 @@ void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags)
 
 /*
  * Name:
- *     sdlglstrDrawEditField
- * Description:
- *     Draws an "EditField "button" with the given text. The text starts
- *     half font size form left and half font size from top from he given
- *     rectangle.
- *     Draws a "shadowed" background with black chars on white background
- *     in it. If "curpos" is >= 0, the an underscore is drawn at the position
- *     of the cursor "curpos" chars from left.
- *     Always FONT8 is used.
- * Input:
- *     text:    Text to print into the button. If 0, no text is drawn.
- *     rect:    Rectangle holding the size of the button
- *     curpos:  Where to draw the cursor in chars(!)
- */
-void sdlglstrDrawEditField(SDLGL_RECT *rect, char *text, int curpos)
-{
-
-    SDLGL_RECT sizerect;
-    SDLGLSTR_STYLE *style = &ActualStyle;
-
-
-    /* First draw the background */
-    sdlglstrIDrawShadowedRect(rect, style, SDLGLSTR_FINVERTED);  /* Draw it inverted */
-
-    memcpy(&sizerect, rect, sizeof(SDLGL_RECT));
-
-    sizerect.x += SDLGLSTR_FIELDBORDER;
-    sizerect.y += SDLGLSTR_FIELDBORDER;
-    ActFont = style -> fontno;
-
-    /* Draw the text */
-    sdlglstrIString(&sizerect, text, style -> textlo, style -> textlo);
-
-    /* Now draw the cursor, if needed */
-    if (curpos >= 0) {
-
-        sizerect.x += (_wFonts[style -> fontno].fontw * curpos);
-        sizerect.y += 1;
-        sdlglstrIString(&sizerect, "_", style -> textlo, style -> textlo);
-
-    }
-
-}
-
-/*
- * Name:
  *     sdlglstrDrawSpecial
  * Description:
  *     Draws standard dialog fields in font 8, using special bitmaps from
  *     font. The text is always rectangle.
- *     Settings as font and color  are taken from 'ActualStyle' 
+ *     Settings as font and color  are taken from 'ActStyle' 
  * Input:
  *     rect:        Rectangle holding the size of the special
  *     text:        Text to print into the button. If 0, no text is drawn.
@@ -1350,7 +1379,7 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
     SDLGL_RECT sizerect;
     char *pbc;
     char percenttext[30];
-    SDLGLSTR_STYLE *style = &ActualStyle;
+    SDLGLSTR_STYLE *style = &ActStyle;
     unsigned char *textcolor, *hotkeycolor;
     int save_color;
 
@@ -1371,16 +1400,8 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
     memcpy(&sizerect ,rect, sizeof(SDLGL_RECT));  /* Hold copy for later use */
     ActFont = SDLGLSTR_FONT8;
     
-    switch(which) {
-
-        case SDLGL_TYPE_STD:
-            sdlglstrDrawButton(rect, 0, 0);
-            break;
-            
-        case SDLGL_TYPE_EDIT:
-            /* TODO: Draw an edit box */
-            break;    
-            
+    switch(which) {         
+               
         case SDLGL_TYPE_CHECKBOX:
         case SDLGL_TYPE_RB:        
 
@@ -1493,26 +1514,26 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
  * Description:
  *     Draw standard fields for SDLGL. Uses the colors defined in 'SDLGLSTR_STYLE'   
  * Input:
- *     field * :     Pointer on fields to print
+ *     field * : Pointer on fields to print
  * Output:
- *     Field was drawn by function 
+ *     Field was drawn yes / no
  */
 int sdlglstrDrawField(SDLGL_FIELD *field)
 {
 
     unsigned char *textcolor;
 
-
-    ActFont = ActualStyle.fontno;
+    
+    ActFont = ActStyle.fontno;
 
     switch(field -> sdlgl_type) {
-
+    
         case SDLGL_TYPE_MENU:
             if (field -> fstate & SDLGL_FSTATE_MOUSEOVER) {
-                textcolor = ActualStyle.texthi;
+                textcolor = ActStyle.texthi;
             }
             else {
-                textcolor = ActualStyle.textlo;
+                textcolor = ActStyle.textlo;
             }
             sdlglstrIString(&field -> rect, field -> pdata, textcolor, textcolor);
             break;
@@ -1521,16 +1542,20 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
         case SDLGL_TYPE_BUTTON:
             sdlglstrDrawButton(&field -> rect, field -> pdata, 0);
             break;
-
+            
+        case SDLGL_TYPE_EDIT:
+            sdlglstrDrawEditField(field);
+            break; 
+                
         case SDLGL_TYPE_VALUE:
             /* Uses subcode, because maincode generates mouse-event */
             sdlglstrPrintValue(&field -> rect, field -> pdata, field -> sub_code);
             break;
 
-        case SDLGL_TYPE_LABEL:            
-            sdlglstrStringToRect(&field -> rect, field -> pdata);
+        case SDLGL_TYPE_LABEL:
+            sdlglstrIString(&field -> rect, field -> pdata, ActStyle.textlo, ActStyle.textlo);
             break;
-
+            
         default:
             /* Unknown type, to be drawn by caller  */
             return 0;
@@ -1538,71 +1563,6 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
     }
     
     return 1;
-}
-
-/*
- * Name:
- *     sdlglstrPrintValue
- * Description:
- *     Prints a value given in 'value *' in format 'which'
- * Input:
- *     rect *: Position where to print
- *     data *: Pointer on value to print
- *     which:  Type of value to print 'SDLGL_VAL_...'
- */ 
-void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which)
-{
-    
-    char val_str[100];
-    char *pdata;
-    int value;
-
-
-    pdata = (char *)data;
-    if (! pdata) {
-        /* play it save */
-        return;
-    }
-    
-    val_str[0] = 0;
-    
-    switch(which) {
-
-        case SDLGL_VAL_NONE:
-        case SDLGL_VAL_STRING:
-            /* Print given string */
-            sdlglstrStringToRect(rect, pdata);
-            break;               
-
-        case SDLGL_VAL_CHAR:
-            value  = *pdata;
-            sprintf(val_str, "%d", value);
-            break;
-
-        case SDLGL_VAL_SHORT:
-            value = *(short int *)pdata;       /* Extend to bigger value */
-            sprintf(val_str, "%d", value);
-            break;
-
-        case SDLGL_VAL_INT:
-            value = *(int *)pdata;
-            sprintf(val_str, "%d", value);
-            break;
-
-        case SDLGL_VAL_FLOAT:
-            sprintf(val_str, "%f", *(float *)pdata);
-            break;
-
-        case SDLGL_VAL_ONECHAR:
-            val_str[0] = *pdata;
-            val_str[1] = 0;
-            break;
-        default:
-            return;
-
-    }
-
-    sdlglstrStringToRect(rect, val_str);
 
 }
 
@@ -1634,46 +1594,6 @@ int  sdlglstrSetFont(int fontno)
     ActFont = fontno;
     
     return oldfont;
-
-}
-
-/*
- * Name:
- *     sdlglstrSetColor
- * Function:
- *     Sets the color to use for text output
- * Input:
- *     colorno:   Number of color to set
- */
-void sdlglstrSetColorNo(int colorno)
-{
-
-    /* Check for color boundary */
-    if (colorno > SDLGLSTR_MAXCOLOR) {
-
-        colorno = SDLGLSTR_MAXCOLOR;
-
-    }
-
-    ActColor = colorno;
-
-}
-
-/*
- * Name:
- *     sdlglstrSetColor
- * Function:
- *     Sets the color to use for text output
- * Input:
- *     r, g, b: Color set
- */
-void sdlglstrSetColor(unsigned char r, unsigned char g, unsigned char b)
-{
-
-    ActColor = SDLGLSTR_USERCOLOR;
-    fontcolors[SDLGLSTR_USERCOLOR][0] = r;
-    fontcolors[SDLGLSTR_USERCOLOR][1] = g;
-    fontcolors[SDLGLSTR_USERCOLOR][2] = b;
 
 }
 
@@ -1711,18 +1631,18 @@ void sdlglstrAddFont(unsigned char * font, int fontw, int fonth, int fontno)
  * Name:
  *     sdlglstrSetDrawStyle
  * Function:
- *     Overwrites the 'ActualStyle' with the style goven in argument
+ *     Overwrites the 'ActStyle' with the style goven in argument
  * Input:
  *     style:   Pointer on a struct with style data.
  */
 void sdlglstrSetDrawStyle(SDLGLSTR_STYLE *style)
 {
     if (style) {
-        memcpy(&ActualStyle, style, sizeof(SDLGLSTR_STYLE));
+        memcpy(&ActStyle, style, sizeof(SDLGLSTR_STYLE));
     }
     else {
         /* Reset it to default */
-        memcpy(&ActualStyle, &BasicStyle, sizeof(SDLGLSTR_STYLE));
+        memcpy(&ActStyle, &BasicStyle, sizeof(SDLGLSTR_STYLE));
     }
 }
 
