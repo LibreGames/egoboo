@@ -42,7 +42,7 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.3"
+#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.4"
 
 #define EDITOR_MAXFLD   100
 
@@ -286,9 +286,9 @@ static SDLGL_FIELD PassageDlg[] = {
 static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_BUTTON, {   0,   0, 350, 260 }, 0, 0, "Object" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Load-Name:" },
-    { SDLGL_TYPE_VALUE,  {  72,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActSpt.line_name[0] },
+    { SDLGL_TYPE_VALUE,  {  96,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActSpt.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Game-Name:" },
-    { SDLGL_TYPE_VALUE,  {  72,  32,  96,   8 }, 0, SDLGL_VAL_STRING, &ActSpt.item_name[0] },
+    { SDLGL_TYPE_VALUE,  {  96,  32,  96,   8 }, 0, SDLGL_VAL_STRING, &ActSpt.item_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
     { SDLGL_TYPE_VALUE,  {  72,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActSpt.slot_no },
     { SDLGL_TYPE_LABEL,  {   8,  64,  80,   8 }, 0, 0, "Position:" },

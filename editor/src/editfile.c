@@ -167,33 +167,6 @@ static void editfileMakeTwist(MESH_T *mesh)
 
 /*
  * Name:
- *     editfileMakeFileName
- * Description:
- *     Generates a filename with path. Path is taken from
- * Input:
- *     dir_no:  Which directory to use for filename
- *     fname *: Name of file to create filename including path
- */
-static char *editfileMakeFileName(int dir_no, char *fname)
-{
-
-    static char file_name[512];
-
-
-    file_name[0] = 0;
-
-    switch(dir_no) {
-        case EDITFILE_WORKDIR:
-        default:
-            sprintf(file_name, "%s%s", EditFileWorkDir, fname);
-    }
-
-    return file_name;
-
-}
-
-/*
- * Name:
  *     editfileLoadMapMesh
  * Description:
  *     Loads the map mesh into the data pointed on
@@ -213,7 +186,7 @@ static int editfileLoadMapMesh(MESH_T *mesh, char *msg)
     int numfan;
 
 
-    fileread = fopen(editfileMakeFileName(EDITFILE_WORKDIR, "level.mpd"), "rb");
+    fileread = fopen(editfileMakeFileName(EDITFILE_GAMEDATDIR, "level.mpd"), "rb");
 
     if (NULL == fileread)
     {
@@ -302,7 +275,7 @@ static int editfileSaveMapMesh(MESH_T *mesh, char *msg)
 
         numwritten = 0;
 
-        filewrite = fopen(editfileMakeFileName(EDITFILE_WORKDIR, "level.mpd"), "wb");
+        filewrite = fopen(editfileMakeFileName(EDITFILE_GAMEDATDIR, "level.mpd"), "wb");
         if (filewrite) {
 
             itmp = MAPID;
@@ -381,12 +354,44 @@ void editfileSetWorkDir(char *dir_name)
 
 /*
  * Name:
+ *     editfileMakeFileName
+ * Description:
+ *     Generates a filename with path. Path is taken from
+ * Input:
+ *     dir_no:  Which directory to use for filename
+ *     fname *: Name of file to create filename including path
+ */
+char *editfileMakeFileName(int dir_no, char *fname)
+{
+
+    static char file_name[512];
+
+
+    file_name[0] = 0;
+
+    switch(dir_no) {
+
+        case EDITFILE_GAMEDATDIR:
+            sprintf(file_name, "%sgamedat/%s", EditFileWorkDir, fname);
+            break;
+
+        case EDITFILE_WORKDIR:
+        default:
+            sprintf(file_name, "%s%s", EditFileWorkDir, fname);
+    }
+
+    return file_name;
+
+}
+
+/*
+ * Name:
  *     editfileMesh
  * Description:
  *     Load/Save an egoboo mesh
  * Input:
  *     mesh *: Pointer on mesh to save
- *     msg *:  About waht failed if load/save failed
+ *     msg *:  About what failed if load/save failed
  *     save:   Save it yes/no  
  * Output:
  *     Success yes/no
@@ -411,9 +416,9 @@ int  editfileMapMesh(MESH_T *mesh, char *msg, char save)
  * Input:
  *     action: What to do
  *     rec_no: Number of record to read/write from buffer
- *     spt *:  Pointer on buffer for spawn point 
+ *     spt *:  Pointer on buffer for copy of chosen spawn point 
  * Output:
- *     Number of passage chosen 'rec_no'
+ *     Number of record chosen    
  */
 int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
 {
@@ -422,13 +427,13 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
     int new_rec_no;
 
 
-    fname = editfileMakeFileName(EDITFILE_WORKDIR, "spawn.txt");
+    fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, "spawn.txt");
 
     switch(action) {
     
         case EDITFILE_ACT_LOAD:
             /* ------- Load the data from file ---- */
-            sdlglcfgEgoboo(fname, &SpawnRec, 0);
+            sdlglcfgEgobooRecord(fname, &SpawnRec, 0);
             /* ----- Return the data from the first record --- */
             memcpy(spt, &SpawnObjects[1], sizeof(EDITFILE_SPAWNPT_T));
             rec_no = 1;
@@ -436,7 +441,7 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
             
         case EDITFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
-            sdlglcfgEgoboo(fname, &SpawnRec, 1);
+            sdlglcfgEgobooRecord(fname, &SpawnRec, 1);
             return 1;
 
         case EDITFILE_ACT_GETDATA:  /* In given buffer      */
@@ -481,9 +486,9 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
  * Input:
  *     action: What to do
  *     rec_no: Number of record to read/write from buffer
- *     psg *:  Pointer on buffer for spawn point 
- * Output:
- *     Number of passage chosen 'rec_no'
+ *     psg *:  Pointer where to return copy of passage asked for
+ * Output:   
+ *    Number of record chosen   
  */
 int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
 {
@@ -492,12 +497,12 @@ int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
     int new_rec_no;
 
 
-    fname = editfileMakeFileName(EDITFILE_WORKDIR, "passage.txt");
+    fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, "passage.txt");
 
     switch(action) {
 
         case EDITFILE_ACT_LOAD:
-            sdlglcfgEgoboo(fname, &PassageRec, 0);
+            sdlglcfgEgobooRecord(fname, &PassageRec, 0);
             /* ----- Return the data from the first record --- */
             memcpy(psg, &Passages[rec_no], sizeof(EDITFILE_PASSAGE_T));
             rec_no = 1;
@@ -505,7 +510,7 @@ int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
             
         case EDITFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
-            sdlglcfgEgoboo(fname, &PassageRec, 1);
+            sdlglcfgEgobooRecord(fname, &PassageRec, 1);
             return 1;
 
         case EDITFILE_ACT_GETDATA:  /* In given buffer      */

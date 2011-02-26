@@ -33,8 +33,6 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITFILE_WORKDIR    1    /* Main directory  */
-
 #define EDITFILE_LASTREC    -1  /* Get last record in data list */    
 
 #define EDITFILE_ACT_LOAD    1
@@ -43,6 +41,9 @@
 #define EDITFILE_ACT_SETDATA 4  /* From given buffer    */      
 #define EDITFILE_ACT_NEW     5  /* Return empty record  */   
 
+/* -- Definiton of directories */
+#define EDITFILE_WORKDIR    1   /* Main directory                       */
+#define EDITFILE_GAMEDATDIR 2   /* Gamedata directory in main directory */
 
 /*******************************************************************************
 * TYPEDEFS 								                                       *
@@ -83,6 +84,7 @@ typedef struct {
 *******************************************************************************/
 
 void editfileSetWorkDir(char *dir_name);
+char *editfileMakeFileName(int dir_no, char *fname);
 int  editfileMapMesh(MESH_T *mesh, char *msg, char save);
 int  editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt);
 int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg);

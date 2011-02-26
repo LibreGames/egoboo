@@ -30,6 +30,7 @@
 #include "sdlgl3d.h"    /* Helper routines for drawing of 3D-Screen     */
 #include "sdlgltex.h"   /* Texture handling                             */
 #include "sdlglstr.h"
+#include "editfile.h"   /* Make the file name for reading textures      */
 
 
 #include "editdraw.h"   /* Own header                                   */   
@@ -1073,6 +1074,7 @@ COMMAND_T *editdrawInitData(void)
 {
 
     char texturename[128];
+    char *fname;
     COMMAND_T *mcmd;
     int entry, cnt;
 
@@ -1104,9 +1106,11 @@ COMMAND_T *editdrawInitData(void)
     /* Load the basic textures */
     for (cnt = 0; cnt < 4; cnt++) {
     
-        sprintf(texturename, "module/tile%d.bmp", cnt);
-
-        WallTex[cnt] = sdlgltexLoadSingle(texturename);
+        sprintf(texturename, "tile%d.bmp", cnt);
+        
+        fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, texturename);
+        
+        WallTex[cnt] = sdlgltexLoadSingle(fname);
         
     }
 
