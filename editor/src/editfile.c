@@ -47,7 +47,24 @@
 * DATA 								                                           *
 *******************************************************************************/
 
-static char EditFileWorkDir[256] = "module/";
+static char EditFileWorkDir[256]   = "module/";
+static char EditFileGORDir[128]    = "basicdat/globalobjects/";
+static char *EditFileGORSubDir[]   = {
+    "armor",
+    "items",
+    "magic"
+    "magic_item",
+    "misc",
+    "monsters",
+    "pets",
+    "players",
+    "potions",
+    "scrolls",
+    "traps",
+    "unique",
+    "weapons"
+    ""
+};
 
 /* -------------Data for Spawn-Points ---------------- */
 static EDITFILE_SPAWNPT_T SpawnObjects[EDITFILE_MAXSPAWN + 2];
@@ -356,15 +373,20 @@ void editfileSetWorkDir(char *dir_name)
  * Name:
  *     editfileMakeFileName
  * Description:
- *     Generates a filename with path. Path is taken from
+ *     Generates a filename with path. 
+ *     Path for objects is taken from the list of the GOR, if the
+ *     object is not found in the modules directory 
  * Input:
  *     dir_no:  Which directory to use for filename
  *     fname *: Name of file to create filename including path
  */
 char *editfileMakeFileName(int dir_no, char *fname)
 {
-
+    
     static char file_name[512];
+    
+    FILE *f;  
+    int i;
 
 
     file_name[0] = 0;
@@ -373,6 +395,40 @@ char *editfileMakeFileName(int dir_no, char *fname)
 
         case EDITFILE_GAMEDATDIR:
             sprintf(file_name, "%sgamedat/%s", EditFileWorkDir, fname);
+            break;
+            
+        case EDITFILE_BASICDATDIR:
+            sprintf(file_name, "basicdat/%s", fname);
+            break;
+
+        case EDITFILE_OBJECTDIR:
+            sprintf(file_name, "%sobjects/%s", EditFileWorkDir, fname);
+            f = fopen(file_name, "r");
+            if (f) {
+                /* Directory found for this object */
+                fclose(f);
+            }
+            else {
+                /* Look for objects in the GOR */
+                i = 0;
+                while(EditFileGORSubDir[i]) {
+                 
+                    sprintf(file_name, "%s%s/%s", EditFileGORDir, EditFileGORSubDir[i], fname);
+                    f = fopen(file_name, "r");
+                    if (f) {
+                    
+                        /* Directory found for this object */
+                        fclose(f);
+                        return file_name;
+                        
+                    }
+                    
+                    i++;
+                    
+                }
+                
+                file_name[0] = 0;
+            }
             break;
 
         case EDITFILE_WORKDIR:
@@ -416,7 +472,7 @@ int  editfileMapMesh(MESH_T *mesh, char *msg, char save)
  * Input:
  *     action: What to do
  *     rec_no: Number of record to read/write from buffer
- *     spt *:  Pointer on buffer for copy of chosen spawn point 
+ *     spt *:  Pointer on buffer for copy of chosen spawn point
  * Output:
  *     Number of record chosen    
  */

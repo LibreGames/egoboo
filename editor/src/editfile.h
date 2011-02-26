@@ -42,8 +42,11 @@
 #define EDITFILE_ACT_NEW     5  /* Return empty record  */   
 
 /* -- Definiton of directories */
-#define EDITFILE_WORKDIR    1   /* Main directory                       */
-#define EDITFILE_GAMEDATDIR 2   /* Gamedata directory in main directory */
+#define EDITFILE_WORKDIR     1  /* Main directory                       */
+#define EDITFILE_BASICDATDIR 2  /* Basic data for game                  */
+#define EDITFILE_GAMEDATDIR  3  /* Gamedata directory in main directory */
+#define EDITFILE_OBJECTDIR   4  /* Directory for the objects            */
+#define EDITFILE_EGOBOODIR   5        
 
 /*******************************************************************************
 * TYPEDEFS 								                                       *
