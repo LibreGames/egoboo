@@ -61,8 +61,13 @@ static SDLGLCFG_VALUE SpawnVal[] = {
 	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].z_pos },
 	{ SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].view_dir },
 	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].money },
-	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].skin },
-	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].pas },
+	{ SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].skin },
+	{ SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].pas },
+    { SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].con },
+    { SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].lvl },
+    { SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].stt },
+    { SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].gho },
+    { SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].team },
 	{ 0 }
 };
 

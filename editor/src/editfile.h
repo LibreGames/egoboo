@@ -68,10 +68,10 @@ typedef struct {
     float x_pos, y_pos, z_pos;
     char view_dir;
     int  money;
-    int  skin;
-    int  pas;
-    int  con;
-    int  lvl;
+    char skin;
+    char pas;
+    char con;
+    char lvl;
     char stt;
     char gho;
     char team;

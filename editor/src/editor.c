@@ -117,10 +117,10 @@ static int  EditorMapSize = 32;             /* Inital mapsize for new maps      
 static char EditorWorkDir[256];
 static char EditorActDlg = 0;
 static char EditorActTool = 0;            /* Number of tool to work with      */
-static EDITFILE_PASSAGE_T ActPassage = {    /* Holds data about chosen passage  */
+static EDITFILE_PASSAGE_T ActPsg = {    /* Holds data about chosen passage  */
     "Passage-Name"
 };
-static EDITFILE_SPAWNPT_T ActSpawnPt = {    /* Holds data about chosen spawn point  */
+static EDITFILE_SPAWNPT_T ActSpt = {    /* Holds data about chosen spawn point  */
     "Object-Name"
 };
 
@@ -260,23 +260,23 @@ static SDLGL_FIELD MapDlg[] = {
 static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_BUTTON, {   0,   0, 280, 150 }, 0, 0, "Passage" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  48,   8 }, 0, 0, "Name:" },
-    { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActPassage.line_name[0] },
+    { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActPsg.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32, 112,   8 }, 0, 0, "Top left:" },
     { SDLGL_TYPE_LABEL,  { 120,  32,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 144,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.topleft[0] },
+    { SDLGL_TYPE_VALUE,  { 144,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPsg.topleft[0] },
     { SDLGL_TYPE_LABEL,  { 176,  32,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 208,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.topleft[1] },
+    { SDLGL_TYPE_VALUE,  { 208,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPsg.topleft[1] },
     { SDLGL_TYPE_LABEL,  {   8,  48, 112,   8 }, 0, 0, "Bottom right:" },
     { SDLGL_TYPE_LABEL,  { 120,  48,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 144,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.bottomright[0] },
+    { SDLGL_TYPE_VALUE,  { 144,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPsg.bottomright[0] },
     { SDLGL_TYPE_LABEL,  { 176,  48,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 208,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPassage.bottomright[1] },
+    { SDLGL_TYPE_VALUE,  { 208,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPsg.bottomright[1] },
     { SDLGL_TYPE_LABEL,  {   8,  64,  48,   8 }, 0, 0, "Open:" },
-    { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.open },
+    { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.open },
     { SDLGL_TYPE_LABEL,  {   8,  80, 120,   8 }, 0, 0, "Shoot Through:" },
-    { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.shoot_trough },
+    { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.shoot_trough },
     { SDLGL_TYPE_LABEL,  {   8,  96, 120,   8 }, 0, 0, "Slippy Close:" },
-    { SDLGL_TYPE_VALUE,  { 128,  96,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPassage.slippy_close },
+    { SDLGL_TYPE_VALUE,  { 128,  96,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.slippy_close },
     { SDLGL_TYPE_BUTTON, {   8, 130,  32,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_NEW, "New"   },
     { SDLGL_TYPE_BUTTON, { 176, 130,  40,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_SAVE, "Save"  },
     { SDLGL_TYPE_BUTTON, { 224, 130,  48,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_CLOSE, "Close" },
@@ -284,38 +284,38 @@ static SDLGL_FIELD PassageDlg[] = {
 };
 
 static SDLGL_FIELD SpawnPtDlg[] = {
-    { SDLGL_TYPE_BUTTON, {   0,   0, 350, 260 }, 0, 0, "Spawn Point" },
-    { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Object:" },
-    { SDLGL_TYPE_VALUE,  {  72,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActSpawnPt.line_name[0] },
-    { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Name:" },
-    { SDLGL_TYPE_LABEL,  {  72,  32,  96,   8 }, 0, SDLGL_VAL_STRING, "(Game-Name [NONE])" },
+    { SDLGL_TYPE_BUTTON, {   0,   0, 350, 260 }, 0, 0, "Object" },
+    { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Load-Name:" },
+    { SDLGL_TYPE_VALUE,  {  72,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActSpt.line_name[0] },
+    { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Game-Name:" },
+    { SDLGL_TYPE_VALUE,  {  72,  32,  96,   8 }, 0, SDLGL_VAL_STRING, &ActSpt.item_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
-    { SDLGL_TYPE_LABEL,  {  72,  48,  64,   8 }, 0, 0, "(Val 1)" },
+    { SDLGL_TYPE_VALUE,  {  72,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActSpt.slot_no },
     { SDLGL_TYPE_LABEL,  {   8,  64,  80,   8 }, 0, 0, "Position:" },
     { SDLGL_TYPE_LABEL,  {  88,  64,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_LABEL,  { 112,  64,  64,   8 }, 0, 0, "(Val 2)" },
+    { SDLGL_TYPE_VALUE,  { 112,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&ActSpt.x_pos },
     { SDLGL_TYPE_LABEL,  { 176,  64,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_LABEL,  { 200,  64,  64,   8 }, 0, 0, "(Val 3)" },
+    { SDLGL_TYPE_VALUE,  { 200,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&ActSpt.y_pos },
     { SDLGL_TYPE_LABEL,  { 264,  64,  24,   8 }, 0, 0, "Z:" },
-    { SDLGL_TYPE_LABEL,  { 288,  64,  64,   8 }, 0, 0, "(Val 4)" },
+    { SDLGL_TYPE_VALUE,  { 288,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&ActSpt.z_pos },
     { SDLGL_TYPE_LABEL,  {   8,  80,  88,   8 }, 0, 0, "Direction:" },
-    { SDLGL_TYPE_LABEL,  {  96,  80,  16,   8 }, 0, 0, "(Val 5)" },
+    { SDLGL_TYPE_VALUE,  {  96,  80,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.view_dir },
     { SDLGL_TYPE_LABEL,  {   8,  96,  88,   8 }, 0, 0, "Money:" },  /* 0 .. 9999 */
-    { SDLGL_TYPE_LABEL,  {  96,  96,  16,   8 }, 0, 0, "(Val 6)" },
+    { SDLGL_TYPE_VALUE,  {  96,  96,  16,   8 }, 0, SDLGL_VAL_INT, (char *)&ActSpt.money },
     { SDLGL_TYPE_LABEL,  {   8, 112,  88,   8 }, 0, 0, "Skin:" },   /* 0 .. 5 (5: Random) */
-    { SDLGL_TYPE_LABEL,  {  96, 112,  16,   8 }, 0, 0, "(Val 7)" },
+    { SDLGL_TYPE_VALUE,  {  96, 112,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.skin },
     { SDLGL_TYPE_LABEL,  {   8, 128,  88,   8 }, 0, 0, "Passage:" },
-    { SDLGL_TYPE_LABEL,  {  96, 128,  16,   8 }, 0, 0, "(Val 8)" },
+    { SDLGL_TYPE_VALUE,  {  96, 128,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.pas },
     { SDLGL_TYPE_LABEL,  {   8, 144,  88,   8 }, 0, 0, "Content:" },
-    { SDLGL_TYPE_LABEL,  {  96, 144,  16,   8 }, 0, 0, "(Val 9)" },
+    { SDLGL_TYPE_VALUE,  {  96, 144,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.con },
     { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
-    { SDLGL_TYPE_LABEL,  {  96, 160,  16,   8 }, 0, 0, "(Val 10)" },
+    { SDLGL_TYPE_VALUE,  {  96, 160,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.lvl },
     { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Status-Bar:" },
-    { SDLGL_TYPE_LABEL,  { 104, 176,  16,   8 }, 0, 0, "(Val 11)" },
+    { SDLGL_TYPE_VALUE,  { 104, 176,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.stt },
     { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Ghost:" },
-    { SDLGL_TYPE_LABEL,  { 104, 192,  16,   8 }, 0, 0, "(Val 12)" },
+    { SDLGL_TYPE_VALUE,  { 104, 192,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.gho },
     { SDLGL_TYPE_LABEL,  {   8, 208,  96,   8 }, 0, 0, "Team:" },
-    { SDLGL_TYPE_LABEL,  { 104, 208,  16,   8 }, 0, 0, "(Val 13)" },
+    { SDLGL_TYPE_VALUE,  { 104, 208,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.team },
     { SDLGL_TYPE_BUTTON, {   8, 240,  32,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_NEW, "New"   },
     { SDLGL_TYPE_BUTTON, { 176, 240,  40,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_SAVE, "Save"  },
     { SDLGL_TYPE_BUTTON, { 224, 240,  48,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_CLOSE, "Close" },
@@ -510,7 +510,7 @@ static void editorOpenToolDialog(EDITMAIN_INFO_T *ti)
                 /* Get info about passage from dialog, if available */
                 if (ti -> t_number > 0 && (ti -> type & MAP_INFO_PASSAGE)) {
 
-                    editfilePassage(EDITFILE_ACT_GETDATA, ti -> t_number, &ActPassage);
+                    editfilePassage(EDITFILE_ACT_GETDATA, ti -> t_number, &ActPsg);
                     editorSetDialog(EditorActTool, 1);
 
                 }
@@ -520,7 +520,7 @@ static void editorOpenToolDialog(EDITMAIN_INFO_T *ti)
                 /* Get info about objects if available */
                 if (ti -> t_number > 0 && (ti -> type & MAP_INFO_SPAWN)) {
 
-                    editfileSpawn(EDITFILE_ACT_GETDATA, ti -> t_number, &ActSpawnPt);
+                    editfileSpawn(EDITFILE_ACT_GETDATA, ti -> t_number, &ActSpt);
                     editorSetDialog(EditorActTool, 1);
 
                 }
@@ -624,8 +624,8 @@ static int editorFileMenu(char which)
         case EDITOR_FILE_LOAD:
             editmainMap(EDITMAIN_LOADMAP);
             /* Load additional data for this module */
-            editfileSpawn(EDITFILE_ACT_LOAD, 1, &ActSpawnPt);
-            editfilePassage(EDITFILE_ACT_LOAD, 1, &ActPassage);
+            editfileSpawn(EDITFILE_ACT_LOAD, 1, &ActSpt);
+            editfilePassage(EDITFILE_ACT_LOAD, 1, &ActPsg);
 
             
             break;
@@ -791,28 +791,28 @@ static void editorMenuTool(SDLGL_EVENT *event)
             case EDITOR_TOOL_PASSAGE:
                 /* Write the data about passages to edit-map  */
                 rec_no = 1;
-                while(editfilePassage(EDITFILE_ACT_GETDATA, rec_no, &ActPassage))
+                while(editfilePassage(EDITFILE_ACT_GETDATA, rec_no, &ActPsg))
                 {
                     editmainSetMapInfo(MAP_INFO_PASSAGE,
                                        rec_no,
-                                       ActPassage.topleft[0],
-                                       ActPassage.topleft[1],
-                                       ActPassage.bottomright[0],
-                                       ActPassage.bottomright[1]);
+                                       ActPsg.topleft[0],
+                                       ActPsg.topleft[1],
+                                       ActPsg.bottomright[0],
+                                       ActPsg.bottomright[1]);
                     rec_no++;
                 }
                 break;
             case EDITOR_TOOL_OBJECT:
                 /* Write the data about objects points to edit-map  */
                 rec_no = 1;
-                while(editfileSpawn(EDITFILE_ACT_GETDATA, rec_no, &ActSpawnPt))
+                while(editfileSpawn(EDITFILE_ACT_GETDATA, rec_no, &ActSpt))
                 {
                     editmainSetMapInfo(MAP_INFO_SPAWN,
                                        rec_no,
-                                       ActSpawnPt.x_pos,
-                                       ActSpawnPt.y_pos,
-                                       ActSpawnPt.x_pos,
-                                       ActSpawnPt.y_pos);
+                                       ActSpt.x_pos,
+                                       ActSpt.y_pos,
+                                       ActSpt.x_pos,
+                                       ActSpt.y_pos);
                     rec_no++;
                 }
                 break;

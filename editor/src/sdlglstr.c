@@ -771,9 +771,14 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which)
             break;
 
         case SDLGL_VAL_FLOAT:
-            sprintf(val_str, "%f", *(float *)pdata);
+            sprintf(val_str, "%.2f", *(float *)pdata);
             break;
 
+        case SDLGL_VAL_ONECHAR:
+            val_str[0] = *pdata;
+            val_str[1] = 0;
+            break;
+            
         default:
             return;
 
