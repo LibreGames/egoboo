@@ -514,7 +514,7 @@ static SDLGLSTR_STYLE ActStyle = {
  *     textcolor: Pointer on vector with color description ( RGBA )
  *     hicolor:   Pointer on vector with color description for highlighting
  */
-void sdlglstrIString(SDLGL_RECT *pos, char *text, unsigned char *textcolor,
+static void sdlglstrIString(SDLGL_RECT *pos, char *text, unsigned char *textcolor,
 						unsigned char *hicolor)
 {
 
@@ -631,6 +631,39 @@ void sdlglstrIString(SDLGL_RECT *pos, char *text, unsigned char *textcolor,
         cx += fptr -> fontw;	/* hold charpos for Carriage-Return */
 
     }
+
+}
+
+/*
+ * Name:
+ *     sdlglstrChar
+ * Description:
+ *     Output of one single char.
+ * Input:
+ *     pos *:     Pointer on SDLGL_RECT, holding drawing position
+ *     c:         The char to put out
+ *     textcolor: Color of char
+ *     fontno:    Number of font to use
+ */
+static void sdlglstrChar(SDLGL_RECT *pos, char c)
+{
+
+    FONT * fptr;
+
+
+    fptr = &_wFonts[ActFont];
+
+    /* Because OpenGL draws the bitmaps from bottom to top, we have to  */
+    /* add the heigth of the font to the position			*/
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glColor3ubv(fontcolors[ActColor]);
+
+    glRasterPos2i(pos -> x, pos -> y + fptr -> fonth);
+
+    glBitmap(fptr -> cwidth, fptr -> fonth,
+             0, 0,
+             fptr -> fontw, 0,
+             &fptr -> font[c * fptr -> fonth]);
 
 }
 
@@ -773,12 +806,12 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which)
         case SDLGL_VAL_FLOAT:
             sprintf(val_str, "%.2f", *(float *)pdata);
             break;
-
+            
         case SDLGL_VAL_ONECHAR:
             val_str[0] = *pdata;
             val_str[1] = 0;
             break;
-            
+
         default:
             return;
 
@@ -811,7 +844,7 @@ static void sdlglstrDrawEditField(SDLGL_FIELD *field)
 
 
     /* First draw the background */
-    sdlglstrIDrawShadowedRect(&field -> rect, style, SDLGLSTR_FINVERTED);  /* Draw it inverted */
+    sdlglstrIDrawShadowedRect(&field -> rect, style, SDLGLSTR_FINVERTED);  
 
     memcpy(&sizerect, &field -> rect, sizeof(SDLGL_RECT));
 
@@ -980,7 +1013,7 @@ void sdlglstrGetButtonSize(char *string, SDLGL_RECT *rect)
 
     rect -> w += _wFonts[ActFont].fontw;
     rect -> h += _wFonts[ActFont].fonth;
-    
+
 }
 
 
@@ -1023,41 +1056,6 @@ void sdlglstrStringF(SDLGL_RECT *pos, char *text, ...)
 
     sdlglstrIString(pos, buffer, fontcolors[ActColor], fontcolors[ActColor]);
     va_end(ap);
-
-}
-
-
-
-/*
- * Name:
- *     sdlglstrChar
- * Description:
- *     Output of one single char.
- * Input:
- *     pos *:     Pointer on SDLGL_RECT, holding drawing position
- *     c:         The char to put out
- *     textcolor: Color of char
- *     fontno:    Number of font to use
- */
-void sdlglstrChar(SDLGL_RECT *pos, char c)
-{
-
-    FONT * fptr;
-
-
-    fptr = &_wFonts[ActFont];
-
-    /* Because OpenGL draws the bitmaps from bottom to top, we have to  */
-    /* add the heigth of the font to the position			*/
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glColor3ubv(fontcolors[ActColor]);
-
-    glRasterPos2i(pos -> x, pos -> y + fptr -> fonth);
-
-    glBitmap(fptr -> cwidth, fptr -> fonth,
-             0, 0,
-             fptr -> fontw, 0,
-             &fptr -> font[c * fptr -> fonth]);
 
 }
 
@@ -1351,7 +1349,7 @@ void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags)
 
             sizerect.x += SDLGLSTR_FIELDBORDER;
             sizerect.y += SDLGLSTR_FIELDBORDER;
-            
+
         }
 
         sdlglstrIString(&sizerect, text, textcolor, hotkeycolor);
@@ -1526,7 +1524,12 @@ void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
 int sdlglstrDrawField(SDLGL_FIELD *field)
 {
 
+    static char buttonchars[] = { 15, 14, 13,	   /* Push button  */
+    				              12, 11, 10,	   /* Radio button */
+				                   9,  8,  7, 6 }; /* Arrows	   */
+
     unsigned char *textcolor;
+    SDLGL_RECT sizerect;
 
     
     ActFont = ActStyle.fontno;
@@ -1559,6 +1562,19 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
 
         case SDLGL_TYPE_LABEL:
             sdlglstrIString(&field -> rect, field -> pdata, ActStyle.textlo, ActStyle.textlo);
+            break;
+            
+        case SDLGL_TYPE_SLI_AU:   /* Arrow up                     */
+        case SDLGL_TYPE_SLI_AD:   /* Arrow Down                   */
+        case SDLGL_TYPE_SLI_AL:   /* Arrow left                   */
+        case SDLGL_TYPE_SLI_AR:   /* Arrow right                  */
+            /* 1: Draw the button */
+            sdlglstrDrawButton(&field -> rect, 0, 0);
+            sizerect.x = field -> rect.x + (field -> rect.w - 8) / 2;
+            sizerect.y = field -> rect.y + (field -> rect.h - 8) / 2;
+            /* 2. Draw the arrow in chosen direction */
+            ActColor = SDLGL_COL_BLACK;
+            sdlglstrChar(&sizerect, buttonchars[6 + (field -> sdlgl_type - SDLGL_TYPE_SLI_AU)]);
             break;
             
         default:

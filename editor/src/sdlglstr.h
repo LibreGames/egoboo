@@ -94,7 +94,6 @@ int  sdlglstrGetCharPos(char *string, int pixelx);
 /* Drawing function */
 void sdlglstrString(SDLGL_RECT *pos, char *text);
 void sdlglstrStringF(SDLGL_RECT *pos, char *text, ...);
-void sdlglstrChar(SDLGL_RECT *pos, char text);
 void sdlglstrStringBackground(SDLGL_RECT *pos, int len, int color);
 void sdlglstrStringPos(SDLGL_RECT *rect, char *text, int flags);
 

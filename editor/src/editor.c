@@ -26,6 +26,7 @@
 *******************************************************************************/
 
 #include <stdio.h>		/* sprintf()    */
+#include <string.h>     /* strcpy()     */
 #include <memory.h>     /* memset()     */
 
 
@@ -58,13 +59,14 @@
 #define EDITOR_FANTEX   ((char)106)
 #define EDITOR_TOOL_TILE ((char)107)         /* Result of fan dialog         */
 #define EDITOR_CAMERA   ((char)108)         /* Movement of camera           */
-#define EDITOR_MAPDLG   ((char)109)         /* Settings for new map         */
+#define EDITOR_MODULEDLG   ((char)109)         /* Settings for new map         */
 #define EDITOR_FANPROPERTY ((char)110)      /* Properties of chosen fan(s)  */
 #define EDITOR_SHOWMAP     ((char)111)
 #define EDITOR_TOOL_PASSAGE  ((char)113)
 #define EDITOR_TOOL_OBJECT  ((char)114)
 #define EDITOR_3DMAP    ((char)115)
 #define EDITOR_DIALOG   ((char)116)         /* 'block_sign' for general dialog   */
+#define EDITOR_TOOL_MODULE  ((char)117)     /* Change info in module description */
 
 /* Sub-Commands */
 #define EDITOR_FILE_LOAD  ((char)1)
@@ -86,22 +88,21 @@
 #define EDITOR_FANPROPERTY_UPDATE   ((char)2)   /* Depending on actual mode */
 #define EDITOR_FANPROPERTY_CLOSE    ((char)3)   /* Close properties dialog  */
 
-#define EDITOR_MAPDLG_SOLID     ((char)1)
-#define EDITOR_MAPDLG_SIZE      ((char)2)
-#define EDITOR_MAPDLG_DECSIZE   ((char)3)
-#define EDITOR_MAPDLG_INCSIZE   ((char)4)
-#define EDITOR_MAPDLG_CANCEL    ((char)5)
-#define EDITOR_MAPDLG_OK        ((char)6)
+#define EDITOR_MODULEDLG_SOLID     ((char)1)
+#define EDITOR_MODULEDLG_SIZE      ((char)2)
+#define EDITOR_MODULEDLG_DECSIZE   ((char)3)
+#define EDITOR_MODULEDLG_INCSIZE   ((char)4)
+#define EDITOR_MODULEDLG_CANCEL    ((char)5)
+#define EDITOR_MODULEDLG_OK        ((char)6)
 
 #define EDITOR_TOOL_OFF         ((char)1)
 #define EDITOR_TOOL_WAWALITE    ((char)5)
 
 /* ------------ General dialog codes ---- */
-#define EDITOR_DLG_PREV  ((char)1)
-#define EDITOR_DLG_NEXT  ((char)2)
-#define EDITOR_DLG_NEW   ((char)3)
-#define EDITOR_DLG_SAVE  ((char)4)
-#define EDITOR_DLG_CLOSE ((char)5)
+#define EDITOR_DLG_NEW    ((char)1)
+#define EDITOR_DLG_DELETE ((char)2)
+#define EDITOR_DLG_SAVE   ((char)3)
+#define EDITOR_DLG_CLOSE  ((char)4)
 
 /* ------- Drawing types ----- */
 #define EDITOR_DRAW2DMAP   ((char)SDLGL_TYPE_MENU + 10)
@@ -123,6 +124,8 @@ static EDITFILE_PASSAGE_T ActPsg = {    /* Holds data about chosen passage  */
 static EDITFILE_SPAWNPT_T ActSpt = {    /* Holds data about chosen spawn point  */
     "Object-Name"
 };
+
+static EDITFILE_MODULE_T ModuleDesc;
 
 static SDLGL_CONFIG SdlGlConfig = {
 
@@ -215,11 +218,13 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_MENU, {  44, 36, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_TEXTURED, "[ ] Draw Texture"  },
     { SDLGL_TYPE_MENU, {  44, 52, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_LIGHTMAX, "[ ] Max Light" },
     /* Tools-Menu */
-    { SDLGL_TYPE_STD,  { 116, 16, 128, 72 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_STD,  { 116, 16, 128, 88 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, { 120, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_OFF,     "None / View" },
     { SDLGL_TYPE_MENU, { 120, 36, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE,    "Tile" },
     { SDLGL_TYPE_MENU, { 120, 52, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passage" },
     { SDLGL_TYPE_MENU, { 120, 68, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_OBJECT,  "Object" },
+    { SDLGL_TYPE_MENU, { 120, 84, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_MODULE,  "Main-Info" },
+
     { 0 }
 };
 
@@ -245,17 +250,6 @@ static SDLGL_FIELD FanInfoDlg[] = {
     { 0 }
 };
 
-/* Prepared dialog for setting values for maps */
-static SDLGL_FIELD MapDlg[] = {
-    { SDLGL_TYPE_BUTTON, {   0,   0, 240, 112 }, 0, 0, "New Map" },
-    { SDLGL_TYPE_EDIT,   {   8,  72,  40,  16 }, EDITOR_MAPDLG, 0, "Size" },
-    { SDLGL_TYPE_SLI_AL, {   8,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_DECSIZE },
-    { SDLGL_TYPE_SLI_AR, { 120,  72,  16,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_INCSIZE },
-    { SDLGL_TYPE_BUTTON, {   8,  88,  56,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_CANCEL, "Cancel"  },
-    { SDLGL_TYPE_BUTTON, { 112,  88,  24,  16 }, EDITOR_MAPDLG, EDITOR_MAPDLG_OK, "Ok" },
-    { 0 }
-};
-
 /* Prepared dialog for spawn points and passages */
 static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_BUTTON, {   0,   0, 280, 150 }, 0, 0, "Passage" },
@@ -277,7 +271,8 @@ static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.shoot_trough },
     { SDLGL_TYPE_LABEL,  {   8,  96, 120,   8 }, 0, 0, "Slippy Close:" },
     { SDLGL_TYPE_VALUE,  { 128,  96,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.slippy_close },
-    { SDLGL_TYPE_BUTTON, {   8, 130,  32,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_NEW, "New"   },
+    { SDLGL_TYPE_BUTTON, {   8, 130,  32,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_NEW,   "New"   },
+    { SDLGL_TYPE_BUTTON, {  48, 130,  56,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_DELETE, "Delete"   },
     { SDLGL_TYPE_BUTTON, { 176, 130,  40,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_SAVE, "Save"  },
     { SDLGL_TYPE_BUTTON, { 224, 130,  48,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_CLOSE, "Close" },
     { 0 }
@@ -317,8 +312,59 @@ static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_LABEL,  {   8, 208,  96,   8 }, 0, 0, "Team:" },
     { SDLGL_TYPE_VALUE,  { 104, 208,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.team },
     { SDLGL_TYPE_BUTTON, {   8, 240,  32,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_NEW, "New"   },
+    { SDLGL_TYPE_BUTTON, {  48, 240,  56,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_DELETE, "Delete"   },
     { SDLGL_TYPE_BUTTON, { 176, 240,  40,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_SAVE, "Save"  },
     { SDLGL_TYPE_BUTTON, { 224, 240,  48,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_CLOSE, "Close" },
+    { 0 }
+};
+
+/* Prepared dialog for setting values for maps */
+static SDLGL_FIELD ModuleDlg[] = {
+    { SDLGL_TYPE_BUTTON, {   0,   0, 350, 440 }, 0, 0, "Module description" },
+    /* ---- Size of modul-map --- */
+    { SDLGL_TYPE_LABEL,  {   8,  16,  80,  16 }, EDITOR_MODULEDLG, 0, "Map-Size:" },
+    { SDLGL_TYPE_SLI_AL, {  96,  16,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_DECSIZE },
+    { SDLGL_TYPE_VALUE,  { 112,  20,  16,   8 }, 0, SDLGL_VAL_INT, (char *)&EditorMapSize },
+    { SDLGL_TYPE_SLI_AR, { 128,  16,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_INCSIZE },
+    /* --- Description itself --- */
+    { SDLGL_TYPE_LABEL,  {   8,  32,  48,   8 }, 0, 0, "Name:" },
+    { SDLGL_TYPE_VALUE,  {  64,  32, 200,   8 }, 24, SDLGL_VAL_STRING, &ModuleDesc.mod_name[0] },
+    { SDLGL_TYPE_LABEL,  {   8,  48, 160,   8 }, 0, 0, "Referenced Module:" },
+    { SDLGL_TYPE_VALUE,  { 176,  48, 200,   8 }, 24, SDLGL_VAL_STRING, &ModuleDesc.ref_mod[0] },
+    { SDLGL_TYPE_LABEL,  {   8,  64, 160,   8 }, 0, 0, "Reference IDSZ:" },
+    { SDLGL_TYPE_VALUE,  { 176,  64,  72,   8 }, 24, SDLGL_VAL_STRING, &ModuleDesc.ref_idsz[0] },
+    { SDLGL_TYPE_LABEL,  {   8,  80, 160,   8 }, 0, 0, "Number of Imports:" },
+    { SDLGL_TYPE_VALUE,  { 176,  80,  16,   8 }, 0, SDLGL_VAL_CHAR, &ModuleDesc.number_of_imports },
+    { SDLGL_TYPE_LABEL,  {   8,  96, 160,   8 }, 0, 0, "Allow Export:" },
+    { SDLGL_TYPE_VALUE,  { 176,  96,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_export },
+    { SDLGL_TYPE_LABEL,  {   8, 112, 160,   8 }, 0, 0, "Min. Players:" },
+    { SDLGL_TYPE_VALUE,  { 176, 112,  16,   8 }, 0, SDLGL_VAL_CHAR, &ModuleDesc.min_player },
+    { SDLGL_TYPE_LABEL,  {   8, 128, 160,   8 }, 0, 0, "Max. Players:" },
+    { SDLGL_TYPE_VALUE,  { 176, 128,  16,   8 }, 0, SDLGL_VAL_CHAR, &ModuleDesc.max_player },
+    { SDLGL_TYPE_LABEL,  {   8, 144, 160,   8 }, 0, 0, "Allow respawn:" },
+    { SDLGL_TYPE_VALUE,  { 176, 144,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_respawn },
+    /* --- ModuleDesc.is_rts: Always FALSE --- */
+    { SDLGL_TYPE_LABEL,  {   8, 160, 112,   8 }, 0, 0, "Level Rating:" },
+    { SDLGL_TYPE_VALUE,  { 128, 160,  72,   8 }, 8, SDLGL_VAL_STRING, &ModuleDesc.lev_rating[0] },
+    { SDLGL_TYPE_LABEL,  {   8, 176, 112,   8 }, 0, 0, "Module Summary:" },
+    { SDLGL_TYPE_VALUE,  {   8, 192, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[0] },
+    { SDLGL_TYPE_VALUE,  {   8, 208, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[1] },
+    { SDLGL_TYPE_VALUE,  {   8, 224, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[2] },
+    { SDLGL_TYPE_VALUE,  {   8, 240, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[3] },
+    { SDLGL_TYPE_VALUE,  {   8, 256, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[4] },
+    { SDLGL_TYPE_VALUE,  {   8, 272, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[5] },
+    { SDLGL_TYPE_VALUE,  {   8, 288, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[6] },
+    { SDLGL_TYPE_VALUE,  {   8, 304, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[7] },
+    { SDLGL_TYPE_LABEL,  {   8, 320,  96,   8 }, 0, 0, "Expansions:" },
+    /* ---- Maximum five expansions --- */
+    { SDLGL_TYPE_VALUE,  {   8, 336, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[0] },
+    { SDLGL_TYPE_VALUE,  {   8, 352, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[1] },
+    { SDLGL_TYPE_VALUE,  {   8, 368, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[2] },
+    { SDLGL_TYPE_VALUE,  {   8, 384, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[3] },
+    { SDLGL_TYPE_VALUE,  {   8, 400, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[4] },
+    /* ------- Buttons ------ */
+    { SDLGL_TYPE_BUTTON, {   8, 416,  56,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_CANCEL, "Cancel"  },
+    { SDLGL_TYPE_BUTTON, { 302, 416,  24,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_OK, "Ok" },
     { 0 }
 };
 
@@ -414,8 +460,9 @@ static void editorSetDialog(char which, char open)
     if (open) {
 
         switch(which) {
-            case EDITOR_MAPDLG:
-                dlg = &MapDlg[0];
+            case EDITOR_TOOL_MODULE:
+            case EDITOR_MODULEDLG:
+                dlg = &ModuleDlg[0];
                 break;
             case EDITOR_TOOL_TILE:
                 dlg = &FanInfoDlg[0];
@@ -444,10 +491,6 @@ static void editorSetDialog(char which, char open)
     }
 
 }
-
-/* =================== Map-Settings-Dialog ================ */
-
-
 
 /* =================== Main-Screen ======================== */
 
@@ -617,39 +660,41 @@ static void editor2DMap(SDLGL_EVENT *event)
 static int editorFileMenu(char which)
 {
 
-    int edit_mode;
-
-
     switch(which) {
         case EDITOR_FILE_LOAD:
             editmainMap(EDITMAIN_LOADMAP);
             /* Load additional data for this module */
             editfileSpawn(EDITFILE_ACT_LOAD, 1, &ActSpt);
             editfilePassage(EDITFILE_ACT_LOAD, 1, &ActPsg);
-
-            
+            editfileModuleDesc(EDITFILE_ACT_LOAD, &ModuleDesc);
             break;
 
         case EDITOR_FILE_SAVE:
             editmainMap(EDITMAIN_SAVEMAP);
+            /* Save Module description, too */
+            editfileModuleDesc(EDITFILE_ACT_SAVE, &ModuleDesc);
             break;
 
         case EDITOR_FILE_NEW:
-            /* TODO: Open Dialog for map size */
-            /*
-            if (Map2DState & event -> sub_code) {
-                editorSetDialog(EDITOR_MAPDLG, 1);
-            }
-            else {
-                editorSetDialog(EDITOR_MAPDLG, 0);
-            }
-            */
+            EditorMapSize = 32;
+            /* --- Clear the buffer and init the data --- */
+            memset(&ModuleDesc, 0, sizeof(EDITFILE_MODULE_T));
+            /* -- Fill in the default values */
+            ModuleDesc.min_player = 1;
+            ModuleDesc.max_player = 1;
+            ModuleDesc.allow_respawn = 'T';
+            ModuleDesc.is_rts = 'F';
+            strcpy(ModuleDesc.ref_mod, "NONE");
+
             if (! editmainMap(EDITMAIN_NEWMAP)) {
                 /* TODO: Display message, what has gone wrong   */
                 /* TODO: Close menu, if menu-point is chosen    */
             }
+            /* Open Dialog for map size and other info about this module */
+            editorSetDialog(EDITOR_TOOL_MODULE, 1);
+            /*
             else {
-                /* Do additional actions */
+                / * Do additional actions * /
                 editmainChooseFan(1, 1, -1);
                 Map2DState |= EDITOR_2DMAP_FANINFO;
                 sdlglInputAdd(EDITOR_TOOL_TILE, FanInfoDlg, 20, 20);
@@ -657,6 +702,7 @@ static int editorFileMenu(char which)
                 sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
                 editmainFanTypeName(EditActFanName);
             }
+            */
             break;
 
         case EDITOR_FILE_EXIT:
@@ -680,26 +726,20 @@ static int editorFileMenu(char which)
  */
 static int editorSpawnDlg(SDLGL_EVENT *event)
 {
-
-    static int act_rec = 0;
-    
     
     switch(event -> sub_code) {
-        case EDITOR_DLG_PREV:
-            if (act_rec > 1) {
-                act_rec--;
-            }
-            /* --- TODO: Get it from 'editfile...' --- */
+
+        case EDITOR_DLG_DELETE:
+            /* Delete chosen passage info */
             break;
-        case EDITOR_DLG_NEXT:
-            act_rec++;
-            /* --- TODO: Get it from 'editfile...' --- */
-            break;
+
         case EDITOR_DLG_NEW:
             /* --- TODO: Get it from 'editfile...' --- */
             break;
+
         case EDITOR_DLG_SAVE:
             break;
+
         case EDITOR_DLG_CLOSE:
             editorSetDialog(0, 0);
             break;
@@ -721,26 +761,20 @@ static int editorSpawnDlg(SDLGL_EVENT *event)
 static int editorPassageDlg(SDLGL_EVENT *event)
 {
 
-    static int act_rec = 0;
-
-
     switch(event -> sub_code) {
-        case EDITOR_DLG_PREV:
-            if (act_rec > 1) {
-                act_rec--;
-            }
-            /* --- TODO: Get it from 'editfile...' --- */
-            break;
-        case EDITOR_DLG_NEXT:
-            act_rec++;
-            /* --- TODO: Get it from 'editfile...' --- */
-            break;
+
         case EDITOR_DLG_NEW:
             /* --- TODO: Get it from 'editfile...' --- */
             break;
+
+        case EDITOR_DLG_DELETE:
+            /* Delete chosen passage info */
+            break;
+
         case EDITOR_DLG_SAVE:
             /* --- TODO: Get it from 'editfile...' --- */
             break;
+
         case EDITOR_DLG_CLOSE:
             editorSetDialog(0, 0);
             break;
@@ -748,6 +782,33 @@ static int editorPassageDlg(SDLGL_EVENT *event)
 
     return SDLGL_INPUT_OK;
 
+}
+
+/*
+ * Name:
+ *     editorModuleDlg
+ * Description:
+ *     Handles the input of the editors module dialog
+ * Input:
+ *     event *: Pointer on event to handle
+ * Output:
+ *     Result for SDLGL-Handler
+ */
+static int editorModuleDlg(SDLGL_EVENT *event)
+{
+
+    switch(event -> sub_code) {
+
+        case EDITOR_MODULEDLG_OK:
+            /* --- TODO: Save the info to file --- */
+        case EDITOR_MODULEDLG_CANCEL:
+            editorSetDialog(0, 0);
+            break;
+
+    }
+
+    return SDLGL_INPUT_OK;
+    
 }
 
 /*
@@ -815,6 +876,11 @@ static void editorMenuTool(SDLGL_EVENT *event)
                                        ActSpt.y_pos);
                     rec_no++;
                 }
+                break;
+
+            case EDITOR_TOOL_MODULE:
+                /* Open Dialog for editing module info */
+                editorSetDialog(EDITOR_TOOL_MODULE, 1);
                 break;
 
         }
@@ -1026,17 +1092,22 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 editor2DMap(event);
                 break;
 
-            case EDITOR_MAPDLG:
-                /* TODO: Handle map dialog input */
+            case EDITOR_MODULEDLG:
+            case EDITOR_TOOL_MODULE:
+                /* Handle module dialog input */
+                editorModuleDlg(event);
                 break;
+
             case EDITOR_TOOL_PASSAGE:
                 /* Handle passage dialog input */
                 editorPassageDlg(event);
                 break;
+
             case EDITOR_TOOL_OBJECT:
                 /* Handle spawn point dialog input */
                 editorSpawnDlg(event);
                 break;
+                
             case EDITOR_TOOLS:
                 editorMenuTool(event);
                 break;

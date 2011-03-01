@@ -117,6 +117,37 @@ static SDLGLCFG_LINEINFO PassageRec = {
 	&PassageVal[0]
 };
 
+/* -------------Data for ModDesc-Files ---------------- */
+static EDITFILE_MODULE_T ModDesc;
+
+static SDLGLCFG_VALUE ModuleVal[] = {
+    { SDLGLCFG_VAL_STRING,  &ModDesc.mod_name, 24 },
+    { SDLGLCFG_VAL_STRING,  &ModDesc.ref_mod, 24 },
+    { SDLGLCFG_VAL_STRING,  &ModDesc.ref_idsz, 24 },
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.number_of_imports },
+    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_export },
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.min_player },
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.max_player },
+    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_respawn },
+    { SDLGLCFG_VAL_ONECHAR, &ModDesc.is_rts },
+    { SDLGLCFG_VAL_STRING,  &ModDesc.lev_rating, 8 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[0], 40 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[1], 40 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[2], 40 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[3], 40 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[4], 40 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[5], 40 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[6], 40 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[7], 40 },
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[0], 18 },
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[1], 18 },
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[2], 18 },
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[3], 18 },
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[4], 18 },
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[5], 18 },
+    { 0 }
+};
+
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
@@ -543,8 +574,8 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
  *     action: What to do
  *     rec_no: Number of record to read/write from buffer
  *     psg *:  Pointer where to return copy of passage asked for
- * Output:   
- *    Number of record chosen   
+ * Output:
+ *    Number of record chosen
  */
 int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
 {
@@ -592,7 +623,7 @@ int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
                 if (new_rec_no >= EDITFILE_MAXPASSAGE) {
                     /* No space left for new passage */
                     return 0;
-                }                    
+                }
             }
             rec_no = new_rec_no;
             break;
@@ -603,3 +634,43 @@ int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
 
 }
 
+/*
+ * Name:
+ *     editfileModuleDesc
+ * Description:
+ *     Load/Save the data from 'menu.txt' in actual work directory
+ * Input:
+ *     action: What to do
+ *     psg *:  Pointer where to return copy of passage asked for
+ * Output:
+ *    Number of record chosen
+ */
+int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc)
+{
+
+    char *fname;
+
+
+    fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, "menu.txt");
+
+    switch(action) {
+
+        case EDITFILE_ACT_LOAD:
+            sdlglcfgEgobooValues(fname, ModuleVal, 0);
+            /* ----- Return the data from internal record --- */
+            /* TODO: Remove underlines in description strings */
+            memcpy(moddesc, &ModDesc, sizeof(EDITFILE_MODULE_T));
+            break;
+
+        case EDITFILE_ACT_SAVE:
+            /* -------- Write data to file -------- */
+            /* TODO: Insert underlines in description strings */ 
+            memcpy(&ModDesc, moddesc, sizeof(EDITFILE_MODULE_T));
+            sdlglcfgEgobooValues(fname, ModuleVal, 1);
+            break;
+
+    }
+
+    return 1;
+
+}
