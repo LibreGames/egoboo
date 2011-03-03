@@ -67,6 +67,7 @@
 #define EDITOR_3DMAP    ((char)115)
 #define EDITOR_DIALOG   ((char)116)         /* 'block_sign' for general dialog   */
 #define EDITOR_TOOL_MODULE  ((char)117)     /* Change info in module description */
+#define EDITOR_TOOL_MAP  ((char)118)        /* 'Carve' out map with mouse        */
 
 /* Sub-Commands */
 #define EDITOR_FILE_LOAD  ((char)1)
@@ -94,6 +95,7 @@
 #define EDITOR_MODULEDLG_INCSIZE   ((char)4)
 #define EDITOR_MODULEDLG_CANCEL    ((char)5)
 #define EDITOR_MODULEDLG_OK        ((char)6)
+#define EDITOR_MODULEDLG_SAVE      ((char)7)
 
 #define EDITOR_TOOL_OFF         ((char)1)
 #define EDITOR_TOOL_WAWALITE    ((char)5)
@@ -210,7 +212,7 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_STD,  {   0, 16, 88, 72 }, EDITOR_FILE, -1 },  /* Menu-Background */
     { SDLGL_TYPE_MENU, {   4, 20, 64,  8 }, EDITOR_FILE, EDITOR_FILE_LOAD, "Load..." },
     { SDLGL_TYPE_MENU, {   4, 36, 64,  8 }, EDITOR_FILE, EDITOR_FILE_SAVE, "Save" },
-    { SDLGL_TYPE_MENU, {   4, 52, 64,  8 }, EDITOR_FILE, EDITOR_FILE_NEW, "New..." },
+    { SDLGL_TYPE_MENU, {   4, 52, 64,  8 }, EDITOR_FILE, EDITOR_FILE_NEW,  "New..." },
     { SDLGL_TYPE_MENU, {   4, 68, 64,  8 }, EDITOR_FILE, EDITOR_FILE_EXIT, "Exit" },
     /* Settings menu for view */
     { SDLGL_TYPE_STD,  {  40, 16, 136, 56 }, EDITOR_SETTINGS, -1 },   /* Menu-Background */
@@ -218,12 +220,13 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_MENU, {  44, 36, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_TEXTURED, "[ ] Draw Texture"  },
     { SDLGL_TYPE_MENU, {  44, 52, 128,  8 }, EDITOR_SETTINGS, EDIT_MODE_LIGHTMAX, "[ ] Max Light" },
     /* Tools-Menu */
-    { SDLGL_TYPE_STD,  { 116, 16, 128, 88 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
-    { SDLGL_TYPE_MENU, { 120, 20, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_OFF,     "None / View" },
-    { SDLGL_TYPE_MENU, { 120, 36, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE,    "Tile" },
-    { SDLGL_TYPE_MENU, { 120, 52, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passage" },
-    { SDLGL_TYPE_MENU, { 120, 68, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_OBJECT,  "Object" },
-    { SDLGL_TYPE_MENU, { 120, 84, 120,  8 }, EDITOR_TOOLS, EDITOR_TOOL_MODULE,  "Main-Info" },
+    { SDLGL_TYPE_STD,  { 116,  16, 128, 104 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_MENU, { 120,  20, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_OFF,     "None / View" },
+    { SDLGL_TYPE_MENU, { 120,  36, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_MAP,     "Map" },
+    { SDLGL_TYPE_MENU, { 120,  52, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_TILE,    "Tile" },
+    { SDLGL_TYPE_MENU, { 120,  68, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passage" },
+    { SDLGL_TYPE_MENU, { 120,  84, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_OBJECT,  "Object" },
+    { SDLGL_TYPE_MENU, { 120, 100, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_MODULE,  "Main-Info" },
 
     { 0 }
 };
@@ -334,15 +337,15 @@ static SDLGL_FIELD ModuleDlg[] = {
     { SDLGL_TYPE_LABEL,  {   8,  64, 160,   8 }, 0, 0, "Reference IDSZ:" },
     { SDLGL_TYPE_VALUE,  { 176,  64,  72,   8 }, 24, SDLGL_VAL_STRING, &ModuleDesc.ref_idsz[0] },
     { SDLGL_TYPE_LABEL,  {   8,  80, 160,   8 }, 0, 0, "Number of Imports:" },
-    { SDLGL_TYPE_VALUE,  { 176,  80,  16,   8 }, 0, SDLGL_VAL_CHAR, &ModuleDesc.number_of_imports },
+    { SDLGL_TYPE_VALUE,  { 176,  80,  16,   8 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.number_of_imports },
     { SDLGL_TYPE_LABEL,  {   8,  96, 160,   8 }, 0, 0, "Allow Export:" },
-    { SDLGL_TYPE_VALUE,  { 176,  96,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_export },
+    { SDLGL_TYPE_VALUE,  { 176,  96,  16,   8 }, 1, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_export },
     { SDLGL_TYPE_LABEL,  {   8, 112, 160,   8 }, 0, 0, "Min. Players:" },
-    { SDLGL_TYPE_VALUE,  { 176, 112,  16,   8 }, 0, SDLGL_VAL_CHAR, &ModuleDesc.min_player },
+    { SDLGL_TYPE_VALUE,  { 176, 112,  16,   8 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.min_player },
     { SDLGL_TYPE_LABEL,  {   8, 128, 160,   8 }, 0, 0, "Max. Players:" },
-    { SDLGL_TYPE_VALUE,  { 176, 128,  16,   8 }, 0, SDLGL_VAL_CHAR, &ModuleDesc.max_player },
+    { SDLGL_TYPE_VALUE,  { 176, 128,  16,   8 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.max_player },
     { SDLGL_TYPE_LABEL,  {   8, 144, 160,   8 }, 0, 0, "Allow respawn:" },
-    { SDLGL_TYPE_VALUE,  { 176, 144,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_respawn },
+    { SDLGL_TYPE_VALUE,  { 176, 144,  16,   8 }, 1, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_respawn },
     /* --- ModuleDesc.is_rts: Always FALSE --- */
     { SDLGL_TYPE_LABEL,  {   8, 160, 112,   8 }, 0, 0, "Level Rating:" },
     { SDLGL_TYPE_VALUE,  { 128, 160,  72,   8 }, 8, SDLGL_VAL_STRING, &ModuleDesc.lev_rating[0] },
@@ -801,6 +804,11 @@ static int editorModuleDlg(SDLGL_EVENT *event)
 
         case EDITOR_MODULEDLG_OK:
             /* --- TODO: Save the info to file --- */
+            break;
+
+        case EDITOR_MODULEDLG_SAVE:
+            break;
+
         case EDITOR_MODULEDLG_CANCEL:
             editorSetDialog(0, 0);
             break;
@@ -845,7 +853,9 @@ static void editorMenuTool(SDLGL_EVENT *event)
         editmainClearMapInfo();
 
         switch(EditorActTool) {
-        
+
+            case EDITOR_TOOL_MAP:
+                break;
             case EDITOR_TOOL_TILE:
                 break;
 

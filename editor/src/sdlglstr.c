@@ -856,9 +856,9 @@ static void sdlglstrDrawEditField(SDLGL_FIELD *field)
     sdlglstrPrintValue(&sizerect, field -> pdata, field -> sub_code);
 
     /* Now draw the cursor, if needed */
-    if (field -> edit_cursor >= 0) {
+    if (field -> workval >= 0 && (field -> fstate & SDLGL_FSTATE_HASFOCUS)) {
 
-        sizerect.x += (_wFonts[style -> fontno].fontw * field -> edit_cursor);
+        sizerect.x += (_wFonts[style -> fontno].fontw * field -> workval);
         sizerect.y += 1;
         sdlglstrIString(&sizerect, "_", style -> textlo, style -> textlo);
 
@@ -1543,7 +1543,21 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
             else {
                 textcolor = ActStyle.textlo;
             }
-            sdlglstrIString(&field -> rect, field -> pdata, textcolor, textcolor);
+            if (field -> workval & 0x02) {
+                /* Flag, if this is a checked menu point */     
+                if (field -> workval & 0x01) {
+                    /* Field is checked */
+                    sdlglstrChar(&field -> rect, buttonchars[2]);
+                    /* Draw a 'checked' sign if checked -- TODO: Measure the font size */
+                    sizerect.x = field -> rect.x + SDLGLSTR_SPECIALDIST;
+                    sizerect.y = field -> rect.y;
+                    sdlglstrIString(&sizerect, field -> pdata, textcolor, textcolor);
+                }
+                
+            }
+            else {
+                sdlglstrIString(&field -> rect, field -> pdata, textcolor, textcolor);
+            }
             break;
 
         case SDLGL_TYPE_STD:
@@ -1575,6 +1589,11 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
             /* 2. Draw the arrow in chosen direction */
             ActColor = SDLGL_COL_BLACK;
             sdlglstrChar(&sizerect, buttonchars[6 + (field -> sdlgl_type - SDLGL_TYPE_SLI_AU)]);
+            break;
+            
+        case SDLGL_TYPE_CHECKBOX:
+        case SDLGL_TYPE_RB: 
+            sdlglstrDrawSpecial(&field -> rect,field -> pdata, field -> sdlgl_type, field -> workval & 0x01);
             break;
             
         default:

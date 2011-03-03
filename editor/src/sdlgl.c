@@ -662,9 +662,17 @@ static int sdlglICheckInput(SDLGL_EVENT *inpevent)
                     inpevent -> mou.y    = 0;
                     inpevent -> sdlcode  = event.key.keysym.sym;
                     inpevent -> modflags = event.key.keysym.mod;
-                    
-                    /* TODO: Do special handling if actual inputfield is  'sdlgl_type' == SDLGL_TYPE_EDIT   */                    
-                    sdlglITranslateKeyboardInput(inpevent, event.type == SDL_KEYDOWN ? 1 : 0);
+                                                          
+                    if (! sdlglITranslateKeyboardInput(inpevent, event.type == SDL_KEYDOWN ? 1 : 0)) {
+                        /* No special command, handle it as simple key by caller */
+                        if (event.type == SDL_KEYUP) {
+
+                            inpevent -> sdlgl_type = SDLGL_TYPE_EDIT;
+                            inpevent -> code       = SDLGL_INPUT_ISCHAR;   /* Can be handled by editor */
+
+                        }
+
+                    }
     	            break;
 
                 default:

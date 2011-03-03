@@ -136,7 +136,7 @@ typedef unsigned short wchar_t;
 #define SDLGL_FSTATE_MOUSEOVER 0x02
 #define SDLGL_FSTATE_MOUPRESS  0x04     /* Input 'pressed' on given field   */ 
 #define SDLGL_FSTATE_MOUDRAG   0x08     /* Mouse dragged on given field     */
-#define SDLGL_FSTATE_TOOLTIP   0x10     /* Mouse over since tooltip-time    */     
+#define SDLGL_FSTATE_TOOLTIP   0x10     /* Mouse over since tooltip-time    */        
 #define SDLGL_FSTATE_CLEAR     0xFE     /* Clear all, except focusflag      */ 
 
 /* -------- SDLGL-Types for input handling --------- */
@@ -171,6 +171,7 @@ typedef unsigned short wchar_t;
 #define SDLGL_INPUT_MOUSEDRAG    0x73   /* Mouse dragged over input-field   */ 
 #define SDLGL_INPUT_LOSEFOCUS    0x74   /* For Edit-Fields                  */
 #define SDLGL_INPUT_GETFOCUS     0x75   
+#define SDLGL_INPUT_ISCHAR       0x76   /* Special command for editor       */   
 #define SDLGL_INPUT_CLEANUP      0x7E
 
 /* -- Codes for edit/print SDLGL_TYPE_EDIT / SDLGL_TYPE_STRING (sub_code) --- */
@@ -238,7 +239,7 @@ typedef struct {
     char subtex;        /* Number of subpart of texture, if any         */
     unsigned char color[4]; /* If color included here [0] == 0 no color */
     unsigned char fstate;   /* SDLGL_FSTATE_*                           */
-    char edit_cursor;   /* For EDIT-State (not used yet)                */
+    char workval;       /* For EDIT-State (not used yet)                */
     char block_sign;    /* Signing of dynamic fields in current array   */
     
 } SDLGL_FIELD;		    /* Info returned from input for drawing.	    */
