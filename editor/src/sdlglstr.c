@@ -866,6 +866,146 @@ static void sdlglstrDrawEditField(SDLGL_FIELD *field)
 
 }
 
+/*
+ * Name:
+ *     sdlglstrDrawSpecial
+ * Description:
+ *     Draws standard dialog fields in font 8, using special bitmaps from
+ *     font. The text is always rectangle.
+ *     Settings as font and color  are taken from 'ActStyle' 
+ * Input:
+ *     rect:        Rectangle holding the size of the special
+ *     text:        Text to print into the button. If 0, no text is drawn.
+ *     which:       Which special to draw
+ *     info:        Additional flags for drawing info
+ */
+static void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
+{
+
+    static char buttonchars[] = { 15, 14, 13,	   /* Push button  */
+    				              12, 11, 10,	   /* Radio button */
+				                   9,  8,  7, 6 }; /* Arrows	   */
+
+
+    SDLGL_RECT sizerect;
+    char *pbc;
+    char percenttext[30];
+    SDLGLSTR_STYLE *style = &ActStyle;
+    unsigned char *textcolor, *hotkeycolor;
+    int save_color;
+
+
+    if (info & SDLGLSTR_FHIGHLIGHT) {
+
+        textcolor   = style -> texthi;
+        hotkeycolor = style -> hotkeyhi;
+
+    }
+    else {
+
+        textcolor   = style -> textlo;
+        hotkeycolor = style -> hotkeylo;
+
+    }
+
+    memcpy(&sizerect ,rect, sizeof(SDLGL_RECT));  /* Hold copy for later use */
+    ActFont = SDLGLSTR_FONT8;
+    
+    switch(which) {         
+               
+        case SDLGL_TYPE_CHECKBOX:
+        case SDLGL_TYPE_RB:        
+
+            pbc = buttonchars;
+
+            if (which == SDLGL_TYPE_RB) {
+
+            	pbc += 3;	/* Point on radio button bitmaps */
+
+            }
+
+            /* 1. Fill the background */
+            ActColor = SDLGL_COL_WHITE;
+            sdlglstrChar(rect, *pbc);
+
+            /* 2: Draw the state */
+            pbc++;		/* Point on state bitmaps	*/
+
+            if (info) {
+
+                pbc++;		/* Point on number of bitmap for state set */
+
+            }
+
+            save_color = ActColor;
+            ActColor = SDLGL_COL_BLACK;
+            sdlglstrChar(rect, *pbc);
+            ActColor = save_color;
+
+            /* 3: Draw the name of this special field, may be highlighted */
+            ActFont = style -> fontno;
+            sizerect.x += SDLGLSTR_SPECIALDIST;
+	        sdlglstrIString(&sizerect, text, textcolor, hotkeycolor);
+            break;
+
+        case SDLGL_TYPE_RBGROUP:
+
+            /* 1. Draw the rectangle 	     */
+            sdlglstrDrawRect(rect, fontcolors[SDLGL_COL_BLACK], 0);
+
+            /* Calculate the position of the type */
+            sdlglstrGetStringSize(text, &sizerect);
+            sizerect.x += rect -> x + ((rect -> w - sizerect.w) / 2);
+            sizerect.y += rect -> y - 4;
+
+            /* 3: Draw the background for the text */
+            sdlglstrStringBackground(&sizerect, strlen(text), SDLGLSTR_MENUCOL1);
+
+            /* 4: Draw the title */
+            ActFont = style -> fontno;
+            sdlglstrIString(&sizerect, text,textcolor, hotkeycolor);
+            break;      
+        
+        case SDLGL_TYPE_SLI_BK:			/* Background of a scroll box */
+            sdlglstrDrawRect(rect, style -> scrollbk, 1);
+            break;
+
+        case SDLGL_TYPE_SLI_BOX:
+            ActFont = style -> fontno;
+            /* 1: Draw the title, if any is given */
+            if (text) {
+                sdlglstrGetStringSize(text, &sizerect);
+                sizerect.x += rect -> x + ((rect -> w - sizerect.w) / 2);
+                sizerect.y += rect -> y + 4;
+                sdlglstrIString(&sizerect, text, textcolor, hotkeycolor);
+            }
+
+            /* 2: Draw the box */
+    	    sdlglstrIDrawShadowedRect(rect, style, SDLGLSTR_FINVERTED);
+            break;
+
+        case SDLGL_TYPE_PROGBAR:
+
+            /* 1: Draw the background*/
+            sdlglstrIDrawShadowedRect(rect, style, SDLGLSTR_FINVERTED);
+
+            /* 2: Draw the progress bar */
+            sizerect.x += 2;
+            sizerect.y += 2;
+            sizerect.w -= 4;
+            sizerect.h -= 4;
+            sdlglstrDrawRect(&sizerect, fontcolors[SDLGL_COL_BLUE], 1);
+
+            /* 3: Draw the progress in percent as text, "info" holds the number */
+            sprintf(percenttext, "%d%%", info);
+            sdlglstrDrawButton(rect, percenttext,
+                              SDLGLSTR_FHCENTER | SDLGLSTR_FVCENTER | SDLGLSTR_FHIDEBUTTON);
+            break;
+
+    } /* switch(which) */
+
+}
+
 /* ========================================================================= */
 /* ============================= THE PUBLIC ROUTINES ======================= */
 /* ========================================================================= */
@@ -1360,159 +1500,6 @@ void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags)
 
 /*
  * Name:
- *     sdlglstrDrawSpecial
- * Description:
- *     Draws standard dialog fields in font 8, using special bitmaps from
- *     font. The text is always rectangle.
- *     Settings as font and color  are taken from 'ActStyle' 
- * Input:
- *     rect:        Rectangle holding the size of the special
- *     text:        Text to print into the button. If 0, no text is drawn.
- *     which:       Which special to draw
- *     info:        Additional flags for drawing info
- */
-void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int info)
-{
-
-    static char buttonchars[] = { 15, 14, 13,	   /* Push button  */
-    				              12, 11, 10,	   /* Radio button */
-				                   9,  8,  7, 6 }; /* Arrows	   */
-
-
-    SDLGL_RECT sizerect;
-    char *pbc;
-    char percenttext[30];
-    SDLGLSTR_STYLE *style = &ActStyle;
-    unsigned char *textcolor, *hotkeycolor;
-    int save_color;
-
-
-    if (info & SDLGLSTR_FHIGHLIGHT) {
-
-        textcolor   = style -> texthi;
-        hotkeycolor = style -> hotkeyhi;
-
-    }
-    else {
-
-        textcolor   = style -> textlo;
-        hotkeycolor = style -> hotkeylo;
-
-    }
-
-    memcpy(&sizerect ,rect, sizeof(SDLGL_RECT));  /* Hold copy for later use */
-    ActFont = SDLGLSTR_FONT8;
-    
-    switch(which) {         
-               
-        case SDLGL_TYPE_CHECKBOX:
-        case SDLGL_TYPE_RB:        
-
-            pbc = buttonchars;
-
-            if (which == SDLGL_TYPE_RB) {
-
-            	pbc += 3;	/* Point on radio button bitmaps */
-
-            }
-
-            /* 1. Fill the background */
-            ActColor = SDLGL_COL_WHITE;
-            sdlglstrChar(rect, *pbc);
-
-            /* 2: Draw the state */
-            pbc++;		/* Point on state bitmaps	*/
-
-            if (info) {
-
-                pbc++;		/* Point on number of bitmap for state set */
-
-            }
-
-            save_color = ActColor;
-            ActColor = SDLGL_COL_BLACK;
-            sdlglstrChar(rect, *pbc);
-            ActColor = save_color;
-
-            /* 3: Draw the name of this special field, may be highlighted */
-            ActFont = style -> fontno;
-            sizerect.x += SDLGLSTR_SPECIALDIST;
-	        sdlglstrIString(&sizerect, text, textcolor, hotkeycolor);
-            break;
-
-        case SDLGL_TYPE_RBGROUP:
-
-            /* 1. Draw the rectangle 	     */
-            sdlglstrDrawRect(rect, fontcolors[SDLGL_COL_BLACK], 0);
-
-            /* Calculate the position of the type */
-            sdlglstrGetStringSize(text, &sizerect);
-            sizerect.x += rect -> x + ((rect -> w - sizerect.w) / 2);
-            sizerect.y += rect -> y - 4;
-
-            /* 3: Draw the background for the text */
-            sdlglstrStringBackground(&sizerect, strlen(text), SDLGLSTR_MENUCOL1);
-
-            /* 4: Draw the title */
-            ActFont = style -> fontno;
-            sdlglstrIString(&sizerect, text,textcolor, hotkeycolor);
-            break;
-        
-        case SDLGL_TYPE_SLI_AU:   /* Arrow up                     */
-        case SDLGL_TYPE_SLI_AD:   /* Arrow Down                   */
-        case SDLGL_TYPE_SLI_AL:   /* Arrow left                   */
-        case SDLGL_TYPE_SLI_AR:   /* Arrow right                  */
-            /* 1: Draw the button */
-            sdlglstrDrawButton(rect, 0, 0);
-            sizerect.x = rect -> x + (rect -> w - 8) / 2;
-            sizerect.y = rect -> y + (rect -> h - 8) / 2;
-            /* 2. Draw the arrow in chosen direction */
-            ActColor = SDLGL_COL_BLACK;
-            sdlglstrChar(&sizerect, buttonchars[6 + (which - SDLGL_TYPE_SLI_AU)]);
-            break;
-        
-        case SDLGL_TYPE_SLI_BK:			/* Background of a scroll box */
-            sdlglstrDrawRect(rect, style -> scrollbk, 1);
-            break;
-
-        case SDLGL_TYPE_SLI_BOX:
-            ActFont = style -> fontno;
-            /* 1: Draw the title, if any is given */
-            if (text) {
-                sdlglstrGetStringSize(text, &sizerect);
-                sizerect.x += rect -> x + ((rect -> w - sizerect.w) / 2);
-                sizerect.y += rect -> y + 4;
-                sdlglstrIString(&sizerect, text, textcolor, hotkeycolor);
-            }
-
-            /* 2: Draw the box */
-    	    sdlglstrIDrawShadowedRect(rect, style, SDLGLSTR_FINVERTED);
-            break;
-
-        case SDLGL_TYPE_PROGBAR:
-
-            /* 1: Draw the background*/
-            sdlglstrIDrawShadowedRect(rect, style, SDLGLSTR_FINVERTED);
-
-            /* 2: Draw the progress bar */
-            sizerect.x += 2;
-            sizerect.y += 2;
-            sizerect.w -= 4;
-            sizerect.h -= 4;
-            sdlglstrDrawRect(&sizerect, fontcolors[SDLGL_COL_BLUE], 1);
-
-            /* 3: Draw the progress in percent as text, "info" holds the number */
-            sprintf(percenttext, "%d%%", info);
-            sdlglstrDrawButton(rect, percenttext,
-                              SDLGLSTR_FHCENTER | SDLGLSTR_FVCENTER | SDLGLSTR_FHIDEBUTTON);
-            break;
-
-    } /* switch(which) */
-
-}
-
-/*
- * Name:
  *     sdlglstrDrawField
  * Description:
  *     Draw standard fields for SDLGL. Uses the colors defined in 'SDLGLSTR_STYLE'   
@@ -1537,27 +1524,24 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
     switch(field -> sdlgl_type) {
     
         case SDLGL_TYPE_MENU:
+            sizerect.x = field -> rect.x;
+            sizerect.y = field -> rect.y;
             if (field -> fstate & SDLGL_FSTATE_MOUSEOVER) {
                 textcolor = ActStyle.texthi;
             }
             else {
                 textcolor = ActStyle.textlo;
             }
-            if (field -> workval & 0x02) {
-                /* Flag, if this is a checked menu point */     
-                if (field -> workval & 0x01) {
+            if (field -> workval & 0x80) {
+                /* Flag, if this is a checked menu point */
+                if (field -> workval & field -> sub_code) {
                     /* Field is checked */
-                    sdlglstrChar(&field -> rect, buttonchars[2]);
-                    /* Draw a 'checked' sign if checked -- TODO: Measure the font size */
-                    sizerect.x = field -> rect.x + SDLGLSTR_SPECIALDIST;
-                    sizerect.y = field -> rect.y;
-                    sdlglstrIString(&sizerect, field -> pdata, textcolor, textcolor);
+                    sdlglstrChar(&sizerect, buttonchars[2]);
+                    sizerect.x += SDLGLSTR_SPECIALDIST;
                 }
-                
+
             }
-            else {
-                sdlglstrIString(&field -> rect, field -> pdata, textcolor, textcolor);
-            }
+            sdlglstrIString(&sizerect, field -> pdata, textcolor, textcolor);
             break;
 
         case SDLGL_TYPE_STD:
@@ -1593,7 +1577,7 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
             
         case SDLGL_TYPE_CHECKBOX:
         case SDLGL_TYPE_RB: 
-            sdlglstrDrawSpecial(&field -> rect,field -> pdata, field -> sdlgl_type, field -> workval & 0x01);
+            sdlglstrDrawSpecial(&field -> rect, field -> pdata, field -> sdlgl_type, field -> workval);
             break;
             
         default:

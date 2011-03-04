@@ -71,9 +71,6 @@
 typedef struct {
 
     int  fan_selected[EDITMAIN_MAXSELECT + 1];    
-    int  psg_no;        /* > 0: Number of passage chosen        */
-    int  spawnpos_no;   /* > 0: Number of spawn position chosen */
-    int  light_no;      /* > 0: Number of light chosen          */ 
     int  minimap_w,
          minimap_h;
     int  tx, ty;        /* Position of fan as x/y on map    */
@@ -81,8 +78,8 @@ typedef struct {
     char draw_mode;     /* For copy into mesh - struct      */
     char edit_mode;     /* None/simple/free                 */
     char bft_no;        /* Number of fan-type in fan-set    */
-    char fan_dir;       /* Direction of new fan             */
-    FANDATA_T ft;       /* Copy of type of chosen fan       */ 
+    char fan_dir;       /* Direction of new fan             */    
+    FANDATA_T ft;       /* Copy of actual chosen fan        */
     COMMAND_T fd;       /* Extent data for new fan type     */
     char msg[256];      /* Possible message from editor     */
     int map_size;       /* Map-Size chosen by user          */
@@ -109,7 +106,8 @@ typedef struct {
 
     int  fan_no;
     char type;
-    int  t_number; 
+    int  t_number;     
+    FANDATA_T ft;       /* Copy of actual chosen fan for user   */
 
 } EDITMAIN_INFO_T;
 
@@ -131,7 +129,8 @@ void editmainChooseTex(int cx, int cy, int w, int h);
 
 void editmainClearMapInfo(void);
 void editmainSetMapInfo(char which, int number, int x, int y, int x2, int y2);
-void editmainGetMiniMapInfo(int mou_x, int mou_y, EDITMAIN_INFO_T *info);  
-
+void editmainGetMapInfo(int mou_x, int mou_y, EDITMAIN_INFO_T *info);  
+void editmainUpdateFan(EDITMAIN_INFO_T *info);  
+    
 #endif /* _EDITMAIN_H_	*/
 

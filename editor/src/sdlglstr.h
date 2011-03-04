@@ -49,13 +49,7 @@
 #define SDLGLSTR_FTEXTURED    0x00800000    /* Draw button with texture     */
 #define SDLGLSTR_FEMPTYBUTTON 0x00400000	/* Draw now middle color for button */
 
-#define SDLGLSTR_FBUTTONSTATE 0x00400000        /* State for radio/push buttons */
 #define SDLGLSTR_FCENTERED    (SDLGLSTR_FHCENTER | SDLGLSTR_FVCENTER)
-
-/* The basic styles available	*/
-#define SDLGLSTR_STYLEBLUE   0
-#define SDLGLSTR_STYLEEUROPE 1
-#define SDLGLSTR_STYLEWOOD   2
 
 /******************************************************************************
 * TYPEDEFS    								      *
@@ -65,19 +59,19 @@ typedef struct {
 
     int fontno;				/* Font to use for drawing         */
     unsigned char buttonmid[3],		/* Color of buttons mid            */
-		  buttontop[3],		/* Color of buttons topside        */
+                  buttontop[3],		/* Color of buttons topside        */
                   buttonbottom[3];	/* Color of buttons bottomside     */
     unsigned char textlo[3],		/* Color of non highlighted text   */
-                  hotkeylo[3];          /* Color of non highlighted hotkey */
+                  hotkeylo[3];      /* Color of non highlighted hotkey */
     unsigned char texthi[3],		/* Color of highlighted text       */
-                  hotkeyhi[3];          /* Color of highlighted hotkey     */
+                  hotkeyhi[3];      /* Color of highlighted hotkey     */
     unsigned char label[3];	        /* Color for label text in dialog  */
     unsigned char scrollbk[3];		/* Color for scrollbox background  */
     unsigned char maplabel[3];		/* Color for labels in map	   */
-    unsigned char maplabelshadow[3];	/* Color for the shadow for mapl.  */
+    unsigned char maplabel_shad[3]; /* Color for the shadow for mapl.  */
     int           texbklistno;		/* Number of the texture which	   */
-					/* holds the background texture	   */
-    int 	  texbkno;		/* Number of texture in tex-list   */
+                                    /* holds the background texture	   */
+    int 	      texbkno;		    /* Number of texture in tex-list   */
 
 } SDLGLSTR_STYLE;
 
@@ -101,7 +95,6 @@ void sdlglstrStringPos(SDLGL_RECT *rect, char *text, int flags);
 void sdlglstrStringStyle(SDLGL_RECT *pos, char *text, int highlight);
 void sdlglstrStringToRect(SDLGL_RECT *rect, char *string);
 void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags);
-void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int flags);
 int  sdlglstrDrawField(SDLGL_FIELD *field);
 
 /* Additional function for user defined fonts and styles */

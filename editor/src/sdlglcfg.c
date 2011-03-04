@@ -166,6 +166,16 @@ static void sdlglcfgStrToVal(char *string, char valtype, void *value, char valle
 
             strncpy(pstr, string, vallen);
             pstr[vallen] = 0;
+            /* --- Replace spaces with underline for egoboo --- */
+            while(*pstr) {
+            
+                if (*pstr == '_') {
+                    *pstr = ' ';
+                }
+                
+                pstr++;
+                
+            }
 
         }
         else {
@@ -231,13 +241,22 @@ static void sdlglcfgStrToVal(char *string, char valtype, void *value, char valle
 static void sdlglcfgValToStr(char *val_str, char valtype, void *value, char vallen)
 {
 
-
     switch(valtype) {
 
         case SDLGLCFG_VAL_NONE:
         case SDLGLCFG_VAL_STRING:
             strncpy(val_str, (char *)value, vallen);
             val_str[vallen] = 0;
+            /* --- Remove underlines for editing  --- */
+            while(*val_str) {
+            
+                if (*val_str == ' ') {
+                    *val_str = '_';
+                }
+                
+                val_str++;
+                
+            }
             break;
 
         case SDLGLCFG_VAL_CHAR:

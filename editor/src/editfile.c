@@ -658,13 +658,11 @@ int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc)
         case EDITFILE_ACT_LOAD:
             sdlglcfgEgobooValues(fname, ModuleVal, 0);
             /* ----- Return the data from internal record --- */
-            /* TODO: Remove underlines in description strings */
             memcpy(moddesc, &ModDesc, sizeof(EDITFILE_MODULE_T));
             break;
 
         case EDITFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
-            /* TODO: Insert underlines in description strings */ 
             memcpy(&ModDesc, moddesc, sizeof(EDITFILE_MODULE_T));
             sdlglcfgEgobooValues(fname, ModuleVal, 1);
             break;

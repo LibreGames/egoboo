@@ -894,14 +894,11 @@ EDITMAIN_STATE_T *editmainInit(int map_size, int minimap_w, int minimap_h)
 	memset(&EditState, 0, sizeof(EDITMAIN_STATE_T));
 
 	EditState.display_flags   |= EDITMAIN_SHOW2DMAP;
-	EditState.fan_selected[0] = -1;   /* No fan chosen          */
-	EditState.fan_selected[0] = -1;   /* No multiple fan chosen */
-	EditState.ft.type         = -1;   /* No fan-type chosen     */
+	EditState.fan_selected[0] = -1;   /* No (multiple) fan chosen   */
 	EditState.map_size        = map_size;
 	EditState.minimap_w       = minimap_w;
 	EditState.minimap_h       = minimap_h;
 	EditState.draw_mode       = (EDIT_MODE_SOLID | EDIT_MODE_TEXTURED | EDIT_MODE_LIGHTMAX);     
-    EditState.map_info        = 0;     /* Display no map info   */   
 
 	return &EditState;
 	
@@ -1430,16 +1427,16 @@ void editmainClearMapInfo(void)
 
 /*
  * Name:
- *     editmainGetMiniMapInfo
+ *     editmainGetMapInfo
  * Description:
  *     Calculates the fan number based on the mouse position on minimap
- "     and returns the data about chosen tile
+ *     and returns the data about chosen tile
  *     Fills in the map info based on the data given
  * Input:
  *     mou_x, mou_x: Chosen position on minimap from left top
  *     info *:       Pointer to fill with info about chosen tile
  */
-void editmainGetMiniMapInfo(int mou_x, int mou_y, EDITMAIN_INFO_T *info)
+void editmainGetMapInfo(int mou_x, int mou_y, EDITMAIN_INFO_T *info)
 {
 
     int tw, th;
@@ -1454,5 +1451,29 @@ void editmainGetMiniMapInfo(int mou_x, int mou_y, EDITMAIN_INFO_T *info)
     info -> fan_no   = (ty * Mesh.tiles_x) + tx;
     info -> type     = Map_Info[info -> fan_no].type;
     info -> t_number = Map_Info[info -> fan_no].number;
+    
+    memcpy(&EditState.ft, &Mesh.fan[info -> fan_no], sizeof(FANDATA_T));
+    memcpy(&info -> ft, &Mesh.fan[info -> fan_no], sizeof(FANDATA_T));
 
 }
+
+/*
+ * Name:
+ *     editmainUpdateFan
+ * Description:
+ *     Calculates the fan number based on the mouse position on minimap
+ *    and returns the data about chosen tile
+ *     Fills in the map info based on the data given
+ * Input:
+ *     mou_x, mou_x: Chosen position on minimap from left top
+ *     info *:       Pointer to fill with info about chosen tile
+ */
+void editmainUpdateFan(EDITMAIN_INFO_T *info)
+{
+
+    /* === Move this data to internal 'EditState' === */
+    memcpy(&EditState.ft, &info -> ft, sizeof(FANDATA_T));
+        
+    editmainDoFanUpdate(&Mesh, &EditState, info -> fan_no);
+
+} 
