@@ -120,18 +120,19 @@ static SDLGLCFG_LINEINFO PassageRec = {
 /* -------------Data for ModDesc-Files ---------------- */
 static EDITFILE_MODULE_T ModDesc;
 
+/* TODO: Declare it as 'SDLGLCFG_NAMEDVALUE' */
 static SDLGLCFG_VALUE ModuleVal[] = {
-    { SDLGLCFG_VAL_STRING,  &ModDesc.mod_name, 24 },
-    { SDLGLCFG_VAL_STRING,  &ModDesc.ref_mod, 24 },
-    { SDLGLCFG_VAL_STRING,  &ModDesc.ref_idsz, 24 },
-    { SDLGLCFG_VAL_CHAR,    &ModDesc.number_of_imports },
-    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_export },
-    { SDLGLCFG_VAL_CHAR,    &ModDesc.min_player },
-    { SDLGLCFG_VAL_CHAR,    &ModDesc.max_player },
-    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_respawn },
-    { SDLGLCFG_VAL_ONECHAR, &ModDesc.is_rts },
-    { SDLGLCFG_VAL_STRING,  &ModDesc.lev_rating, 8 },
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[0], 40 },
+    { SDLGLCFG_VAL_STRING,  ModDesc.mod_name, 24 }, /* Module Name  */
+    { SDLGLCFG_VAL_STRING,  ModDesc.ref_mod, 24 },  /* Reference Directory  */
+    { SDLGLCFG_VAL_STRING,  ModDesc.ref_idsz, 11 }, /* Required reference IDSZ */
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.number_of_imports }, /* Number of imports ( 0 to 4 ) */
+    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_export }, /* Exporting ( TRUE or FALSE ) */
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.min_player },  /* Minimum players ( 1 to 4 ) */
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.max_player },  /* Maximum players ( 1 to 4 ) */
+    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_respawn },  /* Respawning ( TRUE or FALSE ) */
+    { SDLGLCFG_VAL_STRING,  ModDesc.mod_type, 11 },    /* Module Type (MAINQUEST, SIDEQUEST or TOWN) */
+    { SDLGLCFG_VAL_STRING,  &ModDesc.lev_rating, 8 },   /* Level rating ( * to  ***** ) */
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[0], 40 },   /* // Module summary */
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[1], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[2], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[3], 40 },
@@ -140,7 +141,7 @@ static SDLGLCFG_VALUE ModuleVal[] = {
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[6], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[7], 40 },
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[0], 18 },
-    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[1], 18 },
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[1], 18 }, /* // Module expansion IDSZs ( with a colon in front ) */
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[2], 18 },
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[3], 18 },
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[4], 18 },
@@ -377,6 +378,31 @@ static int editfileSaveMapMesh(MESH_T *mesh, char *msg)
 
 }
 
+/*
+ * Name:
+ *     editfileSetUnderlines
+ * Description:
+ *     Replaces spaces with underlines in given string
+ * Input:
+ *     text *: To replace spaces by underlines
+ */
+static void editfileSetUnderlines(char *text)
+{
+
+    while(*text) {
+
+        if (*text == ' ') {
+
+            *text = '_';
+
+        }
+
+        text++;
+
+    }
+
+}
+
 /* ========================================================================== */
 /* ============================= THE PUBLIC ROUTINES ======================== */
 /* ========================================================================== */
@@ -385,11 +411,11 @@ static int editfileSaveMapMesh(MESH_T *mesh, char *msg)
  * Name:
  *     editfileSetWorkDir
  * Description:
- *     Sets the work directory for the file functions 
+ *     Sets the work directory for the file functions
  *     Loads the map mesh into the data pointed on
  * Input:
  *     mesh*: Pointer on mesh to load
- *     msg *: Pointer on buffer for a message 
+ *     msg *: Pointer on buffer for a message
  * Output:
  *     Mesh could be loaded yes/no
  */
@@ -404,16 +430,16 @@ void editfileSetWorkDir(char *dir_name)
  * Name:
  *     editfileMakeFileName
  * Description:
- *     Generates a filename with path. 
+ *     Generates a filename with path.
  *     Path for objects is taken from the list of the GOR, if the
- *     object is not found in the modules directory 
+ *     object is not found in the modules directory
  * Input:
  *     dir_no:  Which directory to use for filename
  *     fname *: Name of file to create filename including path
  */
 char *editfileMakeFileName(int dir_no, char *fname)
 {
-    
+
     static char file_name[512];
     
     FILE *f;  
@@ -455,7 +481,7 @@ char *editfileMakeFileName(int dir_no, char *fname)
                     }
                     
                     i++;
-                    
+
                 }
                 
                 file_name[0] = 0;
@@ -649,6 +675,7 @@ int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc)
 {
 
     char *fname;
+    int i;
 
 
     fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, "menu.txt");
@@ -664,6 +691,23 @@ int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc)
         case EDITFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
             memcpy(&ModDesc, moddesc, sizeof(EDITFILE_MODULE_T));
+            /* ----- Now insert Underlines and so on for egoboo ---- */
+            editfileSetUnderlines(ModDesc.mod_name);
+            for(i = 0; i < 8; i++) {
+
+                if (ModDesc.summary[i][0] == 0) {
+
+                    ModDesc.summary[i][0] = '_';
+                    ModDesc.summary[i][1] = 0;
+
+                }
+                else {
+
+                    editfileSetUnderlines(ModDesc.summary[i]);
+
+                }
+                
+            }
             sdlglcfgEgobooValues(fname, ModuleVal, 1);
             break;
 

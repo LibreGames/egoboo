@@ -58,8 +58,8 @@ typedef struct {
 
     char  type;     /* Type of value to read            */
     void *data;     /* Where to put the value           */
-    char *name;     /* name of value (case insensitive) */
-    char  len;      /* Len of data (strings and arrays) */
+    char *name;     /* name of value (case insensitive) */    
+    char  len;      /* Len of data (strings and arrays) */    
 
 } SDLGLCFG_NAMEDVALUE;
 
