@@ -1036,7 +1036,7 @@ void sdlglcfgEgobooRecord(char *fname, SDLGLCFG_LINEINFO *lineinfo, int write)
  *     vallist *: Pointer on list of values and it's description for read / write
  *     write:     Write it, yes / no  
  */
-void sdlglcfgEgobooValues(char *fname, SDLGLCFG_VALUE *vallist, int write)
+void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
 {
 
     FILE *f;
@@ -1054,7 +1054,16 @@ void sdlglcfgEgobooValues(char *fname, SDLGLCFG_VALUE *vallist, int write)
             while(vallist -> type > 0) {
 
                 sdlglcfgValToStr(line, vallist -> type, vallist -> data, vallist -> len);
-                fprintf(f, "-- : %s\n", line);
+                if (! vallist -> name || vallist -> name == "") {
+                
+                    fprintf(f, " : %s\n", line);
+
+                }
+                else {
+
+                    fprintf(f, "%-30s : %s\n", vallist -> name, line);
+
+                }
 
                 vallist++;
 

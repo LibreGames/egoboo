@@ -39,8 +39,9 @@
 
 
 #include <SDL.h>
-#include <stdlib.h>                     /* malloc */
+#include <stdlib.h>     /* malloc       */
 #include <memory.h>
+#include <ctype.h>      /* isprint()    */
 
 
 /* --- Include own header -------- */
@@ -431,6 +432,41 @@ static int sdlglITranslateKeyboardInput(SDLGL_EVENT *event, char pressed)
 
 /*
  * Name:
+ *     sdlglITranslateKeyToChar
+ * Description:
+ *     Translates the given SDLK_... code to a char that can be used
+ *     by an SDLGL_TYPE_EDIT-Field.
+ *     The result is returned in the events 'text_key' - Field if any.
+ *     If translated, a special Event-Code 'SDLGL_INPUT_ISCHAR' is set
+ * Input:
+ *     event:     Pointer on an inputevent, holding the mouse variables.
+ */
+static void sdlglITranslateKeyToChar(SDLGL_EVENT *event)
+{
+    
+    if (event -> sdlcode < 127 && isprint(event -> sdlcode)) {
+
+        event -> text_key   = (char)event -> sdlcode;
+        event -> sdlgl_type = SDLGL_TYPE_EDIT;
+        event -> code       = SDLGL_INPUT_ISCHAR;   /* Can be handled by editor */
+        
+        if (event -> modflags & KMOD_SHIFT) {
+
+            event -> text_key = (char)toupper(event -> text_key);
+
+        }
+        
+        return;
+
+    }
+    
+    /* --- Otherwise not usable for edit --- */
+    event -> text_key = 0;        
+    
+}
+
+/*
+ * Name:
  *     sdlglITranslateMouseInput
  * Description:
  *     Translates the mouse input, using the inputdescs, if any are
@@ -667,8 +703,7 @@ static int sdlglICheckInput(SDLGL_EVENT *inpevent)
                         /* No special command, handle it as simple key by caller */
                         if (event.type == SDL_KEYUP) {
 
-                            inpevent -> sdlgl_type = SDLGL_TYPE_EDIT;
-                            inpevent -> code       = SDLGL_INPUT_ISCHAR;   /* Can be handled by editor */
+                            sdlglITranslateKeyToChar(inpevent);                            
 
                         }
 

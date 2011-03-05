@@ -142,13 +142,13 @@ static SDLGL_CONFIG SdlGlConfig = {
 
 static SDLGLCFG_NAMEDVALUE CfgValues[] = {
 
-    { SDLGLCFG_VAL_INT, &SdlGlConfig.scrwidth, "scrwidth" },
-    { SDLGLCFG_VAL_INT, &SdlGlConfig.scrheight, "scrheight" },
-    { SDLGLCFG_VAL_INT, &SdlGlConfig.colordepth, "colordepth" },
-    { SDLGLCFG_VAL_INT, &SdlGlConfig.screenmode, "screenmode" },
-    { SDLGLCFG_VAL_INT, &SdlGlConfig.debugmode, "debugmode" },
-    { SDLGLCFG_VAL_INT, &EditorMapSize, "mapsize" },
-    { SDLGLCFG_VAL_STRING, &EditorWorkDir[0], "workdir", 120 },
+    { SDLGLCFG_VAL_INT, &SdlGlConfig.scrwidth, 4, "scrwidth" },
+    { SDLGLCFG_VAL_INT, &SdlGlConfig.scrheight, 4, "scrheight" },
+    { SDLGLCFG_VAL_INT, &SdlGlConfig.colordepth, 2, "colordepth" },
+    { SDLGLCFG_VAL_INT, &SdlGlConfig.screenmode, 2, "screenmode" },
+    { SDLGLCFG_VAL_INT, &SdlGlConfig.debugmode, 1, "debugmode" },
+    { SDLGLCFG_VAL_INT, &EditorMapSize, 2, "mapsize" },
+    { SDLGLCFG_VAL_STRING, &EditorWorkDir[0], 120, "workdir"  },
     { 0 }
 
 };

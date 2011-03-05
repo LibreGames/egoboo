@@ -121,18 +121,18 @@ static SDLGLCFG_LINEINFO PassageRec = {
 static EDITFILE_MODULE_T ModDesc;
 
 /* TODO: Declare it as 'SDLGLCFG_NAMEDVALUE' */
-static SDLGLCFG_VALUE ModuleVal[] = {
-    { SDLGLCFG_VAL_STRING,  ModDesc.mod_name, 24 }, /* Module Name  */
-    { SDLGLCFG_VAL_STRING,  ModDesc.ref_mod, 24 },  /* Reference Directory  */
-    { SDLGLCFG_VAL_STRING,  ModDesc.ref_idsz, 11 }, /* Required reference IDSZ */
-    { SDLGLCFG_VAL_CHAR,    &ModDesc.number_of_imports }, /* Number of imports ( 0 to 4 ) */
-    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_export }, /* Exporting ( TRUE or FALSE ) */
-    { SDLGLCFG_VAL_CHAR,    &ModDesc.min_player },  /* Minimum players ( 1 to 4 ) */
-    { SDLGLCFG_VAL_CHAR,    &ModDesc.max_player },  /* Maximum players ( 1 to 4 ) */
-    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_respawn },  /* Respawning ( TRUE or FALSE ) */
-    { SDLGLCFG_VAL_STRING,  ModDesc.mod_type, 11 },    /* Module Type (MAINQUEST, SIDEQUEST or TOWN) */
-    { SDLGLCFG_VAL_STRING,  &ModDesc.lev_rating, 8 },   /* Level rating ( * to  ***** ) */
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[0], 40 },   /* // Module summary */
+static SDLGLCFG_NAMEDVALUE ModuleVal[] = {
+    { SDLGLCFG_VAL_STRING,  ModDesc.mod_name, 24, "Module Name" }, 
+    { SDLGLCFG_VAL_STRING,  ModDesc.ref_mod, 24, "Reference Directory" },  
+    { SDLGLCFG_VAL_STRING,  ModDesc.ref_idsz, 11, "Required reference IDSZ" }, 
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.number_of_imports, 1, "Number of imports ( 0 to 4 )" }, 
+    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_export, 1, "Exporting ( TRUE or FALSE )"  },
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.min_player, 1, "Minimum players ( 1 to 4 )" },  
+    { SDLGLCFG_VAL_CHAR,    &ModDesc.max_player, 1, "Maximum players ( 1 to 4 )"  },  
+    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_respawn, 1, "Respawning ( TRUE or FALSE )" }, 
+    { SDLGLCFG_VAL_STRING,  ModDesc.mod_type, 11, "Module Type (MAINQUEST, SIDEQUEST or TOWN)" },  
+    { SDLGLCFG_VAL_STRING,  &ModDesc.lev_rating, 8, "Level rating ( * to  ***** )" },
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[0], 40, "//Module summary\n" },   /* Module summary */
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[1], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[2], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[3], 40 },
@@ -140,12 +140,11 @@ static SDLGLCFG_VALUE ModuleVal[] = {
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[5], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[6], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[7], 40 },
-    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[0], 18 },
-    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[1], 18 }, /* // Module expansion IDSZs ( with a colon in front ) */
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[0], 18 }, /* // Module expansion IDSZs ( with a colon in front ) */
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[1], 18 }, 
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[2], 18 },
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[3], 18 },
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[4], 18 },
-    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[5], 18 },
     { 0 }
 };
 
