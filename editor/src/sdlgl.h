@@ -171,7 +171,8 @@ typedef unsigned short wchar_t;
 #define SDLGL_INPUT_MOUSEDRAG    0x73   /* Mouse dragged over input-field   */ 
 #define SDLGL_INPUT_LOSEFOCUS    0x74   /* For Edit-Fields                  */
 #define SDLGL_INPUT_GETFOCUS     0x75   
-#define SDLGL_INPUT_ISCHAR       0x76   /* Special command for editor       */   
+#define SDLGL_INPUT_ISCHAR       0x76   /* Is a 'cooked' char               */
+#define SDLGL_INPUT_ISEDIT       0x77   /* Is a non-command-input           */   
 #define SDLGL_INPUT_CLEANUP      0x7E
 
 /* -- Codes for edit/print SDLGL_TYPE_EDIT / SDLGL_TYPE_STRING (sub_code) --- */

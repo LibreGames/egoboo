@@ -57,21 +57,23 @@
 
 typedef struct {
 
-    int fontno;				/* Font to use for drawing         */
-    unsigned char buttonmid[3],		/* Color of buttons mid            */
-                  buttontop[3],		/* Color of buttons topside        */
-                  buttonbottom[3];	/* Color of buttons bottomside     */
-    unsigned char textlo[3],		/* Color of non highlighted text   */
-                  hotkeylo[3];      /* Color of non highlighted hotkey */
-    unsigned char texthi[3],		/* Color of highlighted text       */
-                  hotkeyhi[3];      /* Color of highlighted hotkey     */
-    unsigned char label[3];	        /* Color for label text in dialog  */
-    unsigned char scrollbk[3];		/* Color for scrollbox background  */
-    unsigned char maplabel[3];		/* Color for labels in map	   */
-    unsigned char maplabel_shad[3]; /* Color for the shadow for mapl.  */
-    int           texbklistno;		/* Number of the texture which	   */
-                                    /* holds the background texture	   */
-    int 	      texbkno;		    /* Number of texture in tex-list   */
+    int fontno;				/* Font to use for drawing                  */
+    unsigned char buttonmid[3],		/* Color of buttons mid             */
+                  buttontop[3],		/* Color of buttons topside         */
+                  buttonbottom[3];	/* Color of buttons bottomside      */
+    unsigned char textlo[3],		/* Color of non highlighted text    */
+                  hotkeylo[3];      /* Color of non highlighted hotkey  */
+    unsigned char texthi[3],		/* Color of highlighted text        */
+                  hotkeyhi[3];      /* Color of highlighted hotkey      */
+    unsigned char label[3];	        /* Color for label text in dialog   */
+    unsigned char scrollbk[3];		/* Color for scrollbox background   */
+    unsigned char maplabel[3];		/* Color for labels in map	        */
+    unsigned char maplabelshadow[3];/* Color for the shadow for mapl.   */
+    unsigned char edit_bk[3];       /* Background for edit fields       */
+    unsigned char edit_text[3];     /* Color of edit text               */
+    int           texbklistno;		/* Number of the texture which	    */
+                                    /* holds the background texture	    */
+    int 	      texbkno;		    /* Number of texture in tex-list    */
 
 } SDLGLSTR_STYLE;
 

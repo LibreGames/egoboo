@@ -1053,16 +1053,25 @@ void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
 
             while(vallist -> type > 0) {
 
-                sdlglcfgValToStr(line, vallist -> type, vallist -> data, vallist -> len);
-                if (! vallist -> name || vallist -> name == "") {
+                if (vallist -> type == SDLGLCFG_VAL_LABEL) {
                 
-                    fprintf(f, " : %s\n", line);
-
+                     fprintf(f, "%s\n", vallist -> name);
+                     
                 }
                 else {
+                
+                    sdlglcfgValToStr(line, vallist -> type, vallist -> data, vallist -> len);
+                    if (! vallist -> name || vallist -> name == "") {
+                    
+                        fprintf(f, " : %s\n", line);
 
-                    fprintf(f, "%-30s : %s\n", vallist -> name, line);
+                    }
+                    else {
 
+                        fprintf(f, "%-30s : %s\n", vallist -> name, line);
+
+                    }
+                    
                 }
 
                 vallist++;
@@ -1087,7 +1096,13 @@ void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
                     break;
 
                 }
+                else if (vallist -> type == SDLGLCFG_VAL_LABEL) {
 
+                    /* Ignore this line */
+                    vallist++;
+
+                }
+                
                 pcolon = strchr(line, ':');
 
                 if (pcolon) {

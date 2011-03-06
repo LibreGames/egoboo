@@ -444,10 +444,12 @@ static int sdlglITranslateKeyboardInput(SDLGL_EVENT *event, char pressed)
 static void sdlglITranslateKeyToChar(SDLGL_EVENT *event)
 {
     
-    if (event -> sdlcode < 127 && isprint(event -> sdlcode)) {
+    event -> sdlgl_type = SDLGL_TYPE_EDIT;
+    event -> code       = SDLGL_INPUT_ISEDIT;
+
+    if (event -> sdlcode < 127 && isprint(event -> sdlcode) && ! event -> pressed) {
 
         event -> text_key   = (char)event -> sdlcode;
-        event -> sdlgl_type = SDLGL_TYPE_EDIT;
         event -> code       = SDLGL_INPUT_ISCHAR;   /* Can be handled by editor */
         
         if (event -> modflags & KMOD_SHIFT) {
@@ -455,7 +457,7 @@ static void sdlglITranslateKeyToChar(SDLGL_EVENT *event)
             event -> text_key = (char)toupper(event -> text_key);
 
         }
-        
+
         return;
 
     }

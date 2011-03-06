@@ -10,7 +10,8 @@ Respawning ( TRUE or FALSE )   : T
 Module Type (MAINQUEST, SIDEQUEST or TOWN) : SIDEQUEST
 Level rating ( * to  ***** )   : *****
 //Module summary
-              : The_criminals_have_broken_out_of
+
+ : The_criminals_have_broken_out_of
  : their_prison_cells!_The_people_of
  : Bishopia_are_depending_on_your
  : help_to_fight_them_back_and_kill
@@ -18,6 +19,8 @@ Level rating ( * to  ***** )   : *****
  : _
  : _
  : _
+// Module expansion IDSZs ( with a colon in front )
+
  : 
  : 
  : 

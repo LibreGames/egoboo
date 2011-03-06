@@ -132,7 +132,8 @@ static SDLGLCFG_NAMEDVALUE ModuleVal[] = {
     { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_respawn, 1, "Respawning ( TRUE or FALSE )" }, 
     { SDLGLCFG_VAL_STRING,  ModDesc.mod_type, 11, "Module Type (MAINQUEST, SIDEQUEST or TOWN)" },  
     { SDLGLCFG_VAL_STRING,  &ModDesc.lev_rating, 8, "Level rating ( * to  ***** )" },
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[0], 40, "//Module summary\n" },   /* Module summary */
+    { SDLGLCFG_VAL_LABEL, 0, 0, "//Module summary\n" }, /* Module summary */
+    { SDLGLCFG_VAL_STRING,  ModDesc.summary[0], 40 },   
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[1], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[2], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[3], 40 },
@@ -140,7 +141,8 @@ static SDLGLCFG_NAMEDVALUE ModuleVal[] = {
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[5], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[6], 40 },
     { SDLGLCFG_VAL_STRING,  ModDesc.summary[7], 40 },
-    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[0], 18 }, /* // Module expansion IDSZs ( with a colon in front ) */
+    { SDLGLCFG_VAL_LABEL, 0, 0, "// Module expansion IDSZs ( with a colon in front )\n" }, 
+    { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[0], 18 }, /*  */
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[1], 18 }, 
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[2], 18 },
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[3], 18 },

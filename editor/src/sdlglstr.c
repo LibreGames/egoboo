@@ -467,35 +467,39 @@ static FONT _wFonts[SDLGLSTR_MAXFONT] = {
 
 static SDLGLSTR_STYLE BasicStyle = {
 
-      SDLGLSTR_FONT8,
-      {  64, 157, 201 },        /* Color of buttons mid            */
-      {  64, 109, 201 },        /* Color of buttons topside        */
-      {  45,  48, 176 },        /* Color of buttons bottomside     */
-      { 255, 255, 255 },	    /* Color of non highlighted text   */
-      { 100, 100, 100 },        /* Color of non highlighted hotkey */
-      { 170,   0,   0 },	    /* Color of highlighted text       */
-      { 170,   0, 100 },	    /* Color of highlighted hotkey     */
-      {   0,   0,   0 },	    /* Color for label text in dialog  */
-      {  40,  32, 172 },	    /* Color for scrollbox background  */
-      { 255, 255, 255 },	    /* Color for labels in map	       */
-      {   0,   0,   0 }         /* Color for the shadow for mapl.  */
+    SDLGLSTR_FONT8,
+    {  64, 157, 201 },  /* Color of buttons mid            */
+    {  64, 109, 201 },  /* Color of buttons topside        */
+    {  45,  48, 176 },  /* Color of buttons bottomside     */
+    { 255, 255, 255 },	/* Color of non highlighted text   */
+    { 100, 100, 100 },  /* Color of non highlighted hotkey */
+    { 170,   0,   0 },	/* Color of highlighted text       */
+    { 170,   0, 100 },	/* Color of highlighted hotkey     */
+    {   0,   0,   0 },	/* Color for label text in dialog  */
+    {  40,  32, 172 },	/* Color for scrollbox background  */
+    { 255, 255, 255 },	/* Color for labels in map	       */
+    {   0,   0,   0 },  /* Color for the shadow for mapl.  */
+    { 255, 255, 255 },  /* Background for edit fields      */
+    {   0,   0,   0 }   /* Color of edit text              */
 
 };
 
 static SDLGLSTR_STYLE ActStyle = {
 
-      SDLGLSTR_FONT8,
-      {  64, 157, 201 },        /* Color of buttons mid            */
-      {  64, 109, 201 },        /* Color of buttons topside        */
-      {  45,  48, 176 },        /* Color of buttons bottomside     */
-      { 255, 255, 255 },	    /* Color of non highlighted text   */
-      { 100, 100, 100 },        /* Color of non highlighted hotkey */
-      { 170,   0,   0 },	    /* Color of highlighted text       */
-      { 170,   0, 100 },	    /* Color of highlighted hotkey     */
-      {   0,   0,   0 },	    /* Color for label text in dialog  */
-      {  40,  32, 172 },	    /* Color for scrollbox background  */
-      { 255, 255, 255 },	    /* Color for labels in map	       */
-      {   0,   0,   0 }         /* Color for the shadow for mapl.  */
+    SDLGLSTR_FONT8,
+    {  64, 157, 201 },  /* Color of buttons mid            */
+    {  64, 109, 201 },  /* Color of buttons topside        */
+    {  45,  48, 176 },  /* Color of buttons bottomside     */
+    { 255, 255, 255 },	/* Color of non highlighted text   */
+    { 100, 100, 100 },  /* Color of non highlighted hotkey */
+    { 170,   0,   0 },	/* Color of highlighted text       */
+    { 170,   0, 100 },	/* Color of highlighted hotkey     */
+    {   0,   0,   0 },	/* Color for label text in dialog  */
+    {  40,  32, 172 },	/* Color for scrollbox background  */
+    { 255, 255, 255 },	/* Color for labels in map	       */
+    {   0,   0,   0 },  /* Color for the shadow for mapl.  */
+    { 255, 255, 255 },  /* Background for edit fields      */
+    {   0,   0,   0 }   /* Color of edit text              */
 
 };
 
@@ -572,11 +576,10 @@ static void sdlglstrIString(SDLGL_RECT *pos, char *text, unsigned char *textcolo
 
 
             case 6:
-
-            	/* Set Color */
-                ptext++;
+            	/* Set Color */               
 				glColor3ubv(fontcolors[*ptext]);
                 glRasterPos2i(cx, cy);
+                ptext++;
                 break;
 
             case '{':
@@ -683,7 +686,7 @@ static void sdlglstrIDrawShadowedRect(SDLGL_RECT *rect, SDLGLSTR_STYLE *style, i
 
     int x, y, x2, y2;
     unsigned char *topcolor,
-    		  *bottomcolor;
+                  *bottomcolor;
 
 
     x = rect -> x;
@@ -692,17 +695,23 @@ static void sdlglstrIDrawShadowedRect(SDLGL_RECT *rect, SDLGLSTR_STYLE *style, i
     y2 = y + rect -> h - 1;
 
 
-    if (! (flags & SDLGLSTR_FEMPTYBUTTON)) {
-
-    	glBegin(GL_QUADS);	/* First the Background */
-            glColor3ubv(style -> buttonmid);
-            glVertex2i(x, y2);
-            glVertex2i(x2, y2);
-            glVertex2i(x2, y);
-            glVertex2i(x, y);
-    	glEnd();
-
+    if (flags & SDLGLSTR_FEMPTYBUTTON) {
+    
+        glColor3ubv(style -> edit_bk);
+        
     }
+    else {
+    
+        glColor3ubv(style -> buttonmid);
+        
+    }
+    
+    glBegin(GL_QUADS);	/* First the Background */            
+        glVertex2i(x, y2);
+        glVertex2i(x2, y2);
+        glVertex2i(x2, y);
+        glVertex2i(x, y);
+    glEnd();
 
     if (flags & SDLGLSTR_FINVERTED) {
 
@@ -763,8 +772,9 @@ static void sdlglstrIDrawShadowedRect(SDLGL_RECT *rect, SDLGLSTR_STYLE *style, i
  *     rect *:    Position where to print
  *     data *:    Pointer on value to print
  *     which:     Type of value to print 'SDLGL_VAL_...'
+ *     color *:   Color to use for printing string   
  */ 
-static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which)
+static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which, unsigned char *color)
 {
     
     char val_str[100];
@@ -785,7 +795,7 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which)
         case SDLGL_VAL_NONE:
         case SDLGL_VAL_STRING:
             /* Print given string */
-            sdlglstrIString(rect, pdata, ActStyle.textlo, ActStyle.textlo);
+            sdlglstrIString(rect, pdata, color, color);
             return;               
 
         case SDLGL_VAL_CHAR:
@@ -817,7 +827,7 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which)
 
     }
 
-    sdlglstrIString(rect, val_str, ActStyle.textlo, ActStyle.textlo);
+    sdlglstrIString(rect, val_str, color, color);
 
 }
 
@@ -844,7 +854,7 @@ static void sdlglstrDrawEditField(SDLGL_FIELD *field)
 
 
     /* First draw the background */
-    sdlglstrIDrawShadowedRect(&field -> rect, style, SDLGLSTR_FINVERTED);  
+    sdlglstrIDrawShadowedRect(&field -> rect, style, SDLGLSTR_FINVERTED | SDLGLSTR_FEMPTYBUTTON);  
 
     memcpy(&sizerect, &field -> rect, sizeof(SDLGL_RECT));
 
@@ -853,14 +863,14 @@ static void sdlglstrDrawEditField(SDLGL_FIELD *field)
     ActFont = style -> fontno;
 
     /* Draw the edited value -- Sub-Code: Kind of edited value in 'pdata' */
-    sdlglstrPrintValue(&sizerect, field -> pdata, field -> sub_code);
+    sdlglstrPrintValue(&sizerect, field -> pdata, field -> sub_code, style -> edit_text);
 
     /* Now draw the cursor, if needed */
     if (field -> workval >= 0 && (field -> fstate & SDLGL_FSTATE_HASFOCUS)) {
 
         sizerect.x += (_wFonts[style -> fontno].fontw * field -> workval);
         sizerect.y += 1;
-        sdlglstrIString(&sizerect, "_", style -> textlo, style -> textlo);
+        sdlglstrIString(&sizerect, "_", style -> edit_text, style -> edit_text);
 
     }
 
@@ -1555,7 +1565,7 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
                 
         case SDLGL_TYPE_VALUE:
             /* Uses subcode, because maincode generates mouse-event */
-            sdlglstrPrintValue(&field -> rect, field -> pdata, field -> sub_code);
+            sdlglstrPrintValue(&field -> rect, field -> pdata, field -> sub_code, ActStyle.textlo);
             break;
 
         case SDLGL_TYPE_LABEL:
