@@ -51,20 +51,20 @@
 #define EDITOR_EXITPROGRAM    ((char)100)
 
 /* Menu commands -- Don't collide with 3D-Commands */
-#define EDITOR_FILE     ((char)80)
-#define EDITOR_SETTINGS ((char)81)
-#define EDITOR_TOOLS    ((char)82)         /* Tools for the map    */
+#define EDITOR_FILE     ((char)10)
+#define EDITOR_SETTINGS ((char)11)
+#define EDITOR_TOOLS    ((char)12)         /* Tools for the map    */
 /* === Special dialog main functions === */
-#define EDITOR_CAMERA   ((char)83)         /* Move camera           */
-#define EDITOR_SHOWMAP  ((char)84)
-#define EDITOR_FANFX    ((char)85)
+#define EDITOR_CAMERA   ((char)13)         /* Move camera           */
+#define EDITOR_SHOWMAP  ((char)14)
+#define EDITOR_FANFX    ((char)15)
+#define EDITOR_FANTEX   ((char)16)
+#define EDITOR_FANPROPERTY ((char)17)      /* Properties of chosen fan(s)  */
 
-#define EDITOR_2DMAP    ((char)105)         /* Displayed map */
-#define EDITOR_FANTEX   ((char)106)
-#define EDITOR_MODULEDLG   ((char)109)      /* Settings for new map         */
-#define EDITOR_FANPROPERTY ((char)110)      /* Properties of chosen fan(s)  */
-#define EDITOR_3DMAP    ((char)115)
-#define EDITOR_DIALOG   ((char)116)         /* 'block_sign' for general dialog   */
+#define EDITOR_MODULEDLG   ((char)18)      /* Settings for new map         */
+#define EDITOR_2DMAP    ((char)19)         /* Displayed map */
+#define EDITOR_3DMAP    ((char)20)
+#define EDITOR_DIALOG   ((char)21)         /* 'block_sign' for general dialog   */
 
 /* Sub-Commands */
 #define EDITOR_FILE_LOAD  ((char)1)
@@ -101,7 +101,6 @@
 #define EDITOR_MODULEDLG_INCSIZE   ((char)4)
 #define EDITOR_MODULEDLG_CANCEL    ((char)5)
 #define EDITOR_MODULEDLG_OK        ((char)6)
-#define EDITOR_MODULEDLG_SAVE      ((char)7)
 
 /* ------------ General dialog codes ---- */
 #define EDITOR_DLG_NEW    ((char)1)
@@ -331,52 +330,52 @@ static SDLGL_FIELD SpawnPtDlg[] = {
 
 /* === Dialog: Edit the base values and module description of a map === */
 static SDLGL_FIELD ModuleDlg[] = {
-    { SDLGL_TYPE_BUTTON, {   0,   0, 350, 460 }, 0, 0, "Module description" },
+    { SDLGL_TYPE_BUTTON, {   0,   0, 380, 560 }, 0, 0, "Module description" },
     /* ---- Size of modul-map --- */
     { SDLGL_TYPE_LABEL,  {   8,  16,  80,  16 }, EDITOR_MODULEDLG, 0, "Map-Size:" },
-    { SDLGL_TYPE_SLI_AL, {  96,  16,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_DECSIZE },
+    { SDLGL_TYPE_SLI_AL, {  92,  16,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_DECSIZE },
     { SDLGL_TYPE_VALUE,  { 112,  20,  16,   8 }, 0, SDLGL_VAL_INT, (char *)&EditorMapSize },
-    { SDLGL_TYPE_SLI_AR, { 128,  16,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_INCSIZE },
+    { SDLGL_TYPE_SLI_AR, { 132,  16,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_INCSIZE },
     /* --- Description itself --- */
-    { SDLGL_TYPE_LABEL,  {   8,  32,  48,   8 }, 0, 0, "Name:" },
-    { SDLGL_TYPE_VALUE,  {  64,  32, 200,   8 }, 24, SDLGL_VAL_STRING, &ModuleDesc.mod_name[0] },
-    { SDLGL_TYPE_LABEL,  {   8,  48, 160,   8 }, 0, 0, "Referenced Module:" },
-    { SDLGL_TYPE_VALUE,  { 176,  48, 200,   8 }, 24, SDLGL_VAL_STRING, &ModuleDesc.ref_mod[0] },
-    { SDLGL_TYPE_LABEL,  {   8,  64, 160,   8 }, 0, 0, "Reference IDSZ:" },
-    { SDLGL_TYPE_VALUE,  { 176,  64,  72,   8 }, 11, SDLGL_VAL_STRING, &ModuleDesc.ref_idsz[0] },
-    { SDLGL_TYPE_LABEL,  {   8,  80, 160,   8 }, 0, 0, "Number of Imports:" },
-    { SDLGL_TYPE_VALUE,  { 176,  80,  16,   8 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.number_of_imports },
-    { SDLGL_TYPE_LABEL,  {   8,  96, 160,   8 }, 0, 0, "Allow Export:" },
-    { SDLGL_TYPE_VALUE,  { 176,  96,  16,   8 }, 1, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_export },
-    { SDLGL_TYPE_LABEL,  {   8, 112, 160,   8 }, 0, 0, "Min. Players:" },
-    { SDLGL_TYPE_VALUE,  { 176, 112,  16,   8 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.min_player },
-    { SDLGL_TYPE_LABEL,  {   8, 128, 160,   8 }, 0, 0, "Max. Players:" },
-    { SDLGL_TYPE_VALUE,  { 176, 128,  16,   8 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.max_player },
-    { SDLGL_TYPE_LABEL,  {   8, 144, 160,   8 }, 0, 0, "Allow respawn:" },
-    { SDLGL_TYPE_VALUE,  { 176, 144,  16,   8 }, 1, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_respawn },
-    { SDLGL_TYPE_LABEL,  {   8, 160, 160,   8 }, 0, 0, "Module Type:" },
-    { SDLGL_TYPE_VALUE,  { 128, 160, 160,   8 }, 11, SDLGL_VAL_STRING, &ModuleDesc.mod_type[0] },
-    { SDLGL_TYPE_LABEL,  {   8, 176, 112,   8 }, 0, 0, "Level Rating:" },
-    { SDLGL_TYPE_VALUE,  { 128, 176,  72,   8 }, 8, SDLGL_VAL_STRING, &ModuleDesc.lev_rating[0] },
-    { SDLGL_TYPE_LABEL,  {   8, 192, 112,   8 }, 0, 0, "Module Summary:" },
-    { SDLGL_TYPE_VALUE,  {   8, 208, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[0] },
-    { SDLGL_TYPE_VALUE,  {   8, 224, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[1] },
-    { SDLGL_TYPE_VALUE,  {   8, 240, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[2] },
-    { SDLGL_TYPE_VALUE,  {   8, 256, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[3] },
-    { SDLGL_TYPE_VALUE,  {   8, 272, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[4] },
-    { SDLGL_TYPE_VALUE,  {   8, 288, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[5] },
-    { SDLGL_TYPE_VALUE,  {   8, 304, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[6] },
-    { SDLGL_TYPE_VALUE,  {   8, 320, 328,   8 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[7] },
-    { SDLGL_TYPE_LABEL,  {   8, 336,  96,   8 }, 0, 0, "Expansions:" },
+    { SDLGL_TYPE_LABEL,  {   8,  44,  48,   8 }, 0, 0, "Name:" },
+    { SDLGL_TYPE_EDIT,   {  64,  40, 200,  16 }, 24, SDLGL_VAL_STRING, &ModuleDesc.mod_name[0] },
+    { SDLGL_TYPE_LABEL,  {   8,  64, 160,   8 }, 0, 0, "Referenced Module:" },
+    { SDLGL_TYPE_EDIT,   { 176,  60, 200,  16 }, 24, SDLGL_VAL_STRING, &ModuleDesc.ref_mod[0] },
+    { SDLGL_TYPE_LABEL,  {   8,  84, 160,   8 }, 0, 0, "Reference IDSZ:" },
+    { SDLGL_TYPE_EDIT,   { 176,  80,  72,  16 }, 11, SDLGL_VAL_STRING, &ModuleDesc.ref_idsz[0] },
+    { SDLGL_TYPE_LABEL,  {   8, 104, 160,   8 }, 0, 0, "Number of Imports:" },
+    { SDLGL_TYPE_EDIT,   { 176, 100,  16,  16 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.number_of_imports },
+    { SDLGL_TYPE_LABEL,  {   8, 124, 160,   8 }, 0, 0, "Allow Export:" },
+    { SDLGL_TYPE_EDIT,   { 176, 120,  16,  16 }, 1, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_export },
+    { SDLGL_TYPE_LABEL,  {   8, 144, 160,   8 }, 0, 0, "Min. Players:" },
+    { SDLGL_TYPE_EDIT,   { 176, 140,  16,  16 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.min_player },
+    { SDLGL_TYPE_LABEL,  {   8, 164, 160,   8 }, 0, 0, "Max. Players:" },
+    { SDLGL_TYPE_EDIT,   { 176, 160,  16,  16 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.max_player },
+    { SDLGL_TYPE_LABEL,  {   8, 184, 160,   8 }, 0, 0, "Allow respawn:" },
+    { SDLGL_TYPE_EDIT,   { 176, 180,  16,  16 }, 1, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_respawn },
+    { SDLGL_TYPE_LABEL,  {   8, 204, 160,   8 }, 0, 0, "Module Type:" },
+    { SDLGL_TYPE_EDIT,   { 128, 200, 160,  16 }, 11, SDLGL_VAL_STRING, &ModuleDesc.mod_type[0] },
+    { SDLGL_TYPE_LABEL,  {   8, 224, 112,   8 }, 0, 0, "Level Rating:" },
+    { SDLGL_TYPE_EDIT,   { 128, 220,  72,  16 }, 8, SDLGL_VAL_STRING, &ModuleDesc.lev_rating[0] },
+    { SDLGL_TYPE_LABEL,  {   8, 240, 112,   8 }, 0, 0, "Module Summary:" },
+    { SDLGL_TYPE_EDIT,   {   8, 260, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[0] },
+    { SDLGL_TYPE_EDIT,   {   8, 280, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[1] },
+    { SDLGL_TYPE_EDIT,   {   8, 300, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[2] },
+    { SDLGL_TYPE_EDIT,   {   8, 320, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[3] },
+    { SDLGL_TYPE_EDIT,   {   8, 340, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[4] },
+    { SDLGL_TYPE_EDIT,   {   8, 360, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[5] },
+    { SDLGL_TYPE_EDIT,   {   8, 380, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[6] },
+    { SDLGL_TYPE_EDIT,   {   8, 400, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[7] },
+    { SDLGL_TYPE_LABEL,  {   8, 420,  96,   8 }, 0, 0, "Expansions:" },
     /* ---- Maximum five expansions --- */
-    { SDLGL_TYPE_VALUE,  {   8, 352, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[0] },
-    { SDLGL_TYPE_VALUE,  {   8, 368, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[1] },
-    { SDLGL_TYPE_VALUE,  {   8, 384, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[2] },
-    { SDLGL_TYPE_VALUE,  {   8, 400, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[3] },
-    { SDLGL_TYPE_VALUE,  {   8, 416, 152,   8 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[4] },
+    { SDLGL_TYPE_EDIT,   {   8, 440, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[0] },
+    { SDLGL_TYPE_EDIT,   {   8, 460, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[1] },
+    { SDLGL_TYPE_EDIT,   {   8, 480, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[2] },
+    { SDLGL_TYPE_EDIT,   {   8, 500, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[3] },
+    { SDLGL_TYPE_EDIT,   {   8, 520, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[4] },
     /* ------- Buttons ------ */
-    { SDLGL_TYPE_BUTTON, {   8, 432,  56,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_CANCEL, "Cancel"  },
-    { SDLGL_TYPE_BUTTON, { 302, 432,  24,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_OK, "Ok" },
+    { SDLGL_TYPE_BUTTON, {   8, 540,  56,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_CANCEL, "Cancel"  },
+    { SDLGL_TYPE_BUTTON, { 302, 540,  24,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_OK, "Ok" },
     { 0 }
 };
 
@@ -753,7 +752,7 @@ static int editorPassageDlg(SDLGL_EVENT *event)
             break;
 
         case EDITOR_DLG_SAVE:
-            /* --- TODO: Get it from 'editfile...' --- */
+            /* --- Write it with 'editfile...' --- */
             break;
 
         case EDITOR_DLG_CLOSE:
@@ -780,12 +779,28 @@ static int editorModuleDlg(SDLGL_EVENT *event)
 
     switch(event -> sub_code) {
 
-        case EDITOR_MODULEDLG_OK:
-        case EDITOR_MODULEDLG_SAVE:
-            /* --- Save the info to file --- */
-            editfileModuleDesc(EDITFILE_ACT_SAVE, &ModuleDesc);       
+        case EDITOR_MODULEDLG_SOLID:
             break;
-
+            
+        case EDITOR_MODULEDLG_SIZE:
+            
+            break;
+            
+        case EDITOR_MODULEDLG_DECSIZE:
+            if (EditorMapSize > 32) {
+                EditorMapSize--;
+            }
+            break;
+            
+        case EDITOR_MODULEDLG_INCSIZE:
+            if (EditorMapSize < 64) {
+                EditorMapSize++;
+            }
+            break;
+            
+        case EDITOR_MODULEDLG_OK:
+            /* --- Save the info to file before closing --- */
+            editfileModuleDesc(EDITFILE_ACT_SAVE, &ModuleDesc);       
         case EDITOR_MODULEDLG_CANCEL:
             editorSetDialog(0, 0);
             break;

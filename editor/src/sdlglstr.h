@@ -39,7 +39,7 @@
 /* Flags for drawing routines */
 #define SDLGLSTR_FINVISIBLE   0x80000000    /* Is invisible                 */
 #define SDLGLSTR_FHIGHLIGHT   0x40000000    /* is highlighted               */
-#define SDLGLSTR_FINVERTED    0x20000000	/* Draw an inverted button 	    */
+#define SDLGLSTR_FINVERTED    0x20000004	/* Draw an inverted button 	    */
 #define SDLGLSTR_FHIGHLIGHTED 0x10000000	/* Use highlight color for text	*/
 #define SDLGLSTR_FHCENTER     0x08000000	/* Center the text horizontally */
                 					        /* in given rectangle		    */

@@ -1546,7 +1546,7 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
 
         case SDLGL_TYPE_STD:
         case SDLGL_TYPE_BUTTON:
-            sdlglstrDrawButton(&field -> rect, field -> pdata, 0);
+            sdlglstrDrawButton(&field -> rect, field -> pdata, field -> fstate);
             break;
             
         case SDLGL_TYPE_EDIT:
