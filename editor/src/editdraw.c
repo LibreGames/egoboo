@@ -872,7 +872,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
     vert_y = &mesh -> vrty[vert_base];
     vert_z = &mesh -> vrtz[vert_base];
 
-    if (! (mesh -> draw_mode & EDIT_MODE_SOLID)) {
+    if (! (mesh -> draw_mode & EDIT_DRAWMODE_SOLID)) {
         /* Set color depending on texturing type */
         if (bigtex) {                           /* It's one with hi res texture */
             sdlglSetColor(SDLGL_COL_LIGHTBLUE); /* color like cartman           */
@@ -885,7 +885,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
         }
 
     }
-    if (mesh -> draw_mode & EDIT_MODE_TEXTURED ) {
+    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED ) {
 
         if (bigtex) {               /* It's one with hi res texture */
             uv = &mc -> biguv[0];
@@ -899,7 +899,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
     offuv = &MeshTileOffUV[(mesh -> fan[fan_no].tx_no & 0x3F) * 2];
 
     /* Now bind the texture */
-    if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
+    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
 
         glBindTexture(GL_TEXTURE_2D, WallTex[((mesh -> fan[fan_no].tx_no >> 6) & 3)]);
 
@@ -916,17 +916,17 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
 
                 actvertex = vertexno[entry]; 	/* Number of vertex to draw */
 
-                if (mesh -> draw_mode & EDIT_MODE_SOLID) {
+                if (mesh -> draw_mode & EDIT_DRAWMODE_SOLID) {
                     /* Show ambient lighting */
                     color[0] = color[1] = color[2] = mesh -> vrta[actvertex];
                     
-                    if (mesh -> draw_mode & EDIT_MODE_LIGHTMAX) {
+                    if (mesh -> draw_mode & EDIT_DRAWMODE_LIGHTMAX) {
                         color[0] = color[1] = color[2] = 255;
                     }
                     glColor3ubv(&color[0]);		/* Set the light color */
 
                 }
-                if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
+                if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
                     glTexCoord2f(uv[(actvertex * 2) + 0] + offuv[0], uv[(actvertex * 2) + 1] + offuv[1]);
                 }
                 
@@ -959,10 +959,10 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, MAP_INFO_T *
     int fan_no;
     
 
-    glPolygonMode(GL_FRONT, mesh -> draw_mode & EDIT_MODE_SOLID ? GL_FILL : GL_LINE);
+    glPolygonMode(GL_FRONT, mesh -> draw_mode & EDIT_DRAWMODE_SOLID ? GL_FILL : GL_LINE);
     glFrontFace(GL_CW); 
     
-    if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
+    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
         glEnable(GL_TEXTURE_2D);
     }
     
@@ -999,7 +999,7 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, MAP_INFO_T *
         }
     }      
     
-    if (mesh -> draw_mode & EDIT_MODE_TEXTURED) {
+    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
         glDisable(GL_TEXTURE_2D);
     }
     

@@ -60,9 +60,17 @@
 /* ---- Flags to toggle --------- */
 #define EDITMAIN_TOGGLE_DRAWMODE    1
 #define EDITMAIN_TOGGLE_EDITSTATE   2
-#define EDITMAIN_TOGGLE_FANTEXSIZE  3 
-#define EDITMAIN_TOGGLE_FANTEXNO    4 
-#define EDITMAIN_TOGGLE_FANFX       5
+#define EDITMAIN_TOGGLE_FANTEXNO    3 
+
+/* --- different edit modes --- */
+#define EDITMAIN_STATE_OFF     ((char)1)   /* 'View' map                        */
+#define EDITMAIN_STATE_MAP     ((char)2)   /* 'Carve' out map with mouse        */
+#define EDITMAIN_STATE_FAN     ((char)3)   /* Result of fan dialog              */
+#define EDITMAIN_STATE_PASSAGE ((char)4)
+#define EDITMAIN_STATE_OBJECT  ((char)5)
+#define EDITMAIN_STATE_MODULE  ((char)6)   /* Change info in module description */
+#define EDITMAIN_STATE_VERTEX  ((char)7)
+#define EDITMAIN_STATE_FREE    ((char)8) 
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -82,10 +90,16 @@ typedef struct {
     FANDATA_T ft;       /* Copy of actual chosen fan        */
     COMMAND_T fd;       /* Extent data for new fan type     */
     char msg[256];      /* Possible message from editor     */
-    int map_size;       /* Map-Size chosen by user          */
-    char map_info;      /* Which kind of additional map info to draw    */
-
-} EDITMAIN_STATE_T;
+    int  map_size;      /* Map-Size chosen by user         */
+    /* --- Additional map info to return if no map editing itself       */
+    int  mi_fan_no;
+    char mi_type;
+    int  mi_t_number; 
+    /* ---- Choosing multiple tiles, save drag of mouse --- */
+    int  drag_x, drag_y, drag_w, drag_h;
+    char fan_name[128]; /* Name of fan, if free is chosen   */
+    
+} EDITMAIN_INFO_T;
 
 typedef struct {
 
@@ -93,44 +107,34 @@ typedef struct {
 
 } EDITMAIN_XY;
 
-/* TODO: Add struct for 'menu.txt' */
-
 typedef struct {
+
     int           x;
     int           y;
     unsigned char level;
     int           radius;
+    
 } LIGHT_T;
-
-typedef struct {
-
-    int  fan_no;
-    char type;
-    int  t_number;     
-    FANDATA_T ft;       /* Copy of actual chosen fan for user   */
-
-} EDITMAIN_INFO_T;
 
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
-EDITMAIN_STATE_T *editmainInit(int map_size, int minimap_w, int minimap_h);
+void editmainInit(EDITMAIN_INFO_T *es, int map_size, int minimap_w, int minimap_h);
 void editmainExit(void);
-int  editmainMap(int command);
-void editmainDrawMap2D(int x, int y);
-char editmainToggleFlag(int which, unsigned char flag);
-void editmainChooseFan(int cx, int cy, int is_floor);
-void editmainChooseFanExt(int cx, int cy, int cw, int ch);
-void editmainFanTypeName(char *fan_name);
-void editmainChooseFanType(int dir, char *fan_name);
-void editmain2DTex(int x, int y, int w, int h);
-void editmainChooseTex(int cx, int cy, int w, int h);
+int  editmainMap(EDITMAIN_INFO_T *es, int command);
+void editmainDrawMap2D(EDITMAIN_INFO_T *es, int x, int y);
+char editmainToggleFlag(EDITMAIN_INFO_T *es, int which, unsigned char flag);
+void editmainChooseFan(EDITMAIN_INFO_T *es, int cx, int cy, int is_floor);
+void editmainChooseFanExt(EDITMAIN_INFO_T *es);
+void editmainFanTypeName(EDITMAIN_INFO_T *es, char *fan_name);
+void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir, char *fan_name);
+void editmain2DTex(EDITMAIN_INFO_T *es, int x, int y, int w, int h);
+void editmainChooseTex(EDITMAIN_INFO_T *es, int cx, int cy, int w, int h);
 
 void editmainClearMapInfo(void);
 void editmainSetMapInfo(char which, int number, int x, int y, int x2, int y2);
-void editmainGetMapInfo(int mou_x, int mou_y, EDITMAIN_INFO_T *info);  
-void editmainUpdateFan(EDITMAIN_INFO_T *info);  
+void editmainGetMapInfo(EDITMAIN_INFO_T *es, int mou_x, int mou_y);  
     
 #endif /* _EDITMAIN_H_	*/
 

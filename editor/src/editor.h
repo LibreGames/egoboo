@@ -60,15 +60,24 @@
 #define COMMAND_TEXTUREHI_FLAG 0x20
 
 // Editor modes: How to draw the map
-#define EDIT_MODE_SOLID     0x01        /* Draw solid, yes/no       */
-#define EDIT_MODE_TEXTURED  0x02        /* Draw textured, yes/no    */
-#define EDIT_MODE_LIGHTMAX  0x04        /* Is drawn all white       */    
+#define EDIT_DRAWMODE_SOLID     0x01        /* Draw solid, yes/no       */
+#define EDIT_DRAWMODE_TEXTURED  0x02        /* Draw textured, yes/no    */
+#define EDIT_DRAWMODE_LIGHTMAX  0x04        /* Is drawn all white       */    
 
 /* ---- For MAP_INFO_T: Kind of additional info ---- */
 #define MAP_INFO_NONE       0x00
 #define MAP_INFO_SPAWN      0x01
 #define MAP_INFO_PASSAGE    0x02
 #define MAP_INFO_CHOSEN     0x40        /* TODO: These fans are chosen  */ 
+
+/* --- different edit modes --- */
+#define EDITOR_TOOL_OFF     ((char)1)   /* 'View' map                        */
+#define EDITOR_TOOL_MAP     ((char)2)   /* 'Carve' out map with mouse        */
+#define EDITOR_TOOL_FAN     ((char)3)   /* Result of fan dialog              */
+#define EDITOR_TOOL_PASSAGE ((char)4)
+#define EDITOR_TOOL_OBJECT  ((char)5)
+#define EDITOR_TOOL_MODULE  ((char)6)   /* Change info in module description */
+#define EDITOR_TOOL_VERTEX  ((char)7)
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
