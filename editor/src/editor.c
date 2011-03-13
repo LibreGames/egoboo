@@ -53,18 +53,19 @@
 /* Menu commands -- Don't collide with 3D-Commands */
 #define EDITOR_FILE     ((char)10)
 #define EDITOR_SETTINGS ((char)11)
-#define EDITOR_TOOLS    ((char)12)         /* Tools for the map    */
+#define EDITOR_TOOLS    ((char)12)          /* Tools for the map    */
 /* === Special dialog main functions === */
-#define EDITOR_CAMERA   ((char)13)         /* Move camera           */
+#define EDITOR_CAMERA   ((char)13)          /* Move camera           */
 #define EDITOR_SHOWMAP  ((char)14)
 #define EDITOR_FANFX    ((char)15)
 #define EDITOR_FANTEX   ((char)16)
-#define EDITOR_FANPROPERTY ((char)17)      /* Properties of chosen fan(s)  */
+#define EDITOR_FANPROPERTY  ((char)17)       /* Properties of chosen fan(s)  */
 
-#define EDITOR_MODULEDLG   ((char)18)      /* Settings for new map         */
-#define EDITOR_2DMAP    ((char)19)         /* Displayed map */
-#define EDITOR_3DMAP    ((char)20)
-#define EDITOR_DIALOG   ((char)21)         /* 'block_sign' for general dialog   */
+#define EDITOR_MODULEDLG    ((char)18)  /* Settings for new map         */
+#define EDITOR_2DMAP        ((char)19)  /* Displayed map                */
+#define EDITOR_3DMAP        ((char)20)
+#define EDITOR_DIALOG       ((char)21)  /* 'block_sign' for general dialog   */
+#define EDITOR_INVENTORY    ((char)22)  /* A players inventory from spawn point */ 
 
 /* Sub-Commands */
 #define EDITOR_FILE_LOAD  ((char)1)
@@ -93,16 +94,28 @@
 #define EDITOR_MODULEDLG_CANCEL    ((char)5)
 #define EDITOR_MODULEDLG_OK        ((char)6)
 
+#define EDITOR_INVENTORY_LEFT      ((char)1) 
+#define EDITOR_INVENTORY_RIGHT     ((char)2)  
+#define EDITOR_INVENTORY_1         ((char)3) 
+#define EDITOR_INVENTORY_2         ((char)4)   
+#define EDITOR_INVENTORY_3         ((char)5) 
+#define EDITOR_INVENTORY_4         ((char)6)
+#define EDITOR_INVENTORY_5         ((char)7)
+#define EDITOR_INVENTORY_6         ((char)8)
+#define EDITOR_INVENTORY_CLOSE     ((char)9) 
+
 /* ------------ General dialog codes ---- */
-#define EDITOR_DLG_NEW    ((char)1)
-#define EDITOR_DLG_DELETE ((char)2)
-#define EDITOR_DLG_SAVE   ((char)3)
-#define EDITOR_DLG_CLOSE  ((char)4)
+#define EDITOR_DLG_NEW          ((char)1)
+#define EDITOR_DLG_DELETE       ((char)2)
+#define EDITOR_DLG_SAVE         ((char)3)
+#define EDITOR_DLG_CLOSE        ((char)4)
+#define EDITOR_DLG_INVENTORY    ((char)5)   
 
 /* ------- Drawing types ----- */
 #define EDITOR_DRAW2DMAP   ((char)SDLGL_TYPE_MENU + 10)
 #define EDITOR_DRAWTEXTURE ((char)SDLGL_TYPE_MENU + 11)
 #define EDITOR_DRAW3DMAP   ((char)SDLGL_TYPE_MENU + 12)
+#define EDITOR_DRAWICON    ((char)SDLGL_TYPE_MENU + 13)
 
 /*******************************************************************************
 * DATA									                                       *
@@ -316,6 +329,24 @@ static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_BUTTON, {  48, 240,  56,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_DELETE, "Delete"   },
     { SDLGL_TYPE_BUTTON, { 176, 240,  40,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_SAVE, "Save"  },
     { SDLGL_TYPE_BUTTON, { 224, 240,  48,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_CLOSE, "Close" },
+    { SDLGL_TYPE_BUTTON, { 266,   4,  80,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_INVENTORY, "Inventory" },
+    { 0 }
+};
+
+/* === Dialog: Edit the inventory of an object === */
+static SDLGL_FIELD DlgInventory[] = {   /* EDITOR_INVENTORY */  /*  */
+    { SDLGL_TYPE_BUTTON, {   0,   0,  76, 136 }, 0, 0, "Inventory" },
+    /* TODO: Add fields with type 'EDITOR_DRAWICON' or draw icons as 'overlay' */
+    { SDLGL_TYPE_BUTTON, {   4,  20,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_LEFT },
+    { SDLGL_TYPE_BUTTON, {  52,  20,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_RIGHT },
+    { SDLGL_TYPE_BUTTON, {   4,  44,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_1 },
+    { SDLGL_TYPE_BUTTON, {  28,  44,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_2 },
+    { SDLGL_TYPE_BUTTON, {  52,  44,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_3 },
+    { SDLGL_TYPE_BUTTON, {   4,  68,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_4 },
+    { SDLGL_TYPE_BUTTON, {  28,  68,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_5 },
+    { SDLGL_TYPE_BUTTON, {  52,  68,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_6 },
+    { SDLGL_TYPE_BUTTON, {  52,  68,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_6 },
+    { SDLGL_TYPE_BUTTON, {  84, 116,  48,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_CLOSE, "Close" },    
     { 0 }
 };
 
