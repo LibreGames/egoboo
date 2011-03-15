@@ -220,6 +220,10 @@ static void sdlglcfgStrToVal(char *string, char valtype, void *value, char valle
                 sscanf(string, "%f", &fvalue);
                 *(float *)value = fvalue;
                 break;
+                
+            case SDLGLCFG_VAL_BOOLEAN:
+                *(char *)value = (string[0] == 'T') ? 0x01 : 0x00;
+                break;
 
         }
 
@@ -279,6 +283,11 @@ static void sdlglcfgValToStr(char *val_str, char valtype, void *value, char vall
             sprintf(val_str, "%.5f", *(float *)value);
             break;
 
+        case SDLGLCFG_VAL_BOOLEAN:
+            val_str[0] = *(char *)value ? 'T' : 'F';
+            val_str[1] = 0;
+            break;
+            
         default:
             /* Return empty string, if unknown */
             val_str[0] = 0;

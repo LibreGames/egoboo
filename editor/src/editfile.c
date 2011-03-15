@@ -82,8 +82,8 @@ static SDLGLCFG_VALUE SpawnVal[] = {
 	{ SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].pas },
     { SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].con },
     { SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].lvl },
-    { SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].stt },
-    { SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].gho },
+    { SDLGLCFG_VAL_BOOLEAN, &SpawnObjects[0].stt },
+    { SDLGLCFG_VAL_BOOLEAN, &SpawnObjects[0].gho },
     { SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].team },
 	{ 0 }
 };
@@ -104,9 +104,9 @@ static SDLGLCFG_VALUE PassageVal[] = {
 	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft[1] },
 	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright[0] },
 	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright[1] },
-	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].open },
-	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].shoot_trough },
-	{ SDLGLCFG_VAL_ONECHAR, &Passages[0].slippy_close },
+	{ SDLGLCFG_VAL_BOOLEAN, &Passages[0].open },
+	{ SDLGLCFG_VAL_BOOLEAN, &Passages[0].shoot_trough },
+	{ SDLGLCFG_VAL_BOOLEAN, &Passages[0].slippy_close },
 	{ 0 }
 };
 

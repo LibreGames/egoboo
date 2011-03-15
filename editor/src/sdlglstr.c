@@ -821,7 +821,7 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which, unsigned
             val_str[0] = *pdata;
             val_str[1] = 0;
             break;
-
+            
         default:
             return;
 
@@ -951,11 +951,6 @@ static void sdlglstrDrawSpecial(SDLGL_RECT *rect, char *text, int which, int inf
             ActColor = SDLGL_COL_BLACK;
             sdlglstrChar(rect, *pbc);
             ActColor = save_color;
-
-            /* 3: Draw the name of this special field, may be highlighted */
-            ActFont = style -> fontno;
-            sizerect.x += SDLGLSTR_SPECIALDIST;
-	        sdlglstrIString(&sizerect, text, textcolor, hotkeycolor);
             break;
 
         case SDLGL_TYPE_RBGROUP:
@@ -1584,11 +1579,12 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
             ActColor = SDLGL_COL_BLACK;
             sdlglstrChar(&sizerect, buttonchars[6 + (field -> sdlgl_type - SDLGL_TYPE_SLI_AU)]);
             break;
-            
+         
+        
         case SDLGL_TYPE_CHECKBOX:
         case SDLGL_TYPE_RB: 
-            sdlglstrDrawSpecial(&field -> rect, field -> pdata, field -> sdlgl_type, field -> workval);
-            break;
+            sdlglstrDrawSpecial(&field -> rect, field -> pdata, field -> sdlgl_type, *field -> pdata);
+            break; 
             
         default:
             /* Unknown type, to be drawn by caller  */

@@ -41,6 +41,7 @@
 #define SDLGLCFG_VAL_STRING  ((char)8)
 #define SDLGLCFG_VAL_ONECHAR ((char)9)      /* Read a single char              */
 #define SDLGLCFG_VAL_LABEL   ((char)10)     /* Write a single string to file   */
+#define SDLGLCFG_VAL_BOOLEAN ((char)11) 
 
 /* *****************************************************************************
 * TYPEDEFS                                 				                       *

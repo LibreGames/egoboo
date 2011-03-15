@@ -186,6 +186,7 @@ typedef unsigned short wchar_t;
 #define SDLGL_VAL_FLOAT   ((char)7)
 #define SDLGL_VAL_STRING  ((char)8)
 #define SDLGL_VAL_ONECHAR ((char)9)       /* Edit / print a single char */
+#define SDLGL_VAL_BOOLEAN ((char)10)
                                             
 /*******************************************************************************
 * GLOBAL TYPEDEFS							                                   *

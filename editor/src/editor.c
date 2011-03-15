@@ -265,7 +265,7 @@ static SDLGL_FIELD FanInfoDlg[] = {
 
 /* === Dialog: Edit a passage === */
 static SDLGL_FIELD PassageDlg[] = {
-    { SDLGL_TYPE_BUTTON, {   0,   0, 280, 150 }, 0, 0, "Passage" },
+    { SDLGL_TYPE_BUTTON, {   0,   0, 280, 134 }, 0, 0, "Passage" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  48,   8 }, 0, 0, "Name:" },
     { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActPsg.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32, 112,   8 }, 0, 0, "Top left:" },
@@ -282,12 +282,10 @@ static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.open },
     { SDLGL_TYPE_LABEL,  {   8,  80, 120,   8 }, 0, 0, "Shoot Through:" },
     { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.shoot_trough },
-    { SDLGL_TYPE_LABEL,  {   8,  96, 120,   8 }, 0, 0, "Slippy Close:" },
-    { SDLGL_TYPE_VALUE,  { 128,  96,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.slippy_close },
-    { SDLGL_TYPE_BUTTON, {   8, 130,  32,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_NEW,   "New"   },
-    { SDLGL_TYPE_BUTTON, {  48, 130,  56,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_DELETE, "Delete"   },
-    { SDLGL_TYPE_BUTTON, { 176, 130,  40,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_SAVE, "Save"  },
-    { SDLGL_TYPE_BUTTON, { 224, 130,  48,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_CLOSE, "Close" },
+    { SDLGL_TYPE_BUTTON, {   8, 114,  32,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_NEW,   "New"   },
+    { SDLGL_TYPE_BUTTON, {  48, 114,  56,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_DELETE, "Delete"   },
+    { SDLGL_TYPE_BUTTON, { 176, 114,  40,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_SAVE, "Save"  },
+    { SDLGL_TYPE_BUTTON, { 224, 114,  48,  16 }, EDITOR_TOOL_PASSAGE, EDITOR_DLG_CLOSE, "Close" },
     { 0 }
 };
 
@@ -319,16 +317,14 @@ static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_VALUE,  {  96, 144,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.con },
     { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
     { SDLGL_TYPE_VALUE,  {  96, 160,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.lvl },
-    { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Status-Bar:" },
-    { SDLGL_TYPE_VALUE,  { 104, 176,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.stt },
-    { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Ghost:" },
-    { SDLGL_TYPE_VALUE,  { 104, 192,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.gho },
-    { SDLGL_TYPE_LABEL,  {   8, 208,  96,   8 }, 0, 0, "Team:" },
-    { SDLGL_TYPE_VALUE,  { 104, 208,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.team },
-    { SDLGL_TYPE_BUTTON, {   8, 240,  32,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_NEW, "New"   },
-    { SDLGL_TYPE_BUTTON, {  48, 240,  56,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_DELETE, "Delete"   },
-    { SDLGL_TYPE_BUTTON, { 176, 240,  40,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_SAVE, "Save"  },
-    { SDLGL_TYPE_BUTTON, { 224, 240,  48,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_CLOSE, "Close" },
+    { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Is Player:" },
+    { SDLGL_TYPE_CHECKBOX,  {  96, 176,  16,   8 }, 0x01, 0, &ActSpt.stt },
+    { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Team:" },
+    { SDLGL_TYPE_VALUE,  {  96, 192,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.team },
+    { SDLGL_TYPE_BUTTON, {   8, 224,  32,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_NEW, "New"   },
+    { SDLGL_TYPE_BUTTON, {  48, 224,  56,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_DELETE, "Delete"   },
+    { SDLGL_TYPE_BUTTON, { 176, 224,  40,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_SAVE, "Save"  },
+    { SDLGL_TYPE_BUTTON, { 224, 224,  48,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_CLOSE, "Close" },
     { SDLGL_TYPE_BUTTON, { 266,   4,  80,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_INVENTORY, "Inventory" },
     { 0 }
 };
