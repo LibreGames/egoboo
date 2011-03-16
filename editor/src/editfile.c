@@ -66,7 +66,8 @@ static char *EditFileGORSubDir[]   = {
     ""
 };
 
-/* -------------Data for Spawn-Points ---------------- */
+/* ============== Data for Spawn-Points ============== */
+static EDITFILE_SPAWNPT_T SpawnTemplate;
 static EDITFILE_SPAWNPT_T SpawnObjects[EDITFILE_MAXSPAWN + 2];
 
 static SDLGLCFG_VALUE SpawnVal[] = {
@@ -95,7 +96,8 @@ static SDLGLCFG_LINEINFO SpawnRec = {
 	&SpawnVal[0]
 };
 
-/* ------------ Data for passages -------------------- */
+/* ============== Data for passages ============== */
+static EDITFILE_PASSAGE_T PassageTemplate;
 static EDITFILE_PASSAGE_T Passages[EDITFILE_MAXPASSAGE + 2];
 
 static SDLGLCFG_VALUE PassageVal[] = {
@@ -117,19 +119,22 @@ static SDLGLCFG_LINEINFO PassageRec = {
 	&PassageVal[0]
 };
 
-/* -------------Data for ModDesc-Files ---------------- */
+/* ============== Data for ModDesc-Files ============== */
+static EDITFILE_MODULE_T ModDescTemplate = {
+    "", "NONE", "[NONE]", 0, 0, 1, 1, 0, "MAINQUEST",
+    "*"
+};
 static EDITFILE_MODULE_T ModDesc;
 
-/* TODO: Declare it as 'SDLGLCFG_NAMEDVALUE' */
 static SDLGLCFG_NAMEDVALUE ModuleVal[] = {
     { SDLGLCFG_VAL_STRING,  ModDesc.mod_name, 24, "Module Name" }, 
     { SDLGLCFG_VAL_STRING,  ModDesc.ref_mod, 24, "Reference Directory" },  
     { SDLGLCFG_VAL_STRING,  ModDesc.ref_idsz, 11, "Required reference IDSZ" }, 
     { SDLGLCFG_VAL_CHAR,    &ModDesc.number_of_imports, 1, "Number of imports ( 0 to 4 )" }, 
-    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_export, 1, "Exporting ( TRUE or FALSE )"  },
+    { SDLGLCFG_VAL_BOOLEAN, &ModDesc.allow_export, 1, "Exporting ( TRUE or FALSE )"  },
     { SDLGLCFG_VAL_CHAR,    &ModDesc.min_player, 1, "Minimum players ( 1 to 4 )" },  
     { SDLGLCFG_VAL_CHAR,    &ModDesc.max_player, 1, "Maximum players ( 1 to 4 )"  },  
-    { SDLGLCFG_VAL_ONECHAR, &ModDesc.allow_respawn, 1, "Respawning ( TRUE or FALSE )" }, 
+    { SDLGLCFG_VAL_BOOLEAN, &ModDesc.allow_respawn, 1, "Respawning ( TRUE or FALSE )" }, 
     { SDLGLCFG_VAL_STRING,  ModDesc.mod_type, 11, "Module Type (MAINQUEST, SIDEQUEST or TOWN)" },  
     { SDLGLCFG_VAL_STRING,  &ModDesc.lev_rating, 8, "Level rating ( * to  ***** )" },
     { SDLGLCFG_VAL_LABEL, 0, 0, "//Module summary\n" }, /* Module summary */
@@ -422,7 +427,8 @@ static void editfileSetUnderlines(char *text)
  */
 void editfileSetWorkDir(char *dir_name)
 {
-
+    
+    /* TODO: Check it, replace possible backslashes '\' with slashes forward */
     sprintf(EditFileWorkDir, "%s/", dir_name);
 
 }
@@ -667,8 +673,8 @@ int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
  * Description:
  *     Load/Save the data from 'menu.txt' in actual work directory
  * Input:
- *     action: What to do
- *     psg *:  Pointer where to return copy of passage asked for
+ *     action:    What to do
+ *     moddesc *: Pointer where to get / return a copy of a module
  * Output:
  *    Number of record chosen
  */
@@ -688,7 +694,7 @@ int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc)
             /* ----- Return the data from internal record --- */
             memcpy(moddesc, &ModDesc, sizeof(EDITFILE_MODULE_T));
             break;
-
+            
         case EDITFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
             memcpy(&ModDesc, moddesc, sizeof(EDITFILE_MODULE_T));
@@ -711,6 +717,11 @@ int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc)
             }
             sdlglcfgEgobooValues(fname, ModuleVal, 1);
             break;
+            
+        case EDITFILE_ACT_NEW:
+            /* Return an module descriptor filled with default values */
+            memcpy(moddesc, &ModDescTemplate, sizeof(EDITFILE_MODULE_T));
+            break;            
 
     }
 

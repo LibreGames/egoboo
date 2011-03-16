@@ -136,9 +136,10 @@ typedef unsigned short wchar_t;
 #define SDLGL_FSTATE_MOUSEOVER 0x02
 #define SDLGL_FSTATE_MOUPRESS  0x04     /* Input 'pressed' on given field   */ 
 #define SDLGL_FSTATE_MOUDRAG   0x08     /* Mouse dragged on given field     */
-#define SDLGL_FSTATE_TOOLTIP   0x10     /* Mouse over since tooltip-time    */        
+#define SDLGL_FSTATE_TOOLTIP   0x10     /* Mouse over since tooltip-time    */ 
+#define SDLGL_FSTATE_EDITINS   0x20     /* Editfield in insert-mode: yes/no */         
 #define SDLGL_FSTATE_CLEAR     0xFE     /* Clear all, except focusflag      */ 
-
+          
 /* -------- SDLGL-Types for input handling --------- */
 #define SDLGL_TYPE_NONE        0x00     /* End of vector                    */
 #define SDLGL_TYPE_STD         0x01     /* Standard-field, no special key

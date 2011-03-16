@@ -514,7 +514,7 @@ static int editmainCreateNewMap(EDITMAIN_INFO_T *es, MESH_T *mesh)
 
 			if (! editmainFanAdd(mesh, fan, x*EDITMAIN_TILEDIV, y*EDITMAIN_TILEDIV))
 			{
-				sprintf(es ->msg, "%s", "NOT ENOUGH VERTICES!!!");
+				sprintf(es -> msg, "%s", "NOT ENOUGH VERTICES!!!");
 				return 0;
 			}
 
@@ -967,10 +967,12 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
 
 				editmainCompleteMapData(&Mesh, es -> draw_mode);
 				sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
-				/* Maybe initialize here the  chosen fan to
-				   none or 0 instead by caller */
                 /* Initialize the 'sub-map' for additional info */
                 memset(Map_Info, 0, (MAXMESHFAN * sizeof(MAP_INFO_T)));
+                /* And move camera to standard basis point */
+                sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
+                /* And no fan is selected */
+                es -> fan_selected[0] = -1;
 				return 1;
 
 			}
@@ -983,6 +985,10 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
 				editmainCompleteMapData(&Mesh, es -> draw_mode);
 				sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
                 memset(Map_Info, 0, (MAXMESHFAN * sizeof(MAP_INFO_T)));
+                /* And move camera to standard basis point */
+                sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
+                /* And no fan is selected */
+                es -> fan_selected[0] = -1;
 				return 1;
 
 			}

@@ -62,6 +62,8 @@ typedef struct {
     char open;
     char shoot_trough;
     char slippy_close;
+    /* For the editors internal use */
+    int number;                 /* Number of this record, 0: empty */
 
 } EDITFILE_PASSAGE_T;
 
@@ -80,28 +82,30 @@ typedef struct {
     char stt;
     char gho;
     char team;
+    /* For the editors internal use */
+    int number;                 /* Number of this record, 0: empty */
 
 } EDITFILE_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
 
 typedef struct {
 
-  char mod_name[24 + 1];        /* With underscores */
-  char ref_mod[24 + 1];         /* Reference module ( Directory name or NONE )  */
-  char ref_idsz[11 + 1];        /* Required reference IDSZ ( or [NONE] ) : [MAIN] 6  */
-  char number_of_imports;       /* Number of imports ( 0 to 4 ) : 4 */
-  char allow_export;            /* Allow exporting of characters ( TRUE or FALSE )  */
-  char min_player;              /* Minimum number of players ( 1 to 4 )  */
-  char max_player;              /* Maximum number of players ( 1 to 4 ) : 4  */
-  char allow_respawn;           /* Allow respawning ( TRUE or FALSE ) : TRUE  */
-  char mod_type[11 + 1];        /* Module Type (MAINQUEST, SIDEQUEST or TOWN) */
-  char lev_rating[8 + 2];       /* Level rating ( *, **, ***, ****, or ***** )  */
-  /* // Module summary ( Must be 8 lines... Each line mush have at least an _ )  */
-  char summary[8][80 + 2];
-  /* Module expansion IDSZs ( with a colon in front )   */
-  /*    :[TYPE] MAINQUEST //Module Type (MAINQUEST, SIDEQUEST or TOWN)  */
-  char exp_idsz[5][18 + 1];
-
-} EDITFILE_MODULE_T;           /* Data from 'menu.txt'                 */
+    char mod_name[24 + 1];      /* With underscores                                 */
+    char ref_mod[24 + 1];       /* Reference module ( Directory name or NONE )      */
+    char ref_idsz[11 + 1];      /* Required reference IDSZ ( or [NONE] ) : [MAIN] 6 */
+    char number_of_imports;     /* Number of imports ( 0 to 4 ) : 4                 */
+    char allow_export;          /* Allow exporting of characters ( TRUE or FALSE )  */
+    char min_player;            /* Minimum number of players ( 1 to 4 )             */
+    char max_player;            /* Maximum number of players ( 1 to 4 ) : 4         */
+    char allow_respawn;         /* Allow respawning ( TRUE or FALSE ) : TRUE        */
+    char mod_type[11 + 1];      /* Module Type (MAINQUEST, SIDEQUEST or TOWN)       */
+    char lev_rating[8 + 2];     /* Level rating ( *, **, ***, ****, or ***** )      */
+    char summary[8][80 + 2];    /* Module summary                                   */
+    char exp_idsz[5][18 + 1];   /* Module expansion IDSZs ( with a colon in front ) */
+    /* For the editors internal use */
+    char mod_type_no;           /* Number of 'mod_type'                             */
+    char lev_rating_no;         /* Number of 'lev_rating'                           */
+    
+} EDITFILE_MODULE_T;            /* Data from 'menu.txt'                 */
 
 /*******************************************************************************
 * CODE 								                                           *
