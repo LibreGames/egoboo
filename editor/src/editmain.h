@@ -45,14 +45,6 @@
 /* ---------- Edit-Flags -------- */
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
 
-/* --- Edit-States (how to set fans) */ 
-#define EDITMAIN_EDIT_NONE      0x00
-#define EDITMAIN_EDIT_SIMPLE    0x01
-#define EDITMAIN_EDIT_FREE      0x02    /* Edit complete single chosen fan      */
-#define EDITMAIN_EDIT_FX        0x03    /* Edit FX-Flags of chosen fan(s)       */
-#define EDITMAIN_EDIT_TEXTURE   0x04    /* Edit the textures of chosen fan(s)   */
-#define EDITMAIN_EDIT_MAX       0x04    /* Maximum number of edit states        */
-
 /* --------- Other values ------- */
 #define EDITMAIN_MAX_MAPSIZE  64
 #define EDITMAIN_MAXSELECT    25        /* Maximum fans to be selected  */
@@ -84,13 +76,13 @@ typedef struct {
     int  tx, ty;        /* Position of fan as x/y on map    */
     char display_flags; /* For display in main editor       */
     char draw_mode;     /* For copy into mesh - struct      */
-    char edit_mode;     /* None/simple/free                 */
+    char edit_mode;     /* EDITOR_TOOL_...                  */
     char bft_no;        /* Number of fan-type in fan-set    */
     char fan_dir;       /* Direction of new fan             */    
     FANDATA_T ft;       /* Copy of actual chosen fan        */
     COMMAND_T fd;       /* Extent data for new fan type     */
     char msg[256];      /* Possible message from editor     */
-    int  map_size;      /* Map-Size chosen by user         */
+    int  map_size;      /* Map-Size chosen by user          */
     /* --- Additional map info to return if no map editing itself       */
     int  mi_fan_no;
     char mi_type;
@@ -120,15 +112,14 @@ typedef struct {
 * CODE 								                                           *
 *******************************************************************************/
 
-void editmainInit(EDITMAIN_INFO_T *es, int map_size, int minimap_w, int minimap_h);
+void editmainInit(EDITMAIN_INFO_T *es, int map_size, int minimap_tile_w);
 void editmainExit(void);
 int  editmainMap(EDITMAIN_INFO_T *es, int command);
 void editmainDrawMap2D(EDITMAIN_INFO_T *es, int x, int y);
 char editmainToggleFlag(EDITMAIN_INFO_T *es, int which, unsigned char flag);
 void editmainChooseFan(EDITMAIN_INFO_T *es, int cx, int cy, int is_floor);
 void editmainChooseFanExt(EDITMAIN_INFO_T *es);
-void editmainFanTypeName(EDITMAIN_INFO_T *es, char *fan_name);
-void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir, char *fan_name);
+void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir);
 void editmain2DTex(EDITMAIN_INFO_T *es, int x, int y, int w, int h);
 void editmainChooseTex(EDITMAIN_INFO_T *es, int cx, int cy, int w, int h);
 

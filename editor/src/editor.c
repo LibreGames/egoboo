@@ -44,7 +44,7 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.6"
+#define EDITOR_CAPTION "EGOBOO - Map Editor V 0.1.7"
 
 #define EDITOR_MAXFLD   100
 
@@ -81,9 +81,8 @@
 #define EDITOR_2DMAP_FANBROWSE  ((char)8)
 
 #define EDITOR_FANTEX_CHOOSE    ((char)1)
-#define EDITOR_FANTEX_SIZE      ((char)2)
-#define EDITOR_FANTEX_DEC       ((char)3)
-#define EDITOR_FANTEX_INC       ((char)4)
+#define EDITOR_FANTEX_DEC       ((char)2)
+#define EDITOR_FANTEX_INC       ((char)3)
 
 #define EDITOR_FANPROPERTY_EDITMODE ((char)1)   /* Changes the edit-mode    */
 #define EDITOR_FANPROPERTY_UPDATE   ((char)2)   /* Depending on actual mode */
@@ -128,7 +127,6 @@ static EDITMAIN_INFO_T EditInfo;      /* Actual state of editor, and its info */
 
 static char EditorWorkDir[256];
 static char EditorActDlg  = 0;
-static char EditorActTool = 0;          /* Number of tool to work with          */
 
 static EDITFILE_PASSAGE_T ActPsg;       /* Holds data about chosen passage      */
 static EDITFILE_SPAWNPT_T ActSpt;       /* Holds data about chosen spawn point  */
@@ -163,16 +161,8 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
 };
 
 static char StatusBar[80];
-static char EditActFanName[80];
 static char Map2DState;         /* EDITOR_2DMAP_ */
 static char EditTypeStr[30];    /* Actual string    */
-static char *EditTypeNames[EDITMAIN_EDIT_MAX + 1] = {
-    "Fan Info (No Edit)",
-    "Edit Simple Mode",
-    "Edit Single Fan",
-    "Edit Fan-FX",
-    "Edit Fan-Texture"
-};
 
 static SDLGL_CMDKEY EditorCmd[] = {
 
@@ -228,39 +218,41 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_MENU, {  44, 36, 148,  8 }, EDITOR_SETTINGS, EDIT_DRAWMODE_TEXTURED, "Draw Texture"  },
     { SDLGL_TYPE_MENU, {  44, 52, 148,  8 }, EDITOR_SETTINGS, EDIT_DRAWMODE_LIGHTMAX, "Max Light" },
     /* Tools-Menu */
-    { SDLGL_TYPE_STD,  { 116,  16, 128, 104 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
+    { SDLGL_TYPE_STD,  { 116,  16, 128, 136 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, { 120,  20, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_OFF,     "None / View" },
     { SDLGL_TYPE_MENU, { 120,  36, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_MAP,     "Map" },
-    { SDLGL_TYPE_MENU, { 120,  52, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_FAN,    "Tile" },
-    { SDLGL_TYPE_MENU, { 120,  68, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passage" },
-    { SDLGL_TYPE_MENU, { 120,  84, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_OBJECT,  "Object" },
-    { SDLGL_TYPE_MENU, { 120, 100, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_MODULE,  "Main-Info" },
+    { SDLGL_TYPE_MENU, { 120,  52, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_FAN,     "Tile" },
+    { SDLGL_TYPE_MENU, { 120,  68, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_FAN_FX,  "Tile-Fx" },
+    { SDLGL_TYPE_MENU, { 120,  84, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_FAN_TEX, "Tile-Texture" },      
+    { SDLGL_TYPE_MENU, { 120, 100, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_PASSAGE, "Passage" },
+    { SDLGL_TYPE_MENU, { 120, 116, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_OBJECT,  "Object" },
+    { SDLGL_TYPE_MENU, { 120, 132, 120,   8 }, EDITOR_TOOLS, EDITOR_TOOL_MODULE,  "Main-Info" },
     { 0 }
 };
 
 /* === Dialog: Edit properties of a fan === */
 static SDLGL_FIELD FanInfoDlg[] = {
     { SDLGL_TYPE_BUTTON,   {   0,  16, 320, 224  }, 0, 0, EditTypeStr },
-    { SDLGL_TYPE_LABEL,    {   0,  32, 320, 224  }, 0, 0, EditActFanName },
+    { SDLGL_TYPE_LABEL,    {   0,  32, 320, 224  }, 0, 0, EditInfo.fan_name },
 	/* Use copy of actual fan descriptor */
-	{ SDLGL_TYPE_CHECKBOX, {   8,  56, 120, 8 }, EDITOR_FANFX, MPDFX_SHA },
+	{ SDLGL_TYPE_CHECKBOX, {   8,  56, 120, 8 }, EDITOR_FANFX, MPDFX_SHA, (char *)&EditInfo.ft.fx },
     { SDLGL_TYPE_LABEL,    {  24,  56, 120, 8 }, 0, 0, "Reflective" },
-    { SDLGL_TYPE_CHECKBOX, {   8,  72, 120, 8 }, EDITOR_FANFX, MPDFX_DRAWREF },
+    { SDLGL_TYPE_CHECKBOX, {   8,  72, 120, 8 }, EDITOR_FANFX, MPDFX_DRAWREF, (char *)&EditInfo.ft.fx },
     { SDLGL_TYPE_LABEL,    {  24,  72, 120, 8 }, 0, 0, "Draw Reflection" },
-    { SDLGL_TYPE_CHECKBOX, {   8,  88, 120, 8 }, EDITOR_FANFX, MPDFX_ANIM },
+    { SDLGL_TYPE_CHECKBOX, {   8,  88, 120, 8 }, EDITOR_FANFX, MPDFX_ANIM, (char *)&EditInfo.ft.fx },
     { SDLGL_TYPE_LABEL,    {  24,  88, 120, 8 }, 0, 0, "Animated" },
-    { SDLGL_TYPE_CHECKBOX, {   8, 104, 120, 8 }, EDITOR_FANFX, MPDFX_WATER },
+    { SDLGL_TYPE_CHECKBOX, {   8, 104, 120, 8 }, EDITOR_FANFX, MPDFX_WATER, (char *)&EditInfo.ft.fx },
     { SDLGL_TYPE_LABEL,    {  24, 104, 120, 8 }, 0, 0, "Overlay (Water)" },
-    { SDLGL_TYPE_CHECKBOX, {   8, 120, 120, 8 }, EDITOR_FANFX, MPDFX_WALL },
+    { SDLGL_TYPE_CHECKBOX, {   8, 120, 120, 8 }, EDITOR_FANFX, MPDFX_WALL, (char *)&EditInfo.ft.fx },
     { SDLGL_TYPE_LABEL,    {   8, 120, 120, 8 }, 0, 0, "Barrier (Slit)" },
-    { SDLGL_TYPE_CHECKBOX, {   8, 136, 120, 8 }, EDITOR_FANFX, MPDFX_IMPASS },
+    { SDLGL_TYPE_CHECKBOX, {   8, 136, 120, 8 }, EDITOR_FANFX, MPDFX_IMPASS, (char *)&EditInfo.ft.fx },
     { SDLGL_TYPE_LABEL,    {   8, 136, 120, 8 }, 0, 0, "Impassable (Wall)" },
-    { SDLGL_TYPE_CHECKBOX, {   8, 154, 120, 8 }, EDITOR_FANFX, MPDFX_DAMAGE },
+    { SDLGL_TYPE_CHECKBOX, {   8, 154, 120, 8 }, EDITOR_FANFX, MPDFX_DAMAGE, (char *)&EditInfo.ft.fx },
     { SDLGL_TYPE_LABEL,    {   8, 154, 120, 8 }, 0, 0, "Damage" },
-    { SDLGL_TYPE_CHECKBOX, {   8, 170, 120, 8 }, EDITOR_FANFX, MPDFX_SLIPPY },
+    { SDLGL_TYPE_CHECKBOX, {   8, 170, 120, 8 }, EDITOR_FANFX, MPDFX_SLIPPY, (char *)&EditInfo.ft.fx },
     { SDLGL_TYPE_LABEL,    {   8, 170, 120, 8 }, 0, 0, "Slippy" },
     { EDITOR_DRAWTEXTURE,  { 190,  78, 128, 128 }, EDITOR_FANTEX, EDITOR_FANTEX_CHOOSE },  /* The actuale Texture  */
-    { SDLGL_TYPE_CHECKBOX, { 190,  62, 128,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_SIZE },
+    { SDLGL_TYPE_CHECKBOX, { 190,  62, 128,  16 }, EDITOR_FANTEX, 0x20, (char *)&EditInfo.ft.type },
     { SDLGL_TYPE_LABEL,    { 214,  62, 128,  16 }, 0, 0, "Big Texture"  },
     { SDLGL_TYPE_SLI_AL,   { 190, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_DEC },
     { SDLGL_TYPE_SLI_AR,   { 222, 210,  16,  16 }, EDITOR_FANTEX, EDITOR_FANTEX_INC },
@@ -500,6 +492,24 @@ static void editorSetMenu(char which)
 
 /*
  * Name:
+ *     editorSetMiniMap
+ * Description:
+ *     Sets size and position of minimap, depending on given map size
+ * Input:
+ *     map_size: Size of map in tiles x/y (tile-size is always 7)
+*/
+static void editorSetMiniMap(int map_size)
+{
+
+    /* Map-Rectangle    */
+    MainMenu[2].rect.w = map_size * 7;
+    MainMenu[2].rect.h = map_size * 7;
+    sdlglAdjustRectToScreen(&MainMenu[2].rect, 0, SDLGL_FRECT_SCRRIGHT);
+
+}
+
+/*
+ * Name:
  *     editorSetDialog
  * Description:
  *     Opens/Closes dialog with given number.
@@ -572,9 +582,9 @@ static void editorSetDialog(char which, char open, int x, int y)
 static void editorOpenToolDialog(EDITMAIN_INFO_T *es)
 {
 
-    if (EditorActTool > 0) {
+    if (EditInfo.edit_mode > 0) {
 
-        switch(EditorActTool) {
+        switch(EditInfo.edit_mode) {
 
             case EDITOR_TOOL_MAP:
                 /* === No tool, only set info about edit-state === */
@@ -582,7 +592,7 @@ static void editorOpenToolDialog(EDITMAIN_INFO_T *es)
 
             case EDITOR_TOOL_FAN:
                 /* Only display tiles and 'chosen' tiles */
-                editorSetDialog(EditorActTool, 1, 20, 20);
+                editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
                 break;
 
             case EDITOR_TOOL_PASSAGE:
@@ -590,7 +600,7 @@ static void editorOpenToolDialog(EDITMAIN_INFO_T *es)
                 if (es -> mi_t_number > 0 && (es -> mi_type & MAP_INFO_PASSAGE)) {
 
                     editfilePassage(EDITFILE_ACT_GETDATA, es -> mi_t_number, &ActPsg);
-                    editorSetDialog(EditorActTool, 1, 20, 20);
+                    editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
 
                 }
                 break;
@@ -600,7 +610,7 @@ static void editorOpenToolDialog(EDITMAIN_INFO_T *es)
                 if (es -> mi_t_number > 0 && (es -> mi_type & MAP_INFO_SPAWN)) {
 
                     editfileSpawn(EDITFILE_ACT_GETDATA, es -> mi_t_number, &ActSpt);
-                    editorSetDialog(EditorActTool, 1, 20, 20);
+                    editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
 
                 }
                 break;
@@ -671,7 +681,7 @@ static void editor2DMap(SDLGL_EVENT *event)
             break;
 
         case EDITOR_2DMAP_FANBROWSE:
-            editmainChooseFanType(&EditInfo, +1, EditActFanName);
+            editmainChooseFanType(&EditInfo, +1);
             break;
 
     }
@@ -698,6 +708,8 @@ static int editorFileMenu(char which)
             editfileSpawn(EDITFILE_ACT_LOAD, 1, &ActSpt);
             editfilePassage(EDITFILE_ACT_LOAD, 1, &ActPsg);
             editfileModuleDesc(EDITFILE_ACT_LOAD, &ModuleDesc);
+            /* Init the size if the minimap display */
+            editorSetMiniMap(EditInfo.map_size);
             break;
 
         case EDITOR_FILE_SAVE:
@@ -708,6 +720,7 @@ static int editorFileMenu(char which)
 
         case EDITOR_FILE_NEW:
             EditInfo.map_size = 32;
+            editorSetMiniMap(32);
             /* --- Get a new, preinitialized module descriptor --- */
             editfileModuleDesc(EDITFILE_ACT_NEW, &ModuleDesc);
 
@@ -884,15 +897,15 @@ static void editorMenuTool(SDLGL_EVENT *event)
 
 
     /* Set the number of tool to use, invoked by right click on map */
-    EditorActTool = event -> sub_code;
+    EditInfo.edit_mode = event -> sub_code;
 
-    if (event -> field -> pdata) {
+    if (event -> field -> pdata && event -> sub_code > 1) {
         /* Display it */
         sprintf(StatusBar, "Edit-State: %s", event -> field -> pdata);
 
     }
 
-    if (EditorActTool == EDITOR_TOOL_OFF)
+    if (EditInfo.edit_mode == EDITOR_TOOL_OFF)
     {
         /* Close actual active dialog, if any */
         editorSetDialog(0, 0, 0, 0);
@@ -902,7 +915,7 @@ static void editorMenuTool(SDLGL_EVENT *event)
 
         editmainClearMapInfo();
 
-        switch(EditorActTool) {
+        switch(EditInfo.edit_mode) {
 
             case EDITOR_TOOL_MAP:
             case EDITOR_TOOL_FAN:
@@ -1079,13 +1092,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 /* Change the Texture of the chosen fan   */
                 if (event -> sub_code == EDITOR_FANTEX_CHOOSE) {
                     editmainChooseTex(&EditInfo, event -> mou.x, event -> mou.y,
-                                                  field -> rect.w, field -> rect.h);
-                }
-                else if (event -> sub_code == EDITOR_FANTEX_SIZE){
-                
-                    EditInfo.ft.type ^= 0x20;
-                    field -> workval = (char)(EditInfo.ft.type & 0x20);
-                    
+                                                 field -> rect.w, field -> rect.h);
                 }
                 else if (event -> sub_code == EDITOR_FANTEX_DEC) {
                     editmainToggleFlag(&EditInfo, EDITMAIN_TOGGLE_FANTEXNO, 0xFF);
@@ -1098,7 +1105,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
             case EDITOR_FANPROPERTY:
                 if (event -> sub_code == EDITOR_FANPROPERTY_EDITMODE) {
                     edit_mode = editmainToggleFlag(&EditInfo, EDITMAIN_TOGGLE_EDITSTATE, 1);
-                    sprintf(EditTypeStr, "%s", EditTypeNames[edit_mode]);
+                    sprintf(EditTypeStr, "%s", SubMenu[9 + edit_mode].pdata);
                 }
                 else {
                     editorSetDialog(EDITOR_TOOL_FAN, 0, 20, 20);
@@ -1131,7 +1138,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 /* Handle spawn point dialog input */
                 editorSpawnDlg(event);
                 break;
-                
+
             case EDITOR_TOOLS:
                 editorMenuTool(event);
                 break;
@@ -1167,7 +1174,7 @@ static void editorStart(void)
 
 
     /* Initalize the maze editor */
-    editmainInit(&EditInfo, EditInfo.map_size, 256, 256);
+    editmainInit(&EditInfo, EditInfo.map_size, 7);
 
     /* Display initally chosen values */
     field = &SubMenu[0];
@@ -1194,11 +1201,12 @@ static void editorStart(void)
                             0,
                             (SDLGL_FRECT_SCRWIDTH | SDLGL_FRECT_SCRBOTTOM));
     /* Map-Rectangle    */
+    editorSetMiniMap(EditInfo.map_size);
+
     sdlglAdjustRectToScreen(&MainMenu[2].rect, 0, SDLGL_FRECT_SCRRIGHT);
     /* Menu-Bar     */
     sdlglAdjustRectToScreen(&MainMenu[3].rect, 0, SDLGL_FRECT_SCRWIDTH);
-    /* Edit-Menu */
-    sprintf(EditTypeStr, "%s", EditTypeNames[EDITMAIN_EDIT_NONE]);
+
     /* -------- Initialize the 3D-Stuff --------------- */
     sdlgl3dInitCamera(0, 310, 0, 90, 0.75);
     /* Init Camera +Z is up, -Y is near plane, X is left/right */

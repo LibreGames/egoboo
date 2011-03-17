@@ -68,16 +68,22 @@
 #define MAP_INFO_NONE       0x00
 #define MAP_INFO_SPAWN      0x01
 #define MAP_INFO_PASSAGE    0x02
-#define MAP_INFO_CHOSEN     0x40        /* TODO: These fans are chosen  */ 
+#define MAP_INFO_CHOSEN     0x40        /* TODO: These fans are chosen      */ 
 
 /* --- different edit modes --- */
-#define EDITOR_TOOL_OFF     ((char)1)   /* 'View' map                        */
-#define EDITOR_TOOL_MAP     ((char)2)   /* 'Carve' out map with mouse        */
-#define EDITOR_TOOL_FAN     ((char)3)   /* Result of fan dialog              */
-#define EDITOR_TOOL_PASSAGE ((char)4)
-#define EDITOR_TOOL_OBJECT  ((char)5)
-#define EDITOR_TOOL_MODULE  ((char)6)   /* Change info in module description */
-#define EDITOR_TOOL_VERTEX  ((char)7)
+#define EDITOR_TOOL_OFF     ((char)1)   /* 'View' map                       */
+#define EDITOR_TOOL_MAP     ((char)2)   /* 'Carve' out map with mouse       */
+                                        /* EDITMAIN_EDIT_SIMPLE             */
+#define EDITOR_TOOL_FAN     ((char)3)   /* Edit fan geometry (base -types)  */
+                                        /* EDITMAIN_EDIT_FREE               */
+#define EDITOR_TOOL_FAN_FX  ((char)4)   /* Edit the flags of a fan          */
+                                        /* EDITMAIN_EDIT_FX                 */   
+#define EDITOR_TOOL_FAN_TEX ((char)5)   /* Texture of a fan                 */ 
+                                        /* EDITMAIN_EDIT_TEXTURE            */
+#define EDITOR_TOOL_PASSAGE ((char)6)   
+#define EDITOR_TOOL_OBJECT  ((char)7)
+#define EDITOR_TOOL_MODULE  ((char)8)   /* Change info in module description */
+#define EDITOR_TOOL_VERTEX  ((char)9)   /* Edit vertices of a fan            */
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -137,7 +143,8 @@ typedef struct {
     int watershift;             // Depends on size of map
     int minimap_w,              // For drawing in 2D on minimap         
         minimap_h;
-
+    int minimap_tile_w;         // Size of tile in minimap
+    
     float edgex;                // Borders of mesh
     float edgey;                
     float edgez;                
