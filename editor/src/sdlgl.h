@@ -174,6 +174,7 @@ typedef unsigned short wchar_t;
 #define SDLGL_INPUT_GETFOCUS     0x75   
 #define SDLGL_INPUT_ISCHAR       0x76   /* Is a 'cooked' char               */
 #define SDLGL_INPUT_ISEDIT       0x77   /* Is a non-command-input           */   
+#define SDLGL_INPUT_SDLGLTYPE    0x78   /* Handle as SDLGL_TYPE             */
 #define SDLGL_INPUT_CLEANUP      0x7E
 
 /* -- Codes for edit/print SDLGL_TYPE_EDIT / SDLGL_TYPE_STRING (sub_code) --- */
@@ -238,13 +239,14 @@ typedef struct {
     char sub_code;      /* mouse button is pressed on given 'rect'.     */        
     /* -------  General purpose data for user. Not used by sdlgl. ----- */
     char *pdata; 	    /* Data for this input field, if any            */
+    char workval;       /* For 'standard-fields' in SDLGLFLD            */
     int  tex;           /* Texture to draw                              */
     char subtex;        /* Number of subpart of texture, if any         */
     unsigned char color[4]; /* If color included here [0] == 0 no color */
     unsigned char fstate;   /* SDLGL_FSTATE_*                           */
-    char workval;       /* For EDIT-State (not used yet)                */
     char block_sign;    /* Signing of dynamic fields in current array   */
-    
+    char edit_cur;      /* Position of cursor in 'edit_field'           */         
+        
 } SDLGL_FIELD;		    /* Info returned from input for drawing.	    */
 
 typedef struct {

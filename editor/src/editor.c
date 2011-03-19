@@ -317,7 +317,7 @@ static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
     { SDLGL_TYPE_VALUE,  {  96, 160,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.lvl },
     { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Is Player:" },
-    { SDLGL_TYPE_CHECKBOX,  {  96, 176,  16,   8 }, 0x01, 0, &ActSpt.stt },
+    { SDLGL_TYPE_CHECKBOX,  {  96, 176,  16,   8 }, EDITOR_TOOL_OBJECT, 0x01, &ActSpt.stt },
     { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Team:" },
     { SDLGL_TYPE_VALUE,  {  96, 192,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.team },
     { SDLGL_TYPE_BUTTON, {   8, 224,  32,  16 }, EDITOR_TOOL_OBJECT, EDITOR_DLG_NEW, "New"   },
@@ -341,7 +341,7 @@ static SDLGL_FIELD DlgInventory[] = {   /* EDITOR_INVENTORY */  /*  */
     { SDLGL_TYPE_BUTTON, {  28,  68,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_5 },
     { SDLGL_TYPE_BUTTON, {  52,  68,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_6 },
     { SDLGL_TYPE_BUTTON, {  52,  68,  16,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_6 },
-    { SDLGL_TYPE_BUTTON, {  84, 116,  48,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_CLOSE, "Close" },    
+    { SDLGL_TYPE_BUTTON, {  84, 116,  48,  16 }, EDITOR_INVENTORY, EDITOR_INVENTORY_CLOSE, "Close" },
     { 0 }
 };
 
@@ -363,21 +363,21 @@ static SDLGL_FIELD ModuleDlg[] = {
     { SDLGL_TYPE_SLI_AR, { 132,  16,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_INCSIZE },
     /* --- Description itself --- */
     { SDLGL_TYPE_LABEL,  {   8,  44,  48,   8 }, 0, 0, "Name:" },
-    { SDLGL_TYPE_EDIT,   {  64,  40, 200,  16 }, 24, SDLGL_VAL_STRING, &ModuleDesc.mod_name[0] },
+    { SDLGL_TYPE_EDIT,   {  64,  40, 200,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, &ModuleDesc.mod_name[0], 24 },
     { SDLGL_TYPE_LABEL,  {   8,  64, 160,   8 }, 0, 0, "Referenced Module:" },
-    { SDLGL_TYPE_EDIT,   { 176,  60, 200,  16 }, 24, SDLGL_VAL_STRING, &ModuleDesc.ref_mod[0] },
+    { SDLGL_TYPE_EDIT,   { 176,  60, 200,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, &ModuleDesc.ref_mod[0], 24 },
     { SDLGL_TYPE_LABEL,  {   8,  84, 160,   8 }, 0, 0, "Reference IDSZ:" },
-    { SDLGL_TYPE_EDIT,   { 176,  80,  72,  16 }, 11, SDLGL_VAL_STRING, &ModuleDesc.ref_idsz[0] },
+    { SDLGL_TYPE_EDIT,   { 176,  80,  72,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, &ModuleDesc.ref_idsz[0], 11 },
     { SDLGL_TYPE_LABEL,  {   8, 104, 160,   8 }, 0, 0, "Number of Imports:" },
-    { SDLGL_TYPE_EDIT,   { 176, 100,  16,  16 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.number_of_imports },
+    { SDLGL_TYPE_EDIT,   { 176, 100,  16,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_CHAR, &ModuleDesc.number_of_imports, 1 },
     { SDLGL_TYPE_LABEL,  {   8, 124, 160,   8 }, 0, 0, "Allow Export:" },
-    { SDLGL_TYPE_EDIT,   { 176, 120,  16,  16 }, 1, SDLGL_VAL_ONECHAR, &ModuleDesc.allow_export },
+    { SDLGL_TYPE_CHECKBOX, { 176, 120,  16,  16 }, SDLGL_INPUT_SDLGLTYPE, 0x01, &ModuleDesc.allow_export },
     { SDLGL_TYPE_LABEL,  {   8, 144, 160,   8 }, 0, 0, "Min. Players:" },
-    { SDLGL_TYPE_EDIT,   { 176, 140,  16,  16 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.min_player },
+    { SDLGL_TYPE_EDIT,   { 176, 140,  16,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_CHAR, &ModuleDesc.min_player, 1 },
     { SDLGL_TYPE_LABEL,  {   8, 164, 160,   8 }, 0, 0, "Max. Players:" },
-    { SDLGL_TYPE_EDIT,   { 176, 160,  16,  16 }, 1, SDLGL_VAL_CHAR, &ModuleDesc.max_player },
+    { SDLGL_TYPE_EDIT,   { 176, 160,  16,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_CHAR, &ModuleDesc.max_player, 1 },
     { SDLGL_TYPE_LABEL,  {   8, 184, 160,   8 }, 0, 0, "Allow respawn:" },
-    { SDLGL_TYPE_CHECKBOX, { 176, 180,  16,  16 }, 0, 1, &ModuleDesc.allow_respawn },
+    { SDLGL_TYPE_CHECKBOX, { 176, 180,  16,  16 }, SDLGL_INPUT_SDLGLTYPE, 0x01, &ModuleDesc.allow_respawn },
     { SDLGL_TYPE_LABEL,  {   8, 204, 160,   8 }, 0, 0, "Module Type:" },
     { SDLGL_TYPE_LABEL,  { 128, 204, 160,   8 }, 0, 0, &ModuleDesc.mod_type[0] },
     { SDLGL_TYPE_SLI_AR, { 224, 200,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_MODTYPE },
@@ -386,21 +386,21 @@ static SDLGL_FIELD ModuleDlg[] = {
     { SDLGL_TYPE_LABEL,  { 144, 224,  72,  16 }, 0, 0, &ModuleDesc.lev_rating[0] },
     { SDLGL_TYPE_SLI_AR, { 224, 220,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_RATEINC },
     { SDLGL_TYPE_LABEL,  {   8, 240, 112,   8 }, 0, 0, "Module Summary:" },
-    { SDLGL_TYPE_EDIT,   {   8, 260, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[0] },
-    { SDLGL_TYPE_EDIT,   {   8, 280, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[1] },
-    { SDLGL_TYPE_EDIT,   {   8, 300, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[2] },
-    { SDLGL_TYPE_EDIT,   {   8, 320, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[3] },
-    { SDLGL_TYPE_EDIT,   {   8, 340, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[4] },
-    { SDLGL_TYPE_EDIT,   {   8, 360, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[5] },
-    { SDLGL_TYPE_EDIT,   {   8, 380, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[6] },
-    { SDLGL_TYPE_EDIT,   {   8, 400, 328,  16 }, 40, SDLGL_VAL_STRING, ModuleDesc.summary[7] },
+    { SDLGL_TYPE_EDIT,   {   8, 260, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[0], 40 },
+    { SDLGL_TYPE_EDIT,   {   8, 280, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[1], 40 },
+    { SDLGL_TYPE_EDIT,   {   8, 300, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[2], 40 },
+    { SDLGL_TYPE_EDIT,   {   8, 320, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[3], 40 },
+    { SDLGL_TYPE_EDIT,   {   8, 340, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[4], 40 },
+    { SDLGL_TYPE_EDIT,   {   8, 360, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[5], 40 },
+    { SDLGL_TYPE_EDIT,   {   8, 380, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[6], 40 },
+    { SDLGL_TYPE_EDIT,   {   8, 400, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[7], 40 },
     { SDLGL_TYPE_LABEL,  {   8, 420,  96,   8 }, 0, 0, "Expansions:" },
     /* ---- Maximum five expansions --- */
-    { SDLGL_TYPE_EDIT,   {   8, 440, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[0] },
-    { SDLGL_TYPE_EDIT,   {   8, 460, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[1] },
-    { SDLGL_TYPE_EDIT,   {   8, 480, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[2] },
-    { SDLGL_TYPE_EDIT,   {   8, 500, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[3] },
-    { SDLGL_TYPE_EDIT,   {   8, 520, 152,  16 }, 18, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[4] },
+    { SDLGL_TYPE_EDIT,   {   8, 440, 152,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[0], 18 },
+    { SDLGL_TYPE_EDIT,   {   8, 460, 152,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[1], 18 },
+    { SDLGL_TYPE_EDIT,   {   8, 480, 152,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[2], 18 },
+    { SDLGL_TYPE_EDIT,   {   8, 500, 152,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[3], 18 },
+    { SDLGL_TYPE_EDIT,   {   8, 520, 152,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.exp_idsz[4], 18 },
     /* ------- Buttons ------ */
     { SDLGL_TYPE_BUTTON, {   8, 540,  56,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_CANCEL, "Cancel"  },
     { SDLGL_TYPE_BUTTON, { 302, 540,  24,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_OK, "Ok" },
@@ -749,7 +749,14 @@ static int editorFileMenu(char which)
  */
 static int editorSpawnDlg(SDLGL_EVENT *event)
 {
-    
+
+    /* -- First try to handle as standard field-type -- */
+    if (sdlglfldHandle(event)) {
+
+        return SDLGL_INPUT_OK;
+
+    }
+
     switch(event -> sub_code) {
 
         case EDITOR_DLG_DELETE:
@@ -766,6 +773,7 @@ static int editorSpawnDlg(SDLGL_EVENT *event)
         case EDITOR_DLG_CLOSE:
             editorSetDialog(0, 0, 0, 0);
             break;
+            
     }
     return SDLGL_INPUT_OK;
 
@@ -783,6 +791,13 @@ static int editorSpawnDlg(SDLGL_EVENT *event)
  */
 static int editorPassageDlg(SDLGL_EVENT *event)
 {
+
+    /* -- First try to handle as standard field-type -- */
+    if (sdlglfldHandle(event)) {
+
+        return SDLGL_INPUT_OK;
+
+    }
 
     switch(event -> sub_code) {
 
@@ -823,8 +838,16 @@ static int editorModuleDlg(SDLGL_EVENT *event)
     int i;
 
 
+    /* -- First try to handle as standard field-type -- */
+    if (sdlglfldHandle(event)) {
+
+        return SDLGL_INPUT_OK;
+
+    }
+
+    /* Handle owner defined input */
     switch(event -> sub_code) {
-            
+
         case EDITOR_MODULEDLG_DECSIZE:
             if (EditInfo.map_size > 32) {
                 EditInfo.map_size--;
@@ -874,6 +897,11 @@ static int editorModuleDlg(SDLGL_EVENT *event)
             editmainMap(&EditInfo, EDITMAIN_SAVEMAP);
         case EDITOR_MODULEDLG_CANCEL:
             editorSetDialog(0, 0, 0, 0);
+            break;
+
+        default:
+            /* --- Handle default field types -- */
+
             break;
 
     }
@@ -1147,7 +1175,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 return SDLGL_INPUT_EXIT;
 
             default:
-                /* ------- Handle 'Standard'-Fields ------ */
+                /* --- Handle all other fields types --- */
                 sdlglfldHandle(event);
                 break;
 

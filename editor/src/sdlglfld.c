@@ -354,23 +354,23 @@ static int sdlglfldEditProcessFuncKey(SDLGL_EVENT *event, SDLGL_FIELD *field, ch
     	case SDLK_INSERT:
             /* editfld -> editmode ^= 1; */	/* Switch the insert mode flag */
             field -> fstate ^= SDLGL_FSTATE_EDITINS;
-            return 0;
+            return 1;
 
         case SDLK_LEFT:
-            if (field -> workval > 0) {
+            if (field -> edit_cur > 0) {
 
-            	(field -> workval)--;	/* Move the cursor left	       */
+            	(field -> edit_cur)--;	/* Move the cursor left	       */
 
             }
             return 1;
 
         case SDLK_RIGHT:
-            if (field -> workval < (field -> code - 1)) {
+            if (field -> edit_cur < (field -> workval - 1)) {
 
             	/* Don't move behind the end of string */
-                if (text[field -> workval] != 0) {
+                if (text[field -> edit_cur] != 0) {
 
-                    field -> workval++;
+                    field -> edit_cur++;
 
                 }
 
@@ -385,15 +385,15 @@ static int sdlglfldEditProcessFuncKey(SDLGL_EVENT *event, SDLGL_FIELD *field, ch
 
             }
 
-            field -> workval = 0;		/* Move the cursor home */
-            return 0;
+            field -> edit_cur = 0;		/* Move the cursor home */
+            return 1;
 
         case SDLK_END:
-            field -> workval = (char)strlen(text);
+            field -> edit_cur = (char)strlen(text);
 
-            if (field -> workval > (field -> code - 1)) {
+            if (field -> edit_cur > (field -> workval - 1)) {
 
-               field -> workval = (char)(field -> code - 1);
+               field -> edit_cur = (char)(field -> workval - 1);
 
             }
             return 1;
@@ -401,23 +401,23 @@ static int sdlglfldEditProcessFuncKey(SDLGL_EVENT *event, SDLGL_FIELD *field, ch
         case SDLK_BACKSPACE:
             /* Remove the char if at end of string */
             if (field -> workval > 0) {
-            
-                if (text[field -> workval] == 0 || text[field -> workval + 1] == 0) {
-                
-                    text[field -> workval] = 0; /* Delete this char */
-                    
+
+                if (text[field -> edit_cur] == 0 || text[field -> edit_cur + 1] == 0) {
+
+                    text[field -> edit_cur] = 0; /* Delete this char */
+
                 }
-                
-                if (field -> workval < (char)(field -> code - 1)) {
-                
-                    field -> workval--;
-                    
-                }             
+
+                if (field -> edit_cur < (char)(field -> workval - 1)) {
+
+                    field -> edit_cur--;
+
+                }
 
             }
 
         case SDLK_DELETE:
-            lp = text + field -> workval;
+            lp = text + field -> edit_cur;
             size = strlen(lp + 1) + 1;	/* Including '\0' at end of string */
             memmove(lp, lp + 1, size);
             return 1;
@@ -442,12 +442,7 @@ static int sdlglfldEditProcessFuncKey(SDLGL_EVENT *event, SDLGL_FIELD *field, ch
 static char sdlglfldEditStdKey(SDLGL_EVENT *event, SDLGL_FIELD *field)
 {
 
-    char edit_char;
-
-
-    if (isprint(event -> sdlcode)) {
-
-        edit_char = (char)event -> sdlcode;
+    if (event -> text_key > 0) {
 
         switch(field -> sub_code) {
 
@@ -457,36 +452,23 @@ static char sdlglfldEditStdKey(SDLGL_EVENT *event, SDLGL_FIELD *field)
             case SDLGL_VAL_USHORT:
             case SDLGL_VAL_INT:
             case SDLGL_VAL_UINT:
-                if (isdigit(edit_char)) {
-                    return edit_char;
+                if (isdigit(event -> text_key)) {
+                    return event -> text_key;
                 }
                 break;
             case SDLGL_VAL_FLOAT:
-                if (isdigit(edit_char) || edit_char == '.') {
-                    return edit_char;
+                if (isdigit(event -> text_key) || event -> text_key == '.') {
+                    return event -> text_key;
                 }
                 break;
             case SDLGL_VAL_ONECHAR:
             case SDLGL_VAL_STRING:
-                if ((event -> sdlcode >= SDLK_a)
-                    && (event -> sdlcode <= SDLK_z)
-                    && (event -> modflags & KMOD_SHIFT)) {
-
-                        edit_char -= (char)32;	/* Change to capitals */
-
-                }
                 if (field -> sub_code == SDLGL_VAL_ONECHAR) {
 
-                    if (isalpha(event -> sdlcode)) {
-
-                        return edit_char;
-
-                    }
-
-                    return 0;
+                    return (char)toupper(event -> text_key);
 
                 }
-                return edit_char;
+                return event -> text_key;
 
         }
                 
@@ -771,7 +753,7 @@ static void sdlglfldSliderButton(SDLGL_EVENT *event, int maxval, int *value, SDL
 static char sdlglfldCheckBox(SDLGL_EVENT *event, char bitmask, char *bitvalue)
 {
 
-    if (event -> modflags == SDL_BUTTON_LEFT) {
+    if (event -> sdlcode == SDLGL_KEY_MOULEFT) {
 
         *bitvalue ^= bitmask;
         
@@ -794,7 +776,7 @@ static char sdlglfldCheckBox(SDLGL_EVENT *event, char bitmask, char *bitvalue)
 static char sdlglfldRadioButton(SDLGL_EVENT *event, char bitmask, char *bitvalue)
 {
 
-    if (event -> modflags == SDL_BUTTON_LEFT) {
+    if (event -> sdlcode == SDLGL_KEY_MOULEFT) {
 
         *bitvalue = bitmask;       
 
@@ -827,7 +809,7 @@ static void sdlglfldEdit(SDLGL_EVENT *event, SDLGL_FIELD *field, char *text)
 
     }
 
-    if (field -> workval < 0) {       /* First time called */
+    if (field -> edit_cur < 0) {       /* First time called */
 
         /* Mimic input of special key */
         event -> sdlcode = SDLK_END;
@@ -836,31 +818,31 @@ static void sdlglfldEdit(SDLGL_EVENT *event, SDLGL_FIELD *field, char *text)
 
     }
 
-    
+
     if (event -> sdlcode == SDLK_RETURN) {
 
         field -> fstate &= ~SDLGL_FSTATE_HASFOCUS;
-        field -> workval = -1;
+        field -> edit_cur = -1;
         /* Change focus to next field */
         sdlglInputSetFocus(field, +1);
         return;
 
     }
-    
+
     if (! sdlglfldEditProcessFuncKey(event, field, text)) {
 
         /* Try standard keys  */
         key = sdlglfldEditStdKey(event, field);
-        
-        if (key > 0 && field -> workval >= 0) {    /* Valid cursor position */
+
+        if (key > 0 && field -> edit_cur >= 0) {    /* Valid cursor position */
 
             /* Do edit of editfield */
-            text[field -> workval] = key;
+            text[field -> edit_cur] = key;
 
             /* And move the cursor one position right, if possible */
-            if (field -> workval < (field -> code - 1))  {
+            if (field -> edit_cur < (field -> workval - 1))  {
 
-                (field -> workval)++;
+                (field -> edit_cur)++;
 
             }
 
@@ -944,7 +926,7 @@ void sdlglfldSlider(SDLGL_EVENT *event, int maxval, int *value, SDLGL_RECT *butt
         if (button) {   /* Adjust it, if available */
 
             slider = event -> field;
-            
+
             sdlglfldCalcSliderButton(&slider -> rect, button, maxval, *value);
 
         }
@@ -1050,7 +1032,7 @@ void sdlglfldSliderBox(SDLGL_EVENT *event, SDLGLFLD_SLIDERBOX *sb)
  * Input:
  *     event *:    To handle, holding field to work with  
  * Output:
- *     != 0, if the 'event'-input was translated byased on the type of 
+ *     != 0, if the 'event'-input was translated based on the type of field 
  */
 int  sdlglfldHandle(SDLGL_EVENT *event)
 {
@@ -1066,7 +1048,7 @@ int  sdlglfldHandle(SDLGL_EVENT *event)
 		case SDLGL_TYPE_EDIT:
             sdlglfldValToStr(field -> sub_code, field -> pdata, val_str, 127);
 		    sdlglfldEdit(event, field, val_str);
-            sdlglfldStrToVal(field -> sub_code, val_str, field -> pdata, field -> code);
+            sdlglfldStrToVal(field -> sub_code, val_str, field -> pdata, field -> workval);
 		    break;
      
 		case SDLGL_TYPE_CHECKBOX:

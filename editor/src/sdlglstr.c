@@ -866,9 +866,9 @@ static void sdlglstrDrawEditField(SDLGL_FIELD *field)
     sdlglstrPrintValue(&sizerect, field -> pdata, field -> sub_code, style -> edit_text);
 
     /* Now draw the cursor, if needed */
-    if (field -> workval >= 0 && (field -> fstate & SDLGL_FSTATE_HASFOCUS)) {
+    if (field -> edit_cur >= 0 && (field -> fstate & SDLGL_FSTATE_HASFOCUS)) {
 
-        sizerect.x += (_wFonts[style -> fontno].fontw * field -> workval);
+        sizerect.x += (_wFonts[style -> fontno].fontw * field -> edit_cur);
         sizerect.y += 1;
         sdlglstrIString(&sizerect, "_", style -> edit_text, style -> edit_text);
 
@@ -1509,11 +1509,11 @@ void sdlglstrDrawButton(SDLGL_RECT *rect, char *text, int flags)
  * Description:
  *     Draw standard fields for SDLGL. Uses the colors defined in 'SDLGLSTR_STYLE'   
  * Input:
- *     field * : Pointer on fields to print
+ *     f * : Pointer on field to print
  * Output:
  *     Field was drawn yes / no
  */
-int sdlglstrDrawField(SDLGL_FIELD *field)
+int sdlglstrDrawField(SDLGL_FIELD *f)
 {
 
     static char buttonchars[] = { 15, 14, 13,	   /* Push button  */
@@ -1526,45 +1526,45 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
     
     ActFont = ActStyle.fontno;
 
-    switch(field -> sdlgl_type) {
+    switch(f -> sdlgl_type) {
     
         case SDLGL_TYPE_MENU:
-            sizerect.x = field -> rect.x;
-            sizerect.y = field -> rect.y;
-            if (field -> fstate & SDLGL_FSTATE_MOUSEOVER) {
+            sizerect.x = f -> rect.x;
+            sizerect.y = f -> rect.y;
+            if (f -> fstate & SDLGL_FSTATE_MOUSEOVER) {
                 textcolor = ActStyle.texthi;
             }
             else {
                 textcolor = ActStyle.textlo;
             }
-            if (field -> workval & 0x80) {
+            if (f -> workval & 0x80) {
                 /* Flag, if this is a checked menu point */
-                if (field -> workval & field -> sub_code) {
+                if (f -> workval & f -> sub_code) {
                     /* Field is checked */
                     sdlglstrChar(&sizerect, buttonchars[2]);
                     sizerect.x += SDLGLSTR_SPECIALDIST;
                 }
 
             }
-            sdlglstrIString(&sizerect, field -> pdata, textcolor, textcolor);
+            sdlglstrIString(&sizerect, f -> pdata, textcolor, textcolor);
             break;
 
         case SDLGL_TYPE_STD:
         case SDLGL_TYPE_BUTTON:
-            sdlglstrDrawButton(&field -> rect, field -> pdata, field -> fstate);
+            sdlglstrDrawButton(&f -> rect, f -> pdata, f -> fstate);
             break;
             
         case SDLGL_TYPE_EDIT:
-            sdlglstrDrawEditField(field);
+            sdlglstrDrawEditField(f);
             break; 
                 
         case SDLGL_TYPE_VALUE:
             /* Uses subcode, because maincode generates mouse-event */
-            sdlglstrPrintValue(&field -> rect, field -> pdata, field -> sub_code, ActStyle.textlo);
+            sdlglstrPrintValue(&f -> rect, f -> pdata, f -> sub_code, ActStyle.textlo);
             break;
 
         case SDLGL_TYPE_LABEL:
-            sdlglstrIString(&field -> rect, field -> pdata, ActStyle.textlo, ActStyle.textlo);
+            sdlglstrIString(&f -> rect, f -> pdata, ActStyle.textlo, ActStyle.textlo);
             break;
             
         case SDLGL_TYPE_SLI_AU:   /* Arrow up                     */
@@ -1572,18 +1572,18 @@ int sdlglstrDrawField(SDLGL_FIELD *field)
         case SDLGL_TYPE_SLI_AL:   /* Arrow left                   */
         case SDLGL_TYPE_SLI_AR:   /* Arrow right                  */
             /* 1: Draw the button */
-            sdlglstrDrawButton(&field -> rect, 0, 0);
-            sizerect.x = field -> rect.x + (field -> rect.w - 8) / 2;
-            sizerect.y = field -> rect.y + (field -> rect.h - 8) / 2;
+            sdlglstrDrawButton(&f -> rect, 0, 0);
+            sizerect.x = f -> rect.x + (f -> rect.w - 8) / 2;
+            sizerect.y = f -> rect.y + (f -> rect.h - 8) / 2;
             /* 2. Draw the arrow in chosen direction */
             ActColor = SDLGL_COL_BLACK;
-            sdlglstrChar(&sizerect, buttonchars[6 + (field -> sdlgl_type - SDLGL_TYPE_SLI_AU)]);
+            sdlglstrChar(&sizerect, buttonchars[6 + (f -> sdlgl_type - SDLGL_TYPE_SLI_AU)]);
             break;
          
         
         case SDLGL_TYPE_CHECKBOX:
         case SDLGL_TYPE_RB: 
-            sdlglstrDrawSpecial(&field -> rect, field -> pdata, field -> sdlgl_type, *field -> pdata);
+            sdlglstrDrawSpecial(&f -> rect, f -> pdata, f -> sdlgl_type, *f -> pdata & f -> sub_code);
             break; 
             
         default:
