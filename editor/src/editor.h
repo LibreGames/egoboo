@@ -42,7 +42,7 @@
 #define MAXMESHLINE                     64          // Number of lines in a fan schematic
 #define MAXMESHVERTICES                 16          // Max number of vertices in a fan
 #define MAXMESHFAN                      (128*128)   // Size of map in fans
-#define MAXTOTALMESHVERTICES            ((MAXMESHFAN*MAXMESHVERTICES) - 10)
+#define MAXTOTALMESHVERTICES            ((MAXMESHFAN*(MAXMESHVERTICES / 2)) - 10)
 #define MAXMESHCOMMAND                  4             // Draw up to 4 fans
 #define MAXMESHCOMMANDENTRIES           32            // Fansquare command list size
 #define MAXMESHCOMMANDSIZE              32            // Max trigs in each command
@@ -120,8 +120,9 @@ typedef struct {
                             /* tx_no & 0x3F:     Number of part of texture  */ 
     unsigned char tx_flags; /* Special flags                                */
     unsigned char fx;		/* Tile special effects flags                   */
-    char type;              /* Tile fan type (index into COMMAND_T)         */
-
+    char          type;     /* Tile fan type (index into COMMAND_T)         */
+    unsigned char twist;    /* Surface normal for slopes (?)                */
+    
 } FANDATA_T;
 
 typedef struct {
@@ -149,8 +150,7 @@ typedef struct {
     float edgey;                
     float edgez;                
 
-    FANDATA_T fan[MAXMESHFAN];                      // Fan desription            
-    unsigned char twist[MAXMESHFAN];                // Surface normal
+    FANDATA_T fan[MAXMESHFAN];                      // Fan desription                
     
     float vrtx[MAXTOTALMESHVERTICES + 10];          // Vertex position
     float vrty[MAXTOTALMESHVERTICES + 10];          //
@@ -159,6 +159,10 @@ typedef struct {
     unsigned char vrta[MAXTOTALMESHVERTICES + 10];  // Vertex base light, 0=unused
     
     int  vrtstart[MAXMESHFAN];                      // First vertex of given fan  
+    
+    /* Prepare usage of dynamically allocated memory */
+    char *data;                 // Allcated memory for map in one chunk (filesize)
+    MESH_VTX_T *vrt;            // Pointer on list of map vertices
 
 } MESH_T;
 

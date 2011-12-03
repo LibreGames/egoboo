@@ -214,7 +214,7 @@ static void editfileMakeTwist(MESH_T *mesh)
     fan = 0;
     while (fan < mesh -> numfan)
     {
-        mesh -> twist[fan] = editfileGetFanTwist(mesh, fan);
+        mesh -> fan[fan].twist = editfileGetFanTwist(mesh, fan);
         fan++;
     }
 
@@ -267,10 +267,14 @@ static int editfileLoadMapMesh(MESH_T *mesh, char *msg)
         numfan = mesh -> tiles_x * mesh -> tiles_y;
         
         /* Load fan data    */
-        fread(&mesh -> fan[0], sizeof(FANDATA_T), numfan, fileread);
+        for (cnt = 0; cnt < numfan; cnt++) {
+            fread(&mesh -> fan[cnt], 4, 1, fileread);
+        }
         /* TODO: Check if enough memory is available for loading map */
         /* Load normal data */
-        fread(&mesh -> twist[0], 1, numfan, fileread);
+        for (cnt = 0; cnt < numfan; cnt++) {
+            fread(&mesh -> fan[cnt].twist, 1, 1, fileread);
+        }
 
         /* Load vertex x data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++) {
@@ -341,9 +345,14 @@ static int editfileSaveMapMesh(MESH_T *mesh, char *msg)
             numwritten += fwrite(&mesh -> tiles_y, 4, 1, filewrite);
 
             /* Write tiles data    */
-            numwritten += fwrite(&mesh -> fan[0], sizeof(FANDATA_T), mesh -> numfan, filewrite);
+            for (cnt = 0; cnt < mesh -> numfan; cnt++) {
+                fwrite(&mesh -> fan[cnt], 4, 1, filewrite);
+            }
+            
             /* Write twist data */
-            numwritten += fwrite(&mesh -> twist[0], 1, mesh -> numfan, filewrite);
+            for (cnt = 0; cnt < mesh -> numfan; cnt++) {
+                numwritten += fwrite(&mesh -> fan[cnt].twist, 1, 1, filewrite);
+            }
 
             /* Write x-vertices */
             for (cnt = 0; cnt < mesh -> numvert; cnt++) {
