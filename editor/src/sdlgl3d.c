@@ -58,9 +58,6 @@
 #define SOME_CLIP   0x01
 #define NOT_VISIBLE 0x02
 
-
-#define SDLGL3D_MAXOBJECT 512 
-
 /*******************************************************************************
 * TYPEDEFS							                                           *
 *******************************************************************************/
@@ -108,7 +105,6 @@ static SDLGL3D_CAMERA Camera[SDLGL3D_MAX_CAMERA] = {
 
 };
 
-static SDLGL3D_OBJECT Object_List[SDLGL3D_MAXOBJECT + 62];  /* List of objects to handle    */
 /* Additional objects are used for visible tiles */
 static int NumVisiTiles = 0;
 static SDLGL3D_VISITILE Visi_Tiles[SDLGL3D_I_MAXVISITILES + 2];
@@ -630,11 +626,11 @@ void sdlgl3dEnd(void)
  * Input:
  *     camera_no: Number of camera to attach to object
  *     mode:      Mode to set for this camera
- *     obj_no:    Number of object to attach camera to   
- *     x, y:      Position to look at if this move    
+ *     obj *:     Pointer on object to attach camera to
+ *     x, y:      Position to look at if this move
  *     camtype:   Type of camera to attach: SDLGL3D_CAMERATYPE_*
  */
-void sdlgl3dSetCameraMode(int camera_no, char mode, int obj_no, float x, float y)
+void sdlgl3dSetCameraMode(int camera_no, char mode, SDLGL3D_OBJECT *obj, float x, float y)
 {
 
     SDLGL3D_CAMERA *cam;
@@ -650,7 +646,7 @@ void sdlgl3dSetCameraMode(int camera_no, char mode, int obj_no, float x, float y
         
         case SDLGL3D_CAM_FOLLOW:
             /* Follow an object             */
-            cam -> obj = &Object_List[obj_no];
+            cam -> obj = obj;
             /* Attach object to camera */        
             /* Create a third person camera behind the given 'moveobj' */
             cam -> cam_dist = cam -> tile_size * 3;
@@ -772,25 +768,6 @@ SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f)
 
 /*
  * Name:
- *     sdlgl3dInitObject
- * Description:
- *     Initializes the given object for the use in sdlgl3d. It's assumed that
- *     the object has filled in the position and so on.
- *     Including speed.
- * Input:
- *     moveobj *: Pointer on object to initialize
- */
-void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
-{
-
-    /* ------- Create the direction vector -------- */
-    moveobj -> dir[0] = sin(DEG2RAD(moveobj -> rot[2]));
-    moveobj -> dir[1] = cos(DEG2RAD(moveobj -> rot[2]));
-
-}
-
-/*
- * Name:
  *     sdlgl3dManageCamera
  * Description:
  *     Sets the commands for object with given number. < 0: Is camera
@@ -862,121 +839,61 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
         obj -> pos[1] = y;
         obj -> pos[SDLGL3D_Z] = z;
     }
-    
+
     /* Adjust the frustum normals */
     sdlgl3dSetupFrustumNormals(cam);
 
 }
 
-/*
- * Name:
- *     sdlgl3dManageObject
- * Description:
- *     Sets the commands for object with given number. < 0: Is camera
- * Input:
- *      object_no: Number of object to manage
- *      move_cmd:  Kind of movement
- *      set:       Set Command yes/no
- */
-void sdlgl3dManageObject(int object_no, char move_cmd, char set)
-{
-
-    int flag;
-
-
-    if (object_no > 0) {
-
-        if (move_cmd == SDLGL3D_MOVE_STOPMOVE) {
-            /* Stop all movement */
-           Object_List[object_no].move_cmd = 0;
-           return;
-        }
-        /* Manage this object. Set command */
-        flag = (1 << move_cmd);
-        if (set) {
-            Object_List[object_no].move_cmd |= flag;
-        }
-        else {
-            Object_List[object_no].move_cmd &= ~flag;
-        }
-
-    }
-
-}
 
 /*
  * Name:
- *     sdlgl3dMoveObjects
+ *     sdlgl3dMoveCamera
  * Description:
- *     Moves all objects
- *     TODO: Callback of user if collision happens
+ *     Moves the camera(s) on map
  * Input:
- *      move_cmd:      Kind of movement
- *      secondspassed: Seconds passed since last call
+ *     secondspassed: Since last call
  */
-void sdlgl3dMoveObjects(float secondspassed)
+void sdlgl3dMoveCamera(float secondspassed)
 {
 
-    SDLGL3D_OBJECT *objects;
     int  flags;
     char move_cmd;
 
 
-    objects = Object_List;
-
-    while(objects -> obj_type) {
-
-        if (objects -> move_cmd) {
-
-            for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1) {
-
-                if (flags & objects -> move_cmd) {
-                    /* Move command is active */
-                    sdlgl3dIMoveSingleObj(objects, move_cmd, secondspassed);
-
-                }
-
-            }
-
-        }
-
-        objects++;
-
-    }
-
     /* TODO: Move each camera which is active -- Add an 'active'-flag*/
     /* Move camera based on camera mode */
     switch(Camera[0].mode) {
-    
+
          case SDLGL3D_CAM_FOLLOW:
             /* TODO: Follow an object attached to camera    */
             /* break; */
-            
+
         case SDLGL3D_CAM_LOOKAT:
-            /* TODO: Attached to a position         */            
+            /* TODO: Attached to a position         */
             /* break; */
         case SDLGL3D_CAM_FIRSTPERS:
             /* TODO: Camera at position of object   */
             /* break; */
-            
-        case SDLGL3D_CAM_MODESTD:   
+
+        case SDLGL3D_CAM_MODESTD:
             /* Move camera itself                   */
             if (Camera[0].campos.move_cmd > 0) {
-                
+
                  /* If the camera was moved, set the frustum normals... */
                 for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1) {
 
                     if (flags & Camera[0].campos.move_cmd) {
-                        /* Move command is active */ 
-                                    
+                        /* Move command is active */
+
                         sdlgl3dIMoveSingleObj(&Camera[0].campos, move_cmd, secondspassed);
 
                     }
 
                 }
-                
+
             }
-            
+
             if (Camera[0].bound) {
                 /* TODO: Do not bind if attached to an object */
                 if (Camera[0].obj -> pos[0] < Camera[0].bx) {
@@ -991,13 +908,108 @@ void sdlgl3dMoveObjects(float secondspassed)
                 if (Camera[0].obj -> pos[1] > Camera[0].by2) {
                     Camera[0].obj -> pos[1] = Camera[0].by2;
                 }
-            
+
             }
-            
+
             sdlgl3dSetupFrustumNormals(&Camera[0]);
-            break;     
+            break;
 
     }
+
+}
+
+/*
+ * Name:
+ *     sdlgl3dInitObject
+ * Description:
+ *     Initializes the given object for the use in sdlgl3d. It's assumed that
+ *     the object has filled in the position and so on.
+ *     Including speed.
+ * Input:
+ *     moveobj *: Pointer on object to initialize
+ */
+void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
+{
+
+    /* ------- Create the direction vector -------- */
+    moveobj -> dir[0] = sin(DEG2RAD(moveobj -> rot[2]));
+    moveobj -> dir[1] = cos(DEG2RAD(moveobj -> rot[2]));
+
+}
+
+/*
+ * Name:
+ *     sdlgl3dManageObject
+ * Description:
+ *     Sets the commands for object with given number. < 0: Is camera
+ * Input:
+ *      obj *:     Pointer on object to manage
+ *      move_cmd:  Kind of movement
+ *      set:       Set Command yes/no
+ */
+void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set)
+{
+
+    int flag;
+
+
+    if (obj -> obj_type > 0) {
+
+        if (move_cmd == SDLGL3D_MOVE_STOPMOVE) {
+            /* Stop all movement */
+           obj -> move_cmd = 0;
+           return;
+        }
+        /* Manage this object. Set command */
+        flag = (1 << move_cmd);
+        if (set) {
+            obj -> move_cmd |= flag;
+        }
+        else {
+            obj -> move_cmd &= ~flag;
+        }
+
+    }
+
+}
+
+/*
+ * Name:
+ *     sdlgl3dMoveObjects
+ * Description:
+ *     Moves all objects in given list
+ * Input:
+ *      obj_list *:    List of objects to move
+ *      secondspassed: Seconds passed since last call
+ */
+void sdlgl3dMoveObjects(SDLGL3D_OBJECT *obj_list, float secondspassed)
+{   
+
+    int  flags;
+    char move_cmd;
+
+
+    while(obj_list -> obj_type) {
+
+        if (obj_list -> move_cmd) {
+
+            for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1) {
+
+                if (flags & obj_list -> move_cmd) {
+                    /* Move command is active */
+                    sdlgl3dIMoveSingleObj(obj_list, move_cmd, secondspassed);
+
+                }
+
+            }
+
+        }
+
+        obj_list++;
+
+    }
+
+
 
 }
 

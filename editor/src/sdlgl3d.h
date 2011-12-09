@@ -272,6 +272,7 @@ typedef struct {
     float   turnvel;           /* Rotation velocity in degrees/second  */
     /* Link for object list in collision - detection                   */
     int     on_tile;           /* Object is on this tile               */
+    int     next_obj;          /* > 0: Number of next object on tile   */          
     char    visi_code;         /* Visibility ob object in frustum      */
     char    speed_modifier;    /* Multiply speed with this one, if > 0 */
 
@@ -308,24 +309,19 @@ typedef struct {
 
 SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid);
 void sdlgl3dEnd(void);
-void sdlgl3dSetCameraMode(int camera_no, char mode, int obj_no, float x, float y);
+void sdlgl3dSetCameraMode(int camera_no, char mode, SDLGL3D_OBJECT *obj, float x, float y);
 void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio);
 void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2);
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f);
-void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj);
 void sdlgl3dManageCamera(int camera_no, char move_cmd, char set, char speed_modifier);
 void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative);
-void sdlgl3dManageObject(int obj_no, char move_cmd, char set);
-void sdlgl3dMoveObjects(float secondspassed);
+void sdlgl3dMoveCamera(float secondspassed);
+/* ---  Handling other objects --- */
+void sdlgl3dInitObject(SDLGL3D_OBJECT *obj);
+void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set);
+void sdlgl3dMoveObjects(SDLGL3D_OBJECT *obj_list, float secondspassed);
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);
 void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy);
 SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile);
-/* TODO:
-    --- List of objects for drawing by caller, sorted from farest to nearest ---
-    int sdlgl3dVisibleObjects(SDLGL3D_OBJECT **objects);
-    --- return-value: Number ob objects in list ---
-    --- add/remove (if object_no) object from list ---
-    int sdlgl3dSetObject(SDLGL3D_OBJECT *object, int int object_no);
-*/
 
 #endif  /* _SDLGL_3D_H_ */

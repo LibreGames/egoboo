@@ -26,7 +26,7 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
-#include "editor.h"     /* Definition of map-mesh MESH_T and COMMAND_T  */
+#include "egomap.h"     /* Definition of map-mesh MESH_T and COMMAND_T  */
 #include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
 
 /*******************************************************************************
@@ -104,8 +104,9 @@ typedef struct {
     /* For the editors internal use */
     char mod_type_no;           /* Number of 'mod_type'                             */
     char lev_rating_no;         /* Number of 'lev_rating'                           */
+    char dir_name[32];          /* Name of the module directory for loading         */
     
-} EDITFILE_MODULE_T;            /* Data from 'menu.txt'                 */
+} EDITFILE_MODULE_T;            /* Data from 'menu.txt'                             */
 
 /*******************************************************************************
 * CODE 								                                           *

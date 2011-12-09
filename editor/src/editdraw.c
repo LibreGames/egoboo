@@ -30,6 +30,7 @@
 #include "sdlgl3d.h"    /* Helper routines for drawing of 3D-Screen     */
 #include "sdlgltex.h"   /* Texture handling                             */
 #include "sdlglstr.h"
+#include "editor.h"     
 #include "editfile.h"   /* Make the file name for reading textures      */
 
 

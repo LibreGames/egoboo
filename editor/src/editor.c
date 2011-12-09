@@ -37,6 +37,7 @@
 #include "sdlgl3d.h"
 #include "sdlglfld.h"       /* Handle 'Standard-Fields          */
 #include "editor.h"
+#include "egomap.h"         /* Handle the map objects           */
 #include "editmain.h"
 #include "editfile.h"       /* Description of Spawn-Points and passages */
 
@@ -1007,7 +1008,7 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     glClear(GL_COLOR_BUFFER_BIT);
 
     /* First move the camera */
-    sdlgl3dMoveObjects(event -> secondspassed);
+    sdlgl3dMoveCamera(event -> secondspassed);
 
     /* Draw the 3D-View before the 2D-Screen */
     editmainMap(&EditInfo, EDITMAIN_DRAWMAP);

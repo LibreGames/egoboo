@@ -29,7 +29,7 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
-#include "editor.h"             /* Definition FANDATA_T and COMMAND_T   */
+#include "egomap.h"             /* Definition FANDATA_T and COMMAND_T   */
 
 /*******************************************************************************
 * DEFINES								                                       *
