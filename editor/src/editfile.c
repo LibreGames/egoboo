@@ -37,12 +37,12 @@
 #define EDITFILE_SLOPE      50          /* Twist stuff          */
 #define MAPID               0x4470614d  /*  The string... MapD  */
 #define EDITFILE_ZADJUST    16.0        /* Read/Write Z-Value   */
-                                        /* Cartman uses 4 bit fixed point for Z */
+                                        /* Cartman uses 4 bit fixed point for Z */                                      
                                         
-/* ======= Maximum-Values for files ======= */
-#define EDITFILE_MAXSPAWN    500        /* Maximum Lines in spawn list  */
+/* -- Maximum-Values for files -- */
+#define EDITFILE_MAXSPAWN    500    /* Maximum Lines in spawn list  */
 #define EDITFILE_MAXPASSAGE   50
-                                        
+                    
 /*******************************************************************************
 * DATA 								                                           *
 *******************************************************************************/
@@ -67,7 +67,7 @@ static char *EditFileGORSubDir[]   = {
 };
 
 /* ============== Data for Spawn-Points ============== */
-static EDITFILE_SPAWNPT_T SpawnTemplate;
+/* static EDITFILE_SPAWNPT_T SpawnTemplate; */
 static EDITFILE_SPAWNPT_T SpawnObjects[EDITFILE_MAXSPAWN + 2];
 
 static SDLGLCFG_VALUE SpawnVal[] = {
@@ -97,7 +97,7 @@ static SDLGLCFG_LINEINFO SpawnRec = {
 };
 
 /* ============== Data for passages ============== */
-static EDITFILE_PASSAGE_T PassageTemplate;
+/* static EDITFILE_PASSAGE_T PassageTemplate; */
 static EDITFILE_PASSAGE_T Passages[EDITFILE_MAXPASSAGE + 2];
 
 static SDLGLCFG_VALUE PassageVal[] = {
@@ -543,9 +543,9 @@ int  editfileMapMesh(MESH_T *mesh, char *msg, char save)
  * Description:
  *     Load/Save spawn data from 'spawn.txt' in actual work directory
  * Input:
- *     action: What to do
- *     rec_no: Number of record to read/write from buffer
- *     spt *:  Pointer on buffer for copy of chosen spawn point
+ *     spt *:   Where to load the spawnpoints to
+ *     num_rec: Maximum number of records available in buffer
+ *     save:    Save it yes/no 
  * Output:
  *     Number of record chosen    
  */

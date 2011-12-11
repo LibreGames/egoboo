@@ -26,24 +26,16 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
-#include "egomap.h"
-
-/*******************************************************************************
-* DEFINES								                                       *
-*******************************************************************************/
-
-#define EDITDRAW_OBJ_TILE   0x01    /* 	==> First always the tile       */
-#define EDITDRAW_OBJ_CHAR   0x02    /* Characters (MD2)                 */
-#define EDITDRAW_OBJ_PART   0x03    /* Particles (can be transparent)   */
+#include "editfile.h"
 
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
-COMMAND_T *editdrawInitData(void);
+void editdrawInitData(void);
 void editdrawFreeData(void);
-void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, MAP_INFO_T *mi);
-void editdraw2DMap(MESH_T *mesh, int x, int y, MAP_INFO_T *mi);
+void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd);
+void editdraw2DMap(MESH_T *mesh, int x, int y);
 void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big); 
 void editdrawAdjustCamera(int tx, int ty);
 

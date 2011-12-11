@@ -26,12 +26,14 @@
 #include <stdio.h>
 #include <memory.h>
 
+
 #include "sdlgl.h"      /* OpenGL-Stuff                                 */
 #include "sdlgl3d.h"    /* Helper routines for drawing of 3D-Screen     */
 #include "sdlgltex.h"   /* Texture handling                             */
 #include "sdlglstr.h"
-#include "editor.h"     
+#include "editor.h"
 #include "editfile.h"   /* Make the file name for reading textures      */
+#include "egomap.h"     /* Flags for 'chosen'                           */
 
 
 #include "editdraw.h"   /* Own header                                   */   
@@ -52,562 +54,7 @@
 * DATA                                                                         *
 *******************************************************************************/
 
-static float DefaultUV[] = { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00 };
-static COMMAND_T MeshCommand[MAXMESHTYPE] = {
-    {  "0: Ground Tile",
-        0,          /* Default FX: None         */
-        1,          /* Default texture          */
-        4,		    /* Total number of vertices */
-        1,    		/*  1 Command               */
-        { 4 },		/* Commandsize (how much vertices per command)  */
-        { 1, 2, 3, 0 },
-        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00 },
-        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 }
-        }
-    },
-    {   "1: Top Tile",             /* Top-Tile for 'simple' edit mode  */
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX:                      */
-        63,                             /* Default texture                  */
-        4,
-        1,
-        { 4 },
-        { 0, 1, 2, 3 },
-        { 0.00f, 0.00f, 1.00f, 0.00f, 1.00f, 1.00f, 0.001f, 1.00f },
-        { 0.00f, 0.00f, 1.00f, 0.00f, 1.00f, 1.00f, 0.001f, 1.00f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 192.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 192.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 192.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 192.00f }
-        }
-
-    },
-    {   "2: Four Faced Ground",
-        0,          /* Default FX: None         */
-        0,          /* Default texture          */
-        5,
-        1,
-        { 6 },
-        { 4, 3, 0, 1, 2, 3 },
-        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00, 0.50, 0.50 },
-        { 0.00, 0.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00, 0.50, 0.50 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  5, 0.50, 0.50,  64.00,  64.00, 0.00 }         
-        }
-    },
-    {   "3: Eight Faced Ground",
-        0,          /* Default FX: None         */
-        0,          /* Default texture          */
-        9,
-        1,
-        { 10 },
-        { 8, 3, 7, 0, 4, 1, 5, 2, 6, 3 }, /* Number of vertices */
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,  0.50, 0.00,
-          1.00, 0.50,  0.50, 1.00,  0.00, 0.50,  0.50, 0.50 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,  0.50, 0.00,
-          1.00, 0.50,  0.50, 1.00,  0.00, 0.50,  0.50, 0.50 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  2, 0.50, 0.00,  64.00,   0.00, 0.00 },
-          { 11, 1.00, 0.50, 128.00,  64.00, 0.00 },
-          { 13, 0.50, 1.00,  64.00, 128.00, 0.00 },
-          {  4, 0.00, 0.50,   0.00,  64.00, 0.00 },
-          {  5, 0.50, 0.50,  64.00,  64.00, 0.00 }
-        }
-    },
-    {   "4:  Ten Face Pillar",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        8,
-        2,
-        { 8, 6 },
-        {  7, 3, 0, 4, 5, 6, 2, 3,
-           5, 4, 0, 1, 2, 6 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.33f, 0.33f,  0.66f, 0.33f,  0.66f, 0.66f,  0.33f, 0.66f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.33f,  0.66f, 0.33f,  0.66f, 0.66f,  0.33f, 0.66f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
-          {  5, 0.33f, 0.33f,  42.00f,  42.00f, 0.00f },  
-          {  6, 0.66f, 0.33f,  84.00f,  42.00f, 0.00f }, 
-          { 10, 0.66f, 0.66f,  84.00f,  84.00f, 0.00f }, 
-          {  9, 0.33f, 0.66f,  42.00f,  84.00f, 0.00f }
-        }
-    },
-    {   "5: Eighteen Faced Pillar",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        16,
-        4,
-        { 10, 8, 4, 4 },
-        { 15, 3, 10, 11, 12, 13, 14, 8, 9, 3,
-          13, 12, 4, 5, 1, 6, 7, 14,
-          12, 11, 0, 4,
-          14, 7, 2, 8 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  1.00f, 0.33f,  1.00f, 0.66f,
-          0.66f, 1.00f,  0.33f, 1.00f,  0.00f, 0.66f,  0.00f, 0.33f,
-          0.33f, 0.33f,  0.66f, 0.33f,  0.66f, 0.66f,  0.33f, 0.66f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  1.00f, 0.33f,  1.00f, 0.66f,
-          0.66f, 1.00f,  0.33f, 1.00f,  0.00f, 0.66f,  0.00f, 0.33f,
-          0.33f, 0.33f,  0.66f, 0.33f,  0.66f, 0.66f,  0.33f, 0.66f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
-          {  1, 0.33f, 0.00f,  42.00f,   0.00f, 0.00f },
-          {  2, 0.66f, 0.00f,  84.00f,   0.00f, 0.00f },
-          {  7, 1.00f, 0.33f, 128.00f,  42.00f, 0.00f },
-          { 11, 1.00f, 0.66f, 128.00f,  84.00f, 0.00f },
-          { 14, 0.66f, 1.00f,  84.00f, 128.00f, 0.00f },
-          { 13, 0.33f, 1.00f,  42.00f, 128.00f, 0.00f },
-          {  8, 0.00f, 0.66f,   0.00f,  84.00f, 0.00f },
-          {  4, 0.00f, 0.33f,   0.00f,  42.00f, 0.00f },
-          {  5, 0.33f, 0.33f,  42.00f,  42.00f, 0.00f },
-          {  6, 0.66f, 0.33f,  84.00f,  42.00f, 0.00f },
-          { 10, 0.66f, 0.66f,  84.00f,  84.00f, 0.00f },
-          {  9, 0.33f, 0.66f,  42.00f,  84.00f, 0.00f }
-        }
-    },
-    {   "6: Blank", 0, 0, 0 },
-    {   "7: Blank", 0, 0, 0 },
-    {   "8: Wall Straight (WE)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
-        63 + 33,                        /* Default texture  */
-        8,
-        2,
-        { 6, 4 },
-        {  5, 2, 3, 6, 7, 4,
-           4, 7, 0, 1 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          1.00f, 0.33f,  1.00f, 0.66f,  0.00f, 0.66f,  0.00f, 0.33f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          1.00f, 0.33f,  1.00f, 0.66f,  0.00f, 0.66f,  0.00f, 0.33f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f,   0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f,   0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 192.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 192.00f },
-          {  7, 1.00f, 0.33f, 128.00f,  42.00f, 128.00f },
-          { 11, 1.00f, 0.66f, 128.00f,  84.00f, 192.00f },
-          {  8, 0.00f, 0.66f,   0.00f,  84.00f, 192.00f },
-          {  4, 0.00f, 0.33f,   0.00f,  42.00f, 128.00f },
-        }  
-
-    },
-    {   "9: Six Faced Wall (NS)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        8,
-        2,
-        { 6, 4 },
-        { 7, 3, 0, 4, 5, 6,
-          6, 5, 1, 2 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  0.66f, 1.00f,  0.33f, 1.00f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  0.66f, 1.00f,  0.33f, 1.00f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
-          {  1, 0.33f, 0.00f,  42.00f,   0.00f, 0.00f },
-          {  2, 0.66f, 0.00f,  84.00f,   0.00f, 0.00f },
-          { 14, 0.66f, 1.00f,  84.00f, 128.00f, 0.00f },
-          { 13, 0.33f, 1.00f,  42.00f, 128.00f, 0.00f }, 
-        }
-    },
-    {   "10: Blank", 0, 0, 0 },
-    {   "11: Blank", 0, 0, 0 },
-    {   "12: Eight Faced Wall (W)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        8,
-        2,
-        { 8, 4 },
-        { 7, 3, 4, 5, 6, 1, 2, 3,
-          1, 6, 5, 0 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.00f, 0.66f,  0.00f, 0.33f,  0.66f, 0.33f,  0.66f, 0.66f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.00f, 0.66f,  0.00f, 0.33f,  0.66f, 0.33f,  0.66f, 0.66f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
-          {  8, 0.00f, 0.66f,   0.00f,  84.00f, 0.00f },
-          {  4, 0.00f, 0.33f,   0.00f,  42.00f, 0.00f },
-          {  6, 0.66f, 0.33f,  84.00f,  42.00f, 0.00f },
-          { 10, 0.66f, 0.66f,  84.00f,  84.00f, 0.00f }
-        }
-    },
-    {   "13: Eight Faced Wall (N)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        8,
-        2,
-        { 8, 4 },
-        { 7, 3, 0, 4, 5, 6, 2, 3,
-          2, 6, 5, 1 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  0.66f, 0.66f,  0.33f, 0.66f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  0.66f, 0.66f,  0.33f, 0.66f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
-          {  1, 0.33f, 0.00f,  42.00f,   0.00f, 0.00f },
-          {  2, 0.66f, 0.00f,  84.00f,   0.00f, 0.00f },
-          { 10, 0.66f, 0.66f,  84.00f,  84.00f, 0.00f },
-          {  9, 0.33f, 0.66f,  42.00f,  84.00f, 0.00f }
-        }
-    },
-    {  "14: Eight Faced Wall (E)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        8,
-        2,
-        { 8, 4 },
-        { 6, 3, 0, 1, 4, 5, 7, 3,
-          3, 7, 5, 2 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          1.00, 0.33,  1.00, 0.66,  0.33, 0.33,  0.33, 0.66 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          1.00, 0.33,  1.00, 0.66,  0.33, 0.33,  0.33, 0.66 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  7, 1.00, 0.33, 128.00,  42.00, 0.00 },
-          { 11, 1.00, 0.66, 128.00,  84.00, 0.00 },
-          {  5, 0.33, 0.33,  42.00,  42.00, 0.00 },
-          {  9, 0.33, 0.66,  42.00,  84.00, 0.00 },
-        } 
-    },
-    {   "15: Eight Faced Wall (S)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        8,
-        2,
-        { 8, 4 },
-        { 7, 5, 6, 0, 1, 2, 4, 5,
-          0, 6, 5, 3 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.66, 1.00,  0.33, 1.00,  0.33, 0.33,  0.66, 0.33 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.66, 1.00,  0.33, 1.00,  0.33, 0.33,  0.66, 0.33 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          { 14, 0.66, 1.00,  84.00, 128.00, 0.00 },
-          { 13, 0.33, 1.00,  42.00, 128.00, 0.00 },
-          {  5, 0.33, 0.33,  42.00,  42.00, 0.00 },
-          {  6, 0.66, 0.33,  84.00,  42.00, 0.00 }
-        }
-    },
-    {   "16: Wall Outer Edge (WS)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
-        63 + 51,                        /* Default texture  */
-        10,
-         2,
-        { 8, 6 },
-        { 9, 3, 6, 7, 8, 4, 5, 3,
-          8, 7, 0, 1, 2, 4 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.66, 1.00,  0.33, 1.00,  0.00, 0.66,  0.00, 0.33,
-          0.66, 0.33,  0.33, 0.66 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.66, 1.00,  0.33, 1.00,  0.00, 0.66,  0.00, 0.33,
-          0.66, 0.33,  0.33, 0.66 },
-        { {  0, 0.00, 0.00,   0.00,   0.00,   0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00,   0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00,   0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 192.00 },
-          { 14, 0.66, 1.00,  84.00, 128.00, 128.00 },
-          { 13, 0.33, 1.00,  42.00, 128.00, 192.00 },
-          {  8, 0.00, 0.66,   0.00,  84.00, 192.00 },
-          {  4, 0.00, 0.33,   0.00,  42.00, 128.00 },
-          {  6, 0.66, 0.33,  84.00,  42.00, 128.00 },
-          {  9, 0.33, 0.66,  42.00,  84.00, 192.00 }
-        }
-          
-    },
-    {   "17: Ten Faced Wall (NW)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        10,
-        2,
-        { 8, 6 },
-        { 8, 6, 7, 0, 4, 5, 9, 6,
-          9, 5, 1, 2, 3, 6 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.33, 0.00,  0.66, 0.00,  0.00, 0.66,  0.00, 0.33,
-          0.33, 0.33,  0.66, 0.66 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.33, 0.00,  0.66, 0.00,  0.00, 0.66,  0.00, 0.33,
-          0.33, 0.33,  0.66, 0.66 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  1, 0.33, 0.00,  42.00,   0.00, 0.00 },
-          {  2, 0.66, 0.00,  84.00,   0.00, 0.00 },
-          {  8, 0.00, 0.66,   0.00,  84.00, 0.00 },
-          {  4, 0.00, 0.33,   0.00,  42.00, 0.00 },
-          {  5, 0.33, 0.33,  42.00,  42.00, 0.00 },
-          { 10, 0.66, 0.66,  84.00,  84.00, 0.00 } 
-        }
-    },
-    {   "18: Ten Faced Wall (NE)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        10,
-        2,
-        { 8, 6 },
-        { 8, 9, 4, 5, 1, 6, 7, 9,
-          9, 7, 2, 3, 0, 4 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.33, 0.00,  0.66, 0.00,  1.00, 0.33,  1.00, 0.66,
-          0.66, 0.33,  0.33, 0.66 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          0.33, 0.00,  0.66, 0.00,  1.00, 0.33,  1.00, 0.66,
-          0.66, 0.33,  0.33, 0.66 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  1, 0.33, 0.00,  42.00,   0.00, 0.00 },
-          {  2, 0.66, 0.00,  84.00,   0.00, 0.00 },
-          {  7, 1.00, 0.33, 128.00,  42.00, 0.00 },
-          { 11, 1.00, 0.66, 128.00,  84.00, 0.00 },
-          {  6, 0.66, 0.33,  84.00,  42.00, 0.00 },
-          {  9, 0.33, 0.66,  42.00,  84.00, 0.00 }
-        }
-    },
-    {   "19: Wall Inner Edge (ES)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX       */
-        63 +  1,                        /* Default texture  */
-        10,
-        2,
-        { 8, 6 },
-        { 9, 7, 8, 4, 5, 2, 6, 7,
-          8, 7, 3, 0, 1, 4 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          1.00, 0.33,  1.00, 0.66,  0.66, 1.00,  0.33, 1.00,
-          0.33, 0.33,  0.66, 0.66 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          1.00, 0.33,  1.00, 0.66,  0.66, 1.00,  0.33, 1.00,
-          0.33, 0.33,  0.66, 0.66 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 192.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 192.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00,   0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 192.00 },
-          {  7, 1.00, 0.33, 128.00,  42.00, 192.00 },
-          { 11, 1.00, 0.66, 128.00,  84.00, 128.00 },
-          { 14, 0.66, 1.00,  84.00, 128.00, 128.00 },
-          { 13, 0.33, 1.00,  42.00, 128.00, 192.00 },
-          {  5, 0.33, 0.33,  42.00,  42.00, 192.00 },
-          { 10, 0.66, 0.66,  84.00,  84.00, 128.00 }
-        }
-        
-    },
-    {   "20: Twelve Faced Wall (WSE)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        12,
-        3,
-        { 9, 5, 4 },
-        { 11, 3, 8, 9, 4, 10, 6, 7, 3,
-          10, 4, 5, 2, 6,
-          4, 9, 0, 1 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          1.00, 0.33,  1.00, 0.66,  0.66, 1.00,  0.33, 1.00,
-          0.00, 0.66,  0.00, 0.33,  0.66, 0.66,  0.33, 0.66 },
-        { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00,
-          1.00, 0.33,  1.00, 0.66,  0.66, 1.00,  0.33, 1.00,
-          0.00, 0.66,  0.00, 0.33,  0.66, 0.66,  0.33, 0.66 },
-        { {  0, 0.00, 0.00,   0.00,   0.00, 0.00 },
-          {  3, 1.00, 0.00, 128.00,   0.00, 0.00 },
-          { 15, 1.00, 1.00, 128.00, 128.00, 0.00 },
-          { 12, 0.00, 1.00,   0.00, 128.00, 0.00 },
-          {  7, 1.00, 0.33, 128.00,  42.00, 0.00 },
-          { 11, 1.00, 0.66, 128.00,  84.00, 0.00 },
-          { 14, 0.66, 1.00,  84.00, 128.00, 0.00 },
-          { 13, 0.33, 1.00,  42.00, 128.00, 0.00 },
-          {  8, 0.00, 0.66,   0.00,  84.00, 0.00 },
-          {  4, 0.00, 0.33,   0.00,  42.00, 0.00 },
-          { 10, 0.66, 0.66,  84.00,  84.00, 0.00 },
-          {  9, 0.33, 0.66,  42.00,  84.00, 0.00 } 
-        }
-    },
-    {   "21: Twelve Faced Wall (NWS)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        12,
-        3,
-        { 9, 5, 4 },
-        { 10, 8, 9, 0, 4, 5, 6, 11, 8,
-          11, 6, 7, 3, 8,
-          6, 5, 1, 2 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  0.66f, 1.00f,  0.33f, 1.00f,
-          0.00f, 0.66f,  0.00f, 0.33f,  0.33f, 0.33f,  0.33f, 0.66f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  0.66f, 1.00f,  0.33f, 1.00f,
-          0.00f, 0.66f,  0.00f, 0.33f,  0.33f, 0.33f,  0.33f, 0.66f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
-          {  1, 0.33f, 0.00f,  42.00f,   0.00f, 0.00f }, 
-          {  2, 0.66f, 0.00f,  84.00f,   0.00f, 0.00f },
-          { 14, 0.66f, 1.00f,  84.00f, 128.00f, 0.00f },
-          { 13, 0.33f, 1.00f,  42.00f, 128.00f, 0.00f },
-          {  8, 0.00f, 0.66f,   0.00f,  84.00f, 0.00f },
-          {  4, 0.00f, 0.33f,   0.00f,  42.00f, 0.00f },
-          {  5, 0.33f, 0.33f,  42.00f,  42.00f, 0.00f },
-          {  9, 0.33f, 0.66f,  42.00f,  84.00f, 0.00f }
-        }
-    },
-    {   "22: Twelve Faced Wall (ENW)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        12,
-        3,
-        { 9, 5, 4 },
-        { 11, 8, 10, 4, 5, 1, 6, 7, 8,
-          10, 8, 9, 0, 4,
-           8, 7, 2, 3 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  1.00f, 0.33f,  1.00f, 0.66f,
-          0.00f, 0.66f,  0.00f, 0.33f,  0.33f, 0.33f,  0.66f, 0.33f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  0.66f, 1.00f,  0.33f, 1.00f,
-          0.00f, 0.66f,  0.00f, 0.33f,  0.33f, 0.33f,  0.33f, 0.66f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
-          {  1, 0.33f, 0.00f,  42.00f,   0.00f, 0.00f },
-          {  2, 0.66f, 0.00f,  84.00f,   0.00f, 0.00f },
-          {  7, 1.00f, 0.33f, 128.00f,  42.00f, 0.00f },
-          { 11, 1.00f, 0.66f, 128.00f,  84.00f, 0.00f },
-          {  8, 0.00f, 0.66f,   0.00f,  84.00f, 0.00f },
-          {  4, 0.00f, 0.33f,   0.00f,  42.00f, 0.00f },
-          {  5, 0.33f, 0.33f,  42.00f,  42.00f, 0.00f },
-          {  6, 0.66f, 0.33f,  84.00f,  42.00f, 0.00f }
-        }
-    },
-    {   "23:  Twelve Faced Wall (SEN)",
-        (MPDFX_WALL | MPDFX_IMPASS),    /* Default FX   */
-        0,                              /* Default texture          */
-        12,
-        3,
-        { 9, 5, 4 },
-        { 11, 9, 4, 10, 6, 7, 2, 8, 9,
-          10, 4, 5, 1, 6,
-          4, 9, 3, 0 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  1.00f, 0.33f,  1.00f, 0.66f,
-          0.66f, 1.00f,  0.33f, 1.00f,  0.66f, 0.33f,  0.66f, 0.66f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.33f, 0.00f,  0.66f, 0.00f,  1.00f, 0.33f,  1.00f, 0.66f,
-          0.66f, 1.00f,  0.33f, 1.00f,  0.66f, 0.33f,  0.66f, 0.66f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
-          {  1, 0.33f, 0.00f,  42.00f,   0.00f, 0.00f },
-          {  2, 0.66f, 0.00f,  84.00f,   0.00f, 0.00f },
-          {  7, 1.00f, 0.33f, 128.00f,  42.00f, 0.00f },
-          { 11, 1.00f, 0.66f, 128.00f,  84.00f, 0.00f },
-          { 14, 0.66f, 1.00f,  84.00f, 128.00f, 0.00f },
-          { 13, 0.33f, 1.00f,  42.00f, 128.00f, 0.00f },
-          {  6, 0.66f, 0.33f,  84.00f,  42.00f, 0.00f },
-          { 10, 0.66f, 0.66f,  84.00f,  82.00f, 0.00f } 
-        }
-    },
-    {   "24: Twelve Faced Stair (WE)",
-        MPDFX_IMPASS,           /* Default FX       */
-        0,                      /* Default texture  */
-        14,
-        3,
-        { 6, 6, 6 },
-        { 13, 3, 0, 4, 5, 12,
-          11, 12, 5, 6, 7, 10,
-          9, 10, 7, 8, 1, 2 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.16f, 0.00f,  0.33f, 0.00f,  0.50f, 0.00f,  0.66f, 0.00f,
-          0.83f, 0.00f,  0.83f, 1.00f,  0.66f, 1.00f,  0.50f, 1.00f,
-          0.33f, 1.00f,  0.16f, 1.00f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          0.16f, 0.00f,  0.33f, 0.00f,  0.50f, 0.00f,  0.66f, 0.00f,
-          0.83f, 0.00f,  0.83f, 1.00f,  0.66f, 1.00f,  0.50f, 1.00f,
-          0.33f, 1.00f,  0.16f, 1.00f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },  
-          {  1, 0.16f, 0.00f,  21.00f,   0.00f, 0.00f },
-          {  2, 0.33f, 0.00f,  42.00f,   0.00f, 0.00f },
-          {  2, 0.50f, 0.00f,  64.00f,   0.00f, 0.00f },
-          {  3, 0.66f, 0.00f,  85.00f,   0.00f, 0.00f },
-          {  3, 0.83f, 0.00f, 106.00f,   0.00f, 0.00f },
-          { 14, 0.83f, 1.00f, 106.00f, 128.00f, 0.00f }, 
-          { 14, 0.66f, 1.00f,  85.00f, 128.00f, 0.00f },
-          { 13, 0.50f, 1.00f,  64.00f, 128.00f, 0.00f }, 
-          { 13, 0.33f, 1.00f,  42.00f, 128.00f, 0.00f }, 
-          { 12, 0.16f, 1.00f,  21.00f, 128.00f, 0.00f }, 
-        }
-    },
-    {   "25: Twelve Faced Stair (NS)",
-        MPDFX_IMPASS,           /* Default FX       */
-        0,                      /* Default texture  */
-        14,
-        3,
-        { 6, 6, 6 },
-        { 13, 0, 1, 4, 5, 12,
-          11, 12, 5, 6, 7, 10,
-          9, 10, 7, 8, 2, 3 },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          1.00f, 0.16f,  1.00f, 0.33f,  1.00f, 0.50f,  1.00f, 0.66f,
-          1.00f, 0.83f,  0.00f, 0.83f,  0.00f, 0.66f,  0.00f, 0.50f,
-          0.00f, 0.33f,  0.00f, 0.16f },
-        { 0.00f, 0.00f,  1.00f, 0.00f,  1.00f, 1.00f,  0.00f, 1.00f,
-          1.00f, 0.16f,  1.00f, 0.33f,  1.00f, 0.50f,  1.00f, 0.66f,
-          1.00f, 0.83f,  0.00f, 0.83f,  0.00f, 0.66f,  0.00f, 0.50f,
-          0.00f, 0.33f,  0.00f, 0.16f },
-        { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
-          {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
-          { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },  
-          {  3, 1.00f, 0.16f, 128.00f,  21.00f, 0.00f },
-          {  7, 1.00f, 0.33f, 128.00f,  42.00f, 0.00f },
-          {  7, 1.00f, 0.50f, 128.00f,  64.00f, 0.00f },
-          { 11, 1.00f, 0.66f, 128.00f,  85.00f, 0.00f },
-          { 11, 1.00f, 0.83f, 128.00f, 106.00f, 0.00f },
-          {  8, 0.00f, 0.83f,   0.00f, 106.00f, 0.00f },
-          {  8, 0.00f, 0.66f,   0.00f,  85.00f, 0.00f },
-          {  4, 0.00f, 0.50f,   0.00f,  64.00f, 0.00f },
-          {  4, 0.00f, 0.33f,   0.00f,  41.00f, 0.00f },
-          {  0, 0.00f, 0.16f,   0.00f,  21.00f, 0.00f }
-        }
-    }
-};
-
+static float  DefaultUV[] = { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00 };
 static float  MeshTileOffUV[EDITDRAW_MAXWALLSUBTEX * 2];    /* Offset into wall texture */
 static GLuint WallTex[EDITDRAW_MAXWALLTEX];
 
@@ -617,38 +64,47 @@ static GLuint WallTex[EDITDRAW_MAXWALLTEX];
 
 /*
  * Name:
- *     editmainSetTransColor
+ *     editdrawSetTransColor
  * Description:
  *     Sets the transparent color for given 'f_type'.
  * Input:
- *     f_type:  To set color for 
- *     trans:   Transparency-Value 
+ *     fd *:    Pointer on fan-data to set color for
+ *     trans:   Transparency-Value
+ * Output:
+ *     Has a color at all yes/no
  */
-static void editmainSetTransColor(char f_type, char trans)
+static int editdrawSetTransColor(FANDATA_T *fd, char trans)
 {
 
     int col_no;
     unsigned char color[5];
-    
-    
-    if (f_type == MAP_INFO_SPAWN) {
+
+
+    if (fd -> obj_no > 0) {
+        /* --- It's a spawn point --- */
         col_no = SDLGL_COL_RED;
     }
-    else if (f_type == MAP_INFO_PASSAGE) {
+    else if ((fd -> psg_no & 0x7F) > 0) {
+        /* --- t's a passage --- */
         col_no = SDLGL_COL_MAGENTA;
     }
-    else if (f_type == MAP_INFO_CHOSEN) {
+    else if (fd -> psg_no & EGOMAP_CHOSEN) {
         col_no = SDLGL_COL_YELLOW;
     }
+    /*
     else {
         col_no = SDLGL_COL_BLUE;
+        return 0;
     }
+    */
 
     sdlglGetColor(col_no, color);
     color[3] = trans;
-    
+
     glColor4ubv(color);
-    
+
+    return 1;
+
 }
 
 /*
@@ -703,28 +159,24 @@ static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
  *	    editdrawTransparentFan2D
  *  Description:
  *	    Draws a list of fans with given number on 3D-Mesh
- *      Transparent, with no texture 
+ *      Transparent, with no texture
  * Input:
  *      mesh *:     Pointer on mesh info
  *      tilesize *: Rectangle size of tile on minimap an position of minimap
- *      mi*:        Pointer on map info holding info about transparent fans  
- *      fan_no*:    List of fan numbers to draw
- *      col_no:     Override for setting by texture-flag
  *      trans:      Transparency of fan drawn
  */
-static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T *mi, unsigned char trans)
+static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, unsigned char trans)
 {
 
     SDLGL_RECT draw_rect;
     int fan_no, w, h;
     int rx2, ry2;
-    char f_type;
-            
-    
+
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glPolygonMode(GL_FRONT, GL_FILL);            
-    
+    glPolygonMode(GL_FRONT, GL_FILL);
+
 
     fan_no = 0;
 
@@ -738,12 +190,8 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T 
 
             for (w = 0; w < mesh -> tiles_x; w++) {
 
-                f_type = mi[fan_no].type;
-                
-                if (f_type > 0) {
+                if (editdrawSetTransColor(&mesh -> fan[fan_no], trans)) {
 
-                    editmainSetTransColor(f_type, trans);   
-                                    
                     rx2 = draw_rect.x + draw_rect.w;
                     ry2 = draw_rect.y + draw_rect.h;
 
@@ -751,7 +199,7 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T 
                     glVertex2i(rx2, ry2);
                     glVertex2i(rx2, draw_rect.y);
                     glVertex2i(draw_rect.x, draw_rect.y);
-                    
+
                 }
 
                 draw_rect.x += draw_rect.w;
@@ -764,7 +212,7 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T 
             draw_rect.y += draw_rect.h;
     }
     glEnd();
-    
+
     glDisable(GL_BLEND);
 
 }
@@ -775,14 +223,13 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, MAP_INFO_T 
  *  Description:
  *      Draws a single transparent fan
  *	    Draws a list of fans with given number on 3D-Mesh
- *      Transparent, with no texture 
+ *      Transparent, with no texture
  * Input:
  *      mesh *:   Pointer on mesh info
  *      fan_no:   Number of fan to draw
- *      add_type: Type of transparent fan for choosing color 
  *      trans:    Transparency of fan drawn
  */
-static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no, char add_type, unsigned char trans)
+static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no, unsigned char trans)
 {
 
     COMMAND_T *mc;
@@ -797,12 +244,12 @@ static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no, char add_type, un
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);     
     glPolygonMode(GL_FRONT, GL_FILL);     
   
-    editmainSetTransColor(add_type, trans);   
+    editdrawSetTransColor(&mesh -> fan[fan_no], trans);
     
     type = (char)(mesh -> fan[fan_no].type & 0x1F);  /* Maximum 31 fan types */
                                                      /* Others are flags     */
 
-    mc   = &MeshCommand[type];
+    mc   = &mesh -> pcmd[type];
 
     vert_base = mesh -> vrtstart[fan_no];
 
@@ -865,7 +312,7 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
     type   &= 0x1F;     /* Maximum 31 fan types for drawing         */
 
     
-    mc   = &MeshCommand[type];
+    mc   = &mesh -> pcmd[type];
 
     vert_base = mesh -> vrtstart[fan_no];
 
@@ -950,29 +397,28 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
  *	    Draws a single fan with given number from given mesh
  * Input:
  *     mesh *:   Pointer on mesh to draw
- *     ft *:     Pointer on chosen fan type
- *     fd *:     ft -> type >= 0 Display it over the position of chosen fan  
- *     mi *:     Pointer on info about special tiles    
+ *     ft *:     Pointer on description of chosen fan type
+ *     fd *:     ft -> type >= 0 Display it over the position of chosen fan
  */
-static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, MAP_INFO_T *mi)
+static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd)
 {
 
     int fan_no;
-    
+
 
     glPolygonMode(GL_FRONT, mesh -> draw_mode & EDIT_DRAWMODE_SOLID ? GL_FILL : GL_LINE);
-    glFrontFace(GL_CW); 
-    
+    glFrontFace(GL_CW);
+
     if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
         glEnable(GL_TEXTURE_2D);
     }
-    
+
     /* Draw the map, using different edit flags           */
     /* Needs list of visible tiles
        ( which must be built every time after the camera moved) */
-    /* TODO: 
+    /* TODO:
         Draw first bottom tiles (and transparent fan, if on same fan)
-        Second draw walls (and transparent fan, if on same fan) 
+        Second draw walls (and transparent fan, if on same fan)
         After that draw ordered all tiles
             if (wall) draw wall
                 ==> objects on same tile
@@ -981,21 +427,21 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, MAP_INFO_T *
     /* =============== First draw bottom tiles ============== */
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
         if (mesh -> fan[fan_no].type == 0) {
-            editdrawSingleFan(mesh, fan_no, 0);  
-            if (mi[fan_no].type != 0) {  
-                /* Draw passages and spawn points, if needed */ 
-                editdrawTransparentFan3D(mesh, fan_no, mi[fan_no].type, 128);
-            }        
+            editdrawSingleFan(mesh, fan_no, 0);
+            if (editdrawSetTransColor(&mesh -> fan[fan_no], 128)) {
+                /* Draw passages and spawn points, if needed */
+                editdrawTransparentFan3D(mesh, fan_no, 128);
+            }
         }
     }
-    
-    /* =============== First draw wall tiles ============== */
+
+    /* =============== Second draw wall tiles ============== */
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
         if (mesh -> fan[fan_no].type != 0) {
             editdrawSingleFan(mesh, fan_no, 0);
-            if (mi[fan_no].type != 0) {  
-                /* Draw passages and spawn points, if needed */ 
-                editdrawTransparentFan3D(mesh, fan_no, mi[fan_no].type, 128);
+            if (editdrawSetTransColor(&mesh -> fan[fan_no], 128)) {
+                /* Draw passages and spawn points, if needed */
+                editdrawTransparentFan3D(mesh, fan_no, 128);
             }             
         }
     }      
@@ -1069,53 +515,34 @@ static void editdraw2DCameraPos(int x, int y, int tw, int th)
  * Input:
  *     None
  * Output:
- *     Pointer on command list
+ *     None
  */
-COMMAND_T *editdrawInitData(void)
+void editdrawInitData(void)
 {
 
     char texturename[128];
     char *fname;
-    COMMAND_T *mcmd;
     int entry, cnt;
-
-
-    mcmd = MeshCommand;
-
-    /* Correct all of them silly texture positions for seamless tiling */
-    for (entry = 0; entry < (MAXMESHTYPE/2); entry++) {
     
-        for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt++) {
-
-            mcmd -> uv[cnt]    *= 0.1211f;   /* 31 / 256 */
-            mcmd -> biguv[cnt] *= 0.2461f;   /* 63 / 256 */
-                    
-        }
-        
-        mcmd++;
-    
-    }     
 
     // Make tile texture start offsets
-     for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
+    for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
 
-        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125);    
-        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125);   
+        MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125);
+        MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125);
 
     }
 
     /* Load the basic textures */
     for (cnt = 0; cnt < 4; cnt++) {
-    
-        sprintf(texturename, "tile%d.bmp", cnt);
-        
-        fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, texturename);
-        
-        WallTex[cnt] = sdlgltexLoadSingle(fname);
-        
-    }
 
-    return MeshCommand;
+        sprintf(texturename, "tile%d.bmp", cnt);
+
+        fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, texturename);
+
+        WallTex[cnt] = sdlgltexLoadSingle(fname);
+
+    }
 
 }
 
@@ -1146,7 +573,7 @@ void editdrawFreeData(void)
  *     fd *:     ft -> type >= 0 Display it over the position of chosen fan     
  *     mi *:     This             
  */
-void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, MAP_INFO_T *mi)
+void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd)
 {
 
     int w, h;
@@ -1185,7 +612,7 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, MAP_INFO_T *mi)
     }
     else {
     
-        editdrawMap(mesh, ft, fd, mi);     
+        editdrawMap(mesh, ft, fd);     
         
     }
 
@@ -1202,9 +629,8 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, MAP_INFO_T *mi)
  *     mesh *:   Pointer on mesh to draw
  *     x, y:     Draw at this position
  *     chosen *: This fan(s) is chosen by user
- *     mi *:     Pointer on info about special tiles    
  */
-void editdraw2DMap(MESH_T *mesh, int x, int y, MAP_INFO_T *mi)
+void editdraw2DMap(MESH_T *mesh, int x, int y)
 {
 
     SDLGL_RECT draw_rect, draw_rect2;
@@ -1267,7 +693,7 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, MAP_INFO_T *mi)
     draw_rect.y = y;
     
     /* ---- Draw all special fans, if asked for ---- */    
-    editdrawTransparentFan2D(mesh, &draw_rect, mi, 128);
+    editdrawTransparentFan2D(mesh, &draw_rect, 128);
 
     /* ------------ Draw grid for easier editing ------- */
     draw_rect.x = x;

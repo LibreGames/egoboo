@@ -30,6 +30,7 @@
 
 #include "sdlgl3d.h"            /* DEG2RAD                              */
 #include "editor.h"             /* Global needed definitions            */
+#include "egomap.h"             /* Map data and handling it             */
 #include "editfile.h"           /* Load and save map files              */
 #include "editdraw.h"           /* Draw anything                        */
 #include "wallmake.h"           /* Create walls/floors simple           */
@@ -55,24 +56,11 @@
 #define EDITMAIN_SOUTH  0x02
 #define EDITMAIN_WEST   0x03
 
-#define EDITMAIN_MAXLIGHT    100        /* Maximum number of lights     */  
-#define EDITMAIN_FADEBORDER   64        /* Darkness at the edge of map  */
-  
 /*******************************************************************************
 * DATA							                                               *
 *******************************************************************************/
 
-/* ----------- Lights ---------- */
-static int LightAmbi    = 22;
-static int LightAmbiCut = 1;
-static int LightDirect  = 16;
-static int NumLight     = 0;
-static LIGHT_T LightList[EDITMAIN_MAXLIGHT + 2];
-
-static MESH_T Mesh;
-static COMMAND_T *pCommands;
-
-static MAP_INFO_T Map_Info[MAXMESHFAN + 10];    /* Info a about spawnpoints and passages */
+static MESH_T *Mesh;            /* Pointer on actual mesh   */
 
 /* --- Definition of preset tiles for 'simple' mode -- */
 static FANDATA_T PresetTiles[] = {
@@ -171,7 +159,7 @@ static void editmainSetFanStart(MESH_T *mesh)
 	for (fan_no = 0, vertex_no = 0; fan_no < mesh -> numfan; fan_no++) {
 
 		mesh -> vrtstart[fan_no] = vertex_no;
-		vertex_no += pCommands[mesh -> fan[fan_no].type & 0x1F].numvertices;
+		vertex_no += mesh -> pcmd[mesh -> fan[fan_no].type & 0x1F].numvertices;
 
 	}
 
@@ -198,7 +186,7 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y)
 	int vertex;
 
 
-	ft = &pCommands[mesh -> fan[fan].type & 0x1F];
+	ft = &mesh -> pcmd[mesh -> fan[fan].type & 0x1F];
 
 	if (mesh -> numfreevert >= ft -> numvertices)
 	{
@@ -253,7 +241,7 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_INFO_T *edit_state, int fa
 
 
 	act_ft = &mesh -> fan[fan_no];
-	act_fd = &pCommands[act_ft -> type & 0x1F];
+	act_fd = &mesh -> pcmd[act_ft -> type & 0x1F];
 
 	/* Do an update on the 'static' data of the fan */
 	act_ft -> tx_no    = edit_state -> ft.tx_no;
@@ -350,7 +338,7 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
 
 
 	/* Get a copy from  the fan type list, get only the 'lower' numbers */
-	memcpy(dest, &pCommands[type & 0x1F], sizeof(COMMAND_T));
+	memcpy(dest, &Mesh -> pcmd[type & 0x1F], sizeof(COMMAND_T));
 
 	if (dir != EDITMAIN_NORTH) {
 
@@ -402,8 +390,8 @@ static int editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
 	int num_welded;
 
 
-	numvertices1 = pCommands[mesh -> fan[fan_no1].type & 0x1F].numvertices;
-	numvertices2 = pCommands[mesh -> fan[fan_no2].type & 0x1F].numvertices;
+	numvertices1 = mesh -> pcmd[mesh -> fan[fan_no1].type & 0x1F].numvertices;
+	numvertices2 = mesh -> pcmd[mesh -> fan[fan_no2].type & 0x1F].numvertices;
 	num_welded   = 0;
 
 	vtx1 = mesh -> vrtstart[fan_no1];
@@ -436,46 +424,7 @@ static int editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
 
 }
 
-/*
- * Name:
- *     editmainCompleteMapData
- * Description:
- *     Completes loaded / generated map data with additional values needed
- *     for work.
- *       - Set number of fans
- *       - Set size of complete mesh
- *       - Set number of first vertex for fans
- * Input:
- *     mesh*:     Pointer on mesh to handle
- *     draw_mode: To hand to mesh for drawing
- * Output:
- *    None
- */
-static void editmainCompleteMapData(MESH_T *mesh, char draw_mode)
-{
 
-	mesh -> numfan  = mesh -> tiles_x * mesh -> tiles_y;
-
-	mesh -> edgex = (mesh -> tiles_x * EDITMAIN_TILEDIV) - 1;
-	mesh -> edgey = (mesh -> tiles_y * EDITMAIN_TILEDIV) - 1;
-	mesh -> edgez = 180 * 16;
-
-	mesh -> watershift = 3;
-	if (mesh -> tiles_x > 16)   mesh -> watershift++;
-	if (mesh -> tiles_x > 32)   mesh -> watershift++;
-	if (mesh -> tiles_x > 64)   mesh -> watershift++;
-	if (mesh -> tiles_x > 128)  mesh -> watershift++;
-	if (mesh -> tiles_x > 256)  mesh -> watershift++;
-
-	/* Now set the number of first vertex for each fan */
-	editmainSetFanStart(mesh);
-
-	mesh -> numfreevert = (MAXTOTALMESHVERTICES - 10) - mesh -> numvert;
-	/* Set flag that map has been loaded */
-	mesh -> map_loaded = 1;
-	mesh -> draw_mode  = draw_mode;
-
-}
 
 /*
  * Name:
@@ -492,8 +441,6 @@ static int editmainCreateNewMap(EDITMAIN_INFO_T *es, MESH_T *mesh)
 
 	int x, y, fan;
 
-
-	memset(mesh, 0, sizeof(MESH_T));
 
 	mesh -> tiles_x        = es -> map_size;
 	mesh -> tiles_y        = es -> map_size;
@@ -525,110 +472,6 @@ static int editmainCreateNewMap(EDITMAIN_INFO_T *es, MESH_T *mesh)
 	}
 
 	return 1;
-
-}
-
-/*
- * Name:
- *     editmainSetVrta
- * Description:
- *     Set the 'vrta'-value for given vertex
- * Input:
- *     mesh *: Pointer on mesh  to handle
- *     vert:   Number of vertex to set
- */
-static int editmainSetVrta(MESH_T *mesh, int vert)
-{
-	/* TODO: Get all needed functions from cartman code */
-	int newa, x, y, z;
-	int brz, deltaz, cnt;
-	int newlevel, distance, disx, disy;
-	/* int brx, bry, dist; */ 
-
-	/* To make life easier  */
-	x = mesh -> vrtx[vert];
-	y = mesh -> vrty[vert];
-	z = mesh -> vrtz[vert];
-
-	// Directional light
-	/*
-	brx = x + 64;
-	bry = y + 64;
-
-	brz = get_level(brx, y) +
-		  get_level(x, bry) +
-		  get_level(x + 46, y + 46);
-	*/
-	
-	brz = z;
-	if (z < -128) z = -128;
-	if (brz < -128) brz = -128;
-	deltaz = z + z + z - brz;
-	newa = (deltaz * LightDirect >> 8);
-
-	// Point lights !!!BAD!!!
-	newlevel = 0;
-	for (cnt = 0; cnt < NumLight; cnt++) {
-		disx = x - LightList[cnt].x;
-		disy = y - LightList[cnt].y;
-		distance = (disx * disx) + (disy * disy);
-		if (distance < (LightList[cnt].radius * LightList[cnt].radius))
-		{
-			newlevel += ((LightList[cnt].level * (LightList[cnt].radius - distance)) / LightList[cnt].radius);
-		}
-	}
-	newa += newlevel;
-
-	// Bounds
-	if (newa < -LightAmbiCut) newa = -LightAmbiCut;
-	newa += LightAmbi;
-	if (newa <= 0) newa = 1;
-	if (newa > 255) newa = 255;
-	mesh -> vrta[vert] = (unsigned char)newa;
-
-	// Edge fade
-	/*
-	dist = dist_from_border(mesh  -> vrtx[vert], mesh -> vrty[vert]);
-	if (dist <= EDITMAIN_FADEBORDER)
-	{
-		newa = newa * dist / EDITMAIN_FADEBORDER;
-		if (newa == 0)  newa = 1;
-		mesh  ->  vrta[vert] = newa;
-	}
-	*/
-
-	return newa;
-
-}
-
-/*
- * Name:
- *     editmainCalcVrta
- * Description:
- *     Generates the 'a'  numbers for all files
- * Input:
- *     mesh*: Pointer on mesh to set twists for
- */
-static void editmainCalcVrta(MESH_T *mesh)
-{
-	int num, cnt;
-	int vert;
-	int fan;
-
-
-	for (fan = 0; fan < mesh -> numfan; fan++) {
-
-		vert = mesh -> vrtstart[fan];
-		num  = pCommands[mesh -> fan[fan].type].numvertices;
-		
-		for (cnt = 0; cnt < num; cnt++) {
-		
-			editmainSetVrta(mesh, vert);
-			vert++;
-			
-		}
-
-	}
 
 }
 
@@ -695,11 +538,11 @@ static void editmainTranslateWallMakeInfo(EDITMAIN_INFO_T *es, MESH_T *mesh, WAL
 
 			es -> ft.type     = type_no;
 			es -> ft.tx_flags = 0;
-			es -> ft.fx       = pCommands[type_no & 0x1F].default_fx;
-			es -> ft.tx_no    = pCommands[type_no & 0x1F].default_tx_no;
+			es -> ft.fx       = mesh -> pcmd[type_no & 0x1F].default_fx;
+			es -> ft.tx_no    = mesh -> pcmd[type_no & 0x1F].default_tx_no;
 			es -> fan_dir     = wi[i].dir;
 
-			memcpy(&es ->fd, &pCommands[type_no & 0x1F], sizeof(COMMAND_T));
+			memcpy(&es ->fd, &mesh -> pcmd[type_no & 0x1F], sizeof(COMMAND_T));
 
 			editmainFanTypeRotate(es -> ft.type,
 								  &es -> fd,
@@ -749,15 +592,15 @@ static void editmainUpdateChosenFreeFan(EDITMAIN_INFO_T *es)
 	if (-1 != es -> fan_selected[0]) {
 					
 		/* Get copy at original position */
-		memcpy(&es -> fd, &pCommands[es -> ft.type & 0x1F], sizeof(COMMAND_T));
+		memcpy(&es -> fd, &Mesh -> pcmd[es -> ft.type & 0x1F], sizeof(COMMAND_T));
         
 		editmainFanTypeRotate(es ->ft.type,
 							  &es -> fd,
 							  es -> fan_dir);
                               
 		/* Now translate the fan to chosen fan position */
-		tx = (es -> fan_selected[0] % Mesh.tiles_x) * 128;
-		ty = (es -> fan_selected[0] / Mesh.tiles_x) * 128;
+		tx = (es -> fan_selected[0] % Mesh -> tiles_x) * 128;
+		ty = (es -> fan_selected[0] / Mesh -> tiles_x) * 128;
 
 		for (cnt = 0; cnt < es -> fd.numvertices; cnt++) {
         
@@ -801,18 +644,18 @@ static int editmainFanSet(EDITMAIN_INFO_T *es, int fan_no, int is_floor)
 		if (es -> edit_mode == EDITOR_TOOL_MAP) {
 
 			if (es -> tx > 0 && es -> ty > 0
-				&& es -> tx < (Mesh.tiles_x - 1)
-				&& es -> ty < (Mesh.tiles_y - 1))  {
+				&& es -> tx < (Mesh -> tiles_x - 1)
+				&& es -> ty < (Mesh -> tiles_y - 1))  {
 
 				/* Get a list of fans surrounding this one */
-				editmainCreateWallMakeInfo(&Mesh, fan_no, wi);
+				editmainCreateWallMakeInfo(Mesh, fan_no, wi);
 
 				num_wall = wallmakeMakeTile(is_floor, wi);
                 
 				if (num_wall) {
                 
 					/* Create tiles from WALLMAKER_INFO_T */
-					editmainTranslateWallMakeInfo(es, &Mesh, wi, num_wall);
+					editmainTranslateWallMakeInfo(es, Mesh, wi, num_wall);
 					es -> fd.numvertices = 0;
 					return 1;
                     
@@ -829,11 +672,11 @@ static int editmainFanSet(EDITMAIN_INFO_T *es, int fan_no, int is_floor)
 			}
 			else {
             
-				memcpy(&es ->fd, &pCommands[es ->ft.type & 0x1F], sizeof(COMMAND_T));
+				memcpy(&es ->fd, &Mesh -> pcmd[es ->ft.type & 0x1F], sizeof(COMMAND_T));
 				editmainFanTypeRotate(es -> ft.type,
 									  &es -> fd,
 									  es -> fan_dir);
-				editmainDoFanUpdate(&Mesh, es, es ->fan_selected[0]);
+				editmainDoFanUpdate(Mesh, es, es -> fan_selected[0]);
                 
 			}
 
@@ -841,14 +684,14 @@ static int editmainFanSet(EDITMAIN_INFO_T *es, int fan_no, int is_floor)
 		else if (es -> edit_mode == EDITOR_TOOL_FAN_FX) {
         
 			/* Do an update on the FX-Flags */
-			Mesh.fan[fan_no].fx = es -> ft.fx;
+			Mesh -> fan[fan_no].fx = es -> ft.fx;
 
 		}
 		else if (es -> edit_mode == EDITOR_TOOL_FAN_TEX) {
         
 			/* Change the texture */
-			Mesh.fan[fan_no].tx_no    = es -> ft.tx_no;
-			Mesh.fan[fan_no].tx_flags = es -> ft.tx_flags;
+			Mesh -> fan[fan_no].tx_no    = es -> ft.tx_no;
+			Mesh -> fan[fan_no].tx_flags = es -> ft.tx_flags;
             
 		}
         
@@ -859,49 +702,14 @@ static int editmainFanSet(EDITMAIN_INFO_T *es, int fan_no, int is_floor)
 
 /*
  * Name:
- *     editmainSetChosenFans
- * Description:
- *     Writes the chosen fans to the info-map
- * Input:
- *     es *: Info to work with
- */
-static void editmainSetChosenFans(EDITMAIN_INFO_T *es)
-{
-
-    int i;
-    int *fan_no;
-
-
-    for (i = 0; i < Mesh.numfan; i++) {
-
-        if (Map_Info[i].type & MAP_INFO_CHOSEN) {
-
-            Map_Info[i].type &= (char)~MAP_INFO_CHOSEN;  /* Clear existing chosen fans */
-
-        }
-
-    }
-
-    fan_no = &es -> fan_selected[0];
-
-    while(*fan_no >= 0) {
-
-        Map_Info[*fan_no].type |= MAP_INFO_CHOSEN;
-        fan_no++;
-        
-    }
-
-}
-
-/*
- * Name:
  *     editmainFanTypeName
  * Description:
  *     Returns the description of given fan-type
  * Input:
+ *     mesh *: This mesh
  *     es *:     Edit-State to handle
  */
-static void editmainFanTypeName(EDITMAIN_INFO_T *es)
+static void editmainFanTypeName(MESH_T *mesh, EDITMAIN_INFO_T *es)
 {
 
 	char type_no;
@@ -911,9 +719,9 @@ static void editmainFanTypeName(EDITMAIN_INFO_T *es)
 
 		type_no = (char)(es -> ft.type & 0x1F);
 
-		if (pCommands[type_no].name != 0) {
+		if (mesh -> pcmd[type_no].name != 0) {
 
-			sprintf(es -> fan_name, "%s", pCommands[type_no].name);
+			sprintf(es -> fan_name, "%s", mesh -> pcmd[type_no].name);
 			return;
 
 		}
@@ -941,8 +749,9 @@ static void editmainFanTypeName(EDITMAIN_INFO_T *es)
 void editmainInit(EDITMAIN_INFO_T *es, int map_size, int minimap_tile_w)
 {
 
-	pCommands = editdrawInitData();
-	 
+	editdrawInitData();
+
+    /* --- Initialie the edit data --- */
 	memset(es, 0, sizeof(EDITMAIN_INFO_T));
 
 	es -> display_flags   |= EDITMAIN_SHOW2DMAP;
@@ -951,6 +760,9 @@ void editmainInit(EDITMAIN_INFO_T *es, int map_size, int minimap_tile_w)
 	es -> minimap_w       = map_size * minimap_tile_w;
 	es -> minimap_h       = map_size * minimap_tile_w;
 	es -> draw_mode       = (EDIT_DRAWMODE_SOLID | EDIT_DRAWMODE_TEXTURED | EDIT_DRAWMODE_LIGHTMAX);
+
+    /* --- Do additional initialization for the map module --- */
+    egomapInit();
 
 }
 
@@ -987,17 +799,23 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
 	switch(command) {
 
 		case EDITMAIN_DRAWMAP:
-            editmainSetChosenFans(es);
-			editdraw3DView(&Mesh, &es -> ft, &es -> fd, Map_Info);
+            egomapDraw(&es -> ft, &es -> fd);
 			return 1;
 
 		case EDITMAIN_NEWMAP:
-			if (editmainCreateNewMap(es, &Mesh)) {
+        case EDITMAIN_LOADMAP:
+            Mesh = egomapLoad((char)(EDITMAIN_NEWMAP ? 0 : 1), es -> msg, es -> map_size);
+			if (Mesh) {
 
-				editmainCompleteMapData(&Mesh, es -> draw_mode);
-				sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
-                /* Initialize the 'sub-map' for additional info */
-                memset(Map_Info, 0, (MAXMESHFAN * sizeof(MAP_INFO_T)));
+                Mesh -> draw_mode = es -> draw_mode;
+                
+                if (command == EDITMAIN_NEWMAP) {
+                
+                    editmainCreateNewMap(es, Mesh);
+                    
+                }
+				                
+				sdlgl3dInitVisiMap(Mesh -> tiles_x, Mesh -> tiles_y, 128.0);
                 /* And move camera to standard basis point */
                 sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
                 /* And no fan is selected */
@@ -1005,27 +823,10 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
 				return 1;
 
 			}
-			break;
-
-		case EDITMAIN_LOADMAP:
-			memset(&Mesh, 0, sizeof(MESH_T));
-			if (editfileMapMesh(&Mesh, es -> msg, 0)) {
-
-				editmainCompleteMapData(&Mesh, es -> draw_mode);
-				sdlgl3dInitVisiMap(Mesh.tiles_x, Mesh.tiles_y, 128.0);
-                memset(Map_Info, 0, (MAXMESHFAN * sizeof(MAP_INFO_T)));
-                /* And move camera to standard basis point */
-                sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
-                /* And no fan is selected */
-                es -> fan_selected[0] = -1;
-				return 1;
-
-			}
-			break;
+			break;		
 
 		case EDITMAIN_SAVEMAP:
-			editmainCalcVrta(&Mesh);
-			return editfileMapMesh(&Mesh, es -> msg, 1);
+            return egomapSave(es -> msg, EGOMAP_SAVE_MAP);			
 
 		case EDITMAIN_ROTFAN:
 			if (es -> edit_mode == EDITOR_TOOL_FAN) {
@@ -1055,14 +856,9 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
  */
 void editmainDrawMap2D(EDITMAIN_INFO_T *es, int x, int y)
 { 
-	if (es ->display_flags & EDITMAIN_SHOW2DMAP) {
-	
-		Mesh.minimap_w = es -> minimap_w;
-		Mesh.minimap_h = es -> minimap_h;
+	if (es -> display_flags & EDITMAIN_SHOW2DMAP) {
 
-        editmainSetChosenFans(es);
-        
-		editdraw2DMap(&Mesh, x, y, Map_Info); 
+        egomapDraw2DMap(x, y, es -> minimap_w, es -> minimap_h);
 
 	}
 
@@ -1089,8 +885,8 @@ char editmainToggleFlag(EDITMAIN_INFO_T *es, int which, unsigned char flag)
 	switch(which) {
 
 		case EDITMAIN_TOGGLE_DRAWMODE:
-			Mesh.draw_mode ^= flag;                 /* Change it in actual map */
-			es -> draw_mode = Mesh.draw_mode;   /* Show it in edit_state */
+			Mesh -> draw_mode ^= flag;                 /* Change it in actual map */
+			es -> draw_mode = Mesh -> draw_mode;   /* Show it in edit_state */
 			break;
 
 		case EDITMAIN_TOGGLE_EDITSTATE:
@@ -1182,19 +978,19 @@ void editmainChooseFan(EDITMAIN_INFO_T *es, int cx, int cy, int is_floor)
         
 		/* Reset number of chosen fan, because it's done */
 		return;
-        
+
 	}
 	/* ------------------------- */
 
 	/* Save it as x/y-position, too */
-	tw = Mesh.minimap_w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
-	th = Mesh.minimap_h / Mesh.tiles_y;
+	tw = Mesh -> minimap_w / Mesh -> tiles_x;      /* Calculate rectangle size for mouse */
+	th = Mesh -> minimap_h / Mesh -> tiles_y;
 	es -> tx = cx / tw;
 	es -> ty = cy / th;
 
-	fan_no = (es -> ty * Mesh.tiles_x) + es -> tx;
+	fan_no = (es -> ty * Mesh -> tiles_x) + es -> tx;
 
-	if (fan_no >= 0 && fan_no < Mesh.numfan) {
+	if (fan_no >= 0 && fan_no < Mesh -> numfan) {
 
 		es -> fan_selected[0] = fan_no;
 		es -> fan_selected[1] = -1;
@@ -1203,7 +999,7 @@ void editmainChooseFan(EDITMAIN_INFO_T *es, int cx, int cy, int is_floor)
 		if (es -> edit_mode == EDITOR_TOOL_OFF) {
         
 			/* In info-mode return the properties of the chosen fan */
-			memcpy(&es -> ft, &Mesh.fan[fan_no], sizeof(FANDATA_T));
+			memcpy(&es -> ft, &Mesh -> fan[fan_no], sizeof(FANDATA_T));
             
 		}
 		else {
@@ -1251,8 +1047,8 @@ void editmainChooseFanExt(EDITMAIN_INFO_T *es)
 	int num_select;
 
 
-	tw = Mesh.minimap_w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
-	th = Mesh.minimap_h / Mesh.tiles_y;
+	tw = Mesh -> minimap_w / Mesh -> tiles_x;      /* Calculate rectangle size for mouse */
+	th = Mesh -> minimap_h / Mesh -> tiles_y;
 
 	tx1 = es -> drag_x / tw;
 	ty1 = es -> drag_y / th;
@@ -1263,15 +1059,15 @@ void editmainChooseFanExt(EDITMAIN_INFO_T *es)
 
 	while(ty1 <= ty2) {
     
-		if (ty1 > 0 && ty1 < (Mesh.tiles_y -1)) {
+		if (ty1 > 0 && ty1 < (Mesh -> tiles_y -1)) {
 			/* If 'ty' in map */
 			ltx = tx1;
             
 			while(ltx < tx2) {
             
-				if (ltx > 0 && ltx < (Mesh.tiles_x - 1) && ty1 > 0 && ty1 < (Mesh.tiles_y - 1)) {
+				if (ltx > 0 && ltx < (Mesh -> tiles_x - 1) && ty1 > 0 && ty1 < (Mesh -> tiles_y - 1)) {
 
-					es -> fan_selected[num_select] = (ty1 * Mesh.tiles_x) + ltx;
+					es -> fan_selected[num_select] = (ty1 * Mesh -> tiles_x) + ltx;
 					num_select++;
                     
 					if (num_select >= EDITMAIN_MAXSELECT) {
@@ -1336,7 +1132,7 @@ void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir)
 	es -> fan_dir = 0;
 
 	memcpy(&es -> ft, &PresetTiles[es ->bft_no], sizeof(FANDATA_T));
-	memcpy(&es -> fd, &pCommands[es ->ft.type & 0x1F], sizeof(COMMAND_T));
+	memcpy(&es -> fd, &Mesh -> pcmd[es ->ft.type & 0x1F], sizeof(COMMAND_T));
 
 	/* Now move it to the chosen position */
 	x = es -> tx * 128;
@@ -1349,7 +1145,7 @@ void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir)
         
 	}
 
-	editmainFanTypeName(es);
+	editmainFanTypeName(Mesh, es);
 
 }
 
@@ -1423,91 +1219,30 @@ void editmainChooseTex(EDITMAIN_INFO_T *es, int cx, int cy, int w, int h)
 
 /*
  * Name:
- *     editmainSetMapInfo
- * Description:
- *     Fills in the map info based on the data given
- * Input:
- *     which:  Kind of data (spawn point, passage
- *     number: Number of info to set
- *     x, y,
- *     x2, y2: Extent on map in tiles
- */
-void editmainSetMapInfo(char which, int number, int x, int y, int x2, int y2)
-{
-
-    int x_count, y_count;
-    int tile_no;
-
-
-    if (x > 0 && y > 0) {
-
-        for (y_count = y; y_count <= y2; y_count++) {
-
-            for (x_count = x; x_count <= x2; x_count++) {
-
-                tile_no = (y_count * Mesh.tiles_x) + x_count;
-                Map_Info[tile_no].type   = which;
-                Map_Info[tile_no].number = (short int)number;
-
-            }
-
-        }
-
-    }
-
-}
-
-/*
- * Name:
- *     editmainClearMapInfo
- * Description:
- *     Clears the whole and-ed with given flags
- * Input:
- *     None
- */
-void editmainClearMapInfo(void)
-{
-
-    int tile_no;
-
-
-    for (tile_no = 0; tile_no < Mesh.numfan; tile_no++) {
-
-        Map_Info[tile_no].type   = 0;
-        Map_Info[tile_no].number = 0;
-
-    }
-
-}
-
-/*
- * Name:
- *     editmainGetMapInfo
+ *     editmainGetTileInfo
  * Description:
  *     Calculates the fan number based on the mouse position on minimap
  *     and returns the data about chosen tile
  *     Fills in the map info based on the data given
  * Input:
- *     es *:         EDit-State to fill with info about map at chosen position      
+ *     es *:         Edit-State to fill with info about map at chosen position      
  *     mou_x, mou_x: Chosen position on minimap from left top
  */
-void editmainGetMapInfo(EDITMAIN_INFO_T *es, int mou_x, int mou_y)
+void editmainGetTileInfo(EDITMAIN_INFO_T *es, int mou_x, int mou_y)
 {
 
     int tw, th;
     int tx, ty;
 
     
-    tw = Mesh.minimap_w / Mesh.tiles_x;      /* Calculate rectangle size for mouse */
-	th = Mesh.minimap_h / Mesh.tiles_y;
+    tw = Mesh -> minimap_w / Mesh -> tiles_x;      /* Calculate rectangle size for mouse */
+	th = Mesh -> minimap_h / Mesh -> tiles_y;
 
     tx = mou_x / tw;
 	ty = mou_y / th;
 
-    es -> mi_fan_no   = (ty * Mesh.tiles_x) + tx;
-    es -> mi_type     = Map_Info[es -> mi_fan_no].type;
-    es -> mi_t_number = Map_Info[es -> mi_fan_no].number;
+    es -> mi_fan_no = (ty * Mesh -> tiles_x) + tx;
     
-    memcpy(&es -> ft, &Mesh.fan[es -> mi_fan_no], sizeof(FANDATA_T));
+    egomapGetTileInfo(es -> mi_fan_no, &es -> ft);
 
 }

@@ -598,19 +598,19 @@ static void editorOpenToolDialog(EDITMAIN_INFO_T *es)
 
             case EDITOR_TOOL_PASSAGE:
                 /* Get info about passage from dialog, if available */
-                if (es -> mi_t_number > 0 && (es -> mi_type & MAP_INFO_PASSAGE)) {
+                if ((es -> ft.psg_no & 0x7F) > 0) {
 
-                    editfilePassage(EDITFILE_ACT_GETDATA, es -> mi_t_number, &ActPsg);
+                    egomapPassage((char)(es -> ft.psg_no & 0x7F), &ActPsg, EGOMAP_GET);
                     editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
 
                 }
                 break;
 
             case EDITOR_TOOL_OBJECT:
-                /* Get info about objects if available */
-                if (es -> mi_t_number > 0 && (es -> mi_type & MAP_INFO_SPAWN)) {
+                /* Get info about object if available */
+                if (es -> ft.obj_no > 0) {
 
-                    editfileSpawn(EDITFILE_ACT_GETDATA, es -> mi_t_number, &ActSpt);
+                    egomapSpawnPoint(es -> ft.obj_no, &ActSpt, EGOMAP_GET);
                     editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
 
                 }
@@ -636,7 +636,7 @@ static void editor2DMap(SDLGL_EVENT *event)
     switch(event -> sub_code) {
 
         case EDITOR_2DMAP_CHOOSEFAN:
-            editmainGetMapInfo(&EditInfo, event -> mou.x, event -> mou.y);
+            editmainGetTileInfo(&EditInfo, event -> mou.x, event -> mou.y);
 
             if (event -> sdlcode == SDLGL_KEY_MOULEFT) {
                 EditInfo.drag_w = 0;
@@ -706,8 +706,6 @@ static int editorFileMenu(char which)
         case EDITOR_FILE_LOAD:
             editmainMap(&EditInfo, EDITMAIN_LOADMAP);
             /* Load additional data for this module */
-            editfileSpawn(EDITFILE_ACT_LOAD, 1, &ActSpt);
-            editfilePassage(EDITFILE_ACT_LOAD, 1, &ActPsg);
             editfileModuleDesc(EDITFILE_ACT_LOAD, &ModuleDesc);
             /* Init the size if the minimap display */
             editorSetMiniMap(EditInfo.map_size);
@@ -922,9 +920,6 @@ static int editorModuleDlg(SDLGL_EVENT *event)
 static void editorMenuTool(SDLGL_EVENT *event)
 {
 
-    int rec_no;
-
-
     /* Set the number of tool to use, invoked by right click on map */
     EditInfo.edit_mode = event -> sub_code;
 
@@ -942,8 +937,6 @@ static void editorMenuTool(SDLGL_EVENT *event)
     }
     else {
 
-        editmainClearMapInfo();
-
         switch(EditInfo.edit_mode) {
 
             case EDITOR_TOOL_MAP:
@@ -953,31 +946,11 @@ static void editorMenuTool(SDLGL_EVENT *event)
                 
             case EDITOR_TOOL_PASSAGE:
                 /* Write the data about passages to edit-map  */
-                rec_no = 1;
-                while(editfilePassage(EDITFILE_ACT_GETDATA, rec_no, &ActPsg))
-                {
-                    editmainSetMapInfo(MAP_INFO_PASSAGE,
-                                       rec_no,
-                                       ActPsg.topleft[0],
-                                       ActPsg.topleft[1],
-                                       ActPsg.bottomright[0],
-                                       ActPsg.bottomright[1]);
-                    rec_no++;
-                }
+
                 break;
             case EDITOR_TOOL_OBJECT:
                 /* Write the data about objects points to edit-map  */
-                rec_no = 1;
-                while(editfileSpawn(EDITFILE_ACT_GETDATA, rec_no, &ActSpt))
-                {
-                    editmainSetMapInfo(MAP_INFO_SPAWN,
-                                       rec_no,
-                                       ActSpt.x_pos,
-                                       ActSpt.y_pos,
-                                       ActSpt.x_pos,
-                                       ActSpt.y_pos);
-                    rec_no++;
-                }
+
                 break;
 
             case EDITOR_TOOL_MODULE:

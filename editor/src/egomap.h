@@ -27,22 +27,11 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
-
-/* --- Own header --- */
-#include "egomap.h"
+#include "editfile.h"   /* Description of passages and spawn points */
 
 /*******************************************************************************
 * DEFINES								                                       *
 *******************************************************************************/
-
-#define MAXMESHTYPE                     64          // Number of mesh types
-#define MAXMESHLINE                     64          // Number of lines in a fan schematic
-#define MAXMESHVERTICES                 16          // Max number of vertices in a fan
-#define MAXMESHFAN                      (128*128)   // Size of map in fans
-#define MAXTOTALMESHVERTICES            ((MAXMESHFAN*(MAXMESHVERTICES / 2)) - 10)
-#define MAXMESHCOMMAND                  4             // Draw up to 4 fans
-#define MAXMESHCOMMANDENTRIES           32            // Fansquare command list size
-#define MAXMESHCOMMANDSIZE              32            // Max trigs in each command
 
 #define MPDFX_REF       0x00    /* MeshFX   */
 #define MPDFX_SHA       0x01    
@@ -54,108 +43,39 @@
 #define MPDFX_DAMAGE    0x40    
 #define MPDFX_SLIPPY    0x80  
 
-/* ---- For MAP_INFO_T: Kind of additional info ---- */
-#define MAP_INFO_NONE       0x00
-#define MAP_INFO_SPAWN      0x01
-#define MAP_INFO_PASSAGE    0x02
-#define MAP_INFO_CHOSEN     0x40        /* TODO: These fans are chosen      */ 
+/* ---- For EGOMAP_T: Kind of additional info ---- */
+#define EGOMAP_CHOSEN   0x80        /* Fan is chosen by editor  */ 
 
-/*******************************************************************************
-* TYPEDEFS							                                           *
-*******************************************************************************/
+/* --- Save files --- */
+#define EGOMAP_SAVE_MAP     0x01    /* Save the map             */
+#define EGOMAP_SAVE_PSG     0x02    /* Save the passages        */
+#define EGOMAP_SAVE_SPAWN   0x04    /* save the spawn points    */   
+#define EGOMAP_SAVE_ALL     0xFF 
 
-typedef struct {
+/* --- Types of objects (for drawing) --- */
+#define EGOMAP_OBJ_TILE   0x01    /* First always the tile            */
+#define EGOMAP_OBJ_CHAR   0x02    /* Characters (MD2)                 */
+#define EGOMAP_OBJ_PART   0x03    /* Particles (can be transparent)   */
 
-    unsigned char ref;      /* Light reference      */
-    float u, v;             /* Texture mapping info: Has to be multiplied by 'sub-uv' */    
-    float x, y, z;          /* Default position of vertex at 0, 0, 0    */
-
-} EDITOR_VTX;
-
-typedef struct {
-
-    char *name;                             // Name of this fan type
-    char default_fx;                        // Default flags to set, if new fan (for walls)
-    unsigned char default_tx_no;            // Default texture to set
-    char  numvertices;			            // meshcommandnumvertices
-    int   count;			                // meshcommands
-    int   size[MAXMESHCOMMAND];             // meshcommandsize
-    int   vertexno[MAXMESHCOMMANDENTRIES];  // meshcommandvrt, number of vertex
-    float uv[MAXMESHVERTICES * 2];          // meshcommandu, meshcommandv
-    float biguv[MAXMESHVERTICES * 2];       // meshcommandu, meshcommandv
-                                            // For big texture images
-    EDITOR_VTX vtx[MAXMESHVERTICES];        // Holds it's u/v position and default extent x/y/z
-    
-} COMMAND_T;
-
-typedef struct {
-  
-    unsigned char tx_no;    /* Number of texture:                           */
-                            /* (tx_no >> 6) & 3: Number of wall texture     */
-                            /* tx_no & 0x3F:     Number of part of texture  */ 
-    unsigned char tx_flags; /* Special flags                                */
-    unsigned char fx;		/* Tile special effects flags                   */
-    char          type;     /* Tile fan type (index into COMMAND_T)         */
-    /* --- Additional info for fan                                          */
-    unsigned char twist;    /* Surface normal for slopes (?)                */
-    int           vs;       /* Number of first vertex for this fan          */
-    char          psg_no;   /* > 0: Number of passage for this tile         */
-    int           obj_no;   /* Number of first object on this fan           */
-    
-} FANDATA_T;
-
-typedef struct {
-
-    float x, y, z;          /* Vertex x / y / z                     */           
-    unsigned char a;        /* Ambient lighting                     */
-
-} MESH_VTX_T;              /* Planned for later adjustement how to store vertices */
-
-typedef struct {
-
-    unsigned char map_loaded;   // A map is loaded  into this struct
-    unsigned char draw_mode;    // Flags for display of map
-    int mem_size;               // Size of memory allocated (for editor)    
-    
-    int numvert;                // Number of vertices in map
-    int numfreevert;            // Number of free vertices for edit
-    int tiles_x, tiles_y;       // Size of mesh in tiles          
-    int numfan;                 // Size of map in 'fans' (tiles_x * tiles_y)
-    int watershift;             // Depends on size of map
-    int minimap_w,              // For drawing in 2D on minimap         
-        minimap_h;
-    int minimap_tile_w;         // Size of tile in minimap
-    
-    float edgex;                // Borders of mesh
-    float edgey;                
-    float edgez;                
-
-    FANDATA_T fan[MAXMESHFAN];                      // Fan desription       
-
-    /* Prepare usage of dynamically allocated memory */
-    MESH_VTX_T *vrt;            // Pointer on list of map vertices
-    char *data;                 // Allcated memory for map in one chunk (filesize)    
-    
-    float vrtx[MAXTOTALMESHVERTICES + 10];          // Vertex position
-    float vrty[MAXTOTALMESHVERTICES + 10];          //
-    float vrtz[MAXTOTALMESHVERTICES + 10];          // Vertex elevation
-    unsigned char vrta[MAXTOTALMESHVERTICES + 10];  // Vertex base light, 0=unused
-    
-    int  vrtstart[MAXMESHFAN];                      // First vertex of given fan    
-    
-} MESH_T;
-
-typedef struct {
-
-    char type;          /* Type of map_info: MAP_INFO_NONE, MAP_INFO_SPAWN  MAP_INFO_PASSAGE */
-    short int number;   /* Number of spawn point / passage chosen           */    
-
-} MAP_INFO_T;   /* Information about spawn points an passages for choosing and display */
+/* --- Handling for map objects --- */
+#define EGOMAP_GET   0x01
+#define EGOMAP_SET   0x02
+#define EGOMAP_CLEAR 0x03
 
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
 void egomapInit(void);
+void egomapSetFanStart(MESH_T *mesh);
+MESH_T *egomapLoad(char create, char *msg, int num_tile);
+int  egomapSave(char *msg, char what);
+void egomapPassage(char p_no, EDITFILE_PASSAGE_T *psg, char action);
+void egomapSpawnPoint(int s_no, EDITFILE_SPAWNPT_T *spt, char action);
+void egomapGetTileInfo(int tile_no, FANDATA_T *ft);
+
+/* --- Draw command --- */
+void egomapDraw(FANDATA_T *ft, COMMAND_T *fd);
+void egomapDraw2DMap(int x, int y, int w, int h);
 
 #endif  /* #define _EGOMAP_H_ */

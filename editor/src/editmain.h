@@ -29,7 +29,7 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
-#include "egomap.h"             /* Definition FANDATA_T and COMMAND_T   */
+#include "editfile.h"             /* Definition FANDATA_T and COMMAND_T   */
 
 /*******************************************************************************
 * DEFINES								                                       *
@@ -85,8 +85,6 @@ typedef struct {
     int  map_size;      /* Map-Size chosen by user          */
     /* --- Additional map info to return if no map editing itself       */
     int  mi_fan_no;
-    char mi_type;
-    int  mi_t_number; 
     /* ---- Choosing multiple tiles, save drag of mouse --- */
     int  drag_x, drag_y, drag_w, drag_h;
     char fan_name[128]; /* Name of fan, if free is chosen   */
@@ -98,15 +96,6 @@ typedef struct {
     int x, y;
 
 } EDITMAIN_XY;
-
-typedef struct {
-
-    int           x;
-    int           y;
-    unsigned char level;
-    int           radius;
-    
-} LIGHT_T;
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -123,9 +112,7 @@ void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir);
 void editmain2DTex(EDITMAIN_INFO_T *es, int x, int y, int w, int h);
 void editmainChooseTex(EDITMAIN_INFO_T *es, int cx, int cy, int w, int h);
 
-void editmainClearMapInfo(void);
-void editmainSetMapInfo(char which, int number, int x, int y, int x2, int y2);
-void editmainGetMapInfo(EDITMAIN_INFO_T *es, int mou_x, int mou_y);  
+void editmainGetTileInfo(EDITMAIN_INFO_T *es, int mou_x, int mou_y);  
     
 #endif /* _EDITMAIN_H_	*/
 
