@@ -442,11 +442,7 @@ static int editmainCreateNewMap(EDITMAIN_INFO_T *es, MESH_T *mesh)
 	int x, y, fan;
 
 
-	mesh -> tiles_x        = es -> map_size;
-	mesh -> tiles_y        = es -> map_size;
-	mesh -> minimap_w      = es -> map_size * mesh -> minimap_tile_w;
-	mesh -> minimap_h      = es -> map_size * mesh -> minimap_tile_w;
-
+    /* --- Now create the vertices --- */
 	mesh -> numvert     = 0;                         /* Vertices used in map              */
 	mesh -> numfreevert = MAXTOTALMESHVERTICES - 10; /* Vertices left in memory           */
 
@@ -532,7 +528,7 @@ static void editmainTranslateWallMakeInfo(EDITMAIN_INFO_T *es, MESH_T *mesh, WAL
 	for (i = 0; i < num_tile; i++) {
 
 		if (wi[i].fan_no >= 0) {
-		
+
 			/* -- Do update in any case */
 			type_no = wi[i].type;
 
@@ -658,7 +654,7 @@ static int editmainFanSet(EDITMAIN_INFO_T *es, int fan_no, int is_floor)
 					editmainTranslateWallMakeInfo(es, Mesh, wi, num_wall);
 					es -> fd.numvertices = 0;
 					return 1;
-                    
+
 				}
 			}
 
@@ -732,6 +728,36 @@ static void editmainFanTypeName(MESH_T *mesh, EDITMAIN_INFO_T *es)
 
 }
 
+/*
+ * Name:
+ *     editmainSetMinimapSize
+ * Description:
+ *     Sets th esize ofthe minimap
+ * Input:
+ *     mesh *: This mesh
+ *     es *:   Edit-State to handle
+ */
+static void editmainSetMinimapSize(MESH_T *mesh, EDITMAIN_INFO_T *es)
+{
+
+    /* --- Set size of minimap --- */
+    mesh -> minimap_tw = 256 / mesh -> tiles_x;
+
+    if (mesh -> minimap_tw < 3) {
+        /* At  least 3 pixels width for a 2D-Tile */
+        mesh -> minimap_tw  = 3;
+
+    }
+
+    /* --- Now calc the whole size of minimap --- */
+    mesh -> minimap_w = mesh -> minimap_tw * mesh -> tiles_x;
+    mesh -> minimap_h = mesh -> minimap_tw * mesh -> tiles_y;
+
+    es -> minimap_w   = mesh -> minimap_w;
+    es -> minimap_h   = mesh -> minimap_h;
+
+}
+
 /* ========================================================================== */
 /* ========================= PUBLIC FUNCTIONS =============================== */
 /* ========================================================================== */
@@ -746,7 +772,7 @@ static void editmainFanTypeName(MESH_T *mesh, EDITMAIN_INFO_T *es)
  *     map_size: Default map size
  */
 
-void editmainInit(EDITMAIN_INFO_T *es, int map_size, int minimap_tile_w)
+void editmainInit(EDITMAIN_INFO_T *es, int map_size)
 {
 
 	editdrawInitData();
@@ -757,8 +783,9 @@ void editmainInit(EDITMAIN_INFO_T *es, int map_size, int minimap_tile_w)
 	es -> display_flags   |= EDITMAIN_SHOW2DMAP;
 	es -> fan_selected[0] = -1;   /* No (multiple) fan chosen   */
 	es -> map_size        = map_size;
-	es -> minimap_w       = map_size * minimap_tile_w;
-	es -> minimap_h       = map_size * minimap_tile_w;
+    es -> minimap_tw      = 256 / map_size;
+	es -> minimap_w       = map_size * es -> minimap_tw;
+	es -> minimap_h       = map_size * es -> minimap_tw;
 	es -> draw_mode       = (EDIT_DRAWMODE_SOLID | EDIT_DRAWMODE_TEXTURED | EDIT_DRAWMODE_LIGHTMAX);
 
     /* --- Do additional initialization for the map module --- */
@@ -795,7 +822,7 @@ void editmainExit(void)
  */
 int editmainMap(EDITMAIN_INFO_T *es, int command)
 {
-									   
+
 	switch(command) {
 
 		case EDITMAIN_DRAWMAP:
@@ -808,18 +835,21 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
 			if (Mesh) {
 
                 Mesh -> draw_mode = es -> draw_mode;
-                
+
                 if (command == EDITMAIN_NEWMAP) {
-                
+
                     editmainCreateNewMap(es, Mesh);
-                    
+
                 }
-				                
+
 				sdlgl3dInitVisiMap(Mesh -> tiles_x, Mesh -> tiles_y, 128.0);
                 /* And move camera to standard basis point */
                 sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
                 /* And no fan is selected */
                 es -> fan_selected[0] = -1;
+
+                editmainSetMinimapSize(Mesh, es);
+
 				return 1;
 
 			}
@@ -858,7 +888,7 @@ void editmainDrawMap2D(EDITMAIN_INFO_T *es, int x, int y)
 { 
 	if (es -> display_flags & EDITMAIN_SHOW2DMAP) {
 
-        egomapDraw2DMap(x, y, es -> minimap_w, es -> minimap_h);
+        egomapDraw2DMap(x, y);
 
 	}
 

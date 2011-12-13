@@ -497,14 +497,14 @@ static void editorSetMenu(char which)
  * Description:
  *     Sets size and position of minimap, depending on given map size
  * Input:
- *     map_size: Size of map in tiles x/y (tile-size is always 7)
-*/
-static void editorSetMiniMap(int map_size)
+ *     ei *: Pointer on Edit-Info
+  */
+static void editorSetMiniMap(EDITMAIN_INFO_T *ei)
 {
 
     /* Map-Rectangle    */
-    MainMenu[2].rect.w = map_size * 7;
-    MainMenu[2].rect.h = map_size * 7;
+    MainMenu[2].rect.w = ei -> minimap_w;
+    MainMenu[2].rect.h = ei -> minimap_h;
     sdlglAdjustRectToScreen(&MainMenu[2].rect, 0, SDLGL_FRECT_SCRRIGHT);
 
 }
@@ -708,7 +708,7 @@ static int editorFileMenu(char which)
             /* Load additional data for this module */
             editfileModuleDesc(EDITFILE_ACT_LOAD, &ModuleDesc);
             /* Init the size if the minimap display */
-            editorSetMiniMap(EditInfo.map_size);
+            editorSetMiniMap(&EditInfo);
             break;
 
         case EDITOR_FILE_SAVE:
@@ -719,7 +719,10 @@ static int editorFileMenu(char which)
 
         case EDITOR_FILE_NEW:
             EditInfo.map_size = 32;
-            editorSetMiniMap(32);
+            EditInfo.minimap_w = 32 * 8;
+            EditInfo.minimap_h = 32 * 8;
+            
+            editorSetMiniMap(&EditInfo);
             /* --- Get a new, preinitialized module descriptor --- */
             editfileModuleDesc(EDITFILE_ACT_NEW, &ModuleDesc);
 
@@ -1176,13 +1179,13 @@ static void editorStart(void)
 
 
     /* Initalize the maze editor */
-    editmainInit(&EditInfo, EditInfo.map_size, 7);
+    editmainInit(&EditInfo, 32);
 
     /* Display initally chosen values */
     field = &SubMenu[0];
 
     while(field -> sdlgl_type != 0) {
-        /* === Tell the drawing code that this one's a checkd menu === */
+        /* === Tell the drawing code that this one's a checked menu === */
         if (field -> code == EDITOR_SETTINGS && field -> sub_code != -1) {
 
             field -> workval = (char)0x80 | (EditInfo.draw_mode & field -> sub_code);
@@ -1203,7 +1206,7 @@ static void editorStart(void)
                             0,
                             (SDLGL_FRECT_SCRWIDTH | SDLGL_FRECT_SCRBOTTOM));
     /* Map-Rectangle    */
-    editorSetMiniMap(EditInfo.map_size);
+    editorSetMiniMap(&EditInfo);
 
     sdlglAdjustRectToScreen(&MainMenu[2].rect, 0, SDLGL_FRECT_SCRRIGHT);
     /* Menu-Bar     */

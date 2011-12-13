@@ -80,24 +80,23 @@ static int editdrawSetTransColor(FANDATA_T *fd, char trans)
     unsigned char color[5];
 
 
-    if (fd -> obj_no > 0) {
+    if ((fd -> psg_no & 0x7F) > 0) {
+        /* --- It's a passage --- */
+        col_no = SDLGL_COL_BLUE;
+    }
+    else if (fd -> obj_no > 0) {
         /* --- It's a spawn point --- */
         col_no = SDLGL_COL_RED;
     }
-    else if ((fd -> psg_no & 0x7F) > 0) {
-        /* --- t's a passage --- */
-        col_no = SDLGL_COL_MAGENTA;
-    }
+
     else if (fd -> psg_no & EGOMAP_CHOSEN) {
+        /* -- It's a tile chosen by the input -- */
         col_no = SDLGL_COL_YELLOW;
     }
-    /*
     else {
-        col_no = SDLGL_COL_BLUE;
         return 0;
     }
-    */
-
+    
     sdlglGetColor(col_no, color);
     color[3] = trans;
 
@@ -627,7 +626,7 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd)
  *     Draws the map as 2D-View into given rectangle
  * Input:
  *     mesh *:   Pointer on mesh to draw
- *     x, y:     Draw at this position
+ *     x, y:     Draw at this position on screen
  *     chosen *: This fan(s) is chosen by user
  */
 void editdraw2DMap(MESH_T *mesh, int x, int y)
@@ -638,17 +637,10 @@ void editdraw2DMap(MESH_T *mesh, int x, int y)
     int rx2, ry2;
     int w, h;
 
-
-    if (! mesh -> map_loaded) {
-
-        return;         /* Draw only if a mpa is loaded */
-
-    }
-
     draw_rect.x = x;
     draw_rect.y = y;
-    draw_rect.w = mesh -> minimap_w / mesh -> tiles_x;   /* With generates size of square */
-    draw_rect.h = mesh -> minimap_h / mesh -> tiles_y;
+    draw_rect.w = mesh -> minimap_tw;   /* With generates size of square */
+    draw_rect.h = mesh -> minimap_tw;
 
     fan_no = 0;
     glBegin(GL_QUADS);

@@ -748,6 +748,7 @@ static void egomapCompleteMapData(MESH_T *mesh)
 	egomapSetFanStart(mesh);
 
 	mesh -> numfreevert = (MAXTOTALMESHVERTICES - 10) - mesh -> numvert;
+
 	/* Set flag that map has been loaded */
 	mesh -> map_loaded = 1;
 
@@ -949,22 +950,22 @@ void egomapSetFanStart(MESH_T *mesh)
 MESH_T *egomapLoad(char create, char *msg, int num_tile)
 {
 
-    int rec_no;
-    
-    
+    /* int rec_no; */
+
+
     memset(&Mesh, 0, sizeof(MESH_T));
 
     /* Set pointer on commands */
-    Mesh.pcmd    = MeshCommand;
-    Mesh.tiles_x = num_tile;
-    Mesh.tiles_y = num_tile;
+    Mesh.pcmd = MeshCommand;
 
     if (create) {
 
-        /* --- Just an empty map for the caller to fill -- */
+        Mesh.tiles_x = num_tile;
+        Mesh.tiles_y = num_tile;
+        /* --- Create an empty map for the caller to fill -- */
         egomapCompleteMapData(&Mesh);
         return &Mesh;
-            
+
     }
     else {
         /* Load map data from file */
@@ -1110,7 +1111,7 @@ int egomapSave(char *msg, char what)
  * Description:
  *     Returns the info about the tile at given x/y-Position 
  *     psg_no > 0: Passage with this number
- *     obj_no > 0: Spawn point with this number  
+ *     obj_no > 0: Spawn point with this number
  * Input:
  *     tile_no: Number of tile to get info for 
  *     fd *:    Pointer on buffer where to return the data 
@@ -1145,14 +1146,14 @@ void egomapDraw(FANDATA_T *ft, COMMAND_T *fd)
  *     Draw a 2D-Map of the mesh 
  * Input:
  *     x, y:    Position on screen
- *     w, h:    Size of 2D Map on screen 
  */
-void egomapDraw2DMap(int x, int y, int w, int h)
+void egomapDraw2DMap(int x, int y)
 {
 
-    Mesh.minimap_w = w;
-    Mesh.minimap_h = h;
+    if (Mesh.minimap_tw > 0 && Mesh.map_loaded) {
 
-    editdraw2DMap(&Mesh, x, y);  
+         editdraw2DMap(&Mesh, x, y);
+
+    }
 
 }

@@ -71,7 +71,8 @@
 typedef struct {
 
     int  fan_selected[EDITMAIN_MAXSELECT + 1];    
-    int  minimap_w,
+    int  minimap_tw,
+         minimap_w,
          minimap_h;
     int  tx, ty;        /* Position of fan as x/y on map    */
     char display_flags; /* For display in main editor       */
@@ -101,7 +102,7 @@ typedef struct {
 * CODE 								                                           *
 *******************************************************************************/
 
-void editmainInit(EDITMAIN_INFO_T *es, int map_size, int minimap_tile_w);
+void editmainInit(EDITMAIN_INFO_T *es, int map_size);
 void editmainExit(void);
 int  editmainMap(EDITMAIN_INFO_T *es, int command);
 void editmainDrawMap2D(EDITMAIN_INFO_T *es, int x, int y);
