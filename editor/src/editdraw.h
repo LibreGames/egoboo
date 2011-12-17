@@ -34,8 +34,8 @@
 
 void editdrawInitData(void);
 void editdrawFreeData(void);
-void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd);
-void editdraw2DMap(MESH_T *mesh, int x, int y);
+void editdraw3DView(MESH_T *mesh, FANDATA_T *fd, COMMAND_T *cm, int *crect);
+void editdraw2DMap(MESH_T *mesh, int x, int y, int *crect);
 void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big); 
 void editdrawAdjustCamera(int tx, int ty);
 

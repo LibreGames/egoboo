@@ -67,12 +67,13 @@ typedef struct {
 
 typedef struct {
 
-    void *recdata;       /* Pointer on record data (any)            */
-                         /* Points on record[0],                    */
-                         /* holding data from SDLGLCFG_VALUE        */
-    int  maxrec;         /* Maximum of records                      */
-    int  recsize;        /* Size of record in buffer 'recdata'      */
-    SDLGLCFG_VALUE *rcf; /* Descriptor for values on single line    */
+    void *readbuf;      /* Read into this buffer, holding          */
+                        /* holding data from SDLGLCFG_VALUE        */
+    void *recbuf;       /* Where to put the data read into readbuf */
+                        /* Points on record[1],                    */                         
+    int  maxrec;        /* Maximum of records                      */
+    int  recsize;       /* Size of record in buffer 'recdata'      */
+    SDLGLCFG_VALUE *rcf;/* Descriptor for values on single line    */
 
 } SDLGLCFG_LINEINFO;     /* Info for reading configuration lines */
 

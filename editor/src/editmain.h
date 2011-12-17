@@ -46,7 +46,7 @@
 #define EDITMAIN_SHOW2DMAP 0x01         /* Display the 2DMap        */
 
 /* --------- Other values ------- */
-#define EDITMAIN_MAX_MAPSIZE  64
+#define EDITMAIN_MAX_MAPSIZE  128
 #define EDITMAIN_MAXSELECT    25        /* Maximum fans to be selected  */
 
 /* ---- Flags to toggle --------- */
@@ -55,14 +55,16 @@
 #define EDITMAIN_TOGGLE_FANTEXNO    3 
 
 /* --- different edit modes --- */
-#define EDITMAIN_STATE_OFF     ((char)1)   /* 'View' map                        */
-#define EDITMAIN_STATE_MAP     ((char)2)   /* 'Carve' out map with mouse        */
-#define EDITMAIN_STATE_FAN     ((char)3)   /* Result of fan dialog              */
-#define EDITMAIN_STATE_PASSAGE ((char)4)
-#define EDITMAIN_STATE_OBJECT  ((char)5)
-#define EDITMAIN_STATE_MODULE  ((char)6)   /* Change info in module description */
-#define EDITMAIN_STATE_VERTEX  ((char)7)
-#define EDITMAIN_STATE_FREE    ((char)8) 
+#define EDITMAIN_MODE_OFF     ((char)1)   /* 'View' map                        */
+#define EDITMAIN_MODE_MAP     ((char)2)   /* 'Carve' out map with mouse        */
+#define EDITMAIN_MODE_FAN     ((char)3)   /* Result of fan dialog              */
+#define EDITMAIN_MODE_FAN_FX  ((char)4) 
+#define EDITMAIN_MODE_FAN_TEX ((char)5)
+#define EDITMAIN_MODE_PASSAGE ((char)6) 
+#define EDITMAIN_MODE_OBJECT  ((char)7)
+#define EDITMAIN_MODE_MODULE  ((char)8) /* Change info in module description */
+#define EDITMAIN_MODE_VERTEX  ((char)9) 
+#define EDITMAIN_MODE_FREE    ((char)10)  
 
 /*******************************************************************************
 * TYPEDEFS							                                           *
@@ -70,7 +72,6 @@
 
 typedef struct {
 
-    int  fan_selected[EDITMAIN_MAXSELECT + 1];    
     int  minimap_tw,
          minimap_w,
          minimap_h;
@@ -81,13 +82,14 @@ typedef struct {
     char bft_no;        /* Number of fan-type in fan-set    */
     char fan_dir;       /* Direction of new fan             */    
     FANDATA_T ft;       /* Copy of actual chosen fan        */
-    COMMAND_T fd;       /* Extent data for new fan type     */
+    COMMAND_T cm;       /* Extent data for new fan type     */
     char msg[256];      /* Possible message from editor     */
     int  map_size;      /* Map-Size chosen by user          */
-    /* --- Additional map info to return if no map editing itself       */
+    /* --- Additional map info to return if no map editing itself --- */
     int  mi_fan_no;
     /* ---- Choosing multiple tiles, save drag of mouse --- */
     int  drag_x, drag_y, drag_w, drag_h;
+    int  crect[5];      /* Extent of chosen tile, if any    */  
     char fan_name[128]; /* Name of fan, if free is chosen   */
     
 } EDITMAIN_INFO_T;
@@ -105,15 +107,11 @@ typedef struct {
 void editmainInit(EDITMAIN_INFO_T *es, int map_size);
 void editmainExit(void);
 int  editmainMap(EDITMAIN_INFO_T *es, int command);
-void editmainDrawMap2D(EDITMAIN_INFO_T *es, int x, int y);
 char editmainToggleFlag(EDITMAIN_INFO_T *es, int which, unsigned char flag);
-void editmainChooseFan(EDITMAIN_INFO_T *es, int cx, int cy, int is_floor);
-void editmainChooseFanExt(EDITMAIN_INFO_T *es);
+void editmainChooseFan(EDITMAIN_INFO_T *es, int is_floor);
 void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir);
 void editmain2DTex(EDITMAIN_INFO_T *es, int x, int y, int w, int h);
 void editmainChooseTex(EDITMAIN_INFO_T *es, int cx, int cy, int w, int h);
 
-void editmainGetTileInfo(EDITMAIN_INFO_T *es, int mou_x, int mou_y);  
-    
 #endif /* _EDITMAIN_H_	*/
 

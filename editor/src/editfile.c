@@ -37,11 +37,7 @@
 #define EDITFILE_SLOPE      50          /* Twist stuff          */
 #define MAPID               0x4470614d  /*  The string... MapD  */
 #define EDITFILE_ZADJUST    16.0        /* Read/Write Z-Value   */
-                                        /* Cartman uses 4 bit fixed point for Z */                                      
-                                        
-/* -- Maximum-Values for files -- */
-#define EDITFILE_MAXSPAWN    500    /* Maximum Lines in spawn list  */
-#define EDITFILE_MAXPASSAGE   50
+                                        /* Cartman uses 4 bit fixed point for Z */
                     
 /*******************************************************************************
 * DATA 								                                           *
@@ -68,53 +64,55 @@ static char *EditFileGORSubDir[]   = {
 
 /* ============== Data for Spawn-Points ============== */
 /* static EDITFILE_SPAWNPT_T SpawnTemplate; */
-static EDITFILE_SPAWNPT_T SpawnObjects[EDITFILE_MAXSPAWN + 2];
+static EDITFILE_SPAWNPT_T SpawnPt;
 
 static SDLGLCFG_VALUE SpawnVal[] = {
-	{ SDLGLCFG_VAL_STRING,  &SpawnObjects[0].line_name, 24 },
-	{ SDLGLCFG_VAL_STRING,  &SpawnObjects[0].item_name, 20 },
-	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].slot_no },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].x_pos },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].y_pos },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnObjects[0].z_pos },
-	{ SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].view_dir },
-	{ SDLGLCFG_VAL_INT,     &SpawnObjects[0].money },
-	{ SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].skin },
-	{ SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].pas },
-    { SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].con },
-    { SDLGLCFG_VAL_CHAR,    &SpawnObjects[0].lvl },
-    { SDLGLCFG_VAL_BOOLEAN, &SpawnObjects[0].stt },
-    { SDLGLCFG_VAL_BOOLEAN, &SpawnObjects[0].gho },
-    { SDLGLCFG_VAL_ONECHAR, &SpawnObjects[0].team },
+	{ SDLGLCFG_VAL_STRING,  &SpawnPt.line_name, 24 },
+	{ SDLGLCFG_VAL_STRING,  &SpawnPt.item_name, 20 },
+	{ SDLGLCFG_VAL_INT,     &SpawnPt.slot_no },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.x_pos },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.y_pos },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.z_pos },
+	{ SDLGLCFG_VAL_ONECHAR, &SpawnPt.view_dir },
+	{ SDLGLCFG_VAL_INT,     &SpawnPt.money },
+	{ SDLGLCFG_VAL_CHAR,    &SpawnPt.skin },
+	{ SDLGLCFG_VAL_CHAR,    &SpawnPt.pas },
+    { SDLGLCFG_VAL_CHAR,    &SpawnPt.con },
+    { SDLGLCFG_VAL_CHAR,    &SpawnPt.lvl },
+    { SDLGLCFG_VAL_BOOLEAN, &SpawnPt.stt },
+    { SDLGLCFG_VAL_BOOLEAN, &SpawnPt.gho },
+    { SDLGLCFG_VAL_ONECHAR, &SpawnPt.team },
 	{ 0 }
 };
 
 static SDLGLCFG_LINEINFO SpawnRec = {
-	&SpawnObjects[0],
-	EDITFILE_MAXSPAWN,
+    &SpawnPt,
+	&SpawnPt,
+	0,
 	sizeof(EDITFILE_SPAWNPT_T),
 	&SpawnVal[0]
 };
 
 /* ============== Data for passages ============== */
 /* static EDITFILE_PASSAGE_T PassageTemplate; */
-static EDITFILE_PASSAGE_T Passages[EDITFILE_MAXPASSAGE + 2];
+static EDITFILE_PASSAGE_T Psg;
 
 static SDLGLCFG_VALUE PassageVal[] = {
-	{ SDLGLCFG_VAL_STRING,  &Passages[0].line_name, 24 },
-	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft[0] },
-	{ SDLGLCFG_VAL_INT,     &Passages[0].topleft[1] },
-	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright[0] },
-	{ SDLGLCFG_VAL_INT,     &Passages[0].bottomright[1] },
-	{ SDLGLCFG_VAL_BOOLEAN, &Passages[0].open },
-	{ SDLGLCFG_VAL_BOOLEAN, &Passages[0].shoot_trough },
-	{ SDLGLCFG_VAL_BOOLEAN, &Passages[0].slippy_close },
+	{ SDLGLCFG_VAL_STRING,  &Psg.line_name, 24 },
+	{ SDLGLCFG_VAL_INT,     &Psg.topleft[0] },
+	{ SDLGLCFG_VAL_INT,     &Psg.topleft[1] },
+	{ SDLGLCFG_VAL_INT,     &Psg.bottomright[0] },
+	{ SDLGLCFG_VAL_INT,     &Psg.bottomright[1] },
+	{ SDLGLCFG_VAL_BOOLEAN, &Psg.open },
+	{ SDLGLCFG_VAL_BOOLEAN, &Psg.shoot_trough },
+	{ SDLGLCFG_VAL_BOOLEAN, &Psg.slippy_close },
 	{ 0 }
 };
 
 static SDLGLCFG_LINEINFO PassageRec = {
-	&Passages[0],
-	EDITFILE_MAXPASSAGE,
+    &Psg,
+	&Psg,
+	0,
 	sizeof(EDITFILE_PASSAGE_T),
 	&PassageVal[0]
 };
@@ -544,28 +542,27 @@ int  editfileMapMesh(MESH_T *mesh, char *msg, char save)
  *     Load/Save spawn data from 'spawn.txt' in actual work directory
  * Input:
  *     spt *:   Where to load the spawnpoints to
- *     num_rec: Maximum number of records available in buffer
- *     save:    Save it yes/no 
+ *     action:  What to do 
+ *     max_rec: Maximum number of records in given buffer
  * Output:
- *     Number of record chosen    
+ *     Success yes/no   
  */
-int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
+int editfileSpawn(EDITFILE_SPAWNPT_T *spt, char action, int max_rec)
 {
 
     char *fname;
-    int new_rec_no;
 
 
     fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, "spawn.txt");
+    
+    SpawnRec.recbuf  = spt;
+    SpawnRec.maxrec = max_rec;
 
     switch(action) {
     
         case EDITFILE_ACT_LOAD:
             /* ------- Load the data from file ---- */
-            sdlglcfgEgobooRecord(fname, &SpawnRec, 0);
-            /* ----- Return the data from the first record --- */
-            memcpy(spt, &SpawnObjects[1], sizeof(EDITFILE_SPAWNPT_T));
-            rec_no = 1;
+            sdlglcfgEgobooRecord(fname, &SpawnRec, 0);            
             break;
             
         case EDITFILE_ACT_SAVE:
@@ -573,37 +570,9 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
             sdlglcfgEgobooRecord(fname, &SpawnRec, 1);
             return 1;
 
-        case EDITFILE_ACT_GETDATA:  /* In given buffer      */
-            if (SpawnObjects[rec_no].line_name[0] > 0) {
-                memcpy(spt, &SpawnObjects[rec_no], sizeof(EDITFILE_SPAWNPT_T));
-            }
-            else {
-                /* No data found at this record position */
-                return 0;
-            }
-            break;
-
-        case EDITFILE_ACT_SETDATA:
-            if (rec_no > 0 && rec_no < EDITFILE_MAXSPAWN) {
-                memcpy(&SpawnObjects[rec_no], spt, sizeof(EDITFILE_SPAWNPT_T));
-            }
-            break;
-
-        case EDITFILE_ACT_NEW:
-            new_rec_no = 1;
-            while(Passages[rec_no].line_name[0] > 0) {
-                new_rec_no++;
-                if (new_rec_no >= EDITFILE_MAXPASSAGE) {
-                    /* No space left for new passage */
-                    return 0;
-                }
-            }
-            rec_no = new_rec_no;
-            break;
-
     }
 
-    return rec_no;
+    return 1;
 
 }
 
@@ -613,66 +582,38 @@ int editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt)
  * Description:
  *     Load/Save passages data from 'passage.txt' in actual work directory
  * Input:
- *     action: What to do
+ *     psg *:   Pointer where to return the data of all passages
+ *     action:  What to do
+ *     max_rec: MAximum number of records in given passage-buffer 
  *     rec_no: Number of record to read/write from buffer
- *     psg *:  Pointer where to return copy of passage asked for
  * Output:
- *    Number of record chosen
+ *    Success yes/no
  */
-int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
+int  editfilePassage(EDITFILE_PASSAGE_T *psg, char action, int max_rec)
 {
 
     char *fname;
-    int new_rec_no;
 
 
     fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, "passage.txt");
+    
+    PassageRec.recbuf = psg;
+    PassageRec.maxrec = max_rec;
 
     switch(action) {
-
-        case EDITFILE_ACT_LOAD:
-            sdlglcfgEgobooRecord(fname, &PassageRec, 0);
-            /* ----- Return the data from the first record --- */
-            memcpy(psg, &Passages[rec_no], sizeof(EDITFILE_PASSAGE_T));
-            rec_no = 1;
-            break;
             
+        case EDITFILE_ACT_LOAD:
+            
+            sdlglcfgEgobooRecord(fname, &PassageRec, 0);
+            break;
+
         case EDITFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
             sdlglcfgEgobooRecord(fname, &PassageRec, 1);
-            return 1;
-
-        case EDITFILE_ACT_GETDATA:  /* In given buffer      */
-            if (Passages[rec_no].line_name[0] > 0) {
-                memcpy(psg, &Passages[rec_no], sizeof(EDITFILE_PASSAGE_T));
-            }
-            else {
-                /* No data found at this record position */
-                return 0;
-            }
-            break;
-            
-        case EDITFILE_ACT_SETDATA:
-            if (rec_no > 0 && rec_no < EDITFILE_MAXPASSAGE) {
-                memcpy(&Passages[rec_no], psg, sizeof(EDITFILE_PASSAGE_T));
-            }
-            break;
-            
-        case EDITFILE_ACT_NEW:
-            new_rec_no = 1;
-            while(Passages[rec_no].line_name[0] > 0) {
-                new_rec_no++;
-                if (new_rec_no >= EDITFILE_MAXPASSAGE) {
-                    /* No space left for new passage */
-                    return 0;
-                }
-            }
-            rec_no = new_rec_no;
-            break;
 
     }
 
-    return rec_no;
+    return 1;
 
 }
 
@@ -682,21 +623,39 @@ int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg)
  * Description:
  *     Load/Save the data from 'menu.txt' in actual work directory
  * Input:
- *     action:    What to do
- *     moddesc *: Pointer where to get / return a copy of a module
+ *     moddesc *: Pointer where to get / return a copy of a module descriptor
+ *     action:    Which action to execute 
  * Output:
- *    Number of record chosen
+ *     Success yes/no
  */
-int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc)
+int  editfileModuleDesc(EDITFILE_MODULE_T *moddesc, char action)
 {
-
+    
+    FILE *f;
     char *fname;
     int i;
+    EDITFILE_MODULE_T *src;
 
 
     fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, "menu.txt");
 
     switch(action) {
+    
+        case EDITFILE_ACT_NEW:
+            /* Return an module descriptor filled with default values   */
+            /* ... if it doesn't exist yet                              */
+            f = fopen(fname, "rt");
+            if (f) {
+                fclose(f);
+                /* File already exists, load it */
+                sdlglcfgEgobooValues(fname, ModuleVal, 0);
+                src = &ModDesc;                
+            }
+            else {
+                src =  &ModDescTemplate;
+            }
+            memcpy(moddesc, src, sizeof(EDITFILE_MODULE_T));
+            break;  
 
         case EDITFILE_ACT_LOAD:
             sdlglcfgEgobooValues(fname, ModuleVal, 0);
@@ -725,12 +684,7 @@ int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc)
                 
             }
             sdlglcfgEgobooValues(fname, ModuleVal, 1);
-            break;
-            
-        case EDITFILE_ACT_NEW:
-            /* Return an module descriptor filled with default values */
-            memcpy(moddesc, &ModDescTemplate, sizeof(EDITFILE_MODULE_T));
-            break;            
+            break;                 
 
     }
 

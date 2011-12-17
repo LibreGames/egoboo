@@ -37,14 +37,9 @@
 #define MAXMESHCOMMANDSIZE              32            // Max trigs in each command
 
 /* ===== File handling commands ===== */
-#define EDITFILE_LASTREC    -1  /* Get last record in data list */    
-
-#define EDITFILE_ACT_LOAD    1
-#define EDITFILE_ACT_SAVE    2
-#define EDITFILE_ACT_GETDATA 3  /* In given buffer      */
-#define EDITFILE_ACT_SETDATA 4  /* From given buffer    */      
-#define EDITFILE_ACT_NEW     5  /* Return empty record  */
-#define EDITFILE_ACT_DELETE  6  /* Delete this record   */
+#define EDITFILE_ACT_NEW     0x01  /* Return empty record  */
+#define EDITFILE_ACT_LOAD    0x02  /* Load existing data   */
+#define EDITFILE_ACT_SAVE    0x03  /* Save given data      */
 
 /* -- Definiton of directories */
 #define EDITFILE_WORKDIR     1  /* Main directory                       */
@@ -146,20 +141,20 @@ typedef struct {
 /* ====== The different file types ===== */
 typedef struct {
 
-    char line_name[25];         /* Only for information purposes */
+    char line_name[25];         /* Only for information purposes "-": Deleted in editor */
     int topleft[2];
     int bottomright[2];
     char open;
     char shoot_trough;
     char slippy_close;
-    /* For the editors internal use */
-    int number;                 /* Number of this record, 0: empty */
+    /* --- Info for editor -- */
+    char rec_no;
 
 } EDITFILE_PASSAGE_T;
 
 typedef struct {
 
-    char line_name[25];     /* Name of object to load   */
+    char line_name[25];     /* Name of object to load, "-": Deleted in editor */
     char item_name[20+1];
     int  slot_no;           /* Use it for coloring the bounding boxes */
     float x_pos, y_pos, z_pos;
@@ -172,8 +167,8 @@ typedef struct {
     char stt;
     char gho;
     char team;
-    /* For the editors internal use */
-    int number;                 /* Number of this record, 0: empty */
+    /* --- Info for editor --- */
+    int rec_no;
 
 } EDITFILE_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
 
@@ -205,8 +200,8 @@ typedef struct {
 void editfileSetWorkDir(char *dir_name);
 char *editfileMakeFileName(int dir_no, char *fname);
 int  editfileMapMesh(MESH_T *mesh, char *msg, char save);
-int  editfileSpawn(int action, int rec_no, EDITFILE_SPAWNPT_T *spt);
-int  editfilePassage(int action, int rec_no, EDITFILE_PASSAGE_T *psg);
-int  editfileModuleDesc(int action, EDITFILE_MODULE_T *moddesc);
+int  editfileSpawn(EDITFILE_SPAWNPT_T *spt, char action, int max_rec);
+int  editfilePassage(EDITFILE_PASSAGE_T *psg, char action, int max_rec);
+int  editfileModuleDesc(EDITFILE_MODULE_T *moddesc, char action);
 
 #endif  /* _EDITFILE_H_ */

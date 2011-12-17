@@ -50,6 +50,8 @@
 * TYPEDEFS                                                                     *
 *******************************************************************************/
 
+static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no);
+
 /*******************************************************************************
 * DATA                                                                         *
 *******************************************************************************/
@@ -66,44 +68,96 @@ static GLuint WallTex[EDITDRAW_MAXWALLTEX];
  * Name:
  *     editdrawSetTransColor
  * Description:
- *     Sets the transparent color for given 'f_type'.
+ *     Sets the transparent color with given transparency.
  * Input:
- *     fd *:    Pointer on fan-data to set color for
+ *     col_no: Set this color 
  *     trans:   Transparency-Value
  * Output:
  *     Has a color at all yes/no
  */
-static int editdrawSetTransColor(FANDATA_T *fd, char trans)
+static void editdrawSetTransColor(int col_no, char trans)
 {
 
-    int col_no;
-    unsigned char color[5];
-
-
-    if ((fd -> psg_no & 0x7F) > 0) {
-        /* --- It's a passage --- */
-        col_no = SDLGL_COL_BLUE;
-    }
-    else if (fd -> obj_no > 0) {
-        /* --- It's a spawn point --- */
-        col_no = SDLGL_COL_RED;
-    }
-
-    else if (fd -> psg_no & EGOMAP_CHOSEN) {
-        /* -- It's a tile chosen by the input -- */
-        col_no = SDLGL_COL_YELLOW;
-    }
-    else {
-        return 0;
-    }
+    unsigned char color[5];   
     
     sdlglGetColor(col_no, color);
     color[3] = trans;
 
     glColor4ubv(color);
 
-    return 1;
+}
 
+
+/*
+ * Name:
+ *     editdrawTileIsChosen
+ * Description:
+ *     Checks if the given tile position is in the chosen rect
+ * Input:
+ *     ty, ty:  Position of tile
+ *     crect *: Pointer on description of chosen rectangle
+ * Output:
+ *     Tile is chosen yes/no
+ */
+static int editdrawTileIsChosen(int tx, int ty, int *crect)
+{
+    /* Check if it's chosen */
+    if (crect[0] > 0 && crect[1] > 0) {
+    
+        if (tx >= crect[0] && tx <= crect[2]
+            && ty >= crect[1] && ty <= crect[3]) {
+            
+            /* -- It's a tile in the chosen area of the input -- */
+            return 1;
+
+        }
+        
+    }  
+    
+    return 0;
+    
+ }
+
+/*
+ * Name:
+ *     editdrawOverlay3D
+ * Description:
+ *     Draws transparent tile(s) with given rectangle
+ *     Depending on info about fan  
+ * Input:
+ *     mesh *:  Info about mesh 
+ *     fan_no:  For this fan 
+ *     crect *: Edges of chosen rectngle, if any
+ */
+static void editdrawOverlay3D(MESH_T *mesh, int fan_no, int *crect)
+{
+
+    FANDATA_T *fd;  
+    int tx, ty;    
+    
+
+    fd = &mesh -> fan[fan_no];    
+    ty = fan_no / mesh -> tiles_x; 
+    tx = fan_no % mesh -> tiles_x;
+    
+    if (fd -> psg_no > 0) {
+        /* --- It's a passage --- */
+        editdrawSetTransColor(SDLGL_COL_BLUE, 128);
+        editdrawTransparentFan3D(mesh, fan_no);
+    }
+    
+    if (fd -> obj_no > 0) {
+        /* --- It's a spawn point --- */
+        editdrawSetTransColor(SDLGL_COL_RED, 128);
+        editdrawTransparentFan3D(mesh, fan_no);
+    }
+
+    if (editdrawTileIsChosen(tx, ty, crect)) {
+        /* -- It's a tile chosen by the input -- */
+        editdrawSetTransColor(SDLGL_COL_YELLOW, 128);
+        editdrawTransparentFan3D(mesh, fan_no);
+    }    
+    
 }
 
 /*
@@ -155,20 +209,22 @@ static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
 
 /*
  *  Name:
- *	    editdrawTransparentFan2D
+ *	    editdrawOverlay2D
  *  Description:
- *	    Draws a list of fans with given number on 3D-Mesh
- *      Transparent, with no texture
+ *      Draws transparent fans on minimap with different colors depending
+ *      on the type of 'overlay' on map 
  * Input:
- *      mesh *:     Pointer on mesh info
- *      tilesize *: Rectangle size of tile on minimap an position of minimap
- *      trans:      Transparency of fan drawn
+ *      mesh *:  Pointer on mesh info
+ *      rect *:  Rectangle size of tile on minimap 
+ *      crect *: Rectangle of chosen tiles
  */
-static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, unsigned char trans)
+static void editdrawOverlay2D(MESH_T *mesh, SDLGL_RECT *rect, int *crect)
 {
 
     SDLGL_RECT draw_rect;
-    int fan_no, w, h;
+    FANDATA_T *fd;
+    
+    int fan_no, x, y;
     int rx2, ry2;
 
 
@@ -185,21 +241,47 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, unsigned ch
     draw_rect.h = rect -> h;
 
     glBegin(GL_QUADS);
-        for (h = 0; h < mesh -> tiles_y; h++) {
+        for (y = 0; y < mesh -> tiles_y; y++) {
 
-            for (w = 0; w < mesh -> tiles_x; w++) {
+            for (x = 0; x < mesh -> tiles_x; x++) {
 
-                if (editdrawSetTransColor(&mesh -> fan[fan_no], trans)) {
-
-                    rx2 = draw_rect.x + draw_rect.w;
-                    ry2 = draw_rect.y + draw_rect.h;
-
+                rx2 = draw_rect.x + draw_rect.w;
+                ry2 = draw_rect.y + draw_rect.h;
+                
+                fd = &mesh -> fan[fan_no];
+                    
+                if (fd -> psg_no > 0) {
+                    /* --- It's a passage --- */
+                    editdrawSetTransColor(SDLGL_COL_BLUE, 128);
+                    /* -- Draw the passage --- */
                     glVertex2i(draw_rect.x,  ry2);
                     glVertex2i(rx2, ry2);
                     glVertex2i(rx2, draw_rect.y);
                     glVertex2i(draw_rect.x, draw_rect.y);
-
                 }
+                
+                if (fd -> obj_no > 0) {
+                    /* --- It's a spawn point --- */
+                    editdrawSetTransColor(SDLGL_COL_RED, 128);
+                    /* -- Draw the spawn point --- */
+                    glVertex2i(draw_rect.x,  ry2);
+                    glVertex2i(rx2, ry2);
+                    glVertex2i(rx2, draw_rect.y);
+                    glVertex2i(draw_rect.x, draw_rect.y);
+                }
+
+                /* Check if it's chosen */
+                if (editdrawTileIsChosen(x, y, crect)) {
+                
+                    /* -- It's a tile in the chosen area of the input -- */
+                    editdrawSetTransColor(SDLGL_COL_YELLOW, 128);
+                    /* -- Draw the chosen tile --- */
+                    glVertex2i(draw_rect.x,  ry2);
+                    glVertex2i(rx2, ry2);
+                    glVertex2i(rx2, draw_rect.y);
+                    glVertex2i(draw_rect.x, draw_rect.y);
+                    
+                }                
 
                 draw_rect.x += draw_rect.w;
                 fan_no++;
@@ -226,9 +308,8 @@ static void editdrawTransparentFan2D(MESH_T *mesh, SDLGL_RECT *rect, unsigned ch
  * Input:
  *      mesh *:   Pointer on mesh info
  *      fan_no:   Number of fan to draw
- *      trans:    Transparency of fan drawn
  */
-static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no, unsigned char trans)
+static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no)
 {
 
     COMMAND_T *mc;
@@ -241,10 +322,8 @@ static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no, unsigned char tra
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);     
-    glPolygonMode(GL_FRONT, GL_FILL);     
-  
-    editdrawSetTransColor(&mesh -> fan[fan_no], trans);
-    
+    glPolygonMode(GL_FRONT, GL_FILL);      
+        
     type = (char)(mesh -> fan[fan_no].type & 0x1F);  /* Maximum 31 fan types */
                                                      /* Others are flags     */
 
@@ -398,8 +477,9 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
  *     mesh *:   Pointer on mesh to draw
  *     ft *:     Pointer on description of chosen fan type
  *     fd *:     ft -> type >= 0 Display it over the position of chosen fan
+ *     crect *: Info about rectangle of chosen tiles [cx1, cy1, cx2, cy2]
  */
-static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd)
+static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
 {
 
     int fan_no;
@@ -426,22 +506,20 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd)
     /* =============== First draw bottom tiles ============== */
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
         if (mesh -> fan[fan_no].type == 0) {
+            /* --- Draw the basic fan, solid --- */
             editdrawSingleFan(mesh, fan_no, 0);
-            if (editdrawSetTransColor(&mesh -> fan[fan_no], 128)) {
-                /* Draw passages and spawn points, if needed */
-                editdrawTransparentFan3D(mesh, fan_no, 128);
-            }
+            /* --- Draw overlays, if needed --- */
+            editdrawOverlay3D(mesh, fan_no, crect);           
         }
     }
 
     /* =============== Second draw wall tiles ============== */
     for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
         if (mesh -> fan[fan_no].type != 0) {
+            /* --- Draw the basic fan, solid --- */
             editdrawSingleFan(mesh, fan_no, 0);
-            if (editdrawSetTransColor(&mesh -> fan[fan_no], 128)) {
-                /* Draw passages and spawn points, if needed */
-                editdrawTransparentFan3D(mesh, fan_no, 128);
-            }             
+            /* --- Draw overlays, if needed --- */
+            editdrawOverlay3D(mesh, fan_no, crect);            
         }
     }      
     
@@ -567,12 +645,12 @@ void editdrawFreeData(void)
  * Description:
  *     Draws the whole 3D-View  
  * Input:
- *     mesh *:   Pointer on mesh to draw
- *     ft *:     Pointer on chosen fan type
- *     fd *:     ft -> type >= 0 Display it over the position of chosen fan     
- *     mi *:     This             
+ *     mesh *:  Pointer on mesh to draw
+ *     ft *:    Pointer on chosen fan type
+ *     fd *:    ft -> type >= 0 Display it over the position of chosen fan     
+ *     crect *: Info about rectangle of chosen tiles [cx1, cy1, cx2, cy2]              
  */
-void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd)
+void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
 {
 
     int w, h;
@@ -611,7 +689,7 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd)
     }
     else {
     
-        editdrawMap(mesh, ft, fd);     
+        editdrawMap(mesh, ft, fd,crect);     
         
     }
 
@@ -623,13 +701,14 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd)
  * Name:
  *     editdraw2DMap
  * Description:
- *     Draws the map as 2D-View into given rectangle
+ *     Draws the map as 2D-View at given position, using size info of
+ *     minimap held in the mesh info 
  * Input:
- *     mesh *:   Pointer on mesh to draw
- *     x, y:     Draw at this position on screen
- *     chosen *: This fan(s) is chosen by user
+ *     mesh *:  Pointer on mesh to draw
+ *     x, y:    Draw at this position on screen
+ *     crect *: Info about rectangle of chosen tiles [cx1, cy1, cx2, cy2]  
  */
-void editdraw2DMap(MESH_T *mesh, int x, int y)
+void editdraw2DMap(MESH_T *mesh, int x, int y, int *crect)
 {
 
     SDLGL_RECT draw_rect, draw_rect2;
@@ -685,7 +764,7 @@ void editdraw2DMap(MESH_T *mesh, int x, int y)
     draw_rect.y = y;
     
     /* ---- Draw all special fans, if asked for ---- */    
-    editdrawTransparentFan2D(mesh, &draw_rect, 128);
+    editdrawOverlay2D(mesh, &draw_rect, crect);
 
     /* ------------ Draw grid for easier editing ------- */
     draw_rect.x = x;

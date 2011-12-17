@@ -43,9 +43,6 @@
 #define MPDFX_DAMAGE    0x40    
 #define MPDFX_SLIPPY    0x80  
 
-/* ---- For EGOMAP_T: Kind of additional info ---- */
-#define EGOMAP_CHOSEN   0x80        /* Fan is chosen by editor  */ 
-
 /* --- Save files --- */
 #define EGOMAP_SAVE_MAP     0x01    /* Save the map             */
 #define EGOMAP_SAVE_PSG     0x02    /* Save the passages        */
@@ -58,9 +55,10 @@
 #define EGOMAP_OBJ_PART   0x03    /* Particles (can be transparent)   */
 
 /* --- Handling for map objects --- */
-#define EGOMAP_GET   0x01
-#define EGOMAP_SET   0x02
-#define EGOMAP_CLEAR 0x03
+#define EGOMAP_NEW   0x01
+#define EGOMAP_GET   0x02
+#define EGOMAP_SET   0x03
+#define EGOMAP_CLEAR 0x04
 
 /*******************************************************************************
 * CODE 								                                           *
@@ -70,12 +68,12 @@ void egomapInit(void);
 void egomapSetFanStart(MESH_T *mesh);
 MESH_T *egomapLoad(char create, char *msg, int num_tile);
 int  egomapSave(char *msg, char what);
-void egomapPassage(char p_no, EDITFILE_PASSAGE_T *psg, char action);
-void egomapSpawnPoint(int s_no, EDITFILE_SPAWNPT_T *spt, char action);
-void egomapGetTileInfo(int tile_no, FANDATA_T *ft);
+int  egomapPassage(int tx, int ty, EDITFILE_PASSAGE_T *psg, char action, int *crect);
+int  egomapSpawnPoint(int tx, int ty, EDITFILE_SPAWNPT_T *spt, char action);
+void egomapGetTileInfo(int tx, int ty, FANDATA_T *fd);
 
 /* --- Draw command --- */
-void egomapDraw(FANDATA_T *ft, COMMAND_T *fd);
-void egomapDraw2DMap(int x, int y);
+void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
+void egomapDraw2DMap(int x, int y, int *crect);
 
 #endif  /* #define _EGOMAP_H_ */
