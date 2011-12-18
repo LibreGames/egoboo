@@ -78,13 +78,14 @@ typedef struct {
     int  tx, ty;        /* Position of fan as x/y on map    */
     char display_flags; /* For display in main editor       */
     char draw_mode;     /* For copy into mesh - struct      */
-    char edit_mode;     /* EDITOR_TOOL_...                  */
+    char edit_mode;     /* EDITMAIN_MODE_...                */
     char bft_no;        /* Number of fan-type in fan-set    */
     char fan_dir;       /* Direction of new fan             */    
     FANDATA_T ft;       /* Copy of actual chosen fan        */
     COMMAND_T cm;       /* Extent data for new fan type     */
     char msg[256];      /* Possible message from editor     */
     int  map_size;      /* Map-Size chosen by user          */
+    char map_loaded;    /* A Map is loaded, yes/no          */
     /* --- Additional map info to return if no map editing itself --- */
     int  mi_fan_no;
     /* ---- Choosing multiple tiles, save drag of mouse --- */

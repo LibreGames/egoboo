@@ -1196,15 +1196,17 @@ void egomapDraw(FANDATA_T *fd, COMMAND_T *cm, int *crect)
  * Description:
  *     Draw a 2D-Map of the mesh 
  * Input:
- *     x, y:    Position on screen
+ *     mx, my:  Draw at this position on screen
+ *     mw, mh:  Size of map on Screen  
+ *     tw:      Tile-Width for minimap 
  *     crect *: Edges of chosen rectangle, if any
  */
-void egomapDraw2DMap(int x, int y, int *crect)
+void egomapDraw2DMap(int mx, int my, int mw, int mh, int tw, int *crect)
 {
 
-    if (Mesh.minimap_tw > 0 && Mesh.map_loaded) {
+    if (tw > 0 && Mesh.map_loaded) {
 
-         editdraw2DMap(&Mesh, x, y, crect);
+         editdraw2DMap(&Mesh, mx, my, mw, mh, tw, crect);
 
     }
 

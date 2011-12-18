@@ -74,6 +74,6 @@ void egomapGetTileInfo(int tx, int ty, FANDATA_T *fd);
 
 /* --- Draw command --- */
 void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
-void egomapDraw2DMap(int x, int y, int *crect);
+void egomapDraw2DMap(int mx, int my, int mw, int mh, int tx, int *crect);
 
 #endif  /* #define _EGOMAP_H_ */

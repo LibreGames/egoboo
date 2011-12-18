@@ -114,9 +114,6 @@ typedef struct {
     int tiles_x, tiles_y;       // Size of mesh in tiles          
     int numfan;                 // Size of map in 'fans' (tiles_x * tiles_y)
     int watershift;             // Depends on size of map
-    int minimap_w;              // Width of minimap
-    int minimap_h;              // Height of minimap
-    int minimap_tw;             // Size of tile in minimap 2D
     
     float edgex;                // Borders of mesh
     float edgey;                

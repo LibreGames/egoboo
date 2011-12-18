@@ -734,7 +734,7 @@ static void editmainFanTypeName(MESH_T *mesh, EDITMAIN_INFO_T *es)
  * Name:
  *     editmainSetMinimapSize
  * Description:
- *     Sets th esize ofthe minimap
+ *     Sets the size ofthe minimap
  * Input:
  *     mesh *: This mesh
  *     es *:   Edit-State to handle
@@ -743,20 +743,17 @@ static void editmainSetMinimapSize(MESH_T *mesh, EDITMAIN_INFO_T *es)
 {
 
     /* --- Set size of minimap --- */
-    mesh -> minimap_tw = 256 / mesh -> tiles_x;
+    es -> minimap_tw = 256 / mesh -> tiles_x;
 
-    if (mesh -> minimap_tw < 3) {
+    if (es -> minimap_tw < 3) {
         /* At  least 3 pixels width for a 2D-Tile */
-        mesh -> minimap_tw  = 3;
+        es -> minimap_tw  = 3;
 
     }
 
     /* --- Now calc the whole size of minimap --- */
-    mesh -> minimap_w = mesh -> minimap_tw * mesh -> tiles_x;
-    mesh -> minimap_h = mesh -> minimap_tw * mesh -> tiles_y;
-
-    es -> minimap_w   = mesh -> minimap_w;
-    es -> minimap_h   = mesh -> minimap_h;
+    es -> minimap_w = es -> minimap_tw * mesh -> tiles_x;
+    es -> minimap_h = es -> minimap_tw * mesh -> tiles_y;
 
 }
 
@@ -849,9 +846,10 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
                 /* And no fan is selected */
                 es -> crect[0] = 0;
                 es -> crect[1] = 0;
+                es -> map_loaded = 1;
 
                 editmainSetMinimapSize(Mesh, es);
-
+                
 				return 1;
 
 			}

@@ -1053,7 +1053,12 @@ static void editorDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
                 case EDITOR_DRAW2DMAP:
                     if (EditInfo.display_flags & EDITMAIN_SHOW2DMAP) {
 
-                        egomapDraw2DMap(fields -> rect.x, fields -> rect.y, EditInfo.crect);
+                        egomapDraw2DMap(fields -> rect.x,
+                                        fields -> rect.y,
+                                        fields -> rect.w,
+                                        fields -> rect.h,
+                                        EditInfo.minimap_tw,
+                                        EditInfo.crect);
 
                     }
                     break;

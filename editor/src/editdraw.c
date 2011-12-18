@@ -543,9 +543,9 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
  *	    Draw the Camera-Frustum in size od 2D-Map
  * Input:
  *      x, y:   Positon in 2D
- *      tw, th: Downsize-Factor of map to minimap
+ *      df:     Downsize-Factor from map-tile to minimap-tile
  */
-static void editdraw2DCameraPos(int x, int y, int tw, int th)
+static void editdraw2DCameraPos(int x, int y, int df)
 {
 
     SDLGL3D_OBJECT *campos;
@@ -554,12 +554,11 @@ static void editdraw2DCameraPos(int x, int y, int tw, int th)
     int zmax;
 
 
-    /* TODO: Calculate now hardcoded value of '32.0' */
     campos = sdlgl3dGetCameraInfo(0, &f);
 
-    draw_rect.x = x + (campos -> pos[0] / tw);
-    draw_rect.y = y + (campos -> pos[1] / th);
-    zmax = f.zmax / tw;       /* Fixme: Do correct division -- resive by diff to full*/
+    draw_rect.x = x + (campos -> pos[0] / df);
+    draw_rect.y = y + (campos -> pos[1] / df);
+    zmax = f.zmax / df;       
 
     /* Now draw the camera angle */
     glBegin(GL_LINES);
@@ -705,10 +704,12 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
  *     minimap held in the mesh info 
  * Input:
  *     mesh *:  Pointer on mesh to draw
- *     x, y:    Draw at this position on screen
- *     crect *: Info about rectangle of chosen tiles [cx1, cy1, cx2, cy2]  
+ *     mx, my:  Draw at this position on screen
+ *     mw, mh:  Size of map on Screen   
+ *     tw:      Size of a tile of minimap 
+ *     crect *: Info about rectangle of chosen tiles [cx1, cy1, cx2, cy2]
  */
-void editdraw2DMap(MESH_T *mesh, int x, int y, int *crect)
+void editdraw2DMap(MESH_T *mesh, int mx, int my, int mw, int mh, int tw, int *crect)
 {
 
     SDLGL_RECT draw_rect, draw_rect2;
@@ -716,10 +717,10 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int *crect)
     int rx2, ry2;
     int w, h;
 
-    draw_rect.x = x;
-    draw_rect.y = y;
-    draw_rect.w = mesh -> minimap_tw;   /* With generates size of square */
-    draw_rect.h = mesh -> minimap_tw;
+    draw_rect.x = mx;
+    draw_rect.y = my;
+    draw_rect.w = tw;
+    draw_rect.h = tw;
 
     fan_no = 0;
     glBegin(GL_QUADS);
@@ -753,22 +754,22 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int *crect)
             }
 
             /* Next line    */
-            draw_rect.x = x;
+            draw_rect.x = mx;
             draw_rect.y += draw_rect.h;
 
         }
 
     glEnd();
 
-    draw_rect.x = x;
-    draw_rect.y = y;
-    
-    /* ---- Draw all special fans, if asked for ---- */    
+    draw_rect.x = mx;
+    draw_rect.y = my;
+
+    /* ---- Draw all special fans, if asked for ---- */
     editdrawOverlay2D(mesh, &draw_rect, crect);
 
     /* ------------ Draw grid for easier editing ------- */
-    draw_rect.x = x;
-    draw_rect.y = y;
+    draw_rect.x = mx;
+    draw_rect.y = my;
 
     for (h = 0; h < mesh -> tiles_y; h++) {
 
@@ -778,19 +779,19 @@ void editdraw2DMap(MESH_T *mesh, int x, int y, int *crect)
         }
 
         /* Next line    */
-        draw_rect.x = x;
+        draw_rect.x = mx;
         draw_rect.y += draw_rect.h;
 
     }
     /* ---------- Draw border for 2D-Map ---------- */
-    draw_rect2.x = x;
-    draw_rect2.y = y;
-    draw_rect2.w = mesh -> minimap_w;
-    draw_rect2.h = mesh -> minimap_h;
+    draw_rect2.x = mx;
+    draw_rect2.y = my;
+    draw_rect2.w = mw;
+    draw_rect2.h = mh;
     sdlglstrDrawRectColNo(&draw_rect2, SDLGL_COL_WHITE, 0);
-    
+
     /* ------------ Draw the camera as last one -------- */
-    editdraw2DCameraPos(x, y, 128 / draw_rect.w, 128 / draw_rect.h);
+    editdraw2DCameraPos(mx, my, 128 / tw);
 
 }
 
