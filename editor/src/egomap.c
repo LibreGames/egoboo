@@ -797,25 +797,27 @@ static void egomapCalcVrta(MESH_T *mesh)
  *     Changes the info about passages on the map
  * Input:
  *     p_no:   Number of passage to set
- *     psg *:  Description of passage 
- *     action: What to do   
+ *     psg *:  Description of passage
+ *     action: What to do
  */
  static void egomapChangePassage(char p_no, EDITFILE_PASSAGE_T *psg, char action)
  {
- 
+
     int x_count, y_count;
     int tile_no;
-    
- 
+
+
     if (psg -> topleft[0] > 0 && psg -> topleft[1] > 0) {
 
+        psg -> rec_no = p_no;   /* Save the number of the passage for the editor */
+
         if (EGOMAP_CLEAR == action) {
-        
+
             /* Remove this passage */
-            p_no = 0;    
-            
+            p_no = 0;
+
         }
-        
+
         for (y_count = psg -> topleft[1]; y_count <= psg -> bottomright[1]; y_count++) {
 
             for (x_count = psg -> topleft[0]; x_count <= psg -> bottomright[0]; x_count++) {
@@ -832,6 +834,40 @@ static void egomapCalcVrta(MESH_T *mesh)
 
  }
 
+ /*
+ * Name:
+ *     egomapChangeSpawnPt
+ * Description:
+ *     Changes the info about passages on the map
+ * Input:
+ *     s_no:   Number of spawn point to set
+ *     psg *:  Description of spawn point
+ *     action: What to do
+ */
+ static void egomapChangeSpawnPt(int s_no, EDITFILE_SPAWNPT_T *spt, char action)
+ {
+
+     int tile_no;
+
+
+    if (spt -> x_pos > 0 && spt -> y_pos > 0) {
+
+        spt -> rec_no = s_no;   /* Save the number of the passage for the editor */
+
+        if (EGOMAP_CLEAR == action) {
+
+            /* Remove this passage */
+            s_no = 0;
+
+        }
+
+        tile_no = (floor(spt -> y_pos) * Mesh.tiles_x) + floor(spt -> x_pos);
+        Mesh.fan[tile_no].obj_no = s_no;
+
+    }
+
+ }
+
 /* ========================================================================== */
 /* ============================= PUBLIC ROUTINE(S) ========================== */
 /* ========================================================================== */
@@ -840,7 +876,7 @@ static void egomapCalcVrta(MESH_T *mesh)
  * Name:
  *     egomapInit
  * Description:
- *     Initializes the map data 
+ *     Initializes the map data
  * Input:
  *     None 
  */
@@ -924,6 +960,7 @@ MESH_T *egomapLoad(char create, char *msg, int num_tile)
 
     EDITFILE_PASSAGE_T *psg;
     EDITFILE_SPAWNPT_T *spt;
+    int i;
     
     
     memset(&Mesh, 0, sizeof(MESH_T));
@@ -947,8 +984,27 @@ MESH_T *egomapLoad(char create, char *msg, int num_tile)
             /* --- Load additional data for this map --- */
             psg = &Passages[1];
             editfilePassage(psg, EDITFILE_ACT_LOAD, EGOMAP_MAXPASSAGE);
+            i = 1;
+            while(psg -> line_name[0] != 0) {
+
+                egomapChangePassage((char)i, psg, EGOMAP_SET);
+
+                psg++;
+                i++;
+
+            }
             spt = &SpawnPts[1];
             editfileSpawn(spt, EDITFILE_ACT_LOAD, EGOMAP_MAXSPAWN);
+            i = 1;
+            while(spt -> line_name[0] != 0) {
+
+                spt -> rec_no = i;
+
+                egomapChangeSpawnPt(i, spt, EGOMAP_SET);
+
+                spt++;
+                i++;
+            }
             /* --- Complete the map info --- */
             egomapCompleteMapData(&Mesh);
             /* --- Success --- */
@@ -957,7 +1013,7 @@ MESH_T *egomapLoad(char create, char *msg, int num_tile)
         }
 
     }
-    
+
     /* -- Failed -- */
     return 0;
 
@@ -1007,7 +1063,7 @@ int egomapSave(char *msg, char what)
  *     action:  What to do   
  *     crect *: Chosen area to handle if new
  * Output:
- *     Data for passage is available yes/no 
+ *     Data for passage is available yes/no
  */
  int egomapPassage(int x, int y, EDITFILE_PASSAGE_T *psg, char action, int *crect)
  {   
@@ -1049,7 +1105,7 @@ int egomapSave(char *msg, char what)
             
                 memcpy(psg, &Passages[fd -> psg_no], sizeof(EDITFILE_PASSAGE_T));        
                 return 1;
-            
+
             }
             break;
             
@@ -1072,7 +1128,7 @@ int egomapSave(char *msg, char what)
             break;
         
     }
-    
+
     return 0;
     
  }
@@ -1091,7 +1147,7 @@ int egomapSave(char *msg, char what)
  */
  int egomapSpawnPoint(int tx, int ty, EDITFILE_SPAWNPT_T *spt, char action)
  {
-    
+
     FANDATA_T *fd;
     int tile_no;    
     int i;
@@ -1114,21 +1170,21 @@ int egomapSave(char *msg, char what)
                     SpawnPts[i].y_pos = ty + 0.5;
                     SpawnPts[i].z_pos = 0.5;
                     /* -- Write number of object to map -- */
-                    fd -> obj_no      = i;  
+                    fd -> obj_no      = i;
                     /* -- Return data to caller -- */
                     memcpy(spt, &SpawnPts[i], sizeof(EDITFILE_SPAWNPT_T));
                     return 1;
-                    
+
                 }
 
             }
             break;
         case EGOMAP_GET:
             if (fd -> obj_no > 0) {
-            
-                memcpy(spt, &SpawnPts[fd -> obj_no], sizeof(EDITFILE_SPAWNPT_T));        
+
+                memcpy(spt, &SpawnPts[fd -> obj_no], sizeof(EDITFILE_SPAWNPT_T));
                 return 1;
-            
+
             }
             break;
         case EGOMAP_SET:
@@ -1148,7 +1204,7 @@ int egomapSave(char *msg, char what)
     }
 
     return 0;
- 
+
  }
 
  /*

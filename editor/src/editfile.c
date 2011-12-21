@@ -67,7 +67,7 @@ static char *EditFileGORSubDir[]   = {
 static EDITFILE_SPAWNPT_T SpawnPt;
 
 static SDLGLCFG_VALUE SpawnVal[] = {
-	{ SDLGLCFG_VAL_STRING,  &SpawnPt.line_name, 24 },
+	{ SDLGLCFG_VAL_STRING,  &SpawnPt.line_name, 30 },
 	{ SDLGLCFG_VAL_STRING,  &SpawnPt.item_name, 20 },
 	{ SDLGLCFG_VAL_INT,     &SpawnPt.slot_no },
 	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.x_pos },

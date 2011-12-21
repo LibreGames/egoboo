@@ -151,7 +151,7 @@ typedef struct {
 
 typedef struct {
 
-    char line_name[25];     /* Name of object to load, "-": Deleted in editor */
+    char line_name[30 + 1];     /* Name of object to load, "-": Deleted in editor */
     char item_name[20+1];
     int  slot_no;           /* Use it for coloring the bounding boxes */
     float x_pos, y_pos, z_pos;
