@@ -60,8 +60,7 @@
 #define EDITMAIN_MODE_FAN     ((char)3)   /* Result of fan dialog              */
 #define EDITMAIN_MODE_FAN_FX  ((char)4) 
 #define EDITMAIN_MODE_FAN_TEX ((char)5)
-#define EDITMAIN_MODE_PASSAGE ((char)6) 
-#define EDITMAIN_MODE_OBJECT  ((char)7)
+#define EDITMAIN_MODE_EQUIP   ((char)6) 
 #define EDITMAIN_MODE_MODULE  ((char)8) /* Change info in module description */
 #define EDITMAIN_MODE_VERTEX  ((char)9) 
 #define EDITMAIN_MODE_FREE    ((char)10)  

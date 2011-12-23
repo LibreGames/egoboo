@@ -69,6 +69,9 @@
 #define EDITOR_DIALOG       ((char)21)  /* 'block_sign' for general dialog      */
 #define EDITOR_INVENTORY    ((char)22)  /* A players inventory from spawn point */
 #define EDITOR_CHOOSE_NEW   ((char)23)  /* Ask for something new on map         */
+#define EDITOR_FANDLG       ((char)24)
+#define EDITOR_PASSAGEDLG   ((char)25)
+#define EDITOR_OBJECTDLG    ((char)26)
 
 /* Sub-Commands */
 #define EDITOR_FILE_LOAD  ((char)1)
@@ -225,9 +228,8 @@ static SDLGL_FIELD SubMenu[] = {
     { SDLGL_TYPE_MENU, { 120,  52, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_FAN,     "Tile" },
     { SDLGL_TYPE_MENU, { 120,  68, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_FAN_FX,  "Tile-Fx" },
     { SDLGL_TYPE_MENU, { 120,  84, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_FAN_TEX, "Tile-Texture" },      
-    { SDLGL_TYPE_MENU, { 120, 100, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_PASSAGE, "Passage" },
-    { SDLGL_TYPE_MENU, { 120, 116, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_OBJECT,  "Object" },
-    { SDLGL_TYPE_MENU, { 120, 132, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_MODULE,  "Main-Info" },
+    { SDLGL_TYPE_MENU, { 120, 100, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_EQUIP,   "Equip Map" },
+    { SDLGL_TYPE_MENU, { 120, 116, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_MODULE,  "Main-Info" },
     { 0 }
 };
 
@@ -282,10 +284,10 @@ static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.open },
     { SDLGL_TYPE_LABEL,  {   8,  80, 120,   8 }, 0, 0, "Shoot Through:" },
     { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.shoot_trough },
-    { SDLGL_TYPE_BUTTON, {   8, 114,  32,  16 }, EDITMAIN_MODE_PASSAGE, EDITOR_DLG_NEW,   "New"   },
-    { SDLGL_TYPE_BUTTON, {  48, 114,  56,  16 }, EDITMAIN_MODE_PASSAGE, EDITOR_DLG_DELETE, "Delete"   },
-    { SDLGL_TYPE_BUTTON, { 176, 114,  40,  16 }, EDITMAIN_MODE_PASSAGE, EDITOR_DLG_SAVE, "Save"  },
-    { SDLGL_TYPE_BUTTON, { 224, 114,  48,  16 }, EDITMAIN_MODE_PASSAGE, EDITOR_DLG_CLOSE, "Close" },
+    { SDLGL_TYPE_BUTTON, {   8, 114,  32,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_NEW,   "New"   },
+    { SDLGL_TYPE_BUTTON, {  48, 114,  56,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_DELETE, "Delete"   },
+    { SDLGL_TYPE_BUTTON, { 176, 114,  40,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_SAVE, "Save"  },
+    { SDLGL_TYPE_BUTTON, { 224, 114,  48,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_CLOSE, "Close" },
     { 0 }
 };
 
@@ -318,14 +320,14 @@ static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
     { SDLGL_TYPE_VALUE,  {  96, 160,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.lvl },
     { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Is Player:" },
-    { SDLGL_TYPE_CHECKBOX,  {  96, 176,  16,   8 }, EDITMAIN_MODE_OBJECT, 0x01, &ActSpt.stt },
+    { SDLGL_TYPE_CHECKBOX,  {  96, 176,  16,   8 }, EDITOR_OBJECTDLG, 0x01, &ActSpt.stt },
     { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Team:" },
     { SDLGL_TYPE_VALUE,  {  96, 192,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.team },
-    { SDLGL_TYPE_BUTTON, {   8, 224,  32,  16 }, EDITMAIN_MODE_OBJECT, EDITOR_DLG_NEW, "New"   },
-    { SDLGL_TYPE_BUTTON, {  48, 224,  56,  16 }, EDITMAIN_MODE_OBJECT, EDITOR_DLG_DELETE, "Delete"   },
-    { SDLGL_TYPE_BUTTON, { 176, 224,  40,  16 }, EDITMAIN_MODE_OBJECT, EDITOR_DLG_SAVE, "Save"  },
-    { SDLGL_TYPE_BUTTON, { 224, 224,  48,  16 }, EDITMAIN_MODE_OBJECT, EDITOR_DLG_CLOSE, "Close" },
-    { SDLGL_TYPE_BUTTON, { 266,   4,  80,  16 }, EDITMAIN_MODE_OBJECT, EDITOR_DLG_INVENTORY, "Inventory" },
+    { SDLGL_TYPE_BUTTON, {   8, 224,  32,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_NEW, "New"   },
+    { SDLGL_TYPE_BUTTON, {  48, 224,  56,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_DELETE, "Delete"   },
+    { SDLGL_TYPE_BUTTON, { 176, 224,  40,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_SAVE, "Save"  },
+    { SDLGL_TYPE_BUTTON, { 224, 224,  48,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_CLOSE, "Close" },
+    { SDLGL_TYPE_BUTTON, { 266,   4,  80,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_INVENTORY, "Inventory" },
     { 0 }
 };
 
@@ -528,18 +530,17 @@ static void editorSetDialog(char which, char open, int x, int y)
     if (open) {
 
         switch(which) {
-            case EDITMAIN_MODE_MODULE:
             case EDITOR_MODULEDLG:
                 dlg = &ModuleDlg[0];
                 break;
-            case EDITMAIN_MODE_FAN:
+            case EDITOR_FANDLG:
                 dlg = &FanInfoDlg[0];
                 break;
                 /* TODO: Add dialogs for Passages and Spawn Points */
-            case EDITMAIN_MODE_PASSAGE:
+            case EDITOR_PASSAGEDLG:
                 dlg = &PassageDlg[0];
                 break;
-            case EDITMAIN_MODE_OBJECT:
+            case EDITOR_OBJECTDLG:
                 dlg = &SpawnPtDlg[0];
                 break;
 
@@ -596,24 +597,28 @@ static void editorOpenToolDialog(EDITMAIN_INFO_T *es)
                 editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
                 break;
 
-            case EDITMAIN_MODE_PASSAGE:
-                /* Get info about passage from dialog, if available */
-                if (es -> ft.psg_no > 0) {
+            case EDITMAIN_MODE_EQUIP:
+                /* Equip the map, create/edit chosen area */
+                if (es -> ft.obj_no > 0) {
+                    /* Edit the chosen object */
+                    egomapSpawnPoint(es -> tx, es -> ty, &ActSpt, EGOMAP_GET);
+                    editorSetDialog(EDITOR_OBJECTDLG, 1, 20, 20);
 
+                }
+                else if (es -> ft.psg_no > 0) {
+                    /* Edit the chosen passage */
                     egomapPassage(es -> tx, es -> ty, &ActPsg, EGOMAP_GET, es -> crect);
                     editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
 
                 }
+                else {
+                    /* TODO: If chosen, ask if to create a passage or a spawn point */
+                }
                 break;
 
-            case EDITMAIN_MODE_OBJECT:
+            case EDITOR_OBJECTDLG:
                 /* Get info about object if available */
-                if (es -> ft.obj_no > 0) {
 
-                    egomapSpawnPoint(es -> tx, es -> ty, &ActSpt, EGOMAP_GET);
-                    editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
-
-                }
                 break;
 
         }
@@ -753,7 +758,7 @@ static int editorFileMenu(char which)
             editfileModuleDesc(&ModuleDesc, EDITFILE_ACT_NEW);
 
             /* Open Dialog for map size and other info about this module */
-            editorSetDialog(EDITMAIN_MODE_MODULE, 1, 20, 20);
+            editorSetDialog(EDITOR_MODULEDLG, 1, 20, 20);
             break;
 
         case EDITOR_FILE_EXIT:
@@ -972,19 +977,14 @@ static void editorMenuTool(SDLGL_EVENT *event)
             case EDITMAIN_MODE_FAN:
                 /* --- This is only changes the state of the editor: How to handle mouse input --- */
                 break;
-                
-            case EDITMAIN_MODE_PASSAGE:
+            case EDITMAIN_MODE_EQUIP:
+                /* --- This is only changes the state of the editor: How to handle mouse input --- */
                 /* Write the data about passages to edit-map  */
-
-                break;
-            case EDITMAIN_MODE_OBJECT:
-                /* Write the data about objects points to edit-map  */
-
                 break;
 
             case EDITMAIN_MODE_MODULE:
                 /* Open Dialog for editing module info */
-                editorSetDialog(EDITMAIN_MODE_MODULE, 1, 20, 20);
+                editorSetDialog(EDITOR_MODULEDLG, 1, 20, 20);
                 break;                
 
         }
@@ -1164,17 +1164,16 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 break;
 
             case EDITOR_MODULEDLG:
-            case EDITMAIN_MODE_MODULE:
                 /* Handle module dialog input */
                 editorModuleDlg(event);
                 break;
 
-            case EDITMAIN_MODE_PASSAGE:
+            case EDITOR_PASSAGEDLG:
                 /* Handle passage dialog input */
                 editorPassageDlg(event);
                 break;
 
-            case EDITMAIN_MODE_OBJECT:
+            case EDITOR_OBJECTDLG:
                 /* Handle spawn point dialog input */
                 editorSpawnDlg(event);
                 break;
