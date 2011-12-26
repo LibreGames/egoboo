@@ -65,6 +65,12 @@
 #define EDITMAIN_MODE_VERTEX  ((char)9) 
 #define EDITMAIN_MODE_FREE    ((char)10)  
 
+/* --- Commands in Edit-Mode --- */
+#define EDITMAIN_SET_MAP      ((char)22)  
+#define EDITMAIN_SET_FAN      ((char)23)
+#define EDITMAIN_SET_FAN_FX   ((char)24) 
+#define EDITMAIN_SET_FAN_TEX  ((char)24) 
+
 /*******************************************************************************
 * TYPEDEFS							                                           *
 *******************************************************************************/

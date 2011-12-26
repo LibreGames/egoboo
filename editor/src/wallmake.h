@@ -58,6 +58,6 @@ typedef struct {
 * CODE 								                                           *
 *******************************************************************************/
 
-int wallmakeMakeTile(int is_floor, WALLMAKER_INFO_T *wi);
+int wallmakeMakeTile(WALLMAKER_INFO_T *wi);
 
 #endif  /* _WALLMAKE_H_ */

@@ -118,13 +118,14 @@ static int editmainGetAdjacent(MESH_T *mesh, int fan, int adjacent[8])
 	EDITMAIN_XY src_xy, dest_xy;
 
 	
-	num_adj = 0;            /* Count them */
+    src_xy.x = fan % mesh -> tiles_x;
+	src_xy.y = fan / mesh -> tiles_x;
+    
+	num_adj = 0;            /* Count them */   
+            
 	for (dir = 0; dir < 8; dir++) {
-	
-		adj_pos = -1;       /* Assume invalid */
 
-		src_xy.x = fan % mesh -> tiles_x;
-		src_xy.y = fan / mesh -> tiles_x;
+		adj_pos = -1;       /* Assume invalid */		
 		
 		dest_xy.x = src_xy.x + AdjacentXY[dir].x;
 		dest_xy.y = src_xy.y + AdjacentXY[dir].y;
@@ -513,9 +514,9 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
  * Name:
  *     editmainTranslateWallMakeInfo
  * Description:
- *     Translates the given wallmaker info into fans on map 
+ *     Translates the given wallmaker info into fans on map
  * Input:
- *     es *:     Edit-Info to work with    
+ *     es *:     Edit-Info to work with
  *     mesh*:    Pointer on mesh to get the info from
  *     wi *:     Array from wallmaker to create walls from
  *     num_tile: Number of tiles to generate
@@ -525,7 +526,7 @@ static void editmainTranslateWallMakeInfo(EDITMAIN_INFO_T *es, MESH_T *mesh, WAL
 
 	int i, i2;
 	char type_no;
-	
+
 
 	for (i = 0; i < num_tile; i++) {
 
@@ -559,17 +560,19 @@ static void editmainTranslateWallMakeInfo(EDITMAIN_INFO_T *es, MESH_T *mesh, WAL
 	}
 
 	/* Weld the new generated walls with each other */
-	for (i = 0; i < 9; i++) {
-		i2 = i + 1;
-		if (i2 > 8) {
-			i2 = 0;
-		}
-		/* Only weld if both tiles are walls */
-		if (wi[i].type > 1 && wi[i2].type > 1) {
-			editmainWeldXY(mesh, wi[i].fan_no, wi[i2].fan_no);
-		}
+    if (num_tile > 1) {
+	    for (i = 0; i < num_tile; i++) {
+		    i2 = i + 1;
+		    if (i2 > (num_tile - 1)) {
+			    i2 = 0;
+		    }
+		    /* Only weld if both tiles are walls */
+		    if (wi[i].type > 1 && wi[i2].type > 1) {
+			    editmainWeldXY(mesh, wi[i].fan_no, wi[i2].fan_no);
+		    }
 
-	}
+	    }
+    }
 
 }
 
@@ -613,19 +616,19 @@ static void editmainUpdateChosenFreeFan(EDITMAIN_INFO_T *es)
 
 /*
  * Name:
- *     editmainFanSet
+ *     editmainSetTile
  * Description:
  *     Sets a fan at the actual chosen position, depending on edit_state.
  *     Does an update on given fan. Including changed number of vertices,
  *     if needed.
  * Input:
  *     es *:     Info to work with
- *     x, y:     Position of tile on map    
+ *     x, y:     Position of tile on map
  *     is_floor: Set floor in simple mode, else set wall
  * Output:
- *     Has done something ( valid EDITMAIN_MODE_...) 
+ *     Has done something ( valid EDITMAIN_MODE_...)
  */
-static int editmainFanSet(EDITMAIN_INFO_T *es, int x, int y, int is_floor)
+static int editmainSetTile(EDITMAIN_INFO_T *es, int x, int y, int is_floor)
 {
 
 	WALLMAKER_INFO_T wi[12];            /* List of fans to create */
@@ -637,26 +640,26 @@ static int editmainFanSet(EDITMAIN_INFO_T *es, int x, int y, int is_floor)
     if (x > 0 && y > 0
 		&& x < (Mesh -> tiles_x - 1)
 		&& y < (Mesh -> tiles_y - 1))  {
-                
-        fan_no = (y * Mesh -> tiles_x) + x;   
-	
-		if (es -> edit_mode == EDITMAIN_MODE_MAP) {			
+
+        fan_no = (y * Mesh -> tiles_x) + x;
+
+		if (es -> edit_mode == EDITMAIN_MODE_MAP) {
 
             /* Get a list of fans surrounding this one */
             editmainCreateWallMakeInfo(Mesh, fan_no, wi);
 
-            num_wall = wallmakeMakeTile(is_floor, wi);
-            
+            num_wall = wallmakeMakeTile(wi);
+
             if (num_wall) {
-            
+
                 /* Create tiles from WALLMAKER_INFO_T */
                 editmainTranslateWallMakeInfo(es, Mesh, wi, num_wall);
-                es -> cm.numvertices = 0;					
+                es -> cm.numvertices = 0;
 
             }
-            
+
             return 1;
-            
+
         }
 		else if (es -> edit_mode == EDITMAIN_MODE_FAN) {
 
@@ -672,28 +675,28 @@ static int editmainFanSet(EDITMAIN_INFO_T *es, int x, int y, int is_floor)
 									  &es -> cm,
 									  es -> fan_dir);
 				editmainDoFanUpdate(Mesh, es, fan_no);
-                
+
 			}
-            
+
             return 1;
 
 		}
 		else if (es -> edit_mode == EDITMAIN_MODE_FAN_FX) {
-        
+
 			/* Do an update on the FX-Flags */
 			Mesh -> fan[fan_no].fx = es -> ft.fx;
             return 1;
 
 		}
 		else if (es -> edit_mode == EDITMAIN_MODE_FAN_TEX) {
-        
+
 			/* Change the texture */
 			Mesh -> fan[fan_no].tx_no    = es -> ft.tx_no;
 			Mesh -> fan[fan_no].tx_flags = es -> ft.tx_flags;
             return 1;
-            
+
 		}
-        
+
 	}
 
 	return 0;
@@ -758,6 +761,70 @@ static void editmainSetMinimapSize(MESH_T *mesh, EDITMAIN_INFO_T *es)
 
 }
 
+/*
+ * Name:
+ *     editmainBuildMap
+ * Description:
+ *     Builds in map walls or floors, depending on 'is_floor'
+ * Input:
+ *     es *:     Pointer on edit-state with chosen area
+ *     is_floor: Build floor tile(s)
+ */
+static void editmainBuildMap(EDITMAIN_INFO_T *es, int is_floor)
+{
+
+    int x, y;
+    WALLMAKER_INFO_T wi;
+
+
+    /* ------- Set one or more fans, if in 'build'-mode --------- */
+    if (es -> crect[0] > 0 && es -> crect[1] > 0) {
+
+        /* --- First step: Change fans to 'basic' wall / floor */
+        if (is_floor) {
+            wi.type = WALLMAKE_FLOOR;
+        }
+        else {
+            wi.type = WALLMAKE_TOP;
+        }
+
+        wi.dir = WALLMAKE_NORTH;
+
+        /* Change all chosen tiles to chosen type: Either 'bottom' or 'top'  */
+        for (y = es -> crect[1]; y <= es -> crect[3]; y++) {
+
+            for (x = es -> crect[0]; x <= es -> crect[2]; x++) {
+
+                wi.fan_no = (y * Mesh -> tiles_x) + x;
+
+                editmainTranslateWallMakeInfo(es, Mesh, &wi, 1);
+
+            }
+
+        }
+
+        /* Second step: For each tile, adjust the adjacent tiles which are  */
+        /*              not floor tiles                                     */
+        for (y = es -> crect[1]; y <= es -> crect[3]; y++) {
+
+            for (x = es -> crect[0]; x <= es -> crect[2]; x++) {
+
+                editmainSetTile(es, x, y, is_floor);
+
+            }
+
+        }
+
+        /* Reset number of chosen tile(s), because it's done */
+        es -> crect[0] = 0;
+        es -> crect[1] = 0;
+        es -> crect[2] = 0;
+        es -> crect[3] = 0;
+
+    }
+
+}
+
 /* ========================================================================== */
 /* ========================= PUBLIC FUNCTIONS =============================== */
 /* ========================================================================== */
@@ -771,7 +838,6 @@ static void editmainSetMinimapSize(MESH_T *mesh, EDITMAIN_INFO_T *es)
  *     es *:     Pointer on edit-state to intialize
  *     map_size: Default map size
  */
-
 void editmainInit(EDITMAIN_INFO_T *es, int map_size)
 {
 
@@ -981,26 +1047,24 @@ void editmainChooseFan(EDITMAIN_INFO_T *es, int is_floor)
                 memcpy(&es -> ft, &Mesh -> fan[fan_no], sizeof(FANDATA_T));
             }
             break;
-    
+
         case EDITMAIN_MODE_MAP:
+            editmainBuildMap(es, is_floor);
+            break;
+
         case EDITMAIN_MODE_FAN:
         case EDITMAIN_MODE_FAN_FX:
         case EDITMAIN_MODE_FAN_TEX:
             /* ------- Set one or more fans, if in 'build'-mode --------- */
             if (es -> crect[0] > 0 && es -> crect[1] > 0) {
 
-                if ((es -> crect[2] - es -> crect[0] > 0)
-                    && (es -> crect[3] - es -> crect[1] > 0)) {
+                for (y = es -> crect[1]; y <= es -> crect[3]; y++) {
 
-                    for (y = es -> crect[1]; y <= es -> crect[3]; y++) {
+                    for (x = es -> crect[0]; x <= es -> crect[2]; x++) {
 
-                        for (x = es -> crect[0]; x <= es -> crect[2]; x++) {
+                        if (! editmainSetTile(es, x, y, is_floor)) {
 
-                            if (! editmainFanSet(es, x, y, is_floor)) {
-                            
-                                return;
-                            
-                            }
+                            return;
 
                         }
 
@@ -1008,17 +1072,18 @@ void editmainChooseFan(EDITMAIN_INFO_T *es, int is_floor)
 
                 }
 
+
                 /* Save it for the camera */
-                es -> tx = es -> crect[0];    
+                es -> tx = es -> crect[0];
                 es -> ty = es -> crect[1];
-                
+
                 /* Reset number of chosen fan(s), because it's done */
                 es -> crect[0] = 0;
                 es -> crect[1] = 0;
 
             }
             break;
-            
+
         case EDITMAIN_MODE_FREE:
             if (es -> cm.numvertices > 0) {
                 
