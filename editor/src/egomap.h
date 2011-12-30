@@ -68,8 +68,8 @@ void egomapInit(void);
 void egomapSetFanStart(MESH_T *mesh);
 MESH_T *egomapLoad(char create, char *msg, int num_tile);
 int  egomapSave(char *msg, char what);
-int  egomapPassage(int tx, int ty, EDITFILE_PASSAGE_T *psg, char action, int *crect);
-int  egomapSpawnPoint(int tx, int ty, EDITFILE_SPAWNPT_T *spt, char action);
+int  egomapPassage(int psg_no, EDITFILE_PASSAGE_T *psg, char action, int *crect);
+int  egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crect);
 void egomapGetTileInfo(int tx, int ty, FANDATA_T *fd);
 
 /* --- Draw command --- */

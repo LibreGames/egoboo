@@ -132,8 +132,8 @@ static EDITMAIN_INFO_T EditInfo;      /* Actual state of editor, and its info */
 static char EditorWorkDir[256];
 static char EditorActDlg  = 0;
 
-static EDITFILE_PASSAGE_T ActPsg;       /* Holds data about chosen passage      */
-static EDITFILE_SPAWNPT_T ActSpt;       /* Holds data about chosen spawn point  */
+static EDITFILE_PASSAGE_T EditPsg;       /* Holds data about chosen passage      */
+static EDITFILE_SPAWNPT_T EditSpt;       /* Holds data about chosen spawn point  */
 static EDITFILE_MODULE_T ModuleDesc;    /* Holds data about actual module desc  */
 
 /* ============= Declaration of configuration data ================= */
@@ -224,12 +224,13 @@ static SDLGL_FIELD SubMenu[] = {
     /* Tools-Menu */
     { SDLGL_TYPE_STD,  { 116,  16, 128, 136 }, EDITOR_TOOLS, -1 },   /* Menu-Background */
     { SDLGL_TYPE_MENU, { 120,  20, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_OFF,     "None / View" },
-    { SDLGL_TYPE_MENU, { 120,  36, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_MAP,     "Map" },
-    { SDLGL_TYPE_MENU, { 120,  52, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_FAN,     "Tile" },
+    { SDLGL_TYPE_MENU, { 120,  36, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_MAP,     "Build Map" },
+    { SDLGL_TYPE_MENU, { 120,  52, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_FAN,     "Single Tile" },
     { SDLGL_TYPE_MENU, { 120,  68, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_FAN_FX,  "Tile-Fx" },
     { SDLGL_TYPE_MENU, { 120,  84, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_FAN_TEX, "Tile-Texture" },      
-    { SDLGL_TYPE_MENU, { 120, 100, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_EQUIP,   "Equip Map" },
-    { SDLGL_TYPE_MENU, { 120, 116, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_MODULE,  "Main-Info" },
+    { SDLGL_TYPE_MENU, { 120, 100, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_PASSAGE, "Passage" },
+    { SDLGL_TYPE_MENU, { 120, 116, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_SPAWN,   "Spawn Point" },
+    { SDLGL_TYPE_MENU, { 120, 132, 120,   8 }, EDITOR_TOOLS, EDITMAIN_MODE_MODULE,  "Main-Info" },
     { 0 }
 };
 
@@ -269,21 +270,21 @@ static SDLGL_FIELD FanInfoDlg[] = {
 static SDLGL_FIELD PassageDlg[] = {
     { SDLGL_TYPE_BUTTON, {   0,   0, 280, 134 }, 0, 0, "Passage" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  48,   8 }, 0, 0, "Name:" },
-    { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActPsg.line_name[0] },
+    { SDLGL_TYPE_LABEL,  {  56,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &EditPsg.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32, 112,   8 }, 0, 0, "Top left:" },
     { SDLGL_TYPE_LABEL,  { 120,  32,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 144,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPsg.topleft[0] },
+    { SDLGL_TYPE_VALUE,  { 144,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&EditPsg.topleft[0] },
     { SDLGL_TYPE_LABEL,  { 176,  32,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 208,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPsg.topleft[1] },
+    { SDLGL_TYPE_VALUE,  { 208,  32,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&EditPsg.topleft[1] },
     { SDLGL_TYPE_LABEL,  {   8,  48, 112,   8 }, 0, 0, "Bottom right:" },
     { SDLGL_TYPE_LABEL,  { 120,  48,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 144,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPsg.bottomright[0] },
+    { SDLGL_TYPE_VALUE,  { 144,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&EditPsg.bottomright[0] },
     { SDLGL_TYPE_LABEL,  { 176,  48,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 208,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&ActPsg.bottomright[1] },
+    { SDLGL_TYPE_VALUE,  { 208,  48,  32,   8 }, 0, SDLGL_VAL_INT, (char *)&EditPsg.bottomright[1] },
     { SDLGL_TYPE_LABEL,  {   8,  64,  48,   8 }, 0, 0, "Open:" },
-    { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.open },
+    { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &EditPsg.open },
     { SDLGL_TYPE_LABEL,  {   8,  80, 120,   8 }, 0, 0, "Shoot Through:" },
-    { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &ActPsg.shoot_trough },
+    { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &EditPsg.shoot_trough },
     { SDLGL_TYPE_BUTTON, {   8, 114,  32,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_NEW,   "New"   },
     { SDLGL_TYPE_BUTTON, {  48, 114,  56,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_DELETE, "Delete"   },
     { SDLGL_TYPE_BUTTON, { 176, 114,  40,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_SAVE, "Save"  },
@@ -295,34 +296,34 @@ static SDLGL_FIELD PassageDlg[] = {
 static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_BUTTON, {   0,   0, 350, 260 }, 0, 0, "Object" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Load-Name:" },
-    { SDLGL_TYPE_VALUE,  {  96,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &ActSpt.line_name[0] },
+    { SDLGL_TYPE_VALUE,  {  96,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.line_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Game-Name:" },
-    { SDLGL_TYPE_VALUE,  {  96,  32,  96,   8 }, 0, SDLGL_VAL_STRING, &ActSpt.item_name[0] },
+    { SDLGL_TYPE_VALUE,  {  96,  32,  96,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.item_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
-    { SDLGL_TYPE_VALUE,  {  72,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&ActSpt.slot_no },
+    { SDLGL_TYPE_VALUE,  {  72,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.slot_no },
     { SDLGL_TYPE_LABEL,  {   8,  64,  80,   8 }, 0, 0, "Position:" },
     { SDLGL_TYPE_LABEL,  {  88,  64,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 112,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&ActSpt.x_pos },
+    { SDLGL_TYPE_VALUE,  { 112,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.x_pos },
     { SDLGL_TYPE_LABEL,  { 176,  64,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 200,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&ActSpt.y_pos },
+    { SDLGL_TYPE_VALUE,  { 200,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.y_pos },
     { SDLGL_TYPE_LABEL,  { 264,  64,  24,   8 }, 0, 0, "Z:" },
-    { SDLGL_TYPE_VALUE,  { 288,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&ActSpt.z_pos },
+    { SDLGL_TYPE_VALUE,  { 288,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.z_pos },
     { SDLGL_TYPE_LABEL,  {   8,  80,  88,   8 }, 0, 0, "Direction:" },
-    { SDLGL_TYPE_VALUE,  {  96,  80,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.view_dir },
+    { SDLGL_TYPE_VALUE,  {  96,  80,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &EditSpt.view_dir },
     { SDLGL_TYPE_LABEL,  {   8,  96,  88,   8 }, 0, 0, "Money:" },  /* 0 .. 9999 */
-    { SDLGL_TYPE_VALUE,  {  96,  96,  16,   8 }, 0, SDLGL_VAL_INT, (char *)&ActSpt.money },
+    { SDLGL_TYPE_VALUE,  {  96,  96,  16,   8 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.money },
     { SDLGL_TYPE_LABEL,  {   8, 112,  88,   8 }, 0, 0, "Skin:" },   /* 0 .. 5 (5: Random) */
-    { SDLGL_TYPE_VALUE,  {  96, 112,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.skin },
+    { SDLGL_TYPE_VALUE,  {  96, 112,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.skin },
     { SDLGL_TYPE_LABEL,  {   8, 128,  88,   8 }, 0, 0, "Passage:" },
-    { SDLGL_TYPE_VALUE,  {  96, 128,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.pas },
+    { SDLGL_TYPE_VALUE,  {  96, 128,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.pas },
     { SDLGL_TYPE_LABEL,  {   8, 144,  88,   8 }, 0, 0, "Content:" },
-    { SDLGL_TYPE_VALUE,  {  96, 144,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.con },
+    { SDLGL_TYPE_VALUE,  {  96, 144,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.con },
     { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
-    { SDLGL_TYPE_VALUE,  {  96, 160,  16,   8 }, 0, SDLGL_VAL_CHAR, &ActSpt.lvl },
+    { SDLGL_TYPE_VALUE,  {  96, 160,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.lvl },
     { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Is Player:" },
-    { SDLGL_TYPE_CHECKBOX,  {  96, 176,  16,   8 }, EDITOR_OBJECTDLG, 0x01, &ActSpt.stt },
+    { SDLGL_TYPE_CHECKBOX,  {  96, 176,  16,   8 }, EDITOR_OBJECTDLG, 0x01, &EditSpt.stt },
     { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Team:" },
-    { SDLGL_TYPE_VALUE,  {  96, 192,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &ActSpt.team },
+    { SDLGL_TYPE_VALUE,  {  96, 192,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &EditSpt.team },
     { SDLGL_TYPE_BUTTON, {   8, 224,  32,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_NEW, "New"   },
     { SDLGL_TYPE_BUTTON, {  48, 224,  56,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_DELETE, "Delete"   },
     { SDLGL_TYPE_BUTTON, { 176, 224,  40,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_SAVE, "Save"  },
@@ -574,52 +575,67 @@ static void editorSetDialog(char which, char open, int x, int y)
 
 /*
  * Name:
- *     editorOpenToolDialog
+ *     editorUseTool
  * Description:
  *     Opens the tool dialog for given position on map,
- *     depending on actual 'EditToolState'
+ *     depending on actual 'EditToolState', using the chosen area
+ *     In 'Map-Build-Mode', the effect is given immediately
  * Input:
- *     es *: Edit-Info with data about chosen tile
+ *     es *:     Edit-Info with data about chosen tile
+ *     is_floor: For immediate action in 'Map Build Mode'
  */
-static void editorOpenToolDialog(EDITMAIN_INFO_T *es)
+static void editorUseTool(EDITMAIN_INFO_T *es, int is_floor)
 {
 
     if (EditInfo.edit_mode > 0) {
 
-        switch(EditInfo.edit_mode) {
+        /* Reset chosen mouse area */
+        EditInfo.drag_w = 0;
+        EditInfo.drag_h = 0;
 
-            case EDITMAIN_MODE_MAP:
-                /* === No tool, only set info about edit-state === */
-                break;
+        if (EditInfo.edit_mode == EDITMAIN_MODE_MAP) {
 
-            case EDITMAIN_MODE_FAN:
-                /* Only display tiles and 'chosen' tiles */
-                editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
-                break;
+            editmainChooseFan(&EditInfo, is_floor);
 
-            case EDITMAIN_MODE_EQUIP:
-                /* Equip the map, create/edit chosen area */
-                if (es -> ft.obj_no > 0) {
-                    /* Edit the chosen object */
-                    egomapSpawnPoint(es -> tx, es -> ty, &ActSpt, EGOMAP_GET);
-                    editorSetDialog(EDITOR_OBJECTDLG, 1, 20, 20);
+        }
+        else if (is_floor > 0) {
 
-                }
-                else if (es -> ft.psg_no > 0) {
-                    /* Edit the chosen passage */
-                    egomapPassage(es -> tx, es -> ty, &ActPsg, EGOMAP_GET, es -> crect);
+            /* Dialogs only on right click */
+            switch(EditInfo.edit_mode) {
+
+                case EDITMAIN_MODE_FAN:
+                    /* Only display tiles and 'chosen' tiles */
                     editorSetDialog(EditInfo.edit_mode, 1, 20, 20);
+                    break;
 
-                }
-                else {
-                    /* TODO: If chosen, ask if to create a passage or a spawn point */
-                }
-                break;
+                case EDITMAIN_MODE_PASSAGE:
+                    /* Edit / create a passage */
+                    if (es -> ft.psg_no > 0) {
+                        /* Edit the chosen passage */
+                        egomapPassage(es -> ft.psg_no, &EditPsg, EGOMAP_GET, es -> crect);
+                    }
+                    else {
+                        /* Create passage using the chosen area */
+                        egomapPassage(es -> ft.psg_no, &EditPsg, EGOMAP_NEW, es -> crect);
+                    }
+                    editorSetDialog(EDITOR_PASSAGEDLG, 1, 20, 20);
+                    break;
+                    
+                case EDITMAIN_MODE_SPAWN:
+                    if (es -> ft.obj_no > 0) {
+                        /* Edit the chosen object */
+                        egomapSpawnPoint(es -> ft.obj_no, &EditSpt, EGOMAP_GET, es -> crect);
+                    }
+                    else {
+                        /* Create spawn point using given position */
+                        egomapSpawnPoint(0, &EditSpt, EGOMAP_NEW, es -> crect);
+                    }
+                    editorSetDialog(EDITOR_OBJECTDLG, 1, 20, 20);
+                    break;
 
-            case EDITOR_OBJECTDLG:
-                /* Get info about object if available */
+            }
 
-                break;
+            editmainMoveCamera(es -> crect[0], es -> crect[1]);
 
         }
 
@@ -677,16 +693,10 @@ static void editor2DMap(SDLGL_EVENT *event)
             egomapGetTileInfo(EditInfo.tx, EditInfo.ty, &EditInfo.ft);
 
             if (event -> sdlcode == SDLGL_KEY_MOULEFT) {
-                EditInfo.drag_w = 0;
-                EditInfo.drag_h = 0;
-                editmainChooseFan(&EditInfo, 0);
+                editorUseTool(&EditInfo, 0);
             }
             else if (event -> sdlcode == SDLGL_KEY_MOURIGHT) {
-                EditInfo.drag_w = 0;
-                EditInfo.drag_h = 0;
-                editmainChooseFan(&EditInfo, 1);
-                /* Check for special info (passages, spawn points), if switched on */
-                editorOpenToolDialog(&EditInfo);
+                editorUseTool(&EditInfo, 1);
             }   /* Choose dragging mouse */
             else if (event -> sdlcode == SDLGL_KEY_MOULDRAG) {
                 editorSetChooseRect(event, &EditInfo);
@@ -967,27 +977,17 @@ static void editorMenuTool(SDLGL_EVENT *event)
     {
         /* Close actual active dialog, if any */
         editorSetDialog(0, 0, 0, 0);
-        
+
     }
     else {
 
-        switch(EditInfo.edit_mode) {
+        if (EditInfo.edit_mode == EDITMAIN_MODE_MODULE) {
 
-            case EDITMAIN_MODE_MAP:
-            case EDITMAIN_MODE_FAN:
-                /* --- This is only changes the state of the editor: How to handle mouse input --- */
-                break;
-            case EDITMAIN_MODE_EQUIP:
-                /* --- This is only changes the state of the editor: How to handle mouse input --- */
-                /* Write the data about passages to edit-map  */
-                break;
-
-            case EDITMAIN_MODE_MODULE:
-                /* Open Dialog for editing module info */
-                editorSetDialog(EDITOR_MODULEDLG, 1, 20, 20);
-                break;                
-
+             /* Open Dialog for editing module info */
+             editorSetDialog(EDITOR_MODULEDLG, 1, 20, 20);
         }
+
+        /* All other modes only change the state of the editor for working */
 
     }
 

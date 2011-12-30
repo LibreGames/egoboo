@@ -493,18 +493,18 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
 
 	int adjacent[8];
 	int i;
-	
+
 
 	wi[0].fan_no = fan;
 	wi[0].type   = mesh -> fan[fan].type;
-	wi[0].dir    = 0;
-	
+	wi[0].dir    = -1;
+
 	editmainGetAdjacent(mesh, fan, adjacent);
 	for (i = 0; i < 8; i++) {
-	
+
 		wi[i + 1].fan_no = adjacent[i];
 		wi[i + 1].type   = mesh -> fan[adjacent[i]].type;
-		wi[i + 1].dir    = 0;
+		wi[i + 1].dir    = -1;
 
 	}  
    
@@ -530,7 +530,7 @@ static void editmainTranslateWallMakeInfo(EDITMAIN_INFO_T *es, MESH_T *mesh, WAL
 
 	for (i = 0; i < num_tile; i++) {
 
-		if (wi[i].fan_no >= 0) {
+		if (wi[i].fan_no >= 0 && wi[i].dir >= 0) {
 
 			/* -- Do update in any case */
 			type_no = wi[i].type;
@@ -1163,7 +1163,7 @@ void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir)
  *     Draws the texture and chosen texture-part of actual chosen fan
  *     into given rectangle. Uses data from EditState
  * Input:
- *     es *:     Edit-State to handle   
+ *     es *:     Edit-State to handle
  *     x, y, w, h: Rectangle to draw into
  */
 void editmain2DTex(EDITMAIN_INFO_T *es, int x, int y, int w, int h)
@@ -1224,3 +1224,16 @@ void editmainChooseTex(EDITMAIN_INFO_T *es, int cx, int cy, int w, int h)
   
 }
 
+/*
+ * Name:
+ *     editmainMoveCamera
+ * Description:
+ *     Moves the camera to look at given position
+ * Input:
+ *     x, y: Position of tile the camera should look to
+ */
+void editmainMoveCamera(int x, int y)
+{
+    /* And now set camera to move/look at this position */
+    editdrawAdjustCamera(x, y);
+}

@@ -1058,23 +1058,18 @@ int egomapSave(char *msg, char what)
  * Description:
  *     Changes the info about passages on the map
  * Input:
- *     tx, ty:  Map-Position of passage edit
+ *     psg_no:  Number of passage to edit, if GET
  *     psg *:   Description of passage to handle
  *     action:  What to do   
- *     crect *: Chosen area to handle if new
+ *     crect *: Chosen area for the passage, if new
  * Output:
  *     Data for passage is available yes/no
  */
- int egomapPassage(int x, int y, EDITFILE_PASSAGE_T *psg, char action, int *crect)
+ int egomapPassage(int psg_no, EDITFILE_PASSAGE_T *psg, char action, int *crect)
  {   
-     
-    FANDATA_T *fd;
+
     char i;
-    int tile_no;    
-    
-    
-    tile_no = (Mesh.tiles_x * y) + x;
-    fd      = &Mesh.fan[tile_no];
+
     
     switch(action) {
     
@@ -1091,9 +1086,11 @@ int egomapSave(char *msg, char what)
                     Passages[i].topleft[1]     = crect[1];
                     Passages[i].bottomright[0] = crect[2];
                     Passages[i].bottomright[1] = crect[3];
-                    /* -- TODO: Write number of passage to map -- */
                     /* -- Return data to caller -- */
                     memcpy(psg, &Passages[i], sizeof(EDITFILE_PASSAGE_T));
+                    /* --- Put it to map --- */
+                    egomapChangePassage(psg -> rec_no, psg, EGOMAP_SET);
+                    /* TODO: Save them to file */
                     return 1;
                     
                 }
@@ -1101,9 +1098,9 @@ int egomapSave(char *msg, char what)
             }
             break;
         case EGOMAP_GET:
-            if (fd -> psg_no > 0) {
+            if (psg_no > 0) {
             
-                memcpy(psg, &Passages[fd -> psg_no], sizeof(EDITFILE_PASSAGE_T));        
+                memcpy(psg, &Passages[psg_no], sizeof(EDITFILE_PASSAGE_T));        
                 return 1;
 
             }
@@ -1139,38 +1136,36 @@ int egomapSave(char *msg, char what)
  * Description:
  *     Handles the data of a given spawn point
  * Input:
- *     tx, ty: Map-Position of spawn point if new or edit
- *     spt *:  Description of spawn-point
- *     action: What to do
+ *     sp_no:   Number of spawn point to handle, if 'get'
+ *     spt *:   Description of spawn-point
+ *     action:  What to do
+ *     crect *: Chosen tile, if new spawn point
  * Output:
  *     Success yes/no
  */
- int egomapSpawnPoint(int tx, int ty, EDITFILE_SPAWNPT_T *spt, char action)
+ int egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crect)
  {
 
-    FANDATA_T *fd;
     int tile_no;    
     int i;
-    
-    
-    tile_no = (Mesh.tiles_x * ty) + tx;
-    fd      = &Mesh.fan[tile_no];
-    
+
+
     switch(action) {
-    
+
         case EGOMAP_NEW:
             /* Look for buffer available */
             for (i = 1; i < EGOMAP_MAXSPAWN; i++) {
-            
+
                 if (SpawnPts[i].rec_no <= 0) {
-                
-                    /* Give it a name and make it valid */                    
+
+                    /* Give it a name and make it valid */
                     SpawnPts[i].rec_no = i;
-                    SpawnPts[i].x_pos = tx + 0.5;
-                    SpawnPts[i].y_pos = ty + 0.5;
-                    SpawnPts[i].z_pos = 0.5;
+                    SpawnPts[i].x_pos  = crect[0] + 0.5;
+                    SpawnPts[i].y_pos  = crect[1] + 0.5;
+                    SpawnPts[i].z_pos  = 0.5;
                     /* -- Write number of object to map -- */
-                    fd -> obj_no      = i;
+                    tile_no = (Mesh.tiles_x * crect[1]) + crect[0];
+                    Mesh.fan[tile_no].obj_no = i;
                     /* -- Return data to caller -- */
                     memcpy(spt, &SpawnPts[i], sizeof(EDITFILE_SPAWNPT_T));
                     return 1;
@@ -1180,9 +1175,9 @@ int egomapSave(char *msg, char what)
             }
             break;
         case EGOMAP_GET:
-            if (fd -> obj_no > 0) {
+            if (sp_no > 0) {
 
-                memcpy(spt, &SpawnPts[fd -> obj_no], sizeof(EDITFILE_SPAWNPT_T));
+                memcpy(spt, &SpawnPts[sp_no], sizeof(EDITFILE_SPAWNPT_T));
                 return 1;
 
             }
@@ -1194,7 +1189,8 @@ int egomapSave(char *msg, char what)
             }
             break;
         case EGOMAP_CLEAR:
-            fd -> obj_no = 0;   /* Remove it from map */
+            tile_no = Mesh.tiles_x * floor(spt -> y_pos) + floor(spt -> x_pos);
+            Mesh.fan[tile_no].obj_no = 0;       /* Remove it from map */
             if (spt -> rec_no > 0 && spt -> rec_no < EGOMAP_MAXSPAWN) {
                 memset(spt, 0, sizeof(EDITFILE_SPAWNPT_T));
                 spt -> rec_no = -1;     /* Sign it as free */

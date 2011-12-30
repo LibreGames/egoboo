@@ -60,7 +60,8 @@
 #define EDITMAIN_MODE_FAN     ((char)3)   /* Result of fan dialog              */
 #define EDITMAIN_MODE_FAN_FX  ((char)4) 
 #define EDITMAIN_MODE_FAN_TEX ((char)5)
-#define EDITMAIN_MODE_EQUIP   ((char)6) 
+#define EDITMAIN_MODE_PASSAGE ((char)6) 
+#define EDITMAIN_MODE_SPAWN   ((char)7)
 #define EDITMAIN_MODE_MODULE  ((char)8) /* Change info in module description */
 #define EDITMAIN_MODE_VERTEX  ((char)9) 
 #define EDITMAIN_MODE_FREE    ((char)10)  
@@ -118,6 +119,7 @@ void editmainChooseFan(EDITMAIN_INFO_T *es, int is_floor);
 void editmainChooseFanType(EDITMAIN_INFO_T *es, int dir);
 void editmain2DTex(EDITMAIN_INFO_T *es, int x, int y, int w, int h);
 void editmainChooseTex(EDITMAIN_INFO_T *es, int cx, int cy, int w, int h);
+void editmainMoveCamera(int x, int y);
 
 #endif /* _EDITMAIN_H_	*/
 
