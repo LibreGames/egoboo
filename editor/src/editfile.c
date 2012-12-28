@@ -43,9 +43,16 @@
 * DATA 								                                           *
 *******************************************************************************/
 
-static char EditFileWorkDir[256]   = "module/";
-static char EditFileGORDir[128]    = "basicdat/globalobjects/";
-static char *EditFileGORSubDir[]   = {
+// Directory where Egoboo resides
+static char EditFileGameDir[128]   = "c:/egoboo/";
+// Directory name of actual game module
+static char EditFileModuleDir[64]   = "test.mod";
+// Where the editor works in the Egoboo-Directory
+static char EditFileWorkDir[256]   = "c:/egoboo/editor/test.mod/";
+/* Directories to read from in Egoboo-Main-Directory */
+// static char EditFileMenuDir[]      = "basicdat/menu/";
+// static char EditFileMusicDir[]     = "basicdat/music/";
+static char *EditFileGORDir[]   = {
     "armor",
     "items",
     "magic"
@@ -67,8 +74,8 @@ static char *EditFileGORSubDir[]   = {
 static EDITFILE_SPAWNPT_T SpawnPt;
 
 static SDLGLCFG_VALUE SpawnVal[] = {
-	{ SDLGLCFG_VAL_STRING,  &SpawnPt.line_name, 30 },
-	{ SDLGLCFG_VAL_STRING,  &SpawnPt.item_name, 20 },
+	{ SDLGLCFG_VAL_STRING,  SpawnPt.obj_name, 30 },
+	{ SDLGLCFG_VAL_STRING,  SpawnPt.item_name, 20 },
 	{ SDLGLCFG_VAL_INT,     &SpawnPt.slot_no },
 	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.x_pos },
 	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.y_pos },
@@ -98,7 +105,7 @@ static SDLGLCFG_LINEINFO SpawnRec = {
 static EDITFILE_PASSAGE_T Psg;
 
 static SDLGLCFG_VALUE PassageVal[] = {
-	{ SDLGLCFG_VAL_STRING,  &Psg.line_name, 24 },
+	{ SDLGLCFG_VAL_STRING,  Psg.line_name, 24 },
 	{ SDLGLCFG_VAL_INT,     &Psg.topleft[0] },
 	{ SDLGLCFG_VAL_INT,     &Psg.topleft[1] },
 	{ SDLGLCFG_VAL_INT,     &Psg.bottomright[0] },
@@ -425,18 +432,32 @@ static void editfileSetUnderlines(char *text)
  *     editfileSetWorkDir
  * Description:
  *     Sets the work directory for the file functions
- *     Loads the map mesh into the data pointed on
  * Input:
- *     mesh*: Pointer on mesh to load
- *     msg *: Pointer on buffer for a message
+ *     which:      Which directory to set
+ *     dir_name *: Direcory-Name to set (If EDITFILE_MODULEDIR only module name)
  * Output:
  *     Mesh could be loaded yes/no
  */
-void editfileSetWorkDir(char *dir_name)
+void editfileSetWorkDir(int which, char *dir_name)
 {
-    
-    /* TODO: Check it, replace possible backslashes '\' with slashes forward */
-    sprintf(EditFileWorkDir, "%s/", dir_name);
+
+
+    /* TODO: Check it, replace possible backslashes '\' with slashes forward    */
+    /* TODO: Check if there's already a slash attached to the given 'dir_name'  */
+    switch(which)
+    {
+        case EDITFILE_EGOBOODIR:
+            sprintf(EditFileGameDir, "%s/", dir_name);
+            break;
+
+        case EDITFILE_WORKDIR:
+            sprintf(EditFileWorkDir, "%s/", dir_name);
+            break;
+
+        case EDITFILE_MODULEDIR:
+            sprintf(EditFileModuleDir, "%s/", dir_name);
+            break;
+    }
 
 }
 
@@ -445,17 +466,22 @@ void editfileSetWorkDir(char *dir_name)
  *     editfileMakeFileName
  * Description:
  *     Generates a filename with path.
- *     Path for objects is taken from the list of the GOR, if the
- *     object is not found in the modules directory
+ *     EDITFILE_OBJECTDIR:  
+ *      Path for objects is taken from the list of the GOR, if the
+ *      object is not found in the modules directory
+ *      Looks for the file 'data.txt' to check if the object exists at all 
  * Input:
  *     dir_no:  Which directory to use for filename
- *     fname *: Name of file to create filename including path
+ *     fname *: Name of file to create filename including path / name of object
+ * Output:
+ *     Valid Filename with complete path except EDITFILE_OBJECTDIR: Only path without file name  
  */
 char *editfileMakeFileName(int dir_no, char *fname)
 {
 
-    static char file_name[512];
+    static char file_name[512];     // Here the filename is returned with path, except the objects directory
     
+    char obj_file_name[512];        // The objects directory with file name
     FILE *f;  
     int i;
 
@@ -467,14 +493,19 @@ char *editfileMakeFileName(int dir_no, char *fname)
         case EDITFILE_GAMEDATDIR:
             sprintf(file_name, "%sgamedat/%s", EditFileWorkDir, fname);
             break;
-            
+
         case EDITFILE_BASICDATDIR:
-            sprintf(file_name, "basicdat/%s", fname);
+            sprintf(file_name, "%sbasicdat/%s", fname);
             break;
 
         case EDITFILE_OBJECTDIR:
-            sprintf(file_name, "%sobjects/%s", EditFileWorkDir, fname);
-            f = fopen(file_name, "r");
+            // @todo: Look up basic data in game directory, if game-level is loaded for browsing
+            // Look up "data.txt" and return the directory without file name, because filename is the objects name
+            // In this case only return the directory without file name for multiple use
+            sprintf(file_name, "%sobjects/%s.obj/", EditFileWorkDir, fname);
+            sprintf(obj_file_name, "%sdata.txt", file_name);
+            
+            f = fopen(obj_file_name, "r");
             if (f) {
                 /* Directory found for this object */
                 fclose(f);
@@ -482,27 +513,37 @@ char *editfileMakeFileName(int dir_no, char *fname)
             else {
                 /* Look for objects in the GOR */
                 i = 0;
-                while(EditFileGORSubDir[i]) {
-                 
-                    sprintf(file_name, "%s%s/%s", EditFileGORDir, EditFileGORSubDir[i], fname);
+                while(EditFileGORDir[i]) {
+
+                    sprintf(file_name, "%sbasicdat/globalobjects/%s/%s.obj/", EditFileGameDir, EditFileGORDir[i], fname);
+                    sprintf(obj_file_name, "%sdata.txt", file_name);
+                    
                     f = fopen(file_name, "r");
                     if (f) {
-                    
                         /* Directory found for this object */
                         fclose(f);
                         return file_name;
-                        
                     }
-                    
-                    i++;
 
+                    i++;
                 }
-                
+
                 file_name[0] = 0;
             }
             break;
 
-        case EDITFILE_WORKDIR:
+        case EDITFILE_MODULEDIR:
+            sprintf(file_name, "%s%s%s", EditFileGameDir, EditFileModuleDir, fname);
+            break;
+
+        case EDITFILE_EGOBOODIR:
+            sprintf(file_name, "%s%s", EditFileGameDir, fname);
+            break;
+
+        case EDITFILE_GLOBPARTDIR:
+            sprintf(file_name, "%sbasicdat/globalparticles/%s", EditFileGameDir, fname);
+            break;
+
         default:
             sprintf(file_name, "%s%s", EditFileWorkDir, fname);
     }
@@ -555,7 +596,7 @@ int editfileSpawn(EDITFILE_SPAWNPT_T *spt, char action, int max_rec)
 
     fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, "spawn.txt");
     
-    SpawnRec.recbuf  = spt;
+    SpawnRec.recbuf = spt;
     SpawnRec.maxrec = max_rec;
 
     switch(action) {

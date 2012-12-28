@@ -42,19 +42,19 @@
 #define EDITFILE_ACT_SAVE    0x03  /* Save given data      */
 
 /* -- Definiton of directories */
-#define EDITFILE_WORKDIR     1  /* Main directory                       */
+#define EDITFILE_WORKDIR     1  /* Main directory for editor            */
 #define EDITFILE_BASICDATDIR 2  /* Basic data for game                  */
 #define EDITFILE_GAMEDATDIR  3  /* Gamedata directory in main directory */
 #define EDITFILE_OBJECTDIR   4  /* Directory for the objects            */
-#define EDITFILE_EGOBOODIR   5
+#define EDITFILE_MODULEDIR   5  /* Directory for the modules            */
+#define EDITFILE_EGOBOODIR   6  /* Main directory of game for globals   */
+#define EDITFILE_GLOBPARTDIR 7  /* Directory for global particles       */
 
 /*******************************************************************************
 * TYPEDEFS 								                                       *
 *******************************************************************************/
 
 /* ====== The mesh file ===== */
-
-
 typedef struct {
 
     unsigned char ref;      /* Light reference      */
@@ -136,8 +136,8 @@ typedef struct {
 } MESH_T;
 
 /* ====== The different file types ===== */
-typedef struct {
-
+typedef struct
+{
     char line_name[25];         /* Only for information purposes "-": Deleted in editor */
     int topleft[2];
     int bottomright[2];
@@ -146,14 +146,13 @@ typedef struct {
     char slippy_close;
     /* --- Info for editor -- */
     char rec_no;
-
 } EDITFILE_PASSAGE_T;
 
-typedef struct {
-
-    char line_name[30 + 1];     /* Name of object to load, "-": Deleted in editor */
-    char item_name[20+1];
-    int  slot_no;           /* Use it for coloring the bounding boxes */
+typedef struct
+{
+    char obj_name[30 + 1];     /* Name of object to load */
+    char item_name[20 + 1];
+    int  slot_no;               /* Use it for coloring the bounding boxes */
     float x_pos, y_pos, z_pos;
     char view_dir;
     int  money;
@@ -164,9 +163,7 @@ typedef struct {
     char stt;
     char gho;
     char team;
-    /* --- Info for editor --- */
-    int rec_no;
-
+    int  rec_no;   
 } EDITFILE_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
 
 typedef struct {
@@ -194,7 +191,7 @@ typedef struct {
 * CODE 								                                           *
 *******************************************************************************/
 
-void editfileSetWorkDir(char *dir_name);
+void editfileSetWorkDir(int which, char *dir_name);
 char *editfileMakeFileName(int dir_no, char *fname);
 int  editfileMapMesh(MESH_T *mesh, char *msg, char save);
 int  editfileSpawn(EDITFILE_SPAWNPT_T *spt, char action, int max_rec);

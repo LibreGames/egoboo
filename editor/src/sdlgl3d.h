@@ -253,28 +253,30 @@ typedef float SDLGL3D_V3D[3];  /* For X, Y, Z coordinates of vector.  */
 
 typedef struct {
 
-    char    obj_type;          /* > 0. Callers side identification     */
-                               /* 0: End of list for SDLGL3D           */
-    int     display_type;      /* Number of geometry for this one      */
-    /* ---------- Extent for collision detection --------------------- */
-    float   bbox[2][3];        /* Bounding box for collision detection */
-    float   bradius;           /* Radius of Bounding box               */ 
-    /* -------- Object info ------------------------------------------ */ 
-    int     tags;              /* Visible and so on                    */
-    SDLGL3D_V3D pos;           /* Position                             */
-    SDLGL3D_V3D dir;           /* Actual direction, unit vector        */
-    SDLGL3D_V3D rot;           /* Rotation angles                      */
-    int     move_cmd;          /* Commands for movement (combined)     */
-    float   speed;             /* Ahead speed in units/second          */
-    float   zspeed;            /* Z-Movement: -towards bottom          */
-                               /*             +towards ceiling         */
-                               /*              in units/second         */
-    float   turnvel;           /* Rotation velocity in degrees/second  */
+    char    obj_type;       /* != 0. Callers side identification    */
+                            /* 0: End of list for SDLGL3D           */
+    int     type_no;        /* Number of type in 'obj_type'         */
+    /* ---------- Extent for collision detection ------------------ */
+    float   bbox[2][3];     /* Bounding box for collision detection */
+                            /* Extension of BB in x, y and z dir    */  
+    float   bradius;        /* Radius of Bounding box               */ 
+    /* -------- Object info --------------------------------------- */ 
+    int     tags;           /* Visible and so on                    */
+    SDLGL3D_V3D pos;        /* Position                             */
+    SDLGL3D_V3D dir;        /* Actual direction, unit vector        */
+    SDLGL3D_V3D rot;        /* Rotation angles                      */
+    int     move_cmd;       /* Commands for movement (combined)     */
+    float   speed;          /* Ahead speed in units/second          */
+    float   zspeed;         /* Z-Movement: -towards bottom          */
+                            /*             +towards ceiling         */
+                            /*              in units/second         */
+    float   turnvel;        /* Rotation velocity in degrees/second  */
     /* Link for object list in collision - detection                   */
-    int     on_tile;           /* Object is on this tile               */
-    int     next_obj;          /* > 0: Number of next object on tile   */          
-    char    visi_code;         /* Visibility ob object in frustum      */
-    char    speed_modifier;    /* Multiply speed with this one, if > 0 */
+    int     old_tile;       /* Object was on this tile before move  */
+    int     on_tile;        /* Object is on this tile               */
+    int     next_obj;       /* > 0: Number of next object on tile   */          
+    char    visi_code;      /* Visibility ob object in frustum      */
+    char    speed_modifier; /* Multiply speed with this one, if > 0 */
 
 } SDLGL3D_OBJECT;
 
@@ -299,7 +301,8 @@ typedef struct {
 typedef struct {
 
     int mid_x, mid_y;   /* Of tile, for distance sorting            */
-    int no;             /* Number of tile, for display by caller    */
+    int tile_no;        /* Number of tile, for display by caller    */
+    int obj_no;         /* Number of object on this tile            */
 
 } SDLGL3D_VISITILE;
 

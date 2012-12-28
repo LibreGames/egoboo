@@ -1,9 +1,9 @@
 /*******************************************************************************
-*  EGOMAP.H                                                                    *
+*  IDSZ_MAP.H                                                                  *
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
-*    - Managing the map and the objects on it                                  *
-*      (c)2011 Paul Mueller <pmtech@swissonline.ch>                            *
+*    - IDSZ-Map for Game                                                                   *
+*      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -20,56 +20,43 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _EGOMAP_H_
-#define _EGOMAP_H_
+#ifndef _IDSZ_MAP_H_
+#define _IDSZ_MAP_H_
 
 /*******************************************************************************
 * INCLUDES								                                       *
 *******************************************************************************/
 
-#include "editfile.h"   /* Description of passages and spawn points */
-
 /*******************************************************************************
 * DEFINES								                                       *
 *******************************************************************************/
 
-/* --- Save files --- */
-#define EGOMAP_SAVE_MAP     0x01    /* Save the map             */
-#define EGOMAP_SAVE_PSG     0x02    /* Save the passages        */
-#define EGOMAP_SAVE_SPAWN   0x04    /* save the spawn points    */   
-#define EGOMAP_SAVE_ALL     0xFF 
+#define IDSZ_NOT_FOUND      -1
+#define MAX_IDSZ_MAP_SIZE   64
 
-/* --- Types of objects (for drawing) --- */
-#define EGOMAP_OBJ_TILE   0x01    /* First always the tile            */
-#define EGOMAP_OBJ_CHAR   0x02    /* Characters (MD2)                 */
-#define EGOMAP_OBJ_PART   0x03    /* Particles (can be transparent)   */
+/*******************************************************************************
+* TYPEDEFS 								                                       *
+*******************************************************************************/
 
-/* --- Handling for map objects --- */
-#define EGOMAP_NEW   0x01
-#define EGOMAP_GET   0x02
-#define EGOMAP_SET   0x03
-#define EGOMAP_CLEAR 0x04
+/// The definition of a single IDSZ element in a IDSZ map
+typedef struct
+{
+    unsigned int id;
+    int  level;
+} IDSZ_NODE_T;
 
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
-void egomapInit(void);
-void egomapSetFanStart(MESH_T *mesh);
-MESH_T *egomapLoad(char create, char *msg, int num_tile);
-int  egomapSave(char *msg, char what);
-int  egomapPassage(int psg_no, EDITFILE_PASSAGE_T *psg, char action, int *crect);
-int  egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crect);
-void egomapGetTileInfo(int tx, int ty, FANDATA_T *fd);
+// Public functions
+/*
+    IDSZ_node_t* idsz_map_init( IDSZ_node_t pidsz_map[] );
+    egoboo_rv    idsz_map_add( IDSZ_node_t idsz_map[], const size_t idsz_map_len, const IDSZ idsz, const int level );
 
-/* ============  Draw command ========== */
-void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
-void egomapDraw2DMap(int mx, int my, int mw, int mh, int tx, int *crect);
+    IDSZ_node_t* idsz_map_get( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, const IDSZ idsz );
+    IDSZ_node_t* idsz_map_iterate( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, int *iterator );
+    egoboo_rv    idsz_map_copy( const IDSZ_node_t pcopy_from[], const size_t idsz_map_len, IDSZ_node_t pcopy_to[] );
+ */
 
-/* ============ OBJECT-FUNCTIONS ========== */
-void egomapAddObject(char type, char obj_name, float x, float y, float z, char dir);
-void egomapDeleteObject(int obj_no);
-int  egomapGetChar(int tile_no);                              
-void egomapDropChar(int char_no, float x, float y, float z, char dir); 
-
-#endif  /* #define _EGOMAP_H_ */
+#endif  /* #define _IDSZ_MAP_H_ */

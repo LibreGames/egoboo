@@ -226,7 +226,7 @@ static int sdlgl3dGetVisiTiles(SDLGL3D_CAMERA *cam)
     }
     */
 
-    Visi_Tiles[NumVisiTiles].no = -1;      /* Sign end of array */
+    Visi_Tiles[NumVisiTiles].tile_no = -1;      /* Sign end of array */
 
     /*
         TODO:
@@ -930,11 +930,9 @@ void sdlgl3dMoveCamera(float secondspassed)
  */
 void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
 {
-
     /* ------- Create the direction vector -------- */
     moveobj -> dir[0] = sin(DEG2RAD(moveobj -> rot[2]));
     moveobj -> dir[1] = cos(DEG2RAD(moveobj -> rot[2]));
-
 }
 
 /*
@@ -984,33 +982,26 @@ void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set)
  */
 void sdlgl3dMoveObjects(SDLGL3D_OBJECT *obj_list, float secondspassed)
 {   
-
     int  flags;
     char move_cmd;
 
 
-    while(obj_list -> obj_type) {
-
-        if (obj_list -> move_cmd) {
-
-            for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1) {
-
+    while(obj_list -> obj_type)
+    {
+        if (obj_list -> move_cmd)
+        {
+            for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1)
+            {
                 if (flags & obj_list -> move_cmd) {
                     /* Move command is active */
                     sdlgl3dIMoveSingleObj(obj_list, move_cmd, secondspassed);
-
                 }
 
             }
-
         }
 
         obj_list++;
-
     }
-
-
-
 }
 
 /*

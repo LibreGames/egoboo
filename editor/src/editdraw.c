@@ -33,8 +33,7 @@
 #include "sdlglstr.h"
 #include "editor.h"
 #include "editfile.h"   /* Make the file name for reading textures      */
-#include "egomap.h"     /* Flags for 'chosen'                           */
-
+#include "egodefs.h"    /* MPDFX_...                                    */                              
 
 #include "editdraw.h"   /* Own header                                   */   
 

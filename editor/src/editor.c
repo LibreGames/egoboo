@@ -37,6 +37,7 @@
 #include "sdlgl3d.h"
 #include "sdlglfld.h"       /* Handle 'Standard-Fields          */
 #include "editor.h"
+#include "egodefs.h"        /* MPDFX_...                        */
 #include "egomap.h"         /* Handle the map objects           */
 #include "editmain.h"
 #include "editfile.h"       /* Description of Spawn-Points and passages */
@@ -129,6 +130,7 @@
 
 static EDITMAIN_INFO_T EditInfo;      /* Actual state of editor, and its info */
 
+static char GameDir[256];
 static char EditorWorkDir[256];
 static char EditorActDlg  = 0;
 
@@ -159,6 +161,7 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] = {
     { SDLGLCFG_VAL_INT, &SdlGlConfig.screenmode, 2, "screenmode" },
     { SDLGLCFG_VAL_INT, &SdlGlConfig.debugmode, 1, "debugmode" },
     { SDLGLCFG_VAL_INT, &EditInfo.map_size, 2, "mapsize" },
+    { SDLGLCFG_VAL_STRING, &GameDir[0], 120, "egoboodir"  },
     { SDLGLCFG_VAL_STRING, &EditorWorkDir[0], 120, "workdir"  },
     { 0 }
 
@@ -296,7 +299,7 @@ static SDLGL_FIELD PassageDlg[] = {
 static SDLGL_FIELD SpawnPtDlg[] = {
     { SDLGL_TYPE_BUTTON, {   0,   0, 350, 260 }, 0, 0, "Object" },
     { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Load-Name:" },
-    { SDLGL_TYPE_VALUE,  {  96,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.line_name[0] },
+    { SDLGL_TYPE_VALUE,  {  96,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.obj_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Game-Name:" },
     { SDLGL_TYPE_VALUE,  {  96,  32,  96,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.item_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
@@ -635,7 +638,7 @@ static void editorUseTool(EDITMAIN_INFO_T *es, int is_floor)
 
             }
 
-            editmainMoveCamera(es -> crect[0], es -> crect[1]);
+            editmainMoveCamera(es -> tx, es -> ty);
 
         }
 
@@ -1285,7 +1288,8 @@ int main(int argc, char **argv)
     sdlglInit(&SdlGlConfig);
 
     /* ------- Set the actual work directory ---------- */
-    editfileSetWorkDir(EditorWorkDir);
+    editfileSetWorkDir(EDITFILE_EGOBOODIR, GameDir);
+    editfileSetWorkDir(EDITFILE_WORKDIR, EditorWorkDir);
 
     /* Set the input handlers and do other stuff before  */
     editorStart();

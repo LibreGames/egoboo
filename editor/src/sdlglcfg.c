@@ -140,8 +140,11 @@ static int sdlglcfgGetValidLine(FILE *f, char *data, int bufsize, char com_sign)
 static void sdlglcfgStrToVal(char *string, char valtype, void *value, char vallen)
 {
 
-    int   ivalue;
-    float fvalue;
+    int   ivalue, ivalue2;
+    float fvalue, fvalue2;
+    int   *pint;
+    float *pfloat;
+    int   num_val;
     char *pstr;
 
 
@@ -223,6 +226,33 @@ static void sdlglcfgStrToVal(char *string, char valtype, void *value, char valle
                 
             case SDLGLCFG_VAL_BOOLEAN:
                 *(char *)value = (char)((string[0] == 'T') ? 0x01 : 0x00);
+                break;
+
+            case SDLGLCFG_VAL_IPAIR:
+                num_val = sscanf(string, "%d-%d", &ivalue, &ivalue2);
+                if(num_val > 0)
+                {
+                    pint = (int *)value;
+                    pint[0] = ivalue;
+                    if(num_val > 1)
+                    {
+                        pint[1] = ivalue2;
+                    }
+                }
+
+                break;
+
+            case SDLGLCFG_VAL_FPAIR:
+                num_val = sscanf(string, "%f-%f", &fvalue, &fvalue2);
+                if(num_val > 0)
+                {
+                    pfloat = (float *)value;
+                    pfloat[0] = fvalue;
+                    if(num_val > 1)
+                    {
+                        pfloat[1] = fvalue2;
+                    }
+                }
                 break;
 
         }

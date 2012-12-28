@@ -42,6 +42,8 @@
 #define SDLGLCFG_VAL_ONECHAR ((char)9)      /* Read a single char              */
 #define SDLGLCFG_VAL_LABEL   ((char)10)     /* Write a single string to file   */
 #define SDLGLCFG_VAL_BOOLEAN ((char)11) 
+#define SDLGLCFG_VAL_IPAIR   ((char)12)     /* Pair of int:   i1 [- i2] */
+#define SDLGLCFG_VAL_FPAIR   ((char)13)     /* Pair of float: f1 [- f2] */
 
 /* *****************************************************************************
 * TYPEDEFS                                 				                       *

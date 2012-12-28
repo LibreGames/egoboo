@@ -30,6 +30,7 @@
 
 #include "sdlgl3d.h"            /* DEG2RAD                              */
 #include "editor.h"
+#include "egodefs.h"            /* MPDFX_...                            */
 #include "egomap.h"             /* Map data and handling it             */
 #include "editfile.h"           /* Load and save map files              */
 #include "editdraw.h"           /* Draw anything                        */
