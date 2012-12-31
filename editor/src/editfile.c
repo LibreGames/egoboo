@@ -52,7 +52,8 @@ static char EditFileWorkDir[256]   = "c:/egoboo/editor/test.mod/";
 /* Directories to read from in Egoboo-Main-Directory */
 // static char EditFileMenuDir[]      = "basicdat/menu/";
 // static char EditFileMusicDir[]     = "basicdat/music/";
-static char *EditFileGORDir[]   = {
+static char *EditFileGORDir[] =
+{
     "armor",
     "items",
     "magic"
@@ -73,7 +74,8 @@ static char *EditFileGORDir[]   = {
 /* static EDITFILE_SPAWNPT_T SpawnTemplate; */
 static EDITFILE_SPAWNPT_T SpawnPt;
 
-static SDLGLCFG_VALUE SpawnVal[] = {
+static SDLGLCFG_VALUE SpawnVal[] =
+{
 	{ SDLGLCFG_VAL_STRING,  SpawnPt.obj_name, 30 },
 	{ SDLGLCFG_VAL_STRING,  SpawnPt.item_name, 20 },
 	{ SDLGLCFG_VAL_INT,     &SpawnPt.slot_no },
@@ -92,7 +94,8 @@ static SDLGLCFG_VALUE SpawnVal[] = {
 	{ 0 }
 };
 
-static SDLGLCFG_LINEINFO SpawnRec = {
+static SDLGLCFG_LINEINFO SpawnRec =
+{
     &SpawnPt,
 	&SpawnPt,
 	0,
@@ -104,7 +107,8 @@ static SDLGLCFG_LINEINFO SpawnRec = {
 /* static EDITFILE_PASSAGE_T PassageTemplate; */
 static EDITFILE_PASSAGE_T Psg;
 
-static SDLGLCFG_VALUE PassageVal[] = {
+static SDLGLCFG_VALUE PassageVal[] =
+{
 	{ SDLGLCFG_VAL_STRING,  Psg.line_name, 24 },
 	{ SDLGLCFG_VAL_INT,     &Psg.topleft[0] },
 	{ SDLGLCFG_VAL_INT,     &Psg.topleft[1] },
@@ -116,7 +120,8 @@ static SDLGLCFG_VALUE PassageVal[] = {
 	{ 0 }
 };
 
-static SDLGLCFG_LINEINFO PassageRec = {
+static SDLGLCFG_LINEINFO PassageRec =
+{
     &Psg,
 	&Psg,
 	0,
@@ -125,16 +130,18 @@ static SDLGLCFG_LINEINFO PassageRec = {
 };
 
 /* ============== Data for ModDesc-Files ============== */
-static EDITFILE_MODULE_T ModDescTemplate = {
+static EDITFILE_MODULE_T ModDescTemplate =
+{
     "", "NONE", "[NONE]", 0, 0, 1, 1, 0, "MAINQUEST",
     "*"
 };
 static EDITFILE_MODULE_T ModDesc;
 
-static SDLGLCFG_NAMEDVALUE ModuleVal[] = {
-    { SDLGLCFG_VAL_STRING,  ModDesc.mod_name, 24, "Module Name" }, 
+static SDLGLCFG_NAMEDVALUE ModuleVal[] =
+{
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.mod_name, 24, "Module Name" }, 
     { SDLGLCFG_VAL_STRING,  ModDesc.ref_mod, 24, "Reference Directory" },  
-    { SDLGLCFG_VAL_STRING,  ModDesc.ref_idsz, 11, "Required reference IDSZ" }, 
+    { SDLGLCFG_VAL_STRING,  ModDesc.ref_idsz, 18, "Required reference IDSZ" }, 
     { SDLGLCFG_VAL_CHAR,    &ModDesc.number_of_imports, 1, "Number of imports ( 0 to 4 )" }, 
     { SDLGLCFG_VAL_BOOLEAN, &ModDesc.allow_export, 1, "Exporting ( TRUE or FALSE )"  },
     { SDLGLCFG_VAL_CHAR,    &ModDesc.min_player, 1, "Minimum players ( 1 to 4 )" },  
@@ -495,7 +502,7 @@ char *editfileMakeFileName(int dir_no, char *fname)
             break;
 
         case EDITFILE_BASICDATDIR:
-            sprintf(file_name, "%sbasicdat/%s", fname);
+            sprintf(file_name, "%sbasicdat/%s", EditFileGameDir, fname);
             break;
 
         case EDITFILE_OBJECTDIR:

@@ -44,6 +44,7 @@
 #define SDLGLCFG_VAL_BOOLEAN ((char)11) 
 #define SDLGLCFG_VAL_IPAIR   ((char)12)     /* Pair of int:   i1 [- i2] */
 #define SDLGLCFG_VAL_FPAIR   ((char)13)     /* Pair of float: f1 [- f2] */
+#define SDLGLCFG_VAL_EGOSTR  ((char)13)     /* Underlines have to be removed at loading time */
 
 /* *****************************************************************************
 * TYPEDEFS                                 				                       *

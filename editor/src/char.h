@@ -42,8 +42,10 @@
 
 #define GET_DAMAGE_RESIST(BITS) ( (BITS) & DAMAGESHIFT )
 
+#define CHAR_NAMELEN  14  
 #define CHARSTAT_ACT  0
 #define CHARSTAT_FULL 1
+
 
 #define CHAR_MAX_TIMER 15
 
@@ -56,6 +58,7 @@
 #define CHAR_DAMAGETIME  ((char)-6) ///< Invincibility timer
 #define CHAR_JUMPTIME    ((char)-7) ///< Delay until next jump
 #define CHAR_FATGOTTIME  ((char)-8) ///< Time left in size change
+#define CHAR_POOFTIME    ((char)-9) ///< Time left for poof
 
 // Special Teams
 #define TEAM_DAMAGE ((char)(('Z' - 'A') + 1))   ///< For damage tiles
@@ -163,22 +166,27 @@ typedef struct
     char icon_no;       /* Number of icon to display                                    */   
     char skin_no;       /* Number of skin for display                                   */     
     int  obj_no;        /* Attached to this 3D-Object                                   */
+    char which_player;  ///< > 0 = player: Attached to this player for movement
+    char name[CHAR_NAMELEN + 1]; /* Name of this character                              */
     char is_overlay;    ///< Is this an overlay? Track aitarget...
     char alive;         ///< Is it alive?
-    char which_player;  ///< > 0 = player: Attached to this player for movement
     int  attached_to;   ///< > 0 if character is a held weapon or in inventory (HAND_LEFT, HAND_RIGHT)    
+    // Bleongs character to a passage ? For editor
+    char psg_no;
     // gender
     char gender;        /* Gender of character          */
     // character state    
-    char state;         /* State of this character      */
+    char state;         /* ///< Short term memory for AI     */
     char latch;         /* Latch data                   */
     
+    int  money;         ///< Money this character has
     // Team stuff -- CHARSTAT_ACT / CHARSTAT_FULL
     char team[2];       ///< Character's team -- Character's starting team
     
     // character stats -- CHARSTAT_ACT / CHARSTAT_FULL
     char life[2];       ///< Basic character stats
     char mana[2];       ///< Mana stuff 
+    
     
     // combat stuff -- CHARSTAT_ACT / CHARSTAT_FULL
     char damageboost[2];                   ///< Add to swipe damage
@@ -235,19 +243,26 @@ typedef struct
     char *script;       /* Pointer on ai_script to use for this character, if any */
     
     /* Other info for graphics and movement is held in the general SDL3D_OBJECT */
+    /* Additional help info for the editor */
+    char *obj_name;     /* Pointer on the name of the object in CAP_T           */
+    
 } CHAR_T;
 
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
+/* ================= Basic character functions =============== */
 void charInit(void);
-int  charCreate(char *objname, int attachedto, char inwhich_slot, char team, char stt, char skin);
+int  charCreate(char *objname, char team, char stt, int money, char skin, char psg);
 CHAR_T *charGet(int char_no); 
 
-// inventory functions
-char charInventoryAdd(const int char_no, const int item, int inventory_slot);
+/* ================= inventory functions ===================== */
+char charInventoryAdd(const int char_no, const int item_no, int inventory_slot);
 int  charInventoryRemove(const int char_no, int inventory_slot, char ignorekurse);
 char charInventorySwap(const int char_no, int inventory_slot, int grip_off);
+
+/* ================= Timer functions ===================== */
+// @todo: Add timers, delete timers, count down timers
 
 #endif  /* #define _CHAR_H_ */

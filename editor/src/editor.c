@@ -596,13 +596,12 @@ static void editorUseTool(EDITMAIN_INFO_T *es, int is_floor)
         EditInfo.drag_w = 0;
         EditInfo.drag_h = 0;
 
-        if (EditInfo.edit_mode == EDITMAIN_MODE_MAP) {
-
+        if (EditInfo.edit_mode == EDITMAIN_MODE_MAP)
+        {
             editmainChooseFan(&EditInfo, is_floor);
-
         }
-        else if (is_floor > 0) {
-
+        else if (is_floor > 0)
+        {
             /* Dialogs only on right click */
             switch(EditInfo.edit_mode) {
 
@@ -613,23 +612,27 @@ static void editorUseTool(EDITMAIN_INFO_T *es, int is_floor)
 
                 case EDITMAIN_MODE_PASSAGE:
                     /* Edit / create a passage */
-                    if (es -> ft.psg_no > 0) {
+                    if (es -> ft.psg_no > 0)
+                    {
                         /* Edit the chosen passage */
                         egomapPassage(es -> ft.psg_no, &EditPsg, EGOMAP_GET, es -> crect);
                     }
-                    else {
+                    else
+                    {
                         /* Create passage using the chosen area */
                         egomapPassage(es -> ft.psg_no, &EditPsg, EGOMAP_NEW, es -> crect);
                     }
                     editorSetDialog(EDITOR_PASSAGEDLG, 1, 20, 20);
                     break;
-                    
+
                 case EDITMAIN_MODE_SPAWN:
-                    if (es -> ft.obj_no > 0) {
+                    if (es -> ft.obj_no > 0)
+                    {
                         /* Edit the chosen object */
                         egomapSpawnPoint(es -> ft.obj_no, &EditSpt, EGOMAP_GET, es -> crect);
                     }
-                    else {
+                    else
+                    {
                         /* Create spawn point using given position */
                         egomapSpawnPoint(0, &EditSpt, EGOMAP_NEW, es -> crect);
                     }

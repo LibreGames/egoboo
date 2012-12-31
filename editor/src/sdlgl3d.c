@@ -58,56 +58,58 @@
 #define SOME_CLIP   0x01
 #define NOT_VISIBLE 0x02
 
+#define SDLGL3D_MAXOBJ 1024
+
 /*******************************************************************************
 * TYPEDEFS							                                           *
 *******************************************************************************/
 
-typedef struct {
+typedef struct
+ {
+    char mode;                  /* Type of camera and size of frustum for zooming */
+                                /* SDLGL3D_CAM_INACTIVE: Not active               */  
+    SDLGL3D_FRUSTUM f;          /* Frustum data, including info for visibility    */
 
-    /* Type of camera and size of frustum for zooming */
-    int   mode;
-
-    SDLGL3D_FRUSTUM f;          /* Frustum data, including info for visibility */
-
-    float cam_dist;           /* Distance behind object for third person camera */
+    float cam_dist;             /* Distance behind object for third person camera */
     int   map_w, map_h;         /* Size of Map in tiles                           */
     float tile_size;            /* Size of tile square                            */
     SDLGL3D_OBJECT *obj;        /* The object the camera is attached to           */
                                 /* Can be camera itself ('campos')                */
     SDLGL3D_OBJECT campos;
     /* Frustum data for calculation of visibility */
-    char  bound;                /* Camera is bound to an x,y-rectangle  */
+    char  bound;                /* Camera is bound to an x,y-rectangle            */
     float bx, by, bx2, by2;
+    float mx, my, mx2, my2;     /* Bounding rectangle of FOV (min, max)           */ 
     /* --- Position to look at (fixed) --- */
     SDLGL3D_V3D look_at;
 
 } SDLGL3D_CAMERA;
 
 /*****************************************************************************
-* DATA								             *
+* DATA								                                         *
 *****************************************************************************/
 
 /* This are the cameras. 0: Standard camera */
-static SDLGL3D_CAMERA Camera[SDLGL3D_MAX_CAMERA] = {
-
+static SDLGL3D_CAMERA Camera[SDLGL3D_MAX_CAMERA] =
+{
     { SDLGL3D_CAM_MODESTD,
-      {
-        SDLGL3D_I_CAMERA_FOV,           /* Field of view               */
-        SDLGL3D_I_VIEWWIDTH,
-        SDLGL3D_I_ASPECTRATIO,          /* Aspect ration of view-plane */
-	    SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
- 	  },
- 	  800.0,
-      /* ---- Additional info to calculate visbility on base of tiles */
-      32, 32,
-      128
+        {
+            SDLGL3D_I_CAMERA_FOV,           /* Field of view               */
+            SDLGL3D_I_VIEWWIDTH,
+            SDLGL3D_I_ASPECTRATIO,          /* Aspect ration of view-plane */
+            SDLGL3D_I_ZMIN, SDLGL3D_I_ZMAX,
+        },
+        800.0,
+        /* ---- Additional info to calculate visbility on base of tiles */
+        32, 32,
+        128
     }
-
 };
 
 /* Additional objects are used for visible tiles */
 static int NumVisiTiles = 0;
 static SDLGL3D_VISITILE Visi_Tiles[SDLGL3D_I_MAXVISITILES + 2];
+static SDLGL3D_OBJECT Obj3D[SDLGL3D_MAXOBJ + 2];    /* Maximum number of visible objects */
 
 /*******************************************************************************
 * CODE									                                       *
@@ -457,8 +459,6 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
  */
 static void sdlgl3dITilesOnLine(int camera_no)
 {
-
-
     SDLGL3D_OBJECT *obj;
     SDLGL3D_CAMERA *cam;
     int x1, y1, x2, y2;
@@ -550,14 +550,14 @@ static void sdlgl3dITilesOnLine(int camera_no)
  * Name:
  *     sdlgl3dBegin
  * Description:
- *     Draws the whole view. Preserves the callers view state
+ *     Starts the 3D-Draw-Mode. Sets the projection matrix and the matrix for 
+ *     given camera. 
  * Input:
  *     camera_no: Number of camera
  *     solid:     Draw it solid, true or false
  */
 SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
 {
-
     SDLGL3D_OBJECT *viewobj;
     float viewwidth, viewheight;
 
@@ -577,11 +577,11 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
     glLoadIdentity();
 
     viewobj = Camera[camera_no].obj;
-    if (viewobj == 0) {
-
+    
+    if (viewobj == 0)
+    {
         /* Play it save */
         viewobj = &Camera[camera_no].campos;
-
     }
 
     glRotatef(viewobj -> rot[0], 1.0, 0.0, 0.0);
@@ -595,7 +595,6 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
     glFrontFace(GL_CW);
 
     return viewobj;
-
 }
 
 /*
@@ -722,7 +721,6 @@ void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect
 
     /* If the camera was moved, set the frustum normals... */
     sdlgl3dSetupFrustumNormals(&Camera[camera_no]);
-
 }
 
 /*
@@ -918,21 +916,89 @@ void sdlgl3dMoveCamera(float secondspassed)
 
 }
 
+/* ===== Object-Functions ==== */
+
 /*
  * Name:
- *     sdlgl3dInitObject
+ *     sdlgl3dCreateObject
  * Description:
- *     Initializes the given object for the use in sdlgl3d. It's assumed that
- *     the object has filled in the position and so on.
- *     Including speed.
+ *     Creates an object using the data set in 'info_obj'
  * Input:
- *     moveobj *: Pointer on object to initialize
+ *     info_obj *: Pointer on object-data to initialize new object with
+ * Output:
+ *     Number of the object created, if successful
  */
-void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
+int sdlgl3dCreateObject(SDLGL3D_OBJECT *info_obj)
 {
-    /* ------- Create the direction vector -------- */
-    moveobj -> dir[0] = sin(DEG2RAD(moveobj -> rot[2]));
-    moveobj -> dir[1] = cos(DEG2RAD(moveobj -> rot[2]));
+    int i;
+    SDLGL3D_OBJECT *new_obj;
+    
+    
+    for(i = 1; i < SDLGL3D_MAXOBJ; i++)
+    {
+        if(Obj3D[i].id <= 0)
+        {
+            // We found an empty slot
+            new_obj = &Obj3D[i];
+            // Copy initalizing code into object
+            memcpy(new_obj, info_obj, sizeof(SDLGL3D_OBJECT));
+            // Sign it as active
+            new_obj -> id = i;
+            
+            /* ------- Create the direction vector -------- */
+            new_obj -> dir[0] = sin(DEG2RAD(new_obj -> rot[2]));
+            new_obj -> dir[1] = cos(DEG2RAD(new_obj -> rot[2]));
+            // Is a valid object
+            return i;
+        }
+    }
+    // No free slot found
+    return 0;
+}
+
+/*
+ * Name:
+ *     sdlgl3dDeleteObject
+ * Description:
+ *     Deletes object with given number, signs it as free slot 
+ * Input:
+ *     obj_no: Number of object to delete (< 0: Clear all objects)
+ */
+void sdlgl3dDeleteObject(int obj_no)
+{
+    if(obj_no < 0)
+    {
+        memset(&Obj3D[0], 0, sizeof(SDLGL3D_OBJECT) * SDLGL3D_MAXOBJ);
+    }
+    else if(obj_no > 0 && obj_no < SDLGL3D_MAXOBJ)
+    {
+        memset(&Obj3D[obj_no], 0, sizeof(SDLGL3D_OBJECT));
+        // Marks as deleted
+        Obj3D[obj_no].id = -1;
+    }
+}
+
+/*
+ * Name:
+ *     sdlgl3dGetObject
+ * Description:
+ *     Returns a pointer on the object with given number.
+ *     If the object number is invalid, a pointer on the object 0 is returned 
+ * Input:
+ *     obj_no: Number of object to get pointer for
+ * Output:
+ *     Pointer on valid object 
+ */
+SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no)
+{
+    if(obj_no > 0 && obj_no < SDLGL3D_MAXOBJ)
+    {
+        // Return pointer on this object
+        return &Obj3D[obj_no];    
+    }
+    
+    // Pointer on empty object
+    return &Obj3D[0];
 }
 
 /*
@@ -947,52 +1013,58 @@ void sdlgl3dInitObject(SDLGL3D_OBJECT *moveobj)
  */
 void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set)
 {
-
     int flag;
 
 
-    if (obj -> obj_type > 0) {
-
-        if (move_cmd == SDLGL3D_MOVE_STOPMOVE) {
+    if (obj -> obj_type > 0)
+    {
+        if (move_cmd == SDLGL3D_MOVE_STOPMOVE)
+        {
             /* Stop all movement */
-           obj -> move_cmd = 0;
-           return;
+            obj -> move_cmd = 0;
+            return;
         }
+        
         /* Manage this object. Set command */
         flag = (1 << move_cmd);
-        if (set) {
+        
+        if (set)
+        {
             obj -> move_cmd |= flag;
         }
-        else {
+        else
+        {
             obj -> move_cmd &= ~flag;
         }
-
     }
-
 }
 
 /*
  * Name:
  *     sdlgl3dMoveObjects
  * Description:
- *     Moves all objects in given list
- * Input:
- *      obj_list *:    List of objects to move
+ *     Moves all objects in the internal object list
+ * Input:      
  *      secondspassed: Seconds passed since last call
  */
-void sdlgl3dMoveObjects(SDLGL3D_OBJECT *obj_list, float secondspassed)
-{   
+void sdlgl3dMoveObjects(float secondspassed)
+{
+    SDLGL3D_OBJECT *obj_list;
     int  flags;
     char move_cmd;
 
 
-    while(obj_list -> obj_type)
+    // Get pointer on first object
+    obj_list = &Obj3D[1];
+
+    while(obj_list -> id)
     {
-        if (obj_list -> move_cmd)
+        if (obj_list -> id > 0 && obj_list -> move_cmd)
         {
             for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1)
             {
-                if (flags & obj_list -> move_cmd) {
+                if (flags & obj_list -> move_cmd)
+                {
                     /* Move command is active */
                     sdlgl3dIMoveSingleObj(obj_list, move_cmd, secondspassed);
                 }

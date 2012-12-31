@@ -1,9 +1,9 @@
 /*******************************************************************************
-*  MISC.H                                                                  *
+*  MISC.H                                                                      *
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
 *    - [...]                                                                   *
-*      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
+*      (c)2012-2013 The Egoboo Team                                            *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -27,15 +27,14 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
-
 /*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
 // Random values
 void miscSetRandSeed(int num);
-int  miscRand(int min, int max);
-int  miscRandom(void);
+int  miscRandRange(int ipair[2]);
+int  miscRandVal(void);
 // Random treasure
 void miscLoadRandTreasure(void);
 char *miscGetRandTreasure(char* pstr);

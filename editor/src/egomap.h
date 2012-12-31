@@ -51,25 +51,48 @@
 #define EGOMAP_CLEAR 0x04
 
 /*******************************************************************************
+* TYPEDESF							                                           *
+*******************************************************************************/
+
+// Short information about a tile 
+typedef struct 
+{
+    int  tile_no;       /* Number of tile                           */
+    int  x, y;          /* X,Y-Position in map                      */
+    char psg_no;        /* > 0: Number of passage for this tile     */
+    int  obj_no;        /* > 0: Number of first object on this tile */    
+    char fx;            /* MPDFX_...                                */
+    
+} EGOMAP_TILEINFO_T;
+
+/*******************************************************************************
 * CODE 								                                           *
 *******************************************************************************/
 
+/* ============ Map functions ========== */
 void egomapInit(void);
 void egomapSetFanStart(MESH_T *mesh);
 MESH_T *egomapLoad(char create, char *msg, int num_tile);
 int  egomapSave(char *msg, char what);
 int  egomapPassage(int psg_no, EDITFILE_PASSAGE_T *psg, char action, int *crect);
 int  egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crect);
-void egomapGetTileInfo(int tx, int ty, FANDATA_T *fd);
+
+/* ============  Tile functions ========== */
+void egomapGetTileInfo(int tx, int ty, EGOMAP_TILEINFO_T *ti);
+void egomapGetAdjacent(int tile_no, EGOMAP_TILEINFO_T adjacent[8]);
+// @todo: Add adjacent code for object position, because particles have to check a maximum of 4 tiles  
+//        included its own
+// void egomapGetAdjacent(int obj_x, int obj_y, EGOMAP_TILEINFO_T adjacent[4]);
 
 /* ============  Draw command ========== */
 void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
 void egomapDraw2DMap(int mx, int my, int mw, int mh, int tx, int *crect);
 
 /* ============ OBJECT-FUNCTIONS ========== */
-void egomapAddObject(char type, char obj_name, float x, float y, float z, char dir);
-void egomapDeleteObject(int obj_no);
-int  egomapGetChar(int tile_no);                              
+void egomapNewObject(char *obj_name, float x, float y, float z, char dir_code);
+void egomapDropObject(int obj_no);      // Drop this object to map
+void egomapDeleteObject(int obj_no);    // Delete this object from map
+int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
 void egomapDropChar(int char_no, float x, float y, float z, char dir); 
 
 #endif  /* #define _EGOMAP_H_ */

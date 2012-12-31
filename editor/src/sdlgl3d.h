@@ -223,10 +223,11 @@
 #define SDLGL3D_MOVE_MAXCMD     0x0F
 
 /* ----- Camera types ------- */
-#define SDLGL3D_CAM_MODESTD     0x00    /* Move camera itself           */
-#define SDLGL3D_CAM_FOLLOW      0x01    /* Follow an object             */
-#define SDLGL3D_CAM_LOOKAT      0x02    /* Attached to a position       */
-#define SDLGL3D_CAM_FIRSTPERS   0x03    /* Move with position of object */
+#define SDLGL3D_CAM_INACTIVE    0x00    /* Camera is not active at all  */    
+#define SDLGL3D_CAM_MODESTD     0x01    /* Move camera itself           */
+#define SDLGL3D_CAM_FOLLOW      0x02    /* Follow an object             */
+#define SDLGL3D_CAM_LOOKAT      0x03    /* Attached to a position       */
+#define SDLGL3D_CAM_FIRSTPERS   0x04    /* Move with position of object */
 
 /* -------- Object-Types ------ */
 #define SDLGL3D_OBJ_NONE     0
@@ -251,8 +252,9 @@
 
 typedef float SDLGL3D_V3D[3];  /* For X, Y, Z coordinates of vector.  */
 
-typedef struct {
-
+typedef struct
+{
+    int    id;              /* Number of object in list             */
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
     int     type_no;        /* Number of type in 'obj_type'         */
@@ -312,6 +314,8 @@ typedef struct {
 
 SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid);
 void sdlgl3dEnd(void);
+
+/* ===== Camera-Functions ==== */
 void sdlgl3dSetCameraMode(int camera_no, char mode, SDLGL3D_OBJECT *obj, float x, float y);
 void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio);
 void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2);
@@ -319,10 +323,17 @@ SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f);
 void sdlgl3dManageCamera(int camera_no, char move_cmd, char set, char speed_modifier);
 void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative);
 void sdlgl3dMoveCamera(float secondspassed);
-/* ---  Handling other objects --- */
-void sdlgl3dInitObject(SDLGL3D_OBJECT *obj);
+
+/* ===== Object-Functions ==== */
+int  sdlgl3dCreateObject(SDLGL3D_OBJECT *info_obj);
+void sdlgl3dDeleteObject(int obj_no);
+SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no);
 void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set);
-void sdlgl3dMoveObjects(SDLGL3D_OBJECT *obj_list, float secondspassed);
+void sdlgl3dMoveObjects(float secondspassed);
+// @todo: Add/remove objects from a single linked list
+// int sdlgl3dListObject(int *list_base, int obj_no, char flag); // flags: ADD, REMOVE, PEEK
+
+/* ===== Visibility-Functions ==== */
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);
 void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy);
 SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile);

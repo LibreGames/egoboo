@@ -25,6 +25,7 @@
 * INCLUDES								                                       *
 *******************************************************************************/
 
+#include <stdio.h>      /* sscanf() */
 #include <string.h>     /* strlwr() */
 
 #include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
@@ -53,7 +54,7 @@
 
 #define CHAR_MAX_CAP    100
 #define CHAR_MAX        500
-#define CHAR_MAX_SKIN          4  
+#define CHAR_MAX_SKIN     4
 
 /*******************************************************************************
 * ENUMS								                                           *
@@ -136,16 +137,16 @@ typedef struct
     float dampen;                        ///< Bounciness
     float bumpdampen;                    ///< Mass
 
-    float size;                          ///< Scale of model
-    float size_perlevel;                 ///< Scale increases
-    int   shadow_size;                   ///< Shadow size
-    int   bump_size;                     ///< Bounding octagon
-    char  bump_override_size;            ///< let bump_size override the measured object size
-    int   bump_sizebig;                  ///< For octagonal bumpers
-    char  bump_override_sizebig;         ///< let bump_sizebig override the measured object size
-    int   bump_height;                   ///< the height of the object
-    char  bump_override_height;          ///< let bump_height overrride the measured height of the object
-    unsigned char stoppedby;                     ///< Collision Mask
+    float size;                         ///< Scale of model
+    float size_perlevel;                ///< Scale increases
+    int   shadow_size;                  ///< Shadow size
+    int   bump_size;                    ///< Bounding octagon
+    char  bump_override_size;           ///< let bump_size override the measured object size
+    int   bump_sizebig;                 ///< For octagonal bumpers
+    char  bump_override_sizebig;        ///< let bump_sizebig override the measured object size
+    int   bump_height;                  ///< the height of the object
+    char  bump_override_height;         ///< let bump_height overrride the measured height of the object
+    unsigned char stoppedby;            ///< Collision Mask
 
     // movement
     float jump;                         ///< Jump power
@@ -157,8 +158,8 @@ typedef struct
     char  waterwalk;                    ///< Walk on water?
 
     // status graphics
-    unsigned char life_color;                     ///< Life bar color
-    unsigned char mana_color;                     ///< Mana bar color
+    unsigned char life_color;           ///< Life bar color
+    unsigned char mana_color;           ///< Mana bar color
     char draw_icon;                     ///< Draw icon
 
     // model graphics
@@ -259,13 +260,10 @@ typedef struct
 } CAP_T;
 
 
-
 /*******************************************************************************
 * DATA									                                       *
 *******************************************************************************/
 
-static int NumCap;
-static int NumChar;
 static CAP_T  CapList[CHAR_MAX_CAP + 2];
 static CHAR_T CharList[CHAR_MAX + 2];
 
@@ -352,7 +350,7 @@ static int charNewCap(void)
     CAP_T *pcap;
 
     
-    // 0: Is an invalid cap
+    // 0: Is an invalid cap    
     for(i = 1; i < CHAR_MAX_CAP; i++)
     {
         if(CapList[i].cap_name[0] == 0)
@@ -361,12 +359,6 @@ static int charNewCap(void)
 
             // clear out all the data
             memset(pcap, 0, sizeof(CAP_T));
-
-            // Clear the idsz
-            for(cnt = 0; cnt < IDSZ_COUNT; cnt++)
-            {
-                pcap -> idsz[cnt] = IDSZ_NONE;
-            }
 
             // clear out the sounds
             for ( cnt = 0; cnt < SOUND_COUNT; cnt++ )
@@ -410,8 +402,12 @@ static int charNewChar(void)
     
     for(i = 1; i < CHAR_MAX; i++)
     {
-        if(CharList[i].cap_no == 0)
+        // 0: Is emtpy, -1: Is deleted
+        if(CharList[i].cap_no <= 0)
         {
+            // clear out all the data
+            memset(&CharList[i], 0, sizeof(CHAR_T));
+            
             return i;
         }
     }
@@ -423,9 +419,10 @@ static int charNewChar(void)
  * Name:
  *     charReadCap
  * Description:
- *     Spawns an object. If needed, the character profile is loaded 
- *     Loads a single object with given name. Looks up first in the module
- *     directory and after that
+ *     Reads a character profile by name, if not already loaded.
+ *     - For "PLAYER"-Slots an empty profile is created for override by imported characters
+ *     - "unknown" slots are skipped
+ *     - @todo; Support Random Treasure Names '%' if not in edit mode  
  * Input:
  *     pname *: Pointer on name of random treasure
  * Output:
@@ -433,17 +430,47 @@ static int charNewChar(void)
  */
  static int charReadCap(char *objname)
  {
-
+    char name_buf[32];
+    int  player_no;
     int cno;
-    char *fname;
+    // char *fdir;
+    // char fname[512];
     CAP_T *pcap;
 
-
-    // Compare lower case
-    strlwr(objname);
+    
+    // 1. PLAYER 1-4: Empty cap slots to be filled by 'saved game'-character profiles  
+    if(strncmp(objname, "PLAYER", 6) == 0)
+    {
+        sscanf(objname, "%s %d", name_buf, &player_no);
+        
+        if(player_no > 0 && player_no < 5)
+        {
+            // Get the object name 
+            strcpy(CapList[player_no].cap_name, objname);
+            // Slot for this imported player
+            return player_no;
+        }
+    }
+    
+    // Remove leading and trailing spaces
+    sscanf(objname, "%s", objname);    
+    
+    // Compare lower case except names for random treasure
+    if('%' != objname[0])
+    {
+        strlwr(objname);    
+    }
+    
+    // Skip "unknown"
+    if(strcmp(objname, "unknown") == 0)
+    {
+        return 0;
+    }
+    
+    // @todo; Support Random Treasure '%' if not in edit mode
 
     // Only read if 'cap_name' not available yet
-    for(cno = 1; cno < CHAR_MAX_CAP; cno++)
+    for(cno = 5; cno < CHAR_MAX_CAP; cno++)
     {
         if(CapList[cno].cap_name[0] != 0)
         {
@@ -461,36 +488,43 @@ static int charNewChar(void)
 
     cno = charNewCap();
 
-    if(cno > 0)
+    if(cno > 4)
     {
         pcap = &CapList[cno];
 
-        strcpy(pcap -> cap_name, objname);  // For checking if profile and object are already loaded
-        // @todo: Get the directory of this object first
-        // fdir = editfileMakeFileName(EDITFILE_OBJECTDIR, "");
-        // Read character profile
-        fname = editfileMakeFileName(EDITFILE_OBJECTDIR, "data.txt");
-
-        if(fname[0] != 0)
+        strcpy(pcap -> cap_name, objname);  // For checking if profile and object are already loaded and editor
+        /* @todo: Load random treasure object if in 'game-mode'
+        if('%' == objname)
+        {
+        }        
+        */
+        /* @todo: Load the real data
+        // Get the directory of this object        
+        fdir = editfileMakeFileName(EDITFILE_OBJECTDIR, objname);
+        
+        // Read character profile        
+        if(fdir[0] != 0)
         {
             // If object was found
+            sprintf(fname, "%sdata.txt", fdir); 
             sdlglcfgEgobooValues(fname, CapVal, 0);
 
-            // "message.txt"
-            // "naming.txt"
+            // sprintf(fname, "%smessage.txt", fdir);
+            // sprintf(fname, "%snaming.txt", fdir);
+            // sprintf(fname, "%sscript.txt", fdir);
             // "part0.txt" - "part9.txt"
-            // "script.txt"
-            // "tris.md2"
+            // sprintf(fname, "%stris.md2", fdir);
             // "icon0,bmp" - "icon4.bmp"
             // "tris0.bmp" - "tris0.bmp"
             // "sound0.wav" - "sound9.wav"
-
-            return cno;
         }
         else
         {
             // @todo: msgSend(MSG_LOG, MSG_GAME_OBJNOTFOUND, objname)
         }
+        */
+        // @todo: Replace this be 'real' code
+        return cno;
     }
 
     return 0;
@@ -499,6 +533,8 @@ static int charNewChar(void)
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
 /* ========================================================================== */
+
+/* ================= Basic character functions =============== */
 
 /*
  * Name:
@@ -510,39 +546,35 @@ static int charNewChar(void)
  */
 void charInit(void) 
 {
-    NumCap  = 0;
-    CapList[0].cap_name[0] = 0;
-    CapList[1].cap_name[0] = 0;
-    
-    NumChar = 0;
-    CharList[0].cap_no = 0;
-    CharList[1].cap_no = 0;
+    memset(&CapList[0], 0, CHAR_MAX_CAP * sizeof(CAP_T)); 
+    memset(&CharList[0], 0, CHAR_MAX * sizeof(CHAR_T)); 
 }
 
 /*
  * Name:
  *     charCreate
  * Description:
- *     Creates a character. If needed, the character profile is loaded
- *     Loads a single object with given name. Looks up first in the module
- *     directory and after that
+ *     Creates a new character.
+ *     If needed, the character profile is loaded:
+ *      - Looks up first in the modules directory
+ *      - Second it looks that in the GOR
  * Input:
- *     objname *:    Pointer on name of object to create character from
- *     attachedto:   Is in inventory of this character
- *     inwhich_slot: In this slot of inventory ('L', 'R', 'I') or
- *     team:         Belongs to this team ('A' - 'Z')
- *     stt:          Statusbar should appear yes/no
- *     skin:         Which skin to use
+ *     objname *: Pointer on name of object to create character from
+ *     team:      Belongs to this team ('A' - 'Z')
+ *     stt:       Statusbar should appear yes/no
+ *     money;     Bonus money for the character for this module.    
+ *     skin:      Which skin to use
+ *     psg:       Number of passage the character belongs to  
  * Output:
- *     Number of character
+ *     Number of character, if any is created
  */
-int charCreate(char *objname, int attachedto, char inwhich_slot, char team, char stt, char skin)
+int charCreate(char *objname, char team, char stt, int money, char skin, char psg)
 {
     int cap_no;
     int char_no;
-    int slot_no;
     CAP_T  *pcap;
     CHAR_T *pchar;
+    
 
     // @todo: Support Random Treasure
     cap_no = charReadCap(objname);
@@ -556,11 +588,13 @@ int charCreate(char *objname, int attachedto, char inwhich_slot, char team, char
             pcap  = &CapList[cap_no];
             pchar = &CharList[char_no];
 
-            // @todo: Now create the char from the character profile
-            pchar -> cap_no = cap_no;           /* Has this character profile   */
-            pchar -> mdl_no = pcap -> mdl_no;   /* Number of model for display  */
-            pchar -> icon_no = skin;            /* Number of models icon for display */
-            pchar -> skin_no = skin;            /* Number of models skin for display */
+            // @todo: Complete creation of character profile
+            pchar -> cap_no  = cap_no;          /* Has this character profile           */
+            pchar -> mdl_no  = pcap -> mdl_no;  /* Number of model for display          */
+            pchar -> icon_no = skin;            /* Number of models icon for display    */
+            pchar -> skin_no = skin;            /* Number of models skin for display    */
+            // Attached to passage
+            pchar -> psg_no  = psg;
             // Gender
             if('F' == pcap -> gender ) pchar -> gender = GENDER_FEMALE;
             else if ('M' == pcap -> gender) pchar -> gender = GENDER_MALE;
@@ -572,11 +606,12 @@ int charCreate(char *objname, int attachedto, char inwhich_slot, char team, char
             pchar -> team[0] = team;    // Actual team
             pchar -> team[1] = team;    // Original team
 
+            pchar -> money = money;   
             /*
             // character stats -- CHARSTAT_ACT / CHARSTAT_FULL
             char life[2];       ///< Basic character stats
             char mana[2];       ///< Mana stuff
-
+            
             // combat stuff -- CHARSTAT_ACT / CHARSTAT_FULL
             char damageboost[2];                   ///< Add to swipe damage
             char damagethreshold[2];               ///< Damage below this number is ignored
@@ -591,28 +626,7 @@ int charCreate(char *objname, int attachedto, char inwhich_slot, char team, char
             char jump_number;                   ///< Number of jumps remaining
             char jump_ready;                    ///< For standing on a platform character
             */
-            if(attachedto > 0)
-            {
-                /* It's an item */
-                if(inwhich_slot == 'L') {
-                    slot_no = 0;
-                }
-                else if(inwhich_slot == 'R')
-                {
-                    slot_no = 1;
-                }
-                else
-                {
-                    slot_no = -1;   /* Slot is found by function */
-                }
-                // Put it into inventory
-                charInventoryAdd(attachedto, char_no, slot_no);
-            }
-            else
-            {
-                // 'inwhich_slot' is the characters direction
-            }
-
+            
             // "variable" properties
             pchar -> is_hidden = 0;
             pchar -> alive     = 1;
@@ -649,6 +663,8 @@ int charCreate(char *objname, int attachedto, char inwhich_slot, char team, char
             // Other info
                 char *script;       // Pointer ai_on script to use for this character, if any 
             */
+            /* Info for editor: Name of object */
+            pchar -> obj_name = pcap -> cap_name;
             
             return char_no;
         }
@@ -732,7 +748,7 @@ char charInventoryAdd(const int char_no, const int item_no, int slot_no)
             }
         }
 
-        // @todo: Support stacked items (In hand too)
+        // @todo: Support stacked items (In hand too ?)
         // @todo: Support 'merge' items
 
         // don't override existing items

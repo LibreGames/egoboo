@@ -27,8 +27,7 @@
 
 // #include <stdio.h>
 #include <stdlib.h>     /* rand()       */
-#include <string.h>     
-#include <memory.h>
+#include <string.h>
 #include <time.h>
 
 #include "editfile.h"       /* Get filepath name by type                    */ 
@@ -40,8 +39,8 @@
 * DEFINES								                                       *
 *******************************************************************************/
 
-#define MAX_TABLES	  32	
-#define MAX_TREASURE 500
+#define MAX_TABLES	  32
+#define MAX_TREASURE 300
 #define MAX_STRLEN    31
 
 /*******************************************************************************
@@ -53,32 +52,33 @@ typedef struct {
     char line_name[2];              /* Dummy for empty name                           */
     char obj_name[MAX_STRLEN + 1];  /* Name of object to load, "-": Deleted in editor */
 
-} TABLE_LINE_T;
+} TABLE_T;
 
 typedef struct {
     char *table_name;       /* Pointer on table-name                        */
-    int  first_obj;         /* Line number of first object in list          */
-    int  num_obj;           /* Number of objects loaded into this table     */
-} TABLE_T;
+    int  idx_no[2];         /* Line number of first and last object in list */
+} TABLE_LIST_T;
 
 /*******************************************************************************
 * DATA									                                       *
 *******************************************************************************/
 
-static TABLE_T TreasureTableList[MAX_TABLES + 1];
-static TABLE_LINE_T TreasureTable[MAX_TREASURE + 2];
+static TABLE_LIST_T TreasureTableList[MAX_TABLES + 2];
+static TABLE_T TreasureTable[MAX_TREASURE + 2];
 
-static SDLGLCFG_VALUE TreasureVal[] = {
+static SDLGLCFG_VALUE TreasureVal[] =
+{
 	{ SDLGLCFG_VAL_STRING, TreasureTable[0].line_name, 1 },
 	{ SDLGLCFG_VAL_STRING, TreasureTable[0].obj_name, MAX_STRLEN},
 	{ 0 }
 };
 
-static SDLGLCFG_LINEINFO TreasureRec = {
-    &TreasureTable[0],
-	&TreasureTable[1],
+static SDLGLCFG_LINEINFO TreasureRec =
+{
+    &TreasureTable[0],          /* Read buffer */
+	&TreasureTable[1],          /* Record buffer    */
 	MAX_TREASURE,
-	sizeof(TABLE_LINE_T),
+	sizeof(TABLE_T),
 	&TreasureVal[0]
 };
 
@@ -89,6 +89,8 @@ static SDLGLCFG_LINEINFO TreasureRec = {
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
 /* ========================================================================== */
+
+/* =============== Random values ============= */
 
 /*
  * Name:
@@ -112,36 +114,34 @@ void miscSetRandSeed(int seed)
 
 /*
  * Name:
- *     miscRand
+ *     miscRandRange
  * Description:
- *     Returns a random number between min and max
+ *     Returns a random in the range ipair[0] .. ipair[1]
  * Input:
- *     min: Lower bound
- *     max: Upper bound
+ *     ipair[] : Minimum and maximum value
  * Output:
  *     Generated random number (min .. max)
  */
-int miscRand(int min, int max)
+int miscRandRange(int ipair[2])
 {
+    if (ipair[1] < 2 || ipair[0] > ipair[1]) {
 
-    if (max < 2 || min > max) {
+        if (ipair[1] < 0) {
 
-        if (max < 0) {
-
-            max = 0;
+            ipair[1] = 0;
 
         }
 
-        return max;
+        return ipair[1];
 
     }
 
-    return (int)((((long)rand()*(max))/(RAND_MAX+1)) + min);
+    return (int)((((long)rand()*(ipair[1]))/(RAND_MAX+1)) + ipair[0]);
 }
 
 /*
  * Name:
- *     miscRandom
+ *     miscRandVal
  * Description:
  *     Returns a random number between 1 and RAND_MAX.
  * Input:
@@ -149,7 +149,7 @@ int miscRand(int min, int max)
  * Output:
  *     Generated random number (1 .. RAND_MAX)
  */
-int miscRandom(void)
+int miscRandVal(void)
 {
 
     return rand();
@@ -159,7 +159,7 @@ int miscRandom(void)
 
 /*
  * Name:
- *     treasureTableLoad
+ *     miscLoadRandTreasure
  * Description:
  *     Loads the table for the random treasures
  * Input:
@@ -168,52 +168,59 @@ int miscRandom(void)
 void miscLoadRandTreasure(void)
 {
     char *fname;
-    int num_table, i, num_el;
+    int num_table, num_el;
 
-    
+
     fname = editfileMakeFileName(EDITFILE_BASICDATDIR, "randomtreasure.txt");
-    
+
     // Read the table
     sdlglcfgEgobooRecord(fname, &TreasureRec, 0);
     // Record 0 is always empty
     TreasureTable[0].obj_name[0] = 0;
-    
+
     // Now create the table for random treasure
-  	//Load each treasure table
+  	// Load each treasure table
 	num_table = 0;
-    i = 1;
-    
-    while(TreasureTable[i].obj_name[0] != 0)
+    num_el = 1;
+
+    while(TreasureTable[num_el].obj_name[0] != 0)
     {
         if(num_table >= MAX_TABLES)
         {
             // Too much treasure tables
             break;
         }
-        
+
         // Starts with table-name
-        TreasureTableList[num_table].table_name = TreasureTable[i].obj_name;
+        TreasureTableList[num_table].table_name = TreasureTable[num_el].obj_name;
+
         // Point on first object in list
-        i++;
-        TreasureTableList[i].first_obj = i;     // Number of first object in list
-        
-        num_el = 0;
-        while(TreasureTable[i].obj_name[0] != 0 && strcmp(TreasureTable[i].obj_name, "END" ) != 0)
+        num_el++;
+        TreasureTableList[num_table].idx_no[0] = num_el;     // Number of first object in list
+
+        while(TreasureTable[num_el].obj_name[0] != 0 && strcmp(TreasureTable[num_el].obj_name, "END" ) != 0)
         {
             // It's an object name
+            // All objects have lower-case names for loading
+            strlwr(TreasureTable[num_el].obj_name);
+            // Count it
             num_el++;
-            i++; 
         }
-        
-        TreasureTableList[i].num_obj = num_el;
-        // skip
+
+        // Save number of last element in list (one before "END)
+        TreasureTableList[num_table].idx_no[1] = num_el - 1;
+        // Start of next table
+        num_table++;
+        // skip "END"
+        num_el++;
     }
-    
 }
+
+/* =============== Random treasure ============= */
 
 /*
  * Name:
- *     treasureGetRandom
+ *     miscGetRandTreasure
  * Description:
  *     Gets the name for a random treasure object from the table 
  * Input:
@@ -221,7 +228,7 @@ void miscLoadRandTreasure(void)
  * Output:
  *     Pointer of the object name for the random treasure 
  */
-char *treasureGetRandom(char *pname)
+char *miscGetRandTreasure(char *pname)
 {
     int i;
     int treasure_index;
@@ -234,30 +241,37 @@ char *treasureGetRandom(char *pname)
         return TreasureTable[0].obj_name;
     }
     
-    // Skip the '%'-sign
-    pname++;
-    
+    // Skip the '%'-sign, if needed
+    if('%' == pname[0])
+    {
+        pname++;
+    }
+    else
+    {
+        return TreasureTable[0].obj_name;
+    }
+
     //Iterate through every treasure table until we find the one we want
 	for(i = 0; i < MAX_TABLES; i++ )
 	{
         if(TreasureTableList[i].table_name[0] != 0)
         {
-            if(strcmp(TreasureTableList[i].table_name, &pname[1]) == 0)
+            if(strcmp(TreasureTableList[i].table_name, pname) == 0)
             {
                 // We found a name
         		//Pick a random number between 0 and the length of the table to get a random element out of the array
-                treasure_index = miscRand(0, TreasureTableList[i].num_obj - 1);
+                treasure_index = miscRandRange(TreasureTableList[i].idx_no);
 
-                pname = TreasureTable[TreasureTableList[i].first_obj + treasure_index].obj_name;
-        		
+                pname = TreasureTable[treasure_index].obj_name;
+
         		//See if it is an actual random object or a reference to a different random table
         		if('%' == pname[0])
                 {
                     // Is a random treasure
-                    treasureGetRandom(pname);
+                    pname = miscGetRandTreasure(pname);
                 }
-                // All objects have lower-case names
-                return strlwr(pname);
+
+                return pname;
             }
 		}
         else
@@ -265,7 +279,7 @@ char *treasureGetRandom(char *pname)
             break;
         }
 	}
-    
+
     // If not found, than it's an empty string */
     return TreasureTable[0].obj_name;
 }

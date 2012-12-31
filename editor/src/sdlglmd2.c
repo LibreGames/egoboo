@@ -743,11 +743,8 @@ int sdlglmd2LoadModel(const char *model_name)
 
     }
 
-
-
     // sdlgllogWrite("\n%s -----------------------------\n", model_name);
     fread(&model -> header, 1, sizeof(MD2_HEADER), md2file);
-
 
     sprintf(ver, "%c%c%c%c", model -> header.magic, model -> header.magic >> 8,
                              model -> header.magic >> 16, model -> header.magic >> 24);

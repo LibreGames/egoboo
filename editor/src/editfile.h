@@ -138,39 +138,47 @@ typedef struct {
 /* ====== The different file types ===== */
 typedef struct
 {
-    char line_name[25];         /* Only for information purposes "-": Deleted in editor */
+    char line_name[25];     /* Only for information purposes "-": Deleted in editor */
     int topleft[2];
     int bottomright[2];
     char open;
     char shoot_trough;
     char slippy_close;
+    /* -- Additional info -- */
+    int  char_no;           ///< The character associated with this passage
     /* --- Info for editor -- */
+    char psg_no;           ///< -1: Deleted
     char rec_no;
+    
 } EDITFILE_PASSAGE_T;
 
 typedef struct
 {
-    char obj_name[30 + 1];     /* Name of object to load */
-    char item_name[20 + 1];
-    int  slot_no;               /* Use it for coloring the bounding boxes */
-    float x_pos, y_pos, z_pos;
+    char obj_name[30 + 1];      /* Name of object to load [obj_name].obj   */
+    char item_name[20 + 1];     ///< Never used ???
+    int  slot_no;               ///< Not used anymore (the slots are set by loading time) 
+    float x_pos, y_pos, z_pos;  
     char view_dir;
     int  money;
     char skin;
     char pas;
-    char con;
+    char con;       ///< is the content setting for this character. Used for armor chests. ???
     char lvl;
-    char stt;
-    char gho;
-    char team;
-    int  rec_no;   
-} EDITFILE_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt' */
+    char stt;       
+    char gho;       ///< is T to make the character a ghost, F for default. Unused
+    char team;                  
+    /* --- Info for editor -- */
+    int  rec_no;
+    int  inventory[12];   /* Number of characters attached to this for display  */      
+    char *inv_name[12];   /* Object-Name of character in inventory              */
+    
+} EDITFILE_SPAWNPT_T;     /* Spawn-Point for display on map. From 'spawn.txt'   */
 
-typedef struct {
-
+typedef struct
+{
     char mod_name[24 + 1];      /* With underscores                                 */
     char ref_mod[24 + 1];       /* Reference module ( Directory name or NONE )      */
-    char ref_idsz[11 + 1];      /* Required reference IDSZ ( or [NONE] ) : [MAIN] 6 */
+    char ref_idsz[18 + 1];      /* Required reference IDSZ ( or [NONE] ) : [MAIN] 6 */
     char number_of_imports;     /* Number of imports ( 0 to 4 ) : 4                 */
     char allow_export;          /* Allow exporting of characters ( TRUE or FALSE )  */
     char min_player;            /* Minimum number of players ( 1 to 4 )             */
