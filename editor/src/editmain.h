@@ -76,8 +76,8 @@
 * TYPEDEFS							                                           *
 *******************************************************************************/
 
-typedef struct {
-
+typedef struct
+{
     int  minimap_tw,
          minimap_w,
          minimap_h;
@@ -101,8 +101,8 @@ typedef struct {
     
 } EDITMAIN_INFO_T;
 
-typedef struct {
-
+typedef struct
+{
     int x, y;
 
 } EDITMAIN_XY;

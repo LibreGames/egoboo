@@ -144,18 +144,19 @@ typedef struct
     char open;
     char shoot_trough;
     char slippy_close;
-    /* -- Additional info -- */
+    /* -- Additional info, for game -- */
     int  char_no;           ///< The character associated with this passage
+    char state;             ///< State of passage in game -1: isopening / 0: inactive / 1: isclosing
     /* --- Info for editor -- */
-    char psg_no;           ///< -1: Deleted
-    char rec_no;
+    char psg_no;            ///< -1: Deleted
+    char rec_no;            
     
 } EDITFILE_PASSAGE_T;
 
 typedef struct
 {
-    char obj_name[30 + 1];      /* Name of object to load [obj_name].obj   */
-    char item_name[20 + 1];     ///< Never used ???
+    char obj_name[24 + 1];      /* Name of object to load [obj_name].obj   */
+    char item_name[24 + 1];     ///< Never used ???
     int  slot_no;               ///< Not used anymore (the slots are set by loading time) 
     float x_pos, y_pos, z_pos;  
     char view_dir;

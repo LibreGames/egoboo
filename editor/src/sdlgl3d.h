@@ -254,7 +254,7 @@ typedef float SDLGL3D_V3D[3];  /* For X, Y, Z coordinates of vector.  */
 
 typedef struct
 {
-    int    id;              /* Number of object in list             */
+    int     id;             /* Number of object in list             */
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
     int     type_no;        /* Number of type in 'obj_type'         */
@@ -273,31 +273,40 @@ typedef struct
                             /*             +towards ceiling         */
                             /*              in units/second         */
     float   turnvel;        /* Rotation velocity in degrees/second  */
-    /* Link for object list in collision - detection                   */
+    /* Link for object list in collision - detection                */
     int     old_tile;       /* Object was on this tile before move  */
-    int     on_tile;        /* Object is on this tile               */
+    int     act_tile;       /* Object is on this tile               */
     int     next_obj;       /* > 0: Number of next object on tile   */          
     char    visi_code;      /* Visibility ob object in frustum      */
     char    speed_modifier; /* Multiply speed with this one, if > 0 */
 
 } SDLGL3D_OBJECT;
 
-typedef struct {
+// Bounding rectangles for camera an visibility tests
+typedef struct
+{
+    int min_x, min_y,
+        max_x, max_y;
+} SDLGL3D_BRECT;
 
+typedef struct
+{
     float fov;
     float viewwidth;
-    float aspect_ratio;         /* For zoom and setup of frustum        */
-    float zmin, zmax;
+    float aspect_ratio;         /* For zoom and setup of frustum            */
+    float zmin, zmax;           /* Front and backplane                      */
     /* ------ Info for internal use ------ */
     float nx[3], ny[3];
-    SDLGL3D_V3D mouse_ray;      /* Set by mouse code, used for drawing  */
-    SDLGL3D_V3D m_ray2d;
     float leftangle, rightangle;
-    int   num_visi_tile;        /* Number of tiles visible in FOV       */
-    int   mou_tiles[30];        /* Numbers of tiles hit bei 'mouse_ray' */
-    int   bx[4], by[4];         /* New bounding rectangle of frustum    */ 
-                                /* Left/right backplane, L/R front plane */
-
+    int   num_visi_tile;        /* Number of tiles visible in FOV           */
+    int   mou_tiles[30];        /* Numbers of tiles hit bei 'mouse_ray'     */
+    int   bx[4], by[4];         /* New bounding rectangle of frustum        */ 
+                                /* Left/right backplane, L/R front plane    */
+    SDLGL3D_BRECT bf;           /* Bounding rectangle of frustum on map     */ 
+    int edgex, edgey, edgez;    /* Map edges for camera and frustum rect    */     
+    SDLGL3D_V3D mouse_ray;      /* Set by mouse code, used for 3D-Edit      */
+    SDLGL3D_V3D m_ray2d;
+    
 } SDLGL3D_FRUSTUM;
 
 typedef struct {
@@ -331,7 +340,7 @@ SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no);
 void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);
 // @todo: Add/remove objects from a single linked list
-// int sdlgl3dListObject(int *list_base, int obj_no, char flag); // flags: ADD, REMOVE, PEEK
+// int sdlgl3dListObject(int *from_base, int *to_base, int obj_no, char action); // action: ADD, REMOVE, PEEK, MOVE
 
 /* ===== Visibility-Functions ==== */
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);

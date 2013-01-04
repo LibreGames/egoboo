@@ -76,16 +76,77 @@ static GLuint WallTex[EDITDRAW_MAXWALLTEX];
  */
 static void editdrawSetTransColor(int col_no, char trans)
 {
-
     unsigned char color[5];   
+
     
     sdlglGetColor(col_no, color);
     color[3] = trans;
 
     glColor4ubv(color);
-
 }
 
+/*
+ * Name:
+ *     editdrawObject
+ * Description:
+ *     Draws an object with given object number.
+ *     -For test purposes: Draws its bounding box
+ * Input:
+ *     obj_no: Number of object to draw 
+ */
+static void editdrawObject(int obj_no)
+{
+    int i, j;
+    SDLGL3D_OBJECT *pobj;
+    float bbox[2][3];
+    
+    if(obj_no > 0)
+    {
+        // If object is valid at all        
+        pobj = sdlgl3dGetObject(obj_no);
+        // @todo: Use OpenGL-Matrix for drawing
+        // Translate bounding box to position of
+        for(i = 0; i < 2; i++)
+        {
+            for(j = 0; j < 3; j++)
+            {
+                bbox[i][j] = pobj -> bbox[i][j] + pobj -> pos[j];
+            }
+        }
+        // Now draw the cube of the bounding box
+        sdlglSetColor(pobj -> type_no);  
+        glBegin(GL_LINE_LOOP);
+            // Draw top of cube
+            glVertex3f(bbox[0][0], bbox[0][1], bbox[0][2]); // x, y, z
+            glVertex3f(bbox[1][0], bbox[0][1], bbox[0][2]); // x, y, z
+            glVertex3f(bbox[1][0], bbox[1][1], bbox[0][2]); // x, y, z
+            glVertex3f(bbox[0][0], bbox[1][1], bbox[0][2]); // x, y, z
+        glEnd();
+        glBegin(GL_LINE_LOOP);
+            // Draw bottom of cube
+            glVertex3f(bbox[0][0], bbox[0][1], bbox[1][2]);
+            glVertex3f(bbox[1][0], bbox[0][1], bbox[1][2]);
+            glVertex3f(bbox[1][0], bbox[1][1], bbox[1][2]);
+            glVertex3f(bbox[0][0], bbox[1][1], bbox[1][2]);
+        glEnd();
+        // Draw edges of cube
+        glBegin(GL_LINES);
+            // Edge one
+            glVertex3f(bbox[0][0], bbox[0][1], bbox[0][2]); /* x, y, z */    
+            glVertex3f(bbox[0][0], bbox[0][1], bbox[1][2]); /* x, y, z */    
+            // Edge two
+            glVertex3f(bbox[1][0], bbox[0][1], bbox[0][2]); /* x, y, z */ 
+            glVertex3f(bbox[1][0], bbox[0][1], bbox[1][2]); /* x, y, z */ 
+            // Edge three
+            glVertex3f(bbox[1][0], bbox[1][1], bbox[0][2]); /* x, y, z */  
+            glVertex3f(bbox[1][0], bbox[1][1], bbox[1][2]); /* x, y, z */  
+            // Edge four
+            glVertex3f(bbox[0][0], bbox[1][1], bbox[0][2]); /* x, y, z */   
+            glVertex3f(bbox[0][0], bbox[1][1], bbox[1][2]); /* x, y, z */   
+        glEnd();    
+    }
+}
+ 
 
 /*
  * Name:
@@ -101,20 +162,16 @@ static void editdrawSetTransColor(int col_no, char trans)
 static int editdrawTileIsChosen(int tx, int ty, int *crect)
 {
     /* Check if it's chosen */
-    if (crect[0] > 0 && crect[1] > 0) {
-    
-        if (tx >= crect[0] && tx <= crect[2]
-            && ty >= crect[1] && ty <= crect[3]) {
-            
+    if (crect[0] > 0 && crect[1] > 0)
+    {
+        if (tx >= crect[0] && tx <= crect[2] && ty >= crect[1] && ty <= crect[3])
+        {
             /* -- It's a tile in the chosen area of the input -- */
             return 1;
-
         }
-        
     }  
     
     return 0;
-    
  }
 
 /*
@@ -130,7 +187,6 @@ static int editdrawTileIsChosen(int tx, int ty, int *crect)
  */
 static void editdrawOverlay3D(MESH_T *mesh, int fan_no, int *crect)
 {
-
     FANDATA_T *fd;  
     int tx, ty;    
     
@@ -139,19 +195,23 @@ static void editdrawOverlay3D(MESH_T *mesh, int fan_no, int *crect)
     ty = fan_no / mesh -> tiles_x; 
     tx = fan_no % mesh -> tiles_x;
     
-    if (fd -> psg_no > 0) {
+    if (fd -> psg_no > 0)
+    {
         /* --- It's a passage --- */
         editdrawSetTransColor(SDLGL_COL_BLUE, 128);
         editdrawTransparentFan3D(mesh, fan_no);
     }
     
-    if (fd -> obj_no > 0) {
+    if (fd -> obj_no > 0)
+    {
         /* --- It's a spawn point --- */
         editdrawSetTransColor(SDLGL_COL_RED, 128);
         editdrawTransparentFan3D(mesh, fan_no);
+        // @todo: Draw the objects bounding box reps. object itself */
     }
 
-    if (editdrawTileIsChosen(tx, ty, crect)) {
+    if (editdrawTileIsChosen(tx, ty, crect))
+    {
         /* -- It's a tile chosen by the input -- */
         editdrawSetTransColor(SDLGL_COL_YELLOW, 128);
         editdrawTransparentFan3D(mesh, fan_no);
@@ -171,7 +231,6 @@ static void editdrawOverlay3D(MESH_T *mesh, int fan_no, int *crect)
  */
 static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
 {
-    
     int cnt, tnc;
     int entry;
     
@@ -180,30 +239,28 @@ static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
     glPolygonMode(GL_FRONT, GL_LINE);
     sdlglSetColor(SDLGL_COL_WHITE);
 
-    if (ft -> tx_no > 0) {
+    if (ft -> tx_no > 0)
+    {
         /* Empty code to keep compiler quiet: 2010-08-18 */
     }
     
     entry = 0;
     
-    for (cnt = 0; cnt < fd -> count; cnt++) {
-
+    for (cnt = 0; cnt < fd -> count; cnt++)
+    {
         glBegin (GL_TRIANGLE_FAN);
 
-            for (tnc = 0; tnc < fd -> size[cnt]; tnc++) {
-                
+            for (tnc = 0; tnc < fd -> size[cnt]; tnc++)
+            {
                 glVertex3f(fd -> vtx[fd -> vertexno[entry]].x,
                            fd -> vtx[fd -> vertexno[entry]].y,
                            fd -> vtx[fd -> vertexno[entry]].z + 10);
 
                 entry++;
-
             }
 
         glEnd();
-
     } 
-
 }
 
 /*
@@ -219,7 +276,6 @@ static void editdrawChosenFanType(FANDATA_T *ft, COMMAND_T *fd)
  */
 static void editdrawOverlay2D(MESH_T *mesh, SDLGL_RECT *rect, int *crect)
 {
-
     SDLGL_RECT draw_rect;
     FANDATA_T *fd;
     
@@ -240,16 +296,17 @@ static void editdrawOverlay2D(MESH_T *mesh, SDLGL_RECT *rect, int *crect)
     draw_rect.h = rect -> h;
 
     glBegin(GL_QUADS);
-        for (y = 0; y < mesh -> tiles_y; y++) {
-
-            for (x = 0; x < mesh -> tiles_x; x++) {
-
+        for (y = 0; y < mesh -> tiles_y; y++)
+        {
+            for (x = 0; x < mesh -> tiles_x; x++)
+            {
                 rx2 = draw_rect.x + draw_rect.w;
                 ry2 = draw_rect.y + draw_rect.h;
                 
                 fd = &mesh -> fan[fan_no];
                     
-                if (fd -> psg_no > 0) {
+                if (fd -> psg_no > 0)
+                {
                     /* --- It's a passage --- */
                     editdrawSetTransColor(SDLGL_COL_BLUE, 128);
                     /* -- Draw the passage --- */
@@ -259,8 +316,9 @@ static void editdrawOverlay2D(MESH_T *mesh, SDLGL_RECT *rect, int *crect)
                     glVertex2i(draw_rect.x, draw_rect.y);
                 }
                 
-                if (fd -> obj_no > 0) {
-                    /* --- It's a spawn point --- */
+                if (fd -> obj_no > 0)
+                {
+                    /* --- It's a spawn point/object --- */
                     editdrawSetTransColor(SDLGL_COL_RED, 128);
                     /* -- Draw the spawn point --- */
                     glVertex2i(draw_rect.x,  ry2);
@@ -270,8 +328,8 @@ static void editdrawOverlay2D(MESH_T *mesh, SDLGL_RECT *rect, int *crect)
                 }
 
                 /* Check if it's chosen */
-                if (editdrawTileIsChosen(x, y, crect)) {
-                
+                if (editdrawTileIsChosen(x, y, crect))
+                {
                     /* -- It's a tile in the chosen area of the input -- */
                     editdrawSetTransColor(SDLGL_COL_YELLOW, 128);
                     /* -- Draw the chosen tile --- */
@@ -279,14 +337,11 @@ static void editdrawOverlay2D(MESH_T *mesh, SDLGL_RECT *rect, int *crect)
                     glVertex2i(rx2, ry2);
                     glVertex2i(rx2, draw_rect.y);
                     glVertex2i(draw_rect.x, draw_rect.y);
-                    
                 }                
 
                 draw_rect.x += draw_rect.w;
                 fan_no++;
-
             }
-
             /* Next line    */
             draw_rect.x = rect -> x;
             draw_rect.y += draw_rect.h;
@@ -294,7 +349,6 @@ static void editdrawOverlay2D(MESH_T *mesh, SDLGL_RECT *rect, int *crect)
     glEnd();
 
     glDisable(GL_BLEND);
-
 }
 
 /*
@@ -310,7 +364,6 @@ static void editdrawOverlay2D(MESH_T *mesh, SDLGL_RECT *rect, int *crect)
  */
 static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no)
 {
-
     COMMAND_T *mc;
     float *vert_x, *vert_y, *vert_z;
     int cnt, tnc, entry, *vertexno;
@@ -337,26 +390,23 @@ static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no)
     entry    = 0;
     vertexno = mc -> vertexno;
 
-    for (cnt = 0; cnt < mc -> count; cnt++) {
-
+    for (cnt = 0; cnt < mc -> count; cnt++)
+    {
         glBegin (GL_TRIANGLE_FAN);
 
-            for (tnc = 0; tnc < mc -> size[cnt]; tnc++) {
-
+            for (tnc = 0; tnc < mc -> size[cnt]; tnc++)
+            {
                 actvertex = vertexno[entry]; 	/* Number of vertex to draw */
 
                 glVertex3f(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex] + 2);
 
                 entry++;
-
             }
 
         glEnd();
-
     } 
     
     glDisable(GL_BLEND);
-
 }
 
 /*
@@ -371,7 +421,6 @@ static void editdrawTransparentFan3D(MESH_T *mesh, int fan_no)
  */
 static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
 {
-
     COMMAND_T *mc;
     float *vert_x, *vert_y, *vert_z;
     int cnt, tnc, entry, *vertexno;
@@ -397,81 +446,85 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
     vert_y = &mesh -> vrty[vert_base];
     vert_z = &mesh -> vrtz[vert_base];
 
-    if (! (mesh -> draw_mode & EDIT_DRAWMODE_SOLID)) {
+    if (! (mesh -> draw_mode & EDIT_DRAWMODE_SOLID))
+    {
         /* Set color depending on texturing type */
-        if (bigtex) {                           /* It's one with hi res texture */
+        if (bigtex)
+        {                           /* It's one with hi res texture */
             sdlglSetColor(SDLGL_COL_LIGHTBLUE); /* color like cartman           */
         }
-        else {
+        else
+        {
             sdlglSetColor(SDLGL_COL_LIGHTRED);
         }
-        if (col_no > 0) {
+        if (col_no > 0)
+        {
             sdlglSetColor(col_no);
         }
-
     }
-    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED ) {
-
-        if (bigtex) {               /* It's one with hi res texture */
+    
+    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED)
+    {
+        if (bigtex)
+        {               /* It's one with hi res texture */
             uv = &mc -> biguv[0];
         }
-        else {
+        else
+        {
             uv = &mc -> uv[0];
         }
-
     }
 
     offuv = &MeshTileOffUV[(mesh -> fan[fan_no].tx_no & 0x3F) * 2];
 
     /* Now bind the texture */
-    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
-
+    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED)
+    {
         glBindTexture(GL_TEXTURE_2D, WallTex[((mesh -> fan[fan_no].tx_no >> 6) & 3)]);
-
     }
 
     entry    = 0;
     vertexno = mc -> vertexno;
 
-    for (cnt = 0; cnt < mc -> count; cnt++) {
-
+    for (cnt = 0; cnt < mc -> count; cnt++)
+    {
         glBegin (GL_TRIANGLE_FAN);
 
-            for (tnc = 0; tnc < mc -> size[cnt]; tnc++) {
-
+            for (tnc = 0; tnc < mc -> size[cnt]; tnc++)
+            {
                 actvertex = vertexno[entry]; 	/* Number of vertex to draw */
 
-                if (mesh -> draw_mode & EDIT_DRAWMODE_SOLID) {
+                if (mesh -> draw_mode & EDIT_DRAWMODE_SOLID)
+                {
                     /* Show ambient lighting */
                     color[0] = color[1] = color[2] = mesh -> vrta[actvertex];
                     
-                    if (mesh -> draw_mode & EDIT_DRAWMODE_LIGHTMAX) {
+                    if (mesh -> draw_mode & EDIT_DRAWMODE_LIGHTMAX)
+                    {
                         color[0] = color[1] = color[2] = 255;
                     }
+                    
                     glColor3ubv(&color[0]);		/* Set the light color */
-
                 }
-                if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
+                if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED)
+                {
                     glTexCoord2f(uv[(actvertex * 2) + 0] + offuv[0], uv[(actvertex * 2) + 1] + offuv[1]);
                 }
                 
                 glVertex3f(vert_x[actvertex], vert_y[actvertex], vert_z[actvertex]);
 
                 entry++;
-
             }
 
         glEnd();
-
     } 
-
 }
 
 /*
  *  Name:
- *	    editdrawMap
+ *	   editdrawMap
  *  Description:
- *	    Draws a single fan with given number from given mesh
+ *	   Draws the whole map. Doen's support any culling code.
  * Input:
  *     mesh *:   Pointer on mesh to draw
  *     ft *:     Pointer on description of chosen fan type
@@ -480,17 +533,18 @@ static void editdrawSingleFan(MESH_T *mesh, int fan_no, int col_no)
  */
 static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
 {
-
     int fan_no;
 
 
     glPolygonMode(GL_FRONT, mesh -> draw_mode & EDIT_DRAWMODE_SOLID ? GL_FILL : GL_LINE);
     glFrontFace(GL_CW);
 
-    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
+    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED)
+    {
         glEnable(GL_TEXTURE_2D);
     }
 
+    // @todo: Use draw edges from actual used camera
     /* Draw the map, using different edit flags           */
     /* Needs list of visible tiles
        ( which must be built every time after the camera moved) */
@@ -503,36 +557,47 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
                 ==> particles on same tile
     */
     /* =============== First draw bottom tiles ============== */
-    for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
-        if (mesh -> fan[fan_no].type == 0) {
+    for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++)
+    {
+        if (mesh -> fan[fan_no].type == 0)
+        {
             /* --- Draw the basic fan, solid --- */
             editdrawSingleFan(mesh, fan_no, 0);
             /* --- Draw overlays, if needed --- */
-            editdrawOverlay3D(mesh, fan_no, crect);           
+            editdrawOverlay3D(mesh, fan_no, crect);
+            
         }
     }
 
     /* =============== Second draw wall tiles ============== */
-    for (fan_no = 0; fan_no < mesh -> numfan;  fan_no++) {
-        if (mesh -> fan[fan_no].type != 0) {
+    for (fan_no = 0; fan_no < mesh -> numfan; fan_no++)
+    {
+        if (mesh -> fan[fan_no].type != 0)
+        {
             /* --- Draw the basic fan, solid --- */
             editdrawSingleFan(mesh, fan_no, 0);
             /* --- Draw overlays, if needed --- */
-            editdrawOverlay3D(mesh, fan_no, crect);            
+            editdrawOverlay3D(mesh, fan_no, crect);
+            // Draw object on tile
+        }
+        
+        // Draw objects on bottom tiles
+        if (mesh -> fan[fan_no].type == 0 && mesh -> fan[fan_no].obj_no > 0)
+        {
+            editdrawObject(mesh -> fan[fan_no].obj_no);
         }
     }      
     
-    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED) {
+    if (mesh -> draw_mode & EDIT_DRAWMODE_TEXTURED)
+    {
         glDisable(GL_TEXTURE_2D);
     }
     
     /* Draw the chosen fan type, if any */
-    if (fd -> numvertices > 0) {
-
+    if (fd -> numvertices > 0)
+    {
         editdrawChosenFanType(ft, fd);
-
     } 
-    
 }
 
 /*
@@ -546,7 +611,6 @@ static void editdrawMap(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
  */
 static void editdraw2DCameraPos(int x, int y, int df)
 {
-
     SDLGL3D_OBJECT *campos;
     SDLGL3D_FRUSTUM f;          /* Information about the frustum        */
     SDLGL_RECT draw_rect;
@@ -575,7 +639,6 @@ static void editdraw2DCameraPos(int x, int y, int df)
         glVertex2i(draw_rect.x + (f.nx[2] * zmax),
                    draw_rect.y + (f.ny[2] * zmax));
     glEnd();
-
 }
 
 /* ========================================================================== */
@@ -594,31 +657,27 @@ static void editdraw2DCameraPos(int x, int y, int df)
  */
 void editdrawInitData(void)
 {
-
     char texturename[128];
     char *fname;
     int entry, cnt;
     
 
     // Make tile texture start offsets
-    for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2) {
-
+    for (entry = 0; entry < (EDITDRAW_MAXWALLSUBTEX * 2); entry += 2)
+    {
         MeshTileOffUV[entry]     = (((entry / 2) & 7) * 0.125);
         MeshTileOffUV[entry + 1] = (((entry / 2) / 8) * 0.125);
-
     }
 
     /* Load the basic textures */
-    for (cnt = 0; cnt < 4; cnt++) {
-
+    for (cnt = 0; cnt < 4; cnt++)
+    {
         sprintf(texturename, "tile%d.bmp", cnt);
 
         fname = editfileMakeFileName(EDITFILE_GAMEDATDIR, texturename);
 
         WallTex[cnt] = sdlgltexLoadSingle(fname);
-
     }
-
 }
 
 /*
@@ -631,10 +690,8 @@ void editdrawInitData(void)
  */
 void editdrawFreeData(void)
 {
-    
     /* Free the basic textures */
     glDeleteTextures(4, &WallTex[0]);
-
 }
 
 /*
@@ -650,7 +707,6 @@ void editdrawFreeData(void)
  */
 void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
 {
-
     int w, h;
     int x, y, x2, y2;
 
@@ -659,19 +715,18 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
 
     /* Draw a grid 64 x 64 squares for test of the camera view */
     /* Draw only if no map is loaded */
-    if (! mesh -> map_loaded) {
-    
+    if (! mesh -> map_loaded)
+    {
         sdlglSetColor(SDLGL_COL_LIGHTGREEN);
 
-        for (h = 0; h < 64; h++) {
-
-            for (w = 0; w < 64; w++) {
-
+        for (h = 0; h < 64; h++)
+        {
+            for (w = 0; w < 64; w++)
+            {
                 x = w * 128;
                 y = h * 128;
                 x2 = x + 128;
                 y2 = y + 128;
-
                 
                 glBegin(GL_TRIANGLE_FAN);  /* Draw clockwise */
                     glVertex2i(x, y);
@@ -679,20 +734,15 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
                     glVertex2i(x2, y2);
                     glVertex2i(x, y2);
                 glEnd();
-                
             }
-
         }      
-        
     }
-    else {
-    
+    else
+    {
         editdrawMap(mesh, ft, fd,crect);     
-        
     }
 
     sdlgl3dEnd();
-
 }
 
 /*
@@ -710,31 +760,34 @@ void editdraw3DView(MESH_T *mesh, FANDATA_T *ft, COMMAND_T *fd, int *crect)
  */
 void editdraw2DMap(MESH_T *mesh, int mx, int my, int mw, int mh, int tw, int *crect)
 {
-
     SDLGL_RECT draw_rect, draw_rect2;
     int fan_no;
     int rx2, ry2;
     int w, h;
 
+    
     draw_rect.x = mx;
     draw_rect.y = my;
     draw_rect.w = tw;
     draw_rect.h = tw;
 
     fan_no = 0;
-    glBegin(GL_QUADS);
-        for (h = 0; h < mesh -> tiles_y; h++) {
-
-            for (w = 0; w < mesh -> tiles_x; w++) {
-            
+    glBegin(GL_QUADS);    
+        for (h = 0; h < mesh -> tiles_y; h++)
+        {
+            for (w = 0; w < mesh -> tiles_x; w++)
+            {
                 /* Set color depeding on WALL-FX-Flags    */
-                if (mesh -> fan[fan_no].fx & MPDFX_WALL) {
+                if (mesh -> fan[fan_no].fx & MPDFX_WALL)
+                {
                     sdlglSetColor(SDLGL_COL_BLACK);
                 }
-                else if (0 == mesh -> fan[fan_no].fx) {
+                else if (0 == mesh -> fan[fan_no].fx)
+                {
                     sdlglSetColor(SDLGL_COL_LIGHTGREY);
                 }
-                else {
+                else
+                {
                     /* Colors >= 15: Others then standard colors */
                     sdlglSetColor(mesh -> fan[fan_no].type + 15);
                 }
@@ -749,13 +802,11 @@ void editdraw2DMap(MESH_T *mesh, int mx, int my, int mw, int mh, int tw, int *cr
 
                 draw_rect.x += draw_rect.w;
                 fan_no++;
-
             }
 
             /* Next line    */
             draw_rect.x = mx;
             draw_rect.y += draw_rect.h;
-
         }
 
     glEnd();
@@ -770,9 +821,10 @@ void editdraw2DMap(MESH_T *mesh, int mx, int my, int mw, int mh, int tw, int *cr
     draw_rect.x = mx;
     draw_rect.y = my;
 
-    for (h = 0; h < mesh -> tiles_y; h++) {
-
-        for (w = 0; w < mesh -> tiles_x; w++) {
+    for (h = 0; h < mesh -> tiles_y; h++)
+    {
+        for (w = 0; w < mesh -> tiles_x; w++)
+        {
             sdlglstrDrawRectColNo(&draw_rect, SDLGL_COL_GREEN, 0);
             draw_rect.x += draw_rect.w;
         }
@@ -780,8 +832,8 @@ void editdraw2DMap(MESH_T *mesh, int mx, int my, int mw, int mh, int tw, int *cr
         /* Next line    */
         draw_rect.x = mx;
         draw_rect.y += draw_rect.h;
-
     }
+    
     /* ---------- Draw border for 2D-Map ---------- */
     draw_rect2.x = mx;
     draw_rect2.y = my;
@@ -791,9 +843,7 @@ void editdraw2DMap(MESH_T *mesh, int mx, int my, int mw, int mh, int tw, int *cr
 
     /* ------------ Draw the camera as last one -------- */
     editdraw2DCameraPos(mx, my, 128 / tw);
-
 }
-
 
 
 /*
@@ -809,7 +859,6 @@ void editdraw2DMap(MESH_T *mesh, int mx, int my, int mw, int mh, int tw, int *cr
  */
 void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big)
 {
-
     int x2, y2;
     int spart_size, part_size;
     unsigned char main_tx_no, subtex_no;
@@ -838,7 +887,8 @@ void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big)
     /* ---- Draw a rectangle around the chosen texture-part */
     spart_size = w / 8;
     part_size = w / 8;
-    if (tx_big) {
+    if (tx_big)
+    {
         part_size *= 2;
     }
 
@@ -852,7 +902,6 @@ void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big)
         glVertex2i(x2, y2);
         glVertex2i(x2, y);
     glEnd();
-
 }
 
 /*
@@ -865,8 +914,6 @@ void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big)
  */
 void editdrawAdjustCamera(int tx, int ty)
 {
-
     sdlgl3dMoveToPosCamera(0, tx * 128, ty * 128, 0, 1);
-    
 }
 

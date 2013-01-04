@@ -56,6 +56,10 @@
 #define CHAR_MAX        500
 #define CHAR_MAX_SKIN     4
 
+// Other maximum values
+#define PERFECTSTAT   18    // wisdom, intelligence and so on...   
+#define PERFECTBIG  1000    // Maximum life/mana
+
 /*******************************************************************************
 * ENUMS								                                           *
 *******************************************************************************/
@@ -528,7 +532,57 @@ static int charNewChar(void)
     }
 
     return 0;
- }
+}
+
+/*
+ * Name:
+ *     charGiveExperienceOne 
+ * Description:
+ *     Gives experence to the given character. 
+ * Input:
+ *     char_no: Number of character to give experience
+ *     amount:  Amount of experience to give
+ *     xp_type: Type of experience to give          
+ */
+static void charGiveExperienceOne(int char_no, int amount, int xp_type)
+{
+    CHAR_T *pchar;
+    CAP_T *pcap;
+    int newamount;
+    int intadd, wisadd;
+    
+    if (0 == amount) return;    //No xp to give
+    
+    pchar = &CharList[char_no];
+            
+    newamount = amount;
+    
+    if (xp_type < XP_COUNT )
+    {
+        pcap  = &CapList[pchar -> cap_no];
+        // Multiplier based on character profile
+        newamount = amount * pcap -> experience_rate[xp_type];
+    }
+    
+    // Figure out how much experience to give
+    intadd = pchar -> intel[CHARSTAT_ACT];
+    wisadd = pchar -> wis[CHARSTAT_ACT];
+        
+    // Intelligence and slightly wisdom increases xp gained (0,5% per int and 0,25% per wisdom above 10)
+    intadd = (intadd > 10) ? (newamount * (intadd - 10) / 200) : 0;
+    wisadd = (wisadd > 10) ? (newamount * (wisadd - 10) / 400) : 0;
+    
+    newamount += (intadd + wisadd);
+    
+    // @todo:Apply XP bonus/penality depending on game difficulty
+    /*
+    if ( cfg.difficulty >= GAME_HARD ) newamount += newamount / 5;          // 20% extra on hard
+    else if ( cfg.difficulty >= GAME_NORMAL ) newamount += newamount / 10;  // 10% extra on normal
+    */
+    pchar -> experience += newamount;   
+    // @todo: Level up, if enough experience
+    // @todo: Send message if levelled up
+}
 
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
@@ -589,6 +643,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             pchar = &CharList[char_no];
 
             // @todo: Complete creation of character profile
+            pchar -> id      = char_no;         /* Number of slot > 0: Is occupied      */
             pchar -> cap_no  = cap_no;          /* Has this character profile           */
             pchar -> mdl_no  = pcap -> mdl_no;  /* Number of model for display          */
             pchar -> icon_no = skin;            /* Number of models icon for display    */
@@ -602,14 +657,14 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             else pcap->gender = GENDER_OTHER;
             
             // Team stuff
-            team = (char)('Z' - team);
+            team = (char)(team - 'A');  // From 0 to ('Z' - 'A')
             pchar -> team[0] = team;    // Actual team
             pchar -> team[1] = team;    // Original team
 
             pchar -> money = money;   
             /*
             // character stats -- CHARSTAT_ACT / CHARSTAT_FULL
-            char life[2];       ///< Basic character stats
+            short int life[2];  ///< Basic character stats
             char mana[2];       ///< Mana stuff
             
             // combat stuff -- CHARSTAT_ACT / CHARSTAT_FULL
@@ -629,7 +684,6 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             
             // "variable" properties
             pchar -> is_hidden = 0;
-            pchar -> alive     = 1;
             /*
             // "constant" properties
             char isshopitem;                    ///< Spawned in a shop?
@@ -882,6 +936,139 @@ char charInventorySwap(const int char_no, int slot_no, int grip_off)
     }
 
     return 0;
+}
+
+/* ================= Gameplay functions ================== */
+
+/*
+ * Name:
+ *     charInventoryFunc
+ * Description:
+ *     Applies the given function on inventory item(s), using the given argument, if needed
+ * Input:
+ *     char_no:  Number of character to handle inventory for
+ *     func_no:  Number of function to execute
+ *     arg:      Additional argument for function, if needed
+ */
+void charInventoryFunc(int char_no, int func_no)
+{
+    int i, item_no;
+    CHAR_T *pchar, *pitem;
+
+
+    // @todo: Search inventories of the whole team (if 'player') 'use_team'
+    pchar = &CharList[char_no];
+
+    for(i = 0; i < (INVEN_COUNT + SLOT_COUNT); i++)
+    {
+        item_no = pchar -> inventory[i].item_no;
+
+        if(item_no > 0)
+        {
+            pitem = &CharList[item_no];
+
+            switch(func_no)
+            {
+                case CHAR_INVFUNC_UNKURSE:
+                    pitem -> iskursed = 0;
+                    break;
+            }
+        }
+    }
+}
+
+/*
+ * Name:
+ *     charGiveExperience
+ *      replaces:
+ *         give_experience, give_team_experience,  
+ * Description:
+ *         Gives experence to the given character. If 'tem' is true, than experience is given to the 
+ *         characters whole team.
+ * Input:
+ *     char_no: Number of character to give experience
+ *     amount:  Amount of experience to give
+ *     xp_type: Type of experience to give 
+ *     to_team: Give it to the characters team yes/no           
+ */
+void charGiveExperience(int char_no, int amount, int xp_type, char to_team)
+{
+    if (0 == amount) return;    //No xp to give
+    
+    if(to_team)
+    {
+        // @todo: Give experience to whole team
+        /*
+        to_team = pchar -> team;
+        //
+        CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
+        {
+            if ( pchar -> team == to_team )
+            {
+                pchar -> experience += newamount;
+                // give_experience( cnt, newamount, ( xp_type )xptype, 0 );
+            }
+        }
+        CHR_END_LOOP();
+        */
+    }
+    else
+    {
+        charGiveExperienceOne(char_no, amount, xp_type);
+    }
+}
+
+/*
+ * Name:
+ *     charApplyChange
+ *      replaces:
+ *          damage_character, give_experience, give_team_experience, kill_character(use high valpair)
+ *          heal_character  
+ * Description:
+ *     Applies the given function on character(s), using the given arguments
+ *   This function calculates and applies damage to a character.  It also
+ *   sets alerts and begins actions. Blocking and frame invincibility
+ *   are done here too.  Direction is ATK_FRONT if the attack is coming head on,
+ *   ATK_RIGHT if from the right, ATK_BEHIND if from the back, ATK_LEFT if from the
+ *   left.
+ * Input:
+ *     char_no:    Number of character to handle 
+ *     dir_no:     Attack direction, if any
+ *     valpair[2]: For damage healing, Experience points are in 'valpair[0]'
+ *     val_type:   Kind of damage of kind of healing or experience and so on 
+ *     team:       Damages/heals the whole team ?!
+ *     attacker:   If damage (and healing ?)
+ *     effects:    Flags about effects to spawn...
+ */
+void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_type,
+                     char team, int attacker, int effects)
+{   
+    CHAR_T *pchar;
+    CAP_T *pcap;
+    int amount;
+    
+    
+    
+    // Fixed value for experience and killing characters
+    if(valpair[1] == 0)
+    {
+        amount = valpair[0];
+    }
+    else
+    {
+        amount = miscRandRange(valpair);
+    }
+    
+    pchar = &CharList[char_no];
+    pcap  = &CapList[pchar -> cap_no];
+    
+    if(val_type == CHAR_DAMAGE)
+    {
+        
+    }
+    else if(val_type == CHAR_HEAL)
+    {
+    }
 }
 
 /* ================= _____ functions ===================== */

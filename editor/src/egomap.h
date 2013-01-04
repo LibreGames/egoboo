@@ -3,7 +3,7 @@
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
 *    - Managing the map and the objects on it                                  *
-*      (c)2011 Paul Mueller <pmtech@swissonline.ch>                            *
+*      (c) 2011-2013 Paul Mueller <muellerp61@bluewin.ch>                      *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -40,9 +40,9 @@
 #define EGOMAP_SAVE_ALL     0xFF 
 
 /* --- Types of objects (for drawing) --- */
-#define EGOMAP_OBJ_TILE   0x01    /* First always the tile            */
-#define EGOMAP_OBJ_CHAR   0x02    /* Characters (MD2)                 */
-#define EGOMAP_OBJ_PART   0x03    /* Particles (can be transparent)   */
+#define EGOMAP_OBJ_TILE   0x01      /* First always the tile            */
+#define EGOMAP_OBJ_CHAR   0x02      /* Characters (MD2)                 */
+#define EGOMAP_OBJ_PART   0x03      /* Particles (can be transparent)   */
 
 /* --- Handling for map objects --- */
 #define EGOMAP_NEW   0x01
@@ -61,7 +61,7 @@ typedef struct
     int  x, y;          /* X,Y-Position in map                      */
     char psg_no;        /* > 0: Number of passage for this tile     */
     int  obj_no;        /* > 0: Number of first object on this tile */    
-    char fx;            /* MPDFX_...                                */
+    char fx;            /* MPDFX_...                                */   
     
 } EGOMAP_TILEINFO_T;
 
@@ -78,8 +78,9 @@ int  egomapPassage(int psg_no, EDITFILE_PASSAGE_T *psg, char action, int *crect)
 int  egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crect);
 
 /* ============  Tile functions ========== */
-void egomapGetTileInfo(int tx, int ty, EGOMAP_TILEINFO_T *ti);
-void egomapGetAdjacent(int tile_no, EGOMAP_TILEINFO_T adjacent[8]);
+char egomapGetFanData(int tx, int ty, FANDATA_T *fd);
+char egomapGetTileInfo(int tx, int ty, EGOMAP_TILEINFO_T *ti);
+void egomapGetAdjacent(int tx, int ty, EGOMAP_TILEINFO_T adjacent[8]);
 // @todo: Add adjacent code for object position, because particles have to check a maximum of 4 tiles  
 //        included its own
 // void egomapGetAdjacent(int obj_x, int obj_y, EGOMAP_TILEINFO_T adjacent[4]);

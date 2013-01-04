@@ -76,8 +76,8 @@ static EDITFILE_SPAWNPT_T SpawnPt;
 
 static SDLGLCFG_VALUE SpawnVal[] =
 {
-	{ SDLGLCFG_VAL_STRING,  SpawnPt.obj_name, 30 },
-	{ SDLGLCFG_VAL_STRING,  SpawnPt.item_name, 20 },
+	{ SDLGLCFG_VAL_STRING,  SpawnPt.obj_name, 24 },
+	{ SDLGLCFG_VAL_STRING,  SpawnPt.item_name, 24 },
 	{ SDLGLCFG_VAL_INT,     &SpawnPt.slot_no },
 	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.x_pos },
 	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.y_pos },
@@ -181,7 +181,6 @@ static SDLGLCFG_NAMEDVALUE ModuleVal[] =
  */
 static unsigned char editfileGetFanTwist(MESH_T *mesh, int fan)
 {
-
     int zx, zy, vt0, vt1, vt2, vt3;
     unsigned char twist;
 
@@ -206,7 +205,6 @@ static unsigned char editfileGetFanTwist(MESH_T *mesh, int fan)
     twist = (unsigned char)((zy << 4) + zx);
 
     return twist;
-
 }
 
 /*
@@ -219,7 +217,6 @@ static unsigned char editfileGetFanTwist(MESH_T *mesh, int fan)
  */
 static void editfileMakeTwist(MESH_T *mesh)
 {
-
     int fan;
 
 
@@ -229,7 +226,6 @@ static void editfileMakeTwist(MESH_T *mesh)
         mesh -> fan[fan].twist = editfileGetFanTwist(mesh, fan);
         fan++;
     }
-
 }
 
 /*
@@ -269,7 +265,6 @@ static int editfileLoadMapMesh(MESH_T *mesh, char *msg)
         {
             sprintf(msg, "%s", "Map file has invalid Map-ID.");
             return 0;
-
         }
 
         fread(&mesh -> numvert, 4, 1, fileread);
@@ -279,29 +274,34 @@ static int editfileLoadMapMesh(MESH_T *mesh, char *msg)
         numfan = mesh -> tiles_x * mesh -> tiles_y;
         
         /* Load fan data    */
-        for (cnt = 0; cnt < numfan; cnt++) {
+        for (cnt = 0; cnt < numfan; cnt++)
+        {
             fread(&mesh -> fan[cnt], 4, 1, fileread);
         }
         /* TODO: Check if enough memory is available for loading map */
         /* Load normal data */
-        for (cnt = 0; cnt < numfan; cnt++) {
+        for (cnt = 0; cnt < numfan; cnt++)
+        {
             fread(&mesh -> fan[cnt].twist, 1, 1, fileread);
         }
 
         /* Load vertex x data   */
-        for (cnt = 0; cnt < mesh -> numvert; cnt++) {
+        for (cnt = 0; cnt < mesh -> numvert; cnt++)
+        {
             fread(&ftmp, 4, 1, fileread);
             mesh -> vrtx[cnt] = ftmp;
         }
 
         /* Load vertex y data   */
-        for (cnt = 0; cnt < mesh -> numvert; cnt++) {
+        for (cnt = 0; cnt < mesh -> numvert; cnt++)
+        {
             fread(&ftmp, 4, 1, fileread);
             mesh -> vrty[cnt] = ftmp;
         }
 
         /* Load vertex z data   */
-        for (cnt = 0; cnt < mesh -> numvert; cnt++) {
+        for (cnt = 0; cnt < mesh -> numvert; cnt++)
+        {
             fread(&ftmp, 4, 1, fileread);
             mesh -> vrtz[cnt] = ftmp / EDITFILE_ZADJUST;  /* Z is fixpoint int in cartman (16)*/
         }
@@ -311,11 +311,9 @@ static int editfileLoadMapMesh(MESH_T *mesh, char *msg)
         fclose(fileread);
 
         return 1;
-
     }
 
     return 0;
-
 } 
 
 /*
@@ -339,16 +337,16 @@ static int editfileSaveMapMesh(MESH_T *mesh, char *msg)
     int numwritten;
 
 
-    if (mesh -> map_loaded) {
-
+    if (mesh -> map_loaded)
+    {
         /* Generate the 'up'-vector-numbers */
         editfileMakeTwist(mesh);
 
         numwritten = 0;
 
         filewrite = fopen(editfileMakeFileName(EDITFILE_GAMEDATDIR, "level.mpd"), "wb");
-        if (filewrite) {
-
+        if (filewrite)
+        {
             itmp = MAPID;
 
             numwritten += fwrite(&itmp, 4, 1, filewrite);
@@ -357,52 +355,51 @@ static int editfileSaveMapMesh(MESH_T *mesh, char *msg)
             numwritten += fwrite(&mesh -> tiles_y, 4, 1, filewrite);
 
             /* Write tiles data    */
-            for (cnt = 0; cnt < mesh -> numfan; cnt++) {
+            for (cnt = 0; cnt < mesh -> numfan; cnt++)
+            {
                 fwrite(&mesh -> fan[cnt], 4, 1, filewrite);
             }
             
             /* Write twist data */
-            for (cnt = 0; cnt < mesh -> numfan; cnt++) {
+            for (cnt = 0; cnt < mesh -> numfan; cnt++)
+            {
                 numwritten += fwrite(&mesh -> fan[cnt].twist, 1, 1, filewrite);
             }
 
             /* Write x-vertices */
-            for (cnt = 0; cnt < mesh -> numvert; cnt++) {
+            for (cnt = 0; cnt < mesh -> numvert; cnt++)
+            {
                 /* Change int to floatfor game */
                 ftmp = mesh -> vrtx[cnt];
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
-
             }
 
             /* Write y-vertices */
-            for (cnt = 0; cnt < mesh -> numvert; cnt++) {
+            for (cnt = 0; cnt < mesh -> numvert; cnt++)
+            {
                 /* Change int to float for game */
                 ftmp = mesh -> vrty[cnt];
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
-
             }
 
             /* Write z-vertices */
-            for (cnt = 0; cnt < mesh -> numvert; cnt++) {
+            for (cnt = 0; cnt < mesh -> numvert; cnt++)
+            {
                 /* Change int to float for game */
                 ftmp = (mesh -> vrtz[cnt] * EDITFILE_ZADJUST);   /* Multiply it again to file format */
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
-
             }
 
             /* Write the light values */
             fwrite(&mesh -> vrta[0], 1, mesh -> numvert, filewrite);   // !!!BAD!!!
 
             return numwritten;
-
         }
-
     }
 
     sprintf(msg, "%s", "Saving map has failed.");
 
 	return 0;
-
 }
 
 /*
@@ -415,19 +412,15 @@ static int editfileSaveMapMesh(MESH_T *mesh, char *msg)
  */
 static void editfileSetUnderlines(char *text)
 {
-
-    while(*text) {
-
-        if (*text == ' ') {
-
+    while(*text)
+    {
+        if (*text == ' ')
+        {
             *text = '_';
-
         }
 
         text++;
-
     }
-
 }
 
 /* ========================================================================== */
@@ -447,8 +440,6 @@ static void editfileSetUnderlines(char *text)
  */
 void editfileSetWorkDir(int which, char *dir_name)
 {
-
-
     /* TODO: Check it, replace possible backslashes '\' with slashes forward    */
     /* TODO: Check if there's already a slash attached to the given 'dir_name'  */
     switch(which)
@@ -465,7 +456,6 @@ void editfileSetWorkDir(int which, char *dir_name)
             sprintf(EditFileModuleDir, "%s/", dir_name);
             break;
     }
-
 }
 
 /*
@@ -513,20 +503,23 @@ char *editfileMakeFileName(int dir_no, char *fname)
             sprintf(obj_file_name, "%sdata.txt", file_name);
             
             f = fopen(obj_file_name, "r");
-            if (f) {
+            if (f)
+            {
                 /* Directory found for this object */
                 fclose(f);
             }
-            else {
+            else
+            {
                 /* Look for objects in the GOR */
                 i = 0;
-                while(EditFileGORDir[i]) {
-
+                while(EditFileGORDir[i])
+                {
                     sprintf(file_name, "%sbasicdat/globalobjects/%s/%s.obj/", EditFileGameDir, EditFileGORDir[i], fname);
                     sprintf(obj_file_name, "%sdata.txt", file_name);
                     
                     f = fopen(file_name, "r");
-                    if (f) {
+                    if (f)
+                    {
                         /* Directory found for this object */
                         fclose(f);
                         return file_name;
@@ -556,7 +549,6 @@ char *editfileMakeFileName(int dir_no, char *fname)
     }
 
     return file_name;
-
 }
 
 /*
@@ -573,14 +565,14 @@ char *editfileMakeFileName(int dir_no, char *fname)
  */
 int  editfileMapMesh(MESH_T *mesh, char *msg, char save)
 {
-
-    if (save) {
+    if (save)
+    {
         return editfileSaveMapMesh(mesh, msg);
     }
-    else {
+    else
+    {
         return editfileLoadMapMesh(mesh, msg);
     }
-
 }
 
 /*
@@ -606,8 +598,8 @@ int editfileSpawn(EDITFILE_SPAWNPT_T *spt, char action, int max_rec)
     SpawnRec.recbuf = spt;
     SpawnRec.maxrec = max_rec;
 
-    switch(action) {
-    
+    switch(action)
+    {
         case EDITFILE_ACT_LOAD:
             /* ------- Load the data from file ---- */
             sdlglcfgEgobooRecord(fname, &SpawnRec, 0);            
@@ -617,11 +609,9 @@ int editfileSpawn(EDITFILE_SPAWNPT_T *spt, char action, int max_rec)
             /* -------- Write data to file -------- */
             sdlglcfgEgobooRecord(fname, &SpawnRec, 1);
             return 1;
-
     }
 
     return 1;
-
 }
 
 /*
@@ -678,7 +668,6 @@ int  editfilePassage(EDITFILE_PASSAGE_T *psg, char action, int max_rec)
  */
 int  editfileModuleDesc(EDITFILE_MODULE_T *moddesc, char action)
 {
-    
     FILE *f;
     char *fname;
     int i;
@@ -716,26 +705,21 @@ int  editfileModuleDesc(EDITFILE_MODULE_T *moddesc, char action)
             memcpy(&ModDesc, moddesc, sizeof(EDITFILE_MODULE_T));
             /* ----- Now insert Underlines and so on for egoboo ---- */
             editfileSetUnderlines(ModDesc.mod_name);
-            for(i = 0; i < 8; i++) {
-
-                if (ModDesc.summary[i][0] == 0) {
-
+            for(i = 0; i < 8; i++)
+            {
+                if (ModDesc.summary[i][0] == 0)
+                {
                     ModDesc.summary[i][0] = '_';
                     ModDesc.summary[i][1] = 0;
-
                 }
-                else {
-
+                else
+                {
                     editfileSetUnderlines(ModDesc.summary[i]);
-
                 }
-                
             }
             sdlglcfgEgobooValues(fname, ModuleVal, 1);
             break;                 
-
     }
 
     return 1;
-
 }

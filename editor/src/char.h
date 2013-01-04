@@ -3,7 +3,7 @@
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
 *    - Egoboo Characters                                                       *
-*      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
+*      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                            *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -42,7 +42,7 @@
 
 #define GET_DAMAGE_RESIST(BITS) ( (BITS) & DAMAGESHIFT )
 
-#define CHAR_NAMELEN  14  
+#define CHAR_NAMELEN  24  
 #define CHARSTAT_ACT  0
 #define CHARSTAT_FULL 1
 
@@ -141,6 +141,20 @@ enum {
     GENDER_COUNT
 } E_GENDER;
 
+enum
+{
+    CHAR_INVFUNC_UNKURSE = 1
+    
+} E_INVENT_FUNC;
+
+enum 
+{
+    CHAR_GIVE_XP = 1,
+    CHAR_DAMAGE,
+    CHAR_HEAL
+    
+} E_CHAR_FUNC;
+
 /*******************************************************************************
 * TYPEDEFS                                                                     *
 *******************************************************************************/
@@ -161,46 +175,53 @@ typedef struct
 
 typedef struct
 {
+    int  id;            /* < 0: deleed / > 0: Exists, number of character               */
     int  cap_no;        /* Has this character profile -- > 0: Character is available    */
     int  mdl_no;        /* Number of model for display                                  */
     char icon_no;       /* Number of icon to display                                    */   
     char skin_no;       /* Number of skin for display                                   */     
     int  obj_no;        /* Attached to this 3D-Object                                   */
-    char which_player;  ///< > 0 = player: Attached to this player for movement
-    char name[CHAR_NAMELEN + 1]; /* Name of this character                              */
-    char is_overlay;    ///< Is this an overlay? Track aitarget...
-    char alive;         ///< Is it alive?
+    char which_player;  ///< > 0 = player: Attached to this player for movement   
+    char is_overlay;    ///< Is this an overlay? Track aitarget...    
     int  attached_to;   ///< > 0 if character is a held weapon or in inventory (HAND_LEFT, HAND_RIGHT)    
-    // Bleongs character to a passage ? For editor
+                        /// Or the character is riding a mount
+    // Belongs  to a passage, invokes code for this passage / For editor
     char psg_no;
-    // gender
+    // name and gender
+    char name[CHAR_NAMELEN + 1]; /* Name of this character                              */
     char gender;        /* Gender of character          */
     // character state    
-    char state;         /* ///< Short term memory for AI     */
-    char latch;         /* Latch data                   */
-    
+    char state;         /* ///< Short term memory for AI: Comment: Number of AI-State = char_no */
+    char latch;         /* Latch data                                   */    
     int  money;         ///< Money this character has
     // Team stuff -- CHARSTAT_ACT / CHARSTAT_FULL
     char team[2];       ///< Character's team -- Character's starting team
-    
-    // character stats -- CHARSTAT_ACT / CHARSTAT_FULL
-    char life[2];       ///< Basic character stats
+    // Basic character stats -- CHARSTAT_ACT / CHARSTAT_FULL
+    short int life[2];  ///< Hit-Points
     char mana[2];       ///< Mana stuff 
-    
-    
+    char str[2];        // strength       
+    char strperc[2];    // strength in percent
+    char intel[2];      // intelligence
+    char wis[2];        // wisdom
+    char dex[2];        // dexterity
+    char con[2];        // constitution
+    char cha[2];        // charisma
+    char ac[2];         // armor class
     // combat stuff -- CHARSTAT_ACT / CHARSTAT_FULL
     char damageboost[2];                   ///< Add to swipe damage
     char damagethreshold[2];               ///< Damage below this number is ignored
-    
+    // Experience points and level
     int  experience;        ///< Experience
     char experience_level;  ///< The Character's current level
-        
+    // Skills               ///< @todo: Replace this by multiple skills based on IDSZ
+    int  darkvision_level;
+    int  see_kurse_level;
     // Hands (0, 1) and inventory
     INVENT_SLOT_T inventory[SLOT_COUNT + INVEN_COUNT]; /* > 0 if theres a character in given slot */
     
     // enchant and other timed data e.g time is always counted in ticks that is 1000 ticks = 1 second
     CHAR_TIMER_T timers[CHAR_MAX_TIMER];
-
+    // Size of model
     float fat;                           ///< Character's size
     float fat_goto;                      ///< Character's size goto
     
@@ -216,19 +237,15 @@ typedef struct
     char iskursed;              ///< For boots and rings and stuff
 
     // "constant" properties
-    char isshopitem;                    ///< Spawned in a shop?
-    char canbecrushed;                  ///< Crush in a door?
-    char canchannel;                    ///< Can it convert life to mana?
+    char isshopitem;            ///< Spawned in a shop?
+    char canbecrushed;          ///< Crush in a door?
+    char canchannel;            ///< Can it convert life to mana?
     
     // graphics info
     int   sparkle;          ///< Sparkle the displayed icon? 0 for off
     char  draw_stats;       ///< Display stats?
     float shadow_size[2];   ///< Current size of shadow  CHARSTAT_ACT / CHARSTAT_FULL
     int   ibillboard;       ///< The attached billboard
-    
-    // Skills
-    int  darkvision_level;
-    int  see_kurse_level;
     
     // missile handling
     char missiletreatment;  ///< For deflection, etc.
@@ -238,7 +255,8 @@ typedef struct
     // sound stuff
     int  loopedsound_channel;           ///< Which sound channel it is looping on, -1 is none.
     // 
-    int istoobig;       // For items
+    char istoobig;       // For items
+    char isitem;
     // Other info
     char *script;       /* Pointer on ai_script to use for this character, if any */
     
@@ -257,12 +275,19 @@ void charInit(void);
 int  charCreate(char *objname, char team, char stt, int money, char skin, char psg);
 CHAR_T *charGet(int char_no); 
 
-/* ================= inventory functions ===================== */
+/* ================= General inventory functions ===================== */
 char charInventoryAdd(const int char_no, const int item_no, int inventory_slot);
 int  charInventoryRemove(const int char_no, int inventory_slot, char ignorekurse);
 char charInventorySwap(const int char_no, int inventory_slot, int grip_off);
 
 /* ================= Timer functions ===================== */
 // @todo: Add timers, delete timers, count down timers
+
+/* ================= Gameplay functions ================== */
+void charInventoryFunc(int char_no, int func_no);
+void charGiveExperience(int char_no, int amount, int xp_type, char to_team);
+void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_type, char team,
+                     int attacker, int effects);
+
 
 #endif  /* #define _CHAR_H_ */
