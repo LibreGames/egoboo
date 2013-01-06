@@ -24,11 +24,13 @@
 #define _CHAR_H_
 
 /*******************************************************************************
-* INCLUDES								                                       *
+* INCLUDES								                                   *
 *******************************************************************************/
 
+#include "idsz.h"       // List of special skills */
+
 /*******************************************************************************
-* DEFINES								                                       *
+* DEFINES								                                   *
 *******************************************************************************/
 
 #define ULTRABLUDY           2          ///< This makes any damage draw blud
@@ -48,21 +50,24 @@
 
 
 #define CHAR_MAX_TIMER 15
+#define CHAR_MAX_SKILL 32
 
 // Special non-enchant timers
-#define CHAR_GROGTIME    ((char)-1) ///< Grog timer
-#define CHAR_DAZETIME    ((char)-2) ///< Daze timer
-#define CHAR_BORETIME    ((char)-3) ///< Boredom timer
-#define CHAR_CAREFULTIME ((char)-4) ///< "You hurt me!" timer
-#define CHAR_RELOADTIME  ((char)-5) ///< Time before another shot
-#define CHAR_DAMAGETIME  ((char)-6) ///< Invincibility timer
-#define CHAR_JUMPTIME    ((char)-7) ///< Delay until next jump
-#define CHAR_FATGOTTIME  ((char)-8) ///< Time left in size change
-#define CHAR_POOFTIME    ((char)-9) ///< Time left for poof
+#define CHAR_GROGTIME    ((char)-1)  ///< Grog timer
+#define CHAR_DAZETIME    ((char)-2)  ///< Daze timer
+#define CHAR_BORETIME    ((char)-3)  ///< Boredom timer
+#define CHAR_CAREFULTIME ((char)-4)  ///< "You hurt me!" timer
+#define CHAR_RELOADTIME  ((char)-5)  ///< Time before another shot
+#define CHAR_DAMAGETIME  ((char)-6)  ///< Invincibility timer
+#define CHAR_JUMPTIME    ((char)-7)  ///< Delay until next jump
+#define CHAR_FATGOTTIME  ((char)-8)  ///< Time left in size change
+#define CHAR_POOFTIME    ((char)-9)  ///< Time left for poof
+#define CHAR_DEFENDTIME  ((char)-10) ///< Time left for defense
 
-// Special Teams
-#define TEAM_DAMAGE ((char)(('Z' - 'A') + 1))   ///< For damage tiles
+// Teams constants
+#define TEAM_DAMAGE ((char)(('Z' - 'A') + 2))   ///< For damage tiles
 #define TEAM_MAX    ((char)(TEAM_DAMAGE + 1))
+#define TEAM_NOLEADER       0xFFFF                        ///< If the team has no leader...
 
 /*******************************************************************************
 * ENUMS                                                                        *
@@ -80,6 +85,7 @@ enum {
     DAMAGE_ICE,
     DAMAGE_ZAP,
     DAMAGE_COUNT
+    
 } E_DAMAGE_TYPE;
 
 /// A list of the possible special experience types
@@ -123,9 +129,9 @@ enum
 {
     HAND_LEFT  = 0,
     HAND_RIGHT,    
-    INVEN_NECK,
-    INVEN_WRIS,
-    INVEN_FOOT,
+    INVEN_NECK,         // Are weared if correct IDSZ
+    INVEN_WRIS,         // Are weared if correct IDSZ
+    INVEN_FOOT,         // Are weared if correct IDSZ
     INVEN_PACK,         /* >= INVEN_PACK is in backpack */
     INVEN_COUNT = 8,
     SLOT_COUNT  = 2
@@ -162,7 +168,7 @@ enum
 typedef struct
 {
     char which;         /* < 0: Display timerand 'GROG' and so on..., > 0: Spell(Enchant) number    */
-    int  timer;         /* Down-Counter for this one                                                */
+    int  clock_ticks;   /* > Down-Counter for this one in ticks                                     */
     
 } CHAR_TIMER_T;
 
@@ -175,7 +181,7 @@ typedef struct
 
 typedef struct
 {
-    int  id;            /* < 0: deleed / > 0: Exists, number of character               */
+    int  id;            /* < 0: deleted / > 0: Exists, number of character              */
     int  cap_no;        /* Has this character profile -- > 0: Character is available    */
     int  mdl_no;        /* Number of model for display                                  */
     char icon_no;       /* Number of icon to display                                    */   
@@ -214,21 +220,25 @@ typedef struct
     int  experience;        ///< Experience
     char experience_level;  ///< The Character's current level
     // Skills               ///< @todo: Replace this by multiple skills based on IDSZ
-    int  darkvision_level;
-    int  see_kurse_level;
+    int darkvision_level;
+    int see_kurse_level;
+    int see_invisible_level;
     // Hands (0, 1) and inventory
     INVENT_SLOT_T inventory[SLOT_COUNT + INVEN_COUNT]; /* > 0 if theres a character in given slot */
     
     // enchant and other timed data e.g time is always counted in ticks that is 1000 ticks = 1 second
     CHAR_TIMER_T timers[CHAR_MAX_TIMER];
+    // Skills of character
+    IDSZ_T skills[CHAR_MAX_SKILL + 1];
     // Size of model
-    float fat;                           ///< Character's size
-    float fat_goto;                      ///< Character's size goto
+    float fat;                  ///< Character's size
+    float fat_goto;             ///< Character's size goto
     
     // jump stuff
-    char jump_number;                   ///< Number of jumps remaining
-    char jump_ready;                    ///< For standing on a platform character
-    
+    char jump_number;           ///< Number of jumps remaining
+    char jump_ready;            ///< For standing on a platform character
+    // NEW: Properties as flags (saves saving space)
+    unsigned int properties;    ///< Boolean values as flags
     // "variable" properties
     char is_hidden;
     char islocalplayer;         ///< btrue = local player
@@ -253,7 +263,8 @@ typedef struct
     int  missilehandler;    ///< Who pays the bill for each one...
     
     // sound stuff
-    int  loopedsound_channel;           ///< Which sound channel it is looping on, -1 is none.
+    int sound_index[SOUND_COUNT];   ///< All this characters sounds
+    int loopedsound_channel;        ///< Which sound channel it is looping on, -1 is none.
     // 
     char istoobig;       // For items
     char isitem;
@@ -263,6 +274,7 @@ typedef struct
     /* Other info for graphics and movement is held in the general SDL3D_OBJECT */
     /* Additional help info for the editor */
     char *obj_name;     /* Pointer on the name of the object in CAP_T           */
+    char *class_name;   /* @todo: Pointer on the classes name from CAP_T        */
     
 } CHAR_T;
 
@@ -281,13 +293,14 @@ int  charInventoryRemove(const int char_no, int inventory_slot, char ignorekurse
 char charInventorySwap(const int char_no, int inventory_slot, int grip_off);
 
 /* ================= Timer functions ===================== */
-// @todo: Add timers, delete timers, count down timers
+// @todo: Add timers, delete timers
 
 /* ================= Gameplay functions ================== */
 void charInventoryFunc(int char_no, int func_no);
 void charGiveExperience(int char_no, int amount, int xp_type, char to_team);
 void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_type, char team,
                      int attacker, int effects);
-
-
+int charGetSkill(int char_no, unsigned int whichskill);
+// @todo: charSetVal() 
+void charUpdateAll(int tickspassed);
 #endif  /* #define _CHAR_H_ */

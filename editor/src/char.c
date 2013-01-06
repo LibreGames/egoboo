@@ -30,7 +30,7 @@
 
 #include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
 #include "editfile.h"   /* Get the work-directoires                     */    
-#include "idsz_map.h";
+#include "idsz.h";
 #include "misc.h"       /* Random treasure objects                      */
 #include "egodefs.h"    /* MPDFX_IMPASS                                 */
 
@@ -45,7 +45,7 @@
 //Levels
 #define MAXBASELEVEL        6   ///< Basic Levels 0-5
 #define MAXLEVEL           20   ///< Absolute max level
-#define CAP_MAX_PRT        10   /// Maximum particles for character profile 
+#define CAP_MAX_PRT        10   /// Maximum particles for character profile
 
 #define GRIP_VERTS          4
 
@@ -57,15 +57,26 @@
 #define CHAR_MAX_SKIN     4
 
 // Other maximum values
-#define PERFECTSTAT   18    // wisdom, intelligence and so on...   
+#define PERFECTSTAT   18    // wisdom, intelligence and so on...
 #define PERFECTBIG  1000    // Maximum life/mana
+
+// Clock-Times for special character clocks
+// Times in seconds or in ticks ?
+//Timer resets
+#define DAMAGETILETIME      32                            ///< Invincibility time
+#define DAMAGETIME          32                            ///< Invincibility time
+#define DEFENDTIME          24                            ///< Invincibility time
+#define BORETIME            320 // @todo((Uint16)generate_randmask( 255, 511 )) ///< IfBored timer
+#define CAREFULTIME         50                            ///< Friendly fire timer
+#define SIZETIME            100                           ///< Time it takes to resize a character
 
 /*******************************************************************************
 * ENUMS								                                           *
 *******************************************************************************/
 
 /// The various ID strings that every character has
-enum {
+enum
+{
     IDSZ_NONE   = 0,
     IDSZ_PARENT = 1,                             ///< Parent index
     IDSZ_TYPE,                                   ///< Self index
@@ -74,6 +85,7 @@ enum {
     IDSZ_HATE,                                   ///< Hate index
     IDSZ_VULNERABILITY,                          ///< Vulnerability index
     IDSZ_COUNT                                   ///< ID strings per character
+
 } E_IDSZ;
 
 /*******************************************************************************
@@ -81,7 +93,8 @@ enum {
 *******************************************************************************/
 
 /// The character statistic data in the form used in data.txt
-typedef struct {
+typedef struct
+{
 
     int val[2];       /* from, to */
     int perlevel[2];  /* from, to */
@@ -96,7 +109,7 @@ typedef struct
 {
     char cap_name[MAXCAPNAMESIZE];             /// Name of this character profile (directory)
     // naming
-    char classname[MAXCAPNAMESIZE];            ///< Class name
+    char class_name[MAXCAPNAMESIZE];           ///< Class name
     // skins
     char           skinname[CHAR_MAX_SKIN][MAXCAPNAMESIZE];   ///< Skin name
     unsigned short skincost[CHAR_MAX_SKIN];                   ///< Store prices
@@ -251,7 +264,7 @@ typedef struct
     int           blud_pip;                       ///< What kind of blud?
 
     // skill system
-    IDSZ_NODE_T  skills[MAX_IDSZ_MAP_SIZE];
+    IDSZ_T       skills[MAX_IDSZ_MAP_SIZE];
     int          see_invisible_level;             ///< Can it see invisible?
 
     // random stuff
@@ -272,9 +285,10 @@ static CAP_T  CapList[CHAR_MAX_CAP + 2];
 static CHAR_T CharList[CHAR_MAX + 2];
 
 // Description for reading a cap-file
-static SDLGLCFG_NAMEDVALUE CapVal[] = {
+static SDLGLCFG_NAMEDVALUE CapVal[] =
+{
     // Read in the real general data
-    { SDLGLCFG_VAL_STRING, CapList[0].classname, MAXCAPNAMESIZE },
+    { SDLGLCFG_VAL_STRING, CapList[0].class_name, MAXCAPNAMESIZE },
     // Light cheat
     { SDLGLCFG_VAL_BOOLEAN, &CapList[0].uniformlit },
     // Ammo
@@ -584,6 +598,44 @@ static void charGiveExperienceOne(int char_no, int amount, int xp_type)
     // @todo: Send message if levelled up
 }
 
+
+/*
+ * Name:
+ *     charSetTimer 
+ * Description:
+ *     Sets a timer with given number, if possible
+ * Input:
+ *     char_no: Number of character to set timer for
+ *     which:   Type of clock 
+ *     amount:  Amount of ticks (duration)       
+ * Output:
+ *     Clock could be set yes/no 
+ */
+static char charSetTimer(int char_no, char which, int clock_ticks)
+{
+    int i;
+    CHAR_T *pchar;
+    
+    
+    // @todo: Only set timer if not already set
+    pchar = &CharList[char_no];
+    
+    // @todo: Loop trough all characters in list
+    for(i = 0; i < CHAR_MAX_TIMER; i++)
+    {
+        if(pchar->timers[i].which == 0)
+        {
+            // Set the clock
+            pchar->timers[i].which       = which;
+            pchar->timers[i].clock_ticks = clock_ticks;
+            return 1;
+        }
+    }
+
+    return 0;    
+}
+
+
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
 /* ========================================================================== */
@@ -624,6 +676,7 @@ void charInit(void)
  */
 int charCreate(char *objname, char team, char stt, int money, char skin, char psg)
 {
+    int i;
     int cap_no;
     int char_no;
     CAP_T  *pcap;
@@ -643,6 +696,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             pchar = &CharList[char_no];
 
             // @todo: Complete creation of character profile
+            // @todo: Change boolean values to flags
             pchar -> id      = char_no;         /* Number of slot > 0: Is occupied      */
             pchar -> cap_no  = cap_no;          /* Has this character profile           */
             pchar -> mdl_no  = pcap -> mdl_no;  /* Number of model for display          */
@@ -654,7 +708,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             if('F' == pcap -> gender ) pchar -> gender = GENDER_FEMALE;
             else if ('M' == pcap -> gender) pchar -> gender = GENDER_MALE;
             else if ('R' == pcap -> gender) pchar -> gender = GENDER_RANDOM;
-            else pcap->gender = GENDER_OTHER;
+            else pchar -> gender = GENDER_OTHER;
             
             // Team stuff
             team = (char)(team - 'A');  // From 0 to ('Z' - 'A')
@@ -662,7 +716,8 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             pchar -> team[1] = team;    // Original team
 
             pchar -> money = money;   
-            /*
+            /* @todo: Take from function
+             char.c.char_download_cap
             // character stats -- CHARSTAT_ACT / CHARSTAT_FULL
             short int life[2];  ///< Basic character stats
             char mana[2];       ///< Mana stuff
@@ -714,12 +769,20 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             
             // Character is created, return its number
             /*
-            // Other info
+                // Other info
                 char *script;       // Pointer ai_on script to use for this character, if any 
-            */
-            /* Info for editor: Name of object */
-            pchar -> obj_name = pcap -> cap_name;
+             */
+             
+            // sound stuff...  copy from the cap
+            for(i = 0; i < SOUND_COUNT; i++ )
+            {
+                pchar->sound_index[i] = pcap->sound_index[i];
+            }
             
+            /* Info for editor: Name of object, for further naming: Name of it's class */
+            pchar -> obj_name   = pcap -> cap_name;
+            pchar -> class_name = pcap -> class_name;
+            // Return number of slot
             return char_no;
         }
     }
@@ -980,8 +1043,6 @@ void charInventoryFunc(int char_no, int func_no)
 /*
  * Name:
  *     charGiveExperience
- *      replaces:
- *         give_experience, give_team_experience,  
  * Description:
  *         Gives experence to the given character. If 'tem' is true, than experience is given to the 
  *         characters whole team.
@@ -1044,7 +1105,7 @@ void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_t
                      char team, int attacker, int effects)
 {   
     CHAR_T *pchar;
-    CAP_T *pcap;
+    // CAP_T *pcap;
     int amount;
     
     
@@ -1060,15 +1121,114 @@ void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_t
     }
     
     pchar = &CharList[char_no];
-    pcap  = &CapList[pchar -> cap_no];
+    // pcap  = &CapList[pchar -> cap_no];
     
     if(val_type == CHAR_DAMAGE)
     {
-        
+        pchar->life[CHARSTAT_ACT] -= (short int)amount;
     }
     else if(val_type == CHAR_HEAL)
     {
+        pchar->life[CHARSTAT_ACT] += (short int)amount;
+        if(pchar->life[CHARSTAT_ACT] > pchar->life[CHARSTAT_FULL])
+        {
+            pchar->life[CHARSTAT_ACT] = pchar->life[CHARSTAT_FULL];
+        }
     }
 }
 
-/* ================= _____ functions ===================== */
+/* ================= Information functions ===================== */
+
+/*
+ * Name:
+ *     charGetSkill
+ * Description:
+ *     This returns the skill level for the specified skill or 0 if the character doesn't
+ *     have the skill. Also checks the skill IDSZ.
+ * Input:
+ *     char_no:    Number of character to give experience
+ *     whichskill: Skill to look for (IDSZ)        
+ */
+int charGetSkill(int char_no, unsigned int whichskill)
+{
+    CHAR_T *pchar;
+    IDSZ_T *pskill;
+    
+    
+    //Any [NONE] IDSZ returns always "true"
+    if (IDSZ_NONE == whichskill) return 1;
+    
+    pchar = &CharList[char_no];
+    
+    //Do not allow poison or backstab skill if we are restricted by code of conduct
+    if ('POIS' == whichskill || 'STAB' == whichskill)
+    {
+        if (NULL != idszMapGet(pchar->skills, 'CODE', CHAR_MAX_SKILL))
+        {
+            return 0;
+        }
+    }
+    
+    // First check the character Skill ID matches
+    // Then check for expansion skills too.
+    /* @todo:
+    if ( chr_get_idsz( pchr->ai.index, IDSZ_SKILL )  == whichskill )
+    {
+        return 1;
+    }
+    */
+    
+    // Simply return the skill level if we have the skill
+    pskill = idszMapGet(pchar->skills, whichskill, CHAR_MAX_SKILL);
+    if (pskill != NULL )
+    {
+        return pskill->level;
+    }
+    
+    // Truesight allows reading
+    if ('READ' == whichskill )
+    {
+        pskill = idszMapGet(pchar->skills, 'CKUR', CHAR_MAX_SKILL);
+        
+        if (pskill != NULL && pchar->see_invisible_level > 0 )
+        {
+            return pchar->see_invisible_level + pskill->level;
+        }
+    }
+
+    //Skill not found
+    return 0;
+}
+
+/*
+ * Name:
+ *     charUpdateAll
+ * Description:
+ *     Does an update of the state of all characters 
+ * Input:
+ *     tickspassed: Ticks passend since last call 
+ */
+void charUpdateAll(int tickspassed)
+{
+    int i;
+    CHAR_T *pchar;
+    
+    
+    pchar = pchar = &CharList[1];
+    // @todo: Loop trough all characters in list
+    for(i = 0; i < CHAR_MAX_TIMER; i++)
+    {
+        if(pchar->timers[i].which != 0)
+        {   
+            pchar->timers[i].clock_ticks -= tickspassed;
+            
+            if(pchar->timers[i].clock_ticks <= 0)
+            {
+                // @todo: Do proper action if the time for this clock is over
+                // Mark the clock as free slot
+                pchar->timers[i].which       = 0;
+                pchar->timers[i].clock_ticks = 0;
+            }
+        }
+    }
+}

@@ -1,6 +1,6 @@
 /*******************************************************************************
 *  EGOMAP.C                                                                    *
-*    - EGOBOO-Editor                                                           *     
+*    - EGOBOO-Editor                                                           *
 *                                                                              *
 *    - Managing the map and the objects on it                                  *
 *      (c)2011 Paul Mueller <pmtech@swissonline.ch>                            *
@@ -45,15 +45,12 @@
 #define EGOMAP_MAXPASSAGE   50
 
 /* -- Maximum-Values for files -- */
-#define EGOMAP_MAXOBJ     1024      /* Maximum of objects visible ob map    */
 #define EGOMAP_MAXSPAWN    500      /* Maximum Lines in spawn list          */
 #define EGOMAP_MAXPASSAGE   50
 
-#define EGOMAP_TILEDIV     128   /* Size of tile     */
-
 /* === Lights === */
-#define EGOMAP_MAXLIGHT    100        /* Maximum number of lights     */  
-#define EGOMAP_FADEBORDER   64        /* Darkness at the edge of map  */
+#define EGOMAP_MAXLIGHT    100      /* Maximum number of lights     */  
+#define EGOMAP_FADEBORDER   64      /* Darkness at the edge of map  */
 
 /*******************************************************************************
 * TYPEDEFS								                                       *
@@ -646,8 +643,7 @@ static EDITFILE_PASSAGE_T Passages[EGOMAP_MAXPASSAGE + 2];
 static EDITFILE_SPAWNPT_T SpawnPts[EGOMAP_MAXSPAWN + 2];       /* Holds data about chosen spawn point  */
 
 /* ---- Map data itself --- */
-static MESH_T Mesh;                                 /* Mesh of map                  */
-static SDLGL3D_OBJECT TileObj;                      /* Tile for collision detection */
+static MESH_T Mesh;         /* Mesh of map                  */
 
 /*******************************************************************************
 * CODE									                                       *
@@ -672,6 +668,7 @@ static SDLGL3D_OBJECT TileObj;                      /* Tile for collision detect
 static int egomapCreateObject(char obj_type, int type_no, float x, float y, float z, char dir)
 {
     SDLGL3D_OBJECT info_obj;
+    int tile_no;
 
 
     // Clear the buffer
@@ -704,7 +701,14 @@ static int egomapCreateObject(char obj_type, int type_no, float x, float y, floa
     info_obj.bbox[1][SDLGL3D_Z] = 0;
     // Now add the radius for 'shortcuts'
     info_obj.bradius = 40.0 * 1.414;
+    
+    // Save the number of the actual tile
+    tile_no = (int)(floor(y) * Mesh.tiles_x) + (int)(floor(x));
 
+    // Save number of tile for checking if tile is changed by movement
+    info_obj.old_tile = tile_no;
+    info_obj.act_tile = tile_no;
+    
     // now create the object
     return sdlgl3dCreateObject(&info_obj);
 }
@@ -866,19 +870,49 @@ static void egomapCalcVrta(MESH_T *mesh)
 
     int x_count, y_count;
     int tile_no;
+    char clear_fx, set_fx;
 
 
+    clear_fx = 0;
+    set_fx = 0;
+    
     if (psg -> topleft[0] > 0 && psg -> topleft[1] > 0)
     {
         psg -> rec_no = p_no;   /* Save the number of the passage for the editor */
 
-        if (EGOMAP_CLEAR == action)
+        switch(action)
         {
-            // Mark the passage as deleted
-            psg -> psg_no = -1;
-            /* Remove this passage from map */
-            p_no = 0;
-        }
+            case EGOMAP_CLEAR:
+                // Mark the passage as deleted
+                psg -> psg_no = -1;
+                // Remove this passage from map
+                p_no = 0;
+                break;
+            case EGOMAP_OPEN:
+                if(psg -> open)
+                {
+                    //no need to do this if it already is open
+                    return;
+                }
+                else
+                {
+                    psg -> open = 1;
+                    clear_fx = (char)~(MPDFX_IMPASS);
+                }
+                break;
+            case EGOMAP_CLOSE:
+                //is it already closed?
+                if(!psg -> open)
+                {
+                    return;
+                }
+                else
+                {
+                    psg -> open = 0;
+                    set_fx = (char)(MPDFX_IMPASS);
+                }
+                break;        
+        }        
 
         for (y_count = psg -> topleft[1]; y_count <= psg -> bottomright[1]; y_count++)
         {
@@ -887,6 +921,15 @@ static void egomapCalcVrta(MESH_T *mesh)
                 /* -- Tell the fan which passage it's belong to -- */
                 tile_no = (y_count * Mesh.tiles_x) + x_count;
                 Mesh.fan[tile_no].psg_no = p_no;
+                // Adjust FX
+                if(clear_fx)
+                {
+                    Mesh.fan[tile_no].fx &= clear_fx;
+                }
+                if(set_fx)
+                {
+                    Mesh.fan[tile_no].fx |= set_fx;
+                }
             }
         }
     }
@@ -1180,10 +1223,8 @@ static int editfileCreateSptList(void)
  */
  void egomapInit(void)
  {
-
     COMMAND_T *mcmd;
     int entry, cnt;
-    float extent;
 
 
     mcmd = MeshCommand;
@@ -1200,27 +1241,11 @@ static int editfileCreateSptList(void)
         mcmd++;
     }
 
-    /* --- Clear buffer for map objects --- */
-    sdlgl3dDeleteObject(-1);    // Delete all objects
-
-    /* --- Some more work --- */
-    TileObj.bradius = 64.0;
-
-    for (cnt = 0; cnt < 2; cnt++)
-    {
-        if(cnt == 0)
-        {
-            extent = -64.0;
-        }
-        else
-        {
-            extent = 64.0;      /* Positive extent */
-        }
-
-        TileObj.bbox[cnt][0] = extent;
-        TileObj.bbox[cnt][1] = extent;
-        TileObj.bbox[cnt][2] = 128.0;   /* Height of a wall */
-    }
+    /* -- Clear all possibly previous loaded data for this module -- */
+    // Delete all objects
+    sdlgl3dDeleteObject(-1);
+    // @todo: Clear models, characters, passage-buffer, spawnpoint-buffer    
+    
 
     /* Calculate the UV-Data */
     editdrawInitData();
@@ -1382,14 +1407,14 @@ int egomapSave(char *msg, char what)
     char i;
 
     
-    switch(action) {
-    
+    switch(action)
+    {
         case EGOMAP_NEW:
             /* Look for buffer available */
-            for (i = 1; i < EGOMAP_MAXPASSAGE; i++) {
-
-                if (Passages[i].rec_no <= 0) {
-                
+            for (i = 1; i < EGOMAP_MAXPASSAGE; i++)
+            {
+                if (Passages[i].rec_no <= 0)
+                {
                     /* Give it a name and make it valid */
                     sprintf(Passages[i].line_name, "%02d", i); 
                     Passages[i].rec_no = i;
@@ -1401,32 +1426,29 @@ int egomapSave(char *msg, char what)
                     memcpy(psg, &Passages[i], sizeof(EDITFILE_PASSAGE_T));
                     /* --- Put it to map --- */
                     egomapChangePassage(psg -> rec_no, psg, EGOMAP_SET);
-                    /* TODO: Save them to file */
                     return 1;
-                    
                 }
-
             }
             break;
         case EGOMAP_GET:
-            if (psg_no > 0) {
-            
+            if (psg_no > 0)
+            {
                 memcpy(psg, &Passages[psg_no], sizeof(EDITFILE_PASSAGE_T));        
                 return 1;
-
             }
             break;
             
         case EGOMAP_SET:
-            if (psg -> rec_no > 0 && psg -> rec_no < EGOMAP_MAXPASSAGE) {
+            if (psg -> rec_no > 0 && psg -> rec_no < EGOMAP_MAXPASSAGE)
+            {
                 memcpy(&Passages[psg -> rec_no], psg, sizeof(EDITFILE_PASSAGE_T));
                 /* --- Put it to map --- */
                 egomapChangePassage(psg -> rec_no, psg, EGOMAP_SET);
-                /* TODO: Save them to file */
             }           
             break;
         case EGOMAP_CLEAR:         
-            if (psg -> rec_no > 0 && psg -> rec_no < EGOMAP_MAXPASSAGE) {
+            if (psg -> rec_no > 0 && psg -> rec_no < EGOMAP_MAXPASSAGE)
+            {
                 /* --- Remove it from map --- */
                 egomapChangePassage(psg -> rec_no, psg, EGOMAP_CLEAR);
                 /* --- Clear the record --- */
@@ -1626,6 +1648,43 @@ char egomapGetFanData(int tx, int ty, FANDATA_T *fd)
     }
  }
  
+  /*
+ * Name:
+ *     egomapGetAdjacentPos
+ * Description:
+ *     Fills the given list with the info about the adjacent positions.
+ *     Tiles off map are signed as MPDFX_IMPASS
+ *     For usage in 'astar' and 'collision' testing 
+ * Input:
+ *     tx, ty:     Map position to get the adjacent positions for
+ *     adjacent[]: Buffre for returning the data
+ */
+ void egomapGetAdjacentPos(int pos_x, int pos_y, EGOMAP_TILEINFO_T adjacent[4])
+ {
+    int tx, ty;
+    int i;
+    
+    // Recalc from absolute position to map position
+    tx = pos_x / EGOMAP_TILEDIV;
+    ty = pos_y / EGOMAP_TILEDIV;
+    
+    // First tile
+    egomapGetTileInfo(tx, ty, &adjacent[0]);
+    // Second tile
+    egomapGetTileInfo(tx + 1, ty, &adjacent[1]);
+    // Third tile
+    egomapGetTileInfo(tx, ty + 1, &adjacent[2]);
+    // Fourth tile
+    egomapGetTileInfo(tx + 1, ty + 1, &adjacent[3]);
+    
+    // Change tile positions to absolute positions
+    for(i = 0; i < 4; i++)
+    {
+        adjacent[3].x *= EGOMAP_TILEDIV;
+        adjacent[3].y *= EGOMAP_TILEDIV;
+    }
+ }
+ 
  /*
  * Name:
  *     egomapDraw
@@ -1638,9 +1697,7 @@ char egomapGetFanData(int tx, int ty, FANDATA_T *fd)
  */
 void egomapDraw(FANDATA_T *fd, COMMAND_T *cm, int *crect)
 {
-
     editdraw3DView(&Mesh, fd, cm, crect);
- 
 }
 
  /*
@@ -1796,4 +1853,20 @@ void egomapDropChar(int char_no, float x, float y, float z, char dir)
     }
 }
 
-/* ============ ____-FUNCTIONS ========== */
+/* ============  Game functions ========== */
+/*
+ * Name:
+ *     egomapHandlePassage
+ * Description:
+ *     Does an action on a passage 
+ * Input:
+ *     psg_no: Number of passage to handle 
+ *     action: Actin to apply  
+ */
+/* @todo
+void egomapHandlePassage(int psg_no, int action)
+{
+
+    EDITFILE_PASSAGE_T *psg;
+}
+*/

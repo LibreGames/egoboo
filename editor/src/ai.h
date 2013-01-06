@@ -1,9 +1,9 @@
 /*******************************************************************************
-*  IDSZ_MAP.H                                                                  *
+*  TEMPLATE.H                                                                  *
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
-*    - IDSZ-Map for Game                                                                   *
-*      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
+*    - [...]                                                                   *
+*      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -20,43 +20,61 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _IDSZ_MAP_H_
-#define _IDSZ_MAP_H_
+#ifndef _TEMPLATE_H_
+#define _TEMPLATE_H_
 
 /*******************************************************************************
-* INCLUDES								                                       *
+* INCLUDES								                                   *
 *******************************************************************************/
 
 /*******************************************************************************
-* DEFINES								                                       *
+* TYPEDEFS								                                       *
 *******************************************************************************/
 
-#define IDSZ_NOT_FOUND      -1
-#define MAX_IDSZ_MAP_SIZE   64
-
-/*******************************************************************************
-* TYPEDEFS 								                                       *
-*******************************************************************************/
-
-/// The definition of a single IDSZ element in a IDSZ map
 typedef struct
 {
-    unsigned int id;
-    int  level;
-} IDSZ_NODE_T;
+    // Init basic data
+    int index;
+    int owner;    // AI is owned by this character (self)
+    int alert;
+    int state;
+    int content;
+    int passage;
+    int target;    
+    int child;
+    int target_old;
+    
+    int bumplast;
+    int hitlast;
+
+    int order_counter;
+    int order_value;
+    int lastitemused;
+    int timer;          // > 0: Timeout in ticks 
+    char timer_set;     // Timer is set OR send a message
+    int poof_time;      // Time before poofing
+    // Script stuff
+    int script_no;  // Number of script for this one
+    
+} AI_STATE_T;       // State of an AI-Controlled character 
+
+typedef struct 
+{
+    int     x;
+    int     y;
+    int     turn;
+    int     distance;
+    int     argument;
+    int     operationsum;
+    
+} SCRIPT_STATE_T;       // Actual arguments 'tmpx', 'tmpy'... in scripts 
+
 
 /*******************************************************************************
-* CODE 								                                           *
+* CODE 								                                       *
 *******************************************************************************/
 
-// Public functions
-/*
-    IDSZ_node_t* idsz_map_init( IDSZ_node_t pidsz_map[] );
-    egoboo_rv    idsz_map_add( IDSZ_node_t idsz_map[], const size_t idsz_map_len, const IDSZ idsz, const int level );
+void aiStateInit(const int char_no, char rank);
+void aiMain(void);
 
-    IDSZ_node_t* idsz_map_get( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, const IDSZ idsz );
-    IDSZ_node_t* idsz_map_iterate( const IDSZ_node_t pidsz_map[], const size_t idsz_map_len, int *iterator );
-    egoboo_rv    idsz_map_copy( const IDSZ_node_t pcopy_from[], const size_t idsz_map_len, IDSZ_node_t pcopy_to[] );
- */
-
-#endif  /* #define _IDSZ_MAP_H_ */
+#endif  /* #define _TEMPLATE_H_ */

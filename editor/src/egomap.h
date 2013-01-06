@@ -44,11 +44,18 @@
 #define EGOMAP_OBJ_CHAR   0x02      /* Characters (MD2)                 */
 #define EGOMAP_OBJ_PART   0x03      /* Particles (can be transparent)   */
 
-/* --- Handling for map objects --- */
-#define EGOMAP_NEW   0x01
-#define EGOMAP_GET   0x02
-#define EGOMAP_SET   0x03
-#define EGOMAP_CLEAR 0x04
+/* --- Handling for map objects (Spawn points and passages) --- */
+#define EGOMAP_NEW    0x01      
+#define EGOMAP_GET    0x02
+#define EGOMAP_SET    0x03
+#define EGOMAP_CLEAR  0x04
+// Actions for passage
+#define EGOMAP_OPEN   0x05  
+#define EGOMAP_CLOSE  0x06  
+#define EGOMAP_SWITCH 0x06
+
+
+#define EGOMAP_TILEDIV     128      /* Size of a tile       */
 
 /*******************************************************************************
 * TYPEDESF							                                           *
@@ -61,7 +68,9 @@ typedef struct
     int  x, y;          /* X,Y-Position in map                      */
     char psg_no;        /* > 0: Number of passage for this tile     */
     int  obj_no;        /* > 0: Number of first object on this tile */    
-    char fx;            /* MPDFX_...                                */   
+    char fx;            /* MPDFX_...                                */
+    // @todo: Support position of bottom tiles
+    int  tile_z;        /* Z-Position of tile for jump and bump     */    
     
 } EGOMAP_TILEINFO_T;
 
@@ -81,9 +90,7 @@ int  egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crec
 char egomapGetFanData(int tx, int ty, FANDATA_T *fd);
 char egomapGetTileInfo(int tx, int ty, EGOMAP_TILEINFO_T *ti);
 void egomapGetAdjacent(int tx, int ty, EGOMAP_TILEINFO_T adjacent[8]);
-// @todo: Add adjacent code for object position, because particles have to check a maximum of 4 tiles  
-//        included its own
-// void egomapGetAdjacent(int obj_x, int obj_y, EGOMAP_TILEINFO_T adjacent[4]);
+void egomapGetAdjacentPos(int pos_x, int pos_y, EGOMAP_TILEINFO_T adjacent[4]);
 
 /* ============  Draw command ========== */
 void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
@@ -95,5 +102,11 @@ void egomapDropObject(int obj_no);      // Drop this object to map
 void egomapDeleteObject(int obj_no);    // Delete this object from map
 int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
 void egomapDropChar(int char_no, float x, float y, float z, char dir); 
+// @todo: egomapMoveAllObjects(void);   // Manages the linked lists on tile and invokes passages
+// @todo: Add/remove objects from a single linked list
+// int sdlgl3dListObject(int *from_base, int *to_base, int obj_no, char action); // action: ADD, REMOVE, PEEK, MOVE
+
+/* ============  Game functions ========== */
+void egomapHandlePassage(int psg_no, int action);
 
 #endif  /* #define _EGOMAP_H_ */

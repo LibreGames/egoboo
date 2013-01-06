@@ -55,16 +55,16 @@
 *******************************************************************************/
 
 /* ====== The mesh file ===== */
-typedef struct {
-
+typedef struct
+{
     unsigned char ref;      /* Light reference      */
     float u, v;             /* Texture mapping info: Has to be multiplied by 'sub-uv' */    
     float x, y, z;          /* Default position of vertex at 0, 0, 0    */
 
 } EDITOR_VTX;
 
-typedef struct {
-
+typedef struct
+{
     char *name;                             // Name of this fan type
     char default_fx;                        // Default flags to set, if new fan (for walls)
     unsigned char default_tx_no;            // Default texture to set
@@ -79,8 +79,8 @@ typedef struct {
     
 } COMMAND_T;
 
-typedef struct {
-  
+typedef struct
+{
     unsigned char tx_no;    /* Number of texture:                           */
                             /* (tx_no >> 6) & 3: Number of wall texture     */
                             /* tx_no & 0x3F:     Number of part of texture  */ 
@@ -93,18 +93,19 @@ typedef struct {
     char          psg_no;   /* > 0: Number of passage for this tile         */
                             /* & 0x80h: Fan is chosen yes/no                */
     int           obj_no;   /* > 0: Number of first object on this fan      */
+    unsigned char fxg;		/* Tile special effects flags                   */
     
 } FANDATA_T;
 
-typedef struct {
-
+typedef struct
+{
     float x, y, z;          /* Vertex x / y / z                     */           
     unsigned char a;        /* Ambient lighting                     */
 
 } MESH_VTX_T;              /* Planned for later adjustement how to store vertices */
 
-typedef struct {
-
+typedef struct
+{
     unsigned char map_loaded;   // A map is loaded  into this struct
     unsigned char draw_mode;    // Flags for display of map
     int mem_size;               // Size of memory allocated (for editor)    
@@ -139,14 +140,15 @@ typedef struct {
 typedef struct
 {
     char line_name[25];     /* Only for information purposes "-": Deleted in editor */
-    int topleft[2];
-    int bottomright[2];
+    int  topleft[2];
+    int  bottomright[2];
     char open;
-    char shoot_trough;
+    char shoot_trough;      // @todo: Set map flags for 'allow passage small'
     char slippy_close;
     /* -- Additional info, for game -- */
     int  char_no;           ///< The character associated with this passage
     char state;             ///< State of passage in game -1: isopening / 0: inactive / 1: isclosing
+    char ishop;             ///< This passage is a shop
     /* --- Info for editor -- */
     char psg_no;            ///< -1: Deleted
     char rec_no;            
@@ -188,8 +190,10 @@ typedef struct
     char mod_type[11 + 1];      /* Module Type (MAINQUEST, SIDEQUEST or TOWN)       */
     char lev_rating[8 + 2];     /* Level rating ( *, **, ***, ****, or ***** )      */
     char summary[8][80 + 2];    /* Module summary                                   */
+    // @todo: Use 'idsz
     char exp_idsz[5][18 + 1];   /* Module expansion IDSZs ( with a colon in front ) */
     /* For the editors internal use */
+    int  seed;
     char mod_type_no;           /* Number of 'mod_type'                             */
     char lev_rating_no;         /* Number of 'lev_rating'                           */
     char dir_name[32];          /* Name of the module directory for loading         */

@@ -1,9 +1,9 @@
 /*******************************************************************************
-*  EGODEFS.H                                                                   *
+*  GAME.H                                                                      *
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
-*    - Globally used definitions                                               *
-*      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
+*    - Functions to do 'play-tests' in the actual loaded/edited module         *
+*      (c)2013 Paul Mueller <muellerp61@bluewin.ch>                            *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -20,23 +20,13 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _EGODEFS_H_
-#define _EGODEFS_H_
+#ifndef _GAME_H_
+#define _GAME_H_
 
 /*******************************************************************************
-* DEFINES 								                                       *
+* CODE 								                                           *
 *******************************************************************************/
 
-#define MPDFX_REF       0x00    /* MeshFX   */
-#define MPDFX_SHA       0x01    
-#define MPDFX_DRAWREF   0x02    
-#define MPDFX_ANIM      0x04    
-#define MPDFX_WATER     0x08    
-#define MPDFX_WALL      0x10    
-#define MPDFX_IMPASS    0x20    
-#define MPDFX_DAMAGE    0x40    
-#define MPDFX_SLIPPY    0x80 
+void gamePlay(void);
 
-// @todo: MPDFXG_             fan.fxg      /* GameFX */
-
-#endif  /* #define _EGODEFS_H_ */
+#endif  /* #define _GAME_H_ */

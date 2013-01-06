@@ -258,27 +258,31 @@ typedef struct
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
     int     type_no;        /* Number of type in 'obj_type'         */
-    /* ---------- Extent for collision detection ------------------ */
+    int     frame_no;       /* Actual frame: For particles          */
+    /* ---------- Extent for collision detection -------------------- */
     float   bbox[2][3];     /* Bounding box for collision detection */
                             /* Extension of BB in x, y and z dir    */  
     float   bradius;        /* Radius of Bounding box               */ 
-    /* -------- Object info --------------------------------------- */ 
-    int     tags;           /* Visible and so on                    */
+    /* -------- Object info ----------------------------------------- */
+    int     move_cmd;       /* Commands for movement (combined)     */   
     SDLGL3D_V3D pos;        /* Position                             */
     SDLGL3D_V3D dir;        /* Actual direction, unit vector        */
     SDLGL3D_V3D rot;        /* Rotation angles                      */
-    int     move_cmd;       /* Commands for movement (combined)     */
     float   speed;          /* Ahead speed in units/second          */
     float   zspeed;         /* Z-Movement: -towards bottom          */
                             /*             +towards ceiling         */
                             /*              in units/second         */
     float   turnvel;        /* Rotation velocity in degrees/second  */
-    /* Link for object list in collision - detection                */
+    float   speed_modifier; /* Multiply speed with this one, if > 0 */
+    /* -------- Physics --------------------------------------------- */
+    float   spdlimit;       ///< Speed limit
+    float   dampen;         ///< Bounciness    
+    /* Link for object list in collision - detection                  */
+    int     next_obj;       /* > 0: Number of next object on tile   */
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */
-    int     next_obj;       /* > 0: Number of next object on tile   */          
     char    visi_code;      /* Visibility ob object in frustum      */
-    char    speed_modifier; /* Multiply speed with this one, if > 0 */
+    int     tags;           /* User defined flags                   */
 
 } SDLGL3D_OBJECT;
 
@@ -292,7 +296,7 @@ typedef struct
 typedef struct
 {
     float fov;
-    float viewwidth;
+    float viewwidth;            // @todo: Save viewport per camera
     float aspect_ratio;         /* For zoom and setup of frustum            */
     float zmin, zmax;           /* Front and backplane                      */
     /* ------ Info for internal use ------ */
@@ -313,7 +317,7 @@ typedef struct {
 
     int mid_x, mid_y;   /* Of tile, for distance sorting            */
     int tile_no;        /* Number of tile, for display by caller    */
-    int obj_no;         /* Number of object on this tile            */
+    int obj_no;         /* Number of first object on this tile      */
 
 } SDLGL3D_VISITILE;
 
@@ -339,8 +343,6 @@ void sdlgl3dDeleteObject(int obj_no);
 SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no);
 void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);
-// @todo: Add/remove objects from a single linked list
-// int sdlgl3dListObject(int *from_base, int *to_base, int obj_no, char action); // action: ADD, REMOVE, PEEK, MOVE
 
 /* ===== Visibility-Functions ==== */
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);

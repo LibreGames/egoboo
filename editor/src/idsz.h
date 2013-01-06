@@ -1,8 +1,8 @@
 /*******************************************************************************
-*  EGODEFS.H                                                                   *
+*  IDSZ.H                                                                  *
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
-*    - Globally used definitions                                               *
+*    - IDSZ-Map and management for editor and game                             *
 *      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
@@ -20,23 +20,43 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _EGODEFS_H_
-#define _EGODEFS_H_
+#ifndef _IDSZ_H_
+#define _IDSZ_H_
 
 /*******************************************************************************
-* DEFINES 								                                       *
+* INCLUDES								                                   *
 *******************************************************************************/
 
-#define MPDFX_REF       0x00    /* MeshFX   */
-#define MPDFX_SHA       0x01    
-#define MPDFX_DRAWREF   0x02    
-#define MPDFX_ANIM      0x04    
-#define MPDFX_WATER     0x08    
-#define MPDFX_WALL      0x10    
-#define MPDFX_IMPASS    0x20    
-#define MPDFX_DAMAGE    0x40    
-#define MPDFX_SLIPPY    0x80 
+/*******************************************************************************
+* DEFINES								                                   *
+*******************************************************************************/
 
-// @todo: MPDFXG_             fan.fxg      /* GameFX */
+#define IDSZ_NOT_FOUND  -1
+#define MAX_IDSZ_SIZE   64
+#define MAX_IDSZ_MAP_SIZE 32
 
-#endif  /* #define _EGODEFS_H_ */
+/*******************************************************************************
+* TYPEDEFS 								                                   *
+*******************************************************************************/
+
+/// The definition of a single IDSZ element in a IDSZ map
+typedef struct
+{
+    unsigned int idsz;      // The IDSZ itself
+    int  level;             // Or value
+
+} IDSZ_T;
+
+/*******************************************************************************
+* CODE 								                                       *
+*******************************************************************************/
+
+/* ============ Tools for loading and saving ========== */
+void idszIDSZtoString(IDSZ_T *idsz, char *idsz_str);
+void idszStringtoIDSZ(char *idsz_str, IDSZ_T *idsz);
+
+/* =========== Handling IDSZ-Lists ========================== */
+void idszMapAdd(IDSZ_T *idsz_list, unsigned int idsz, int list_len);
+IDSZ_T *idszMapGet(IDSZ_T *idsz_list, unsigned int idsz, int list_len);
+
+#endif  /* #define _IDSZ_H_ */

@@ -50,18 +50,17 @@
 #define SDLGL3D_I_ZMIN   48.0
 #define SDLGL3D_I_ZMAX 1385.0
 
-/* ------- GRID_DATA ------ */
-#define SDLGL3D_TILESIZE     128.0
-
 /* Internal defines */
 #define NO_CLIP     0x00
 #define SOME_CLIP   0x01
 #define NOT_VISIBLE 0x02
 
-#define SDLGL3D_MAXOBJ 1024
+#define SDLGL3D_OBJCAM   0x70       /* Type of object                        */
+#define SDLGL3D_FIRSTOBJ 5          /* Objects 1,,4 are reserved for cameras */
+#define SDLGL3D_MAXOBJ   1024
 
 /*******************************************************************************
-* TYPEDEFS							                                           *
+* TYPEDEFS							                                        *
 *******************************************************************************/
 
 typedef struct
@@ -73,6 +72,7 @@ typedef struct
     float cam_dist;             /* Distance behind object for third person camera */
     int   map_w, map_h;         /* Size of Map in tiles                           */
     float tile_size;            /* Size of tile square                            */
+    // @todo: Camera is attached to object, behaves depending on 'mode'              */
     SDLGL3D_OBJECT *obj;        /* The object the camera is attached to           */
                                 /* Can be camera itself ('campos')                */
     SDLGL3D_OBJECT campos;
@@ -859,7 +859,7 @@ void sdlgl3dMoveCamera(float secondspassed)
     char move_cmd;
 
 
-    /* TODO: Move each camera which is active -- Add an 'active'-flag*/
+    /* @todo: Move each camera which is active -- Add an 'active'-flag*/
     /* Move camera based on camera mode */
     switch(Camera[0].mode) {
 
@@ -983,7 +983,8 @@ void sdlgl3dDeleteObject(int obj_no)
  *     sdlgl3dGetObject
  * Description:
  *     Returns a pointer on the object with given number.
- *     If the object number is invalid, a pointer on the object 0 is returned 
+ *     - If the object number is 0, a pointer on the first valid object is returned
+ *     - If the object number is invalid, a pointer on the object 0 is returned 
  * Input:
  *     obj_no: Number of object to get pointer for
  * Output:
