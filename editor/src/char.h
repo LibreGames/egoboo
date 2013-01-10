@@ -27,7 +27,8 @@
 * INCLUDES								                                   *
 *******************************************************************************/
 
-#include "idsz.h"       // List of special skills */
+#include "ai.h"         /* AI_STATE_T and its initialization            */
+#include "idsz.h"       // List of special skills 
 
 /*******************************************************************************
 * DEFINES								                                   *
@@ -48,7 +49,6 @@
 #define CHARSTAT_ACT  0
 #define CHARSTAT_FULL 1
 
-
 #define CHAR_MAX_TIMER 15
 #define CHAR_MAX_SKILL 32
 
@@ -66,15 +66,15 @@
 
 // Teams constants
 #define TEAM_DAMAGE ((char)(('Z' - 'A') + 2))   ///< For damage tiles
-#define TEAM_MAX    ((char)(TEAM_DAMAGE + 1))
-#define TEAM_NOLEADER       0xFFFF                        ///< If the team has no leader...
+#define TEAM_NOLEADER 0xFFFF                    ///< If the team has no leader...
 
 /*******************************************************************************
 * ENUMS                                                                        *
 *******************************************************************************/
 
 /// The possible damage types
-enum {
+enum
+{
     DAMAGE_NONE  = 0,
     DAMAGE_SLASH = 1,
     DAMAGE_CRUSH,
@@ -89,7 +89,8 @@ enum {
 } E_DAMAGE_TYPE;
 
 /// A list of the possible special experience types
-enum {
+enum
+{
     XP_FINDSECRET = 1,                          ///< Finding a secret
     XP_WINQUEST,                                ///< Beating a module or a subquest
     XP_USEDUNKOWN,                              ///< Used an unknown item
@@ -103,7 +104,8 @@ enum {
     XP_DIRECT     = 255                         ///< No modification
 } E_XP_TYPE;
 
-enum {
+enum
+{
     SOUND_NONE     = 0,
     SOUND_FOOTFALL = 1,
     SOUND_JUMP,
@@ -128,18 +130,20 @@ enum {
 enum
 {
     HAND_LEFT  = 0,
-    HAND_RIGHT,    
+    HAND_RIGHT,         // @todo: Adjust code for handling 'equipment'
     INVEN_NECK,         // Are weared if correct IDSZ
     INVEN_WRIS,         // Are weared if correct IDSZ
     INVEN_FOOT,         // Are weared if correct IDSZ
     INVEN_PACK,         /* >= INVEN_PACK is in backpack */
     INVEN_COUNT = 8,
     SLOT_COUNT  = 2
+    
 } E_INVENTORY;
 
 
 /// What gender a character can be spawned with
-enum {
+enum
+{
     GENDER_FEMALE = 0,
     GENDER_MALE,
     GENDER_OTHER,
@@ -202,6 +206,8 @@ typedef struct
     int  money;         ///< Money this character has
     // Team stuff -- CHARSTAT_ACT / CHARSTAT_FULL
     char team[2];       ///< Character's team -- Character's starting team
+    unsigned int t_friends; // Our friends as flags
+    unsigned int t_foes;    // Our foes as flags    
     // Basic character stats -- CHARSTAT_ACT / CHARSTAT_FULL
     short int life[2];  ///< Hit-Points
     char mana[2];       ///< Mana stuff 
@@ -275,6 +281,8 @@ typedef struct
     /* Additional help info for the editor */
     char *obj_name;     /* Pointer on the name of the object in CAP_T           */
     char *class_name;   /* @todo: Pointer on the classes name from CAP_T        */
+    // AI-Stuff if the character is AI-Controlled
+    AI_STATE_T ai;              ///< ai data
     
 } CHAR_T;
 
@@ -302,5 +310,6 @@ void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_t
                      int attacker, int effects);
 int charGetSkill(int char_no, unsigned int whichskill);
 // @todo: charSetVal() 
+char charSetTimer(int char_no, char which, int clock_ticks);
 void charUpdateAll(int tickspassed);
 #endif  /* #define _CHAR_H_ */

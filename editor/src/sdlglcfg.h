@@ -50,8 +50,8 @@
 * TYPEDEFS                                 				                       *
 *******************************************************************************/
 
-typedef struct {
-
+typedef struct
+{
     char type;      /* Type of value to read                	*/
     void *data;     /* Where to put the data                	*/
     char len;       /* Len of data (strings and arrays)     	*/
@@ -59,17 +59,17 @@ typedef struct {
 
 } SDLGLCFG_VALUE;
 
-typedef struct {
-
+typedef struct
+{
     char  type;     /* Type of value to read            */
     void *data;     /* Where to put the value           */     
     char  len;      /* Len of data (strings and arrays) */
-    char *name;     /* name of value (case insensitive) */       
+    char *name;     /* name of value (case insensitive) */
 
 } SDLGLCFG_NAMEDVALUE;
 
-typedef struct {
-
+typedef struct
+{
     void *readbuf;      /* Read into this buffer, holding          */
                         /* holding data from SDLGLCFG_VALUE        */
     void *recbuf;       /* Where to put the data read into readbuf */
@@ -80,8 +80,8 @@ typedef struct {
 
 } SDLGLCFG_LINEINFO;     /* Info for reading configuration lines */
 
-typedef struct {
-    
+typedef struct
+{  
     char *filename;
     char *buffer;        /* Pointer on buffer holding all file data as block  */
     int  size;           /* Size of data in 'buffer'                          */ 
@@ -106,5 +106,6 @@ void sdlglcfgFreeFile(SDLGLCFG_FILE *fdesc);
 
 void sdlglcfgEgobooRecord(char *fname, SDLGLCFG_LINEINFO *lineinfo, int write);
 void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write); 
+char sdlglcfgRawLines(char *filename, char *destbuffer, int dest_size, int line_len, char write);
 
 #endif

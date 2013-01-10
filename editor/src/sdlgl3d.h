@@ -36,8 +36,6 @@
 #define	FALSE	0
 #endif /* TRUE */
 
-
-
 #ifdef SDLGL_EPS
 #undef SDLGL_EPS
 #endif /* SDLGL_EPS */
@@ -278,6 +276,8 @@ typedef struct
     float   spdlimit;       ///< Speed limit
     float   dampen;         ///< Bounciness    
     /* Link for object list in collision - detection                  */
+    int     child_obj;      /* Children move simultaneous with this */
+                            /* object                               */    
     int     next_obj;       /* > 0: Number of next object on tile   */
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */

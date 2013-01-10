@@ -934,7 +934,8 @@ int sdlgl3dCreateObject(SDLGL3D_OBJECT *info_obj)
     SDLGL3D_OBJECT *new_obj;
     
     
-    for(i = 1; i < SDLGL3D_MAXOBJ; i++)
+    // Slots 1..4 are reserved for the cameras
+    for(i = SDLGL3D_FIRSTOBJ; i < SDLGL3D_MAXOBJ; i++)
     {
         if(Obj3D[i].id <= 0)
         {
@@ -992,7 +993,12 @@ void sdlgl3dDeleteObject(int obj_no)
  */
 SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no)
 {
-    if(obj_no > 0 && obj_no < SDLGL3D_MAXOBJ)
+    if(obj_no <= 1)
+    {
+        return &Obj3D[SDLGL3D_FIRSTOBJ]; 
+    }
+    
+    if(obj_no > SDLGL3D_FIRSTOBJ && obj_no < SDLGL3D_MAXOBJ)
     {
         // Return pointer on this object
         return &Obj3D[obj_no];    
@@ -1056,7 +1062,7 @@ void sdlgl3dMoveObjects(float secondspassed)
 
 
     // Get pointer on first object
-    obj_list = &Obj3D[1];
+    obj_list = &Obj3D[SDLGL3D_FIRSTOBJ];
 
     while(obj_list -> id)
     {

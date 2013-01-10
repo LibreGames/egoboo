@@ -47,6 +47,312 @@ static MSG_T MsgList[MSG_MAX + 2];
 * CODE									                                   *
 *******************************************************************************/
 
+//--------------------------------------------------------------------------------------------
+/*
+ * Name:
+ *     msgExpand
+ * Description:
+ *     Puts the message into the message list for collection by the 'receiver'  
+ *     The numbe rof the message is filled into the given info and then the 
+ *     message is added at the end of the message queue.
+ *     Clears the message list, if the number of the message is < 0
+ * Input:
+ *     msg *:     Pointer on message with string to expand
+ *     dest *:    Where to return the expanded string
+ *     dest_size: Maximum length of destination, including trailing 0
+ */
+static void msgExpand(MSG_T *msg, char *dest, int dest_size)
+{
+    // @todo: Flesh this out / Port it
+    // int  cnt;
+    // char szTmp[256];
+
+    /*
+    chr_t      * pchr, *ptarget, *powner;
+    ai_state_t * pai;
+
+    pchr    = !INGAME_CHR( ichr ) ? NULL : ChrList_get_ptr( ichr );
+    pai     = ( NULL == pchr )    ? NULL : &( pchr->ai );
+
+    ptarget = (( NULL == pai ) || !INGAME_CHR( pai->target ) ) ? pchr : ChrList_get_ptr( pai->target );
+    powner  = (( NULL == pai ) || !INGAME_CHR( pai->owner ) ) ? pchr : ChrList_get_ptr( pai->owner );
+
+    cnt = 0;
+    while ( CSTR_END != *src && src < src_end && dst < dst_end )
+    {
+        if ( '%' == *src )
+        {
+            char * ebuffer, * ebuffer_end;
+
+            // go to the escape character
+            src++;
+
+            // set up the buffer to hold the escape data
+            ebuffer     = szTmp;
+            ebuffer_end = szTmp + SDL_arraysize( szTmp ) - 1;
+
+            // make the excape buffer an empty string
+            *ebuffer = CSTR_END;
+
+            switch ( *src )
+            {
+                case '%' : // the % symbol
+                    {
+                        snprintf( szTmp, SDL_arraysize( szTmp ), "%%" );
+                    }
+                    break;
+
+                case 'n' : // Name
+                    {
+                        chr_get_name( ichr, CHRNAME_ARTICLE, szTmp, SDL_arraysize( szTmp ) );
+                    }
+                    break;
+
+                case 'c':  // Class name
+                    {
+                        if ( NULL != pchr )
+                        {
+                            ebuffer     = chr_get_pcap( ichr )->classname;
+                            ebuffer_end = ebuffer + SDL_arraysize( chr_get_pcap( ichr )->classname );
+                        }
+                    }
+                    break;
+
+                case 't':  // Target name
+                    {
+                        if ( NULL != pai )
+                        {
+                            chr_get_name( pai->target, CHRNAME_ARTICLE, szTmp, SDL_arraysize( szTmp ) );
+                        }
+                    }
+                    break;
+
+                case 'o':  // Owner name
+                    {
+                        if ( NULL != pai )
+                        {
+                            chr_get_name( pai->owner, CHRNAME_ARTICLE, szTmp, SDL_arraysize( szTmp ) );
+                        }
+                    }
+                    break;
+
+                case 's':  // Target class name
+                    {
+                        if ( NULL != ptarget )
+                        {
+                            ebuffer     = chr_get_pcap( pai->target )->classname;
+                            ebuffer_end = ebuffer + SDL_arraysize( chr_get_pcap( pai->target )->classname );
+                        }
+                    }
+                    break;
+
+                case '0':
+                case '1':
+                case '2':
+                case '3': // Target's skin name
+                    {
+                        if ( NULL != ptarget )
+                        {
+                            ebuffer = chr_get_pcap( pai->target )->skin_info.name[( *src )-'0'];
+                            ebuffer_end = ebuffer + SDL_arraysize( chr_get_pcap( pai->target )->skin_info.name[( *src )-'0'] );
+                        }
+                    }
+                    break;
+
+                case 'a':  // Character's ammo
+                    {
+                        if ( NULL != pchr )
+                        {
+                            if ( pchr->ammoknown )
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "%d", pchr->ammo );
+                            }
+                            else
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "?" );
+                            }
+                        }
+                    }
+                    break;
+
+                case 'k':  // Kurse state
+                    {
+                        if ( NULL != pchr )
+                        {
+                            if ( pchr->iskursed )
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "kursed" );
+                            }
+                            else
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "unkursed" );
+                            }
+                        }
+                    }
+                    break;
+
+                case 'p':  // Character's possessive
+                    {
+                        if ( NULL != pchr )
+                        {
+                            if ( pchr->gender == GENDER_FEMALE )
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "her" );
+                            }
+                            else if ( pchr->gender == GENDER_MALE )
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "his" );
+                            }
+                            else
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "its" );
+                            }
+                        }
+                    }
+                    break;
+
+                case 'm':  // Character's gender
+                    {
+                        if ( NULL != pchr )
+                        {
+                            if ( pchr->gender == GENDER_FEMALE )
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "female " );
+                            }
+                            else if ( pchr->gender == GENDER_MALE )
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "male " );
+                            }
+                            else
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), " " );
+                            }
+                        }
+                    }
+                    break;
+
+                case 'g':  // Target's possessive
+                    {
+                        if ( NULL != ptarget )
+                        {
+                            if ( ptarget->gender == GENDER_FEMALE )
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "her" );
+                            }
+                            else if ( ptarget->gender == GENDER_MALE )
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "his" );
+                            }
+                            else
+                            {
+                                snprintf( szTmp, SDL_arraysize( szTmp ), "its" );
+                            }
+                        }
+                    }
+                    break;
+
+                case '#':  // New line (enter)
+                    {
+                        snprintf( szTmp, SDL_arraysize( szTmp ), "\n" );
+                    }
+                    break;
+
+                case 'd':  // tmpdistance value
+                    {
+                        if ( NULL != pstate )
+                        {
+                            snprintf( szTmp, SDL_arraysize( szTmp ), "%d", pstate->distance );
+                        }
+                    }
+                    break;
+
+                case 'x':  // tmpx value
+                    {
+                        if ( NULL != pstate )
+                        {
+                            snprintf( szTmp, SDL_arraysize( szTmp ), "%d", pstate->x );
+                        }
+                    }
+                    break;
+
+                case 'y':  // tmpy value
+                    {
+                        if ( NULL != pstate )
+                        {
+                            snprintf( szTmp, SDL_arraysize( szTmp ), "%d", pstate->y );
+                        }
+                    }
+                    break;
+
+                case 'D':  // tmpdistance value
+                    {
+                        if ( NULL != pstate )
+                        {
+                            snprintf( szTmp, SDL_arraysize( szTmp ), "%2d", pstate->distance );
+                        }
+                    }
+                    break;
+
+                case 'X':  // tmpx value
+                    {
+                        if ( NULL != pstate )
+                        {
+                            snprintf( szTmp, SDL_arraysize( szTmp ), "%2d", pstate->x );
+                        }
+                    }
+                    break;
+
+                case 'Y':  // tmpy value
+                    {
+                        if ( NULL != pstate )
+                        {
+                            snprintf( szTmp, SDL_arraysize( szTmp ), "%2d", pstate->y );
+                        }
+                    }
+                    break;
+
+                default:
+                    snprintf( szTmp, SDL_arraysize( szTmp ), "%%%c???", ( *src ) );
+                    break;
+            }
+
+            if ( CSTR_END == *ebuffer )
+            {
+                ebuffer     = szTmp;
+                ebuffer_end = szTmp + SDL_arraysize( szTmp );
+                snprintf( szTmp, SDL_arraysize( szTmp ), "%%%c???", ( *src ) );
+            }
+
+            // make the line capitalized if necessary
+            if ( 0 == cnt && NULL != ebuffer )  *ebuffer = char_toupper(( unsigned )( *ebuffer ) );
+
+            // Copy the generated text
+            while ( CSTR_END != *ebuffer && ebuffer < ebuffer_end && dst < dst_end )
+            {
+                *dst++ = *ebuffer++;
+            }
+            *dst = CSTR_END;
+        }
+        else
+        {
+            // Copy the letter
+            *dst = *src;
+            dst++;
+        }
+
+        src++;
+        cnt++;
+    }
+
+    // make sure the destination string is terminated
+    if ( dst < dst_end )
+    {
+        *dst = CSTR_END;
+    }
+    *dst_end = CSTR_END;
+    */
+}
+
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
 /* ========================================================================== */
@@ -263,6 +569,7 @@ typedef enum
     MSG_NOTTAKENOUT = MSG_NOTPUTAWAY
 
 } E_MSG_WHY;
-    */
+    */   
+   
     return 0;
 }

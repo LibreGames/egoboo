@@ -58,23 +58,11 @@ typedef struct
     
 } AI_STATE_T;       // State of an AI-Controlled character 
 
-typedef struct 
-{
-    int     x;
-    int     y;
-    int     turn;
-    int     distance;
-    int     argument;
-    int     operationsum;
-    
-} SCRIPT_STATE_T;       // Actual arguments 'tmpx', 'tmpy'... in scripts 
-
-
 /*******************************************************************************
 * CODE 								                                       *
 *******************************************************************************/
 
-void aiStateInit(const int char_no, char rank);
+void aiStateInit(const int char_no, AI_STATE_T *ai_state, char rank);
 void aiMain(void);
 
 #endif  /* #define _TEMPLATE_H_ */

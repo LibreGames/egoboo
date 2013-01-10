@@ -29,12 +29,14 @@
 #include <string.h>     /* strlwr() */
 
 #include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
-#include "editfile.h"   /* Get the work-directoires                     */    
+#include "editfile.h"   /* Get the work-directoires                     */
+
 #include "idsz.h";
 #include "misc.h"       /* Random treasure objects                      */
 #include "egodefs.h"    /* MPDFX_IMPASS                                 */
 
-#include "char.h"       /* Own header                                   */
+// Own header
+#include "char.h"
 
 /*******************************************************************************
 * DEFINES								                                       *
@@ -53,8 +55,9 @@
 #define CAP_MAX_WEIGHT       (CAP_INFINITE_WEIGHT - 1)
 
 #define CHAR_MAX_CAP    100
-#define CHAR_MAX        500
 #define CHAR_MAX_SKIN     4
+// Maximum of characters that can be loaded, for each an AI_STATE may be needed
+#define CHAR_MAX        500
 
 // Other maximum values
 #define PERFECTSTAT   18    // wisdom, intelligence and so on...
@@ -69,6 +72,10 @@
 #define BORETIME            320 // @todo((Uint16)generate_randmask( 255, 511 )) ///< IfBored timer
 #define CAREFULTIME         50                            ///< Friendly fire timer
 #define SIZETIME            100                           ///< Time it takes to resize a character
+
+// team
+#define TEAM_MAX            32  // Mum number of teams
+#define TEAM_MAX_MEMBER     6   // Maximum members of a team 
 
 /*******************************************************************************
 * ENUMS								                                           *
@@ -95,11 +102,22 @@ enum
 /// The character statistic data in the form used in data.txt
 typedef struct
 {
-
     int val[2];       /* from, to */
     int perlevel[2];  /* from, to */
     
 } CAP_STAT_T;
+
+// Definition of a team
+typedef struct 
+{
+    int  members[TEAM_MAX_MEMBER];
+    int  leader_no;                 // Index of leader in 'members'-array
+    char morale;                    ///< Number of characters on team
+    int  sissy_no;                  ///< Whoever called for help last Index of leader in 'members'-array
+    unsigned int friends;           // Our friends as flags
+    unsigned int foes;              // Our foes as flags
+    
+} TEAM_T;   
 
 //--------------------------------------------------------------------------------------------
 
@@ -281,6 +299,7 @@ typedef struct
 * DATA									                                       *
 *******************************************************************************/
 
+static TEAM_T TeamList[TEAM_MAX + 2];     
 static CAP_T  CapList[CHAR_MAX_CAP + 2];
 static CHAR_T CharList[CHAR_MAX + 2];
 
@@ -598,44 +617,6 @@ static void charGiveExperienceOne(int char_no, int amount, int xp_type)
     // @todo: Send message if levelled up
 }
 
-
-/*
- * Name:
- *     charSetTimer 
- * Description:
- *     Sets a timer with given number, if possible
- * Input:
- *     char_no: Number of character to set timer for
- *     which:   Type of clock 
- *     amount:  Amount of ticks (duration)       
- * Output:
- *     Clock could be set yes/no 
- */
-static char charSetTimer(int char_no, char which, int clock_ticks)
-{
-    int i;
-    CHAR_T *pchar;
-    
-    
-    // @todo: Only set timer if not already set
-    pchar = &CharList[char_no];
-    
-    // @todo: Loop trough all characters in list
-    for(i = 0; i < CHAR_MAX_TIMER; i++)
-    {
-        if(pchar->timers[i].which == 0)
-        {
-            // Set the clock
-            pchar->timers[i].which       = which;
-            pchar->timers[i].clock_ticks = clock_ticks;
-            return 1;
-        }
-    }
-
-    return 0;    
-}
-
-
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
 /* ========================================================================== */
@@ -651,9 +632,26 @@ static char charSetTimer(int char_no, char which, int clock_ticks)
  *     None
  */
 void charInit(void) 
-{
+{       
+    int i;
+    unsigned int t_flag;
+    
+    
+    // Clear the buffer for the character profiles
     memset(&CapList[0], 0, CHAR_MAX_CAP * sizeof(CAP_T)); 
+    // Clear the buffer for the characters
     memset(&CharList[0], 0, CHAR_MAX * sizeof(CHAR_T)); 
+    /* ----- Initalize the teams ------ */
+    memset(&TeamList[0], 0, TEAM_MAX * sizeof(TEAM_T)); 
+    for (i = 0; i < TEAM_MAX; i++)
+    {
+        t_flag = (1 << i);
+        // Preset before 'alliance.txt' data is loaded
+        TeamList[i].friends = t_flag;   // we are our friends
+        TeamList[i].foes    = ~t_flag;  // all other are our foes
+    }
+    // The neutral team hates nobody
+    TeamList[('N' - 'A')].foes = 0;
 }
 
 /*
@@ -1126,13 +1124,24 @@ void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_t
     if(val_type == CHAR_DAMAGE)
     {
         pchar->life[CHARSTAT_ACT] -= (short int)amount;
+        if(attacker)
+        {
+            // @todo: Take attacker into account
+        }
     }
     else if(val_type == CHAR_HEAL)
     {
-        pchar->life[CHARSTAT_ACT] += (short int)amount;
-        if(pchar->life[CHARSTAT_ACT] > pchar->life[CHARSTAT_FULL])
+        if(team)
         {
-            pchar->life[CHARSTAT_ACT] = pchar->life[CHARSTAT_FULL];
+            // Apply to the characters team
+        }
+        else
+        {
+            pchar->life[CHARSTAT_ACT] += (short int)amount;
+            if(pchar->life[CHARSTAT_ACT] > pchar->life[CHARSTAT_FULL])
+            {
+                pchar->life[CHARSTAT_ACT] = pchar->life[CHARSTAT_FULL];
+            }
         }
     }
 }
@@ -1189,7 +1198,7 @@ int charGetSkill(int char_no, unsigned int whichskill)
     if ('READ' == whichskill )
     {
         pskill = idszMapGet(pchar->skills, 'CKUR', CHAR_MAX_SKILL);
-        
+
         if (pskill != NULL && pchar->see_invisible_level > 0 )
         {
             return pchar->see_invisible_level + pskill->level;
@@ -1199,6 +1208,44 @@ int charGetSkill(int char_no, unsigned int whichskill)
     //Skill not found
     return 0;
 }
+
+/*
+ * Name:
+ *     charSetTimer 
+ * Description:
+ *     Sets a timer with given number, if possible
+ * Input:
+ *     char_no: Number of character to set timer for
+ *     which:   Type of clock 
+ *     amount:  Amount of ticks (duration)       
+ * Output:
+ *     Clock could be set yes/no 
+ */
+char charSetTimer(int char_no, char which, int clock_ticks)
+{
+    int i;
+    CHAR_T *pchar;
+    
+    
+    // @todo: Only set timer if not already set
+    pchar = &CharList[char_no];
+    
+    // @todo: Loop trough all characters in list
+    for(i = 0; i < CHAR_MAX_TIMER; i++)
+    {
+        if(pchar->timers[i].which == 0)
+        {
+            // Set the clock
+            pchar->timers[i].which       = which;
+            pchar->timers[i].clock_ticks = clock_ticks;
+            
+            return 1;
+        }
+    }
+
+    return 0;    
+}
+
 
 /*
  * Name:

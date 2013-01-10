@@ -1086,63 +1086,56 @@ void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
     char *pcolon;
 
     
-    if (write) {
-    
+    if (write)
+    {
         f = fopen(fname, "wt");
-        if (f) {
-        
+        if (f)
+        {
             fputs(EGOBOO_FILE_CREATED, f);
 
-            while(vallist -> type > 0) {
-
-                if (vallist -> type == SDLGLCFG_VAL_LABEL) {
-                
+            while(vallist -> type > 0)
+            {
+                if (vallist -> type == SDLGLCFG_VAL_LABEL)
+                {
                      fprintf(f, "%s\n", vallist -> name);
-                     
                 }
-                else {
-                
+                else
+                {
                     sdlglcfgValToStr(line, vallist -> type, vallist -> data, vallist -> len);
-                    if (! vallist -> name || vallist -> name == "") {
-                    
+                    if (! vallist -> name || vallist -> name == "")
+                    {
                         fprintf(f, " : %s\n", line);
-
                     }
-                    else {
-
+                    else
+                    {
                         fprintf(f, "%-30s : %s\n", vallist -> name, line);
-
                     }
-                    
                 }
 
                 vallist++;
-
             }
 
             fputs("\n\n", f);
             fclose(f);
-
         }
-
     }
-    else {
-
+    else
+    {
         f = fopen(fname, "rt");
-        if (f) {
-
-            while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/')) {
-
+        
+        if (f)
+        {
+            while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/'))
+            {
                 if (vallist -> type == 0) {
                     /* More values in file then in asked for */
                     break;
 
                 }
-                else if (vallist -> type == SDLGLCFG_VAL_LABEL) {
-
+                else if (vallist -> type == SDLGLCFG_VAL_LABEL)
+                {
                     /* Ignore this line */
                     vallist++;
-
                 }
                 
                 pcolon = strchr(line, ':');
@@ -1154,14 +1147,88 @@ void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
                     sdlglcfgStrToVal(pcolon, vallist -> type, vallist -> data, vallist -> len);
 
                     vallist++;      /* Read next value */
-
                 }
-
             }
 
             fclose(f);
-
         }
-
     }
+}
+
+/*
+ * Name:
+ *     sdlglcfgRawLines
+ * Description:
+ *     Reads in raw text lines from given file, if any exists, ignores the comment lines
+ *     Reads maximum ((dest_size / line_len) - 1) Lines from given file
+ *     Reads a maximum length of (line_len - 1) chars from a files line, terminates it with a 0   
+ * Input:
+ *     fname *:    Name of file to read / write
+ *     dest_buf *: Pointer on char buffer with values to read/write (End of list => Empty string)
+ *     dest_size:  Size of destination buffer
+ *     line_len:   Size of buffer to use per line   
+ *     write:      Write it, yes / no  
+ * Output:
+ *     Success yes/no 
+ */
+char sdlglcfgRawLines(char *fname, char *dest_buf, int dest_size, int line_len, char write)
+{
+    FILE *f;
+    char line[SDLGLCFG_LINELEN];
+    
+    
+    // @todo: Fill in the code needed
+    if(write)
+    {
+        f = fopen(fname, "wt");
+        
+        if (f)
+        {
+            dest_size -= line_len;
+            
+            // Write who has created it
+            fputs(EGOBOO_FILE_CREATED, f);
+            // Write it all to file
+            while(*dest_buf > 0 && dest_size > line_len)
+            {                
+                fprintf(f, "%s\n", dest_buf); 
+                // Next string        
+                dest_buf += line_len;
+            }
+            
+            fputs("\n\n", f);
+            fclose(f);
+            // Return success
+            return 1;
+        }
+    }
+    else
+    {
+        // Read from file
+        f = fopen(fname, "rt");
+        
+        if (f)
+        {
+            // Safety
+            dest_size -= line_len;
+            // Clear the destination buffer
+            memset(dest_buf, 0, dest_size);
+            
+            while (dest_size > line_len && sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/'))
+            {              
+                strncpy(dest_buf, line, line_len);
+                dest_buf[line_len] = 0;
+                //
+                dest_buf += line_len;
+                dest_size -= line_len;
+            }
+            
+            fclose(f);
+            
+            return 1;
+        }
+    }
+    
+    // Action failed
+    return 0;
 }

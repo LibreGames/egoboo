@@ -1870,3 +1870,50 @@ void egomapHandlePassage(int psg_no, int action)
     EDITFILE_PASSAGE_T *psg;
 }
 */
+
+/*
+ * Name:
+ *     egomapMoveObjects
+ * Description:
+ *     Loops trough all objects which have moved at all and sets there tile position
+ *      
+ * Input:
+ *     None
+ */
+ void egomapMoveObjects(void)
+ {
+    SDLGL3D_OBJECT *obj_list;
+    int new_tile;
+    
+    
+    obj_list = sdlgl3dGetObject(0); // Get pointer on first object in list
+    
+    while(obj_list -> id)
+    {
+        // Only handle objects which have moved
+        if (obj_list -> id > 0 && obj_list -> move_cmd)
+        {
+            new_tile = (int)(floor(obj_list -> pos[1]) * Mesh.tiles_x) + (int)(floor(obj_list -> pos[0]));
+            
+            if(new_tile != obj_list -> act_tile)
+            {
+                obj_list -> old_tile = obj_list -> act_tile;
+                obj_list -> act_tile = new_tile;
+                
+                // Move from/to tile
+                Mesh.fan[obj_list -> old_tile].obj_no = 0;  
+                Mesh.fan[new_tile].obj_no = obj_list -> id;                      
+                // @todo: Use linked list for multiple characters on tile
+                
+                // @todo: Trigger event (e.g. entering a passage if tile has changed
+                // if(obj_list -> obj_type == EGOMAP_OBJ_CHAR) 
+                //      Actions: 'leave' 'old_tile, 'enter' 'new_tile' (act_tile)
+                //      Maybe for particles too ?
+                // if psg_no: egomapHandlePassage(obj_no [who], enter [what], obj_list -> old_tile [where]);
+                // if psg_no: egomapHandlePassage(obj_no [who], leave [what], new_tile [where]);
+            } 
+        }
+        
+        obj_list++;
+    }
+ }

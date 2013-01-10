@@ -1,9 +1,9 @@
 /*******************************************************************************
-*  IDSZ.H                                                                      *
+*  PLAYER.H                                                                  *
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
-*    - IDSZ-Map and management for editor and game                             *
-*      (c)2013 Paul Mueller <muellerp61@bluewin.ch>                            *
+*    - [...]                                                                   *
+*      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -20,43 +20,49 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _IDSZ_H_
-#define _IDSZ_H_
+#ifndef _PLAYER_H_
+#define _PLAYER_H_
 
 /*******************************************************************************
-* INCLUDES								                                   *
+* INCLUDES 							                                        *
 *******************************************************************************/
+
+#include "idsz.h"
 
 /*******************************************************************************
-* DEFINES								                                   *
+* DEFINES   							                                        *
 *******************************************************************************/
 
-#define IDSZ_NOT_FOUND  -1
-#define MAX_IDSZ_SIZE   64
-#define MAX_IDSZ_MAP_SIZE 32
+#define PLAYER_MAX 6
 
 /*******************************************************************************
-* TYPEDEFS 								                                   *
+* TYPEDEFS   							                                   *
 *******************************************************************************/
 
-/// The definition of a single IDSZ element in a IDSZ map
-typedef struct
+/// The state of a player
+typedef struct 
 {
-    unsigned int idsz;      // The IDSZ itself
-    int  level;             // Or value
+    char    id;         ///< Player used? : Number of player    
+    char    valid;      ///< Player used?         
+    int     char_no;    ///< Which character?
+    int     obj_no;     ///< Which 3D-Object 
+    // inventory stuff
+    char    inventory_slot; ///< Actual chosen inventory slot
+    char    draw_inventory; ///<draws the inventory
+    int     inventory_cooldown; ///< In Ticks
+    int     inventory_lerp;
 
-} IDSZ_T;
+    /// Local latch, set by set_one_player_latch(), read by sv_talkToRemotes()
+    unsigned int local_latch;
+
+    // quest log for this player
+    IDSZ_T  quest_log[MAX_IDSZ_MAP_SIZE];          ///< lists all the character's quests
+
+} PLAYER_T;
 
 /*******************************************************************************
 * CODE 								                                       *
 *******************************************************************************/
 
-/* ============ Tools for loading and saving ========== */
-void idszIDSZtoString(IDSZ_T *idsz, char *idsz_str);
-void idszStringtoIDSZ(char *idsz_str, IDSZ_T *idsz);
 
-/* =========== Handling IDSZ-Lists ========================== */
-void idszMapAdd(IDSZ_T *idsz_list, unsigned int idsz, int list_len);
-IDSZ_T *idszMapGet(IDSZ_T *idsz_list, unsigned int idsz, int list_len);
-
-#endif  /* #define _IDSZ_H_ */
+#endif  /* #define _PLAYER_H_ */
