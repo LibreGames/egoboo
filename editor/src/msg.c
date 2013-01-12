@@ -573,3 +573,8 @@ typedef enum
    
     return 0;
 }
+
+// @todo: msgTipsLoad(void);        // Global tips
+// @todo: msgTipsGet(char *str_buf, int buf_len);
+// @todo: msgModuleLoad(char *fname); // Load messages for a module (overwrite old)
+// @todo: msgModuleGet(int msg_no, char *str_buf, int buf_len);

@@ -244,6 +244,11 @@
 #define SDLGL3D_EVENT_MOVED         1
 #define SDLGL3D_EVENT_NONE          0
 
+// List-Functions
+#define SDLGL3D_ADD_TO          1
+#define SDLGL3D_REMOVE_FROM     2
+#define SDLGL3D_MOVE_FROM_TO    3
+
 /*******************************************************************************
 * TYPEDEFS                                                                     *
 *******************************************************************************/
@@ -256,7 +261,12 @@ typedef struct
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
     int     type_no;        /* Number of type in 'obj_type'         */
-    int     frame_no;       /* Actual frame: For particles          */
+    int     frame_no;       /* Actual frame: For particles/anim     */
+    float   life_time;      /* In seconds                           */
+                            /* Is counted down each object-update   */
+                            /* 0: Lives forever                     */
+    int     user_flags;     /* Bits for the user to set and read    */    
+    char    team_no;        /* Belongs to this Egoboo-Team          */
     /* ---------- Extent for collision detection -------------------- */
     float   bbox[2][3];     /* Bounding box for collision detection */
                             /* Extension of BB in x, y and z dir    */  
@@ -266,18 +276,21 @@ typedef struct
     SDLGL3D_V3D pos;        /* Position                             */
     SDLGL3D_V3D dir;        /* Actual direction, unit vector        */
     SDLGL3D_V3D rot;        /* Rotation angles                      */
-    float   speed;          /* Ahead speed in units/second          */
+    float   speed;          /* Ahead speed in units/second (limit)  */
     float   zspeed;         /* Z-Movement: -towards bottom          */
                             /*             +towards ceiling         */
                             /*              in units/second         */
     float   turnvel;        /* Rotation velocity in degrees/second  */
-    float   speed_modifier; /* Multiply speed with this one, if > 0 */
+    float   speed_modifier; /* Multiply speed with this one, if !0  */
     /* -------- Physics --------------------------------------------- */
     float   spdlimit;       ///< Speed limit
     float   dampen;         ///< Bounciness    
+    float   weight;         // 0: Not affected by gravity/wind
+                            // > 0: Falls to bottom (-Z)
+                            // < 0: ascend (+Z) like hot particles        
     /* Link for object list in collision - detection                  */
-    int     child_obj;      /* Children move simultaneous with this */
-                            /* object                               */    
+    int     follow_obj;     /* Follow this object, don't move self  */
+                            /* except if 'homing'                   */
     int     next_obj;       /* > 0: Number of next object on tile   */
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */
@@ -291,6 +304,7 @@ typedef struct
 {
     int min_x, min_y,
         max_x, max_y;
+        
 } SDLGL3D_BRECT;
 
 typedef struct
@@ -313,13 +327,16 @@ typedef struct
     
 } SDLGL3D_FRUSTUM;
 
-typedef struct {
+typedef struct
+{
 
     int mid_x, mid_y;   /* Of tile, for distance sorting            */
     int tile_no;        /* Number of tile, for display by caller    */
     int obj_no;         /* Number of first object on this tile      */
 
 } SDLGL3D_VISITILE;
+
+// @todo: Handle global physics with 
 
 /*******************************************************************************
 * CODE                                                                         *
@@ -341,8 +358,9 @@ void sdlgl3dMoveCamera(float secondspassed);
 int  sdlgl3dCreateObject(SDLGL3D_OBJECT *info_obj);
 void sdlgl3dDeleteObject(int obj_no);
 SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no);
-void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set);
+void sdlgl3dManageObject(int obj_no, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);
+char sdlgl3dObjectList(int *from, int *to, int obj_no, int action); 
 
 /* ===== Visibility-Functions ==== */
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);

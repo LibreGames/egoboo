@@ -99,6 +99,7 @@ static void editdrawObject(int obj_no)
     int i, j;
     SDLGL3D_OBJECT *pobj;
     float bbox[2][3];
+
     
     if(obj_no > 0)
     {
@@ -114,7 +115,7 @@ static void editdrawObject(int obj_no)
             }
         }
         // Now draw the cube of the bounding box
-        sdlglSetColor(pobj -> type_no);  
+        sdlglSetColor(pobj -> type_no & 0x0F);  
         glBegin(GL_LINE_LOOP);
             // Draw top of cube
             glVertex3f(bbox[0][0], bbox[0][1], bbox[0][2]); // x, y, z

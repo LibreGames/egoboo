@@ -181,31 +181,35 @@ static void gameDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     // sdlgl3dMoveObjects(event -> secondspassed);
     // @todo: Apply environtal effects on movement like 'slippery' and so on 
     
+    
     // Move the camera
     sdlgl3dMoveCamera(event -> secondspassed);
     
     // @todo: Check collision with feedback to characters and AI
     //        Applies physics 
-    // collideMain();
+    // collisionMain();
+    
+    // @todo: void egomapMoveObjects(void);
+    // Update of the linked lists on map, removing of killed objects
+    // Applies environmental effects to all objects
+    // Apply additional actions by 'particleUpdateOne()'
  
     // @todo: Do all AI-Stuff using their scripts
-    // aiMain();
-    
+    // aiMain();        
 
     /* -------------- Drawing section ---------- */
     // Draw the 3D-View before the 2D-Screen 
     // egomapDraw(&es -> ft, &es -> cm, es -> crect);
     // void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
-    // draw3dMain();
+    // render3dMain();
 
     /* ---- Prepare drawing in 2D-Mode ---- */
     glPolygonMode(GL_FRONT, GL_FILL);
     glShadeModel(GL_FLAT);		            /* No smoothing	of edges    */
     glFrontFace(GL_CCW);                    /* Draws counterclockwise   */
     
-    // @todo
-    // Draw all the 2D-Stuff
-    // draw2dMain();
+    // @todo: Draw all the 2D-Stuff 
+    // render2dMain();
 }
 
 /* ========================================================================== */

@@ -102,6 +102,7 @@ typedef struct
     int receiver;   // receiver of message 'msgGet()'
     // @todo: Additional info, if needed  
     // @todo: Info from AI-State for these variables    
+    // @todo: Load in-game messages to ==> msgModuleLoad() / msgModuleGet()
     char *expand_str;   // For ingame messages which have to be expanded
     
 } MSG_T; 
@@ -114,7 +115,9 @@ void msgSend(int sender, int receiver, int why);
 char msgGet(int receiver, MSG_T *pmsg, int remove);
 int  msgGetNext(int prev_no, MSG_T *pmsg);
 char msgToString(MSG_T *pmsg, char *str_buf, int buf_len);
-// @todo: msgTipsLoad();
+// @todo: msgTipsLoad(void);        // Global tips
 // @todo: msgTipsGet(char *str_buf, int buf_len);
+// @todo: msgModuleLoad(char *fname); // Load messages for a module (overwrite old)
+// @todo: msgModuleGet(int msg_no, char *str_buf, int buf_len);
 
 #endif  /* #define _MSG_H_ */

@@ -147,25 +147,22 @@ static void sdlglcfgStrToVal(char *string, char valtype, void *value, char valle
     char *pstr;
 
 
-    if (string[0] == 0) {
+    /* Remove trailing spaces: 2010-01-02 <bitnapper> */
+    while (*string == ' ')
+    {
+        string++;
+    }
 
+    if (string[0] == 0)
+    {
         return;
-
     }
 
     if (valtype == SDLGLCFG_VAL_STRING
         || valtype == SDLGLCFG_VAL_ONECHAR
         || valtype == SDLGLCFG_VAL_EGOSTR)
     {
-
         pstr = (char *)value;
-
-        /* Remove trailing spaces: 2010-01-02 <bitnapper> */
-        while (*string == ' ') {
-
-            string++;
-
-        }
 
         if (valtype == SDLGLCFG_VAL_STRING || valtype == SDLGLCFG_VAL_EGOSTR) {
 
@@ -174,31 +171,29 @@ static void sdlglcfgStrToVal(char *string, char valtype, void *value, char valle
             /* --- Remove underlines for editing, if needed --- */
             if(valtype == SDLGLCFG_VAL_EGOSTR)
             {
-                while(*pstr) {
-            
-                    if (*pstr == '_') {
+                while(*pstr)
+                {
+                    if (*pstr == '_')
+                    {
                         *pstr = ' ';
                     }
-                
+
                     pstr++;
                 }
             }
-
         }
-        else {
-
+        else
+        {
             *pstr = *string;
-
         }
-
     }
-    else {
-
+    else
+    {
         /* TODO: (2008-06-20) : Support an array of values,  if 'vallen' is given ==> do while (vallen > 0) */
         /* It's a value */
         sscanf(string, "%d", &ivalue);
-        switch(valtype) {
-
+        switch(valtype)
+        {
             case SDLGLCFG_VAL_CHAR:
                 *(char *)value = (char)ivalue;
                 break;
@@ -279,7 +274,8 @@ static void sdlglcfgStrToVal(char *string, char valtype, void *value, char valle
 static void sdlglcfgValToStr(char *val_str, char valtype, void *value, char vallen)
 {
 
-    switch(valtype) {
+    switch(valtype)
+    {
 
         case SDLGLCFG_VAL_ONECHAR:
             vallen = 1;
@@ -321,14 +317,12 @@ static void sdlglcfgValToStr(char *val_str, char valtype, void *value, char vall
             val_str[0] = (char)(*(char *)value ? 'T' : 'F');
             val_str[1] = 0;
             break;
-            
+
         default:
             /* Return empty string, if unknown */
             val_str[0] = 0;
             break;
-
     }
-
 }
 
 /*
@@ -353,34 +347,28 @@ static void sdlglcfgGetNamedValue(char *line, SDLGLCFG_NAMEDVALUE *vallist)
 
     /* -------- */
     pval = strchr(line, '=');
-    if (pval) {       /* Found an equal sign */
-
+    if (pval)
+    {       /* Found an equal sign */
         *pval = 0;      /* Scan name later          */
         pval++;
         sscanf(line, "%s", namestr);
         sscanf(pval, "%s", valstr);
-        
-        if ( strcmp( pval, "" ) != 0 ) {
-            
+
+        if ( strcmp( pval, "" ) != 0 )
+        {
             strlwr(namestr); /* To lower for comparision */
 
-            while (vallist -> type) {
-
-                if (! strcmp(namestr, vallist -> name)) {
-
+            while (vallist -> type)
+            {
+                if (! strcmp(namestr, vallist -> name))
+                {
                     sdlglcfgStrToVal(valstr, vallist -> type, vallist -> data, vallist -> len);
-
                 }
 
                 vallist++;
-
             }  /* while (vallist -> type) */
-
-
         } /* if (pval) */
-
     }
-
 }
 
 /*
@@ -393,7 +381,7 @@ static void sdlglcfgGetNamedValue(char *line, SDLGLCFG_NAMEDVALUE *vallist)
  *     line *:    Line to read values from
  *     rcf *:     Description of values on given line to read from
  *     fixedpos:  Values have a fixed position in line given in value-lenght
- *     delimiter: Delimiter to use 
+ *     delimiter: Delimiter to use
  */
 static void sdlglcfgRecordFromLine(char *line, SDLGLCFG_VALUE *rcf, int fixedpos, char delimiter)
 {
@@ -404,47 +392,42 @@ static void sdlglcfgRecordFromLine(char *line, SDLGLCFG_VALUE *rcf, int fixedpos
 
     delimit_str[0] = delimiter;
     delimit_str[1] = 0;
-    
+
     strcat(line, delimit_str);      /* Just in case it lacks... : Delimiter for last value in string */
     pbuf = &line[0];
 
     /* Scan trough all descriptors */
-    while(rcf -> type > 0) {
-
-        if (fixedpos) {
-            
+    while(rcf -> type > 0)
+    {
+        if (fixedpos)
+        {
             /* Fixed column positions */
             sdlglcfgStrToVal(pbuf + rcf -> pos, rcf -> type, rcf -> data, rcf -> len);
-        
         }
-        else  {
-
+        else
+        {
             /* Remove leading spaces */
-            while(*pbuf == ' ' || *pbuf == '\t') {
+            while(*pbuf == ' ' || *pbuf == '\t')
+            {
                 pbuf++;
             }
             /* data in 'buffer' is decomma-limited  */
             pbrk = strchr(pbuf, delimiter);
-            if (pbrk) {
-
+            if (pbrk)
+            {
                 *pbrk = 0;          /* End of string to scan value from */
                 sdlglcfgStrToVal(pbuf, rcf -> type, rcf -> data, rcf -> len);
                 pbuf = &pbrk[1];    /* Next value                      */
-
             }
-            else {
-
+            else
+            {
                 /* No value anymore, bail out */
                 break;
-
             }
-            
         }
-        
+
         rcf++;
-
     }    /*  while(rcf -> type > 0)  */
-
 }
 
 /*
@@ -466,38 +449,32 @@ static int sdlglcfgCheckBlockName(char *line)
     BlockName[0] = 0;
 
     /* Get the name of a block, if any  */
-    if (BlockSigns[0]) {
-
+    if (BlockSigns[0])
+    {
         pbs = strchr(line, BlockSigns[0]);
-        if (pbs) {
-
+        if (pbs)
+        {
             pbs++;
             line++;
 
-            if (BlockSigns[1]) {
-
+            if (BlockSigns[1])
+            {
                 /* Get rid of second blocksign, if asked for */
-
                 pbs = strchr(pbs, BlockSigns[1]);
-                if (pbs) {
-
+                if (pbs)
+                {
                     *pbs = 0;
-
                 }
-
             }
 
             sscanf(line, "%s", BlockName);
             strlwr(BlockName);      /* To lower for comparision of names */
 
             return 1;
-        
         }
-
     } /* if (blocksigns[0]) */
 
     return 0;
-
 }
 
 /*
@@ -512,21 +489,18 @@ static int sdlglcfgFindNextBlock(void)
 {
 
     char line[SDLGLCFG_LINELEN];
-    
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';')) {
 
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';'))
+    {
         /* Read the type of configuration */
-        if (sdlglcfgCheckBlockName(line)) {
-
+        if (sdlglcfgCheckBlockName(line))
+        {
             return 1;
-            
         }
-
     }
-    
-    return 0;
 
+    return 0;
 }
 
 /*
@@ -535,7 +509,7 @@ static int sdlglcfgFindNextBlock(void)
  * Description:
  *     Special function to read egoboo files SPAWN.TXT and PASSAGE.TXT
  * Input:
- *     fname *:    Name of file to read 
+ *     fname *:    Name of file to read
  *     lineinfo *: Pointer on description how to read the data
  */
 static void sdlglcfgReadEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
@@ -545,50 +519,45 @@ static void sdlglcfgReadEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
     char line[SDLGLCFG_LINELEN];
     char *pbaserec, *pactrec;
     int  maxrec;
-    char *pbrk;  
-    
-    
+    char *pbrk;
+
+
     pbaserec = (char *)lineinfo -> readbuf;
     pactrec  = (char *)lineinfo -> recbuf;
     maxrec   = lineinfo -> maxrec;
-    
+
     /* -------- Clear the buffer, possible empty file --- */
     memset(pbaserec, 0, lineinfo -> recsize);
     memset(pactrec, 0, lineinfo -> recsize);
-        
+
     f = fopen(fname, "rt");
-    if (f) {    
-        
-        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/')) {
-      
-            if (maxrec > 0) {   /* if not filled yet */
-            
+    if (f)
+    {
+        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/'))
+        {
+            if (maxrec > 0)
+            {   /* if not filled yet */
                 pbrk = strchr(line, ':');
                 if (pbrk) {
-            
+
                     *pbrk = 0;
-                    /* Copy the description */                    
+                    /* Copy the description */
                     strncpy(pbaserec, line, lineinfo -> rcf[0].len);
                     pbaserec[lineinfo -> rcf[0].len] = 0;
 
                     sdlglcfgRecordFromLine(&pbrk[1], &lineinfo -> rcf[1], 0, ' ');
                     /* Copy data to actual rec */
                     memcpy(pactrec, pbaserec, lineinfo -> recsize);
-                    
-                    pactrec += lineinfo -> recsize;
-               
-                    maxrec--;
-                    
-                }
-                
-            }
-     
-        }
-        
-        fclose(f);
-        
-    }
 
+                    pactrec += lineinfo -> recsize;
+
+                    maxrec--;
+                }
+            }
+        }
+
+        fclose(f);
+    }
 }
 
 /*
@@ -647,9 +616,7 @@ static void sdlglcfgWriteEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
         fputs("\r\n\r\n", f);
 
         fclose(f);
-                
-    }  
-    
+    }
 }
 
 /* ========================================================================== */
@@ -669,35 +636,31 @@ int sdlglcfgOpenFile(char *filename, char blocksigns[4])
 {
 
     TextFile = fopen(filename, "rt");
-    if (TextFile) {
 
-        if (blocksigns[0]) {
-
+    if (TextFile)
+    {
+        if (blocksigns[0])
+        {
             /* Save this block-signs for later use with other functions */
             BlockSigns[0] = blocksigns[0];
             BlockSigns[1] = blocksigns[1];
             BlockSigns[2] = blocksigns[2];
             BlockSigns[3] = blocksigns[3];
 
-            if (BlockSigns[1] == ' ') {
-
+            if (BlockSigns[1] == ' ')
+            {
                 BlockSigns[1] = 0;
-
             }
 
             return sdlglcfgFindNextBlock();
-
         }
-        else {
-
+        else
+        {
             return 1;
-
         }
-
     }
 
     return 0;
-
 }
 
 /*
@@ -710,9 +673,7 @@ int sdlglcfgOpenFile(char *filename, char blocksigns[4])
  */
 int sdlglcfgSkipBlock(void)
 {
-
     return sdlglcfgFindNextBlock();
-
 }
 
 /*
@@ -730,12 +691,11 @@ int sdlglcfgIsActualBlockName(char *name)
 
     strlwr(name);       /* to lower for comparision */
 
-    if (strcmp(name, BlockName) == 0) {
-
+    if (strcmp(name, BlockName) == 0)
+    {
         return 1;
-        
     }
-    
+
     return 0;
 
 }
@@ -756,24 +716,20 @@ int sdlglcfgReadNamedValues(SDLGLCFG_NAMEDVALUE *vallist)
     char line[SDLGLCFG_LINELEN];
 
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN -  2, ';')) {
-
-        if (sdlglcfgCheckBlockName(line)) {       /* Start of a new block */
-
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN -  2, ';'))
+    {
+        if (sdlglcfgCheckBlockName(line))
+        {       /* Start of a new block */
             return 1;
-
         }
-        else {
-
+        else
+        {
             sdlglcfgGetNamedValue(line, vallist);
             return 1;
-
         }
-
     }
 
     return 0;
-
 }
 
 /*
@@ -792,26 +748,23 @@ int sdlglcfgReadValues(SDLGLCFG_VALUE *vallist)
     char line[SDLGLCFG_LINELEN];
 
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN -  2, ';')) {if (sdlglcfgCheckBlockName(line)) {       /* Start of a new block */
-
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN -  2, ';'))
+    {
+        if (sdlglcfgCheckBlockName(line))
+        {       /* Start of a new block */
             return 1;
-
         }
-        else {
-
-            if (vallist -> type > 0) {  /* Only if there is something left to read */
-            
+        else
+        {
+            if (vallist -> type > 0)
+            {  /* Only if there is something left to read */
                 sdlglcfgStrToVal(line, vallist -> type, vallist -> data, vallist -> len);
                 vallist++;              /* Get next value */
-                
             }
-
         }
-
     }
 
     return 0;
-
 }
 
 /*
@@ -838,33 +791,28 @@ int sdlglcfgReadRecordLines(SDLGLCFG_LINEINFO *lineinfo, int fixedpos)
     pactrec  = (char *)lineinfo -> recbuf;
     maxrec   = lineinfo -> maxrec;
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';')) {
-
-        if (sdlglcfgCheckBlockName(line)) {       /* Start of a new block */
-
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';'))
+    {
+        if (sdlglcfgCheckBlockName(line))  /* Start of a new block */
+        {
             return 1;
-
         }
-        else {
-
-            if (maxrec > 0) {   /* if not filled yet */
-
+        else
+        {
+            if (maxrec > 0)          /* if not filled yet */
+            {
                 sdlglcfgRecordFromLine(line, lineinfo -> rcf, fixedpos, ',');
                 /* Copy data to actial rec */
                 memcpy(pactrec, pbaserec, lineinfo -> recsize);
 
                 pactrec += lineinfo -> recsize;
-                
+
                 maxrec--;
-
             }
-
         }
-
     }
 
     return 0;   /* End of file */
-
 }
 
 /*
@@ -888,33 +836,28 @@ int sdlglcfgReadStrings(char *buffer, int bufsize)
     buffer[0] = 0;
     ptarget = buffer;
 
-    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';')) {
-
-        if (sdlglcfgCheckBlockName(line)) {       /* Start of a new block */
-
+    while (sdlglcfgGetValidLine(TextFile, line, SDLGLCFG_LINELEN - 2, ';'))
+    {
+        if (sdlglcfgCheckBlockName(line))   /* Start of a new block */
+        {
             return 1;
-
         }
-        else {
-
+        else
+        {
             /* Check if there is space left for the new string */
             slen = strlen(line);
             spaceleft = bufsize - (ptarget - buffer);
 
-            if (spaceleft > (slen + 1)) {
-
+            if (spaceleft > (slen + 1))
+            {
                 /* We can copy the string to the buffer */
                 strcpy(ptarget, line);
                 ptarget = strchr(ptarget, 0) + 1;
-
             }
-
         }
-
     }
 
     return 0;   /* End of file */
-
 }
 
 /*
@@ -927,13 +870,10 @@ int sdlglcfgReadStrings(char *buffer, int bufsize)
  */
 void sdlglcfgCloseFile(void)
 {
-
-    if (TextFile) {
-
+    if (TextFile)
+    {
         fclose(TextFile);
-
     }
-
 }
 
 /*

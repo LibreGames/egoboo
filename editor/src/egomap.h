@@ -39,11 +39,6 @@
 #define EGOMAP_SAVE_SPAWN   0x04    /* save the spawn points    */   
 #define EGOMAP_SAVE_ALL     0xFF 
 
-/* --- Types of objects (for drawing) --- */
-#define EGOMAP_OBJ_TILE   0x01      /* First always the tile            */
-#define EGOMAP_OBJ_CHAR   0x02      /* Characters (MD2)                 */
-#define EGOMAP_OBJ_PART   0x03      /* Particles (can be transparent)   */
-
 /* --- Handling for map objects (Spawn points and passages) --- */
 #define EGOMAP_NEW    0x01      
 #define EGOMAP_GET    0x02

@@ -1876,7 +1876,7 @@ void egomapHandlePassage(int psg_no, int action)
  *     egomapMoveObjects
  * Description:
  *     Loops trough all objects which have moved at all and sets there tile position
- *      
+ *     This function has to be called 'after' collision testing is done 
  * Input:
  *     None
  */
@@ -1893,8 +1893,10 @@ void egomapHandlePassage(int psg_no, int action)
         // Only handle objects which have moved
         if (obj_list -> id > 0 && obj_list -> move_cmd)
         {
+            // @todo: Add descritpion of MAPENV_T for physics
+            // @todo: Call particle function for additional actions 
             new_tile = (int)(floor(obj_list -> pos[1]) * Mesh.tiles_x) + (int)(floor(obj_list -> pos[0]));
-            
+                
             if(new_tile != obj_list -> act_tile)
             {
                 obj_list -> old_tile = obj_list -> act_tile;

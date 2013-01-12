@@ -441,8 +441,9 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
             break;
 
         case SDLGL3D_MOVE_CAMDIST:
-            /* TODO: This one */
+            // @todo
             break;
+            // @todo: Add further flags for particle movement
 
     }
 
@@ -995,7 +996,7 @@ SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no)
 {
     if(obj_no <= 1)
     {
-        return &Obj3D[SDLGL3D_FIRSTOBJ]; 
+        return &Obj3D[SDLGL3D_FIRSTOBJ];
     }
     
     if(obj_no > SDLGL3D_FIRSTOBJ && obj_no < SDLGL3D_MAXOBJ)
@@ -1014,21 +1015,21 @@ SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no)
  * Description:
  *     Sets the commands for object with given number. < 0: Is camera
  * Input:
- *      obj *:     Pointer on object to manage
+ *      obj_no:    Number of object to manage
  *      move_cmd:  Kind of movement
  *      set:       Set Command yes/no
  */
-void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set)
+void sdlgl3dManageObject(int obj_no, char move_cmd, char set)
 {
     int flag;
 
 
-    if (obj -> obj_type > 0)
+    if (Obj3D[obj_no].obj_type > 0)
     {
         if (move_cmd == SDLGL3D_MOVE_STOPMOVE)
         {
-            /* Stop all movement */
-            obj -> move_cmd = 0;
+            // Stop all movement
+            Obj3D[obj_no].move_cmd = 0;
             return;
         }
         
@@ -1037,11 +1038,11 @@ void sdlgl3dManageObject(SDLGL3D_OBJECT *obj, char move_cmd, char set)
         
         if (set)
         {
-            obj -> move_cmd |= flag;
+            Obj3D[obj_no].move_cmd |= flag;
         }
         else
         {
-            obj -> move_cmd &= ~flag;
+            Obj3D[obj_no].move_cmd &= ~flag;
         }
     }
 }
@@ -1082,6 +1083,86 @@ void sdlgl3dMoveObjects(float secondspassed)
         obj_list++;
     }
 }
+
+/*
+ * Name:
+ *     sdlgl3dObjectList
+ * Description:
+ *     Manage linked list(s) with object numbers
+ * Input:
+ *      from *: Pointer on list base where to move 'from'
+ *      to *:   Pointer on list base where to move 'to
+ *      obj_no: Number of object to handle
+ *      action: SDLGL3D_ADD_TO: Add obj_no 'to' list
+ *              SDLGL3D_REMOVE_FROM: Remove obj_no 'from' list
+ *              SDLGL3D_MOVE_FROM_TO: Move object 'from' => 'to'
+ */
+char sdlgl3dObjectList(int *from, int *to, int obj_no, int action)
+{
+    SDLGL3D_OBJECT *pactual;
+    int oldbase;
+    int act_obj_no;
+    char found;
+
+
+    switch(action)
+    {
+        case SDLGL3D_REMOVE_FROM:
+        case SDLGL3D_MOVE_FROM_TO:
+            if (NULL == *from)
+            {
+                // Invalid pointer
+                return 0;
+            }
+
+            //
+            act_obj_no = *from;
+            found = 0;
+
+            do
+            {
+                pactual = &Obj3D[act_obj_no];
+
+                if (act_obj_no == obj_no)
+                {
+                    found = 1;
+                    // found it, remove it
+                    (*from) = pactual -> next_obj;
+                    pactual -> next_obj = 0;         // Set next to zero
+                    break;
+                }
+
+                from = &pactual -> next_obj;    // Where to attach next, if
+                                                // actual object_no is removed
+                act_obj_no = pactual -> next_obj;
+
+            }
+            while (act_obj_no);
+
+            if (action == SDLGL3D_REMOVE_FROM || !found)
+            {
+                // Only remove 'obj_no' from List, or nothing to add 'to'
+                break;
+            }
+        case SDLGL3D_ADD_TO:
+            if (NULL == *to)
+            {
+                // Invalid pointer
+                return 0;
+            }
+
+            oldbase = (*to);    // Save posible actual 'obj_no' for attachment
+                                // If none available, is anyway 0!
+            (*to) = obj_no;     // Insert new 'obj_no' at base
+            // Attach previous object(s) to base
+            Obj3D[obj_no].next_obj = oldbase;
+    }
+
+    return 0;
+}
+
+
+/* ===== Visibility-Functions ==== */
 
 /*
  * Name:

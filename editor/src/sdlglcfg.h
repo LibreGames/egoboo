@@ -65,6 +65,7 @@ typedef struct
     void *data;     /* Where to put the value           */     
     char  len;      /* Len of data (strings and arrays) */
     char *name;     /* name of value (case insensitive) */
+    char info;      /* If commands are for multiple players on same PC */
 
 } SDLGLCFG_NAMEDVALUE;
 

@@ -39,6 +39,43 @@
 
 // @todo: MPDFXG_             fan.fxg      /* GameFX */
 
+/* --- Types of objects (for drawing and handling) --- */
+#define EGOMAP_OBJ_TILE   0x01      /* First always the tile            */
+#define EGOMAP_OBJ_CHAR   0x02      /* Characters (MD2)                 */
+#define EGOMAP_OBJ_PART   0x03      /* Particles (can be transparent)   */
 
+/// Everything that is necessary to compute an objects interaction with the environment
+typedef struct
+{
+    // floor stuff
+    unsigned char  twist;   // ego_mesh_get_twist( PMesh, itile );           
+    float  floor_level;     ///< Height of tile
+                            // ego_mesh_get_level( PMesh, loc_obj->pos.x, loc_obj->pos.y );
+    float  level;           ///< Height of a tile or a platform
+                            // Init: penviro->floor_level @todo: Add height of 'fixed' object
+                            // 'onwhichplatform_ref'    
+    float  zlerp;
+
+    float adj_level;              ///< The level for the particle to sit on the floor or a platform
+    float adj_floor;              ///< The level for the particle to sit on the floor or a platform
+
+    // friction stuff
+    char is_slipping;
+    char is_slippy, // !penviro->is_watery && ( 0 != ego_mesh_test_fx( PMesh, loc_obj->onwhichgrid, MAPFX_SLIPPY ) );
+         is_watery; // object -> act_tile ==> MAPFX_WATER 'onwhichgrid', not set if !water.is_water
+                    // water.is_water && penviro->inwater;
+    float  air_friction,
+           ice_friction;
+    float  fluid_friction_hrz, fluid_friction_vrt; // penviro->is_watery ? waterfriction : penviro->air_friction
+    float  friction_hrz;    // slippyfriction
+    float  traction;        // Init = 1.0f; @todo: Adjust by tile angle 'hillslide'
+
+    // misc states
+    char   hit_env;             // 'hit_env: Hit wall or bottom from collision code or 'heavy' object
+    float  water_surface_level; // @new 
+    char   inwater;
+    float  acc[3];
+
+} MAPENV_T;
 
 #endif  /* #define _EGODEFS_H_ */
