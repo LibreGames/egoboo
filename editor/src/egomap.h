@@ -98,8 +98,6 @@ void egomapDeleteObject(int obj_no);    // Delete this object from map
 int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
 void egomapDropChar(int char_no, float x, float y, float z, char dir); 
 // @todo: egomapMoveAllObjects(void);   // Manages the linked lists on tile and invokes passages
-// @todo: Add/remove objects from a single linked list
-// int sdlgl3dListObject(int *from_base, int *to_base, int obj_no, char action); // action: ADD, REMOVE, PEEK, MOVE
 
 /* ============  Game functions ========== */
 void egomapHandlePassage(int psg_no, int action);

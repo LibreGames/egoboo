@@ -783,15 +783,24 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which, unsigned
 
 
     pdata = (char *)data;
-    if (! pdata) {
+    if (! pdata)
+    {
         /* play it save */
         return;
     }
-    
+
     val_str[0] = 0;
     
-    switch(which) {
-
+    switch(which)
+    {
+        case SDLGL_VAL_PSTR:
+            // Pointer on a pchar
+            // pdata = (char *)(*pdata);
+            if (! pdata)
+            {
+                /* play it save */
+                return;
+            }
         case SDLGL_VAL_NONE:
         case SDLGL_VAL_STRING:
             /* Print given string */
@@ -828,7 +837,6 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which, unsigned
     }
 
     sdlglstrIString(rect, val_str, color, color);
-
 }
 
 /*

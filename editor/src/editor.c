@@ -287,55 +287,56 @@ static SDLGL_FIELD PassageDlg[] =
 /* === Dialog: Edit a spawn point === */
 static SDLGL_FIELD SpawnPtDlg[] =
 {
-    { SDLGL_TYPE_BUTTON, {   0,   0, 350, 260 }, 0, 0, "Object" },
+    { SDLGL_TYPE_BUTTON, {   0,   0, 350, 280 }, 0, 0, "Object" },  
+    { SDLGL_TYPE_BUTTON, { 326,   4,  16,  16 } },  // @todo: Draw icon of object
     { SDLGL_TYPE_LABEL,  {   8,  16,  64,   8 }, 0, 0, "Load-Name:" },
     { SDLGL_TYPE_VALUE,  {  96,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.obj_name[0] },
-    { SDLGL_TYPE_LABEL,  {   8,  32,  64,   8 }, 0, 0, "Game-Name:" },
-    { SDLGL_TYPE_VALUE,  {  96,  32,  96,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.item_name[0] },
-    { SDLGL_TYPE_LABEL,  {   8,  48,  64,   8 }, 0, 0, "Slot:" },
-    { SDLGL_TYPE_VALUE,  {  72,  48,  64,   8 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.slot_no },
-    { SDLGL_TYPE_LABEL,  {   8,  64,  80,   8 }, 0, 0, "Position:" },
-    { SDLGL_TYPE_LABEL,  {  88,  64,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 112,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.x_pos },
-    { SDLGL_TYPE_LABEL,  { 176,  64,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 200,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.y_pos },
-    { SDLGL_TYPE_LABEL,  { 264,  64,  24,   8 }, 0, 0, "Z:" },
-    { SDLGL_TYPE_VALUE,  { 288,  64,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.z_pos },
-    { SDLGL_TYPE_LABEL,  {   8,  80,  88,   8 }, 0, 0, "Direction:" },
-    { SDLGL_TYPE_VALUE,  {  96,  80,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &EditSpt.view_dir },
-    { SDLGL_TYPE_LABEL,  {   8,  96,  88,   8 }, 0, 0, "Money:" },  /* 0 .. 9999 */
-    { SDLGL_TYPE_VALUE,  {  96,  96,  16,   8 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.money },
-    { SDLGL_TYPE_LABEL,  {   8, 112,  88,   8 }, 0, 0, "Skin:" },   /* 0 .. 5 (5: Random) */
-    { SDLGL_TYPE_VALUE,  {  96, 112,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.skin },
-    { SDLGL_TYPE_LABEL,  {   8, 128,  88,   8 }, 0, 0, "Passage:" },
-    { SDLGL_TYPE_VALUE,  {  96, 128,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.pas },
-    { SDLGL_TYPE_LABEL,  {   8, 144,  88,   8 }, 0, 0, "Content:" },
-    { SDLGL_TYPE_VALUE,  {  96, 144,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.con },
-    { SDLGL_TYPE_LABEL,  {   8, 160,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
-    { SDLGL_TYPE_VALUE,  {  96, 160,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.lvl },
-    { SDLGL_TYPE_LABEL,  {   8, 176,  96,   8 }, 0, 0, "Is Player:" },
-    { SDLGL_TYPE_CHECKBOX,  {  96, 176,  16,   8 }, EDITOR_OBJECTDLG, 0x01, &EditSpt.stt },
-    { SDLGL_TYPE_LABEL,  {   8, 192,  96,   8 }, 0, 0, "Team:" },
-    { SDLGL_TYPE_VALUE,  {  96, 192,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &EditSpt.team },
-    // @todo: Replace by asking for new object if right click on tile in object-edit-mode
-    { SDLGL_TYPE_BUTTON, {   8, 224,  32,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_NEW, "New" },
-    { SDLGL_TYPE_BUTTON, {  48, 224,  56,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_DELETE, "Delete" },
-    { SDLGL_TYPE_BUTTON, { 176, 224,  40,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_SAVE, "Save" },
-    { SDLGL_TYPE_BUTTON, { 224, 224,  48,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_CLOSE, "Close" },
-    { SDLGL_TYPE_LABEL,  { 266,   4,  80,  16 }, 0, 0, "Inventory" },
+    { SDLGL_TYPE_LABEL,  {   8,  32,  80,   8 }, 0, 0, "Position:" },
+    { SDLGL_TYPE_LABEL,  {  88,  32,  24,   8 }, 0, 0, "X:" },
+    { SDLGL_TYPE_VALUE,  { 112,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.x_pos },
+    { SDLGL_TYPE_LABEL,  { 176,  32,  24,   8 }, 0, 0, "Y:" },
+    { SDLGL_TYPE_VALUE,  { 200,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.y_pos },
+    { SDLGL_TYPE_LABEL,  { 264,  32,  24,   8 }, 0, 0, "Z:" },
+    { SDLGL_TYPE_VALUE,  { 288,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.z_pos },
+    { SDLGL_TYPE_LABEL,  {   8,  48,  88,   8 }, 0, 0, "Direction:" },
+    { SDLGL_TYPE_VALUE,  {  96,  48,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &EditSpt.view_dir },
+    { SDLGL_TYPE_LABEL,  {   8,  64,  88,   8 }, 0, 0, "Money:" },  /* 0 .. 9999 */
+    { SDLGL_TYPE_VALUE,  {  96,  64,  16,   8 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.money },
+    { SDLGL_TYPE_LABEL,  {   8,  80,  88,   8 }, 0, 0, "Skin:" },   /* 0 .. 5 (5: Random) */
+    { SDLGL_TYPE_VALUE,  {  96,  80,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.skin },
+    { SDLGL_TYPE_LABEL,  {   8,  96,  88,   8 }, 0, 0, "Passage:" },
+    { SDLGL_TYPE_VALUE,  {  96,  96,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.pas },
+    { SDLGL_TYPE_LABEL,  {   8, 112,  88,   8 }, 0, 0, "Content:" },
+    { SDLGL_TYPE_VALUE,  {  96, 112,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.con },
+    { SDLGL_TYPE_LABEL,  {   8, 128,  88,   8 }, 0, 0, "Level:" },  /* 0 .. 20 */
+    { SDLGL_TYPE_VALUE,  {  96, 128,  16,   8 }, 0, SDLGL_VAL_CHAR, &EditSpt.lvl },
+    { SDLGL_TYPE_LABEL,  {   8, 144,  96,   8 }, 0, 0, "Is Player:" },
+    { SDLGL_TYPE_CHECKBOX,  {  96, 144,  16,   8 }, 0, SDLGL_VAL_BOOLEAN, &EditSpt.stt },
+    { SDLGL_TYPE_LABEL,  {   8, 160,  96,   8 }, 0, 0, "Team:" },
+    { SDLGL_TYPE_VALUE,  {  96, 160,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &EditSpt.team },
+    // @todo: Replace by asking for new object if right click on tile in object-edit-mode    
+    { SDLGL_TYPE_BUTTON, {   8, 260,  56,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_DELETE, "Delete" },
+    { SDLGL_TYPE_BUTTON, { 155, 260,  40,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_SAVE, "Save" },
+    { SDLGL_TYPE_BUTTON, { 294, 260,  48,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_CLOSE, "Close" },
+    { SDLGL_TYPE_LABEL,  { 216,  48,  80,  16 }, 0, 0, "Inventory" },
     // @todo: Add the inventory icon rectangles and the position for the object names func:add/delete
-    // @todo: Add the strings with the object names
-    /*
-    { SDLGL_TYPE_BUTTON, {   4,  20,  16,  16 }, EDITOR_OBJECTDLG, 0 },
-    { SDLGL_TYPE_BUTTON, {  52,  20,  16,  16 }, EDITOR_OBJECTDLG, 1 },
-    { SDLGL_TYPE_BUTTON, {   4,  44,  16,  16 }, EDITOR_OBJECTDLG, 2 },
-    { SDLGL_TYPE_BUTTON, {  28,  44,  16,  16 }, EDITOR_OBJECTDLG, 3 },
-    { SDLGL_TYPE_BUTTON, {  52,  44,  16,  16 }, EDITOR_OBJECTDLG, 4 },
-    { SDLGL_TYPE_BUTTON, {   4,  68,  16,  16 }, EDITOR_OBJECTDLG, 5 },
-    { SDLGL_TYPE_BUTTON, {  28,  68,  16,  16 }, EDITOR_OBJECTDLG, 6 },
-    { SDLGL_TYPE_BUTTON, {  52,  68,  16,  16 }, EDITOR_OBJECTDLG, 7 },
-    { SDLGL_TYPE_BUTTON, {  52,  68,  16,  16 }, EDITOR_OBJECTDLG, 8 },
-    */
+    // @todo: Add the strings with the object names, display icon of object    
+    { SDLGL_TYPE_BUTTON, { 216,  64,  16,  16 }, 0, SDLGL_VAL_INT, &EditSpt.inventory[0] },  
+    { SDLGL_TYPE_VALUE,  { 240,  68, 106,   8 }, 0, SDLGL_VAL_PSTR, &EditSpt.inv_name[0] },
+    { SDLGL_TYPE_BUTTON, { 216,  80,  16,  16 }, 0, SDLGL_VAL_INT, &EditSpt.inventory[1] },
+    { SDLGL_TYPE_VALUE,  { 240,  88, 106,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.inv_name[1] },
+    { SDLGL_TYPE_BUTTON, { 216,  96,  16,  16 }, 0, SDLGL_VAL_INT, &EditSpt.inventory[2] },
+    { SDLGL_TYPE_VALUE,  { 240, 100, 106,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.inv_name[2] },
+    { SDLGL_TYPE_BUTTON, { 216, 112,  16,  16 }, 0, SDLGL_VAL_INT, &EditSpt.inventory[3] },
+    { SDLGL_TYPE_VALUE,  { 240, 116, 106,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.inv_name[3] },
+    { SDLGL_TYPE_BUTTON, { 216, 128,  16,  16 }, 0, SDLGL_VAL_INT, &EditSpt.inventory[4] },
+    { SDLGL_TYPE_VALUE,  { 240, 132, 106,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.inv_name[4] },
+    { SDLGL_TYPE_BUTTON, { 216, 144,  16,  16 }, 0, SDLGL_VAL_INT, &EditSpt.inventory[5] },
+    { SDLGL_TYPE_VALUE,  { 240, 148, 106,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.inv_name[5] },
+    { SDLGL_TYPE_BUTTON, { 216, 160,  16,  16 }, 0, SDLGL_VAL_INT, &EditSpt.inventory[6] },
+    { SDLGL_TYPE_VALUE,  { 240, 164, 106,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.inv_name[6] },
+    { SDLGL_TYPE_BUTTON, { 216, 176,  16,  16 }, 0, SDLGL_VAL_INT, &EditSpt.inventory[7] },
+    { SDLGL_TYPE_VALUE,  { 240, 180, 106,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.inv_name[7] },
     { 0 }
 };
 

@@ -3,7 +3,7 @@
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
 *    - Globally used definitions                                               *
-*      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
+*      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -39,10 +39,16 @@
 
 // @todo: MPDFXG_             fan.fxg      /* GameFX */
 
-/* --- Types of objects (for drawing and handling) --- */
+// Types of objects (for drawing and handling) 
 #define EGOMAP_OBJ_TILE   0x01      /* First always the tile            */
 #define EGOMAP_OBJ_CHAR   0x02      /* Characters (MD2)                 */
 #define EGOMAP_OBJ_PART   0x03      /* Particles (can be transparent)   */
+
+// Types of environment collisions (object with map)
+#define EGOMAP_HIT_NONE   0x00      // No collision detected  
+#define EGOMAP_HIT_WALL   0x01      // Collision with wall detected
+#define EGOMAP_HIT_BOTTOM 0x02      // Collision with bottom detected
+#define EGOMAP_HIT_OTHER  0x03      // Collsiion with other object detected
 
 /// Everything that is necessary to compute an objects interaction with the environment
 typedef struct
@@ -56,8 +62,8 @@ typedef struct
                             // 'onwhichplatform_ref'    
     float  zlerp;
 
-    float adj_level;              ///< The level for the particle to sit on the floor or a platform
-    float adj_floor;              ///< The level for the particle to sit on the floor or a platform
+    float adj_level;        ///< The level for the particle to sit on the floor or a platform
+    float adj_floor;        ///< The level for the particle to sit on the floor or a platform
 
     // friction stuff
     char is_slipping;
@@ -66,9 +72,10 @@ typedef struct
                     // water.is_water && penviro->inwater;
     float  air_friction,
            ice_friction;
-    float  fluid_friction_hrz, fluid_friction_vrt; // penviro->is_watery ? waterfriction : penviro->air_friction
-    float  friction_hrz;    // slippyfriction
-    float  traction;        // Init = 1.0f; @todo: Adjust by tile angle 'hillslide'
+    float  fluid_friction_hrz, 
+           fluid_friction_vrt; // penviro->is_watery ? waterfriction : penviro->air_friction
+    float  friction_hrz;        // slippyfriction
+    float  traction;            // Init = 1.0f; @todo: Adjust by tile angle 'hillslide'
 
     // misc states
     char   hit_env;             // 'hit_env: Hit wall or bottom from collision code or 'heavy' object

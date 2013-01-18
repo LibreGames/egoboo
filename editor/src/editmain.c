@@ -199,20 +199,18 @@ static int editmainFanAdd(MESH_T *mesh, int fan, int x, int y)
 
 		mesh -> vrtstart[fan] = vertex;
 
-		for (cnt = 0; cnt < ft -> numvertices; cnt++) {
-
+		for (cnt = 0; cnt < ft -> numvertices; cnt++)
+        {
 			mesh -> vrtx[vertex] = x + ft -> vtx[cnt].x;
 			mesh -> vrty[vertex] = y + ft -> vtx[cnt].y;
 			mesh -> vrtz[vertex] = ft -> vtx[cnt].z;
 			vertex++;
-
 		}
 
 		mesh -> numvert     += ft -> numvertices;   /* Actual number of vertices used   */
 		mesh -> numfreevert -= ft -> numvertices;   /* Vertices left for edit           */
 
 		return 1;
-
 	}
 
 	return 0;
@@ -256,32 +254,31 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_INFO_T *edit_state, int fa
 	tx = (fan_no % mesh -> tiles_x) * 128;
 	ty = (fan_no / mesh -> tiles_x) * 128;
 
-	if (act_fd -> type == edit_state -> ft.type) {
-
+	if (act_fd -> type == edit_state -> ft.type)
+    {
 		vrt_diff = 0;       /* May be rotated */
-
 	}
-	else {
-
+	else
+    {
 		vrt_diff = edit_state -> cm.numvertices - act_cm -> numvertices;
-
 	}
 
-	if (0 == vrt_diff) {
+	if (0 == vrt_diff)
+    {
 		/* Same number of vertices, only overwrite is needed */
 		/* Set the new type of fan */
 		act_fd -> type = edit_state -> ft.type;
-
 	}
-	else {
-
-		if (vrt_diff > 0) {
+	else
+    {
+		if (vrt_diff > 0)
+        {
 			/* Insert more vertices -- check for space */
-			if (vrt_diff > mesh -> numfreevert) {
+			if (vrt_diff > mesh -> numfreevert)
+            {
 				/* Not enough vertices left in buffer */
 				return 0;
 			}
-
 		}
 		/* Set the new type of fan */
 		act_fd -> type = edit_state -> ft.type;
@@ -299,12 +296,13 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_INFO_T *edit_state, int fa
 		memmove(&mesh -> vrtx[dst_vtx], &mesh -> vrtx[src_vtx], vrt_size);
 		memmove(&mesh -> vrty[dst_vtx], &mesh -> vrty[src_vtx], vrt_size);
 		memmove(&mesh -> vrtz[dst_vtx], &mesh -> vrtz[src_vtx], vrt_size);
-
 	}
 
 	/* Fill in the vertex values from type definition */
 	vertex = mesh -> vrtstart[fan_no];
-	for (cnt = 0; cnt < edit_state -> cm.numvertices; cnt++) {
+    
+	for (cnt = 0; cnt < edit_state -> cm.numvertices; cnt++)
+    {
 		/* Replace actual values by new values */
 		mesh -> vrtx[vertex] = tx + edit_state -> cm.vtx[cnt].x;
 		mesh -> vrty[vertex] = ty + edit_state -> cm.vtx[cnt].y;
@@ -313,7 +311,8 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_INFO_T *edit_state, int fa
 	}
 
 	/* Adjust 'vrtstart' for all following fans */
-	if (vrt_diff != 0) {
+	if (vrt_diff != 0)
+    {
 		editmainSetFanStart(mesh);
 	}
 
@@ -334,22 +333,20 @@ static int editmainDoFanUpdate(MESH_T *mesh, EDITMAIN_INFO_T *edit_state, int fa
  */
 static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
 {
-
 	int cnt;
 	double angle;
 	double result_x, result_y;
 
 
-
 	/* Get a copy from  the fan type list, get only the 'lower' numbers */
 	memcpy(dest, &Mesh -> pcmd[type & 0x1F], sizeof(COMMAND_T));
 
-	if (dir != EDITMAIN_NORTH) {
-
+	if (dir != EDITMAIN_NORTH)
+    {
 		angle  = DEG2RAD(dir * 90.0);
 
-		for (cnt = 0; cnt < dest -> numvertices; cnt++) {
-
+		for (cnt = 0; cnt < dest -> numvertices; cnt++)
+        {
 			/* First translate it to have rotation center in middle of fan */
 			dest -> vtx[cnt].x -= 64.0;
 			dest -> vtx[cnt].y -= 64.0;
@@ -364,11 +361,8 @@ static void editmainFanTypeRotate(int type, COMMAND_T *dest, char dir)
 			/* And move it back to start position */
 			dest -> vtx[cnt].x += 64.0;
 			dest -> vtx[cnt].y += 64.0;
-
 		}
-
 	}
-
 }
 
 /*
@@ -400,12 +394,15 @@ static int editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
 
 	vtx1 = mesh -> vrtstart[fan_no1];
 
-	for (cnt1 = 0; cnt1 < numvertices1; cnt1++) {
+	for (cnt1 = 0; cnt1 < numvertices1; cnt1++)
+    {
 		/* Compare all vertices of first fan with this of second fan */
 		vtx2 = mesh -> vrtstart[fan_no2];
 
-		for (cnt2 = 0; cnt2 < numvertices2; cnt2++) {
-			if (mesh -> vrtz[vtx1] == mesh -> vrtz[vtx2]) {
+		for (cnt2 = 0; cnt2 < numvertices2; cnt2++)
+        {
+			if (mesh -> vrtz[vtx1] == mesh -> vrtz[vtx2])
+            {
 				/* Look for vertex in distance... */
 				xdiff = mesh -> vrtx[vtx1] - mesh -> vrtx[vtx2];
 				ydiff = mesh -> vrty[vtx1] - mesh -> vrty[vtx2];
@@ -413,7 +410,8 @@ static int editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
 				if (xdiff < 0) xdiff = -xdiff;
 				if (ydiff < 0) ydiff = -ydiff;
 
-				if ((xdiff + ydiff) < 12.0) {
+				if ((xdiff + ydiff) < 12.0)
+                {
 					mesh -> vrtx[vtx2] = mesh -> vrtx[vtx1];
 					mesh -> vrty[vtx2] = mesh -> vrty[vtx1];
 					num_welded++;
@@ -425,7 +423,6 @@ static int editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
 	}
 	
 	return num_welded;
-
 }
 
 
@@ -442,7 +439,6 @@ static int editmainWeldXY(MESH_T *mesh, int fan_no1, int fan_no2)
  */
 static int editmainCreateNewMap(EDITMAIN_INFO_T *es, MESH_T *mesh)
 {
-
 	int x, y, fan;
 
 
@@ -451,10 +447,11 @@ static int editmainCreateNewMap(EDITMAIN_INFO_T *es, MESH_T *mesh)
 	mesh -> numfreevert = MAXTOTALMESHVERTICES - 10; /* Vertices left in memory           */
 
 	fan = 0;
-	for (y = 0; y < mesh -> tiles_y; y++) {
-
-		for (x = 0; x < mesh -> tiles_x; x++) {
-
+    
+	for (y = 0; y < mesh -> tiles_y; y++)
+    {
+		for (x = 0; x < mesh -> tiles_x; x++)
+        {
 			mesh -> fan[fan].type  = WALLMAKE_TOP;
 			mesh -> fan[fan].fx    = (MPDFX_WALL | MPDFX_IMPASS);
 			mesh -> fan[fan].tx_no = EDITMAIN_TOP_TILE;
@@ -466,13 +463,10 @@ static int editmainCreateNewMap(EDITMAIN_INFO_T *es, MESH_T *mesh)
 			}
 
 			fan++;
-
 		}
-
 	}
 
 	return 1;
-
 }
 
 /*
@@ -491,7 +485,6 @@ static int editmainCreateNewMap(EDITMAIN_INFO_T *es, MESH_T *mesh)
  */
 static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *wi)
 {
-
 	int adjacent[8];
 	int i;
 
@@ -501,14 +494,12 @@ static void editmainCreateWallMakeInfo(MESH_T *mesh, int fan, WALLMAKER_INFO_T *
 	wi[0].dir    = -1;
 
 	editmainGetAdjacent(mesh, fan, adjacent);
-	for (i = 0; i < 8; i++) {
-
+	for (i = 0; i < 8; i++)
+    {
 		wi[i + 1].fan_no = adjacent[i];
 		wi[i + 1].type   = mesh -> fan[adjacent[i]].type;
 		wi[i + 1].dir    = -1;
-
 	}  
-   
 }
 
 /*                                             
@@ -529,10 +520,10 @@ static void editmainTranslateWallMakeInfo(EDITMAIN_INFO_T *es, MESH_T *mesh, WAL
 	char type_no;
 
 
-	for (i = 0; i < num_tile; i++) {
-
-		if (wi[i].fan_no >= 0 && wi[i].dir >= 0) {
-
+	for (i = 0; i < num_tile; i++)
+    {
+		if (wi[i].fan_no >= 0 && wi[i].dir >= 0)
+        {
 			/* -- Do update in any case */
 			type_no = wi[i].type;
 
@@ -549,32 +540,32 @@ static void editmainTranslateWallMakeInfo(EDITMAIN_INFO_T *es, MESH_T *mesh, WAL
 								  es -> fan_dir);
 
 			editmainDoFanUpdate(mesh, es, wi[i].fan_no);
-
 		}
-
 	}
 
 	/* Weld the new generated walls to middle tile */
-	for (i = 1; i < num_tile; i++) {
+	for (i = 1; i < num_tile; i++)
+    {
 		editmainWeldXY(mesh, wi[0].fan_no,  wi[i].fan_no);
-
 	}
 
 	/* Weld the new generated walls with each other */
-    if (num_tile > 1) {
-	    for (i = 0; i < num_tile; i++) {
+    if (num_tile > 1)
+    {
+	    for (i = 0; i < num_tile; i++)
+        {
 		    i2 = i + 1;
-		    if (i2 > (num_tile - 1)) {
+		    if (i2 > (num_tile - 1))
+            {
 			    i2 = 0;
 		    }
 		    /* Only weld if both tiles are walls */
-		    if (wi[i].type > 1 && wi[i2].type > 1) {
+		    if (wi[i].type > 1 && wi[i2].type > 1)
+            {
 			    editmainWeldXY(mesh, wi[i].fan_no, wi[i2].fan_no);
 		    }
-
 	    }
     }
-
 }
 
 /*
@@ -587,12 +578,11 @@ static void editmainTranslateWallMakeInfo(EDITMAIN_INFO_T *es, MESH_T *mesh, WAL
  */
 static void editmainUpdateChosenFreeFan(EDITMAIN_INFO_T *es)
 {
-
 	int cnt, tx, ty;
 
 
-	if (es -> crect[0] > 0 && es -> crect[1] > 0) {
-
+	if (es -> crect[0] > 0 && es -> crect[1] > 0)
+    {
 		/* Get copy at original position */
 		memcpy(&es -> cm, &Mesh -> pcmd[es -> ft.type & 0x1F], sizeof(COMMAND_T));
 
@@ -604,15 +594,12 @@ static void editmainUpdateChosenFreeFan(EDITMAIN_INFO_T *es)
 		tx = es -> crect[0] * 128;
 		ty = es -> crect[1] * 128;
 
-		for (cnt = 0; cnt < es -> cm.numvertices; cnt++) {
-        
+		for (cnt = 0; cnt < es -> cm.numvertices; cnt++)
+        {
 			es -> cm.vtx[cnt].x += tx;
 			es -> cm.vtx[cnt].y += ty;
-            
 		}
-
 	}
-
 }
 
 /*
@@ -631,7 +618,6 @@ static void editmainUpdateChosenFreeFan(EDITMAIN_INFO_T *es)
  */
 static int editmainSetTile(EDITMAIN_INFO_T *es, int x, int y, int is_floor)
 {
-
 	WALLMAKER_INFO_T wi[12];            /* List of fans to create */
 	int num_wall;
     int fan_no;
@@ -640,64 +626,56 @@ static int editmainSetTile(EDITMAIN_INFO_T *es, int x, int y, int is_floor)
     /* First check if in boundary of map */
     if (x > 0 && y > 0
 		&& x < (Mesh -> tiles_x - 1)
-		&& y < (Mesh -> tiles_y - 1))  {
-
+		&& y < (Mesh -> tiles_y - 1))
+    {
         fan_no = (y * Mesh -> tiles_x) + x;
 
-		if (es -> edit_mode == EDITMAIN_MODE_MAP) {
-
+		if (es -> edit_mode == EDITMAIN_MODE_MAP)
+        {
             /* Get a list of fans surrounding this one */
             editmainCreateWallMakeInfo(Mesh, fan_no, wi);
 
             num_wall = wallmakeMakeTile(wi);
 
-            if (num_wall) {
-
+            if (num_wall)
+            {
                 /* Create tiles from WALLMAKER_INFO_T */
                 editmainTranslateWallMakeInfo(es, Mesh, wi, num_wall);
                 es -> cm.numvertices = 0;
-
             }
 
             return 1;
-
         }
-		else if (es -> edit_mode == EDITMAIN_MODE_FAN) {
-
-			if (is_floor) {
-
+		else if (es -> edit_mode == EDITMAIN_MODE_FAN)
+        {
+			if (is_floor)
+            {
 				editmainUpdateChosenFreeFan(es);
-
 			}
-			else {
-
+			else
+            {
 				memcpy(&es -> cm, &Mesh -> pcmd[es ->ft.type & 0x1F], sizeof(COMMAND_T));
 				editmainFanTypeRotate(es -> ft.type,
 									  &es -> cm,
 									  es -> fan_dir);
 				editmainDoFanUpdate(Mesh, es, fan_no);
-
 			}
 
             return 1;
-
 		}
-		else if (es -> edit_mode == EDITMAIN_MODE_FAN_FX) {
-
+		else if (es -> edit_mode == EDITMAIN_MODE_FAN_FX)
+        {
 			/* Do an update on the FX-Flags */
 			Mesh -> fan[fan_no].fx = es -> ft.fx;
             return 1;
-
 		}
-		else if (es -> edit_mode == EDITMAIN_MODE_FAN_TEX) {
-
+		else if (es -> edit_mode == EDITMAIN_MODE_FAN_TEX)
+        {
 			/* Change the texture */
 			Mesh -> fan[fan_no].tx_no    = es -> ft.tx_no;
 			Mesh -> fan[fan_no].tx_flags = es -> ft.tx_flags;
             return 1;
-
 		}
-
 	}
 
 	return 0;
@@ -722,17 +700,14 @@ static void editmainFanTypeName(MESH_T *mesh, EDITMAIN_INFO_T *es)
 
 		type_no = (char)(es -> ft.type & 0x1F);
 
-		if (mesh -> pcmd[type_no].name != 0) {
-
+		if (mesh -> pcmd[type_no].name != 0)
+        {
 			sprintf(es -> fan_name, "%s", mesh -> pcmd[type_no].name);
 			return;
-
 		}
-
 	}
 
 	es -> fan_name[0] = 0;
-
 }
 
 /*
@@ -750,16 +725,15 @@ static void editmainSetMinimapSize(MESH_T *mesh, EDITMAIN_INFO_T *es)
     /* --- Set size of minimap --- */
     es -> minimap_tw = 256 / mesh -> tiles_x;
 
-    if (es -> minimap_tw < 3) {
+    if (es -> minimap_tw < 3)
+    {
         /* At  least 3 pixels width for a 2D-Tile */
         es -> minimap_tw  = 3;
-
     }
 
     /* --- Now calc the whole size of minimap --- */
     es -> minimap_w = es -> minimap_tw * mesh -> tiles_x;
     es -> minimap_h = es -> minimap_tw * mesh -> tiles_y;
-
 }
 
 /*
@@ -773,47 +747,45 @@ static void editmainSetMinimapSize(MESH_T *mesh, EDITMAIN_INFO_T *es)
  */
 static void editmainBuildMap(EDITMAIN_INFO_T *es, int is_floor)
 {
-
     int x, y;
     WALLMAKER_INFO_T wi;
 
 
     /* ------- Set one or more fans, if in 'build'-mode --------- */
-    if (es -> crect[0] > 0 && es -> crect[1] > 0) {
-
+    if (es -> crect[0] > 0 && es -> crect[1] > 0)
+    {
         /* --- First step: Change fans to 'basic' wall / floor */
-        if (is_floor) {
+        if (is_floor)
+        {
             wi.type = WALLMAKE_FLOOR;
         }
-        else {
+        else
+        {
             wi.type = WALLMAKE_TOP;
         }
 
         wi.dir = WALLMAKE_NORTH;
 
         /* Change all chosen tiles to chosen type: Either 'bottom' or 'top'  */
-        for (y = es -> crect[1]; y <= es -> crect[3]; y++) {
-
-            for (x = es -> crect[0]; x <= es -> crect[2]; x++) {
+        for (y = es -> crect[1]; y <= es -> crect[3]; y++)
+        {
+            for (x = es -> crect[0]; x <= es -> crect[2]; x++)
+            {
 
                 wi.fan_no = (y * Mesh -> tiles_x) + x;
 
                 editmainTranslateWallMakeInfo(es, Mesh, &wi, 1);
-
             }
-
         }
 
         /* Second step: For each tile, adjust the adjacent tiles which are  */
         /*              not floor tiles                                     */
-        for (y = es -> crect[1]; y <= es -> crect[3]; y++) {
-
-            for (x = es -> crect[0]; x <= es -> crect[2]; x++) {
-
+        for (y = es -> crect[1]; y <= es -> crect[3]; y++)
+        {
+            for (x = es -> crect[0]; x <= es -> crect[2]; x++)
+            {
                 editmainSetTile(es, x, y, is_floor);
-
             }
-
         }
 
         /* Reset number of chosen tile(s), because it's done */
@@ -821,9 +793,7 @@ static void editmainBuildMap(EDITMAIN_INFO_T *es, int is_floor)
         es -> crect[1] = 0;
         es -> crect[2] = 0;
         es -> crect[3] = 0;
-
     }
-
 }
 
 /* ========================================================================== */
@@ -869,10 +839,8 @@ void editmainInit(EDITMAIN_INFO_T *es, int map_size)
  */
 void editmainExit(void)
 {
-
 	/* Free all data initialized by draw code */
 	editdrawFreeData();
-
 }
 
 /*
@@ -889,8 +857,8 @@ void editmainExit(void)
 int editmainMap(EDITMAIN_INFO_T *es, int command)
 {
 
-	switch(command) {
-
+	switch(command)
+    {
 		case EDITMAIN_DRAWMAP:
             egomapDraw(&es -> ft, &es -> cm, es -> crect);
 			return 1;
@@ -898,14 +866,13 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
 		case EDITMAIN_NEWMAP:
         case EDITMAIN_LOADMAP:
             Mesh = egomapLoad((char)(EDITMAIN_NEWMAP ? 0 : 1), es -> msg, es -> map_size);
-			if (Mesh) {
-
+			if (Mesh)
+            {
                 Mesh -> draw_mode = es -> draw_mode;
 
-                if (command == EDITMAIN_NEWMAP) {
-
+                if (command == EDITMAIN_NEWMAP)
+                {
                     editmainCreateNewMap(es, Mesh);
-
                 }
 
 				sdlgl3dInitVisiMap(Mesh -> tiles_x, Mesh -> tiles_y, 128.0);
@@ -919,7 +886,6 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
                 editmainSetMinimapSize(Mesh, es);
                 
 				return 1;
-
 			}
 			break;		
 
@@ -927,18 +893,17 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
             return egomapSave(es -> msg, EGOMAP_SAVE_MAP);			
 
 		case EDITMAIN_ROTFAN:
-			if (es -> edit_mode == EDITMAIN_MODE_FAN) {
+			if (es -> edit_mode == EDITMAIN_MODE_FAN)
+            {
 				/* Rotate the chosen fan type, if active edit mode */
 				es -> fan_dir++;
 				es -> fan_dir &= 0x03;
 				editmainUpdateChosenFreeFan(es);
 			}
 			return 1;
- 
 	}
 
 	return 0;
-
 }
 
 /*
@@ -951,16 +916,14 @@ int editmainMap(EDITMAIN_INFO_T *es, int command)
  *     es *:  Edit-State to handle
  *     which: Which flag to change
  *     flag:  Info about flag 
- *
  */
 char editmainToggleFlag(EDITMAIN_INFO_T *es, int which, unsigned char flag)
 {
-
 	char tex_no;
 	
 	
-	switch(which) {
-
+	switch(which)
+    {
 		case EDITMAIN_TOGGLE_DRAWMODE:
 			Mesh -> draw_mode ^= flag;                 /* Change it in actual map */
 			es -> draw_mode = Mesh -> draw_mode;   /* Show it in edit_state */

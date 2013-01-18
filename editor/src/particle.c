@@ -474,8 +474,14 @@ int particleLoadGlobals(void)
     spacing_xy += (float)miscRandVal(ppip->spacing_hrz_pair[1]) * 100.0 / 65535.0;
     spacing_z   = ppip->spacing_vrt_pair[0]; // Altitude : ( -100 to 100 )
     spacing_z  += (float)miscRandVal(ppip->spacing_vrt_pair[1]) * 100.0 / 65535.0;
+    // Velocity data
+    /*
+    vel.x = -turntocos[ turn ] * velocity;
+    vel.y = -turntosin[ turn ] * velocity;
+    vel.z += generate_irand_pair( ppip->vel_vrt_pair ) - ( ppip->vel_vrt_pair.rand / 2 );
+    */
     vel_xy      = ppip->vel_hrz_pair[0];     ///< Shot velocity : ( 0 to 100 )
-    vel_xy     += (float)miscRandVal(ppip->vel_hrz_pair[1]) * 100.0 / 65535.0;
+    vel_xy     += (float)miscRandVal(ppip->vel_hrz_pair[1]) * 100.0 / 65535.0;    
     vel_z       = ppip->vel_vrt_pair[0];     ///< Up velocity : ( -100 to 100 )
     vel_z      += (float)miscRandVal(ppip->vel_vrt_pair[1]) * 100.0 / 65535.0;
 
@@ -488,7 +494,8 @@ int particleLoadGlobals(void)
     new_obj.pos[2] += spacing_z;
     // General Velocity
     new_obj.speed  = vel_xy;
-    new_obj.zspeed = vel_z;
+    new_obj.zspeed = vel_z;  
+    
 
     // Set the turn-velocity
     ///< ( -100 to 100 ), ( 0, 1, 3, 7, 15, 31, 63... )
