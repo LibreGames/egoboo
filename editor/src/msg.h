@@ -119,5 +119,8 @@ char msgToString(MSG_T *pmsg, char *str_buf, int buf_len);
 // @todo: msgTipsGet(char *str_buf, int buf_len);
 // @todo: msgModuleLoad(char *fname); // Load messages for a module (overwrite old)
 // @todo: msgModuleGet(int msg_no, char *str_buf, int buf_len);
+// @todo: int msgObjectLoad(char *fname);       // returns number of first message in msg-list
+// @todo: int msgObjectAddOne(char *msg_str);   // Add a message to the object-messages buffer
+// @todo: msgObjectGet(int msg_no, char *str_buf, int buf_len);  // returns Message with this number       
 
 #endif  /* #define _MSG_H_ */

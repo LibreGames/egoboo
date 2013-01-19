@@ -35,7 +35,9 @@
 * DEFINES								                                   *
 *******************************************************************************/
 
-#define MSG_MAX 200
+#define MSG_MAX          200    // Game messages to send around
+#define MSG_GAMETIP_MAX  100    // Maximum number of gametips
+#define MSG_OBJECT_MAX  1000    // Number of 'personal' object messages
 
 /*******************************************************************************
 * DATA									                                   *
@@ -47,7 +49,6 @@ static MSG_T MsgList[MSG_MAX + 2];
 * CODE									                                   *
 *******************************************************************************/
 
-//--------------------------------------------------------------------------------------------
 /*
  * Name:
  *     msgExpand

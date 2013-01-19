@@ -251,6 +251,8 @@ typedef struct
     char waskilled;             ///< Fix for network
     char hitready;              ///< Was it just dropped?
     char iskursed;              ///< For boots and rings and stuff
+    char istoobig;              ///< For items
+    char isitem;  
 
     // "constant" properties
     char isshopitem;            ///< Spawned in a shop?
@@ -271,18 +273,13 @@ typedef struct
     // sound stuff
     int sound_index[SOUND_COUNT];   ///< All this characters sounds
     int loopedsound_channel;        ///< Which sound channel it is looping on, -1 is none.
-    // 
-    char istoobig;       // For items
-    char isitem;
-    // Other info
-    char *script;       /* Pointer on ai_script to use for this character, if any */
     
     /* Other info for graphics and movement is held in the general SDL3D_OBJECT */
     /* Additional help info for the editor */
     char *obj_name;     /* Pointer on the name of the object in CAP_T           */
     char *class_name;   /* @todo: Pointer on the classes name from CAP_T        */
     // AI-Stuff if the character is AI-Controlled
-    AI_STATE_T ai;              ///< ai data
+    AI_STATE_T ai;              ///< ai data and script to use
     
 } CHAR_T;
 

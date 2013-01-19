@@ -778,7 +778,7 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which, unsigned
 {
     
     char val_str[100];
-    char *pdata;
+    char *pdata, **ppchar;
     int value;
 
 
@@ -795,12 +795,13 @@ static void sdlglstrPrintValue(SDLGL_RECT *rect, void *data, int which, unsigned
     {
         case SDLGL_VAL_PSTR:
             // Pointer on a pchar
-            // pdata = (char *)(*pdata);
-            if (! pdata)
+            ppchar = (char *)((void *)pdata);            
+            if (! *ppchar)
             {
                 /* play it save */
                 return;
             }
+            pdata = *ppchar;
         case SDLGL_VAL_NONE:
         case SDLGL_VAL_STRING:
             /* Print given string */

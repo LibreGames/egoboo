@@ -96,55 +96,58 @@ static void editdrawSetTransColor(int col_no, char trans)
  */
 static void editdrawObject(int obj_no)
 {
-    int i, j;
     SDLGL3D_OBJECT *pobj;
-    float bbox[2][3];
+    int color;
 
     
     if(obj_no > 0)
     {
         // If object is valid at all        
         pobj = sdlgl3dGetObject(obj_no);
-        // @todo: Use OpenGL-Matrix for drawing
-        // Translate bounding box to position of
-        for(i = 0; i < 2; i++)
-        {
-            for(j = 0; j < 3; j++)
+        glPushMatrix();
+            // Move the object from origin to map position
+            glTranslatef(pobj -> pos[0], pobj -> pos[1], pobj -> pos[2]); 
+
+            // Set the color to yellow, if its an emitter
+            color = (pobj->type_no > 0) ? (pobj->type_no & 0x0F) : SDLGL_COL_YELLOW;
+            if(0 == color)
             {
-                bbox[i][j] = pobj -> bbox[i][j] + pobj -> pos[j];
-            }
-        }
-        // Now draw the cube of the bounding box
-        sdlglSetColor(pobj -> type_no & 0x0F);  
-        glBegin(GL_LINE_LOOP);
-            // Draw top of cube
-            glVertex3f(bbox[0][0], bbox[0][1], bbox[0][2]); // x, y, z
-            glVertex3f(bbox[1][0], bbox[0][1], bbox[0][2]); // x, y, z
-            glVertex3f(bbox[1][0], bbox[1][1], bbox[0][2]); // x, y, z
-            glVertex3f(bbox[0][0], bbox[1][1], bbox[0][2]); // x, y, z
-        glEnd();
-        glBegin(GL_LINE_LOOP);
-            // Draw bottom of cube
-            glVertex3f(bbox[0][0], bbox[0][1], bbox[1][2]);
-            glVertex3f(bbox[1][0], bbox[0][1], bbox[1][2]);
-            glVertex3f(bbox[1][0], bbox[1][1], bbox[1][2]);
-            glVertex3f(bbox[0][0], bbox[1][1], bbox[1][2]);
-        glEnd();
-        // Draw edges of cube
-        glBegin(GL_LINES);
-            // Edge one
-            glVertex3f(bbox[0][0], bbox[0][1], bbox[0][2]); /* x, y, z */    
-            glVertex3f(bbox[0][0], bbox[0][1], bbox[1][2]); /* x, y, z */    
-            // Edge two
-            glVertex3f(bbox[1][0], bbox[0][1], bbox[0][2]); /* x, y, z */ 
-            glVertex3f(bbox[1][0], bbox[0][1], bbox[1][2]); /* x, y, z */ 
-            // Edge three
-            glVertex3f(bbox[1][0], bbox[1][1], bbox[0][2]); /* x, y, z */  
-            glVertex3f(bbox[1][0], bbox[1][1], bbox[1][2]); /* x, y, z */  
-            // Edge four
-            glVertex3f(bbox[0][0], bbox[1][1], bbox[0][2]); /* x, y, z */   
-            glVertex3f(bbox[0][0], bbox[1][1], bbox[1][2]); /* x, y, z */   
-        glEnd();    
+                color = 1;
+            }        
+        
+            // Now draw the cube of the bounding box
+            sdlglSetColor(color);
+            glBegin(GL_LINE_LOOP);
+                // Draw top of cube
+                glVertex3f(pobj -> bbox[0][0], pobj -> bbox[0][1], pobj -> bbox[0][2]); // x, y, z
+                glVertex3f(pobj -> bbox[1][0], pobj -> bbox[0][1], pobj -> bbox[0][2]); // x, y, z
+                glVertex3f(pobj -> bbox[1][0], pobj -> bbox[1][1], pobj -> bbox[0][2]); // x, y, z
+                glVertex3f(pobj -> bbox[0][0], pobj -> bbox[1][1], pobj -> bbox[0][2]); // x, y, z
+            glEnd();
+            glBegin(GL_LINE_LOOP);
+                // Draw bottom of cube
+                glVertex3f(pobj -> bbox[0][0], pobj -> bbox[0][1], pobj -> bbox[1][2]);
+                glVertex3f(pobj -> bbox[1][0], pobj -> bbox[0][1], pobj -> bbox[1][2]);
+                glVertex3f(pobj -> bbox[1][0], pobj -> bbox[1][1], pobj -> bbox[1][2]);
+                glVertex3f(pobj -> bbox[0][0], pobj -> bbox[1][1], pobj -> bbox[1][2]);
+            glEnd();
+            // Draw edges of cube
+            glBegin(GL_LINES);
+                // Edge one
+                glVertex3f(pobj -> bbox[0][0], pobj -> bbox[0][1], pobj -> bbox[0][2]); /* x, y, z */    
+                glVertex3f(pobj -> bbox[0][0], pobj -> bbox[0][1], pobj -> bbox[1][2]); /* x, y, z */    
+                // Edge two
+                glVertex3f(pobj -> bbox[1][0], pobj -> bbox[0][1], pobj -> bbox[0][2]); /* x, y, z */ 
+                glVertex3f(pobj -> bbox[1][0], pobj -> bbox[0][1], pobj -> bbox[1][2]); /* x, y, z */ 
+                // Edge three
+                glVertex3f(pobj -> bbox[1][0], pobj -> bbox[1][1], pobj -> bbox[0][2]); /* x, y, z */  
+                glVertex3f(pobj -> bbox[1][0], pobj -> bbox[1][1], pobj -> bbox[1][2]); /* x, y, z */  
+                // Edge four
+                glVertex3f(pobj -> bbox[0][0], pobj -> bbox[1][1], pobj -> bbox[0][2]); /* x, y, z */   
+                glVertex3f(pobj -> bbox[0][0], pobj -> bbox[1][1], pobj -> bbox[1][2]); /* x, y, z */   
+            glEnd();
+        // restores the modelview matrix       
+        glPopMatrix();    
     }
 }
  

@@ -1,8 +1,8 @@
 /*******************************************************************************
-*  TEMPLATE.H                                                                  *
+*  AI.H                                                                        *
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
-*    - [...]                                                                   *
+*    - EGOBOO-Editor -- AI for 'Play it'-Part                                  *
 *      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
@@ -20,8 +20,8 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _TEMPLATE_H_
-#define _TEMPLATE_H_
+#ifndef _AI_H_
+#define _AI_H_
 
 /*******************************************************************************
 * INCLUDES								                                   *
@@ -65,4 +65,4 @@ typedef struct
 void aiStateInit(const int char_no, AI_STATE_T *ai_state, char rank);
 void aiMain(void);
 
-#endif  /* #define _TEMPLATE_H_ */
+#endif  /* #define _AI_H_ */

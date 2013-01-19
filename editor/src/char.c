@@ -291,12 +291,16 @@ typedef struct
     char       mdl_no;          /// < Display model for this character profile
     // particles for this profile
     int prt_list[CAP_MAX_PRT];
+    // @todo: Possible other solution 'flexible' number of particles, 
+    //        loaded in consecutive order
+    int prt_first_no;           // Number of first particle
+    int prt_cnt;                // Total number of particles
     
 } CAP_T;
 
 
 /*******************************************************************************
-* DATA									                                       *
+* DATA									                                   *
 *******************************************************************************/
 
 static TEAM_T TeamList[TEAM_MAX + 2];     
@@ -547,13 +551,20 @@ static int charNewChar(void)
             sdlglcfgEgobooValues(fname, CapVal, 0);
 
             // sprintf(fname, "%smessage.txt", fdir);
-            // sprintf(fname, "%snaming.txt", fdir);
-            // sprintf(fname, "%sscript.txt", fdir);
+            // @todo: msgObjectLoad(char *fname)
+
+            // @todo: Function for loading the naming data
+            // sprintf(fname, "%snaming.txt", fdir);            
+            // @todo: Load its particles
             // "part0.txt" - "part9.txt"
+            // pcap -> prt_first_no = particleLoad(fdir, &pcap -> prt_cnt)
+            //
             // sprintf(fname, "%stris.md2", fdir);
             // "icon0,bmp" - "icon4.bmp"
-            // "tris0.bmp" - "tris0.bmp"
+            // "tris0.bmp" - "tris4.bmp"
             // "sound0.wav" - "sound9.wav"
+            // @todo: Load its scripts
+            // sprintf(fname, "%sscript.txt", fdir);
         }
         else
         {
