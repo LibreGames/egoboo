@@ -210,9 +210,9 @@
 #define SDLGL3D_MOVE_DOWN	    0x06
 #define SDLGL3D_MOVE_TURNLEFT	0x07    /* Z-Rotation               */
 #define SDLGL3D_MOVE_TURNRIGHT	0x08
-#define SDLGL3D_MOVE_3D		    0x09	/* Along movement-vector, for 'auto-move' eg. particles */
-#define SDLGL3D_MOVE_ROTX	    0x0A
-#define SDLGL3D_MOVE_ROTY	    0x0B
+#define SDLGL3D_MOVE_ROTX	    0x09
+#define SDLGL3D_MOVE_ROTY	    0x0A
+#define SDLGL3D_MOVE_3D		    0x0B	/* Along direction-vector, for 'auto-move' eg. particles */
     /* Camera commands */
 #define SDLGL3D_MOVE_ZOOMIN	    0x0C
 #define SDLGL3D_MOVE_ZOOMOUT	0x0D
@@ -261,13 +261,16 @@ typedef struct
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
     int     type_no;        /* Number of type in 'obj_type'         */
-    int     frame_no;       /* Actual frame: For particles/anim     */
+    /* -------------------------- Animation info -------------------- */
+    int     base_frame,     // Number of first rame in animation
+            cur_frame,      // Actual used frame of animation
+            end_frame;      // Last frame of animation        
+    float   anim_speed;     // Seconds per frame
+    float   anim_clock;     // Is counted down or each frame
     float   life_time;      /* In seconds                           */
                             /* Is counted down each object-update   */
                             /* 0: Lives forever                     */
-    float   size;           /* Size of object 1.0: Default          */
-    int     user_flags;     /* Bits for the user to set and read    */    
-    char    team_no;        /* Belongs to this Egoboo-Team          */
+    float   size;           /* Size of object 1.0: Default          */                            
     /* ---------- Extent for collision detection -------------------- */
     float   bbox[2][3];     /* Bounding box for collision detection */
                             /* Extension of BB in x, y and z dir    */  
@@ -284,6 +287,7 @@ typedef struct
     float   turnvel;        /* Rotation velocity in degrees/second  */
     float   speed_modifier; /* Multiply speed with this one, if !0  */
     /* -------- Physics --------------------------------------------- */
+    char    collision_type; ///< > 0: Collided with something
     float   spdlimit;       ///< Speed limit
     float   dampen;         ///< Bounciness    
     float   weight;         // 0: Not affected by gravity/wind
@@ -296,7 +300,8 @@ typedef struct
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */
     char    visi_code;      /* Visibility ob object in frustum      */
-    int     tags;           /* User defined flags                   */
+    int     user_flags;     /* User defined flags                   */
+    int     t_foes;         /* Flags for team foes                  */
 
 } SDLGL3D_OBJECT;
 
@@ -356,7 +361,7 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
 void sdlgl3dMoveCamera(float secondspassed);
 
 /* ===== Object-Functions ==== */
-int  sdlgl3dCreateObject(SDLGL3D_OBJECT *info_obj);
+int  sdlgl3dCreateObject(SDLGL3D_OBJECT *info_obj, char move_cmd);
 void sdlgl3dDeleteObject(int obj_no);
 SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no);
 void sdlgl3dManageObject(int obj_no, char move_cmd, char set);

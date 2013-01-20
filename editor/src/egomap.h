@@ -100,6 +100,6 @@ void egomapDropChar(int char_no, float x, float y, float z, char dir);
 // @todo: egomapMoveAllObjects(void);   // Manages the linked lists on tile and invokes passages
 
 /* ============  Game functions ========== */
-void egomapHandlePassage(int psg_no, int action);
+void  egomapHandlePassage(int psg_no, int action);
 
 #endif  /* #define _EGOMAP_H_ */

@@ -56,8 +56,8 @@
 * TYPEDEFS								                                       *
 *******************************************************************************/
 
-typedef struct {
-
+typedef struct
+{
     int           x;
     int           y;
     unsigned char level;
@@ -649,27 +649,75 @@ static MESH_T Mesh;         /* Mesh of map                  */
 * CODE									                                       *
 *******************************************************************************/
 
-
 /* ============ OBJECT-FUNCTIONS ========== */
+
+/*
+ * Name:
+ *     egomapGetLevel
+ * Description:
+ *     This function returns the height of a point within a mesh fan, precisely
+ *     If 'waterwalk' is nonzero and the fan is watery, then the level returned is the
+ *     level of the water. 
+ * Input:
+ *     tile_no:   Object is on this tile
+ *     x, y:      Absolute position on map (not in tiles !) 
+ *     // waterwalk:   
+ * Output:
+ *     >= 0: Z-Position of tile 
+ */
+static float egomapGetLevel(int tile_no, float x, float y /* , char waterwalk */)
+{
+    int   vert_base;
+    float z0, z1, z2, z3;         // Height of each fan corner
+    float zdone;
+
+
+    vert_base = Mesh.vrtstart[tile_no];
+
+    z0 = Mesh.vrtz[vert_base + 0];
+    z1 = Mesh.vrtz[vert_base + 1];
+    z2 = Mesh.vrtz[vert_base + 2];
+    z3 = Mesh.vrtz[vert_base + 3];
+
+    zdone = (z0 + z1 + z2 + z3) / 4;
+
+    /* @todo: Use 'Water' from 'wawalite'
+    if (waterwalk && water.surface_level > zdone && water.is_water)
+    {
+        if(Mesh.fan[tile_no].fx & MAPFX_WATER)
+        {
+            zdone = water.surface_level;
+        }
+    }
+    */
+
+    return zdone;
+}
 
 /*
  * Name:
  *     egomapCreateObject
  * Description:
- *     Returns the number of an empty object slot, if available
+ *     Returns the number of an valid, initialized object on success
  * Input:
  *     obj_type: Type of object
  *     type_no:  Number in list of 'obj_type'
  *     x, y, z:  Position
  *     dir:      Direction
  * Output:
- *     > 0: Number of valid object slot
+ *     > 0: Number of valid object 
  */
 static int egomapCreateObject(char obj_type, int type_no, float x, float y, float z, char dir)
 {
     SDLGL3D_OBJECT info_obj;
     int tile_no;
 
+
+    // Save the number of the actual tile
+    tile_no = (int)(floor(y) * Mesh.tiles_x) + (int)(floor(x));
+    // Change to 'absolute' position
+    x *= EGOMAP_TILEDIV;
+    y *= EGOMAP_TILEDIV;
 
     // Clear the buffer
     memset(&info_obj, 0, sizeof(SDLGL3D_OBJECT));
@@ -678,9 +726,9 @@ static int egomapCreateObject(char obj_type, int type_no, float x, float y, floa
     info_obj.obj_type = obj_type;
     info_obj.type_no  = type_no;
     // Set position
-    info_obj.pos[SDLGL3D_X] = x * EGOMAP_TILEDIV;
-    info_obj.pos[SDLGL3D_Y] = y * EGOMAP_TILEDIV;
-    info_obj.pos[SDLGL3D_Z] = z;
+    info_obj.pos[SDLGL3D_X] = x;
+    info_obj.pos[SDLGL3D_Y] = y;
+    info_obj.pos[SDLGL3D_Z] = z + egomapGetLevel(tile_no, x, y);
 
     // Set the rotation around y = Direction of
     if(dir > 3)
@@ -701,9 +749,6 @@ static int egomapCreateObject(char obj_type, int type_no, float x, float y, floa
     info_obj.bbox[1][SDLGL3D_Z] = 0;
     // Now add the radius for 'shortcuts'
     info_obj.bradius = 40.0 * 1.414;
-    
-    // Save the number of the actual tile
-    tile_no = (int)(floor(y) * Mesh.tiles_x) + (int)(floor(x));
 
     // Save number of tile for checking if tile is changed by movement
     info_obj.old_tile = tile_no;
@@ -1309,9 +1354,12 @@ MESH_T *egomapLoad(char create, char *msg, int num_tile)
         /* Load map data from file */
         if (editfileMapMesh(&Mesh, msg, 0))
         {
+            // Complete the map info before loading of spawn points because
+            // spawning needs the Z-Values from the map
+            egomapCompleteMapData(&Mesh);
+
             /* --- Load additional data for this map --- */
             // First load the passages, because this are connected with spawned characters
-            /* Load the passages */
             psg = &Passages[1];
             editfilePassage(psg, EDITFILE_ACT_LOAD, EGOMAP_MAXPASSAGE);
             i = 0;
@@ -1342,8 +1390,6 @@ MESH_T *egomapLoad(char create, char *msg, int num_tile)
                 i++;
             }
 
-            /* --- Complete the map info --- */
-            egomapCompleteMapData(&Mesh);
             /* --- Success --- */
             return &Mesh;
         }
@@ -1919,3 +1965,5 @@ void egomapHandlePassage(int psg_no, int action)
         obj_list++;
     }
  }
+
+ 
