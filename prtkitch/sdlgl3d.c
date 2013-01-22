@@ -1077,18 +1077,41 @@ void sdlgl3dMoveObjects(float secondspassed)
 
     while(obj_list -> id)
     {
-        if (obj_list -> id > 0 && obj_list -> move_cmd)
+        if (obj_list -> id > 0)
         {
-            for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1)
+            if(obj_list -> move_cmd > 0)
             {
-                if (flags & obj_list -> move_cmd)
+                // If moving
+                for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1)
                 {
-                    /* Move command is active */
-                    sdlgl3dIMoveSingleObj(obj_list, move_cmd, secondspassed);
+                    if (flags & obj_list -> move_cmd)
+                    {
+                        /* Move command is active */
+                        sdlgl3dIMoveSingleObj(obj_list, move_cmd, secondspassed);
+                    }
                 }
-
             }
-        }
+
+            // Do animation data for 'non-moving' objects, too
+            if(obj_list->anim_speed > 0.0 && obj_list->base_frame < obj_list->end_frame)
+            {
+                // Animation is active and has more then one frame
+                obj_list->anim_clock -= secondspassed;
+
+                if(obj_list->anim_clock <= 0.0)
+                {
+                    obj_list->cur_frame++;
+                    // @todo: Check if animation looping, support random frames
+                    if(obj_list->cur_frame > obj_list->end_frame)
+                    {
+                        // Wrap around
+                        obj_list->cur_frame = obj_list->base_frame;
+                    }
+                    // Set next countdown
+                    obj_list->anim_clock += obj_list->anim_speed;
+                }
+            }
+        }   
 
         obj_list++;
     }
@@ -1196,7 +1219,6 @@ void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size)
         Camera[i].tile_size = tile_size;
 
     }
-
 }
 
 /*
@@ -1213,7 +1235,6 @@ void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size)
  */
 void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy)
 {
-
     SDLGL3D_OBJECT *obj;
     SDLGL3D_CAMERA *cam;
     SDLGL3D_V3D m_ray;

@@ -276,9 +276,13 @@ static SDL_Surface *sdlgltexLoadSurfaceA(const char *filename, unsigned int key,
             th = power_of_two(th);
         
         }
-
+    
         /* Create a blank SDL_Surface (of the smallest size to fit the image) & copy imageSurface into it*/
-        tempSurface = SDL_CreateRGBSurface( SDL_SWSURFACE, tw, th, 32, imageSurface->format->Rmask, imageSurface->format->Gmask, imageSurface->format->Bmask, imageSurface->format->Amask );
+        tempSurface = SDL_CreateRGBSurface( SDL_SWSURFACE, tw, th, 32, 
+                                            0x000000ff,
+                                            0x0000ff00,
+                                            0x00ff0000,
+                                            0xff000000 );
   
 
         SDL_BlitSurface( imageSurface, &imageSurface -> clip_rect,

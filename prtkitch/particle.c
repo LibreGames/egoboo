@@ -499,6 +499,8 @@ int particleLoadGlobals(void)
     new_obj.base_frame = ppip->image_base;
     new_obj.cur_frame  = ppip->image_base;
     new_obj.end_frame  = ppip->image_base + ppip->numframes - 1;
+    new_obj.anim_speed = (float)ppip->image_add[0] / 1000.0;    // Famerat in ticks/sec
+    new_obj.anim_clock = new_obj.anim_speed;                    // Set clock for countdown
     
     // count all the requests for this particle type
     ppip->request_count++;

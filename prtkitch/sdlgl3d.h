@@ -266,7 +266,7 @@ typedef struct
             cur_frame,      // Actual used frame of animation
             end_frame;      // Last frame of animation        
     float   anim_speed;     // Seconds per frame
-    float   anim_clock;     // Is counted down or each frame
+    float   anim_clock;     // Counted down or each frame 
     float   life_time;      /* In seconds                           */
                             /* Is counted down each object-update   */
                             /* 0: Lives forever                     */

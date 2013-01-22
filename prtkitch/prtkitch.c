@@ -161,7 +161,6 @@ static void prtkitchDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     glFrontFace(GL_CCW);                    /* Draws counterclockwise   */
 
     // @todo: Draw the 2D-Part of the screen
-
 }
 
 /*
@@ -206,7 +205,6 @@ static int prtkitchInputHandler(SDLGL_EVENT *event)
     } /* if (event -> code > 0) */
 
     return SDLGL_INPUT_OK;
-
 }
 
 /*
@@ -255,7 +253,7 @@ static void prtkitchStart(void)
     /* Init Camera +Z is up, -Y is near plane, X is left/right */
     sdlgl3dMoveToPosCamera(0, -50.0, 150.0, 300.0, 0);
 
-    // Emit one particle type 2
+    // Emit one particle type 2 (Animated fire)
     particleSpawn(PrtList[2], emitter_obj_no, 0, 0);
 
     /* -------- Initialize the dialog ------------------- */
@@ -286,12 +284,7 @@ static void prtkitchStart(void)
 #endif
 int main(int argc, char **argv)
 {
-
     /* Now read the configuration file and the global data, if available */
-
-    /* Now overwrite the win caption, because in this stage it displays */
-    /* the version number and the compile data.				            */
-
     sdlglInit(&SdlGlConfig);
 
     glPolygonMode(GL_FRONT, GL_FILL);
@@ -300,14 +293,14 @@ int main(int argc, char **argv)
     /* Set the input handlers and do other stuff before  */
     prtkitchStart();
     // Load the 3D-Resources
-    /// render3dInit();
+    render3dInit();
 
     /* Now enter the mainloop */
     sdlglExecute();
 
     /* Do any shutdown stuff. */
     // Clean up the 3D-Resources
-    /// render3dCleanup();
+    render3dCleanup();
     
     // SDL-GL
     sdlglShutdown();

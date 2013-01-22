@@ -60,9 +60,23 @@ void render3DParticle(SDLGL3D_OBJECT *pobj)
         { -8.0, -8.0, -8.0, +8.0, +8.0, +8.0, +8.0, -8.0 };
     
     int color;
+    float uv[8];
     float modelview[16];
     int i,j;
-
+    int x, y;
+    
+    // Get the UV-Indices into particle texture, Sub-Textures 16 by 16: 256 Textures
+    x = pobj->cur_frame % 16;
+    y = pobj->cur_frame / 16;
+    // Fill in the UV-Values
+    uv[0] = (float)x * 0.0625; 
+    uv[1] = (float)y * 0.0625; 
+    uv[2] = uv[0] + 0.0625; 
+    uv[3] = uv[1]; 
+    uv[4] = uv[0] + 0.0625; 
+    uv[5] = uv[1] + 0.0625; 
+    uv[6] = uv[0]; 
+    uv[7] = uv[1] + 0.0625; 
     
     // save the current modelview matrix
     glPushMatrix();
@@ -133,9 +147,13 @@ void render3DParticle(SDLGL3D_OBJECT *pobj)
         glPolygonMode(GL_FRONT, GL_FILL);
         glColor3f(1.0, 1.0, 1.0);   // Set white color
         glBegin(GL_TRIANGLE_FAN);
+            glTexCoord2fv(&uv[4]);
             glVertex2fv(&pextent[0]);
+            glTexCoord2fv(&uv[6]);
             glVertex2fv(&pextent[6]);
+            glTexCoord2fv(&uv[0]);
             glVertex2fv(&pextent[4]);
+            glTexCoord2fv(&uv[2]);
             glVertex2fv(&pextent[2]);
         glEnd();
     // restores the modelview matrix       
@@ -204,6 +222,13 @@ void render3dMain(void)
     // Get the pointer on the list of objects    
     obj_list = sdlgl3dGetObject(0);
     
+    // Enable texturing, bind texture for particles    
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, PartTex);
+    // do not display the completely transparent portion
+    glEnable(GL_ALPHA_TEST);            // ENABLE_BIT
+    glAlphaFunc(GL_GREATER, 0.0f);      // GL_COLOR_BUFFER_BIT
+    
     while(obj_list->id > 0)
     {
         if(obj_list->obj_type == EGOMAP_OBJ_PART)
@@ -212,7 +237,9 @@ void render3dMain(void)
         }
 
         obj_list++;
-    }   
+    }
+
+    glDisable(GL_TEXTURE_2D);    
     
     // End 3D-Mode
     sdlgl3dEnd();
