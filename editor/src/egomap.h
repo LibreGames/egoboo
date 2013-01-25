@@ -50,8 +50,6 @@
 #define EGOMAP_SWITCH 0x06
 
 
-#define EGOMAP_TILEDIV     128      /* Size of a tile       */
-
 /*******************************************************************************
 * TYPEDESF							                                           *
 *******************************************************************************/
@@ -64,6 +62,7 @@ typedef struct
     char psg_no;        /* > 0: Number of passage for this tile     */
     int  obj_no;        /* > 0: Number of first object on this tile */    
     char fx;            /* MPDFX_...                                */
+    char twist;         /* Twist for collision info                 */
     // @todo: Support position of bottom tiles
     int  tile_z;        /* Z-Position of tile for jump and bump     */    
     

@@ -25,6 +25,7 @@
 * INCLUDES					                                                *
 *******************************************************************************/
 
+#include <math.h>
 #include <memory.h> 
 
 // Egoboo headers
@@ -40,18 +41,16 @@
 #include "particle.h"   
 
 /*******************************************************************************
-* DEFINES								                                       *
+* DEFINES								                                   *
 *******************************************************************************/
 
-#define MAX_PIP_TYPE    1024
+#define PRT_STOP_BOUNCING   0.04         // To make particles stop bouncing
+#define MAX_PIP_TYPE       1024
 
 /*******************************************************************************
-* TYPEDEFS								                                       *
+* TYPEDEFS								                                   *
 *******************************************************************************/
 
-//--------------------------------------------------------------------------------------------
-// Particle template
-//--------------------------------------------------------------------------------------------
 
 /// The definition of a particle profile
 typedef struct
@@ -104,7 +103,7 @@ typedef struct
     int     bumpspawn_pip;          ///< Spawn type ( global )
 
     // continuous spawning
-    unsigned short contspawn_timer;         ///< Spawn timer
+    unsigned short contspawn_time;          ///< Spawn timer (Number of frames)
     unsigned char  contspawn_amount;        ///< Spawn amount
     unsigned short contspawn_facingadd;     ///< Spawn in circle
     int     contspawn_pip;                  ///< Spawn type ( local )
@@ -132,8 +131,6 @@ typedef struct
     char    allowpush;                    ///< Allow particle to push characters around    
 
     DYNALIGHT_INFO_T dynalight;           ///< Dynamic lighting info
-
-    PRT_ORI_T orientation;      ///< the way the particle orientation is calculated for display
     
     IDSZ_T exp_idsz[5];         /// Particle expansion IDSZs */
     // Data for internal use and statistics
@@ -142,15 +139,6 @@ typedef struct
     
 } PIP_T;
 
-typedef struct
-{
-    int    obj_no;          // prt_ref
-    SDLGL3D_OBJECT *pobj;   // SDLGL3D_OBJECT  prt_ptr
-
-    int   pip_ref;
-    PIP_T *pip_ptr;     // Pointer on its particle type
-
-} PRT_BUNDLE_T;
 
 /*******************************************************************************
 * DATA									                                       *
@@ -202,7 +190,7 @@ static SDLGLCFG_NAMEDVALUE PrtVal[] =
     { SDLGLCFG_VAL_INT, &PrtDesc.vel_hrz_pair[1] },
     { SDLGLCFG_VAL_INT, &PrtDesc.vel_vrt_pair[0] },
     { SDLGLCFG_VAL_INT, &PrtDesc.vel_vrt_pair[1] },
-    { SDLGLCFG_VAL_USHORT, &PrtDesc.contspawn_timer },
+    { SDLGLCFG_VAL_USHORT, &PrtDesc.contspawn_time },
     { SDLGLCFG_VAL_UCHAR, &PrtDesc.contspawn_amount },
     { SDLGLCFG_VAL_USHORT, &PrtDesc.contspawn_facingadd },
     { SDLGLCFG_VAL_INT, &PrtDesc.contspawn_pip },
@@ -266,6 +254,346 @@ static PIP_T PrtDescList[MAX_PIP_TYPE + 2];
 
 /*
  * Name:
+ *     particlePlaySound
+ * Description:
+ *     This function plays a sound effect for a particle
+ * Input:
+ *     sound:       Number of sound to play
+ */
+static void particlePlaySound(int sound)
+{
+    if(sound > 0)
+    {
+        // @todo: soundPlay(sound);
+        // sound_play_chunk(prt_get_pos_v_const( pprt ), pro_get_chunk( pprt->profile_ref, sound ))
+        // Sound-Functions check itself forthe validity of a sound
+        // @note: Check for 'g_wavelist[sound]'
+    }
+}
+
+/*
+ * Name:
+ *     particleSpawnOne
+ * Description:
+ *     Spawns a particle as an object. Returns the number of the object created on success. 
+ * Input:
+ *     pip_no:    Use this particle type for creation of object
+ *     pemit *:   Spawned by this object (Holds spawn position)
+ *     target_no: Particle has to follow the 'emitter_no' or targetting this one
+ *     modifier:  Precision of aiming 70..100%, strength multiplier for damage
+ *     zpos:      Modifier for zpos, if any 
+ * Output:
+ *     > 0: Number of the object created
+ */
+ static int particleSpawnOne(int pip_no, SDLGL3D_OBJECT *pemit, char target_no, char modifier, float zpos)
+ {  
+    int obj_no;
+    float size, velocity, offsetfacing, posz;
+    float facing, spacing_xy, spacing_z, vel_z;
+    SDLGL3D_OBJECT new_obj;
+    PIP_T *ppip;
+
+
+    // @port: Replaces: 'prt_config_do_init'
+    // @note: The particle is a pure object. The only difference is additional handling after movement
+    if(NULL == pemit || 0 == pip_no)
+    {
+        // no spawner, no type, no particle
+        return 0;
+    }       
+
+    // Get the particle profile
+    ppip = &PrtDescList[pip_no];
+        
+
+    // Copy all its data into the new object
+    memcpy(&new_obj, pemit, sizeof(SDLGL3D_OBJECT));
+
+    // New object is a particle of given type
+    new_obj.obj_type = EGOMAP_OBJ_PART;
+    new_obj.type_no  = pip_no;
+
+    /* Setup the objects values */
+    // Set character attachments ( pdata->chr_attach == 0 means none )
+    if(target_no)
+    {
+        // Set 'attached_to'
+        new_obj.target_obj = pemit->id;
+    }
+
+    // Initial spawning of this particle
+    // Correct loc_facing
+    ///< Facing rate     ( 0 to 1000 ) at movement
+    facing      = ppip->facing_pair[0] * 360.0 / 65535.0;      // Facing base: ( 0 to 65535 )
+    facing     += (float)miscRandVal(ppip->facing_pair[1]) * 360.0 / 65535.0;
+    spacing_xy  = ppip->spacing_hrz_pair[0]; // Spacing : ( 0 to 100 )
+    spacing_xy += (float)miscRandVal(ppip->spacing_hrz_pair[1]) * 100.0 / 65535.0;
+    spacing_z   = ppip->spacing_vrt_pair[0]; // Altitude : ( -100 to 100 )
+    spacing_z  += (float)miscRandVal(ppip->spacing_vrt_pair[1]) * 100.0 / 65535.0;
+    velocity   = ppip->vel_hrz_pair[0];     ///< Shot velocity : ( 0 to 100 )
+    velocity   += (float)miscRandVal(ppip->vel_hrz_pair[1]) * 100.0 / 65535.0;
+    vel_z       = ppip->vel_vrt_pair[0];     ///< Up velocity : ( -100 to 100 )
+    vel_z      += (float)miscRandVal(ppip->vel_vrt_pair[1]) * 100.0 / 65535.0;
+
+    // Targeting... 
+    posz = pemit->pos[2];
+    
+    if(ppip->flags & PRT_NEWTARGETONSPAWN)
+    {
+        if(ppip->flags & PRT_TARGETCASTER)
+        {
+            // Set the target to the caster
+            new_obj.target_obj = pemit->id;
+        }
+        else
+        {
+            // Find a target
+            // @todo: Correct 'facing' for dexterity...
+            /*
+                new_obj.target_obj = find_target(pos -> x,  pos -> y, facing,
+                                             ppip->targetangle, ppip->onlydamagefriendly, 0, team, characterorigin, oldtarget);
+                if(pprt->target[cnt] != 0 && ppip->homing == 0)
+                {
+                    facing = facing-glouseangle;
+                }
+             */
+            offsetfacing = 0;
+            /*
+             pchar = charGet(pemit->owner_no);
+            if(pchar->dex[CHARSTAT_ACT] < CHAR_PERFECTSTAT)
+                {
+                    // Correct facing for randomness
+                    offsetfacing = facing;  // Divided by PERFECTSTAT
+                    offsetfacing /= (CHAR_PERFECTSTAT - pchar->dex[CHARSTAT_ACT]);
+                }
+                if(ppip->zaimspd != 0 && new_obj.target_obj > 0)
+                {
+                    // These aren't velocities...  This is to do aiming on the Z axis
+                    if(velocity > 0)
+                    {
+                        posz = pemit->pos[2];
+                        
+                        ptarget = sdlgl3dGetObject(new_obj.target_obj);
+                        vel[0] = ptarget.pos[0] - pemit->pos[0];
+                        vel[1] = ptarget.pos[1] - pemit->pos[1];
+                        Vel.x = CharPos[pprt->target[cnt]].pos.x - pos -> x;
+                        Vel.y = CharPos[pprt->target[cnt]].pos.y - pos -> y;
+                        tvel = sqrt(vel[0]*vel[0]+vel[1]*vel[1])/velocity;  // This is the number of steps...
+                        if(tvel > 0)
+                        {
+                            vel[2] = (ptarget->pos[2]+(ptarget->bradius)-vel[2])/tvel;  // This is the zvel alteration
+                            if(vel[2] < -(ppip->zaimspd / 2)) 
+                            {
+                                posz = -(ppip->zaimspd / 2);
+                            }
+                            if(vel[2] > ppip->zaimspd)
+                            {
+                                posz = ppip->zaimspd;
+                            }
+                        }
+                    }
+                }
+            */
+        }
+        // Does it go away?
+        if(new_obj.target_obj == 0 && (ppip->flags & PRT_NEEDTARGET))
+        {
+            return 0;
+        }
+        // Start on top of target
+        if(new_obj.target_obj != 0 && (ppip->flags & PRT_STARTONTARGET))
+        {
+            new_obj.pos[0] = pemit->pos[0];
+            new_obj.pos[1] = pemit->pos[1];
+        }    
+    }
+    else
+    {
+        offsetfacing = pemit->rot[2];
+        offsetfacing += (float)miscRandVal(ppip->facing_pair[1]) * 180.0 / 65535.0;
+    }
+    
+    // @todo: Correct 'facing' for dexterity...
+    facing += offsetfacing;
+    new_obj.rot[2] += facing;
+        
+    // Adjust position in the original objects direction
+    new_obj.pos[0] += new_obj.dir[0] * spacing_xy;
+    new_obj.pos[1] += new_obj.dir[1] * spacing_xy;
+    
+    // Adjust position on Z-Axis
+    new_obj.pos[2] += spacing_z;
+        
+    if(zpos != 0.0)
+    {
+        new_obj.pos[2] = zpos;
+    }
+    else if(posz != 0)
+    {
+        new_obj.pos[2] = posz;
+    }
+    
+    // General Velocity
+    new_obj.speed  = velocity;
+    new_obj.zspeed = vel_z;
+
+    // Set the turn-velocity
+    ///< ( -100 to 100 ), ( 0, 1, 3, 7, 15, 31, 63... )
+    new_obj.turnvel = (float)ppip->facingadd * 360.0 / 65535.0;
+
+    // @todo: Set 'new_obj.user_flags'
+
+    // Set the bounding box
+    size = (float)ppip->size_base * 20.0 / 65535.0; // half the size
+    new_obj.bradius = size;
+    new_obj.bbox[0][0] = -size;
+    new_obj.bbox[0][1] = -size;
+    new_obj.bbox[0][2] = -(ppip->bump_height / 2);
+    new_obj.bbox[1][0] = +size;
+    new_obj.bbox[1][1] = +size;
+    new_obj.bbox[1][2] = +(ppip->bump_height / 2);
+
+    // Info about animation, First / Current and Last frame
+    new_obj.base_frame = ppip->image_base;
+    new_obj.cur_frame  = ppip->image_base;
+    new_obj.end_frame  = ppip->image_base + ppip->numframes - 1;
+    new_obj.anim_speed = (float)ppip->image_add[0] / 1000.0;    // Framerat in ticks/sec
+    new_obj.anim_clock = new_obj.anim_speed;                    // Set clock for countdown
+    new_obj.spawn_time = (float)ppip->contspawn_time / 50.0;    // 50 Frames / Second
+    new_obj.life_time  = (float)ppip->time / 50.0;              // Life in frames (max. 20 Sec.)
+    
+    if((ppip->flags & PRT_END_LASTFRAME) && ppip->numframes > 1)
+    {
+        if(ppip->time == 0)
+        {
+            // Part time is set to 1 cycle
+            new_obj.life_time = 0.02f * ppip->numframes;
+        }
+        else
+        {
+            // Part time is used to give number of cycles
+            new_obj.life_time = 0.02f * (float)ppip->time * ppip->numframes;
+        }
+    }
+
+    // Other general info-flags
+    new_obj.tags =  ppip->flags;     // PRT_...
+
+    // count all the requests for this particle type
+    ppip->request_count++;
+
+    // Create new object with 'auto-movement'
+    obj_no = sdlgl3dCreateObject(&new_obj, SDLGL3D_MOVE_3D);
+    
+    if(obj_no > 0)
+    {
+        // count all the successful spawns of this particle
+        ppip->create_count++;
+    }
+    
+    // return the number of the object, if any is created
+    return obj_no;
+}
+
+/*
+ * Name:
+ *     particleDoEndSpawn
+ * Description:
+ *     Does all of the end of life care for the particle
+ * Input:
+ *     pprt *: This particle-object
+ *     ppip *: This is its profile
+ * Output:
+ *     > 0: Number of the object created
+ */
+static int particleDoEndSpawn(SDLGL3D_OBJECT *pprt, PIP_T *ppip)
+{
+    int tnc, obj_no;
+    int endspawn_count;
+    float facing;
+
+    
+    endspawn_count = 0;
+    
+    if (!pprt->type_no) return endspawn_count;    
+
+    // Spawn new particles if time for old one is up
+    if (ppip->end_spawn_amount > 0 && ppip->end_spawn_pip > -1 )
+    {
+        facing = 0.0;
+        
+        // All object data is copied from 'parent' to 'child'
+        for (tnc = 0; tnc < ppip->end_spawn_amount; tnc++)
+        {
+            facing += ppip->end_spawn_facingadd;
+            
+            // we have determined the absolute pip reference when the particle was spawned
+            // so, set the profile reference to INVALID_PRO_REF, so that the
+            // value of ppip->endspawn_lpip will be used directly
+            obj_no = particleSpawnOne(ppip->end_spawn_pip, pprt, 0, 100, 0);
+
+            if (obj_no > 0)
+            {
+                endspawn_count++;
+            }
+            
+            // @todo: Add facing angle to object
+        }
+
+        // we have already spawned these particles, so set this amount to
+        // zero in case we are not actually calling 'particleEndInGame()'
+        // this time around.        
+    }
+
+    return endspawn_count;
+}
+
+/*
+ * Name:
+ *     particleEndInGame
+ * Description:
+ *     This function causes the game to end a particle and mark it as a ghost.
+ *     A 'ghost' has to be killed by the game itself
+ * Input:
+ *     obj_no:  Do update on this object
+ *     hit_env: Has hit environement ENV_WALL or ENV_BOTTOM or 0 
+ *     // @todo: enviro *: Pointer on description of environment for physics 
+ * Output:
+ *     0: Particle is killed by movement,
+ *        // Caller should detach its object from map and destroy it  
+ */
+static char particleEndInGame(SDLGL3D_OBJECT *pprt, PIP_T *ppip)
+{
+    // the object is waiting to be killed, so
+    // do all of the end of life care for the particle
+    particleDoEndSpawn(pprt, ppip);
+
+    /*
+    if ( SPAWNNOCHARACTER != pprt->endspawn_characterstate )
+    {
+        child = spawn_one_character( prt_get_pos_v_const( pprt ), pprt->profile_ref, pprt->team, 0, pprt->facing, NULL, INVALID_CHR_REF );
+        if ( DEFINED_CHR( child ) )
+        {
+            chr_t * pchild = ChrList_get_ptr( child );
+
+            chr_set_ai_state( pchild , pprt->endspawn_characterstate );
+            pchild->ai.owner = pprt->owner_ref;
+        }
+    }
+    */
+
+    if(NULL != ppip)
+    {
+        particlePlaySound(ppip->end_sound);
+    }
+        
+    // Object is killed by game
+    return 0;
+}
+
+
+/*
+ * Name:
  *     particleLoadOne
  * Description:
  *     Loads one particle profile
@@ -310,6 +638,8 @@ static int particleLoadOne(char *filename, int pip_no)
 
     return 1;
 }
+
+
 
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
@@ -418,11 +748,7 @@ int particleLoadGlobals(void)
  */
  int particleSpawn(int pip_no, int emitter_no, char attached_to, char modifier)
  {  
-    float size;
-    float facing, spacing_xy, spacing_z, vel_xy, vel_z;
-    int obj_no;
-    SDLGL3D_OBJECT new_obj, *orig_obj;
-    PIP_T *ppip;
+    SDLGL3D_OBJECT *orig_obj;
 
 
     // @port: Replaces: 'prt_config_do_init'
@@ -433,89 +759,11 @@ int particleLoadGlobals(void)
         return 0;
     }
 
-    // Get the particle profile
-    ppip = &PrtDescList[pip_no];
-
     // Get the spawning object
     orig_obj = sdlgl3dGetObject(emitter_no);
-
-    // Copy all its data into the new object
-    memcpy(&new_obj, orig_obj, sizeof(SDLGL3D_OBJECT));
-
-    // New object is a particle of given type
-    new_obj.obj_type = EGOMAP_OBJ_PART;
-    new_obj.type_no  = pip_no;
-
-    /* Setup the objects values */
-    // Set character attachments ( pdata->chr_attach == 0 means none )
-    if(attached_to)
-    {
-        // Set 'attached_to'
-        new_obj.follow_obj = emitter_no;
-    }
-
-    // Initial spawning of this particle
-    // Correct loc_facing
-    ///< Facing rate     ( 0 to 1000 ) at movement
-    facing      = ppip->facing_pair[0];      // Facing base: ( 0 to 65535 )
-    facing     += (float)miscRandVal(ppip->facing_pair[1]) * 360.0 / 65535.0;
-    spacing_xy  = ppip->spacing_hrz_pair[0]; // Spacing : ( 0 to 100 )
-    spacing_xy += (float)miscRandVal(ppip->spacing_hrz_pair[1]) * 100.0 / 65535.0;
-    spacing_z   = ppip->spacing_vrt_pair[0]; // Altitude : ( -100 to 100 )
-    spacing_z  += (float)miscRandVal(ppip->spacing_vrt_pair[1]) * 100.0 / 65535.0;
-    vel_xy      = ppip->vel_hrz_pair[0];     ///< Shot velocity : ( 0 to 100 )
-    vel_xy     += (float)miscRandVal(ppip->vel_hrz_pair[1]) * 100.0 / 65535.0;
-    vel_z       = ppip->vel_vrt_pair[0];     ///< Up velocity : ( -100 to 100 )
-    vel_z      += (float)miscRandVal(ppip->vel_vrt_pair[1]) * 100.0 / 65535.0;
-
-    // @todo: Correct 'facing' for dexterity...
-    new_obj.rot[2] = facing;
-    // Adjust position in the original objects direction
-    new_obj.pos[0] += new_obj.dir[0] * spacing_xy;
-    new_obj.pos[1] += new_obj.dir[1] * spacing_xy;
-    // Adjust position on Z-Axis
-    new_obj.pos[2] += spacing_z;
-    // General Velocity
-    new_obj.speed  = vel_xy;
-    new_obj.zspeed = vel_z;
-
-    // Set the turn-velocity
-    ///< ( -100 to 100 ), ( 0, 1, 3, 7, 15, 31, 63... )
-    new_obj.turnvel = (float)ppip->facingadd * 360.0 / 65535.0;
-
-    // @todo: Set 'new_obj.user_flags'
-
-    // Set the bounding box
-    size = (float)ppip->size_base * 20.0 / 65535.0; // half the size
-    new_obj.bradius = size;
-    new_obj.bbox[0][0] = -size;
-    new_obj.bbox[0][1] = -size;
-    new_obj.bbox[0][2] = -size;
-    new_obj.bbox[1][0] = +size;
-    new_obj.bbox[1][1] = +size;
-    new_obj.bbox[1][2] = +size;
-
-    // Info about animation, First / Current and Last frame
-    new_obj.base_frame = ppip->image_base;
-    new_obj.cur_frame  = ppip->image_base;
-    new_obj.end_frame  = ppip->image_base + ppip->numframes - 1;
-    new_obj.anim_speed = (float)ppip->image_add[0] / 1000.0;    // Famerat in ticks/sec
-    new_obj.anim_clock = new_obj.anim_speed;                    // Set clock for countdown
-    
-    // count all the requests for this particle type
-    ppip->request_count++;
-
-    // Create new object with 'auto-movement'
-    obj_no = sdlgl3dCreateObject(&new_obj, SDLGL3D_MOVE_3D);
-    
-    if(obj_no > 0)
-    {
-        // count all the successful spawns of this particle
-        ppip->create_count++;
-    }
-    
+     
     // return the number of the object, if any is created
-    return obj_no;
+    return particleSpawnOne(pip_no, orig_obj, attached_to, modifier, 0.0);
  }
 
 /* ============ Particle functions ========== */
@@ -523,31 +771,199 @@ int particleLoadGlobals(void)
 
 /*
  * Name:
- *     particleUpdateOne
- * Description:
- *     Does the addtional update needed on a particle object. 
- *     It'ss assumed that the particle has not collided for damage  
+ *     particleOnMove
+ * Description:   
+ *     Does the additional update needed on a particle object while moving. 
+ *     It'ss assumed that the particle has not collided for damage.
+ *     Animation is done by the general object movement code  
  * Input:
- *     obj_no:  Do update on this object
- *     hit_env: Has hit environement EGOMAP_HIT_WALL or EGOMAP_HIT_BOTTOM or 0
- *     // @todo: enviro *: Pointer on description of environment for physics
+ *     pobj *:    Do update on this object
+ *     penviro *: Info about the local environment 
  * Output:
- *     0: Particle is killed by movement,
- *        // Caller should detach its object from map and destroy it
+ *     0: Destroyed by movement, particle has to be destroyed by caller
  */
-char particleUpdateOne(int obj_no, int hit_env /* @todo: , MAPENV_T *penviro */)
-{
-    SDLGL3D_OBJECT *pobj;
-    PIP_T          *ppip;
+char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
+{    
+    SDLGL3D_OBJECT *ptarget;
+    PIP_T *ppip;
+    float facing;
+    int tnc, part_obj;
+    
+    
+    ppip = &PrtDescList[pobj -> obj_type];  // Particle type;
+    
+    pobj->rot[2] = ppip->rotate_add;        // Rotates around Z-Axis
+    pobj->size   += ppip->size_add;         // Change size
+    
+    // Change dyna light values
+    pobj->dynalight_level   += ppip->dynalight.level_add;
+    pobj->dynalight_falloff += ppip->dynalight.falloff_add;
 
+    // Make it sit on the floor...  Shift is there to correct for sprite size
+    // level = prtlevel[cnt]+(prtsize[cnt]>>9);    
+    
+    // Do homing
+    if((pobj->tags & PRT_HOMING) && pobj->target_obj != 0)
+    {
+        ptarget = sdlgl3dGetObject(pobj->target_obj);
+        
+        if (!(pobj->tags & PRT_ATTACHEDTO))
+        {
+            pobj->pos[0] += ((ptarget->pos[0] - pobj->pos[0]) * ppip->homingaccel) * ppip->homingfriction;
+            pobj->pos[1] += ((ptarget->pos[1] - pobj->pos[1]) * ppip->homingaccel) * ppip->homingfriction;
+            pobj->pos[2] += ((ptarget->pos[2] + (ptarget->bbox[1][2] / 2) - pobj->pos[2]) * ppip->homingaccel);
+        }
+        
+        if (pobj->tags & PRT_ROTATETOFACE)
+        {
+            // Turn to face target
+            facing = atan2(ptarget->pos[1] - pobj->pos[1], ptarget->pos[0] - pobj->pos[0]);
+            facing += 180;
+            pobj->rot[2] = facing;
+        }
+    }
+    
+    // Do speed limit on Z ??
+    if (pobj->dir[2] < -ppip->spdlimit)
+    {
+        pobj->dir[2] = -ppip->spdlimit;
+    }
+    
+    // Spawn new particles if continually spawning
+    if(ppip->contspawn_amount > 0)
+    {
+        // Clock is counted down by general object movement code
+        if(pobj->spawn_time < 0)
+        {
+            pobj->spawn_time += (float)ppip->contspawn_time / 50.0;
+            if(pobj->spawn_time <= 0.0)
+            {   
+                // Spawn at next call
+                pobj->spawn_time += (float)ppip->contspawn_time / 50.0;
+            }   
+            
+            facing = pobj->rot[2];
+            tnc = 0;
+            
+            while(tnc < ppip->contspawn_amount)
+            {   
+                part_obj = particleSpawnOne(ppip->contspawn_pip, pobj, 0, 0, 0);
 
-    pobj = sdlgl3dGetObject(obj_no);
+                if(ppip->facingadd != 0 && part_obj != 0)
+                {
+                    ptarget = sdlgl3dGetObject(part_obj);
+                    // Hack to fix velocity
+                    ptarget->speed += pobj->speed;
+                }
+
+                facing += ppip->contspawn_facingadd;
+                tnc++;
+            }
+        }
+    }
+    
+    // Check underwater
+    if (pobj->pos[2] < penviro -> waterdouselevel && (penviro->fx & MPDFX_WATER) && (ppip->flags & PRT_END_WATER))
+    {
+        if(penviro -> water_surface_level == 0.0)
+        {
+            // Mark 'zpos' as valid for override
+            penviro -> water_surface_level = 0.01;
+        }
+        
+        particleSpawnOne(PIP_RIPPLE, pobj, 0, 0, penviro -> water_surface_level);
+
+        // Check for disaffirming character
+        if((pobj->tags & PRT_ATTACHEDTO) && pobj->target_obj != 0)
+        {
+            // @todo: Disaffirm the whole character
+            // disaffirm_attached_particles(pobj->target_obj);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    
+    
+    return 1;
+}
+
+/*
+ * Name:
+ *     particleOnBump
+ * Description:
+ *     Does the action needed if a particle collided with something
+ * Input:
+ *     pobj *:    Handle this object
+ *     reason:    Of collision EGOMAP_HIT_...     
+ *     penviro *: Pointer on description of environment for physics 
+ * Output:
+ *     0: Particle is killed by movement, caller should detach it from linked list
+ */
+char particleOnBump(SDLGL3D_OBJECT *pobj, int reason, MAPENV_T *penviro)
+{   
+    PIP_T *ppip;
+    
+    
     ppip = &PrtDescList[pobj -> obj_type]; // Particle type;
+    
+    
+    // handle the sound and collision
+    
+    if(reason == EGOMAP_HIT_WALL)
+    {
+        // Play the sound for hitting the wall [FSND]
+        particlePlaySound(ppip->end_sound_wall);
+        // handle the collision
+        if(pobj->tags & (PRT_END_WALL | PRT_END_BUMP))
+        {
+            return particleEndInGame(pobj, ppip);
+        }
+        else
+        {
+            // @todo: Only if not attached to character
+            // @todo: Take collision angle into account
+            /* Change direction */
+            pobj->dir[0] = -pobj->dir[0];
+            pobj->dir[1] = -pobj->dir[1];
+            pobj->dir[2] = -pobj->dir[2];
+            pobj->speed *= ppip->dampen;
 
-
-    /* @todo: move_one_particle(pobj, ppip); */
-
+            // Gravity is done by general object moving code
+            // pobj->dir[2] += penviro->gravity;
+        }
+    }
+    else if(reason == EGOMAP_HIT_FLOOR)
+    {
+        pobj->speed *= penviro->noslipfriction;
+        
+        if (pobj->dir[2] < 0)
+        { 
+            /* If heading towards bottom */
+            if (pobj->speed > -PRT_STOP_BOUNCING)
+            {
+                // Make it not bounce
+                pobj->speed = 0.0;
+            }
+            else
+            {
+                // Make it bounce
+                pobj->dir[2] = -pobj->dir[2];
+                pobj->speed *= ppip->dampen;                
+            }
+        }
+        
+        // Play the sound for hitting the floor [FSND]
+        particlePlaySound(ppip->end_sound_floor);
+        // handle the collision
+        if(pobj->tags & PRT_END_GROUND)
+        {
+            return particleEndInGame(pobj, ppip);
+        }
+    }
 
     return 1;   // Particle is still alive, keep object
 }
+
 

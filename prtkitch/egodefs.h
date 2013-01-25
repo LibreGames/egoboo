@@ -45,16 +45,19 @@
 #define EGOMAP_OBJ_PART   0x03      /* Particles (can be transparent)   */
 
 // Types of environment collisions (object with map)
-#define EGOMAP_HIT_NONE   0x00      // No collision detected  
-#define EGOMAP_HIT_WALL   0x01      // Collision with wall detected
-#define EGOMAP_HIT_BOTTOM 0x02      // Collision with bottom detected
-#define EGOMAP_HIT_OTHER  0x03      // Collsiion with other object detected
+#define EGOMAP_HIT_NONE  0x00      // No collision detected
+#define EGOMAP_HIT_WALL  0x01      // Collision with wall detected
+#define EGOMAP_HIT_FLOOR 0x02      // Collision with bottom detected
+#define EGOMAP_HIT_OTHER 0x03      // Collsiion with other object detected
+
+#define EGOMAP_TILE_SIZE 128
 
 /// Everything that is necessary to compute an objects interaction with the environment
 typedef struct
 {
     // floor stuff
-    unsigned char  twist;   // ego_mesh_get_twist( PMesh, itile );           
+    unsigned char twist;    // ego_mesh_get_twist( PMesh, itile );
+    unsigned char fx;       // ego_mesh_get_fx()
     float  floor_level;     ///< Height of tile
                             // ego_mesh_get_level( PMesh, loc_obj->pos.x, loc_obj->pos.y );
     float  level;           ///< Height of a tile or a platform
@@ -70,6 +73,7 @@ typedef struct
     char is_slippy, // !penviro->is_watery && ( 0 != ego_mesh_test_fx( PMesh, loc_obj->onwhichgrid, MAPFX_SLIPPY ) );
          is_watery; // object -> act_tile ==> MAPFX_WATER 'onwhichgrid', not set if !water.is_water
                     // water.is_water && penviro->inwater;
+    float  noslipfriction;      // @todo: Handle this by map
     float  air_friction,
            ice_friction;
     float  fluid_friction_hrz, 
@@ -80,7 +84,8 @@ typedef struct
     // misc states
     char   hit_env;             // 'hit_env: Hit wall or bottom from collision code or 'heavy' object
     float  water_surface_level; // @new 
-    char   inwater;
+    char   inwater; 
+    float  waterdouselevel;     // @new      
     float  acc[3];
 
 } MAPENV_T;

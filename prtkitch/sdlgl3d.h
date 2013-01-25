@@ -20,8 +20,8 @@
 *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 *******************************************************************************/
 
-#ifndef _SDLGL_3D_H_
-#define _SDLGL_3D_H_
+#ifndef _SDLGL3D_H_
+#define _SDLGL3D_H_
 
 /*******************************************************************************
 * DEFINES 							                                           *
@@ -261,12 +261,15 @@ typedef struct
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
     int     type_no;        /* Number of type in 'obj_type'         */
+                            /* Number of model for character        */
+    int     owner_no;       // Owner, if its a character
     /* -------------------------- Animation info -------------------- */
     int     base_frame,     // Number of first rame in animation
             cur_frame,      // Actual used frame of animation
             end_frame;      // Last frame of animation        
     float   anim_speed;     // Seconds per frame
     float   anim_clock;     // Counted down or each frame 
+    float   spawn_time;     /* For emitters                         */
     float   life_time;      /* In seconds                           */
                             /* Is counted down each object-update   */
                             /* 0: Lives forever                     */
@@ -292,15 +295,18 @@ typedef struct
     float   dampen;         ///< Bounciness    
     float   weight;         // 0: Not affected by gravity/wind
                             // > 0: Falls to bottom (-Z)
-                            // < 0: ascend (+Z) like hot particles        
+                            // < 0: ascend (+Z) like hot particles
+    // Lighting
+    float dynalight_level;
+    float dynalight_falloff;
     /* Link for object list in collision - detection                  */
-    int     follow_obj;     /* Follow this object, don't move self  */
-                            /* except if 'homing'                   */
+    int     target_obj;     /* Follow this object, don't move self  */
+                            /* 'Homing' towards this, track this    */
     int     next_obj;       /* > 0: Number of next object on tile   */
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */
     char    visi_code;      /* Visibility ob object in frustum      */
-    int     user_flags;     /* User defined flags                   */
+    int     tags;           /* User defined flags                   */
     int     t_foes;         /* Flags for team foes                  */
 
 } SDLGL3D_OBJECT;
@@ -342,7 +348,17 @@ typedef struct
 
 } SDLGL3D_VISITILE;
 
-// @todo: Handle global physics with 
+// @todo: Handle global physics with this one
+typedef struct
+{
+    float hillslide;
+    float slippyfriction;
+    float airfriction;
+    float waterfriction;
+    float noslipfriction;
+    float gravity;
+
+} SDLGL3D_PHYSICS_T;
 
 /*******************************************************************************
 * CODE                                                                         *
@@ -373,4 +389,4 @@ void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);
 void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy);
 SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile);
 
-#endif  /* _SDLGL_3D_H_ */
+#endif  /* _SDLGL3D_H_ */

@@ -45,10 +45,13 @@
 #define EGOMAP_OBJ_PART   0x03      /* Particles (can be transparent)   */
 
 // Types of environment collisions (object with map)
-#define EGOMAP_HIT_NONE   0x00      // No collision detected  
-#define EGOMAP_HIT_WALL   0x01      // Collision with wall detected
-#define EGOMAP_HIT_BOTTOM 0x02      // Collision with bottom detected
-#define EGOMAP_HIT_OTHER  0x03      // Collsiion with other object detected
+#define EGOMAP_HIT_NONE  0x00      // No collision detected  
+#define EGOMAP_HIT_WALL  0x01      // Collision with wall detected
+#define EGOMAP_HIT_FLOOR 0x02      // Collision with bottom detected
+#define EGOMAP_HIT_WATER 0x03      // Collision with water surface detected
+#define EGOMAP_HIT_OTHER 0x04      // Collsiion with other object detected (char/prt)
+
+#define EGOMAP_TILEDIV     128      /* Size of a tile       */
 
 /// Everything that is necessary to compute an objects interaction with the environment
 typedef struct
@@ -80,7 +83,8 @@ typedef struct
     // misc states
     char   hit_env;             // 'hit_env: Hit wall or bottom from collision code or 'heavy' object
     float  water_surface_level; // @new 
-    char   inwater;
+    char   inwater;  
+    float  gravity;    
     float  acc[3];
 
 } MAPENV_T;

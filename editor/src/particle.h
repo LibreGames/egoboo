@@ -34,7 +34,7 @@
 #define PRT_END_GROUND    0x0008    ///< End if on ground
 #define PRT_END_WALL      0x0010    ///< End if hit a wall
 #define PRT_END_LASTFRAME 0x0020    ///< End on last frame  / BoolVal[4]
-#define PRT_DYNALIGHT_ON  0x0040    // dynalight_on / BoolVal[5]
+#define PRT_DYNALIGHT_ON  0x0040    ///< dynalight_on / BoolVal[5]
 #define PRT_SPAWNENCHANT  0x0080    ///< Spawn enchant?  
 #define PRT_CAUSEROLL     0x0100    ///< Cause roll?
 #define PRT_CAUSEPANCAKE  0x0200    ///< \todo Not implemented!! Cause pancake
@@ -86,18 +86,6 @@ enum
     DYNA_MODE_LOCAL
     
 } E_DYNA_MODE;
-
-/// Possible methods for computing the position and orientation of the quad used to display particle sprites
-typedef enum 
-{
-    ORIENTATION_B = 0,   ///< billboard
-    ORIENTATION_X,       ///< put particle up along the world or body-fixed x-axis
-    ORIENTATION_Y,       ///< put particle up along the world or body-fixed y-axis
-    ORIENTATION_Z,       ///< put particle up along the world or body-fixed z-axis
-    ORIENTATION_V,       ///< vertical, like a candle
-    ORIENTATION_H        ///< horizontal, like a plate
-    
-} PRT_ORI_T;
 
 // The special damage effects for particles
 enum

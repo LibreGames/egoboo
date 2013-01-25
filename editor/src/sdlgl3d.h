@@ -265,6 +265,7 @@ typedef struct
     float   life_time;      /* In seconds                           */
                             /* Is counted down each object-update   */
                             /* 0: Lives forever                     */
+    float   spawn_time;     /* For emitters                         */
     float   size;           /* Size of object 1.0: Default          */
     int     user_flags;     /* Bits for the user to set and read    */    
     char    team_no;        /* Belongs to this Egoboo-Team          */
@@ -284,14 +285,16 @@ typedef struct
     float   turnvel;        /* Rotation velocity in degrees/second  */
     float   speed_modifier; /* Multiply speed with this one, if !0  */
     /* -------- Physics --------------------------------------------- */
+    char    collision_type; ///< > 0: Collided with something    
     float   spdlimit;       ///< Speed limit
     float   dampen;         ///< Bounciness    
     float   weight;         // 0: Not affected by gravity/wind
                             // > 0: Falls to bottom (-Z)
                             // < 0: ascend (+Z) like hot particles        
     /* Link for object list in collision - detection                  */
-    int     follow_obj;     /* Follow this object, don't move self  */
-                            /* except if 'homing'                   */
+    int     target_obj;     /* Follow this object, don't move self  */
+                            /* or do homing to this one, attached   */
+                            /* to this, if emitter                  */
     int     next_obj;       /* > 0: Number of next object on tile   */
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */

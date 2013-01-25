@@ -24,6 +24,13 @@
 #define _PARTICLE_H_
 
 /*******************************************************************************
+* INCLUDES					                                                *
+*******************************************************************************/
+
+#include "sdlgl3d.h"        // SDLGL3D_OBJECT
+#include "egodefs.h"        // MAPENV_T
+
+/*******************************************************************************
 * DEFINES								                                   *
 *******************************************************************************/
 
@@ -48,6 +55,8 @@
 #define PRT_HOMING          0x20000     ///< Homing in on target?
 #define PRT_ROTATETOFACE    0x40000     ///< Rotate to face direction? ///< Arrows/Missiles
 #define PRT_RESPAWNONHIT    0x80000     ///< Respawn character on hit?
+#define PRT_ISHIDDEN        0x100000    ///< Is it hidden?
+#define PRT_ATTACHEDTO      0x200000    ///< Is it attached to an other object?
 
 /*******************************************************************************
 * ENUMS								                                        *
@@ -151,6 +160,7 @@ int particleLoad(char *filename);
 int  particleSpawn(int pip_no, int spawnobj_no, char attached_to, char modifier);
 
 /* ============ Particle functions ========== */
-char particleUpdateOne(int obj_no, int hit_env /* @todo: , MAPENV_T *penviro */);
+char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro);
+char particleOnBump(SDLGL3D_OBJECT *pobj, int why, MAPENV_T *penviro);
 
 #endif  /* #define _PARTICLE_H_ */

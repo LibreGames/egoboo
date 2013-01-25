@@ -48,6 +48,7 @@
 #define CHAR_NAMELEN  24  
 #define CHARSTAT_ACT  0
 #define CHARSTAT_FULL 1
+#define CHAR_PERFECTSTAT 18
 
 #define CHAR_MAX_TIMER 15
 #define CHAR_MAX_SKILL 32
@@ -199,7 +200,7 @@ typedef struct
     char psg_no;
     // name and gender
     char name[CHAR_NAMELEN + 1]; /* Name of this character                              */
-    char gender;        /* Gender of character          */
+    char gender;                /* Gender of character          */
     // character state    
     char state;         /* ///< Short term memory for AI: Comment: Number of AI-State = char_no */
     char latch;         /* Latch data                                   */    

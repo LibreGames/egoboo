@@ -29,8 +29,8 @@
 
 #include "sdlgl.h"      /* Include Opengl-Headers and library functions */
 
-
-#include "sdlgl3d.h"    /* Own header                                   */
+// Own header
+#include "sdlgl3d.h"  
 
 /*******************************************************************************
 * DEFINES							                                           *
@@ -106,6 +106,17 @@ static SDLGL3D_CAMERA Camera[SDLGL3D_MAX_CAMERA] =
     }
 };
 
+// Physics
+static SDLGL3D_PHYSICS_T S3Dphysics = 
+{
+    0.70,   // float hillslide;
+    0.80,   // float slippyfriction;
+    0.95,   // float airfriction;
+    0.75,   // float waterfriction;
+    0.95,   // float noslipfriction;
+    1.00    // float gravity;
+};
+
 /* Additional objects are used for visible tiles */
 static int NumVisiTiles = 0;
 static SDLGL3D_VISITILE Visi_Tiles[SDLGL3D_I_MAXVISITILES + 2];
@@ -137,9 +148,10 @@ static char CheckBoxAgainstFrustum(int cx, int cy, int HalfSize,
     int	i, j, k;
 
     /* Check each box corner against each edge of the frustum. */
-    for (j = 0; j < 2; j++) {
-
-    	for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++)
+    {
+    	for (i = 0; i < 2; i++)
+        {
 	        // int	mask = 1 << (j * 2 + i);
 
     	    int x = cx + (i == 0 ? -HalfSize : HalfSize);
@@ -166,13 +178,17 @@ static char CheckBoxAgainstFrustum(int cx, int cy, int HalfSize,
     }
 
     // Based on bit-codes, return culling results.
-    if (OrCodes == 0) {
+    if (OrCodes == 0)
+    {
 	    /* The box is completely within the frustum (no box vert is outside any frustum edge). */
 	    return NO_CLIP;
-    } else if (AndCodes != 0) {
+    }
+    else if (AndCodes != 0)
+    {
 	/* All the box verts are outside one of the frustum edges.     */
 	    return NOT_VISIBLE;
-    } else {
+    } else
+    {
 	    return SOME_CLIP;
     }
 
@@ -305,7 +321,6 @@ static void sdlgl3dSetupFrustumNormals(SDLGL3D_CAMERA *cam)
 
     /* ---------- Set up visible tiles ----- */
     cam -> f.num_visi_tile = sdlgl3dGetVisiTiles(cam);
-
 }
 
 
@@ -330,8 +345,8 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
     /* Allways presume its a positive direction */
     move_dir = +1;
 
-    switch(move_cmd) {
-
+    switch(move_cmd)
+    {
         case SDLGL3D_MOVE_BACKWARD:
             move_dir = -1;
         case SDLGL3D_MOVE_FORWARD:
@@ -363,15 +378,13 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
             speed = moveobj -> turnvel * move_dir;
             /* Clockwise */
             moveobj -> rot[SDLGL3D_Z] -= (speed * secondspassed);
-            if (moveobj -> rot[SDLGL3D_Z] < 0.0 ) {
-
+            if (moveobj -> rot[SDLGL3D_Z] < 0.0 )
+            {
                 moveobj -> rot[SDLGL3D_Z] += 360.0;
-
             }
-            else if (moveobj -> rot[SDLGL3D_Z]> 360.0) {
-
+            else if (moveobj -> rot[SDLGL3D_Z]> 360.0)
+            {
                 moveobj -> rot[SDLGL3D_Z] -= 360.0;
-
             }
 
             moveobj -> dir[0] = sin(DEG2RAD(moveobj -> rot[SDLGL3D_Z]));
@@ -382,21 +395,23 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
             moveobj -> pos[0] += (moveobj -> dir[0] * moveobj -> speed * secondspassed);
             moveobj -> pos[1] += (moveobj -> dir[1] * moveobj -> speed * secondspassed);
             moveobj -> pos[SDLGL3D_Z] += (moveobj -> zspeed * secondspassed);
+            if(moveobj -> weight > 0)
+            {
+                moveobj -> pos[SDLGL3D_Z] += S3Dphysics.gravity;
+            }
             break;
 
         case SDLGL3D_MOVE_ROTX:
             speed = moveobj -> turnvel * move_dir;
 
             moveobj -> rot[0] += (speed * secondspassed);      /* Clockwise */
-            if (moveobj -> rot[0] > 360.0) {
-
+            if (moveobj -> rot[0] > 360.0)
+            {
                 moveobj -> rot[0] -= 360.0;
-
             }
-            else if (moveobj -> rot[0] < 0.0) {
-
+            else if (moveobj -> rot[0] < 0.0)
+            {
                 moveobj -> rot[0] += 360.0;
-
             }
             break;
 
@@ -404,15 +419,13 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
             speed = moveobj -> turnvel * move_dir;
 
             moveobj -> rot[1] += (speed * secondspassed);      /* Clockwise */
-            if (moveobj -> rot[1] > 360.0) {
-
+            if (moveobj -> rot[1] > 360.0)
+            {
                 moveobj -> rot[1] -= 360.0;
-
             }
-            else if (moveobj -> rot[1] < 0.0) {
-
+            else if (moveobj -> rot[1] < 0.0)
+            {
                 moveobj -> rot[1] += 360.0;
-
             }
             break;
 
@@ -420,23 +433,21 @@ static void sdlgl3dIMoveSingleObj(SDLGL3D_OBJECT *moveobj, char move_cmd, float 
             /* TODO: Adjust far plane, Set a maximum for zoom out */
             /* Do zoom by changing of distance */
             dist_add = (100.0 * secondspassed);
-            if (moveobj -> pos[2] < 600.0) {
-
+            if (moveobj -> pos[2] < 600.0)
+            {
                 moveobj -> pos[0] += (dist_add * moveobj -> dir[0]);
                 moveobj -> pos[1] += (dist_add * moveobj -> dir[1]);
                 moveobj -> pos[2] += (dist_add * moveobj -> dir[2]);
-
             }
             break;
         case SDLGL3D_MOVE_ZOOMIN:
             /* Do zoom by changing of distance */
             dist_add = (100.0 * secondspassed);
-            if (moveobj -> pos[2] > 200.0) {
-
+            if (moveobj -> pos[2] > 200.0)
+            {
                 moveobj -> pos[0] -= (dist_add * moveobj -> dir[0]);
                 moveobj -> pos[1] -= (dist_add * moveobj -> dir[1]);
                 moveobj -> pos[2] -= (dist_add * moveobj -> dir[2]);
-
             }
             break;
 
@@ -540,7 +551,6 @@ static void sdlgl3dITilesOnLine(int camera_no)
 	}
 
     cam -> f.mou_tiles[tile_no] = -1;    /* Sign end of list */
-
 }
 
 /* ========================================================================== */
@@ -608,13 +618,11 @@ SDLGL3D_OBJECT *sdlgl3dBegin(int camera_no, int solid)
  */
 void sdlgl3dEnd(void)
 {
-
     /* Restore the users screen settings */
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-
 }
 
 /*
@@ -632,14 +640,13 @@ void sdlgl3dEnd(void)
  */
 void sdlgl3dSetCameraMode(int camera_no, char mode, SDLGL3D_OBJECT *obj, float x, float y)
 {
-
     SDLGL3D_CAMERA *cam;
 
 
     cam = &Camera[camera_no];
     
-    switch(mode) {
-    
+    switch(mode)
+    {
         case SDLGL3D_CAM_MODESTD:
             /* Move camera itself           */
             break;                
@@ -658,6 +665,7 @@ void sdlgl3dSetCameraMode(int camera_no, char mode, SDLGL3D_OBJECT *obj, float x
             cam -> campos.pos[2] = cam -> tile_size;
             cam -> campos.rot[2] = cam -> obj -> rot[2];
             break;
+            
         case SDLGL3D_CAM_LOOKAT:
             /* Attached to a position       */
             cam -> look_at[0] = x;
@@ -672,14 +680,12 @@ void sdlgl3dSetCameraMode(int camera_no, char mode, SDLGL3D_OBJECT *obj, float x
             
         default:
             return;
-    
     }
 
     cam -> mode = mode;
 
     /* Set the frustum normals... */
     sdlgl3dSetupFrustumNormals(cam);
-
 }
 
 /*
@@ -695,7 +701,6 @@ void sdlgl3dSetCameraMode(int camera_no, char mode, SDLGL3D_OBJECT *obj, float x
  */
 void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect_ratio)
 {
-
     SDLGL3D_CAMERA *cam;
 
 
@@ -735,13 +740,11 @@ void sdlgl3dInitCamera(int camera_no, int rotx, int roty, int rotz, float aspect
  */
 void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2)
 {
-
     Camera[camera_no].bound = 1;
     Camera[camera_no].bx    = x;
     Camera[camera_no].by    = y;
     Camera[camera_no].bx2   = x2;
     Camera[camera_no].by2   = y2;
-    
 }
 
 /*
@@ -758,11 +761,9 @@ void sdlgl3dBindCamera(int camera_no, float x, float y, float x2, float y2)
  */
 SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f)
 {
-
     memcpy(f, &Camera[camera_no].f, sizeof(SDLGL3D_FRUSTUM));
 
     return Camera[camera_no].obj;
-
 }
 
 /*
@@ -778,28 +779,30 @@ SDLGL3D_OBJECT *sdlgl3dGetCameraInfo(int camera_no, SDLGL3D_FRUSTUM *f)
  */
 void sdlgl3dManageCamera(int camera_no, char move_cmd, char set, char speed_modifier)
 {
-
     int flag;
 
 
-    if (move_cmd == SDLGL3D_MOVE_STOPMOVE) {
+    if (move_cmd == SDLGL3D_MOVE_STOPMOVE)
+    {
         /* Stop all movement */
         Camera[camera_no].campos.move_cmd = 0;
         return;
     }
 
     flag = (1 << move_cmd);
-    if (set) {
+    if (set)
+    {
         Camera[camera_no].campos.move_cmd |= flag;
-        if (speed_modifier < 1) {
+        if (speed_modifier < 1)
+        {
             speed_modifier = 1;
         }
         Camera[camera_no].campos.speed_modifier = speed_modifier;
     }
-    else {
+    else
+    {
         Camera[camera_no].campos.move_cmd &= ~flag;
     }
-
 }
 
 /*
@@ -814,7 +817,6 @@ void sdlgl3dManageCamera(int camera_no, char move_cmd, char set, char speed_modi
  */
 void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relative)
 {
-
     SDLGL3D_CAMERA *cam;
     SDLGL3D_OBJECT *obj;
     float cam_dist;
@@ -823,7 +825,8 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
     cam = &Camera[camera_no];
     obj = cam -> obj;
     
-    if (relative) {        
+    if (relative)
+    {        
         cam_dist = cam -> cam_dist;
         /* Calculate now position for camera */
         obj -> pos[0] = x;
@@ -831,9 +834,9 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
         /* TODO: Move back 'cam_dist' from chosen position */
         obj -> pos[0] -= obj -> dir[0] * cam_dist;
         obj -> pos[1] -= obj -> dir[1] * cam_dist;
-
     }
-    else {
+    else
+    {
         obj -> pos[0] = x;
         obj -> pos[1] = y;
         obj -> pos[SDLGL3D_Z] = z;
@@ -841,7 +844,6 @@ void sdlgl3dMoveToPosCamera(int camera_no, float x, float y, float z, int relati
 
     /* Adjust the frustum normals */
     sdlgl3dSetupFrustumNormals(cam);
-
 }
 
 
@@ -862,8 +864,8 @@ void sdlgl3dMoveCamera(float secondspassed)
 
     /* @todo: Move each camera which is active -- Add an 'active'-flag*/
     /* Move camera based on camera mode */
-    switch(Camera[0].mode) {
-
+    switch(Camera[0].mode)
+    {
          case SDLGL3D_CAM_FOLLOW:
             /* TODO: Follow an object attached to camera    */
             /* break; */
@@ -877,44 +879,43 @@ void sdlgl3dMoveCamera(float secondspassed)
 
         case SDLGL3D_CAM_MODESTD:
             /* Move camera itself                   */
-            if (Camera[0].campos.move_cmd > 0) {
-
+            if (Camera[0].campos.move_cmd > 0)
+            {
                  /* If the camera was moved, set the frustum normals... */
-                for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1) {
-
-                    if (flags & Camera[0].campos.move_cmd) {
+                for (move_cmd = 1, flags = 0x02; move_cmd < SDLGL3D_MOVE_MAXCMD; move_cmd++, flags <<= 1)
+                {
+                    if (flags & Camera[0].campos.move_cmd)
+                    {
                         /* Move command is active */
-
                         sdlgl3dIMoveSingleObj(&Camera[0].campos, move_cmd, secondspassed);
-
                     }
-
                 }
-
             }
 
-            if (Camera[0].bound) {
+            if (Camera[0].bound)
+            {
                 /* TODO: Do not bind if attached to an object */
-                if (Camera[0].obj -> pos[0] < Camera[0].bx) {
+                if (Camera[0].obj -> pos[0] < Camera[0].bx)
+                {
                     Camera[0].obj -> pos[0] = Camera[0].bx;
                 }
-                if (Camera[0].obj -> pos[1] < Camera[0].by) {
+                if (Camera[0].obj -> pos[1] < Camera[0].by)
+                {
                     Camera[0].obj -> pos[1] = Camera[0].by;
                 }
-                if (Camera[0].obj -> pos[0] > Camera[0].bx2) {
+                if (Camera[0].obj -> pos[0] > Camera[0].bx2)
+                {
                     Camera[0].obj -> pos[0] = Camera[0].bx2;
                 }
-                if (Camera[0].obj -> pos[1] > Camera[0].by2) {
+                if (Camera[0].obj -> pos[1] > Camera[0].by2)
+                {
                     Camera[0].obj -> pos[1] = Camera[0].by2;
                 }
-
             }
 
             sdlgl3dSetupFrustumNormals(&Camera[0]);
             break;
-
     }
-
 }
 
 /* ===== Object-Functions ==== */
@@ -1111,6 +1112,17 @@ void sdlgl3dMoveObjects(float secondspassed)
                     obj_list->anim_clock += obj_list->anim_speed;
                 }
             }
+            
+            if(obj_list->spawn_time > 0.0)
+            {
+                // Has a second clock
+                obj_list->spawn_time -= secondspassed;
+                if(obj_list->spawn_time == 0.0)
+                {
+                    // Mark that time is up
+                    obj_list->spawn_time = 0.001;
+                }
+            }
         }   
 
         obj_list++;
@@ -1208,16 +1220,14 @@ char sdlgl3dObjectList(int *from, int *to, int obj_no, int action)
  */
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size)
 {
-
     int i;
 
 
-    for (i = 0; i < SDLGL3D_MAX_CAMERA; i++) {
-
+    for (i = 0; i < SDLGL3D_MAX_CAMERA; i++)
+    {
         Camera[i].map_w     = map_w;
         Camera[i].map_h     = map_h;
         Camera[i].tile_size = tile_size;
-
     }
 }
 
@@ -1295,9 +1305,7 @@ void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy)
  */
 SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile)
 {
-
     *num_tile = NumVisiTiles;
 
     return &Visi_Tiles[0];
-
 }

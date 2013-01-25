@@ -2,7 +2,7 @@
 *  PARTICLE.C                                                                  *
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
-*    - [...]                                                                   *
+*    - Handling particles                                                      *
 *      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *
@@ -533,38 +533,45 @@ int particleLoadGlobals(void)
 
 /* ============ Particle functions ========== */
 
+/*
+ * Name:
+ *     particleOnMove
+ * Description:   
+ *     Does the additional update needed on a particle object while moving. 
+ *     It'ss assumed that the particle has not collided for damage.  
+ * Input:
+ *     pobj *:    Do update on this object
+ *     penviro *: Info about the environment 
+ * Output:
+ *     0: Particle is killed by movement,
+ *        // Caller should detach its object from map and destroy it  
+ */
+char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
+{
+    // 
+    return 1;
+}
 
 /*
  * Name:
- *     particleUpdateOne
+ *     particleOnBump
  * Description:
- *     Does the addtional update needed on a particle object. 
- *     It'ss assumed that the particle has not collided for damage  
+ *     Does the action needed if a particle collided with something
  * Input:
- *     obj_no:  Do update on this object
+ *     pobj *: Handle this object
+ *     reason: Of collision EGOMAP_HIT_...     
  *     hit_env: Has hit environement ENV_WALL or ENV_BOTTOM or 0 
  *     // @todo: enviro *: Pointer on description of environment for physics 
  * Output:
  *     0: Particle is killed by movement,
  *        // Caller should detach its object from map and destroy it  
  */
-char particleUpdateOne(int obj_no, int hit_env /* @todo: , MAPENV_T *penviro */)
+char particleOnBump(SDLGL3D_OBJECT *pobj, int reason, MAPENV_T *penviro)
 {
-    SDLGL3D_OBJECT *obj;
-    PRT_BUNDLE_T prt_bundle;
-    SDLGL3D_OBJECT  *loc_pprt;
-    PIP_T           *loc_ppip;
+    PIP_T          *ppip;
     
     
-    loc_pprt = sdlgl3dGetObject(obj_no);
-    loc_ppip = &PrtDescList[loc_pprt -> obj_type]; // Particle type;
-    
-    // Set up the bundle
-    prt_bundle.obj_no  = obj_no;
-    prt_bundle.pobj    = loc_pprt;       // SDLGL3D_OBJECT  prt_ptr
-    prt_bundle.pip_ref = loc_pprt -> obj_type;
-    prt_bundle.pip_ptr = loc_ppip;
-    
+    ppip = &PrtDescList[loc_pprt -> obj_type]; // Particle type;
     
     /* @todo: move_one_particle( &prt_bdl ); */
     
