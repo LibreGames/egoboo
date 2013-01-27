@@ -43,6 +43,7 @@
 #define EGOMAP_OBJ_TILE   0x01      /* First always the tile            */
 #define EGOMAP_OBJ_CHAR   0x02      /* Characters (MD2)                 */
 #define EGOMAP_OBJ_PART   0x03      /* Particles (can be transparent)   */
+#define EGOMAP_OBJ_EMIT   0x04      /* Emitter of particles, fixed pos  */
 
 // Types of environment collisions (object with map)
 #define EGOMAP_HIT_NONE  0x00      // No collision detected

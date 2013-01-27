@@ -224,8 +224,8 @@ typedef struct
     unsigned char damagemodifier[DAMAGE_COUNT][CHAR_MAX_SKIN];
 
     // xp
-    int   experience_forlevel[MAXLEVEL];  ///< Experience needed for next level
-    float experience[2];                     ///< Starting experience
+    int   experience_forlevel[MAXLEVEL];    ///< Experience needed for next level
+    float experience[2];                    ///< Starting experience
     unsigned short experience_worth;               ///< Amount given to killer/user
     float experience_exchange;            ///< Adds to worth
     float experience_rate[XP_COUNT];
@@ -372,8 +372,38 @@ static SDLGLCFG_NAMEDVALUE CapVal[] =
 
 
 /*******************************************************************************
-* CODE									                                       *
+* CODE									                                   *
 *******************************************************************************/
+
+/*
+ * Name:
+ *     charSetupXPTable
+ * Description:
+ *     This calculates the xp needed to reach next level and stores it in an array for later use
+ * Input:
+ *     pcap *: POinter on character profile to setup XP-Table for
+ * Output:
+ *     >0: Number of character profile
+ */
+static char charSetupXPTable(CAP_T *pcap)
+{
+    char level;
+    int xpneeded;
+
+
+    // Calculate xp needed
+    for (level = MAXBASELEVEL; level < MAXLEVEL; level++ )
+    {
+        xpneeded = pcap->experience_forlevel[MAXBASELEVEL - 1];
+        xpneeded += ( level * level * level * 15 );
+        xpneeded -= (( MAXBASELEVEL - 1 ) * ( MAXBASELEVEL - 1 ) * ( MAXBASELEVEL - 1 ) * 15 );
+        pcap->experience_forlevel[level] = xpneeded;
+    }
+    
+    return 1;
+}
+
+
 
 /*
  * Name:
@@ -418,8 +448,8 @@ static int charNewCap(void)
 
             // More stuff I forgot
             pcap -> stoppedby  = MPDFX_IMPASS;
-
-            // Now return its number
+            
+            // Now return its number            
             return i;
         }
     }
@@ -565,6 +595,7 @@ static int charNewChar(void)
             // "sound0.wav" - "sound9.wav"
             // @todo: Load its scripts
             // sprintf(fname, "%sscript.txt", fdir);
+            // charSetupXPTable(pcap);
         }
         else
         {
@@ -572,17 +603,121 @@ static int charNewChar(void)
         }
         */
         // @todo: Replace this be 'real' code
+        
+        
+        
         return cno;
     }
 
     return 0;
 }
 
+
+/* ================ Game functions ================== */
+
 /*
  * Name:
- *     charGiveExperienceOne 
+ *     charDoLevelUp
  * Description:
- *     Gives experence to the given character. 
+ *     level gains are done here, but only once a second
+ * Input:
+ *     char_no: Number of character to do the level up for
+ */
+static void charDoLevelUp(const int char_no)
+{
+    CHAR_T *pchar;
+    CAP_T *pcap;
+    char curlevel;
+    int  number;
+    int xpcurrent, xpneeded;
+
+
+    pchar = &CharList[char_no];
+    pcap  = &CapList[pchar->cap_no];
+
+    if (0 == pchar->cap_no) return;
+
+    // Do level ups and stat changes
+    curlevel = (char)(pchar->experience_level + 1);
+    
+    if (curlevel < MAXLEVEL)
+    {
+        xpcurrent = pchar->experience;
+        xpneeded  = pcap->experience_forlevel[curlevel];
+        
+        if ( xpcurrent >= xpneeded )
+        {
+            // do the level up                
+            pchar->experience_level++;
+            // The character is ready to advance...
+            // msgSend(0, character, MSG_LEVELUP);
+
+            // Size
+            pchar->fat_goto += pcap->size_perlevel * 0.25f;  // Limit this?
+            pchar->fat_goto_time += SIZETIME;
+
+            // Strength
+            number = miscRandRange( pcap->strength_stat.perlevel );
+            number += pchar->str[1];
+            if ( number > PERFECTSTAT ) number = PERFECTSTAT;
+            pchar->str[0] += (char)(number - pchar->str[1]);
+            pchar->str[1] = (char)number;
+
+            // Wisdom
+            number = miscRandRange( pcap->wisdom_stat.perlevel );
+            number += pchar->wis[1];
+            if ( number > PERFECTSTAT ) number = PERFECTSTAT;
+            pchar->wis[0] += (char)(number - pchar->wis[1]);
+            pchar->wis[1] = (char)number;
+
+            // Intelligence
+            number = miscRandRange( pcap->intelligence_stat.perlevel );
+            number += pchar->intel[1];
+            if (number > PERFECTSTAT) number = PERFECTSTAT;
+            pchar->intel[0] += (char)(number - pchar->intel[1]);
+            pchar->intel[1] = (char)number;
+
+            // Dexterity
+            number = miscRandRange( pcap->dexterity_stat.perlevel );
+            number += pchar->dex[1];
+            if (number > PERFECTSTAT) number = PERFECTSTAT;
+            pchar->dex[0] += (char)(number - pchar->dex[1]);
+            pchar->dex[1] = (char)number;
+
+            // Life
+            number = miscRandRange( pcap->life_stat.perlevel );
+            number += pchar->life[1];
+            if (number > PERFECTBIG) number = PERFECTBIG;
+            pchar->life[0] += (short int)(number - pchar->life[1]);
+            pchar->life[1] = (short int)number;
+
+            // Mana
+            number = miscRandRange( pcap->mana_stat.perlevel );
+            number += pchar->mana[1];
+            if (number > PERFECTBIG) number = PERFECTBIG;
+            pchar->mana[0] += (char)(number - pchar->mana[1]);
+            pchar->mana[1] = (char)number;
+
+            // Mana Return
+            number = miscRandRange( pcap->mana_return_stat.perlevel );
+            number += pchar->mana_return;
+            if (number > PERFECTSTAT) number = PERFECTSTAT;
+            pchar->mana_return = (char)number;
+
+            // Mana Flow
+            number = miscRandRange( pcap->mana_flow_stat.perlevel );
+            number += pchar->mana_flow;
+            if (number > PERFECTSTAT) number = PERFECTSTAT;
+            pchar->mana_flow = (char)number;
+        }
+    }
+}
+
+/*
+ * Name:
+ *     charGiveExperienceOne
+ * Description:
+ *     Gives experence to the given character.
  * Input:
  *     char_no: Number of character to give experience
  *     amount:  Amount of experience to give
@@ -652,6 +787,7 @@ void charInit(void)
     memset(&CapList[0], 0, CHAR_MAX_CAP * sizeof(CAP_T)); 
     // Clear the buffer for the characters
     memset(&CharList[0], 0, CHAR_MAX * sizeof(CHAR_T)); 
+    
     /* ----- Initalize the teams ------ */
     memset(&TeamList[0], 0, TEAM_MAX * sizeof(TEAM_T)); 
     for (i = 0; i < TEAM_MAX; i++)

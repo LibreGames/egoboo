@@ -220,6 +220,8 @@ typedef struct
     char con[2];        // constitution
     char cha[2];        // charisma
     char ac[2];         // armor class
+    char mana_return;
+    char mana_flow;
     // combat stuff -- CHARSTAT_ACT / CHARSTAT_FULL
     char damageboost[2];                   ///< Add to swipe damage
     char damagethreshold[2];               ///< Damage below this number is ignored
@@ -240,6 +242,7 @@ typedef struct
     // Size of model
     float fat;                  ///< Character's size
     float fat_goto;             ///< Character's size goto
+    float fat_goto_time;        ///< Time to go ot that size
     
     // jump stuff
     char jump_number;           ///< Number of jumps remaining

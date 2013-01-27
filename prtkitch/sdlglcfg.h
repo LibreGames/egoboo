@@ -106,7 +106,7 @@ void sdlglcfgLoadFile(char *dir_name, SDLGLCFG_FILE *fdesc);
 void sdlglcfgFreeFile(SDLGLCFG_FILE *fdesc);
 
 void sdlglcfgEgobooRecord(char *fname, SDLGLCFG_LINEINFO *lineinfo, int write);
-void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write); 
+char sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write); 
 char sdlglcfgRawLines(char *filename, char *destbuffer, int dest_size, int line_len, char write);
 
 #endif

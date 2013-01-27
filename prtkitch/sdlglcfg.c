@@ -1017,8 +1017,10 @@ void sdlglcfgEgobooRecord(char *fname, SDLGLCFG_LINEINFO *lineinfo, int write)
  *     fname *:   Name of file to read / write
  *     vallist *: Pointer on list of values and it's description for read / write
  *     write:     Write it, yes / no  
+ * Output:
+ *     Values were read in yes/no 
  */
-void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
+char sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
 {
 
     FILE *f;
@@ -1057,6 +1059,7 @@ void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
 
             fputs("\n\n", f);
             fclose(f);
+            return 1;
         }
     }
     else
@@ -1091,8 +1094,13 @@ void sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
             }
 
             fclose(f);
+            
+            return 1;
         }
     }
+    
+    // Action failed
+    return 0;
 }
 
 /*

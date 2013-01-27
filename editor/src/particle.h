@@ -134,10 +134,9 @@ typedef struct
 
 /* ============ File functions ============== */
 int particleLoadGlobals(void);
-// @todo: Load multiple particles in consecutive order
+// Load multiple particles in consecutive order
 // "part0.txt" - "part9.txt"
-// prt_first_no = int particleLoad(char *fdir, &prt_cnt);
-int particleLoad(char *filename);
+int particleLoad(char *fdir, int *prt_cnt);
 
 /* ======= Game-Functions ===== */
 int  particleSpawn(int pip_no, int spawnobj_no, char attached_to, char modifier);

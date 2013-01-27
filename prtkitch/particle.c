@@ -27,6 +27,8 @@
 
 #include <math.h>
 #include <memory.h> 
+#include <stdio.h>
+
 
 // Egoboo headers
 #include "sdlgl3d.h"     /* Create, handle a particle as object         */
@@ -38,7 +40,7 @@
 
 
 // Own header
-#include "particle.h"   
+#include "particle.h"
 
 /*******************************************************************************
 * DEFINES								                                   *
@@ -145,8 +147,8 @@ typedef struct
 *******************************************************************************/
 
 // Load-Buffer for 'raw' data which is converted into 'packed' data
-static char BoolVal[33];       /* Boolean values */
-static char ExpIdsz[5][18 + 1]; /* Particle expansion IDSZs ( with a colon in front ) */
+static char BoolVal[33];        /* Boolean values */
+static char ExpIdsz[16][18 + 1]; /* Particle expansion IDSZs ( with a colon in front ) */
 
 // Particle description itself
 static PIP_T PrtDesc;
@@ -221,12 +223,21 @@ static SDLGLCFG_NAMEDVALUE PrtVal[] =
     { SDLGLCFG_VAL_BOOLEAN, &BoolVal[18] },     // respawnonhit
     { SDLGLCFG_VAL_CHAR,   &PrtDesc.manadrain },
     { SDLGLCFG_VAL_CHAR,   &PrtDesc.lifedrain },
-    // IDSZ values
+    // IDSZ values (maximum 12 different IDSZs)
     { SDLGLCFG_VAL_STRING, ExpIdsz[0], 18 },
     { SDLGLCFG_VAL_STRING, ExpIdsz[1], 18 },
     { SDLGLCFG_VAL_STRING, ExpIdsz[2], 18 },
     { SDLGLCFG_VAL_STRING, ExpIdsz[3], 18 },
     { SDLGLCFG_VAL_STRING, ExpIdsz[4], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[5], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[6], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[7], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[8], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[9], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[10], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[11], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[12], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[13], 18 },
     { 0 }
 };
 
@@ -405,25 +416,25 @@ static void particlePlaySound(int sound)
         {
             new_obj.pos[0] = pemit->pos[0];
             new_obj.pos[1] = pemit->pos[1];
-        }    
+        }
     }
     else
     {
         offsetfacing = pemit->rot[2];
         offsetfacing += (float)miscRandVal(ppip->facing_pair[1]) * 180.0 / 65535.0;
     }
-    
+
     // @todo: Correct 'facing' for dexterity...
     facing += offsetfacing;
     new_obj.rot[2] += facing;
-        
+
     // Adjust position in the original objects direction
     new_obj.pos[0] += new_obj.dir[0] * spacing_xy;
     new_obj.pos[1] += new_obj.dir[1] * spacing_xy;
-    
+
     // Adjust position on Z-Axis
     new_obj.pos[2] += spacing_z;
-        
+
     if(zpos != 0.0)
     {
         new_obj.pos[2] = zpos;
@@ -432,7 +443,7 @@ static void particlePlaySound(int sound)
     {
         new_obj.pos[2] = posz;
     }
-    
+
     // General Velocity
     new_obj.speed  = velocity;
     new_obj.zspeed = vel_z;
@@ -441,17 +452,16 @@ static void particlePlaySound(int sound)
     ///< ( -100 to 100 ), ( 0, 1, 3, 7, 15, 31, 63... )
     new_obj.turnvel = (float)ppip->facingadd * 360.0 / 65535.0;
 
-    // @todo: Set 'new_obj.user_flags'
-
     // Set the bounding box
+    // Only set ppip->bump_height if > 0
     size = (float)ppip->size_base * 20.0 / 65535.0; // half the size
     new_obj.bradius = size;
     new_obj.bbox[0][0] = -size;
     new_obj.bbox[0][1] = -size;
-    new_obj.bbox[0][2] = -(ppip->bump_height / 2);
+    new_obj.bbox[0][2] = -size; // (ppip->bump_height / 2);
     new_obj.bbox[1][0] = +size;
     new_obj.bbox[1][1] = +size;
-    new_obj.bbox[1][2] = +(ppip->bump_height / 2);
+    new_obj.bbox[1][2] = +size; // (ppip->bump_height / 2);
 
     // Info about animation, First / Current and Last frame
     new_obj.base_frame = ppip->image_base;
@@ -461,7 +471,7 @@ static void particlePlaySound(int sound)
     new_obj.anim_clock = new_obj.anim_speed;                    // Set clock for countdown
     new_obj.spawn_time = (float)ppip->contspawn_time / 50.0;    // 50 Frames / Second
     new_obj.life_time  = (float)ppip->time / 50.0;              // Life in frames (max. 20 Sec.)
-    
+
     if((ppip->flags & PRT_END_LASTFRAME) && ppip->numframes > 1)
     {
         if(ppip->time == 0)
@@ -477,20 +487,21 @@ static void particlePlaySound(int sound)
     }
 
     // Other general info-flags
-    new_obj.tags =  ppip->flags;     // PRT_...
+    new_obj.tags = ppip->flags;     // PRT_...
+    new_obj.size = 1.0;
 
     // count all the requests for this particle type
     ppip->request_count++;
 
     // Create new object with 'auto-movement'
     obj_no = sdlgl3dCreateObject(&new_obj, SDLGL3D_MOVE_3D);
-    
+
     if(obj_no > 0)
     {
         // count all the successful spawns of this particle
         ppip->create_count++;
     }
-    
+
     // return the number of the object, if any is created
     return obj_no;
 }
@@ -512,7 +523,7 @@ static int particleDoEndSpawn(SDLGL3D_OBJECT *pprt, PIP_T *ppip)
     int endspawn_count;
     float facing;
 
-    
+
     endspawn_count = 0;
     
     if (!pprt->type_no) return endspawn_count;    
@@ -591,6 +602,32 @@ static char particleEndInGame(SDLGL3D_OBJECT *pprt, PIP_T *ppip)
     return 0;
 }
 
+/*
+ * Name:
+ *     particleGetFreePip
+ * Description:
+ *     Returns the number of the first free buffer for a particle profile
+ * Input:
+ *     None
+ * Output:
+ *     >0: Number of profile
+ */
+static int particleGetFreePip(void)
+{
+    int pip_no;
+    
+    
+    for(pip_no = GLOBAL_PIP_COUNT; pip_no < MAX_PIP_TYPE; pip_no++)
+    {
+        if(PrtDescList[pip_no].id == 0)
+        {
+            return pip_no;
+        }
+    }
+    
+    return 0;
+}
+
 
 /*
  * Name:
@@ -599,18 +636,22 @@ static char particleEndInGame(SDLGL3D_OBJECT *pprt, PIP_T *ppip)
  *     Loads one particle profile
  * Input:
  *     filename *:
- *     pip_no:      Number of profile to fill with given data 
+ *     pip_no:       Number of profile to fill with given data
+ *     first_pip_no: Number of first particle of consecutive loaded PIPS
  * Output:
- *     >0: Number of profile
+ *     Profile could be read yes/no
  */
-static int particleLoadOne(char *filename, int pip_no)
+static char particleLoadOne(char *filename, int pip_no, int first_pip_no)
 {
     int i;
     PIP_T *ppip;
 
 
     // Do the 'raw' loading
-    sdlglcfgEgobooValues(filename, PrtVal, 0);
+    if(! sdlglcfgEgobooValues(filename, PrtVal, 0))
+    {
+        return 0;
+    }
 
     ppip = &PrtDescList[pip_no];
 
@@ -627,19 +668,20 @@ static int particleLoadOne(char *filename, int pip_no)
         if(BoolVal[i] != 0)
         {
             ppip -> flags |= (int)(1 << i);
-        }        
+        }
     }
     
+    // Set number of local PIP for continuous spawning
+    ppip -> contspawn_pip += first_pip_no;
+    
     // Change idsz-strings to idsz-values
-    for(i = 0; i < 5; i++)
+    for(i = 0; i < 14; i++)
     {
-        // @todo:
+        // @todo: Convert IDSZ's to Particle values
     }
 
     return 1;
 }
-
-
 
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
@@ -663,40 +705,62 @@ void particleInit(void)
  * Name:
  *     particleLoad
  * Description:
- *     Loads a particle
+ *     Loads multiple particles in consecutive order
  * Input:
- *     fname *: Name of file to load
+ *     fdir *:    Directory to lad particle descriptors from
+ *     pip_cnt *: Where to return the number of pips loaded 
  * Output:
- *     > 0: Number of Descriptor in 'PrtDescList'
+ *     > 0: Number of first in 'PrtDescList', if any
  */
-int particleLoad(char *fname)
+int particleLoad(char *fdir, int *pip_cnt)
 {   
-    int pip_no;
+    char fname[512];
+    int first_pip_no, cnt, num_pip;
 
 
-    for(pip_no = GLOBAL_PIP_COUNT; pip_no < MAX_PIP_TYPE; pip_no++)
+    // Init counter of loaded particles
+    *pip_cnt = 0;
+
+    first_pip_no = particleGetFreePip();
+
+    if(first_pip_no > 0)
     {
-        if(PrtDescList[pip_no].id == 0)
+        // Load the first (basic) particle
+        sprintf(fname, "%spart0.txt", fdir);
+
+        if(particleLoadOne(fname, first_pip_no, first_pip_no))
         {
-            break;
+            // Now load the other particles
+            num_pip = 1;
+
+            for(cnt = 1; cnt < 20; cnt++)
+            {
+                // A maximum of 20 particles
+                if(first_pip_no + cnt < MAX_PIP_TYPE)
+                {
+                    // Still buffer left for particle profiles
+                    sprintf(fname, "%spart%d.txt", fdir, cnt);
+
+                    if(particleLoadOne(fname, first_pip_no + cnt, first_pip_no))
+                    {
+                        num_pip++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            *pip_cnt = num_pip;
+        }
+        else
+        {
+            first_pip_no = 0;
         }
     }
 
-    if(pip_no >= MAX_PIP_TYPE)
-    {
-        // No Buffer left to read in the particle type
-        return 0;
-    }
-    else
-    {
-        // @todo: Get the directory to read from
-        if(*fname > 0)
-        {
-            particleLoadOne(fname, pip_no);
-        }
-
-        return pip_no;
-    }
+    return first_pip_no;
 }
 
 /*
@@ -723,7 +787,7 @@ int particleLoadGlobals(void)
         {
             // @todo: Load global particles
             // fname = editfileMakeFileName();
-            particleLoadOne(fname, pip_no);
+            particleLoadOne(fname, pip_no, 0);
         }
     }
     
@@ -772,7 +836,7 @@ int particleLoadGlobals(void)
 /*
  * Name:
  *     particleOnMove
- * Description:   
+ * Description:
  *     Does the additional update needed on a particle object while moving. 
  *     It'ss assumed that the particle has not collided for damage.
  *     Animation is done by the general object movement code  
@@ -783,37 +847,41 @@ int particleLoadGlobals(void)
  *     0: Destroyed by movement, particle has to be destroyed by caller
  */
 char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
-{    
+{
     SDLGL3D_OBJECT *ptarget;
     PIP_T *ppip;
     float facing;
     int tnc, part_obj;
     
     
-    ppip = &PrtDescList[pobj -> obj_type];  // Particle type;
-    
-    pobj->rot[2] = ppip->rotate_add;        // Rotates around Z-Axis
-    pobj->size   += ppip->size_add;         // Change size
-    
-    // Change dyna light values
+    ppip = &PrtDescList[pobj->type_no];     // Particle profile
+
+    /*
+    pobj->rot[2] = ppip->rotate_add;                    // Rotates around Z-Axis
+    pobj->size   += (float)ppip->size_add / 65635.0;    // Change size
+    */
+
+    // Change dynalight values
+    /*
     pobj->dynalight_level   += ppip->dynalight.level_add;
     pobj->dynalight_falloff += ppip->dynalight.falloff_add;
+    */
 
     // Make it sit on the floor...  Shift is there to correct for sprite size
-    // level = prtlevel[cnt]+(prtsize[cnt]>>9);    
-    
+    // level = prtlevel[cnt]+(prtsize[cnt]>>9);
+
     // Do homing
     if((pobj->tags & PRT_HOMING) && pobj->target_obj != 0)
     {
         ptarget = sdlgl3dGetObject(pobj->target_obj);
-        
+
         if (!(pobj->tags & PRT_ATTACHEDTO))
         {
             pobj->pos[0] += ((ptarget->pos[0] - pobj->pos[0]) * ppip->homingaccel) * ppip->homingfriction;
             pobj->pos[1] += ((ptarget->pos[1] - pobj->pos[1]) * ppip->homingaccel) * ppip->homingfriction;
             pobj->pos[2] += ((ptarget->pos[2] + (ptarget->bbox[1][2] / 2) - pobj->pos[2]) * ppip->homingaccel);
         }
-        
+
         if (pobj->tags & PRT_ROTATETOFACE)
         {
             // Turn to face target
@@ -822,12 +890,14 @@ char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
             pobj->rot[2] = facing;
         }
     }
-    
+
     // Do speed limit on Z ??
+    /*
     if (pobj->dir[2] < -ppip->spdlimit)
     {
         pobj->dir[2] = -ppip->spdlimit;
     }
+    */
     
     // Spawn new particles if continually spawning
     if(ppip->contspawn_amount > 0)
@@ -835,33 +905,41 @@ char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
         // Clock is counted down by general object movement code
         if(pobj->spawn_time < 0)
         {
+
             pobj->spawn_time += (float)ppip->contspawn_time / 50.0;
+            // Skip one spawning
             if(pobj->spawn_time <= 0.0)
-            {   
+            {
                 // Spawn at next call
                 pobj->spawn_time += (float)ppip->contspawn_time / 50.0;
-            }   
-            
+            }
+
             facing = pobj->rot[2];
             tnc = 0;
-            
+
             while(tnc < ppip->contspawn_amount)
-            {   
+            {
                 part_obj = particleSpawnOne(ppip->contspawn_pip, pobj, 0, 0, 0);
 
-                if(ppip->facingadd != 0 && part_obj != 0)
+                /*
+                if(part_obj != 0 && ppip->contspawn_facingadd != 0)
                 {
                     ptarget = sdlgl3dGetObject(part_obj);
+
+                    facing += ppip->contspawn_facingadd;
+                    ptarget->rot[2] += facing;
                     // Hack to fix velocity
                     ptarget->speed += pobj->speed;
                 }
+                */
 
-                facing += ppip->contspawn_facingadd;
                 tnc++;
             }
+
         }
     }
-    
+
+
     // Check underwater
     if (pobj->pos[2] < penviro -> waterdouselevel && (penviro->fx & MPDFX_WATER) && (ppip->flags & PRT_END_WATER))
     {
@@ -870,7 +948,7 @@ char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
             // Mark 'zpos' as valid for override
             penviro -> water_surface_level = 0.01;
         }
-        
+
         particleSpawnOne(PIP_RIPPLE, pobj, 0, 0, penviro -> water_surface_level);
 
         // Check for disaffirming character
@@ -884,8 +962,7 @@ char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
             return 0;
         }
     }
-    
-    
+
     return 1;
 }
 
@@ -896,7 +973,7 @@ char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
  *     Does the action needed if a particle collided with something
  * Input:
  *     pobj *:    Handle this object
- *     reason:    Of collision EGOMAP_HIT_...     
+ *     reason:    Of collision EGOMAP_HIT_...
  *     penviro *: Pointer on description of environment for physics 
  * Output:
  *     0: Particle is killed by movement, caller should detach it from linked list

@@ -290,12 +290,14 @@ typedef struct
     float   turnvel;        /* Rotation velocity in degrees/second  */
     float   speed_modifier; /* Multiply speed with this one, if !0  */
     /* -------- Physics --------------------------------------------- */
+    char    stopped_by;     // MAPD
     char    collision_type; ///< > 0: Collided with something
     float   spdlimit;       ///< Speed limit
     float   dampen;         ///< Bounciness    
     float   weight;         // 0: Not affected by gravity/wind
                             // > 0: Falls to bottom (-Z)
                             // < 0: ascend (+Z) like hot particles
+    int     platform_obj;   // If object is on a platform
     // Lighting
     float dynalight_level;
     float dynalight_falloff;

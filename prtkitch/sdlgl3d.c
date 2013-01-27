@@ -109,12 +109,12 @@ static SDLGL3D_CAMERA Camera[SDLGL3D_MAX_CAMERA] =
 // Physics
 static SDLGL3D_PHYSICS_T S3Dphysics = 
 {
-    0.70,   // float hillslide;
-    0.80,   // float slippyfriction;
-    0.95,   // float airfriction;
-    0.75,   // float waterfriction;
-    0.95,   // float noslipfriction;
-    1.00    // float gravity;
+    1.00f,  // float hillslide;
+    1.00f,  // float slippyfriction;
+    0.91f,  // float airfriction;
+    0.80f,  // float waterfriction;
+    0.91f,  // float noslipfriction;
+    -1.00f  // float gravity;
 };
 
 /* Additional objects are used for visible tiles */

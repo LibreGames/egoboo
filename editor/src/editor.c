@@ -177,7 +177,7 @@ static SDLGL_CMDKEY EditorCmd[] =
     { { SDLK_RIGHT }, EDITOR_CAMERA, SDLGL3D_MOVE_RIGHT,    SDLGL3D_MOVE_RIGHT },
     { { SDLK_UP },    EDITOR_CAMERA, SDLGL3D_MOVE_FORWARD,  SDLGL3D_MOVE_FORWARD },
     { { SDLK_DOWN },  EDITOR_CAMERA, SDLGL3D_MOVE_BACKWARD, SDLGL3D_MOVE_BACKWARD },
-    /* -------- Switch the player with given number ------- */
+    /* -------- Exit to OS ------- */
     { { SDLK_ESCAPE }, EDITOR_EXITPROGRAM },
     { { 0 } }
 };
@@ -318,25 +318,25 @@ static SDLGL_FIELD SpawnPtDlg[] =
     { SDLGL_TYPE_BUTTON, {   8, 260,  56,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_DELETE, "Delete" },
     { SDLGL_TYPE_BUTTON, { 155, 260,  40,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_SAVE, "Save" },
     { SDLGL_TYPE_BUTTON, { 294, 260,  48,  16 }, EDITOR_OBJECTDLG, EDITOR_DLG_CLOSE, "Close" },
-    { SDLGL_TYPE_LABEL,  { 216,  48,  80,  16 }, 0, 0, "Inventory" },
+    { SDLGL_TYPE_LABEL,  { 140,  48,  80,  16 }, 0, 0, "Inventory" },
     // @todo: Add the inventory icon rectangles and the position for the object names func:add/delete
     // @todo: Add the strings with the object names, display icon of object    
-    { SDLGL_TYPE_BUTTON, { 216,  64,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[0] },
-    { SDLGL_TYPE_VALUE,  { 240,  68, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[0] },
-    { SDLGL_TYPE_BUTTON, { 216,  80,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[1] },
-    { SDLGL_TYPE_VALUE,  { 240,  88, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[1] },
-    { SDLGL_TYPE_BUTTON, { 216,  96,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[2] },
-    { SDLGL_TYPE_VALUE,  { 240, 100, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[2] },
-    { SDLGL_TYPE_BUTTON, { 216, 112,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[3] },
-    { SDLGL_TYPE_VALUE,  { 240, 116, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[3] },
-    { SDLGL_TYPE_BUTTON, { 216, 128,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[4] },
-    { SDLGL_TYPE_VALUE,  { 240, 132, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[4] },
-    { SDLGL_TYPE_BUTTON, { 216, 144,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[5] },
-    { SDLGL_TYPE_VALUE,  { 240, 148, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[5] },
-    { SDLGL_TYPE_BUTTON, { 216, 160,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[6] },
-    { SDLGL_TYPE_VALUE,  { 240, 164, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[6] },
-    { SDLGL_TYPE_BUTTON, { 216, 176,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[7] },
-    { SDLGL_TYPE_VALUE,  { 240, 180, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[7] },
+    { SDLGL_TYPE_BUTTON, { 140,  64,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[0] },
+    { SDLGL_TYPE_VALUE,  { 164,  68, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[0] },
+    { SDLGL_TYPE_BUTTON, { 140,  80,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[1] },
+    { SDLGL_TYPE_VALUE,  { 164,  88, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[1] },
+    { SDLGL_TYPE_BUTTON, { 140,  96,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[2] },
+    { SDLGL_TYPE_VALUE,  { 164, 100, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[2] },
+    { SDLGL_TYPE_BUTTON, { 140, 112,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[3] },
+    { SDLGL_TYPE_VALUE,  { 164, 116, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[3] },
+    { SDLGL_TYPE_BUTTON, { 140, 128,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[4] },
+    { SDLGL_TYPE_VALUE,  { 164, 132, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[4] },
+    { SDLGL_TYPE_BUTTON, { 140, 144,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[5] },
+    { SDLGL_TYPE_VALUE,  { 164, 148, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[5] },
+    { SDLGL_TYPE_BUTTON, { 140, 160,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[6] },
+    { SDLGL_TYPE_VALUE,  { 164, 164, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[6] },
+    { SDLGL_TYPE_BUTTON, { 140, 176,  16,  16 }, 0, SDLGL_VAL_INT, (char *)&EditSpt.inventory[7] },
+    { SDLGL_TYPE_VALUE,  { 164, 180, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[7] },
     { 0 }
 };
 
@@ -381,7 +381,7 @@ static SDLGL_FIELD ModuleDlg[] =
     { SDLGL_TYPE_SLI_AL, { 120, 220,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_RATEDEC },
     { SDLGL_TYPE_LABEL,  { 144, 224,  72,  16 }, 0, 0, &ModuleDesc.lev_rating[0] },
     { SDLGL_TYPE_SLI_AR, { 224, 220,  16,  16 }, EDITOR_MODULEDLG, EDITOR_MODULEDLG_RATEINC },
-    { SDLGL_TYPE_LABEL,  {   8, 240, 112,   8 }, 0, 0, "Module Summary:" },
+    { SDLGL_TYPE_LABEL,  {   8, 204, 112,   8 }, 0, 0, "Module Summary:" },
     { SDLGL_TYPE_EDIT,   {   8, 260, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[0], 40 },
     { SDLGL_TYPE_EDIT,   {   8, 280, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[1], 40 },
     { SDLGL_TYPE_EDIT,   {   8, 300, 328,  16 }, SDLGL_INPUT_SDLGLTYPE, SDLGL_VAL_STRING, ModuleDesc.summary[2], 40 },
@@ -1159,7 +1159,7 @@ static int editorInputHandler(SDLGL_EVENT *event)
                 sdlglfldHandle(event);
                 break;
         }
-    } /* if (event -> type == SDLGL_INPUT_COMMAND) */
+    } 
 
     return SDLGL_INPUT_OK;
 }

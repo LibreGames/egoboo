@@ -105,7 +105,9 @@ static SDLGL_CMDKEY prtkitchCmd[] =
 static SDLGL_FIELD PrtKitchFields[20];
 
 static int emitter_obj_no = 0;      // Number of the Emitter-Object
-static int PrtList[50];             // List of particles with numbers
+static int PipFirst, PipNum;        // Number of first profile and number of profiles
+
+static MAPENV_T Enviro;             // Dummy Data about environment
 
 /*******************************************************************************
 * CODE									                                       *
@@ -138,6 +140,9 @@ static void prtkitchSpawnPrt(int pip_no)
 #endif
 static void prtkitchDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 {
+    SDLGL3D_OBJECT *pobj_list;
+    
+    
     glClear(GL_COLOR_BUFFER_BIT);
 
     sdlglstrSetFont(SDLGLSTR_FONT8);
@@ -149,6 +154,21 @@ static void prtkitchDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     // Do all the movement code before drawing
     sdlgl3dMoveObjects(event -> secondspassed);
+    // Now do additional actions on particle
+    pobj_list = sdlgl3dGetObject(0);
+
+
+    while(pobj_list->id)
+    {
+        if(pobj_list->obj_type == EGOMAP_OBJ_PART && pobj_list->type_no > 0)
+        {
+            // Is particle and has a valid profile
+            particleOnMove(pobj_list, &Enviro);
+        }
+        // Handle next object
+        pobj_list++;
+    }
+       
 
     /* Draw the 3D-View before the 2D-Screen */
     // @todo: Draw the particle(s)
@@ -178,8 +198,11 @@ static int prtkitchInputHandler(SDLGL_EVENT *event)
         switch(event -> code) {
 
             case PRTKITCH_SPAWNPRT:
-                // Spawn a particle                
-                prtkitchSpawnPrt(PrtList[event -> sub_code]);
+                // Spawn a particle
+                if(event -> sub_code > 0 && event -> sub_code < PipNum)
+                {                
+                    prtkitchSpawnPrt(PipFirst + event -> sub_code);
+                }
                 break;
 
             case PRTKITCH_CAMERA:
@@ -217,9 +240,7 @@ static int prtkitchInputHandler(SDLGL_EVENT *event)
  */
 static void prtkitchStart(void)
 {
-    char fname[64];
     SDLGL3D_OBJECT emitter;
-    int i;
 
 
     // --- Create and initalize the Emitter-Object
@@ -242,11 +263,7 @@ static void prtkitchStart(void)
     emitter_obj_no = sdlgl3dCreateObject(&emitter, 0);    
 
     // Load some particles
-    for (i = 0; i < 6; i++)
-    {
-        sprintf(fname, "data/part%d.txt", i);
-        PrtList[i] = particleLoad(fname);
-    }
+    PipFirst = particleLoad("data/", &PipNum);       
 
     /* -------- Initialize the 3D-Stuff --------------- */
     sdlgl3dInitCamera(0, 310, 0, 90, 0.75);
@@ -254,7 +271,7 @@ static void prtkitchStart(void)
     sdlgl3dMoveToPosCamera(0, -50.0, 150.0, 300.0, 0);
 
     // Emit one particle type 2 (Animated fire)
-    particleSpawn(PrtList[2], emitter_obj_no, 0, 0);
+    particleSpawn(PipFirst + 2, emitter_obj_no, 0, 0);
 
     /* -------- Initialize the dialog ------------------- */
     /* -------- Now create the output screen ---------- */

@@ -57,6 +57,7 @@
 #define PRT_RESPAWNONHIT    0x80000     ///< Respawn character on hit?
 #define PRT_ISHIDDEN        0x100000    ///< Is it hidden?
 #define PRT_ATTACHEDTO      0x200000    ///< Is it attached to an other object?
+#define PRT_TRANS           0x400000    ///<Display it as transparent
 
 /*******************************************************************************
 * ENUMS								                                        *
@@ -154,7 +155,7 @@ typedef struct
 
 /* ============ File functions ============== */
 int particleLoadGlobals(void);
-int particleLoad(char *filename);
+int particleLoad(char *fdir, int *prt_cnt);
 
 /* ======= Game-Functions ===== */
 int  particleSpawn(int pip_no, int spawnobj_no, char attached_to, char modifier);
