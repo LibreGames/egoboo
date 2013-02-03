@@ -322,11 +322,24 @@ typedef struct
     char stopped_by;
     int reaffirm_damagetype;
     char invictus;
+    char nameknown;            
+
     /* Additional help info  */
     char *obj_name;     /* Pointer on the name of the object in CAP_T           */
     char *class_name;   /* @todo: Pointer on the classes name from CAP_T        */
     // AI-Stuff if the character is AI-Controlled
     AI_STATE_T ai;              ///< ai data and script to use
+    // More flags from CAP_T for faster code and model graphics
+    unsigned char flashand;
+    unsigned char alpha_base;
+    unsigned char light_base;
+    // physics
+    int   weight;             ///< Weight
+    float dampen;                     ///< Bounciness
+    float bumpdampen;                 ///< Mass
+    // Other stuff
+    char platform;
+    char canuseplatforms;
     
 } CHAR_T;
 
@@ -349,12 +362,13 @@ char charInventorySwap(const int char_no, int inventory_slot, int grip_off);
 
 /* ================= Gameplay functions ================== */
 void charInventoryFunc(int char_no, int func_no);
-void charDamage(const char char_no, char dir_no, int valpair[2], char val_type, char team,
+void charDamage(const char char_no, char dir_no, int valpair[2], char team,
                 int attacker, int effects);
 void charAddValue(int char_no, int which, int sub_type, int valpair[2], int duration_sec);
 void charSetValue(int char_no, int which, int sub_type, int amount);
-int  charGetSkill(int char_no, unsigned int whichskill);
+int  charGetSkill(int char_no, unsigned int whichskill); /* IDSZ */
 
+char charSetTimer(int char_no, int which, int add_val, int duration_sec);
 void charUpdateAll(float sec_passed);
 
 #endif  /* #define _CHAR_H_ */

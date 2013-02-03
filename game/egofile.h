@@ -103,7 +103,7 @@ typedef struct
     float x, y, z;          /* Vertex x / y / z                     */           
     unsigned char a;        /* Ambient lighting                     */
 
-} MESH_VTX_T;              /* Planned for later adjustement how to store vertices */
+} MESH_VTX_T;              
 
 typedef struct
 {

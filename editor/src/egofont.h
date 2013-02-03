@@ -3,7 +3,7 @@
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
 *    - Egoboo Bitmapped Font                                                   *
-*      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
+*      (c) 2010-2013 Paul Mueller <muellerp61@bluewin.ch>                      *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *

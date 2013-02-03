@@ -1,8 +1,9 @@
 /*******************************************************************************
-*  EDITDRAW.H                                                                  *
-*	- Draws anithing what's 3D        	                                       *
-*									                                       *
-*      (c) 2010-2013 Paul Mueller <muellerp61@bluewin.ch>                      *
+*  RENDER3D.H                                                                  *
+*    - EGOBOO-Game                                                             *
+*                                                                              *
+*    - All functionality to render the 3D-Part of the game                     *
+*      (c) 2013 The Egoboo Team                                                *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -19,24 +20,29 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _EDITDRAW_H_
-#define _EDITDRAW_H_
+#ifndef _RENDER3D_H_
+#define _RENDER3D_H_
 
 /*******************************************************************************
-* INCLUDES								                                       *
+* INCLUDES                                                                     *
 *******************************************************************************/
 
-#include "editfile.h"
+#include "egofile.h"        // MESH_T;
 
 /*******************************************************************************
-* CODE 								                                           *
+* DEFINES                                                                      *
 *******************************************************************************/
 
-void editdrawInitData(void);
-void editdrawFreeData(void);
-void editdraw3DView(MESH_T *mesh, FANDATA_T *fd, COMMAND_T *cm, int *crect);
-void editdraw2DMap(MESH_T *mesh, int mx, int my, int mw, int mh, int tw, int *crect);
-void editdraw2DTex(int x, int y, int w, int h, unsigned char tx_no, char tx_big); 
-void editdrawAdjustCamera(int tx, int ty);
+#define RENDER3D_SOLID      0x01
+#define RENDER3D_LIGHTMAX   0x02    // Draw the map full lighted
+#define RENDER3D_TEXTURED   0x04
 
-#endif  /* _EDITDRAW_H_ */
+/*******************************************************************************
+* CODE                                                                         *
+*******************************************************************************/
+
+void render3dLoad(char globals);
+void render3dCleanup(char globals);
+void render3dMain(MESH_T *pmesh);
+
+#endif  /* #define _RENDER3D_H_ */

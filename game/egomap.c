@@ -32,7 +32,7 @@
 
 #include "sdlgl3d.h"
 #include "egofile.h"        /* Loading the different files                  */
-// #include "render3d.h"       /* Draw the whole map                           */
+#include "render3d.h"       /* Draw the whole map                           */
 #include "egodefs.h"        /* Global definitions with no additional data   */
 #include "char.h"           /* Load a character from file                   */
 // #include "particle.h"       // Additional movement code for particles
@@ -640,7 +640,7 @@ static COMMAND_T MeshCommand[MESH_MAXTYPE] =
 
 /* --- Game objects buffer --- */
 static EGOFILE_PASSAGE_T Passages[EGOMAP_MAXPASSAGE + 2];
-static EGOFILE_SPAWNPT_T SpawnPts[EGOMAP_MAXSPAWN + 2];       /* Holds data about chosen spawn point  */
+static EGOFILE_SPAWNPT_T SpawnPts[EGOMAP_MAXSPAWN + 2];       // List of all spawn points
 
 /* ---- Map data itself --- */
 static MESH_T Mesh;         /* Mesh of map                  */
@@ -778,9 +778,9 @@ static int egomapSetVrta(MESH_T *mesh, int vert)
 	/* int brx, bry, dist; */ 
 
 	/* To make life easier  */
-	x = mesh -> vrt[vert].x;
-	y = mesh -> vrt[vert].y;
-	z = mesh -> vrt[vert].z;
+	x = mesh->vrt[vert].x;
+	y = mesh->vrt[vert].y;
+	z = mesh->vrt[vert].z;
 
 	// Directional light
 	/*
@@ -816,21 +816,20 @@ static int egomapSetVrta(MESH_T *mesh, int vert)
 	newa += LightAmbi;
 	if (newa <= 0) newa = 1;
 	if (newa > 255) newa = 255;
-	mesh -> vrt[vert].a = (unsigned char)newa;
+	mesh->vrt[vert].a = (unsigned char)newa;
 
 	// Edge fade
 	/*
-	dist = dist_from_border(mesh  -> vrtx[vert], mesh -> vrty[vert]);
+	dist = dist_from_border(mesh ->vrtx[vert], mesh->vrty[vert]);
 	if (dist <= EGOMAP_FADEBORDER)
 	{
 		newa = newa * dist / EGOMAP_FADEBORDER;
 		if (newa == 0)  newa = 1;
-		mesh  ->  vrta[vert] = newa;
+		mesh -> vrta[vert] = newa;
 	}
 	*/
 
 	return newa;
-
 }
 
 /*
@@ -849,27 +848,27 @@ static int egomapSetVrta(MESH_T *mesh, int vert)
  */
 static void egomapCompleteMapData(MESH_T *mesh)
 {
-	mesh -> numfan  = mesh -> tiles_x * mesh -> tiles_y;
+	mesh->numfan  = mesh->tiles_x * mesh->tiles_y;
 
     // @todo: Load 'edge' data into 'sdlgl3d' for Camera boundary
-	mesh -> edgex = (mesh -> tiles_x * EGOMAP_TILE_SIZE) - 1;
-	mesh -> edgey = (mesh -> tiles_y * EGOMAP_TILE_SIZE) - 1;
-	mesh -> edgez = 180 * 16;
+	mesh->edgex = (mesh->tiles_x * EGOMAP_TILE_SIZE) - 1;
+	mesh->edgey = (mesh->tiles_y * EGOMAP_TILE_SIZE) - 1;
+	mesh->edgez = 180 * 16;
 
-	mesh -> watershift = 3;
-	if (mesh -> tiles_x > 16)   mesh -> watershift++;
-	if (mesh -> tiles_x > 32)   mesh -> watershift++;
-	if (mesh -> tiles_x > 64)   mesh -> watershift++;
-	if (mesh -> tiles_x > 128)  mesh -> watershift++;
-	if (mesh -> tiles_x > 256)  mesh -> watershift++;
+	mesh->watershift = 3;
+	if (mesh->tiles_x > 16)   mesh->watershift++;
+	if (mesh->tiles_x > 32)   mesh->watershift++;
+	if (mesh->tiles_x > 64)   mesh->watershift++;
+	if (mesh->tiles_x > 128)  mesh->watershift++;
+	if (mesh->tiles_x > 256)  mesh->watershift++;
 
 	/* Now set the number of first vertex for each fan */
 	egomapSetFanStart(mesh);
 
-	mesh -> numfreevert = (MESH_MAXTOTALVRT - 10) - mesh -> numvert;
+	mesh->numfreevert = (MESH_MAXTOTALVRT - 10) - mesh->numvert;
 
 	/* Set flag that map has been loaded */
-	mesh -> map_loaded = 1;
+	mesh->map_loaded = 1;
 }
 
 /*
@@ -887,10 +886,10 @@ static void egomapCalcVrta(MESH_T *mesh)
 	int fan;
 
 
-	for (fan = 0; fan < mesh -> numfan; fan++)
+	for (fan = 0; fan < mesh->numfan; fan++)
     {
-		vert = mesh -> vrtstart[fan];
-		num  = mesh -> pcmd[mesh -> fan[fan].type].numvertices;
+		vert = mesh->vrtstart[fan];
+		num  = mesh->pcmd[mesh->fan[fan].type].numvertices;
 
 		for (cnt = 0; cnt < num; cnt++)
         {
@@ -912,7 +911,6 @@ static void egomapCalcVrta(MESH_T *mesh)
  */
  static void egomapChangePassage(char p_no, EGOFILE_PASSAGE_T *psg, char action)
  {
-
     int x_count, y_count;
     int tile_no;
     char clear_fx, set_fx;
@@ -921,20 +919,20 @@ static void egomapCalcVrta(MESH_T *mesh)
     clear_fx = 0;
     set_fx = 0;
     
-    if (psg -> topleft[0] > 0 && psg -> topleft[1] > 0)
+    if (psg->topleft[0] > 0 && psg->topleft[1] > 0)
     {
-        psg -> rec_no = p_no;   /* Save the number of the passage for the editor */
+        psg->rec_no = p_no;   /* Save the number of the passage for the editor */
 
         switch(action)
         {
             case EGOMAP_CLEAR:
                 // Mark the passage as deleted
-                psg -> psg_no = -1;
+                psg->psg_no = -1;
                 // Remove this passage from map
                 p_no = 0;
                 break;
             case EGOMAP_OPEN:
-                if(psg -> open)
+                if(psg->open)
                 {
                     //no need to do this if it already is open
                     return;
@@ -953,15 +951,15 @@ static void egomapCalcVrta(MESH_T *mesh)
                 }
                 else
                 {
-                    psg -> open = 0;
+                    psg->open = 0;
                     set_fx = (char)(MPDFX_IMPASS);
                 }
                 break;        
         }        
 
-        for (y_count = psg -> topleft[1]; y_count <= psg -> bottomright[1]; y_count++)
+        for (y_count = psg->topleft[1]; y_count <= psg->bottomright[1]; y_count++)
         {
-            for (x_count = psg -> topleft[0]; x_count <= psg -> bottomright[0]; x_count++)
+            for (x_count = psg->topleft[0]; x_count <= psg->bottomright[0]; x_count++)
             {
                 /* -- Tell the fan which passage it's belong to -- */
                 tile_no = (y_count * Mesh.tiles_x) + x_count;
@@ -998,15 +996,15 @@ static void egomapCalcVrta(MESH_T *mesh)
     char slot_no;           /* In inventory, if any */
 
 
-    if(spt -> view_dir == 'R')
+    if(spt->view_dir == 'R')
     {
         slot_no = 0;    /* Also for mounts */
     }
-    else if(spt -> view_dir == 'L')
+    else if(spt->view_dir == 'L')
     {
         slot_no = 1;
     }
-    else if(spt -> view_dir == 'I')
+    else if(spt->view_dir == 'I')
     {
         slot_no = -1;
     }
@@ -1015,16 +1013,16 @@ static void egomapCalcVrta(MESH_T *mesh)
         slot_no = 10;   /* Is a character on map */
     }
 
-    char_no = charCreate(spt -> obj_name, spt -> team, spt -> stt, spt -> money, spt -> skin, spt -> pas);
+    char_no = charCreate(spt->obj_name, spt->team, spt->stt, spt->money, spt->skin, spt->pas);
 
     if(char_no > 0)
     {
-        if(slot_no == 10 && spt -> x_pos > 0 && spt -> y_pos > 0)
+        if(slot_no == 10 && spt->x_pos > 0 && spt->y_pos > 0)
         {
             /* Inventory belongs to this character, if any */
             inv_char = char_no;
             // Is a character with an inventory -- Drop it to map
-            egomapDropChar(char_no, spt -> x_pos, spt -> y_pos, spt -> z_pos, spt -> view_dir);
+            egomapDropChar(char_no, spt->x_pos, spt->y_pos, spt->z_pos, spt->view_dir);
         }
         else
         {
@@ -1032,9 +1030,9 @@ static void egomapCalcVrta(MESH_T *mesh)
             charInventoryAdd(inv_char, char_no, slot_no);
         }
         // Attach the character to a passage, if needed
-        if(spt -> pas > 0)
+        if(spt->pas > 0)
         {
-            Passages[spt -> pas].char_no = char_no;
+            Passages[spt->pas].char_no = char_no;
         }
     }
 }
@@ -1061,42 +1059,42 @@ static void egomapCalcVrta(MESH_T *mesh)
     // Get pointer on object    
     pobj = sdlgl3dGetObject(obj_no);
     
-    if(pobj -> obj_type == EGOMAP_OBJ_CHAR && pobj -> type_no > 0)
+    if(pobj->obj_type == EGOMAP_OBJ_CHAR && pobj->type_no > 0)
     {
         // Get the info about the character
-        pchar = charGet(pobj -> type_no);
+        pchar = charGet(pobj->type_no);
 
         // Get the characters profile name
-        strcpy(spt -> obj_name, pchar -> obj_name);
+        strcpy(spt->obj_name, pchar->obj_name);
 
         // Get some more info
-        spt -> money    = pchar -> money;
-        spt -> view_dir = 'N';  // @todo: Get direction from object
-        spt -> skin     = pchar -> skin_no;
-        spt -> pas      = pchar -> psg_no;
-        spt -> stt      = pchar -> draw_stats;
-        spt -> team     = pchar -> team[CHARSTAT_ACT];
-        spt -> lvl      = pchar -> experience_level;
-        spt -> rec_no   = 0;
+        spt->money    = pchar->money;
+        spt->view_dir = 'N';  // @todo: Get direction from object
+        spt->skin     = pchar->skin_no;
+        spt->pas      = pchar->psg_no;
+        spt->stt      = pchar->draw_stats;
+        spt->team     = pchar->team[CHARSTAT_ACT];
+        spt->lvl      = pchar->experience_level;
+        spt->rec_no   = 0;
         // Get inventory info
         for(i = 0; i < (INVEN_COUNT + SLOT_COUNT); i++)
         {
-            item_no = pchar -> inventory[i].item_no;
+            item_no = pchar->inventory[i].item_no;
 
             if(item_no > 0)
             {
                 // Get the inventory item and the objects name
                 pitem = charGet(item_no);
 
-                spt -> inventory[i] = pitem -> icon_no;
-                spt -> inv_name[i]  = pitem -> obj_name;
+                spt->inventory[i] = pitem->icon_no;
+                spt->inv_name[i]  = pitem->obj_name;
             }
         }
 
         // Now add the position from object
-        spt -> x_pos = pobj -> pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
-        spt -> y_pos = pobj -> pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
-        spt -> z_pos = pobj -> pos[SDLGL3D_Z];
+        spt->x_pos = pobj->pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
+        spt->y_pos = pobj->pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
+        spt->z_pos = pobj->pos[SDLGL3D_Z];
     }
 }
 
@@ -1126,36 +1124,36 @@ static void egomapCalcVrta(MESH_T *mesh)
     // Get pointer on object
     pobj = sdlgl3dGetObject(obj_no);
 
-    if(pobj -> obj_type == EGOMAP_OBJ_CHAR && pobj -> type_no > 0)
+    if(pobj->obj_type == EGOMAP_OBJ_CHAR && pobj->type_no > 0)
     {
         // Create spawn point from character-object
-        pchar = charGet(pobj -> type_no);
+        pchar = charGet(pobj->type_no);
 
         // Get the characters profile name
-        strcpy(spt -> obj_name, pchar -> obj_name);
-        strcpy(spt -> item_name, "NONE");
+        strcpy(spt->obj_name, pchar->obj_name);
+        strcpy(spt->item_name, "NONE");
         // Get some more info
-        spt -> slot_no  = spt_cnt;
-        spt -> money    = pchar -> money;
-        spt -> view_dir = 'N';  // @todo: Get direction from object
-        spt -> skin     = pchar -> skin_no;
-        spt -> pas      = pchar -> psg_no;
-        spt -> stt      = pchar -> draw_stats;
-        spt -> gho      = 'F';
-        spt -> team     = (char)(pchar -> team[CHARSTAT_ACT] + 'A');
-        spt -> lvl      = pchar -> experience_level;
-        spt -> rec_no   = 0;
+        spt->slot_no  = spt_cnt;
+        spt->money    = pchar->money;
+        spt->view_dir = 'N';  // @todo: Get direction from object
+        spt->skin     = pchar->skin_no;
+        spt->pas      = pchar->psg_no;
+        spt->stt      = pchar->draw_stats;
+        spt->gho      = 'F';
+        spt->team     = (char)(pchar->team[CHARSTAT_ACT] + 'A');
+        spt->lvl      = pchar->experience_level;
+        spt->rec_no   = 0;
         // Now add the position from object
-        spt -> x_pos = pobj -> pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
-        spt -> y_pos = pobj -> pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
-        spt -> z_pos = pobj -> pos[SDLGL3D_Z];
+        spt->x_pos = pobj->pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
+        spt->y_pos = pobj->pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
+        spt->z_pos = pobj->pos[SDLGL3D_Z];
         spt++;
         spt_cnt++;
 
         //  Create spawn points from inventory-objects
         for(i = 0; i < (INVEN_COUNT + SLOT_COUNT); i++)
         {
-            item_no = pchar -> inventory[i].item_no;
+            item_no = pchar->inventory[i].item_no;
 
             if(item_no > 0)
             {
@@ -1184,13 +1182,13 @@ static void egomapCalcVrta(MESH_T *mesh)
                 memset(spt, 0, sizeof(EGOFILE_SPAWNPT_T));
 
                 // Get the items profile name
-                strcpy(spt -> obj_name, pitem -> obj_name);
-                strcpy(spt -> item_name, "NONE");
-                spt -> slot_no  = spt_cnt;
-                spt -> view_dir = slot_sign;
-                spt -> stt      = pchar -> draw_stats;
-                spt -> gho      = 'F';
-                spt -> team     = 'N';
+                strcpy(spt->obj_name, pitem->obj_name);
+                strcpy(spt->item_name, "NONE");
+                spt->slot_no  = spt_cnt;
+                spt->view_dir = slot_sign;
+                spt->stt      = pchar->draw_stats;
+                spt->gho      = 'F';
+                spt->team     = 'N';
                 // Next buffer and count it
                 spt++;
                 spt_cnt++;
@@ -1227,7 +1225,7 @@ static int egomapCreateSptList(void)
         // Get pointer on object
         pobj = sdlgl3dGetObject(obj_no);
 
-        if(pobj -> id != 0)
+        if(pobj->id != 0)
         {
             // Create a spawn points, get back the number of slots left
             spt_cnt = egomapObjToSptList(obj_no, pspt, spt_cnt);
@@ -1371,24 +1369,17 @@ static int egomapCreateSptList(void)
     /* Correct all of them silly texture positions for seamless tiling */
     for (entry = 0; entry < (MESH_MAXTYPE/2); entry++)
     {
-        for (cnt = 0; cnt < (mcmd -> numvertices * 2); cnt++)
+        for (cnt = 0; cnt < (mcmd->numvertices * 2); cnt++)
         {
-            mcmd -> uv[cnt]    *= 0.1211f;   /* 31 / 256 */
-            mcmd -> biguv[cnt] *= 0.2461f;   /* 63 / 256 */
+            mcmd->uv[cnt]    *= 0.1211f;   /* 31 / 256 */
+            mcmd->biguv[cnt] *= 0.2461f;   /* 63 / 256 */
         }
 
         mcmd++;
-    }
-
-    /* -- Clear all possibly previous loaded data for this module -- */
-    // Delete all objects
-    sdlgl3dDeleteObject(-1);
-    // @todo: Clear models, characters, passage-buffer, spawnpoint-buffer    
-    
+    }      
 
     /* Calculate the UV-Data */
     // @todo: 'render3dInitData()
-    // editdrawInitData();
 }
 
  /*
@@ -1404,11 +1395,11 @@ void egomapSetFanStart(MESH_T *mesh)
 	int fan_no, vertex_no;
     
 
-	for (fan_no = 0, vertex_no = 0; fan_no < mesh -> numfan; fan_no++)
+	for (fan_no = 0, vertex_no = 0; fan_no < mesh->numfan; fan_no++)
     {
-		mesh -> vrtstart[fan_no] = vertex_no;
-        mesh -> fan[fan_no].vs   = vertex_no;       /* New info in fan-struct */
-		vertex_no += mesh -> pcmd[mesh -> fan[fan_no].type & 0x1F].numvertices;
+		mesh->vrtstart[fan_no] = vertex_no;
+        mesh->fan[fan_no].vs   = vertex_no;       /* New info in fan-struct */
+		vertex_no += mesh->pcmd[mesh->fan[fan_no].type & 0x1F].numvertices;
 	}
 }
 
@@ -1416,67 +1407,90 @@ void egomapSetFanStart(MESH_T *mesh)
  * Name:
  *     egomapLoad
  * Description:
- *     Loads
- *     Initializes the map data
+ *     Loads the map for the given module
  * Input:
- *     msg *: Where to return a possible error message
+ *     mod_name *: Name of the module 
+ *     msg *:      Where to return a possible error message
  */
-MESH_T *egomapLoad(char *msg, int num_tile)
+char egomapLoad(char *mod_name, char *msg)
 {
+    static char act_mod_name[32];       // Name of actually loaded module, if any
+    
     EGOFILE_PASSAGE_T *psg;
     EGOFILE_SPAWNPT_T *spt;
     int i;
 
 
-    memset(&Mesh, 0, sizeof(MESH_T));
+    if(NULL == mod_name || mod_name[0] == 0) return 0;
+
+    // Set the module directory where to load data from
+    egofileSetDir(EGOFILE_MODULEDIR, mod_name);
+
+    if(act_mod_name[0] == 0)
+    {
+        // We don't have to clear any buffers, but save the name for later
+        strcpy(act_mod_name, mod_name);
+    }
+    else if(strcmp(act_mod_name, mod_name) != 0)
+    {
+        // Replace the actually loaded map
+        memset(&Mesh, 0, sizeof(MESH_T));
+        if(egofileMapMesh(&Mesh, msg, 0))
+        {
+            Mesh.map_loaded = 1;
+            render3dLoad(1);                    // Load the wall textures
+            // @todo: render2dLoad();
+        }
+        else
+        {
+            // Loading map failed
+            return 0;
+        }
+    }
 
     /* Set pointer on commands */
     Mesh.pcmd = MeshCommand;
 
-    /* Load map data from file */
-    if (egofileMapMesh(&Mesh, msg, 0))
+    // Complete the map info before loading of spawn points because
+    // spawning needs the Z-Values from the map
+    egomapCompleteMapData(&Mesh);
+
+    /* -- Clear all possibly previous loaded data for this module -- */
+    // Delete all objects
+    sdlgl3dDeleteObject(-1);
+    // @todo: Clear models and characters, passage- and spawnpoint-buffer
+
+    // First load the passages, because this are connected with spawned characters
+    psg = &Passages[1];
+    egofilePassage(psg, EGOFILE_ACT_LOAD, EGOMAP_MAXPASSAGE);
+    i = 0;
+    while(psg->line_name[0] != 0)
     {
-        // Complete the map info before loading of spawn points because
-        // spawning needs the Z-Values from the map
-        egomapCompleteMapData(&Mesh);
+        psg->psg_no = 0;
 
-        /* --- Load additional data for this map --- */
-        // First load the passages, because this are connected with spawned characters
-        psg = &Passages[1];
-        egofilePassage(psg, EGOFILE_ACT_LOAD, EGOMAP_MAXPASSAGE);
-        i = 0;
-        while(psg -> line_name[0] != 0)
-        {
-            // Add data for editor
-            psg -> psg_no = 0;
+        egomapChangePassage((char)i, psg, EGOMAP_SET);
 
-            egomapChangePassage((char)i, psg, EGOMAP_SET);
-
-            psg++;
-            i++;
-        }
-        
-        /* Load spawn points and its character data */
-        spt = &SpawnPts[1];
-        egofileSpawn(spt, EGOFILE_ACT_LOAD, EGOMAP_MAXSPAWN);
-
-        while(spt -> obj_name[0] != 0)
-        {
-            // Spawn the object
-            egomapSpawnObject(spt);
-
-            spt++;
-        }
-
-        /* --- Success --- */
-        return &Mesh;
+        psg++;
+        i++;
     }
 
-    /* -- Failed -- */
-    return 0;
+    // Load spawn points and spawn characters
+    spt = &SpawnPts[1];
+    egofileSpawn(spt, EGOFILE_ACT_LOAD, EGOMAP_MAXSPAWN);
+
+    while(spt->obj_name[0] != 0)
+    {
+        // Spawn the object
+        egomapSpawnObject(spt);
+
+        spt++;
+    }
+
+    /* --- Success --- */
+    return 1;
 }
 
- 
+
 /* ============  Tile info ========== */
 
 /*
@@ -1484,8 +1498,8 @@ MESH_T *egomapLoad(char *msg, int num_tile)
  *     egomapGetTileInfo
  * Description:
  *     Returns the info about the tile at given x/y-Position 
- *     fd -> psg_no > 0: Passage with this number on this fan
- *     fd -> obj_no > 0: Spawn point with this number on this fan
+ *     fd->psg_no > 0: Passage with this number on this fan
+ *     fd->obj_no > 0: Spawn point with this number on this fan
  * Input:
  *     tx, ty: Position on map
  *     ti *:   Pointer on buffer where to return the data
@@ -1499,27 +1513,27 @@ MESH_T *egomapLoad(char *msg, int num_tile)
     
     
     // Save position for A-Star 'off map check'
-    ti -> x = tx;
-    ti -> y = ty;
+    ti->x = tx;
+    ti->y = ty;
         
     // Check if destinationis on map at all
     if ((tx >= 0) && (tx < Mesh.tiles_x) && (ty >= 0) && (ty < Mesh.tiles_y))
     {
         tile_no = (ty * Mesh.tiles_x) + tx;
 
-        ti -> tile_no = tile_no;
+        ti->tile_no = tile_no;
         // Data about fan itself
         ft = &Mesh.fan[tile_no];            
-        ti -> psg_no = ft -> psg_no;
-        ti -> obj_no = ft -> obj_no;    // Number of first object on this tile (fan)
-        ti -> fx     = ft -> fx;
+        ti->psg_no = ft->psg_no;
+        ti->obj_no = ft->obj_no;    // Number of first object on this tile (fan)
+        ti->fx     = ft->fx;
         return 1;
     }
     else
     {            
         // Mark position as off map and 'blocked' 
-        ti -> tile_no = -1;
-        ti -> fx      = MPDFX_IMPASS;
+        ti->tile_no = -1;
+        ti->fx      = MPDFX_IMPASS;
         return 0;
     }    
  } 
@@ -1600,14 +1614,14 @@ MESH_T *egomapLoad(char *msg, int num_tile)
  * Description:
  *     Draw the whole map and allt he objects on it
  * Input:
- *     fd *:    Fandata from editor
- *     cm *:    Command data from editor
- *     crect *: Pointer on edges of chosen rectangle, if any
+ *     void
  */
-void egomapDraw(FANDATA_T *fd, COMMAND_T *cm, int *crect)
+void egomapDraw(void)
 {
-    // editdraw3DView(&Mesh, fd, cm, crect);
-    // @todo: render3DMain(&Mesh);
+    if(Mesh.map_loaded)
+    {
+        render3dMain(&Mesh);
+    }        
 }
 
  /*
@@ -1621,16 +1635,16 @@ void egomapDraw(FANDATA_T *fd, COMMAND_T *cm, int *crect)
  *     tw:      Tile-Width for minimap 
  *     crect *: Edges of chosen rectangle, if any
  */
+/*
 void egomapDraw2DMap(int mx, int my, int mw, int mh, int tw, int *crect)
 {
 
-    if (tw > 0 && Mesh.map_loaded) {
-
-         editdraw2DMap(&Mesh, mx, my, mw, mh, tw, crect);
-
-    }
-
+    // if (tw > 0 && Mesh.map_loaded)
+    // {
+    //      editdraw2DMap(&Mesh, mx, my, mw, mh, tw, crect);
+    // }
 }
+*/
 
 /* ============ OBJECT-FUNCTIONS ========== */
 
@@ -1689,6 +1703,7 @@ void egomapDeleteObject(int obj_no)
  */
 void egomapDropChar(int char_no, float x, float y, float z, char dir)
 {
+    CHAR_T *pchar;
     int obj_no;
     int tile_no;
     char dir_no;
@@ -1724,8 +1739,28 @@ void egomapDropChar(int char_no, float x, float y, float z, char dir)
     {
         // Put it to the map
         tile_no = (floor(y) * Mesh.tiles_x) + floor(x);
-        // @todo: Create a linked list if needed (more then one object on tile)
+        // @todo: Create a linked list if needed (more then one object on tile for collision detection)
         Mesh.fan[tile_no].obj_no = obj_no;
+        
+        // Set backlink from character to object
+        pchar = charGet(char_no);
+        pchar->obj_no = obj_no;
+        // is the object part of a shop's inventory?
+        if(pchar->isitem)
+        {
+            // @todo: Put shop items into shopkeepers inventory
+            pchar->isshopitem = 0;
+            if(Mesh.fan[tile_no].psg_no > 0)
+            {
+                if(Passages[Mesh.fan[tile_no].psg_no].ishop)
+                {
+                    pchar->isshopitem = 1;  // Full value
+                    pchar->iskursed   = 0;  // Shop items are never kursed
+                    pchar->nameknown  = 1;
+                }
+            }
+        }
+        
     }
 }
 
@@ -1766,10 +1801,10 @@ void egomapHandlePassage(int psg_no, int action)
     
     obj_list = sdlgl3dGetObject(0); // Get pointer on first object in list
     
-    while(obj_list -> id)
+    while(obj_list->id)
     {
         // Only handle objects which have moved
-        if (obj_list -> id > 0 && obj_list -> move_cmd)
+        if (obj_list->id > 0 && obj_list->move_cmd)
         {
             // Check collision with map
             bump_res = egomapCheckBump(obj_list, obj_list->stopped_by, bump_val);
@@ -1801,25 +1836,25 @@ void egomapHandlePassage(int psg_no, int action)
                 }
             }            
             
-            new_tile = (int)(floor(obj_list -> pos[1]) * Mesh.tiles_x) + (int)(floor(obj_list -> pos[0]));
+            new_tile = (int)(floor(obj_list->pos[1]) * Mesh.tiles_x) + (int)(floor(obj_list->pos[0]));
                 
-            if(new_tile != obj_list -> act_tile)
+            if(new_tile != obj_list->act_tile)
             {
-                obj_list -> old_tile = obj_list -> act_tile;
-                obj_list -> act_tile = new_tile;
+                obj_list->old_tile = obj_list->act_tile;
+                obj_list->act_tile = new_tile;
                 
                 // Move from/to tile
-                Mesh.fan[obj_list -> old_tile].obj_no = 0;  
-                Mesh.fan[new_tile].obj_no = obj_list -> id;                      
+                Mesh.fan[obj_list->old_tile].obj_no = 0;  
+                Mesh.fan[new_tile].obj_no = obj_list->id;                      
                 // @todo: Use linked list for multiple characters on tile
                 
                 // @todo: Trigger event (e.g. entering a passage if tile has changed
-                // if(obj_list -> obj_type == EGOMAP_OBJ_CHAR) 
+                // if(obj_list->obj_type == EGOMAP_OBJ_CHAR) 
                 //      Actions:
                 //          - 'leave' 'old_tile,
                 //          - 'enter' 'new_tile' (act_tile)
                 //      Maybe for particles too ?
-                // if psg_no: egomapHandlePassage(obj_no [who], enter [what], obj_list -> old_tile [where]);
+                // if psg_no: egomapHandlePassage(obj_no [who], enter [what], obj_list->old_tile [where]);
                 // if psg_no: egomapHandlePassage(obj_no [who], leave [what], new_tile [where]);
             } 
         }

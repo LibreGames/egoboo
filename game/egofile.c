@@ -47,8 +47,9 @@
 // Directory where Egoboo resides
 static char EgofileGameDir[128]   = "c:/egoboo/";
 // Directory name of actual game module
-static char EgofileModuleDir[34]   = "test.mod";
-static char SavegameDir[120 + 2]    = "c:/egoboo/savegame/";
+static char EgoFileModule[34]     = "";
+static char EgoFileModuleDir[256] = "";
+static char SavegameDir[120 + 2]  = "c:/egoboo/savegame/";
 // Where the editor works in the Egoboo-Directory
 static char EgofileWorkDir[256]   = "c:/egoboo/editor/test.mod/";
 /* Directories to read from in Egoboo-Main-Directory */
@@ -260,7 +261,6 @@ static int egofileLoadMapMesh(MESH_T *mesh, char *msg)
 
     if (fileread)
     {
-
         fread( &uiTmp32, 4, 1, fileread );
         if ( uiTmp32 != MAPID )
         {
@@ -459,7 +459,8 @@ void egofileSetDir(int which, char *dir_name)
             break;
 
         case EGOFILE_MODULEDIR:
-            sprintf(EgofileModuleDir, "%s/", dir_name);
+            sprintf(EgoFileModule, "%s/", dir_name);
+            sprintf(EgoFileModuleDir, "%s/modules/%s.mod/", EgofileGameDir, dir_name);
             break;
             
         case EGOFILE_SAVEGAMEDIR:
@@ -485,7 +486,6 @@ void egofileSetDir(int which, char *dir_name)
  */
 char *egofileMakeFileName(int dir_no, char *fname)
 {
-
     static char file_name[512];     // Here the filename is returned with path, except the objects directory
     
     char obj_file_name[512];        // The objects directory with file name
@@ -495,10 +495,10 @@ char *egofileMakeFileName(int dir_no, char *fname)
 
     file_name[0] = 0;
 
-    switch(dir_no) {
-
+    switch(dir_no)
+    {
         case EGOFILE_GAMEDATDIR:
-            sprintf(file_name, "%sgamedat/%s", EgofileWorkDir, fname);
+            sprintf(file_name, "%sgamedat/%s", EgoFileModuleDir, fname);
             break;
 
         case EGOFILE_BASICDATDIR:
@@ -508,8 +508,8 @@ char *egofileMakeFileName(int dir_no, char *fname)
         case EGOFILE_OBJECTDIR:
             // @todo: Look up basic data in game directory, if game-level is loaded for browsing
             // Look up "data.txt" and return the directory without file name, because filename is the objects name
-            // In this case only return the directory without file name for multiple use
-            sprintf(file_name, "%sobjects/%s.obj/", EgofileWorkDir, fname);
+            // In this case only return the directory without file name for reading all files from directory
+            sprintf(file_name, "%sobjects/%s.obj/", EgoFileModuleDir, fname);
             sprintf(obj_file_name, "%sdata.txt", file_name);
             
             f = fopen(obj_file_name, "r");
@@ -543,7 +543,7 @@ char *egofileMakeFileName(int dir_no, char *fname)
             break;
 
         case EGOFILE_MODULEDIR:
-            sprintf(file_name, "%s%s%s", EgofileGameDir, EgofileModuleDir, fname);
+            sprintf(file_name, "%s%s", EgoFileModuleDir, fname);
             break;
 
         case EGOFILE_EGOBOODIR:
@@ -555,7 +555,7 @@ char *egofileMakeFileName(int dir_no, char *fname)
             break;
 
         default:
-            sprintf(file_name, "%s%s", EgofileWorkDir, fname);
+            sprintf(file_name, "%s%s", EgofileGameDir, fname);
     }
 
     return file_name;
@@ -599,7 +599,6 @@ int  egofileMapMesh(MESH_T *mesh, char *msg, char save)
  */
 int egofileSpawn(EGOFILE_SPAWNPT_T *spt, char action, int max_rec)
 {
-
     char *fname;
 
 
@@ -639,7 +638,6 @@ int egofileSpawn(EGOFILE_SPAWNPT_T *spt, char action, int max_rec)
  */
 int  egofilePassage(EGOFILE_PASSAGE_T *psg, char action, int max_rec)
 {
-
     char *fname;
 
 
@@ -648,17 +646,15 @@ int  egofilePassage(EGOFILE_PASSAGE_T *psg, char action, int max_rec)
     PassageRec.recbuf = psg;
     PassageRec.maxrec = max_rec;
 
-    switch(action) {
-            
+    switch(action)
+    {
         case EGOFILE_ACT_LOAD:
-            
             sdlglcfgEgobooRecord(fname, &PassageRec, 0);
             break;
 
         case EGOFILE_ACT_SAVE:
             /* -------- Write data to file -------- */
             sdlglcfgEgobooRecord(fname, &PassageRec, 1);
-
     }
 
     return 1;
@@ -686,19 +682,21 @@ int  egofileModuleDesc(EGOFILE_MODULE_T *moddesc, char action)
 
     fname = egofileMakeFileName(EGOFILE_GAMEDATDIR, "menu.txt");
 
-    switch(action) {
-    
+    switch(action)
+    {
         case EGOFILE_ACT_NEW:
             /* Return an module descriptor filled with default values   */
             /* ... if it doesn't exist yet                              */
             f = fopen(fname, "rt");
-            if (f) {
+            if (f)
+            {
                 fclose(f);
                 /* File already exists, load it */
                 sdlglcfgEgobooValues(fname, ModuleVal, 0);
                 src = &ModDesc;                
             }
-            else {
+            else
+            {
                 src =  &ModDescTemplate;
             }
             memcpy(moddesc, src, sizeof(EGOFILE_MODULE_T));

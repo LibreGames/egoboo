@@ -1120,7 +1120,18 @@ void sdlgl3dMoveObjects(float secondspassed)
                 if(obj_list->spawn_time == 0.0)
                 {
                     // Mark that time is up
-                    obj_list->spawn_time = 0.001;
+                    obj_list->spawn_time = -0.001;
+                }
+            }
+            
+            if(obj_list->life_time > 0.0)
+            {
+                obj_list->life_time -= secondspassed;
+                if(obj_list->life_time == 0.0)
+                {
+                    // Mark that time is up
+                    // @todo: Delete object
+                    obj_list->life_time = -0.001;
                 }
             }
         }   

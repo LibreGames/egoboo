@@ -261,14 +261,18 @@ typedef struct
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
     int     type_no;        /* Number of type in 'obj_type'         */
-    int     frame_no;       /* Actual frame: For particles/anim     */
+    /* -------------------------- Animation info -------------------- */
+    int     base_frame,     // Number of first rame in animation
+            cur_frame,      // Actual used frame of animation
+            end_frame;      // Last frame of animation        
+    float   anim_speed;     // Seconds per frame
+    float   anim_clock;     // Counted down or each frame 
+    float   spawn_time;     /* For emitters                         */
     float   life_time;      /* In seconds                           */
                             /* Is counted down each object-update   */
                             /* 0: Lives forever                     */
-    float   spawn_time;     /* For emitters                         */
-    float   size;           /* Size of object 1.0: Default          */
-    int     user_flags;     /* Bits for the user to set and read    */    
-    char    team_no;        /* Belongs to this Egoboo-Team          */
+    float   size;           /* Size of object 1.0: Default          */ 
+    int     skin_no;        // For MD2-Models
     /* ---------- Extent for collision detection -------------------- */
     float   bbox[2][3];     /* Bounding box for collision detection */
                             /* Extension of BB in x, y and z dir    */  
@@ -298,8 +302,10 @@ typedef struct
     int     next_obj;       /* > 0: Number of next object on tile   */
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */
-    char    visi_code;      /* Visibility ob object in frustum      */
+    int     next_visi_obj;  // Next visible object in visible list
     int     tags;           /* User defined flags                   */
+    int     t_foes;         /* Flags for team foes                  */
+    char    team_no;        /* Belongs to this Egoboo-Team          */
 
 } SDLGL3D_OBJECT;
 
@@ -320,27 +326,13 @@ typedef struct
     /* ------ Info for internal use ------ */
     float nx[3], ny[3];
     float leftangle, rightangle;
-    int   num_visi_tile;        /* Number of tiles visible in FOV           */
     int   mou_tiles[30];        /* Numbers of tiles hit bei 'mouse_ray'     */
-    int   bx[4], by[4];         /* New bounding rectangle of frustum        */ 
-                                /* Left/right backplane, L/R front plane    */
     SDLGL3D_BRECT bf;           /* Bounding rectangle of frustum on map     */ 
     int edgex, edgey, edgez;    /* Map edges for camera and frustum rect    */     
     SDLGL3D_V3D mouse_ray;      /* Set by mouse code, used for 3D-Edit      */
     SDLGL3D_V3D m_ray2d;
     
 } SDLGL3D_FRUSTUM;
-
-typedef struct
-{
-
-    int mid_x, mid_y;   /* Of tile, for distance sorting            */
-    int tile_no;        /* Number of tile, for display by caller    */
-    int obj_no;         /* Number of first object on this tile      */
-
-} SDLGL3D_VISITILE;
-
-// @todo: Handle global physics with 
 
 /*******************************************************************************
 * CODE                                                                         *
@@ -369,6 +361,6 @@ char sdlgl3dObjectList(int *from, int *to, int obj_no, int action);
 /* ===== Visibility-Functions ==== */
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);
 void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy);
-SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile);
+SDLGL3D_OBJECT *sdlgl3dGetVisiObjList(int camera_no);
 
 #endif  /* _SDLGL_3D_H_ */

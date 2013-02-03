@@ -75,17 +75,14 @@ typedef struct
 /* ============ Map functions ========== */
 void egomapInit(void);
 void egomapSetFanStart(MESH_T *mesh);
-MESH_T *egomapLoad(char *msg, int num_tile);
-int  egomapPassage(int psg_no, EGOFILE_PASSAGE_T *psg, char action, int *crect);
-int  egomapSpawnPoint(int sp_no, EGOFILE_SPAWNPT_T *spt, char action, int *crect);
+char egomapLoad(char *mod_name, char *msg);
 
 /* ============  Tile functions ========== */
 void egomapGetAdjacent(int tx, int ty, EGOMAP_TILEINFO_T adjacent[8]);
 void egomapGetAdjacentPos(int pos_x, int pos_y, EGOMAP_TILEINFO_T adjacent[4]);
 
 /* ============  Draw command ========== */
-void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
-void egomapDraw2DMap(int mx, int my, int mw, int mh, int tx, int *crect);
+void egomapDraw(void);
 
 /* ============ OBJECT-FUNCTIONS ========== */
 void egomapNewObject(char *obj_name, float x, float y, float z, char dir_code);
@@ -93,9 +90,9 @@ void egomapDropObject(int obj_no);      // Drop this object to map
 void egomapDeleteObject(int obj_no);    // Delete this object from map
 int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
 void egomapDropChar(int char_no, float x, float y, float z, char dir); 
-// @todo: egomapMoveAllObjects(void);   // Manages the linked lists on tile and invokes passages
+void egomapMoveObjects(void);           // Manages the linked lists on tile and invokes passages
 
 /* ============  Game functions ========== */
-void  egomapHandlePassage(int psg_no, int action);
+// @todo: void  egomapHandlePassage(int psg_no, int action);
 
 #endif  /* #define _EGOMAP_H_ */

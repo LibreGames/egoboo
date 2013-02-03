@@ -36,10 +36,21 @@
 *******************************************************************************/
 
 /*******************************************************************************
+* DEFINES								                                   *
+*******************************************************************************/
+
+#define RENDER3D_MAXWALLSUBTEX   64     /* Images per wall texture   */
+#define RENDER3D_MAXWALLTEX       4     /* Maximum wall textures     */ 
+#define RENDER3D_TILEDIV        128
+
+/*******************************************************************************
 * DATA									                                   *
 *******************************************************************************/
 
 static GLuint PartTex;      // Texture for particles
+static float  DefaultUV[] = { 0.00, 0.00,  1.00, 0.00,  1.00, 1.00,  0.00, 1.00 };
+static float  MeshTileOffUV[RENDER3D_MAXWALLSUBTEX * 2];    /* Offset into wall texture */
+static GLuint WallTex[RENDER3D_MAXWALLTEX];
 
 /*******************************************************************************
 * CODE									                                   *
@@ -200,14 +211,14 @@ void render3dCleanup(void)
  * Description:
  *     Renders the 3D-View
  * Input:
- *     None 
+ *     pmap *: Pointer on map data for drawing 
  */
 void render3dMain(void)
 {
     SDLGL3D_OBJECT *obj_list;
     
 
-    sdlgl3dBegin(0, 0);        /* Draw not solid */
+    sdlgl3dBegin(0, 0);        /* Draw solid */
 
     // Draw a white rectangle with center at 200, 200 (Emitter is at 200, 200, 100)
     // This is the 'bottom' of the view
@@ -229,7 +240,7 @@ void render3dMain(void)
     glEnable(GL_ALPHA_TEST);            // ENABLE_BIT
     glAlphaFunc(GL_GREATER, 0.0f);      // GL_COLOR_BUFFER_BIT
     
-    while(obj_list->id > 0)
+    while(obj_list->id != 0)
     {
         if(obj_list->obj_type == EGOMAP_OBJ_PART)
         {

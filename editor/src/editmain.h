@@ -1,8 +1,8 @@
 /*******************************************************************************
 *  EDITMAIN.H                                                                  *
-*	- Main edit functions for map and other things      	                   *
-*									                                           *
-*   Copyright (C) 2010  Paul Mueller <pmtech@swissonline.ch>                   *
+*	- Main edit functions for map and other things      	                      *
+*									                                       *
+*      (c) 2010-2013 Paul Mueller <muellerp61@bluewin.ch>                      *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *

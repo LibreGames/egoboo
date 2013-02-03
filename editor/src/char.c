@@ -3,7 +3,7 @@
 *    - EGOBOO-Editor                                                           *     
 *                                                                              *
 *    - Egoboo Characters                                                       *
-*      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
+*      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *
 *  it under the terms of the GNU General Public License as published by        *
@@ -54,7 +54,7 @@
 #define CAP_INFINITE_WEIGHT  0xFF
 #define CAP_MAX_WEIGHT       (CAP_INFINITE_WEIGHT - 1)
 
-#define CHAR_MAX_CAP    100
+#define CHAR_MAX_CAP    180
 #define CHAR_MAX_SKIN     4
 // Maximum of characters that can be loaded, for each an AI_STATE may be needed
 #define CHAR_MAX        500

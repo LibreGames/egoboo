@@ -22,7 +22,7 @@
 
 
 /*******************************************************************************
-* INCLUDES								                                       *
+* INCLUDES                                                                     *
 *******************************************************************************/
 
 #include <memory.h>
@@ -39,7 +39,7 @@
 #include "egomap.h"
 
 /*******************************************************************************
-* DEFINES								                                       *
+* DEFINES                                                                      *
 *******************************************************************************/
 
 #define EGOMAP_MAXPASSAGE   50
@@ -53,7 +53,7 @@
 #define EGOMAP_FADEBORDER   64      /* Darkness at the edge of map  */
 
 /*******************************************************************************
-* TYPEDEFS								                                       *
+* TYPEDEFS                                                                     *
 *******************************************************************************/
 
 typedef struct
@@ -72,7 +72,7 @@ typedef struct
 } EGOMAP_XY;
 
 /*******************************************************************************
-* DATA									                                       *
+* DATA                                                                         *
 *******************************************************************************/
 
 /* ----------- Lights ---------- */
@@ -623,7 +623,7 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] =
         { {  0, 0.00f, 0.00f,   0.00f,   0.00f, 0.00f },
           {  3, 1.00f, 0.00f, 128.00f,   0.00f, 0.00f },
           { 15, 1.00f, 1.00f, 128.00f, 128.00f, 0.00f },
-          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },  
+          { 12, 0.00f, 1.00f,   0.00f, 128.00f, 0.00f },
           {  3, 1.00f, 0.16f, 128.00f,  21.00f, 0.00f },
           {  7, 1.00f, 0.33f, 128.00f,  42.00f, 0.00f },
           {  7, 1.00f, 0.50f, 128.00f,  64.00f, 0.00f },
@@ -640,13 +640,13 @@ static COMMAND_T MeshCommand[MAXMESHTYPE] =
 
 /* --- Game objects buffer --- */
 static EDITFILE_PASSAGE_T Passages[EGOMAP_MAXPASSAGE + 2];
-static EDITFILE_SPAWNPT_T SpawnPts[EGOMAP_MAXSPAWN + 2];       /* Holds data about chosen spawn point  */
+static EDITFILE_SPAWNPT_T SpawnPts[EGOMAP_MAXSPAWN + 2];    /* Holds data about chosen spawn point  */
 
 /* ---- Map data itself --- */
 static MESH_T Mesh;         /* Mesh of map                  */
 
 /*******************************************************************************
-* CODE									                                       *
+* CODE                                                                         *
 *******************************************************************************/
 
 /* ============ OBJECT-FUNCTIONS ========== */

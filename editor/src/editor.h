@@ -1,8 +1,8 @@
 /*******************************************************************************
 *  EDITOR.H                                                                    *
-*	- General definitions for the editor                	                   *
-*									                                           *
-*   Copyright (C) 2010  Paul Mueller <pmtech@swissonline.ch>                   *
+*	- General definitions for the editor                	                     *
+*									                                       *
+*      (c) 2010-2013 Paul Mueller <muellerp61@bluewin.ch>                      *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *

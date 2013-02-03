@@ -54,10 +54,12 @@
 #define CAP_INFINITE_WEIGHT  0xFF
 #define CAP_MAX_WEIGHT       (CAP_INFINITE_WEIGHT - 1)
 
-#define CHAR_MAX_CAP    100
+#define CHAR_MAX_CAP    180
 #define CHAR_MAX_SKIN     4
 // Maximum of characters that can be loaded, for each an AI_STATE may be needed
 #define CHAR_MAX        500
+#define CHAR_MAX_WEIGHT 127
+#define CHAR_MAX_XP     9999  
 
 // Other maximum values
 #define PERFECTSTAT   18    // wisdom, intelligence and so on...
@@ -170,7 +172,7 @@ typedef struct
     CAP_STAT_T dexterity_stat;        ///< Dexterity
 
     // physics
-    unsigned char weight;             ///< Weight
+    int   weight;                    ///< Weight
     float dampen;                     ///< Bounciness
     float bumpdampen;                 ///< Mass
 
@@ -766,50 +768,181 @@ void charGiveXPTeam(int char_no, int amount, int xp_type)
 
 /*
  * Name:
- *     charSetTimer 
+ *     charCleanUp
  * Description:
- *     Sets a timer with given number, if possible
+ *     Everything necessary to disconnect one character from the game
  * Input:
- *     char_no:      Number of character to set timer for
- *     which:        Which temporary value 
- *     add_val:      Temporary added value 
- *     duration_sec: Duration in seconds
- * Output:
- *     Clock could be set yes/no 
+ *     pchar *: Pointer on character to cleanup
  */
-static char charSetTimer(int char_no, int which, int add_val, int duration_sec)
-{
-    int i;
-    CHAR_T *pchar;
+static void charCleanUp(CHAR_T * pchar)
+{  
+    int act_team;
     
-    
-    pchar = &CharList[char_no];
-    // Only set timer if not already set
-    for(i = 0; i < CHAR_MAX_TIMER; i++)
+
+    // Remove it from the team
+    act_team = pchar->team[CHARSTAT_ACT];
+    if (TeamList[act_team].morale > 0 ) TeamList[act_team].morale--;
+
+    if (TeamList[act_team].leader_no == pchar->id)
     {
-        if(pchar->timers[i].which == (char)which)
-        {
-            // Set the clock to the new time
-            pchar->timers[i].clock_sec = duration_sec;
-            return 1;
-        }
+        // The team now has no leader if the character is the leader
+        TeamList[act_team].leader_no = 0;
+    }
+
+    // Clear all shop passages that it owned...
+    // @todo: Do this in 'egomap'-Code
+    
+    // detach from any mount
+    /*
+    if ( INGAME_CHR( pchar->attachedto ) )
+    {
+        detach_character_from_mount( ichr, char, 0 );
+    }
+    */
+
+    // drop your left item
+    /*
+    itmp = pchar->holdingwhich[SLOT_LEFT];
+    if ( INGAME_CHR( itmp ) && ChrList.lst[itmp].isitem )
+    {
+        detach_character_from_mount( itmp, char, 0 );
+    }
+
+    // drop your right item
+    itmp = pchar->holdingwhich[SLOT_RIGHT];
+    if ( INGAME_CHR( itmp ) && ChrList.lst[itmp].isitem )
+    {
+        detach_character_from_mount( itmp, char, 0 );
+    }
+    */
+
+    // remove enchants from the character
+    if(pchar->life >= 0)
+    {
+        // remove all SPELLS
     }
     
-    // Loop trough all timers
-    for(i = 0; i < CHAR_MAX_TIMER; i++)
-    {
-        if(pchar->timers[i].which == 0)
-        {
-            // Set the clock
-            pchar->timers[i].which     = (char)which;
-            pchar->timers[i].clock_sec = duration_sec;
-            pchar->timers[i].add_val   = (char)add_val;
-            return 1;
-        }
-    }
-    // No free slot with clock found
-    return 0;    
+    // @todo: Stop all sound loops for this object
+    // looped_stop_object_sounds(pchar->id);
+    memset(pchar, 0, sizeof(CHAR_T));
+    // Sign it as invalid
+    pchar->id     = -1;
+    pchar->cap_no = -1;
 }
+
+/*
+ * Name:
+ *     charKill
+ * Description:
+ *     Handle a character death. Set various states, disconnect it from the world, etc.
+ * Input:
+ *     char_no:   Number of character to kill
+ *     killer_no: Number of character which killed this one
+ *     ignore_invictus:  
+ */
+static void charKill(const int char_no, const int killer_no, char ignore_invictus)
+{
+    CHAR_T *pchar, *pkiller;
+    CAP_T *pcap;
+    int action;
+    int experience;
+    int killer_team;
+
+
+    pchar = &CharList[char_no];
+    //No need to continue is there?
+    if ( !pchar->life[CHARSTAT_ACT] <= 0 || ( pchar->invictus && !ignore_invictus ) ) return;
+
+    pcap = &CapList[pchar->cap_no];      
+
+    pchar->waskilled = 1;
+
+    pchar->life[CHARSTAT_ACT] = -1;
+    pchar->platform           = 1;
+    pchar->canuseplatforms    = 1;
+    pchar->bumpdampen         *= 0.5f;
+
+    // @todo: Play the death animation
+    // action = generate_randmask( ACTION_KA, 3 );
+    // chr_play_action( pchar, action, 0 );
+    // chr_instance_set_action_keep( &( pchar->inst ), char );
+
+    // Give kill experience
+    experience = pcap->experience_worth + (pchar->experience * pcap->experience_exchange);
+    pkiller = &CharList[killer_no];
+    
+    killer_team = pkiller->team[CHARSTAT_ACT];
+    // distribute experience to the attacker
+    if (pkiller->cap_no > 0)
+    {
+        // Set target
+        pchar->ai.target = killer_no;
+        if (killer_team == TEAM_DAMAGE || killer_team == 0 )  pchar->ai.target = char_no;
+
+        // Award experience for kill?
+        if(pkiller->t_foes & (~pchar->t_foes))  // Team hates team
+        {
+            //Check for special hatred
+            if (charGetSkill(killer_no, IDSZ_HATE ) == charGetSkill(char_no, IDSZ_PARENT ) ||
+                 charGetSkill(killer_no, IDSZ_HATE ) == charGetSkill(char_no, IDSZ_TYPE ) )
+            {
+                charGiveXPOne(pkiller, experience, XP_KILLHATED);
+            }
+
+            // Nope, award direct kill experience instead
+            else charGiveXPOne(pkiller, experience, XP_KILLENEMY);
+        }
+    }
+
+    //Set various alerts to let others know it has died
+    //and distribute experience to whoever needs it
+    // @todo: Send a message
+    // msgSend(0, ichr, MSG_KILLED);
+
+    /*
+    CHR_BEGIN_LOOP_ACTIVE( tnc, plistener )
+    {
+        if ( !plistener->alive ) continue;
+
+        // All allies get team experience, but only if they also hate the dead guy's team
+        if ( tnc != actual_killer && !team_hates_team( plistener->team, killer_team ) && team_hates_team( plistener->team, pchar->team ) )
+        {
+            give_experience( tnc, experience, XP_TEAMKILL, 0 );
+        }
+
+        // Check if it was a leader
+        if ( TeamList[pchar->team].leader == ichr && chr_get_iteam( tnc ) == pchar->team )
+        {
+            // All folks on the leaders team get the alert
+            // msgSend(0, tnc, MSG_LEADERKILLED);
+        }
+
+        // Let the other characters know it died
+        if ( plistener->ai.target == ichr )
+        {
+            // msgSend(0, tnc, MSG_TARGETKILLED);
+        }
+    }
+    CHR_END_LOOP();
+    */
+
+    // @todo: If it's a player, let it die properly before enabling respawn
+    // if ( VALID_PLA( pchar->is_which_player ) ) local_stats.revivetimer = ONESECOND; // 1 second
+    // msgSend(char_no, MSG_KILLED);
+
+    // Let it's AI script run one last time
+    // scriptRun(char_no, pchar->cap_no, MSG_KILLED);
+    // pchar->ai.timer = update_wld + 1;            // Prevent IfTimeOut in scr_run_chr_script()
+    // scr_run_chr_script( ichr );
+
+    // Stop any looped sounds
+    // looped_stop_object_sounds( ichr );
+    // Detach the character from the game
+    charCleanUp(pchar);
+}
+
+
+
 
 /* ========================================================================== */
 /* ============================= PUBLIC FUNCTION(S) ========================= */
@@ -990,25 +1123,22 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             // Other junk
             pchar->fly_height  = pcap->fly_height;
             pchar->max_accel[0] = pchar->max_accel[1] = pcap->maxaccel[pchar->skin_no];
-            /*
             pchar->alpha_base  = pcap->alpha;
             pchar->light_base  = pcap->light;
             pchar->flashand    = pcap->flashand;
             pchar->dampen      = pcap->dampen;
             pchar->bumpdampen  = pcap->bumpdampen;
-            */
 
-            /*
-            if (CAP_INFINITE_WEIGHT == pcap->weight )
+            
+            if(CAP_INFINITE_WEIGHT == pcap->weight)            
             {
-                pchar->phys.weight = CHR_INFINITE_WEIGHT;
+                pchar->weight = CHAR_MAX_WEIGHT;
             }
             else
             {
-                int itmp = pcap->weight * pcap->size * pcap->size * pcap->size;
-                pchar->phys.weight = MIN( itmp, CHR_MAX_WEIGHT );
+                i = pcap->weight * pcap->size * pcap->size * pcap->size;
+                pchar->weight = (i > CHAR_MAX_WEIGHT) ? CHAR_MAX_WEIGHT: i;
             }
-            */
             
             // Experience
             // MIN(miscRandRange(pcap->experience), MAXXP );
@@ -1049,30 +1179,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
                                     ichr, GRIP_LAST + tnc, pchar->team, ichr, INVALID_PRT_REF, tnc, INVALID_CHR_REF );
             }
             */
-            
-            // is the object part of a shop's inventory?
-            /*
-            if ( pchar->isitem )
-            {
-                SHOP_REF ishop;
-
-                // Items that are spawned inside shop passages are more expensive than normal
-                pchar->isshopitem = 0;
-                for ( ishop = 0; ishop < ShopStack.count; ishop++ )
-                {
-                    // Make sure the owner is not dead
-                    if ( SHOP_NOOWNER == ShopStack.lst[ishop].owner ) continue;
-
-                    if ( object_is_in_passage( ShopStack.lst[ishop].passage, pchar->pos.x, pchar->pos.y, pchar->bump_1.size ) )
-                    {
-                        pchar->isshopitem = 1;               // Full value
-                        pchar->iskursed   = 0;              // Shop items are never kursed
-                        pchar->nameknown  = 1;
-                        break;
-                    }
-                }
-            }
-            */
+           // Shop thing is done as the character is dropped to the map
             
             pchar->draw_stats = stt;  ///< Display stats?
              
@@ -1370,21 +1477,19 @@ void charInventoryFunc(int char_no, int func_no)
  * Input:
  *     char_no:    Number of character to handle 
  *     dir_no:     Attack direction, if any
- *     valpair[2]: For damage healing, Experience points are in 'valpair[0]'
- *     val_type:   Kind of damage of kind of healing or experience and so on 
- *     team:       Damages/heals the whole team ?!
- *     attacker:   If damage (and healing ?)
+ *     valpair[2]: Number, fixed points are in 'valpair[0]'
+ *     team:       Damages the whole team ?!
+ *     attacker:   If damage
  *     effects:    Flags about effects to spawn...
  */
-void charDamage(const char char_no, char dir_no, int valpair[2], char val_type,
-                     char team, int attacker, int effects)
-{   
+void charDamage(const char char_no, char dir_no, int valpair[2], char team,
+                int attacker, int effects)
+{
     CHAR_T *pchar;
     // CAP_T *pcap;
     int amount;
-    
-    
-    
+
+
     // Fixed value for experience and killing characters
     if(valpair[1] == 0)
     {
@@ -1394,32 +1499,15 @@ void charDamage(const char char_no, char dir_no, int valpair[2], char val_type,
     {
         amount = miscRandRange(valpair);
     }
-    
+
     pchar = &CharList[char_no];
     // pcap  = &CapList[pchar->cap_no];
-    
-    if(val_type == CHAR_DAMAGE)
+
+    pchar->life[CHARSTAT_ACT] -= (short int)amount;
+
+    if(pchar->life[CHARSTAT_ACT] <= 0)
     {
-        pchar->life[CHARSTAT_ACT] -= (short int)amount;
-        if(attacker)
-        {
-            // @todo: Take attacker into account
-        }
-    }
-    else if(val_type == CHAR_HEAL)
-    {
-        if(team)
-        {
-            // Apply to the characters team
-        }
-        else
-        {
-            pchar->life[CHARSTAT_ACT] += (short int)amount;
-            if(pchar->life[CHARSTAT_ACT] > pchar->life[CHARSTAT_BASE])
-            {
-                pchar->life[CHARSTAT_ACT] = pchar->life[CHARSTAT_BASE];
-            }
-        }
+        charKill(char_no, attacker, 1);
     }
 }
 
@@ -1427,7 +1515,7 @@ void charDamage(const char char_no, char dir_no, int valpair[2], char val_type,
  * Name:
  *     charAddValue
  *      replaces:
- *          give_experience, give_team_experience, heal_character  
+ *          give_experience, give_team_experience, heal_character
  * Description:
  *     Changes the given value on character(s), using the given arguments
  *     This function calculates and applies changing of stats and so on to a character or a team.
@@ -1868,8 +1956,6 @@ void charSetValue(int char_no, int which, int sub_type, int amount)
             break;
         */
     }
-    
-    
 }
 
 /* ================= Information functions ===================== */
@@ -1983,13 +2069,71 @@ int charGetSkill(int char_no, unsigned int whichskill)
     // chr_set_maxaccel( pchar, pcap->skin_info.maxaccel[lskin_no] );
     
     return skin_no; 
- }
+}
+
+/*
+ * Name:
+ *     charSetTimer 
+ * Description:
+ *     Sets a timer with given number, if possible
+ * Input:
+ *     char_no:      Number of character to set timer for
+ *     which:        Which temporary value 
+ *     add_val:      Temporary added value 
+ *     duration_sec: Duration in seconds (< 0: Remove it)
+ * Output:
+ *     Clock could be set yes/no
+ */
+char charSetTimer(int char_no, int which, int add_val, int duration_sec)
+{
+    int i;
+    CHAR_T *pchar;
+
+
+    pchar = &CharList[char_no];
+
+    // Only set timer if not already set
+    for(i = 0; i < CHAR_MAX_TIMER; i++)
+    {
+        if(pchar->timers[i].which == (char)which)
+        {
+            if(duration_sec > 0)
+            {
+                // Set the clock to the new time
+                pchar->timers[i].clock_sec = duration_sec;
+                return 1;
+            }
+            else
+            {
+                pchar->timers[i].which = 0;
+                pchar->timers[i].clock_sec = 0;
+                // @todo: Do remove all effects ('spell_no')
+                return 1;
+            }
+        }
+    }
+
+    // Loop trough all timers
+    for(i = 0; i < CHAR_MAX_TIMER; i++)
+    {
+        if(pchar->timers[i].which == 0)
+        {
+            // Set the clock
+            pchar->timers[i].which     = (char)which;
+            pchar->timers[i].clock_sec = duration_sec;
+            pchar->timers[i].add_val   = (char)add_val;
+            return 1;
+        }
+    }
+    // No free slot with clock found
+    return 0;
+}
 
 /*
  * Name:
  *     charUpdateAll
  * Description:
- *     Does an update of the state of all characters 
+ *     Does an update of the state of all characters
  * Input:
  *     sec_passed: Seconds passed since last call
  */
@@ -2033,3 +2177,38 @@ void charUpdateAll(float sec_passed)
     }
 }
 
+
+/*
+ * Name:
+ *     charCallForHelp
+ * Description:
+ *     This function issues a call for help to all allies
+ * Input:
+ *     char_no:   Number of character which calls for help
+ */
+void charCallForHelp(const int char_no)
+{
+    CHAR_T *pchar, *pother;
+    int team;
+    int friends;
+
+    
+    pchar = &CharList[char_no];
+    team = pchar->team[CHARSTAT_ACT];
+    
+    
+    TeamList[team].sissy_no = char_no;
+    
+    friends = ~pchar->t_foes;
+    
+    pother = &CharList[1];
+    
+    while(pother->id != 0)
+    {
+        if(pother != pchar && (friends & ~pother->t_foes))
+        { 
+            // msgSend(0, pother->id, MSG_CALLEDFORHELP);
+        }
+        pother++;
+    }
+}
