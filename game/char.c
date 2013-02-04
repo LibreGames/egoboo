@@ -29,11 +29,12 @@
 #include <string.h>     /* strlwr() */
 
 #include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
-#include "egofile.h"   /* Get the work-directoires                     */
 
+#include "egodefs.h"    /* MPDFX_IMPASS                                 */
+#include "egofile.h"    /* Get the work-directoires                     */
 #include "idsz.h";
 #include "misc.h"       /* Random treasure objects                      */
-#include "egodefs.h"    /* MPDFX_IMPASS                                 */
+#include "msg.h"        /* Handle sending game messages                 */
 
 // Own header
 #include "char.h"
@@ -298,7 +299,6 @@ typedef struct
     //        loaded in consecutive order
     int prt_first_no;           // Number of first particle
     int prt_cnt;                // Total number of particles
-    int first_msg_no;
     
 } CAP_T;
 
@@ -602,14 +602,14 @@ static int charNewChar(void)
             // @todo: Load its scripts including messages
             // scriptLoad(fdir, cno); // Each character profile has its script and its messages
             // sprintf(fname, "%smessage.txt", fdir);
-            // @todo: pcap->first_msg_no = msgObjectLoad(char *fname);
+            // @todo: pscript->first_msg_no = msgObjectLoad(char *fname);
             // sprintf(fname, "%sscript.txt", fdir);
             */
            charSetupXPTable(pcap);
         }
         else
         {
-            // @todo: msgSend(MSG_LOG, MSG_GAME_OBJNOTFOUND, objname)
+            msgSend(MSG_LOG, MSG_GAME_OBJNOTFOUND, objname)
         }
         
         // @todo: Replace this be 'real' code
@@ -657,7 +657,7 @@ static void charDoLevelUp(const int char_no)
             // do the level up
             pchar->experience_level++;
             // The character is ready to advance...
-            // msgSend(0, character, MSG_LEVELUP);
+            msgSend(0, char_no, MSG_LEVELUP);
 
             // Size
             valpair[0] = (10.0 * pcap->size_perlevel);
@@ -897,7 +897,7 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
     //Set various alerts to let others know it has died
     //and distribute experience to whoever needs it
     // @todo: Send a message
-    // msgSend(0, ichr, MSG_KILLED);
+    msgSend(0, char_no, MSG_KILLED);
 
     /*
     CHR_BEGIN_LOOP_ACTIVE( tnc, plistener )
@@ -914,13 +914,13 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
         if ( TeamList[pchar->team].leader == ichr && chr_get_iteam( tnc ) == pchar->team )
         {
             // All folks on the leaders team get the alert
-            // msgSend(0, tnc, MSG_LEADERKILLED);
+            msgSend(0, tnc, MSG_LEADERKILLED);
         }
 
         // Let the other characters know it died
         if ( plistener->ai.target == ichr )
         {
-            // msgSend(0, tnc, MSG_TARGETKILLED);
+            msgSend(0, tnc, MSG_TARGETKILLED);
         }
     }
     CHR_END_LOOP();
@@ -928,7 +928,7 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
 
     // @todo: If it's a player, let it die properly before enabling respawn
     // if ( VALID_PLA( pchar->is_which_player ) ) local_stats.revivetimer = ONESECOND; // 1 second
-    // msgSend(char_no, MSG_KILLED);
+    msgSend(0, char_no, MSG_KILLED);
 
     // Let it's AI script run one last time
     // scriptRun(char_no, pchar->cap_no, MSG_KILLED);
@@ -1257,7 +1257,7 @@ char charInventoryAdd(const int char_no, const int item_no, int slot_no)
             if(pchar->islocalplayer)
             {
                 // @todo: Send message for display or to AI/Player
-                // msgSend(char_no, MSG_TOOBIG, chr_get_name())
+                msgSend(0, char_no, MSG_TOOBIG) // , chr_get_name()
                 // DisplayMsg_printf("%s is too big to be put away...", chr_get_name( item, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL, NULL, 0 ) );
             }
             return 0;
@@ -1290,7 +1290,7 @@ char charInventoryAdd(const int char_no, const int item_no, int slot_no)
                 pitem->attached_to = char_no;
 
                 // @todo: Message to player that it has picked up an item ?!
-                // msgSend(char_no, MSG_ITEMFOUND, chr_get_name())
+                msgSend(0, char_no, MSG_ITEMFOUND); // , chr_get_name()
             }
         }
     }
@@ -1330,11 +1330,11 @@ int charInventoryRemove(const int char_no, int slot_no, char ignorekurse, char d
             
             if (pitem->iskursed && !ignorekurse )
             {
+                msgSend(0, char_no, MSG_NOTTAKENOUT) // , chr_get_name()
                 // Flag the last found_item as not removed
-                /*
-                @todo: msgSend(char_no, ALERTIF_NOTTAKENOUT, chr_get_name())
-                SET_BIT( pitem->ai.alert, ALERTIF_NOTTAKENOUT );  // Same as ALERTIF_NOTPUTAWAY
-                if ( pchar->islocalplayer ) DisplayMsg_printf( "%s won't go out!", chr_get_name( item, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL, NULL, 0 ) );
+                /* 
+                // SET_BIT( pitem->ai.alert, ALERTIF_NOTTAKENOUT );  // Same as ALERTIF_NOTPUTAWAY
+                // if ( pchar->islocalplayer ) DisplayMsg_printf( "%s won't go out!", chr_get_name( item, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL, NULL, 0 ) );
                 */
                 return 0;
             }
@@ -2207,7 +2207,7 @@ void charCallForHelp(const int char_no)
     {
         if(pother != pchar && (friends & ~pother->t_foes))
         { 
-            // msgSend(0, pother->id, MSG_CALLEDFORHELP);
+            msgSend(0, pother->id, MSG_CALLEDFORHELP);
         }
         pother++;
     }
