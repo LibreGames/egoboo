@@ -261,6 +261,7 @@ typedef struct
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
     int     type_no;        /* Number of type in 'obj_type'         */
+    int     owner_no;       // Object owner by this game object (e.g 'char_no)
     /* -------------------------- Animation info -------------------- */
     int     base_frame,     // Number of first rame in animation
             cur_frame,      // Actual used frame of animation
@@ -273,6 +274,7 @@ typedef struct
                             /* 0: Lives forever                     */
     float   size;           /* Size of object 1.0: Default          */ 
     int     skin_no;        // For MD2-Models
+    char    interp;         // Draw interpolated MD2-Models
     /* ---------- Extent for collision detection -------------------- */
     float   bbox[2][3];     /* Bounding box for collision detection */
                             /* Extension of BB in x, y and z dir    */  

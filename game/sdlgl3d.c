@@ -1016,7 +1016,7 @@ void sdlgl3dMoveObjects(float secondspassed)
             if(obj_list->anim_clock <= 0.0)
             {
                 obj_list->cur_frame++;
-                // @todo: Check if animation looping, support random frames
+                // @todo: support random frames, looping forth and back
                 if(obj_list->cur_frame > obj_list->end_frame)
                 {
                     // Wrap around

@@ -238,8 +238,8 @@ typedef struct
     char name[CHAR_NAMELEN + 1]; /* Name of this character                              */
     char gender;                /* Gender of character          */
     // character state    
-    char state;         /* ///< Short term memory for AI: Comment: Number of AI-State = char_no */
-    char latch;         /* Latch data                                   */    
+    char state;         ///< Short term memory for AI: Comment: Number of AI-State = char_no 
+    char latch;         ///< Latch data                                   
     int  money;         ///< Money this character has
     // Team stuff -- CHARSTAT_ACT / CHARSTAT_FULL
     char team[2];       ///< Character's team -- Character's starting team   

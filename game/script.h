@@ -1,9 +1,9 @@
 /*******************************************************************************
-*  EGOMODEL.H                                                                  *
-*    - Load and display for Quake 2 Models                                     *
+*  SCRIPT.H                                                                    *
+*    - EGOBOO-Game                                                             *
 *                                                                              *
-*   Copyright © 2000, by Mustata Bogdan (LoneRunner)                           *
-*   Adjusted for use with SDLGL Paul Mueller <bitnapper>                       *
+*    - All functions to run a script                                           *
+*      (c) The Egoboo Team                                                     *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -20,36 +20,18 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _EGOMODEL_H_
-#define _EGOMODEL_H_
+#ifndef _SCRIPT_H_
+#define _SCRIPT_H_
 
 /*******************************************************************************
 * INCLUDES                                                                     *
 *******************************************************************************/
 
-#include "sdlgl3d.h"        // SDLGL3D_OBJECT
-
-/*******************************************************************************
-* TYPEDEFS                                                                     *
-*******************************************************************************/
-
-typedef struct
-{
-    int x, y, w, h;
-    
-} EGOMODEL_RECT;
 
 /*******************************************************************************
 * CODE                                                                         *
 *******************************************************************************/
 
-int  egomodelLoadModel(const char *fdir, float bbox[2][3]);
-void egomodelFreeAll(void);
-// Actions
-int  egomodelDraw(int mdl_no, int skin_no, int frame_no);
-void egomodelDrawObject(SDLGL3D_OBJECT *pobj);
-char egomodelSetAnimation(int obj_no, short int action);
+void scriptRun(int char_no, int script_no, int why);
 
-void egomodelDrawIcon(int mdl_no, int skin_no, int *crect /* x1, y1, x2, y2 */);
-
-#endif /* _EGOMODEL_H_ */
+#endif  /* #define _SCRIPT_H_ */
