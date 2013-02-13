@@ -367,11 +367,12 @@ static void msgExpand(MSG_T *msg, char *dest, int dest_size)
  *     message is added at the end of the message queue.
  *     Clears the message list, if the number of the message is < 0
  * Input:
- *     sender:   Sent by this character 
- *     receiver: This character has to react on this message
- *     why:      Why the message is sent (AI: ALERTIF_
+ *     sender:    Sent by this character 
+ *     receiver:  This character has to react on this message
+ *     why:       Why the message is sent (AI: ALERTIF_
+ *     log_str *: Message for log 
  */
-void msgSend(int sender, int receiver, int why)
+void msgSend(int sender, int receiver, int why, char *log_str)
 {
     int msgno;
     

@@ -27,7 +27,6 @@
 * INCLUDES								                                   *
 *******************************************************************************/
 
-#include "ai.h"         /* AI_STATE_T and its initialization            */
 #include "idsz.h"       // List of special skills 
 
 /*******************************************************************************
@@ -282,9 +281,7 @@ typedef struct
     /* Additional help info for the editor */
     char *obj_name;     /* Pointer on the name of the object in CAP_T           */
     char *class_name;   /* @todo: Pointer on the classes name from CAP_T        */
-    // AI-Stuff if the character is AI-Controlled
-    AI_STATE_T ai;              ///< ai data and script to use
-    
+
 } CHAR_T;
 
 /*******************************************************************************

@@ -75,7 +75,11 @@ typedef enum
 
     // add in some aliases
     MSG_PUTAWAY     = MSG_ATLASTWAYPOINT,
-    MSG_NOTTAKENOUT = MSG_NOTPUTAWAY
+    MSG_NOTTAKENOUT = MSG_NOTPUTAWAY,
+    MSG_TOOBIG,
+    MSG_ITEMFOUND,
+    // Other messages
+    MSG_GAME_OBJNOTFOUND = 1000
     
 } E_MSG_WHY;
 
@@ -84,9 +88,9 @@ typedef enum
 *******************************************************************************/
 
 // Special receivers
-#define MSG_REC_GAME    -1  // This message is for the game
-#define MSG_REC_LOG     -2  // This message is for the log
-#define MSG_REC_ERROR   -3  // This is an error message
+#define MSG_REC_GAME    -2  // This message is for the game
+#define MSG_REC_LOG     -3  // This message is for the log
+#define MSG_REC_ERROR   -4  // This is an error message
 
 /*******************************************************************************
 * TYPEDEFS                               								    *
@@ -111,7 +115,7 @@ typedef struct
 * CODE 								                                       *
 *******************************************************************************/
 
-void msgSend(int sender, int receiver, int why);
+void msgSend(int sender, int receiver, int why, char *log_str);
 char msgGet(int receiver, MSG_T *pmsg, int remove);
 int  msgGetNext(int prev_no, MSG_T *pmsg);
 char msgToString(MSG_T *pmsg, char *str_buf, int buf_len);

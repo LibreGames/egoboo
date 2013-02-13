@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <alloc.h>      /* malloc() */
+#include <stdlib.h>      /* malloc() */
 
 #include "sdlgl.h"
 #include "sdlgltex.h"

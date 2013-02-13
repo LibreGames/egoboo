@@ -27,7 +27,6 @@
 * INCLUDES								                                   *
 *******************************************************************************/
 
-#include "ai.h"         /* AI_STATE_T and its initialization            */
 #include "idsz.h"       // List of special skills 
 
 /*******************************************************************************
@@ -230,6 +229,7 @@ typedef struct
     char is_overlay;    ///< Is this an overlay? Track aitarget...    
     int  attached_to;   ///< > 0 if character is a held weapon or in inventory (HAND_LEFT, HAND_RIGHT)    
                         /// Or the character is riding a mount
+    char inwhich_slot;  /// For hands, if attached
     char life_color,
          mana_color;    ///< Colors for displayed bars
     // Belongs  to a passage, invokes code for this passage / For editor
@@ -327,8 +327,6 @@ typedef struct
     /* Additional help info  */
     char *obj_name;     /* Pointer on the name of the object in CAP_T           */
     char *class_name;   /* @todo: Pointer on the classes name from CAP_T        */
-    // AI-Stuff if the character is AI-Controlled
-    AI_STATE_T ai;              ///< ai data and script to use
     // More flags from CAP_T for faster code and model graphics
     unsigned char flashand;
     unsigned char alpha_base;
@@ -340,7 +338,8 @@ typedef struct
     // Other stuff
     char platform;
     char canuseplatforms;
-    
+    short int act_action;   // action_which: Actual animation action
+    int target_no;          // Target for AI
 } CHAR_T;
 
 /*******************************************************************************

@@ -1,9 +1,9 @@
 /*******************************************************************************
 *  TEMPLATE.C                                                                  *
-*    - EGOBOO-Editor                                                           *     
+*    - EGOBOO-Game                                                             *
 *                                                                              *
 *    - [...]                                                                   *
-*      (c)2012 Paul Mueller <muellerp61@bluewin.ch>                            *
+*      (c) The Egoboo Team                                                     *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *
 *  it under the terms of the GNU General Public License as published by        *
@@ -22,7 +22,7 @@
 
 
 /*******************************************************************************
-* INCLUDES								                                       *
+* INCLUDES								                                   *
 *******************************************************************************/
 
 // Engine functions
@@ -37,7 +37,7 @@
 #include "game.h"
 
 /*******************************************************************************
-* DEFINES								                                       *
+* DEFINES                                                                      *
 *******************************************************************************/
 
 #define GAME_MAXFLD   100
@@ -46,13 +46,31 @@
 #define GAME_EXITMODULE    ((char)100)
 #define GAME_CAMERA      ((char)10)          /* Move camera           */
 
-/*******************************************************************************
-* TYPEDEFS								                                       *
-*******************************************************************************/
+
+#define COLOR_MAX 16
+#define MAX_BLIP  128  
 
 /*******************************************************************************
-* DATA									                                       *
+* TYPEDEFS                                                                     *
 *******************************************************************************/
+
+typedef struct
+{
+    int x, y;
+    int c;    
+    
+} GAME_BLIP_T;
+
+/*******************************************************************************
+* DATA                                                                         *
+*******************************************************************************/
+
+static char GameTimerOn = 0;
+static int  GameTimerValue = 0;
+static char ShowMap = 0;
+static char ShowPlayerPos = 0;
+static int GameBlipCount = 0;
+static GAME_BLIP_T GameBlips[MAX_BLIP + 2]; 
 
 static SDLGL_FIELD GameMenu[GAME_MAXFLD + 2] =
 {
@@ -222,9 +240,7 @@ static void gameDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
  * Description:
  *     Plays the game using the default keys for the keyboard player
  * Input:
- *     filename *: Name of file to load (without ".txt")
- * Output:
- *     > 0: Number of Descriptor in 'PrtDescList'
+ *     None
  */
 void gamePlay(void)
 {
@@ -239,5 +255,115 @@ void gamePlay(void)
                   GameMenu,               /* Input-Fields (mouse) */
                   GameCmd,              /* Keyboard-Commands    */
                   GAME_MAXFLD);         /* Buffer size for dynamic menus    */
-    
 }
+
+
+/* ============== Functions to call by scripting engine ============== */
+
+/*
+ * Name:
+ *     gameSet
+ * Description:
+ *     Set given value
+ * Input:
+ *     which: Which value to set
+ *     value: Value to set  
+ */
+void gameSet(int which, int value)
+{
+    // float fTmp;
+    
+    
+    switch(which)
+    {
+        case GAME_FOG_BOTTOMLEVEL:
+            /*
+            fTmp = (value / 10.0f ) - fog.bottom;
+            fog.bottom += fTmp;
+            fog.distance -= fTmp;
+            fog.on      = cfg.fog_allowed;
+            if ( fog.distance < 1.0f ) fog.on = 0;
+            */
+            break;
+        case GAME_FOG_TAD:
+            /*
+            fog.color = value;
+            fog.red = CLIP(pstate->turn, 0, 0xFF);
+            fog.grn = CLIP(pstate->argument, 0, 0xFF);
+            fog.blu = CLIP(pstate->distance, 0, 0xFF);
+            */
+            break;
+        case GAME_FOG_LEVEL:
+            /*            
+            fTmp = ( pstate->argument / 10.0f ) - fog.top;
+            fog.top += fTmp;
+            fog.distance += fTmp;
+            fog.on = cfg.fog_allowed;
+            if ( fog.distance < 1.0f )  fog.on = 0;
+            */
+            break;
+        case GAME_SHOWPLAYER_POS:
+            ShowPlayerPos = (char)value;
+            break;
+        case GAME_SHOWMAP:
+            ShowMap = (char)value;
+            break;
+        case GAME_TIMER:    
+            GameTimerOn = 1;
+            GameTimerValue = value;
+            // timeron = 1;
+            // timervalue = pstate->argument;
+            break;
+    }
+}
+
+/*
+ * Name:
+ *     gameGet
+ * Description:
+ *     Get given value
+ * Input:
+ *     which: Which value to get
+ */
+int gameGet(int which)
+{
+    switch(which)
+    {
+        case GAME_FOG_BOTTOMLEVEL:  
+            // fog.bottom * 10;
+            return 1;
+        case GAME_FOG_LEVEL:
+            // fog.top * 10;
+            break;
+    }
+    
+    return 0;
+}
+
+/*
+ * Name:
+ *     gameShowBlipXY
+ * Description:
+ *     Shows a blip at given position
+ * Input:
+ *     tx, ty:   Position
+ *     color_no: Color for blip
+ */
+ void gameShowBlipXY(int tx, int ty, int color_no)
+ {
+    // Add a blip
+    if(GameBlipCount < MAX_BLIP)
+    {
+        // @todo: Clip blips to map size in tiles
+        // if (tx > 0 && tx < PMesh->gmem.edge_x && ty > 0 && ty < PMesh->gmem.edge_y)
+        // {
+            if(color_no >= 0)
+            {
+                GameBlips[blip_count].x = tx;
+                GameBlips[blip_count].y = ty;
+                GameBlips[blip_count].c = color_no % COLOR_MAX;
+                GameBlipCount++;
+            }
+        // }
+    }
+ }
