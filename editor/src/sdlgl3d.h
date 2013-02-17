@@ -20,21 +20,12 @@
 *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 *******************************************************************************/
 
-#ifndef _SDLGL_3D_H_
-#define _SDLGL_3D_H_
+#ifndef _SDLGL3D_H_
+#define _SDLGL3D_H_
 
 /*******************************************************************************
 * DEFINES 							                                           *
 *******************************************************************************/
-
-#ifndef	NULL
-#define	NULL	0
-#endif /* NULL */
-
-#ifndef	TRUE
-#define	TRUE	1
-#define	FALSE	0
-#endif /* TRUE */
 
 #ifdef SDLGL_EPS
 #undef SDLGL_EPS
@@ -260,7 +251,8 @@ typedef struct
     int     id;             /* Number of object in list             */
     char    obj_type;       /* != 0. Callers side identification    */
                             /* 0: End of list for SDLGL3D           */
-    int     type_no;        /* Number of type in 'obj_type'         */
+    int     type_no;        /* Number of type in 'obj_type', 'mdl'  */
+    int     owner_no;       // This one owns the object
     int     frame_no;       /* Actual frame: For particles/anim     */
     float   life_time;      /* In seconds                           */
                             /* Is counted down each object-update   */
@@ -371,4 +363,4 @@ void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);
 void sdlgl3dMouse(int camera_no, int scrw, int scrh, int moux, int mouy);
 SDLGL3D_VISITILE *sdlgl3dGetVisiTileList(int *num_tile);
 
-#endif  /* _SDLGL_3D_H_ */
+#endif  /* _SDLGL3D_H_ */

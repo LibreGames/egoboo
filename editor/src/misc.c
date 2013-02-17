@@ -143,17 +143,15 @@ int miscRandRange(int ipair[2])
  * Name:
  *     miscRandVal
  * Description:
- *     Returns a random number between 1 and RAND_MAX.
+ *     Returns a random number between 1 and 'max'.
  * Input:
- *     None
+ *     max: Maximum value (
  * Output:
  *     Generated random number (1 .. RAND_MAX)
  */
-int miscRandVal(void)
+int miscRandVal(int max)
 {
-
-    return rand();
-
+    return (int)((((long)rand()*(max))/(RAND_MAX+1)));
 }
 
 

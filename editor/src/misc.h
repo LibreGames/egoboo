@@ -34,7 +34,7 @@
 // Random values
 void miscSetRandSeed(int num);
 int  miscRandRange(int ipair[2]);
-int  miscRandVal(void);
+int  miscRandVal(int max);
 // Random treasure
 void miscLoadRandTreasure(void);
 char *miscGetRandTreasure(char* pstr);

@@ -44,10 +44,12 @@
 #define EGOMAP_GET    0x02
 #define EGOMAP_SET    0x03
 #define EGOMAP_CLEAR  0x04
+
 // Actions for passage
-#define EGOMAP_OPEN   0x05  
-#define EGOMAP_CLOSE  0x06  
-#define EGOMAP_SWITCH 0x06
+#define EGOMAP_PSGOPEN   0x05  
+#define EGOMAP_PSGCLOSE  0x06  
+#define EGOMAP_PSGSWITCH 0x07
+#define EGOMAP_PSGOWNER  0x08
 
 
 /*******************************************************************************
@@ -77,8 +79,6 @@ void egomapInit(void);
 void egomapSetFanStart(MESH_T *mesh);
 MESH_T *egomapLoad(char create, char *msg, int num_tile);
 int  egomapSave(char *msg, char what);
-int  egomapPassage(int psg_no, EDITFILE_PASSAGE_T *psg, char action, int *crect);
-int  egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crect);
 
 /* ============  Tile functions ========== */
 char egomapGetFanData(int tx, int ty, FANDATA_T *fd);
@@ -91,14 +91,14 @@ void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
 void egomapDraw2DMap(int mx, int my, int mw, int mh, int tx, int *crect);
 
 /* ============ OBJECT-FUNCTIONS ========== */
-void egomapNewObject(char *obj_name, float x, float y, float z, char dir_code);
 void egomapDropObject(int obj_no);      // Drop this object to map
 void egomapDeleteObject(int obj_no);    // Delete this object from map
 int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
-void egomapDropChar(int char_no, float x, float y, float z, char dir); 
-// @todo: egomapMoveAllObjects(void);   // Manages the linked lists on tile and invokes passages
+int  egomapPutChar(int char_no, float x, float y, float z, char dir, int mdl_no); 
 
-/* ============  Game functions ========== */
-void  egomapHandlePassage(int psg_no, int action);
+/* ============ Other functions ========== */
+int  egomapPassage(int psg_no, EDITFILE_PASSAGE_T *psg, char action, int *crect);
+void egomapPassageFunc(int psg_no, int action, int value, EDITFILE_PASSAGE_T *psg);
+int  egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crect);
 
 #endif  /* #define _EGOMAP_H_ */

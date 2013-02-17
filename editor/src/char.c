@@ -30,6 +30,8 @@
 
 #include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
 #include "editfile.h"   /* Get the work-directoires                     */
+#include "egomap.h"     // Place objects on map
+
 
 #include "idsz.h";
 #include "misc.h"       /* Random treasure objects                      */
@@ -76,6 +78,8 @@
 // team
 #define TEAM_MAX            32  // Mum number of teams
 #define TEAM_MAX_MEMBER     6   // Maximum members of a team 
+// Spawn points
+#define CHAR_MAXSPAWN    500      /* Maximum Lines in spawn list          */
 
 /*******************************************************************************
 * ENUMS								                                           *
@@ -303,8 +307,12 @@ typedef struct
 * DATA									                                   *
 *******************************************************************************/
 
+static EDITFILE_SPAWNPT_T SpawnPts[CHAR_MAXSPAWN + 2];    /* Holds data about chosen spawn point  */
+// General info about teams
 static TEAM_T TeamList[TEAM_MAX + 2];     
+// Character profiles
 static CAP_T  CapList[CHAR_MAX_CAP + 2];
+// Characters itself, created from character-profiles
 static CHAR_T CharList[CHAR_MAX + 2];
 
 // Description for reading a cap-file
@@ -438,16 +446,16 @@ static int charNewCap(void)
             }
 
             // Clear expansions...
-            pcap -> reflect = 1;
-            pcap -> isvaluable = -1;
+            pcap->reflect = 1;
+            pcap->isvaluable = -1;
 
             // either these will be overridden by data in the data.txt, or
             // they will be limited by the spawning character's max stats
-            pcap -> life_spawn = 10000;
-            pcap -> mana_spawn = 10000;
+            pcap->life_spawn = 10000;
+            pcap->mana_spawn = 10000;
 
             // More stuff I forgot
-            pcap -> stoppedby  = MPDFX_IMPASS;
+            pcap->stoppedby  = MPDFX_IMPASS;
             
             // Now return its number            
             return i;
@@ -563,7 +571,7 @@ static int charNewChar(void)
     {
         pcap = &CapList[cno];
 
-        strcpy(pcap -> cap_name, objname);  // For checking if profile and object are already loaded and editor
+        strcpy(pcap->cap_name, objname);  // For checking if profile and object are already loaded and editor
         /* @todo: Load random treasure object if in 'game-mode'
         if('%' == objname)
         {
@@ -587,7 +595,7 @@ static int charNewChar(void)
             // sprintf(fname, "%snaming.txt", fdir);            
             // @todo: Load its particles
             // "part0.txt" - "part9.txt"
-            // pcap -> prt_first_no = particleLoad(fdir, &pcap -> prt_cnt)
+            // pcap->prt_first_no = particleLoad(fdir, &pcap->prt_cnt)
             //
             // sprintf(fname, "%stris.md2", fdir);
             // "icon0,bmp" - "icon4.bmp"
@@ -715,52 +723,129 @@ static void charDoLevelUp(const int char_no)
 
 /*
  * Name:
- *     charGiveExperienceOne
+ *     charCreate
  * Description:
- *     Gives experence to the given character.
+ *     Creates a new character.
+ *     If needed, the character profile is loaded:
+ *      - Looks up first in the modules directory
+ *      - Second it looks that in the GOR
  * Input:
- *     char_no: Number of character to give experience
- *     amount:  Amount of experience to give
- *     xp_type: Type of experience to give          
+ *     spt *:     Create from this spawn point description
+ * Output:
+ *     Number of character, if any is created
  */
-static void charGiveExperienceOne(int char_no, int amount, int xp_type)
+static int charCreate(EDITFILE_SPAWNPT_T *spt)
 {
+    int cap_no;
+    int char_no;
+    CAP_T  *pcap;
     CHAR_T *pchar;
-    CAP_T *pcap;
-    int newamount;
-    int intadd, wisadd;
-    
-    if (0 == amount) return;    //No xp to give
-    
-    pchar = &CharList[char_no];
-            
-    newamount = amount;
-    
-    if (xp_type < XP_COUNT )
+
+
+    // @todo: Support Random Treasure
+    cap_no = charReadCap(spt->obj_name);
+
+    if(cap_no > 0)
     {
-        pcap  = &CapList[pchar -> cap_no];
-        // Multiplier based on character profile
-        newamount = amount * pcap -> experience_rate[xp_type];
+        char_no = charNewChar();
+
+        if(char_no > 0)
+        {
+            pcap  = &CapList[cap_no];
+            pchar = &CharList[char_no];
+
+            // @todo: Complete creation of character profile
+            // @todo: Change boolean values to flags
+            pchar->id      = char_no;         /* Number of slot > 0: Is occupied      */
+            pchar->cap_no  = cap_no;          /* Has this character profile           */
+            pchar->mdl_no  = pcap->mdl_no;    /* Number of model for display          */
+            pchar->icon_no = spt->skin;       /* Number of models icon for display    */
+            pchar->skin_no = spt->skin;       /* Number of models skin for display    */
+            // Attached to passage
+            pchar->psg_no  = spt->pas;
+            pchar->gender  = pcap->gender;            
+            // Gender
+            if('R' == pchar->gender)
+            {
+                // @todo: Set random gender
+            }
+            
+            // Team stuff
+            spt->team = (char)(spt->team - 'A'); // From 0 to ('Z' - 'A')
+            pchar->team[0] = spt->team;          // Actual team
+            pchar->team[1] = spt->team;          // Original team
+
+            pchar->money = spt->money;   
+            /* Info for editor: Name of object, for further naming: Name of it's class */
+            pchar->obj_name   = pcap->cap_name;
+            pchar->class_name = pcap->class_name;
+            
+            // Return number of slot
+            return char_no;
+        }
     }
     
-    // Figure out how much experience to give
-    intadd = pchar -> intel[CHARSTAT_ACT];
-    wisadd = pchar -> wis[CHARSTAT_ACT];
-        
-    // Intelligence and slightly wisdom increases xp gained (0,5% per int and 0,25% per wisdom above 10)
-    intadd = (intadd > 10) ? (newamount * (intadd - 10) / 200) : 0;
-    wisadd = (wisadd > 10) ? (newamount * (wisadd - 10) / 400) : 0;
-    
-    newamount += (intadd + wisadd);
-    
-    // @todo:Apply XP bonus/penality depending on game difficulty
-    /*
-    if ( cfg.difficulty >= GAME_HARD ) newamount += newamount / 5;          // 20% extra on hard
-    else if ( cfg.difficulty >= GAME_NORMAL ) newamount += newamount / 10;  // 10% extra on normal
-    */
-    pchar -> experience += newamount;   
-    // @todo: Level up, if enough experience
-    // @todo: Send message if levelled up
+    return 0;
+}
+
+/*
+ * Name:
+ *     charSpawnFromSpt
+ * Description:
+ *     Spawns an object on map, based on given spawn point
+ * Input:
+ *     spt *:  Description of spawn point
+ */
+ static void charSpawnFromSpt(EDITFILE_SPAWNPT_T *spt)
+ {
+    static inv_char = 0;   // Old character for inventory
+
+    int char_no;
+    int obj_no;             // 3D-Object generated
+    char slot_no;           /* In inventory, if any */
+
+
+    if(spt->view_dir == 'R')
+    {
+        slot_no = 0;    /* Also for mounts */
+    }
+    else if(spt->view_dir == 'L')
+    {
+        slot_no = 1;
+    }
+    else if(spt->view_dir == 'I')
+    {
+        slot_no = -1;
+    }
+    else
+    {
+        slot_no = 10;   /* Is a character on map */
+    }
+
+    char_no = charCreate(spt);
+
+    if(char_no > 0)
+    {
+        if(slot_no == 10 && spt->x_pos > 0 && spt->y_pos > 0)
+        {
+            /* Inventory belongs to this character, if any */
+            inv_char = char_no;
+            // Is a character with an inventory -- Drop it to map
+            obj_no = egomapPutChar(char_no, spt->x_pos, spt->y_pos, spt->z_pos, spt->view_dir, CharList[char_no].mdl_no);
+            // Link back to object from character
+            CharList[char_no].obj_no = obj_no;
+        }
+        else
+        {
+            // Is an inventory object -- put it there
+            charInventoryAdd(inv_char, char_no, slot_no);
+        }
+        // Attach the character to a passage, if needed
+        if(spt->pas > 0)
+        {
+            egomapPassageFunc(spt->pas, EGOMAP_PSGOWNER, char_no, NULL);
+        }
+    }
 }
 
 /* ========================================================================== */
@@ -803,140 +888,6 @@ void charInit(void)
 
 /*
  * Name:
- *     charCreate
- * Description:
- *     Creates a new character.
- *     If needed, the character profile is loaded:
- *      - Looks up first in the modules directory
- *      - Second it looks that in the GOR
- * Input:
- *     objname *: Pointer on name of object to create character from
- *     team:      Belongs to this team ('A' - 'Z')
- *     stt:       Statusbar should appear yes/no
- *     money;     Bonus money for the character for this module.    
- *     skin:      Which skin to use
- *     psg:       Number of passage the character belongs to  
- * Output:
- *     Number of character, if any is created
- */
-int charCreate(char *objname, char team, char stt, int money, char skin, char psg)
-{
-    int i;
-    int cap_no;
-    int char_no;
-    CAP_T  *pcap;
-    CHAR_T *pchar;
-    
-
-    // @todo: Support Random Treasure
-    cap_no = charReadCap(objname);
-
-    if(cap_no > 0)
-    {
-        char_no = charNewChar();
-
-        if(char_no > 0)
-        {
-            pcap  = &CapList[cap_no];
-            pchar = &CharList[char_no];
-
-            // @todo: Complete creation of character profile
-            // @todo: Change boolean values to flags
-            pchar -> id      = char_no;         /* Number of slot > 0: Is occupied      */
-            pchar -> cap_no  = cap_no;          /* Has this character profile           */
-            pchar -> mdl_no  = pcap -> mdl_no;  /* Number of model for display          */
-            pchar -> icon_no = skin;            /* Number of models icon for display    */
-            pchar -> skin_no = skin;            /* Number of models skin for display    */
-            // Attached to passage
-            pchar -> psg_no  = psg;
-            // Gender
-            if('F' == pcap -> gender ) pchar -> gender = GENDER_FEMALE;
-            else if ('M' == pcap -> gender) pchar -> gender = GENDER_MALE;
-            else if ('R' == pcap -> gender) pchar -> gender = GENDER_RANDOM;
-            else pchar -> gender = GENDER_OTHER;
-            
-            // Team stuff
-            team = (char)(team - 'A');  // From 0 to ('Z' - 'A')
-            pchar -> team[0] = team;    // Actual team
-            pchar -> team[1] = team;    // Original team
-
-            pchar -> money = money;   
-            /* @todo: Take from function
-             char.c.char_download_cap
-            // character stats -- CHARSTAT_ACT / CHARSTAT_FULL
-            short int life[2];  ///< Basic character stats
-            char mana[2];       ///< Mana stuff
-            
-            // combat stuff -- CHARSTAT_ACT / CHARSTAT_FULL
-            char damageboost[2];                   ///< Add to swipe damage
-            char damagethreshold[2];               ///< Damage below this number is ignored
-
-            int  experience;        ///< Experience
-            char experience_level;  ///< The Character's current level
-
-            float fat;                           ///< Character's size
-            float fat_goto;                      ///< Character's size goto
-
-            // jump stuff
-            char jump_number;                   ///< Number of jumps remaining
-            char jump_ready;                    ///< For standing on a platform character
-            */
-            
-            // "variable" properties
-            pchar -> is_hidden = 0;
-            /*
-            // "constant" properties
-            char isshopitem;                    ///< Spawned in a shop?
-            char canbecrushed;                  ///< Crush in a door?
-            char canchannel;                    ///< Can it convert life to mana?
-
-            // graphics info
-            int   sparkle;              ///< Sparkle the displayed icon? 0 for off
-            */
-            pchar -> draw_stats = stt;  ///< Display stats?
-            /*
-            float shadow_size[2];   ///< Size of shadow  -- CHARSTAT_ACT / CHARSTAT_FULL
-            int   ibillboard;       ///< The attached billboard
-
-            // Skills
-            int  darkvision_level;
-            int  see_kurse_level;
-
-            // missile handling
-            char missiletreatment;  ///< For deflection, etc.
-            char missilecost;       ///< Mana cost for each one
-            int  missilehandler;    ///< Who pays the bill for each one...
-            
-            // sound stuff
-            int  loopedsound_channel;           ///< Which sound channel it is looping on, -1 is none.
-            */
-
-            
-            // Character is created, return its number
-            /*
-                // Other info
-                char *script;       // Pointer ai_on script to use for this character, if any 
-             */
-             
-            // sound stuff...  copy from the cap
-            for(i = 0; i < SOUND_COUNT; i++ )
-            {
-                pchar->sound_index[i] = pcap->sound_index[i];
-            }
-            
-            /* Info for editor: Name of object, for further naming: Name of it's class */
-            pchar -> obj_name   = pcap -> cap_name;
-            pchar -> class_name = pcap -> class_name;
-            // Return number of slot
-            return char_no;
-        }
-    }
-    
-    return 0;
-}
-
-/*
- * Name:
  *     charGet
  * Description:
  *     Returns a pointer on a valid character, if available 
@@ -951,7 +902,38 @@ CHAR_T *charGet(int char_no)
     return &CharList[char_no];
 } 
 
-/* ================= inventory functions ===================== */
+/*
+ * Name:
+ *     charSpawnAll
+ * Description:
+ *     Spawns all characters for the actual set module directory 
+ * Input:
+ *     None
+ */
+void charSpawnAll(void)
+{
+    EDITFILE_SPAWNPT_T *spt;
+    int i;
+    
+    /* Load the spawn points */
+    spt = &SpawnPts[1];
+    editfileSpawn(spt, EDITFILE_ACT_LOAD, CHAR_MAXSPAWN);
+
+    i = 1;
+    while(spt->obj_name[0] != 0)
+    {
+        // Add data for editor -- Number of spawn point
+        spt->rec_no = i;
+
+        // Spawn the object
+        charSpawnFromSpt(spt);
+
+        spt++;
+        i++;
+    }
+}
+
+/* ================= Inventory functions ===================== */
 
 /*
  * Name:
@@ -974,21 +956,21 @@ char charInventoryAdd(const int char_no, const int item_no, int slot_no)
 
     pchar = &CharList[char_no];
 
-    if(pchar -> cap_no > 0 && CharList[item_no].cap_no > 0)
+    if(pchar->cap_no > 0 && CharList[item_no].cap_no > 0)
     {
         pitem = &CharList[item_no];
 
         // don't allow sub-inventories, e.g.
-        if(pitem -> attached_to > 0)
+        if(pitem->attached_to > 0)
         {
             return 0;
         }
 
         //too big item?
-        if(pitem -> istoobig)
+        if(pitem->istoobig)
         {
             // SET_BIT( pitem->ai.alert, ALERTIF_NOTPUTAWAY );
-            if(pchar -> islocalplayer)
+            if(pchar->islocalplayer)
             {
                 // @todo: Send message for display or to AI/Player
                 // msgSend(char_no, MSG_TOOBIG, chr_get_name())
@@ -1002,7 +984,7 @@ char charInventoryAdd(const int char_no, const int item_no, int slot_no)
             // Find an empty slot
             for(i = SLOT_COUNT; i < INVEN_COUNT; i++)
             {
-                if(pchar -> inventory[i].item_no == 0)
+                if(pchar->inventory[i].item_no == 0)
                 {
                     slot_no = i;
                     break;
@@ -1016,12 +998,12 @@ char charInventoryAdd(const int char_no, const int item_no, int slot_no)
         // don't override existing items
         if(slot_no < INVEN_COUNT)
         {
-            if(pchar -> inventory[slot_no].item_no == 0)
+            if(pchar->inventory[slot_no].item_no == 0)
             {
-                pchar -> inventory[slot_no].item_no = item_no;
+                pchar->inventory[slot_no].item_no = item_no;
                 // Link back to character
                 // display code has to check slots 0 and 1 for display in 3D
-                pitem -> attached_to = char_no;
+                pitem->attached_to = char_no;
 
                 // @todo: Message to player that it has picked up an item ?!
                 // msgSend(char_no, MSG_ITEMFOUND, chr_get_name())
@@ -1053,15 +1035,15 @@ int charInventoryRemove(const int char_no, int slot_no, char ignorekurse)
     
     pchar = &CharList[char_no];
 
-    if(pchar -> cap_no > 0 && slot_no < INVEN_COUNT)
+    if(pchar->cap_no > 0 && slot_no < INVEN_COUNT)
     {
-        item_no = pchar -> inventory[slot_no].item_no;
+        item_no = pchar->inventory[slot_no].item_no;
         
         if(item_no > 0)
         {
             pitem = &CharList[item_no];
             
-            if (pitem -> iskursed && !ignorekurse )
+            if (pitem->iskursed && !ignorekurse )
             {
                 // Flag the last found_item as not removed
                 /*
@@ -1074,8 +1056,8 @@ int charInventoryRemove(const int char_no, int slot_no, char ignorekurse)
             else
             {
                 // Remove item from inventory
-                pchar -> inventory[slot_no].item_no = 0;
-                pitem -> attached_to  = 0;
+                pchar->inventory[slot_no].item_no = 0;
+                pitem->attached_to  = 0;
                 // Return number of item to caller for further handling
                 return item_no;
             }
@@ -1106,14 +1088,14 @@ char charInventorySwap(const int char_no, int slot_no, int grip_off)
 
     pchar = &CharList[char_no];
     
-    if(pchar -> cap_no > 0)
+    if(pchar->cap_no > 0)
     {
         if(slot_no < 0)
         {
             // Find the first slot
             for(i = SLOT_COUNT; i < INVEN_COUNT; i++)
             {
-                if(pchar -> inventory[i].item_no > 0)
+                if(pchar->inventory[i].item_no > 0)
                 {
                     slot_no = i;
                     break;
@@ -1123,22 +1105,22 @@ char charInventorySwap(const int char_no, int slot_no, int grip_off)
 
         if(grip_off <= HAND_RIGHT && slot_no > HAND_RIGHT && slot_no < INVEN_COUNT)
         {
-            inv_item  = pchar -> inventory[slot_no].item_no;
-            grip_item = pchar -> inventory[grip_off].item_no;
+            inv_item  = pchar->inventory[slot_no].item_no;
+            grip_item = pchar->inventory[grip_off].item_no;
 
             // Make space to put the item into the grip
-            pchar -> inventory[grip_off].item_no = 0;
+            pchar->inventory[grip_off].item_no = 0;
 
             // Put inventory item to grip
             if(charInventoryAdd(char_no, inv_item, grip_off))
             {
                 // Put item from grip to inventory
-                pchar -> inventory[slot_no].item_no = grip_item;
+                pchar->inventory[slot_no].item_no = grip_item;
             }
             else
             {
                 // Put item back to grip
-                pchar -> inventory[grip_off].item_no = grip_item;
+                pchar->inventory[grip_off].item_no = grip_item;
             }
         }
     }
@@ -1146,283 +1128,61 @@ char charInventorySwap(const int char_no, int slot_no, int grip_off)
     return 0;
 }
 
-/* ================= Gameplay functions ================== */
-
+/* ============ Other functions ======================== */
 /*
  * Name:
- *     charInventoryFunc
+ *     charSpawnPoint
  * Description:
- *     Applies the given function on inventory item(s), using the given argument, if needed
+ *     This function does the handlig of spawn points
  * Input:
- *     char_no:  Number of character to handle inventory for
- *     func_no:  Number of function to execute
- *     arg:      Additional argument for function, if needed
- */
-void charInventoryFunc(int char_no, int func_no)
-{
-    int i, item_no;
-    CHAR_T *pchar, *pitem;
-
-
-    // @todo: Search inventories of the whole team (if 'player') 'use_team'
-    pchar = &CharList[char_no];
-
-    for(i = 0; i < (INVEN_COUNT + SLOT_COUNT); i++)
-    {
-        item_no = pchar -> inventory[i].item_no;
-
-        if(item_no > 0)
-        {
-            pitem = &CharList[item_no];
-
-            switch(func_no)
-            {
-                case CHAR_INVFUNC_UNKURSE:
-                    pitem -> iskursed = 0;
-                    break;
-            }
-        }
-    }
-}
-
-/*
- * Name:
- *     charGiveExperience
- * Description:
- *         Gives experence to the given character. If 'tem' is true, than experience is given to the 
- *         characters whole team.
- * Input:
- *     char_no: Number of character to give experience
- *     amount:  Amount of experience to give
- *     xp_type: Type of experience to give 
- *     to_team: Give it to the characters team yes/no           
- */
-void charGiveExperience(int char_no, int amount, int xp_type, char to_team)
-{
-    if (0 == amount) return;    //No xp to give
-    
-    if(to_team)
-    {
-        // @todo: Give experience to whole team
-        /*
-        to_team = pchar -> team;
-        //
-        CHR_BEGIN_LOOP_ACTIVE( cnt, pchr )
-        {
-            if ( pchar -> team == to_team )
-            {
-                pchar -> experience += newamount;
-                // give_experience( cnt, newamount, ( xp_type )xptype, 0 );
-            }
-        }
-        CHR_END_LOOP();
-        */
-    }
-    else
-    {
-        charGiveExperienceOne(char_no, amount, xp_type);
-    }
-}
-
-/*
- * Name:
- *     charApplyChange
- *      replaces:
- *          damage_character, give_experience, give_team_experience, kill_character(use high valpair)
- *          heal_character  
- * Description:
- *     Applies the given function on character(s), using the given arguments
- *   This function calculates and applies damage to a character.  It also
- *   sets alerts and begins actions. Blocking and frame invincibility
- *   are done here too.  Direction is ATK_FRONT if the attack is coming head on,
- *   ATK_RIGHT if from the right, ATK_BEHIND if from the back, ATK_LEFT if from the
- *   left.
- * Input:
- *     char_no:    Number of character to handle 
- *     dir_no:     Attack direction, if any
- *     valpair[2]: For damage healing, Experience points are in 'valpair[0]'
- *     val_type:   Kind of damage of kind of healing or experience and so on 
- *     team:       Damages/heals the whole team ?!
- *     attacker:   If damage (and healing ?)
- *     effects:    Flags about effects to spawn...
- */
-void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_type,
-                     char team, int attacker, int effects)
-{   
-    CHAR_T *pchar;
-    // CAP_T *pcap;
-    int amount;
-    
-    
-    
-    // Fixed value for experience and killing characters
-    if(valpair[1] == 0)
-    {
-        amount = valpair[0];
-    }
-    else
-    {
-        amount = miscRandRange(valpair);
-    }
-    
-    pchar = &CharList[char_no];
-    // pcap  = &CapList[pchar -> cap_no];
-    
-    if(val_type == CHAR_DAMAGE)
-    {
-        pchar->life[CHARSTAT_ACT] -= (short int)amount;
-        if(attacker)
-        {
-            // @todo: Take attacker into account
-        }
-    }
-    else if(val_type == CHAR_HEAL)
-    {
-        if(team)
-        {
-            // Apply to the characters team
-        }
-        else
-        {
-            pchar->life[CHARSTAT_ACT] += (short int)amount;
-            if(pchar->life[CHARSTAT_ACT] > pchar->life[CHARSTAT_FULL])
-            {
-                pchar->life[CHARSTAT_ACT] = pchar->life[CHARSTAT_FULL];
-            }
-        }
-    }
-}
-
-/* ================= Information functions ===================== */
-
-/*
- * Name:
- *     charGetSkill
- * Description:
- *     This returns the skill level for the specified skill or 0 if the character doesn't
- *     have the skill. Also checks the skill IDSZ.
- * Input:
- *     char_no:    Number of character to give experience
- *     whichskill: Skill to look for (IDSZ)        
- */
-int charGetSkill(int char_no, unsigned int whichskill)
-{
-    CHAR_T *pchar;
-    IDSZ_T *pskill;
-    
-    
-    //Any [NONE] IDSZ returns always "true"
-    if (IDSZ_NONE == whichskill) return 1;
-    
-    pchar = &CharList[char_no];
-    
-    //Do not allow poison or backstab skill if we are restricted by code of conduct
-    if ('POIS' == whichskill || 'STAB' == whichskill)
-    {
-        if (NULL != idszMapGet(pchar->skills, 'CODE', CHAR_MAX_SKILL))
-        {
-            return 0;
-        }
-    }
-    
-    // First check the character Skill ID matches
-    // Then check for expansion skills too.
-    /* @todo:
-    if ( chr_get_idsz( pchr->ai.index, IDSZ_SKILL )  == whichskill )
-    {
-        return 1;
-    }
-    */
-    
-    // Simply return the skill level if we have the skill
-    pskill = idszMapGet(pchar->skills, whichskill, CHAR_MAX_SKILL);
-    if (pskill != NULL )
-    {
-        return pskill->level;
-    }
-    
-    // Truesight allows reading
-    if ('READ' == whichskill )
-    {
-        pskill = idszMapGet(pchar->skills, 'CKUR', CHAR_MAX_SKILL);
-
-        if (pskill != NULL && pchar->see_invisible_level > 0 )
-        {
-            return pchar->see_invisible_level + pskill->level;
-        }
-    }
-
-    //Skill not found
-    return 0;
-}
-
-/*
- * Name:
- *     charSetTimer 
- * Description:
- *     Sets a timer with given number, if possible
- * Input:
- *     char_no: Number of character to set timer for
- *     which:   Type of clock 
- *     amount:  Amount of ticks (duration)       
+ *     sp_no:  Work with this spawn point
+ *     spt *:  Pointer on Spawn-Point data to get/set
+ *     action: What to do with this spawn point
  * Output:
- *     Clock could be set yes/no 
+ *     Number of spawn point, if a new one is created
  */
-char charSetTimer(int char_no, char which, int clock_ticks)
+int charSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action)
 {
     int i;
-    CHAR_T *pchar;
     
     
-    // @todo: Only set timer if not already set
-    pchar = &CharList[char_no];
-    
-    // @todo: Loop trough all characters in list
-    for(i = 0; i < CHAR_MAX_TIMER; i++)
+    switch(action)
     {
-        if(pchar->timers[i].which == 0)
-        {
-            // Set the clock
-            pchar->timers[i].which       = which;
-            pchar->timers[i].clock_ticks = clock_ticks;
-            
-            return 1;
-        }
-    }
-
-    return 0;    
-}
-
-
-/*
- * Name:
- *     charUpdateAll
- * Description:
- *     Does an update of the state of all characters 
- * Input:
- *     tickspassed: Ticks passend since last call 
- */
-void charUpdateAll(int tickspassed)
-{
-    int i;
-    CHAR_T *pchar;
-    
-    
-    pchar = pchar = &CharList[1];
-    // @todo: Loop trough all characters in list
-    for(i = 0; i < CHAR_MAX_TIMER; i++)
-    {
-        if(pchar->timers[i].which != 0)
-        {   
-            pchar->timers[i].clock_ticks -= tickspassed;
-            
-            if(pchar->timers[i].clock_ticks <= 0)
+        case CHAR_SPTNEW:
+            /* Look for buffer available */
+            for (i = 1; i < CHAR_MAXSPAWN; i++)
             {
-                // @todo: Do proper action if the time for this clock is over
-                // Mark the clock as free slot
-                pchar->timers[i].which       = 0;
-                pchar->timers[i].clock_ticks = 0;
+                if (SpawnPts[i].rec_no <= 0)
+                {   
+                    SpawnPts[i].rec_no = i;
+                    SpawnPts[i].x_pos  = spt->x_pos;
+                    SpawnPts[i].y_pos  = spt->y_pos;
+                    SpawnPts[i].z_pos  = spt->z_pos;
+
+                    /* Give it a name and make it valid */
+                    sprintf(SpawnPts[i].obj_name, "%02dPassage", i);
+
+                    /* -- Return data to caller -- */
+                    memcpy(spt, &SpawnPts[i], sizeof(EDITFILE_SPAWNPT_T));
+                    return i;
+                }
             }
-        }
+            break;
+        case CHAR_SPTSET:
+            // Save changes
+            if (sp_no > 0 && sp_no < CHAR_MAXSPAWN)
+            {
+                memcpy(&SpawnPts[sp_no], spt, sizeof(EDITFILE_SPAWNPT_T));
+            }
+            break;
+        case CHAR_SPTCLEAR:
+            if (sp_no > 0 && sp_no < CHAR_MAXSPAWN)
+            {
+                memset(spt, 0, sizeof(EDITFILE_SPAWNPT_T));
+                spt->rec_no = -1;     /* Sign it as free */
+            }
+            break;
     }
+
+    return 0;
 }

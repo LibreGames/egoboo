@@ -24,13 +24,14 @@
 #define _CHAR_H_
 
 /*******************************************************************************
-* INCLUDES								                                   *
+* INCLUDES                                                                     *
 *******************************************************************************/
 
+#include "editfile.h"   // Description of passages and spawn points 
 #include "idsz.h"       // List of special skills 
 
 /*******************************************************************************
-* DEFINES								                                   *
+* DEFINES                                                                      *
 *******************************************************************************/
 
 #define ULTRABLUDY           2          ///< This makes any damage draw blud
@@ -67,6 +68,12 @@
 // Teams constants
 #define TEAM_DAMAGE ((char)(('Z' - 'A') + 2))   ///< For damage tiles
 #define TEAM_NOLEADER 0xFFFF                    ///< If the team has no leader...
+
+// Edit functions
+#define CHAR_SPTNEW    0x01      
+#define CHAR_SPTGET    0x02
+#define CHAR_SPTSET    0x03
+#define CHAR_SPTCLEAR  0x04
 
 /*******************************************************************************
 * ENUMS                                                                        *
@@ -139,17 +146,6 @@ enum
     SLOT_COUNT  = 2
     
 } E_INVENTORY;
-
-
-/// What gender a character can be spawned with
-enum
-{
-    GENDER_FEMALE = 0,
-    GENDER_MALE,
-    GENDER_OTHER,
-    GENDER_RANDOM,
-    GENDER_COUNT
-} E_GENDER;
 
 enum
 {
@@ -290,24 +286,17 @@ typedef struct
 
 /* ================= Basic character functions =============== */
 void charInit(void);
-int  charCreate(char *objname, char team, char stt, int money, char skin, char psg);
 CHAR_T *charGet(int char_no); 
+void charSpawnAll(void);
+void charSpawnOne(char *objname, float x, float y, float z, char dir);
 
 /* ================= General inventory functions ===================== */
 char charInventoryAdd(const int char_no, const int item_no, int inventory_slot);
 int  charInventoryRemove(const int char_no, int inventory_slot, char ignorekurse);
 char charInventorySwap(const int char_no, int inventory_slot, int grip_off);
 
-/* ================= Timer functions ===================== */
-// @todo: Add timers, delete timers
+/* ============ Other functions ======================== */
+charSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action);
 
-/* ================= Gameplay functions ================== */
-void charInventoryFunc(int char_no, int func_no);
-void charGiveExperience(int char_no, int amount, int xp_type, char to_team);
-void charApplyChange(const char char_no, char dir_no, int valpair[2], char val_type, char team,
-                     int attacker, int effects);
-int charGetSkill(int char_no, unsigned int whichskill);
-// @todo: charSetVal() 
-char charSetTimer(int char_no, char which, int clock_ticks);
-void charUpdateAll(int tickspassed);
+
 #endif  /* #define _CHAR_H_ */
