@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <string.h>
+#include <ctype.h>      // tolower()
 #include <stdlib.h>      /* malloc(), free(), don't use alloc.h it's obsolete*/
 
 #include "platform.h"
@@ -340,11 +341,10 @@ static void sdlglcfgGetNamedValue(char *line, SDLGLCFG_NAMEDVALUE *vallist)
 
     char valstr[128];
     char namestr[128];
-    char *pval;
+    char *pval, *pstr;
 
 
     /* FIXME: Check for blocksign and return it, if needed */
-
     /* -------- */
     pval = strchr(line, '=');
     if (pval)
@@ -354,9 +354,15 @@ static void sdlglcfgGetNamedValue(char *line, SDLGLCFG_NAMEDVALUE *vallist)
         sscanf(line, "%s", namestr);
         sscanf(pval, "%s", valstr);
 
-        if ( strcmp( pval, "" ) != 0 )
+        if (strcmp( pval, "" ) != 0 )
         {
-            strlwr(namestr); /* To lower for comparision */
+            pstr = namestr; /* To lower for comparision */
+
+            while(*pstr)
+            {
+                *pstr = (char)tolower(*pstr);
+	            pstr++;
+            }
 
             while (vallist -> type)
             {
@@ -442,8 +448,7 @@ static void sdlglcfgRecordFromLine(char *line, SDLGLCFG_VALUE *rcf, int fixedpos
  */
 static int sdlglcfgCheckBlockName(char *line)
 {
-
-    char *pbs;
+    char *pbs, *pstr;
 
 
     BlockName[0] = 0;
@@ -468,7 +473,14 @@ static int sdlglcfgCheckBlockName(char *line)
             }
 
             sscanf(line, "%s", BlockName);
-            strlwr(BlockName);      /* To lower for comparision of names */
+            /* To lower for comparision of names */
+            pstr = BlockName;
+
+            while(*pstr)
+            {
+                *pstr = (char)tolower(*pstr);
+    	        pstr++;
+            }
 
             return 1;
         }
@@ -536,22 +548,39 @@ static void sdlglcfgReadEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
         while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/'))
         {
             if (maxrec > 0)
-            {   /* if not filled yet */
-                pbrk = strchr(line, ':');
-                if (pbrk) {
+            {   
+                // If there is space left
+                // Support '#dependency' ==> e.g "Advent 0" object-name / slot-no for SPAWN.TXT'
+                pbrk = strchr(line, '#');
+                if(pbrk)
+                {
+                    if(strncmp(pbrk, "#dependency", 11) == 0)
+                    {
+                        // Sign it as dependency, holding object and slot no in string
+                        pbaserec[0] = '#';                        
+                        strncpy(pbaserec + 1, pbrk + 12, lineinfo -> rcf[0].len);
+                        pbaserec[lineinfo -> rcf[0].len] = 0;
+                    }
+                }
+                else
+                {
+                    // 'Normal' Line
+                    pbrk = strchr(line, ':');
+                    if (pbrk)
+                    {
+                        *pbrk = 0;
+                        /* Copy the description */
+                        strncpy(pbaserec, line, lineinfo -> rcf[0].len);
+                        pbaserec[lineinfo -> rcf[0].len] = 0;
 
-                    *pbrk = 0;
-                    /* Copy the description */
-                    strncpy(pbaserec, line, lineinfo -> rcf[0].len);
-                    pbaserec[lineinfo -> rcf[0].len] = 0;
+                        sdlglcfgRecordFromLine(&pbrk[1], &lineinfo -> rcf[1], 0, ' ');
+                        /* Copy data to actual rec */
+                        memcpy(pactrec, pbaserec, lineinfo -> recsize);
 
-                    sdlglcfgRecordFromLine(&pbrk[1], &lineinfo -> rcf[1], 0, ' ');
-                    /* Copy data to actual rec */
-                    memcpy(pactrec, pbaserec, lineinfo -> recsize);
+                        pactrec += lineinfo -> recsize;
 
-                    pactrec += lineinfo -> recsize;
-
-                    maxrec--;
+                        maxrec--;
+                    }
                 }
             }
         }
@@ -688,8 +717,17 @@ int sdlglcfgSkipBlock(void)
  */
 int sdlglcfgIsActualBlockName(char *name)
 {
+    char *pstr;
 
-    strlwr(name);       /* to lower for comparision */
+
+    /* To lower for comparision */
+    pstr = name;
+
+    while(*pstr)
+    {
+        *pstr = (char)tolower(*pstr);
+	    pstr++;
+    }
 
     if (strcmp(name, BlockName) == 0)
     {
@@ -1156,8 +1194,8 @@ char sdlglcfgRawLines(char *fname, char *dest_buf, int dest_size, int line_len, 
             
             while (dest_size > line_len && sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/'))
             {              
-                strncpy(dest_buf, line, line_len);
-                dest_buf[line_len] = 0;
+                strncpy(dest_buf, line, line_len - 1);
+                dest_buf[line_len - 1] = 0;
                 //
                 dest_buf += line_len;
                 dest_size -= line_len;

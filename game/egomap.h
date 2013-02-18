@@ -86,7 +86,8 @@ void egomapDraw(void);
 
 /* ============ OBJECT-FUNCTIONS ========== */
 void egomapNewObject(char *obj_name, float x, float y, float z, char dir_code);
-void egomapDropObject(int obj_no);      // Drop this object to map
+void egomapPutObject(int obj_no);       // Put this object to map
+void egomapDropObject(int obj_no);      // Drop this object to map (fall to bottom)
 void egomapDeleteObject(int obj_no);    // Delete this object from map
 int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
 void egomapDropChar(int char_no, float x, float y, float z, char dir); 

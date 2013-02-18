@@ -28,6 +28,7 @@
 // #include <stdio.h>
 #include <stdlib.h>     /* rand()       */
 #include <string.h>
+#include <ctype.h>      // tolower()
 #include <time.h>
 
 #include "editfile.h"       /* Get filepath name by type                    */ 
@@ -166,6 +167,7 @@ int miscRandVal(int max)
 void miscLoadRandTreasure(void)
 {
     char *fname;
+    char *pstr;
     int num_table, num_el;
 
 
@@ -200,7 +202,13 @@ void miscLoadRandTreasure(void)
         {
             // It's an object name
             // All objects have lower-case names for loading
-            strlwr(TreasureTable[num_el].obj_name);
+            pstr = TreasureTable[num_el].obj_name;
+
+            while(*pstr)
+            {
+                *pstr = (char)tolower(*pstr);
+	            pstr++;
+            }
             // Count it
             num_el++;
         }
@@ -220,25 +228,25 @@ void miscLoadRandTreasure(void)
  * Name:
  *     miscGetRandTreasure
  * Description:
- *     Gets the name for a random treasure object from the table 
+ *     Gets the name for a random treasure object from the table
  * Input:
  *     pname *: Pointer on name of random treasure (including %-sign for random names)
  * Output:
- *     Pointer of the object name for the random treasure 
+ *     Pointer of the object name for the random treasure
  */
 char *miscGetRandTreasure(char *pname)
 {
     int i;
     int treasure_index;
-   
-    
+
+
     //Trap invalid strings
 	if(NULL == pname)
     {
         // Return an empty object name
         return TreasureTable[0].obj_name;
     }
-    
+
     // Skip the '%'-sign, if needed
     if('%' == pname[0])
     {

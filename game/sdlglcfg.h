@@ -2,7 +2,7 @@
 *  SDLGLCFG.H                                                                  *
 *      - Read procedures for the configuration of SDLGL                        *
 *                                                                              *
-*  SDLGL_Lybrary                                                               *
+*  SDLGL_Library                                                               *
 *      (c)2005-2010 Paul Mueller <pmtech@swissonline.ch>                       *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *

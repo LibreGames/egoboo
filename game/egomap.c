@@ -1072,7 +1072,7 @@ static void egomapCalcVrta(MESH_T *mesh)
         spt->view_dir = 'N';  // @todo: Get direction from object
         spt->skin     = pchar->skin_no;
         spt->pas      = pchar->psg_no;
-        spt->stt      = pchar->draw_stats;
+        spt->stt      = (char)CHAR_BIT_ISSET(pchar->var_props, CHAR_FDRAWSTATS);
         spt->team     = pchar->team[CHARSTAT_ACT];
         spt->lvl      = pchar->experience_level;
         spt->rec_no   = 0;
@@ -1138,7 +1138,7 @@ static void egomapCalcVrta(MESH_T *mesh)
         spt->view_dir = 'N';  // @todo: Get direction from object
         spt->skin     = pchar->skin_no;
         spt->pas      = pchar->psg_no;
-        spt->stt      = pchar->draw_stats;
+        spt->stt      = (char)CHAR_BIT_ISSET(pchar->var_props, CHAR_FDRAWSTATS);
         spt->gho      = 'F';
         spt->team     = (char)(pchar->team[CHARSTAT_ACT] + 'A');
         spt->lvl      = pchar->experience_level;
@@ -1186,7 +1186,7 @@ static void egomapCalcVrta(MESH_T *mesh)
                 strcpy(spt->item_name, "NONE");
                 spt->slot_no  = spt_cnt;
                 spt->view_dir = slot_sign;
-                spt->stt      = pchar->draw_stats;
+                spt->stt      = (char)CHAR_BIT_ISSET(pchar->var_props, CHAR_FDRAWSTATS);
                 spt->gho      = 'F';
                 spt->team     = 'N';
                 // Next buffer and count it
@@ -1746,17 +1746,18 @@ void egomapDropChar(int char_no, float x, float y, float z, char dir)
         pchar = charGet(char_no);
         pchar->obj_no = obj_no;
         // is the object part of a shop's inventory?
-        if(pchar->isitem)
+        if(CHAR_BIT_SET(pchar->cap_props, CHAR_CFITEM))
         {
             // @todo: Put shop items into shopkeepers inventory
-            pchar->isshopitem = 0;
+            CHAR_BIT_CLEAR(pchar->cap_props, CHAR_FISSHOPITEM);
+            
             if(Mesh.fan[tile_no].psg_no > 0)
             {
                 if(Passages[Mesh.fan[tile_no].psg_no].ishop)
                 {
-                    pchar->isshopitem = 1;  // Full value
-                    pchar->iskursed   = 0;  // Shop items are never kursed
-                    pchar->nameknown  = 1;
+                    CHAR_BIT_SET(pchar->var_props, CHAR_FISSHOPITEM); // Full value
+                    CHAR_BIT_CLEAR(pchar->cap_props, CHAR_CFKURSED);  // Shop items are never kursed
+                    CHAR_BIT_SET(pchar->cap_props, CHAR_CFNAMEKNOWN);
                 }
             }
         }

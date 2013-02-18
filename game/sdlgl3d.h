@@ -27,15 +27,6 @@
 * DEFINES 							                                           *
 *******************************************************************************/
 
-#ifndef	NULL
-#define	NULL	0
-#endif /* NULL */
-
-#ifndef	TRUE
-#define	TRUE	1
-#define	FALSE	0
-#endif /* TRUE */
-
 #ifdef SDLGL_EPS
 #undef SDLGL_EPS
 #endif /* SDLGL_EPS */
@@ -227,9 +218,6 @@
 #define SDLGL3D_CAM_LOOKAT      0x03    /* Attached to a position       */
 #define SDLGL3D_CAM_FIRSTPERS   0x04    /* Move with position of object */
 
-/* -------- Object-Types ------ */
-#define SDLGL3D_OBJ_NONE     0
-
 /* Values in vector */
 #define SDLGL3D_X   0
 #define SDLGL3D_Y   1
@@ -238,16 +226,6 @@
 /* ----- Extents for collision ------- */
 #define SDLGL3D_EXTENT_CIRCLE 0x01
 #define SDLGL3D_EXTENT_RECT   0x02 
-
-/* ----- Results of collision detection in movement ----- */
-#define SDLGL3D_EVENT_TILECHANGED   2
-#define SDLGL3D_EVENT_MOVED         1
-#define SDLGL3D_EVENT_NONE          0
-
-// List-Functions
-#define SDLGL3D_ADD_TO          1
-#define SDLGL3D_REMOVE_FROM     2
-#define SDLGL3D_MOVE_FROM_TO    3
 
 /*******************************************************************************
 * TYPEDEFS                                                                     *
@@ -275,6 +253,7 @@ typedef struct
     float   size;           /* Size of object 1.0: Default          */ 
     int     skin_no;        // For MD2-Models
     char    interp;         // Draw interpolated MD2-Models
+    int     attached_obj[2];// Objects attached to this one (Weapons, particles)
     /* ---------- Extent for collision detection -------------------- */
     float   bbox[2][3];     /* Bounding box for collision detection */
                             /* Extension of BB in x, y and z dir    */  
@@ -299,8 +278,7 @@ typedef struct
                             // < 0: ascend (+Z) like hot particles        
     /* Link for object list in collision - detection                  */
     int     target_obj;     /* Follow this object, don't move self  */
-                            /* or do homing to this one, attached   */
-                            /* to this, if emitter                  */
+                            /* or do homing to this one             */
     int     next_obj;       /* > 0: Number of next object on tile   */
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */
@@ -358,7 +336,10 @@ void sdlgl3dDeleteObject(int obj_no);
 SDLGL3D_OBJECT *sdlgl3dGetObject(int obj_no);
 void sdlgl3dManageObject(int obj_no, char move_cmd, char set);
 void sdlgl3dMoveObjects(float secondspassed);
-char sdlgl3dObjectList(int *from, int *to, int obj_no, int action); 
+char sdlgl3dObjectList(int *from, int *to, int obj_no); 
+// @todo: void sdlgl3dObjectAttach(int obj_no, int attach_obj, int which_slot);
+// @todo: void sdlgl3dObjectDetach(int objno, int which_slot);
+// @todo: Function for setting display properties like color, transparency and so on (for scripts)
 
 /* ===== Visibility-Functions ==== */
 void sdlgl3dInitVisiMap(int map_w, int map_h, float tile_size);

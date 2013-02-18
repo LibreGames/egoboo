@@ -1,6 +1,6 @@
 /*******************************************************************************
 *  MSG.C                                                                       *
-*    - EGOBOO-Editor                                                           *     
+*    - EGOBOO-Game                                                             *
 *                                                                              *
 *    - Sending and handling messages for editor and play                       *
 *      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
@@ -22,31 +22,54 @@
 
 
 /*******************************************************************************
-* INCLUDES								                                   *
+* INCLUDES                                                                     *
 *******************************************************************************/
 
 #include <memory.h>
+#include <stdio.h>
 
+
+#include "egofile.h"        // Directories for files
+#include "sdlglcfg.h"       // Load the text file as raw
+#include "misc.h"
 
 // Own header
 #include "msg.h"
 
 /*******************************************************************************
-* DEFINES								                                   *
+* DEFINES                                                                      *
 *******************************************************************************/
 
 #define MSG_MAX          200    // Game messages to send around
-#define MSG_GAMETIP_MAX  100    // Maximum number of gametips
-#define MSG_OBJECT_MAX  1000    // Number of 'personal' object messages
+#define MSG_STR_MAX     1200    // Message strings for display
+#define MSG_STRLEN_MAX    90    // Maximum lenght of a message string  
 
 /*******************************************************************************
-* DATA									                                   *
+* TYPEDEFS                                                                     *
 *******************************************************************************/
 
-static MSG_T MsgList[MSG_MAX + 2];
+typedef struct
+{
+    int act_idx;                    // For loading dynamic string
+    int first_global_tip;           // Number of first global tip message
+    int num_global_tips;            // Number of global game tips
+    int first_local_tip;            // Number of first local  tip message
+    int num_local_tips;             // Number of local game tips (random)    
+    char msg[MSG_STR_MAX + 2][MSG_STRLEN_MAX]; // All possible messages
+    
+} MSG_STRLIST_T;
+
 
 /*******************************************************************************
-* CODE									                                   *
+* DATA                                                                         *
+*******************************************************************************/
+
+// Messages for the game: First: Global Tips, Second: 
+static MSG_T MsgList[MSG_MAX + 2];
+static MSG_STRLIST_T MsgStrList;
+
+/*******************************************************************************
+* CODE                                                                         *
 *******************************************************************************/
 
 /*
@@ -553,9 +576,8 @@ typedef enum
     MSG_DISAFFIRMED,
     MSG_CHANGED,
     MSG_INWATER,
-    MSG_BORED1,
+    MSG_BORED,
     MSG_TOOMUCHBAGGAGE,
-            MSG_LEVELUP,
     MSG_CONFUSED,
     MSG_HITGROUND,
     MSG_NOTDROPPED,
@@ -564,7 +586,7 @@ typedef enum
     MSG_CRUSHED,
     MSG_NOTPUTAWAY,
     MSG_TAKENOUT,
-            MSG_CANTUSEITEM,
+    MSG_CANTUSEITEM,
 
     // add in some aliases
     MSG_PUTAWAY     = MSG_ATLASTWAYPOINT,
@@ -576,7 +598,95 @@ typedef enum
     return 0;
 }
 
-// @todo: msgTipsLoad(void);        // Global tips
-// @todo: msgTipsGet(char *str_buf, int buf_len);
-// @todo: msgModuleLoad(char *fname); // Load messages for a module (overwrite old)
-// @todo: msgModuleGet(int msg_no, char *str_buf, int buf_len);
+/*
+ * Name:
+ *     msgLoad
+ * Description:
+ *     Load message(s) of given type into the 
+ * Input:
+ *     which: Which kind of message to load 
+ * Output:
+ *     Number of first message loaded 
+ */
+void msgLoad(int which)
+{
+    switch(which)
+    {
+        case MSG_LOAD_RESET:
+            // Reset the message-buffer
+            break;
+        case MSG_TIP_GLOBAL:
+            // Load global tips from file
+            break;
+        case MSG_TIP_LOCAL:
+            // Load local tips from file, starts overwrite 
+            break;
+        case MSG_SCRIPT_LIST:   
+            // Load messages belonging to a script
+            break;
+    }
+}
+
+/*
+ * Name:
+ *     msgGetText
+ * Description:
+ *     Get a message of given type 
+ * Input:
+ *     which: Which kind of messate to get
+ * Output:
+ *     Has at least one char in this string
+ */
+int msgGetText(int which, int text_no, char *str_buf, int buf_len)
+{
+    int msg_no;
+    
+    
+    str_buf[0] = 0;     // Create an empty string
+    
+    switch(which)
+    {
+        case MSG_TIP_GLOBAL:
+            // Get a global tips string, random
+            msg_no = miscRandVal(MsgStrList.num_global_tips);
+            msg_no += MsgStrList.first_global_tip;
+            break;
+        case MSG_TIP_LOCAL:
+            // Get a local tips string, random
+            msg_no = miscRandVal(MsgStrList.num_local_tips);
+            msg_no += MsgStrList.first_local_tip;
+            break;
+    }
+    
+    strncpy(str_buf, MsgStrList.msg[msg_no], buf_len - 1);
+    str_buf[buf_len - 1] = 0;
+    
+    return str_buf[0];
+}
+
+/*
+ * Name:
+ *     msgGetTextModule
+ * Description:
+ *      Get the message with given number 'translated', if needed
+ * Input:
+ *     which: Which kind of messate to get
+ * Output:
+ *     Number of first message loaded 
+ */
+int msgGetTextScript(MSG_T *pmsg, int msg_no, char *str_buf, int buf_len) 
+{
+    char *src_str;
+    
+    
+    str_buf[0] = 0;     // Create an empty string
+    
+    src_str = MsgStrList.msg[msg_no];
+    // msgExpand(MSG_T *msg, char *dest, int dest_size)
+    
+    strncpy(str_buf, src_str, buf_len - 1);
+    str_buf[buf_len - 1] = 0;
+    
+    return str_buf[0];
+}
+

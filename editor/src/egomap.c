@@ -1006,10 +1006,10 @@ static void egomapCalcVrta(MESH_T *mesh)
     // Get pointer on object    
     pobj = sdlgl3dGetObject(obj_no);
     
-    if(pobj->obj_type == EGOMAP_OBJ_CHAR && pobj->type_no > 0)
+    if(pobj->obj_type == EGOMAP_OBJ_CHAR && pobj->owner_no > 0)
     {
         // Get the info about the character
-        pchar = charGet(pobj->type_no);
+        pchar = charGet(pobj->owner_no);
 
         // Get the characters profile name
         strcpy(spt->obj_name, pchar->obj_name);

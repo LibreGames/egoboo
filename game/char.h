@@ -1,6 +1,6 @@
 /*******************************************************************************
 *  CHAR.C                                                                      *
-*    - EGOBOO-Game                                                             *     
+*    - EGOBOO-Game                                                             *
 *                                                                              *
 *    - Egoboo Characters                                                       *
 *      (c) The Egoboo Team                                                     *
@@ -67,41 +67,86 @@
 #define TEAM_DAMAGE ((char)(('Z' - 'A') + 2))   ///< For damage tiles
 #define TEAM_NOLEADER 0xFFFF                    ///< If the team has no leader...
 
+/// Numbers of 'pchar->properties', part taken from 'pcap'
+/// Variable properties 'var_props'
+#define CHAR_FISHIDDEN	 ((char)0)	// is_hidden
+#define CHAR_FPLAYER     ((char)1)   // is a human player, attached to 'PLAYER_T'
+#define CHAR_FISLOCALPLAYER ((char)2)	///< btrue = local player char islocalplayer;    
+#define CHAR_FKILLED	 ((char)3)	///< Fix for network// waskilled	
+#define CHAR_FHITREADY   ((char)4)	///< Was it just dropped? // hitready
+#define CHAR_FISSHOPITEM ((char)5)	///< Spawned in a shop? // isshopitem
+#define CHAR_FSPARKLE	 ((char)6)	///< Sparkle the displayed icon? 0 for off// sparkle	
+#define CHAR_FINVISIBLE  ((char)7)
+#define CHAR_FTHROWN     ((char)8)  ///< This character is thrown
+#define CHAR_FMOUNTED    ((char)9)	// ptarget->attached_to->ismount
+#define CHAR_FDRAWSTATS  ((char)10)	///< Display stats?// draw_stats
+
+/// Fixed properties 'cap_props'
+#define CHAR_CFMOUNT   ((char)0)       ///< Can you ride it?	// pcap->		// pchar->ismount
+#define CHAR_CFTOOBIG ((char)1)	        ///< For items // istoobig	 ///< Can't be put in pack
+#define CHAR_CFITEM   ((char)2)	        ///< Is it an item? // isitem	
+#define CHAR_FCANBECRUSHED ((char)3)    ///< Crush in a door?	// canbecrushed
+#define CHAR_FCANCHANNEL   ((char)4)    ///< Can it convert life to mana?	// 
+#define CHAR_CFEQUIPMENT ((char)5)	    ///< Behave in silly ways// pcap-> 	      
+#define CHAR_CFSTACKABLE ((char)6)	    ///< Is it arrowlike?// pcap->	
+#define CHAR_CFINVICTUS	((char)7)	    ///< Is it invincible?// pcap->	
+#define CHAR_CFPLATFORM	((char)8)	    ///< Can be stood on?// pcap->	
+#define CHAR_CFCANUSEPLATFORMS ((char)9)///< Can use platforms?// pcap->
+#define CHAR_CFUSAGEKNOWN ((char)10)	// pcap->	///< Is its usage known
+#define CHAR_CFCANGRABMONEY ((char)11)	// pcap->	///< Collect money?
+#define CHAR_CFCANOPENSTUFF ((char)12)  // pcap->	///< Open chests/doors?
+#define CHAR_CFCANBEDAZED ((char)13)	// pcap->	///< Can it be dazed?
+#define CHAR_CFCANBEGROGGED ((char)14)	// pcap->	///< Can it be grogged?
+#define CHAR_CFNAMEKNOWN	((char)15)	// pcap->	///< Is the class name known?
+#define CHAR_CFCANCARRYTONEXTMODULE ((char)16)	// pcap->  ///< Take it with you?
+#define CHAR_CFRIDERCANATTACK ((char)17)	// pcap->	///< Rider attack?
+#define CHAR_CFVALUABLE ((char)18)	    // pcap->	///< Force to be valuable
+#define CHAR_CFSTICKYBUTT ((char)19)	// pcap->	///< Stick to the ground?
+#define CHAR_CFNEEDSKILLIDTOUSE ((char)20) // pcap->     ///< Check IDSZ first? 
+#define CHAR_CFWATERWALK ((char)21)	// pcap->	 ///< Walk on water
+#define CHAR_CFWEAPON    ((char)22)   // pcap->isranged || chr_has_idsz( pself->target, MAKE_IDSZ( 'X', 'W', 'E', 'P' ) );
+#define CHAR_CFKURSED   ((char)23)	///< For boots and rings and stuff // iskursed
+
+// @todo: Check Item-Type
+#define CHAR_TYPE_SPELL  1 // ppip->intdamagebonus || ppip->wisdamagebonus
+#define CHAR_TYPE_MELEE  2 // !pcap->isranged	///< Flag for ranged weapon
+#define CHAR_TYPE_RANGED 3 // pcap->isranged	///< Flag for ranged weapon  
+#define CHAR_TYPE_SHIELD 4 // pcap->weaponaction == ACTION_PA
+
+/// The possible damage types, as char for usage in scripts
+#define DAMAGE_NONE  ((char)0)
+#define DAMAGE_SLASH ((char)1)
+#define DAMAGE_CRUSH ((char)2)
+#define DAMAGE_POKE  ((char)3)
+#define DAMAGE_HOLY  ((char)4)  ///< (Most invert Holy damage )
+#define DAMAGE_EVIL  ((char)5)
+#define DAMAGE_FIRE  ((char)6)
+#define DAMAGE_ICE   ((char)7)
+#define DAMAGE_ZAP   ((char)8)
+#define DAMAGE_COUNT 8          /// Number of damages
+
+/// A list of the possible special experience types, as char for usage in scripts
+#define XP_FINDSECRET ((char)1) ///< Finding a secret
+#define XP_WINQUEST   ((char)2) ///< Beating a module or a subquest
+#define XP_USEDUNKOWN ((char)3) ///< Used an unknown item
+#define XP_KILLENEMY  ((char)4) ///< Killed an enemy
+#define XP_KILLSLEEPY ((char)5) ///< Killed a sleeping enemy
+#define XP_KILLHATED  ((char)6) ///< Killed a hated enemy
+#define XP_TEAMKILL   ((char)7) ///< Team has killed an enemy
+#define XP_TALKGOOD   ((char)8) ///< Talk good, er...  I mean well
+#define XP_DIRECT     ((char)127)   ///< No modification
+#define XP_COUNT      9         ///< Number of ways to get experience
+
+// macros
+#define CHAR_BIT_ISSET(x, bno)  ((x) & (1 << bno))
+#define CHAR_BIT_SET(x, bno)    ((x) |= (1 << bno))
+#define CHAR_BIT_GET(x, bno)    (((x) & (1 << bno)) >> bno)
+#define CHAR_BIT_CLEAR(x, bno)  ((x) &= (~(1 << bno)))
+
+
 /*******************************************************************************
 * ENUMS                                                                        *
 *******************************************************************************/
-
-/// The possible damage types
-enum
-{
-    DAMAGE_NONE  = 0,
-    DAMAGE_SLASH = 1,
-    DAMAGE_CRUSH,
-    DAMAGE_POKE,
-    DAMAGE_HOLY,                             ///< (Most invert Holy damage )
-    DAMAGE_EVIL,
-    DAMAGE_FIRE,
-    DAMAGE_ICE,
-    DAMAGE_ZAP,
-    DAMAGE_COUNT
-    
-} E_DAMAGE_TYPE;
-
-/// A list of the possible special experience types
-enum
-{
-    XP_FINDSECRET = 1,                          ///< Finding a secret
-    XP_WINQUEST,                                ///< Beating a module or a subquest
-    XP_USEDUNKOWN,                              ///< Used an unknown item
-    XP_KILLENEMY,                               ///< Killed an enemy
-    XP_KILLSLEEPY,                              ///< Killed a sleeping enemy
-    XP_KILLHATED,                               ///< Killed a hated enemy
-    XP_TEAMKILL,                                ///< Team has killed an enemy
-    XP_TALKGOOD,                                ///< Talk good, er...  I mean well
-    XP_COUNT,                                   ///< Number of ways to get experience
-
-    XP_DIRECT     = 255                         ///< No modification
-} E_XP_TYPE;
 
 enum
 {
@@ -140,16 +185,8 @@ enum
 } E_INVENTORY;
 
 
-/// What gender a character can be spawned with
-enum
-{
-    GENDER_FEMALE = 0,
-    GENDER_MALE,
-    GENDER_OTHER,
-    GENDER_RANDOM,
-    GENDER_COUNT
-    
-} E_GENDER;
+/// What gender a character can be spawned with, use chars 
+// GENDER_FEMALE = 'F', GENDER_MALE = 'M', GENDER_OTHER = 'O', GENDER_RANDOM = 'R'
 
 enum
 {
@@ -170,8 +207,7 @@ enum
     CHAR_VAL_NONE = 0,
     CHAR_VAL_LIFE,
     CHAR_VAL_MANA,
-    CHAR_VAL_STR,
-    CHAR_VAL_STRPERC,      
+    CHAR_VAL_STR,    
     CHAR_VAL_INTEL,
     CHAR_VAL_WIS,
     CHAR_VAL_DEX,
@@ -184,17 +220,37 @@ enum
     CHAR_VAL_DMGTHRES,  ///< Damage below this number is ignored
     CHAR_VAL_XP,
     CHAR_VAL_XP_TEAM,
+    CHAR_VAL_MORPH,
+    CHAR_VAL_DMGTYPE,
+    CHAR_VAL_NUMJUMPS,   
+    CHAR_VAL_FLYHEIGHT,
     // Skills
     CHAR_VAL_DVLVL,     ///<darkvision_level
     CHAR_VAL_SKLVL,     ///<see_kurse_level
     CHAR_VAL_SILVL,     ///<see_invisible_level
-    CHAR_VAL_DMGRESIST, ///<dmg_resist
-    CHAR_VAL_COLSHIFT,  ///<chr_set_redshift, chr_set_grnshift, chr_set_blushift
+    CHAR_VAL_DMGRESIST, ///<dmg_resist    
     CHAR_VAL_JUMPPOWER,
     CHAR_VAL_BUMPDAMPEN,
     CHAR_VAL_BOUNCINESS,    
     CHAR_VAL_SIZE,      ///<fat_goto
-    CHAR_VAL_ACCEL
+    CHAR_VAL_ACCEL,
+    CHAR_VAL_ITEMTYPE,  ///<Type of item, if any e.g 'CHAR_TYPE_WEAPON'
+    CHAR_VAL_FLAG,      ///<Number of flag
+    CHAR_VAL_CAPFLAG,   ///<Number of flag
+    CHAR_VAL_MISSILETREAT, 	///< How to treat missiles
+    CHAR_VAL_MISSILECOST,	///< Cost for each missile treat
+    CHAR_VAL_MANACHANNEL,	 ///< Can channel life as mana?
+    // Graphics
+    CHAR_VAL_COLSHIFT,  ///<chr_set_redshift, chr_set_grnshift, chr_set_blushift
+    CHAR_VAL_RED,	///< Red shift
+    CHAR_VAL_GREEN,	///< Green shift
+    CHAR_VAL_BLUE,	///< Blue shift
+    CHAR_VAL_FLASHAND,	///< Flash rate
+    CHAR_VAL_LIGHTBLEND,///< Transparency
+    CHAR_VAL_ALPHABLEND,///< Alpha
+    CHAR_VAL_SHEEN,
+    CHAR_VAL_LIFEBARCOL,
+    CHAR_VAL_MANABARCOL	
     
 } E_CHAR_VALUE;
 
@@ -287,27 +343,15 @@ typedef struct
     char jump_power;            ///< Pwer for jump
     char jump_ready;            ///< For standing on a platform character
     unsigned char fly_height;           ///< Fly height
-    // NEW: Properties as flags (saves saving space)
-    unsigned int properties;    ///< Boolean values as flags
-    // "variable" properties
-    char is_hidden;
-    char islocalplayer;         ///< btrue = local player
-    char waskilled;             ///< Fix for network
-    char hitready;              ///< Was it just dropped?
-    char iskursed;              ///< For boots and rings and stuff
-    char istoobig;              ///< For items
-    char isitem;  
-
-    // "constant" properties
-    char isshopitem;            ///< Spawned in a shop?
-    char canbecrushed;          ///< Crush in a door?
-    char canchannel;            ///< Can it convert life to mana?
+    // NEW: Properties as flags (saves saving space) and makes up for simpler script code
+    // "variable" and "constant" properties       
+    int var_props;              ///< Boolean values as flags
+    int cap_props;              ///< PCAP: Boolean values as flags 
+    char item_type;             ///> Which kind of item, if item e.g. WEAPON
     
-    // graphics info
-    int   sparkle;          ///< Sparkle the displayed icon? 0 for off
-    char  draw_stats;       ///< Display stats?
+    // graphics info  
     float shadow_size[2];   ///< Current size of shadow  CHARSTAT_ACT / CHARSTAT_FULL
-    int   ibillboard;       ///< The attached billboard
+    int   ibillboard;       ///< The attached billboard @todo: replace by 'pstring*'
     
     // missile handling
     char missiletreatment;  ///< For deflection, etc.
@@ -321,8 +365,6 @@ typedef struct
     /* Other info for graphics and movement is held in the general SDL3D_OBJECT */
     char stopped_by;
     int reaffirm_damagetype;
-    char invictus;
-    char nameknown;            
 
     /* Additional help info  */
     char *obj_name;     /* Pointer on the name of the object in CAP_T           */
@@ -335,11 +377,10 @@ typedef struct
     int   weight;             ///< Weight
     float dampen;                     ///< Bounciness
     float bumpdampen;                 ///< Mass
-    // Other stuff
-    char platform;
-    char canuseplatforms;
+    // Other stuff    
     short int act_action;   // action_which: Actual animation action
     int target_no;          // Target for AI
+    
 } CHAR_T;
 
 /*******************************************************************************

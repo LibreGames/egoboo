@@ -349,9 +349,9 @@ static void particlePlaySound(int sound)
     // Targeting... 
     posz = pemit->pos[2];
     
-    if(ppip->flags & PRT_NEWTARGETONSPAWN)
+    if(ppip->flags & (1 << PRT_NEWTARGETONSPAWN))
     {
-        if(ppip->flags & PRT_TARGETCASTER)
+        if(ppip->flags & (1 << PRT_TARGETCASTER))
         {
             // Set the target to the caster
             new_obj.target_obj = pemit->id;
@@ -407,12 +407,12 @@ static void particlePlaySound(int sound)
             */
         }
         // Does it go away?
-        if(new_obj.target_obj == 0 && (ppip->flags & PRT_NEEDTARGET))
+        if(new_obj.target_obj == 0 && (ppip->flags & (1 << PRT_NEEDTARGET)))
         {
             return 0;
         }
         // Start on top of target
-        if(new_obj.target_obj != 0 && (ppip->flags & PRT_STARTONTARGET))
+        if(new_obj.target_obj != 0 && (ppip->flags & (1 << PRT_STARTONTARGET)))
         {
             new_obj.pos[0] = pemit->pos[0];
             new_obj.pos[1] = pemit->pos[1];
@@ -472,7 +472,7 @@ static void particlePlaySound(int sound)
     new_obj.spawn_time = (float)ppip->contspawn_time / 50.0;    // 50 Frames / Second
     new_obj.life_time  = (float)ppip->time / 50.0;              // Life in frames (max. 20 Sec.)
 
-    if((ppip->flags & PRT_END_LASTFRAME) && ppip->numframes > 1)
+    if((ppip->flags & (1 << PRT_END_LASTFRAME)) && ppip->numframes > 1)
     {
         if(ppip->time == 0)
         {
@@ -871,18 +871,18 @@ char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
     // level = prtlevel[cnt]+(prtsize[cnt]>>9);
 
     // Do homing
-    if((pobj->tags & PRT_HOMING) && pobj->target_obj != 0)
+    if((pobj->tags & (1 << PRT_HOMING)) && pobj->target_obj != 0)
     {
         ptarget = sdlgl3dGetObject(pobj->target_obj);
 
-        if (!(pobj->tags & PRT_ATTACHEDTO))
+        if (!(pobj->tags & (1 << PRT_ATTACHEDTO)))
         {
             pobj->pos[0] += ((ptarget->pos[0] - pobj->pos[0]) * ppip->homingaccel) * ppip->homingfriction;
             pobj->pos[1] += ((ptarget->pos[1] - pobj->pos[1]) * ppip->homingaccel) * ppip->homingfriction;
             pobj->pos[2] += ((ptarget->pos[2] + (ptarget->bbox[1][2] / 2) - pobj->pos[2]) * ppip->homingaccel);
         }
 
-        if (pobj->tags & PRT_ROTATETOFACE)
+        if (pobj->tags & (1 << PRT_ROTATETOFACE))
         {
             // Turn to face target
             facing = atan2(ptarget->pos[1] - pobj->pos[1], ptarget->pos[0] - pobj->pos[0]);
@@ -941,7 +941,8 @@ char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
 
 
     // Check underwater
-    if (pobj->pos[2] < penviro -> waterdouselevel && (penviro->fx & MPDFX_WATER) && (ppip->flags & PRT_END_WATER))
+    if (pobj->pos[2] < penviro -> waterdouselevel && (penviro->fx & MPDFX_WATER) 
+        && (ppip->flags & (1 << PRT_END_WATER)))
     {
         if(penviro -> water_surface_level == 0.0)
         {
@@ -952,7 +953,7 @@ char particleOnMove(SDLGL3D_OBJECT *pobj, MAPENV_T *penviro)
         particleSpawnOne(PIP_RIPPLE, pobj, 0, 0, penviro -> water_surface_level);
 
         // Check for disaffirming character
-        if((pobj->tags & PRT_ATTACHEDTO) && pobj->target_obj != 0)
+        if((pobj->tags & (1 << PRT_ATTACHEDTO)) && pobj->target_obj != 0)
         {
             // @todo: Disaffirm the whole character
             // disaffirm_attached_particles(pobj->target_obj);
@@ -993,7 +994,7 @@ char particleOnBump(SDLGL3D_OBJECT *pobj, int reason, MAPENV_T *penviro)
         // Play the sound for hitting the wall [FSND]
         particlePlaySound(ppip->end_sound_wall);
         // handle the collision
-        if(pobj->tags & (PRT_END_WALL | PRT_END_BUMP))
+        if(pobj->tags & ((1 << PRT_END_WALL) | (1 << PRT_END_BUMP)))
         {
             return particleEndInGame(pobj, ppip);
         }
@@ -1034,7 +1035,7 @@ char particleOnBump(SDLGL3D_OBJECT *pobj, int reason, MAPENV_T *penviro)
         // Play the sound for hitting the floor [FSND]
         particlePlaySound(ppip->end_sound_floor);
         // handle the collision
-        if(pobj->tags & PRT_END_GROUND)
+        if(pobj->tags & (1 << PRT_END_GROUND))
         {
             return particleEndInGame(pobj, ppip);
         }

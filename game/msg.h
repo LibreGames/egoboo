@@ -1,6 +1,6 @@
 /*******************************************************************************
 *  MSG.H                                                                       *
-*    - EGOBOO-Editor                                                           *     
+*    - EGOBOO-Game                                                             *
 *                                                                              *
 *    - Send/Receive messages in game                                           *
 *      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
@@ -78,6 +78,7 @@ typedef enum
     MSG_NOTTAKENOUT = MSG_NOTPUTAWAY,
     MSG_TOOBIG,
     MSG_ITEMFOUND,
+    MSG_HURT,       // Message to attacker that the target is hurt (for scripts)
     // Other messages
     MSG_GAME_OBJNOTFOUND = 1000
     
@@ -92,8 +93,14 @@ typedef enum
 #define MSG_REC_LOG     -3  // This message is for the log
 #define MSG_REC_ERROR   -4  // This is an error message
 
+// Type of game-tips
+#define MSG_LOAD_RESET  0  // Reset the message buffer to 
+#define MSG_TIP_GLOBAL  1
+#define MSG_TIP_LOCAL   2
+#define MSG_SCRIPT_LIST 3   // Is the list of messages for a script
+
 /*******************************************************************************
-* TYPEDEFS                               								    *
+* TYPEDEFS                                                                     *
 *******************************************************************************/
 
 typedef struct
@@ -104,7 +111,7 @@ typedef struct
                     // reaction of AI         
     int sender;     // Sender of message  'msgSend()'                  
     int receiver;   // receiver of message 'msgGet()'
-    // @todo: Additional info, if needed  
+    // @todo: Additional info, if needed  for 'expanded' script Messages
     // @todo: Info from AI-State for these variables    
     // @todo: Load in-game messages to ==> msgModuleLoad() / msgModuleGet()
     char *expand_str;   // For ingame messages which have to be expanded
@@ -116,15 +123,12 @@ typedef struct
 *******************************************************************************/
 
 void msgSend(int sender, int receiver, int why, char *log_str);
+// @todo: msgLog(char *log_str);
 char msgGet(int receiver, MSG_T *pmsg, int remove);
 int  msgGetNext(int prev_no, MSG_T *pmsg);
 char msgToString(MSG_T *pmsg, char *str_buf, int buf_len);
-// @todo: msgTipsLoad(void);        // Global tips
-// @todo: msgTipsGet(char *str_buf, int buf_len);
-// @todo: msgModuleLoad(char *fname); // Load messages for a module (overwrite old)
-// @todo: msgModuleGet(int msg_no, char *str_buf, int buf_len);
-// @todo: int msgObjectLoad(char *fname);       // returns number of first message in msg-list
-// @todo: int msgObjectAddOne(char *msg_str);   // Add a message to the object-messages buffer
-// @todo: msgObjectGet(int msg_no, char *str_buf, int buf_len);  // returns Message with this number       
+void msgLoad(int which);        // Global and local tips, script messages
+int  msgGetText(int which, int msg_no, char *str_buf, int buf_len);
+int  msgGetTextScript(MSG_T *pmsg, int msg_no, char *str_buf, int buf_len); 
 
 #endif  /* #define _MSG_H_ */

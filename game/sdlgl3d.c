@@ -1062,72 +1062,49 @@ void sdlgl3dMoveObjects(float secondspassed)
  *      from *: Pointer on list base where to move 'from'
  *      to *:   Pointer on list base where to move 'to
  *      obj_no: Number of object to handle
- *      action: SDLGL3D_ADD_TO: Add obj_no 'to' list
- *              SDLGL3D_REMOVE_FROM: Remove obj_no 'from' list
- *              SDLGL3D_MOVE_FROM_TO: Move object 'from' => 'to'
  */
-char sdlgl3dObjectList(int *from, int *to, int obj_no, int action)
+char sdlgl3dObjectList(int *from, int *to, int obj_no)
 {
     SDLGL3D_OBJECT *pactual;
     int oldbase;
     int act_obj_no;
     char found;
 
-
-    switch(action)
+    if(from)
     {
-        case SDLGL3D_REMOVE_FROM:
-        case SDLGL3D_MOVE_FROM_TO:
-            if (NULL == *from)
+        // Remove given object 'from'
+        act_obj_no = *from;
+        found = 0;
+
+        do
+        {
+            pactual = &Obj3D[act_obj_no];
+
+            if (act_obj_no == obj_no)
             {
-                // Invalid pointer
-                return 0;
-            }
-
-            //
-            act_obj_no = *from;
-            found = 0;
-
-            do
-            {
-                pactual = &Obj3D[act_obj_no];
-
-                if (act_obj_no == obj_no)
-                {
-                    found = 1;
-                    // found it, remove it
-                    (*from) = pactual->next_obj;
-                    pactual->next_obj = 0;         // Set next to zero
-                    break;
-                }
-
-                from = &pactual->next_obj;    // Where to attach next, if
-                                                // actual object_no is removed
-                act_obj_no = pactual->next_obj;
-
-            }
-            while (act_obj_no);
-
-            if (action == SDLGL3D_REMOVE_FROM || !found)
-            {
-                // Only remove 'obj_no' from List, or nothing to add 'to'
+                found = 1;
+                // found it, remove it
+                (*from) = pactual->next_obj;
+                pactual->next_obj = 0;         // Set next to zero
                 break;
             }
-        case SDLGL3D_ADD_TO:
-            if (NULL == *to)
-            {
-                // Invalid pointer
-                return 0;
-            }
 
-            oldbase = (*to);    // Save posible actual 'obj_no' for attachment
-                                // If none available, is anyway 0!
-            (*to) = obj_no;     // Insert new 'obj_no' at base
-            // Attach previous object(s) to base
-            Obj3D[obj_no].next_obj = oldbase;
+            from = &pactual->next_obj;    // Where to attach next, if
+                                            // actual object_no is removed
+            act_obj_no = pactual->next_obj;
+
+        }
+        while (act_obj_no);
     }
-
-    return 0;
+    
+    if(to)
+    {
+         oldbase = (*to);    // Save posible actual 'obj_no' for attachment
+                                // If none available, is anyway 0!
+        (*to) = obj_no;     // Insert new 'obj_no' at base
+        // Attach previous object(s) to base
+        Obj3D[obj_no].next_obj = oldbase;
+    }
 }
 
 

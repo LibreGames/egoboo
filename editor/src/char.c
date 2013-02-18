@@ -1,6 +1,6 @@
 /*******************************************************************************
 *  CHAR.C                                                                      *
-*    - EGOBOO-Editor                                                           *     
+*    - EGOBOO-Editor                                                           *
 *                                                                              *
 *    - Egoboo Characters                                                       *
 *      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
@@ -26,12 +26,12 @@
 *******************************************************************************/
 
 #include <stdio.h>      /* sscanf() */
-#include <string.h>     /* strlwr() */
+#include <string.h>
+#include <ctype.h>      // tolower()
 
 #include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
 #include "editfile.h"   /* Get the work-directoires                     */
 #include "egomap.h"     // Place objects on map
-
 
 #include "idsz.h";
 #include "misc.h"       /* Random treasure objects                      */
@@ -56,6 +56,7 @@
 #define CAP_INFINITE_WEIGHT  0xFF
 #define CAP_MAX_WEIGHT       (CAP_INFINITE_WEIGHT - 1)
 
+#define CHAR_MIN_CAP      5
 #define CHAR_MAX_CAP    180
 #define CHAR_MAX_SKIN     4
 // Maximum of characters that can be loaded, for each an AI_STATE may be needed
@@ -428,9 +429,9 @@ static int charNewCap(void)
     int i, cnt;
     CAP_T *pcap;
 
-    
-    // 0: Is an invalid cap    
-    for(i = 1; i < CHAR_MAX_CAP; i++)
+
+    // 0: Is an invalid cap, 0..4 are reserverd for override players
+    for(i = CHAR_MIN_CAP; i < CHAR_MAX_CAP; i++)
     {
         if(CapList[i].cap_name[0] == 0)
         {
@@ -456,12 +457,12 @@ static int charNewCap(void)
 
             // More stuff I forgot
             pcap->stoppedby  = MPDFX_IMPASS;
-            
-            // Now return its number            
+
+            // Now return its number
             return i;
         }
     }
-    
+
     // no empty slot left
     return 0;
 }
@@ -512,6 +513,7 @@ static int charNewChar(void)
     char name_buf[32];
     int  player_no;
     int cno;
+    char *pstr;
     // char *fdir;
     // char fname[512];
     CAP_T *pcap;
@@ -532,24 +534,30 @@ static int charNewChar(void)
     }
     
     // Remove leading and trailing spaces
-    sscanf(objname, "%s", objname);    
-    
+    sscanf(objname, "%s", objname);
+
     // Compare lower case except names for random treasure
     if('%' != objname[0])
     {
-        strlwr(objname);    
+        pstr = objname;
+
+        while(*pstr)
+        {
+            *pstr = (char)tolower(*pstr);
+	        pstr++;    
+        }
     }
-    
+
     // Skip "unknown"
     if(strcmp(objname, "unknown") == 0)
     {
         return 0;
     }
-    
+
     // @todo; Support Random Treasure '%' if not in edit mode
 
     // Only read if 'cap_name' not available yet
-    for(cno = 5; cno < CHAR_MAX_CAP; cno++)
+    for(cno = CHAR_MIN_CAP; cno < CHAR_MAX_CAP; cno++)
     {
         if(CapList[cno].cap_name[0] != 0)
         {
@@ -575,10 +583,10 @@ static int charNewChar(void)
         /* @todo: Load random treasure object if in 'game-mode'
         if('%' == objname)
         {
-        }        
+        }
         */
         /* @todo: Load the real data
-        // Get the directory of this object        
+        // Get the directory of this object
         fdir = editfileMakeFileName(EDITFILE_OBJECTDIR, objname);
         
         // Read character profile        
@@ -611,7 +619,7 @@ static int charNewChar(void)
         }
         */
         // @todo: Replace this be 'real' code
-        
+
         
         
         return cno;
@@ -906,7 +914,7 @@ CHAR_T *charGet(int char_no)
  * Name:
  *     charSpawnAll
  * Description:
- *     Spawns all characters for the actual set module directory 
+ *     Spawns all characters for the actual set module directory
  * Input:
  *     None
  */
@@ -914,7 +922,7 @@ void charSpawnAll(void)
 {
     EDITFILE_SPAWNPT_T *spt;
     int i;
-    
+
     /* Load the spawn points */
     spt = &SpawnPts[1];
     editfileSpawn(spt, EDITFILE_ACT_LOAD, CHAR_MAXSPAWN);

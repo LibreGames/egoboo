@@ -34,30 +34,30 @@
 * DEFINES								                                   *
 *******************************************************************************/
 
-// File booleans as flags
-#define PRT_FORCE         0x0001    ///< Force spawn?
-#define PRT_END_WATER     0x0002    ///< End if underwater
-#define PRT_END_BUMP      0x0004    ///< End if bumped
-#define PRT_END_GROUND    0x0008    ///< End if on ground
-#define PRT_END_WALL      0x0010    ///< End if hit a wall
-#define PRT_END_LASTFRAME 0x0020    ///< End on last frame  / BoolVal[4]
-#define PRT_DYNALIGHT_ON  0x0040    // dynalight_on / BoolVal[5]
-#define PRT_SPAWNENCHANT  0x0080    ///< Spawn enchant?  
-#define PRT_CAUSEROLL     0x0100    ///< Cause roll?
-#define PRT_CAUSEPANCAKE  0x0200    ///< \todo Not implemented!! Cause pancake
-#define PRT_NEEDTARGET    0x0400    // needtarget
-#define PRT_TARGETCASTER  0x0800    ///< Target caster?
-#define PRT_STARTONTARGET 0x1000    ///< Start on target
-#define PRT_ONLYDAMAGEFRIENDLY 0x2000   ///< Only friends?
-#define PRT_FRIENDLYFIRE    0x4000      ///< Friendly fire
-#define PRT_HATEONLY        0x8000      ///< Only hit hategroup
-#define PRT_NEWTARGETONSPAWN 0x10000    ///< New target on spawn?
-#define PRT_HOMING          0x20000     ///< Homing in on target?
-#define PRT_ROTATETOFACE    0x40000     ///< Rotate to face direction? ///< Arrows/Missiles
-#define PRT_RESPAWNONHIT    0x80000     ///< Respawn character on hit?
-#define PRT_ISHIDDEN        0x100000    ///< Is it hidden?
-#define PRT_ATTACHEDTO      0x200000    ///< Is it attached to an other object?
-#define PRT_TRANS           0x400000    ///<Display it as transparent
+// File booleans as flags, Numbers of flags
+#define PRT_FORCE         ((char)0)     ///< Force spawn?
+#define PRT_END_WATER     ((char)1)     ///< End if underwater
+#define PRT_END_BUMP      ((char)2)     ///< End if bumped
+#define PRT_END_GROUND    ((char)3)     ///< End if on ground
+#define PRT_END_WALL      ((char)4)     ///< End if hit a wall
+#define PRT_END_LASTFRAME ((char)5)     ///< End on last frame  / BoolVal[4]
+#define PRT_DYNALIGHT_ON  ((char)6)     /// dynalight_on / BoolVal[5]
+#define PRT_SPAWNENCHANT  ((char)7)     ///< Spawn enchant?  
+#define PRT_CAUSEROLL     ((char)8)     ///< Cause roll?
+#define PRT_CAUSEPANCAKE  ((char)9)     ///< \todo Not implemented!! Cause pancake
+#define PRT_NEEDTARGET    ((char)10)    /// needtarget
+#define PRT_TARGETCASTER  ((char)11)    ///< Target caster?
+#define PRT_STARTONTARGET ((char)12)    ///< Start on target
+#define PRT_ONLYDAMAGEFRIENDLY ((char)13)   ///< Only friends?
+#define PRT_FRIENDLYFIRE    ((char)14)  ///< Friendly fire
+#define PRT_HATEONLY        ((char)15)  ///< Only hit hategroup
+#define PRT_NEWTARGETONSPAWN ((char)16) ///< New target on spawn?
+#define PRT_HOMING          ((char)17)  ///< Homing in on target?
+#define PRT_ROTATETOFACE    ((char)18)  ///< Rotate to face direction? ///< Arrows/Missiles
+#define PRT_RESPAWNONHIT    ((char)19)  ///< Respawn character on hit?
+#define PRT_ISHIDDEN        ((char)20)  ///< Is it hidden?
+#define PRT_ATTACHEDTO      ((char)21)  ///< Is it attached to an other object?
+#define PRT_TRANS           ((char)22)  ///<Display it as transparent
 
 /*******************************************************************************
 * ENUMS								                                        *

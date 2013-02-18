@@ -60,7 +60,7 @@
 // Maximum of characters that can be loaded, for each an AI_STATE may be needed
 #define CHAR_MAX        500
 #define CHAR_MAX_WEIGHT 127
-#define CHAR_MAX_XP     9999  
+#define CHAR_MAX_XP     9999
 
 // Other maximum values
 #define PERFECTSTAT   18    // wisdom, intelligence and so on...
@@ -78,7 +78,7 @@
 
 // team
 #define TEAM_MAX            32  // Mum number of teams
-#define TEAM_MAX_MEMBER     6   // Maximum members of a team 
+#define TEAM_MAX_MEMBER     6   // Maximum members of a team
 
 /*******************************************************************************
 * ENUMS								                                           *
@@ -119,7 +119,7 @@ typedef struct
     int  sissy_no;                  ///< Whoever called for help last Index of leader in 'members'-array    
     unsigned int foes;              // Our foes as flags, friends == !foes
     
-} TEAM_T;   
+} TEAM_T;
 
 //--------------------------------------------------------------------------------------------
 
@@ -215,7 +215,7 @@ typedef struct
     char reflect;                        ///< Draw the reflection
     char alwaysdraw;                     ///< Always render
     char forceshadow;                    ///< Draw a shadow?
-    char ripple;                         ///< Spawn ripples?unsigned char        mana_color;                     ///< Mana bar color
+    char ripple;                         ///< Spawn ripples?unsigned
 
     // attack blocking info
     unsigned short iframefacing;                  ///< Invincibility frame
@@ -239,7 +239,8 @@ typedef struct
     // sound
     char  sound_index[SOUND_COUNT];       ///< a map for soundX.wav to sound types
 
-    // flags
+    // flags: @todo: Flags packed into one integer
+    int  fprops;                        ///< Properties as flags
     char isequipment;                    ///< Behave in silly ways
     char isitem;                         ///< Is it an item?
     char ismount;                        ///< Can you ride it?
@@ -292,13 +293,13 @@ typedef struct
     int          see_invisible_level;             ///< Can it see invisible?
 
     // random stuff
-    char       stickybutt;      ///< Stick to the ground?    
-    // particles for this profile
-    int prt_list[CAP_MAX_PRT];
-    // @todo: Possible other solution 'flexible' number of particles, 
-    //        loaded in consecutive order
+    char       stickybutt;      ///< Stick to the ground?         
+    // particles for this profile, loaded in consecutive order
     int prt_first_no;           // Number of first particle
     int prt_cnt;                // Total number of particles
+    int sound_first_no;         // Number of first local sound
+    int sound_cnt;              // Number of local sounds
+    int script_no;              // Number of script belonging to this one
     
 } CAP_T;
 
@@ -600,7 +601,7 @@ static int charNewChar(void)
             // Load sound
             // "sound0.wav" - "sound9.wav"
             // @todo: Load its scripts including messages
-            // scriptLoad(fdir, cno); // Each character profile has its script and its messages
+            // pcap->script_no = scriptLoad(fdir); // Each character profile has its script and its messages
             // sprintf(fname, "%smessage.txt", fdir);
             // @todo: pscript->first_msg_no = msgObjectLoad(char *fname);
             // sprintf(fname, "%sscript.txt", fdir);
@@ -851,15 +852,16 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
 
     pchar = &CharList[char_no];
     //No need to continue is there?
-    if ( !pchar->life[CHARSTAT_ACT] <= 0 || ( pchar->invictus && !ignore_invictus ) ) return;
+    if ( !pchar->life[CHARSTAT_ACT] <= 0
+        || (CHAR_BIT_ISSET(pchar->cap_props, CHAR_CFINVICTUS) && !ignore_invictus ) ) return;
 
     pcap = &CapList[pchar->cap_no];      
 
-    pchar->waskilled = 1;
+    CHAR_BIT_SET(pchar->var_props, CHAR_FKILLED);
+    CHAR_BIT_SET(pchar->cap_props, CHAR_CFPLATFORM);
+    CHAR_BIT_SET(pchar->cap_props, CHAR_CFCANUSEPLATFORMS);
 
     pchar->life[CHARSTAT_ACT] = -1;
-    pchar->platform           = 1;
-    pchar->canuseplatforms    = 1;
     pchar->bumpdampen         *= 0.5f;
 
     // @todo: Play the death animation
@@ -870,7 +872,7 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
     // Give kill experience
     experience = pcap->experience_worth + (pchar->experience * pcap->experience_exchange);
     pkiller = &CharList[killer_no];
-    
+
     killer_team = pkiller->team[CHARSTAT_ACT];
     // distribute experience to the attacker
     if (pkiller->cap_no > 0)
@@ -1031,14 +1033,11 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             // Attached to passage
             pchar->psg_no  = psg;
             // Gender
-            if('F' == pcap->gender ) pchar->gender = GENDER_FEMALE;
-            else if ('M' == pcap->gender) pchar->gender = GENDER_MALE;
-            else if ('R' == pcap->gender)
+            pchar->gender = pcap->gender;       // As char
+            if(pcap->gender == 'R')
             {
-                pchar->gender = GENDER_RANDOM;
-                pchar->gender = (char)(miscRandVal(3) & 1);
+                // @todo: Generate random gender
             }
-            else pchar->gender = GENDER_OTHER;
             
             // Team stuff
             team = (char)(team - 'A');  // From 0 to ('Z' - 'A')
@@ -1064,22 +1063,15 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             }
 
             // Flags
-            /*
-            pchar->stickybutt      = pcap->stickybutt;
-            pchar->openstuff       = pcap->canopenstuff;
-            pchar->transferblend   = pcap->transferblend;
-            pchar->waterwalk       = pcap->waterwalk;
-            pchar->platform        = pcap->platform;
-            pchar->canuseplatforms = pcap->canuseplatforms;
+            pchar->cap_props = pcap->fprops;
 
-            pchar->cangrabmoney    = pcap->cangrabmoney;
-            */
-            pchar->isitem          = pcap->isitem;
-            
             // calculate a base kurse state. this may be overridden later
-            if (pcap->isitem)
+            if (CHAR_BIT_ISSET(pchar->cap_props, CHAR_CFITEM))
             {
-                pchar->iskursed = (char)(miscRandVal(100) == 2);
+                if((miscRandVal(100) == 2))
+                {
+                    CHAR_BIT_SET(pchar->cap_props, CHAR_CFKURSED);
+                }
             }
             
             // Enchant stuff
@@ -1115,7 +1107,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             {
                 pchar->skin_no = (char)(miscRandVal(4)-1);
             }
-            
+
             // Jumping
             pchar->jump_power  = pcap->jump;
             pchar->jump_number = pcap->jump_number;
@@ -1151,7 +1143,10 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             // IMPORTANT!!!
             pchar->missilehandler = char_no;
             
-            if(!pchar->invictus) TeamList[team].morale++;
+            if(! CHAR_BIT_ISSET(pchar->cap_props, CHAR_CFINVICTUS))
+            {
+                TeamList[team].morale++;
+            }
 
             /*
             // Character size and bumping
@@ -1180,8 +1175,11 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             }
             */
            // Shop thing is done as the character is dropped to the map
-            
-            pchar->draw_stats = stt;  ///< Display stats?
+
+            if(stt)  ///< Display stats?
+            {
+                CHAR_BIT_SET(pchar->var_props, CHAR_FDRAWSTATS);
+            }
              
             // sound stuff...  copy from the cap
             for(i = 0; i < SOUND_COUNT; i++ )
@@ -1251,10 +1249,10 @@ char charInventoryAdd(const int char_no, const int item_no, int slot_no)
         }
 
         //too big item?
-        if(pitem->istoobig)
+        if(CHAR_BIT_SET(pitem->cap_props, CHAR_CFTOOBIG))
         {
             // SET_BIT( pitem->ai.alert, ALERTIF_NOTPUTAWAY );
-            if(pchar->islocalplayer)
+            if(CHAR_BIT_SET(pchar->var_props, CHAR_FISLOCALPLAYER))
             {
                 // @todo: Send message for display or to AI/Player
                 msgSend(0, char_no, MSG_TOOBIG, NULL); // , chr_get_name()
@@ -1328,12 +1326,11 @@ int charInventoryRemove(const int char_no, int slot_no, char ignorekurse, char d
         {
             pitem = &CharList[item_no];
             
-            if (pitem->iskursed && !ignorekurse )
+            if (CHAR_BIT_SET(pitem->cap_props, CHAR_CFKURSED) && !ignorekurse )
             {
                 msgSend(0, char_no, MSG_NOTTAKENOUT, NULL); // , chr_get_name()
                 // Flag the last found_item as not removed
-                /* 
-                // SET_BIT( pitem->ai.alert, ALERTIF_NOTTAKENOUT );  // Same as ALERTIF_NOTPUTAWAY
+                /*
                 // if ( pchar->islocalplayer ) DisplayMsg_printf( "%s won't go out!", chr_get_name( item, CHRNAME_ARTICLE | CHRNAME_DEFINITE | CHRNAME_CAPITAL, NULL, 0 ) );
                 */
                 return 0;
@@ -1453,7 +1450,7 @@ void charInventoryFunc(int char_no, int func_no)
             switch(func_no)
             {
                 case CHAR_INVFUNC_UNKURSE:
-                    pitem->iskursed = 0;
+                    CHAR_BIT_CLEAR(pitem->cap_props, CHAR_CFKURSED);
                     break;
             }
         }
