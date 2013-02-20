@@ -277,8 +277,7 @@ static SDLGL_FIELD PassageDlg[] =
     { SDLGL_TYPE_VALUE,  {  56,  64,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &EditPsg.open },
     { SDLGL_TYPE_LABEL,  {   8,  80, 120,   8 }, 0, 0, "Shoot Through:" },
     { SDLGL_TYPE_VALUE,  { 128,  80,  64,   8 }, 0, SDLGL_VAL_ONECHAR, &EditPsg.shoot_trough },
-    { SDLGL_TYPE_BUTTON, {   8, 114,  32,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_NEW,   "New"   },
-    { SDLGL_TYPE_BUTTON, {  48, 114,  56,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_DELETE, "Delete"   },
+    { SDLGL_TYPE_BUTTON, {   8, 114,  56,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_DELETE, "Delete"   },
     { SDLGL_TYPE_BUTTON, { 176, 114,  40,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_SAVE, "Save"  },
     { SDLGL_TYPE_BUTTON, { 224, 114,  48,  16 }, EDITOR_PASSAGEDLG, EDITOR_DLG_CLOSE, "Close" },
     { 0 }
@@ -293,11 +292,11 @@ static SDLGL_FIELD SpawnPtDlg[] =
     { SDLGL_TYPE_VALUE,  {  96,  16, 192,   8 }, 0, SDLGL_VAL_STRING, &EditSpt.obj_name[0] },
     { SDLGL_TYPE_LABEL,  {   8,  32,  80,   8 }, 0, 0, "Position:" },
     { SDLGL_TYPE_LABEL,  {  88,  32,  24,   8 }, 0, 0, "X:" },
-    { SDLGL_TYPE_VALUE,  { 112,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.x_pos },
+    { SDLGL_TYPE_VALUE,  { 112,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.pos[0] },
     { SDLGL_TYPE_LABEL,  { 176,  32,  24,   8 }, 0, 0, "Y:" },
-    { SDLGL_TYPE_VALUE,  { 200,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.y_pos },
+    { SDLGL_TYPE_VALUE,  { 200,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.pos[1] },
     { SDLGL_TYPE_LABEL,  { 264,  32,  24,   8 }, 0, 0, "Z:" },
-    { SDLGL_TYPE_VALUE,  { 288,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.z_pos },
+    { SDLGL_TYPE_VALUE,  { 288,  32,  64,   8 }, 0, SDLGL_VAL_FLOAT, (char *)&EditSpt.pos[2] },
     { SDLGL_TYPE_LABEL,  {   8,  48,  88,   8 }, 0, 0, "Direction:" },
     { SDLGL_TYPE_VALUE,  {  96,  48,  16,   8 }, 0, SDLGL_VAL_ONECHAR, &EditSpt.view_dir },
     { SDLGL_TYPE_LABEL,  {   8,  64,  88,   8 }, 0, 0, "Money:" },  /* 0 .. 9999 */
@@ -339,7 +338,7 @@ static SDLGL_FIELD SpawnPtDlg[] =
     { SDLGL_TYPE_VALUE,  { 164, 180, 106,   8 }, 0, SDLGL_VAL_PSTR, (char *)&EditSpt.inv_name[7] },
     { 0 }
 };
-
+                                                                                            
 /* === Dialog: Edit the base values and module description of a map === */
 static char *QuestNames[] =
 {

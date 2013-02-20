@@ -94,7 +94,7 @@ void egomapDraw2DMap(int mx, int my, int mw, int mh, int tx, int *crect);
 void egomapDropObject(int obj_no);      // Drop this object to map
 void egomapDeleteObject(int obj_no);    // Delete this object from map
 int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
-int  egomapPutChar(int char_no, float x, float y, float z, char dir, int mdl_no); 
+int  egomapPutChar(int char_no, float pos[3], char dir, int mdl_no); 
 
 /* ============ Other functions ========== */
 int  egomapPassage(int psg_no, EDITFILE_PASSAGE_T *psg, char action, int *crect);

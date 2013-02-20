@@ -834,12 +834,12 @@ static int charCreate(EDITFILE_SPAWNPT_T *spt)
 
     if(char_no > 0)
     {
-        if(slot_no == 10 && spt->x_pos > 0 && spt->y_pos > 0)
+        if(slot_no == 10 && spt->pos[0] > 0 && spt->pos[1] > 0)
         {
             /* Inventory belongs to this character, if any */
             inv_char = char_no;
             // Is a character with an inventory -- Drop it to map
-            obj_no = egomapPutChar(char_no, spt->x_pos, spt->y_pos, spt->z_pos, spt->view_dir, CharList[char_no].mdl_no);
+            obj_no = egomapPutChar(char_no, spt->pos, spt->view_dir, CharList[char_no].mdl_no);
             // Link back to object from character
             CharList[char_no].obj_no = obj_no;
         }
@@ -939,6 +939,34 @@ void charSpawnAll(void)
         spt++;
         i++;
     }
+}
+
+/*
+ * Name:
+ *     charSpawnOne
+ * Description:
+ *     Spawns a single character at given position
+ * Input:
+ *     objname *: Name of object to spawn
+ *     pos[3]:    Where to spawn on map in tiles
+ *     dir:       Object should look into this direction   
+ */
+void charSpawnOne(char *objname, float pos[3], char dir)
+{
+     EDITFILE_SPAWNPT_T spt;
+     int i;
+
+
+     memset(&spt, 0, sizeof(EDITFILE_SPAWNPT_T));
+     // And create a spawn point
+     strcpy(spt.obj_name, objname);
+     for(i = 0; i < 3; i++)
+     {
+        spt.pos[i] = pos[i];
+     }
+     // Ant the direction
+     spt.view_dir = dir;
+
 }
 
 /* ================= Inventory functions ===================== */
@@ -1152,8 +1180,8 @@ char charInventorySwap(const int char_no, int slot_no, int grip_off)
 int charSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action)
 {
     int i;
-    
-    
+
+
     switch(action)
     {
         case CHAR_SPTNEW:
@@ -1161,14 +1189,14 @@ int charSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action)
             for (i = 1; i < CHAR_MAXSPAWN; i++)
             {
                 if (SpawnPts[i].rec_no <= 0)
-                {   
+                {
                     SpawnPts[i].rec_no = i;
-                    SpawnPts[i].x_pos  = spt->x_pos;
-                    SpawnPts[i].y_pos  = spt->y_pos;
-                    SpawnPts[i].z_pos  = spt->z_pos;
+                    SpawnPts[i].pos[0] = spt->pos[0];
+                    SpawnPts[i].pos[1] = spt->pos[1];
+                    SpawnPts[i].pos[2] = spt->pos[2];
 
                     /* Give it a name and make it valid */
-                    sprintf(SpawnPts[i].obj_name, "%02dPassage", i);
+                    sprintf(SpawnPts[i].obj_name, "NewObject%02d", i);
 
                     /* -- Return data to caller -- */
                     memcpy(spt, &SpawnPts[i], sizeof(EDITFILE_SPAWNPT_T));

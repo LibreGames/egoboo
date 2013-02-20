@@ -64,7 +64,8 @@ static SC_PROC ScriptProc[] = {
 };
 */
 
-static SC_PROC CompareFunc[] = {
+static SC_PROC CompareFunc[] = 
+{
     { 11, "EventChoice", EVENT_CHOICE },
     { 17, "EventTriggerFlags", EVENT_TRIGGERFLAGS },
     { 14, "PartyDirection", EVENT_PARTYDIRECTION },
@@ -99,7 +100,8 @@ static SC_PROC CompareFunc[] = {
     { 0 }
 };
 
-static SC_PROC CompareOperation[] = {
+static SC_PROC CompareOperation[] =
+{
     {  1, "=", SC_COMPAREEQUAL },
     {  2, "<>", SC_COMPARENOTEQUAL },
     {  1, "<", SC_COMPARELESS },
@@ -147,9 +149,10 @@ static int decodeArguments(char *code, SC_PROC *pd, char *dest)
     num_byte = 0;       /* Counter for bytes used for arguments */
     strcat(dest, "(");  /* Open bracket for argument            */
     
-    for (num_arg = 0; num_arg <  pd -> argcount; num_arg++) {
-    
-        switch(pd -> args[num_arg]) {
+    for (num_arg = 0; num_arg <  pd -> argcount; num_arg++)
+    {
+        switch(pd -> args[num_arg])
+        {
             case SC_CHAR:
                 sprintf(valstr, "%d", (int)*code);
                 code++;
@@ -181,7 +184,6 @@ static int decodeArguments(char *code, SC_PROC *pd, char *dest)
     strcat(dest, ")");       /* Closing bracket for arguments */
 
     return num_byte;
-
 }
 
 /*
@@ -199,29 +201,25 @@ static int decodeArguments(char *code, SC_PROC *pd, char *dest)
  */
 static int decodeFunc(char main_code, char sub_code, char *code, char *textbuf)
 {
-
     SC_PROC  *cp;
 
 
     cp = CompareFunc;
 
-    while(cp -> len > 0) {
-
-        if (cp -> code == main_code && cp -> sub_code == sub_code) {
-
+    while(cp -> len > 0)
+    {
+        if (cp -> code == main_code && cp -> sub_code == sub_code)
+        {
             strcpy(textbuf, cp -> name);
             return decodeArguments(code, cp, textbuf); /* May be no arguments at all */
-
         }
 
         cp++;
-
     }
 
     EndProc = 2;    /* Stop decoding with error */
 
     return 0;
-
 }
 
 /*
@@ -239,26 +237,23 @@ static int decodeFunc(char main_code, char sub_code, char *code, char *textbuf)
  */
 static void decodeComparision(char comp_code, char *first_arg, char *second_arg, char *textbuf)
 {
-
     SC_PROC  *cp;
 
 
     cp = CompareOperation;
-    while(cp -> len > 0) {
-
-        if (cp -> code == comp_code) {
-
+    while(cp -> len > 0)
+    {
+        if (cp -> code == comp_code)
+        {
             sprintf(textbuf, "%s %s %s ", first_arg, cp -> name, second_arg);
             return;
 
         }
 
         cp++;
-
     }
 
     EndProc = 2;    /* Stop decoding with error */
-
 }
 
 /*
@@ -276,14 +271,12 @@ static void decodeComparision(char comp_code, char *first_arg, char *second_arg,
  */
 static int eventDecodePrintProc(char *code, char sub_code, SC_PROC *sp, char *textbuf)
 {
-
-    while(sp -> len > 0) {
-
-        if (sp -> sub_code == sub_code) {
-
+    while(sp -> len > 0)
+    {
+        if (sp -> sub_code == sub_code)
+        {
             strcat(textbuf, sp -> name);        /* Main name or additional name */
             return decodeArguments(code, sp, textbuf);
-
         }
 
         sp++;
@@ -292,7 +285,6 @@ static int eventDecodePrintProc(char *code, char sub_code, SC_PROC *sp, char *te
     EndProc = 2;    /* Stop decoding with error */
 
     return 0;
-
 }
 
 /*
@@ -309,7 +301,8 @@ static int eventDecodePrintProc(char *code, char sub_code, SC_PROC *sp, char *te
 static char *decodeSetWall(char *code, char *textbuf)
 {
 
-    static SC_PROC setwall[] = {
+    static SC_PROC setwall[] =
+    {
         { 5, "Whole", 0xFF, EVENT_WHOLEWALL, 2, { SC_SMALLINT, SC_CHAR } },
         { 4, "Part", 0xFF, EVENT_WALLPART, 3, { SC_SMALLINT, SC_CHAR, SC_CHAR } },
         { 8, "PartyDir", 0xFF, EVENT_PARTYDIRECTION, 1, { SC_CHAR } },

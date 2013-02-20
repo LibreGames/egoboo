@@ -660,12 +660,12 @@ static MESH_T Mesh;         /* Mesh of map                  */
  *     level of the water. 
  * Input:
  *     tile_no:   Object is on this tile
- *     x, y:      Absolute position on map (not in tiles !) 
+ *     pos[3]:    Absolute position on map (not in tiles !) 
  *     // waterwalk:   
  * Output:
  *     >= 0: Z-Position of tile 
  */
-static float egomapGetLevel(int tile_no, float x, float y /* , char waterwalk */)
+static float egomapGetLevel(int tile_no, float pos[3] /* , char waterwalk */)
 {
     int   vert_base;
     float z0, z1, z2, z3;         // Height of each fan corner
@@ -702,23 +702,20 @@ static float egomapGetLevel(int tile_no, float x, float y /* , char waterwalk */
  * Input:
  *     obj_type: Type of object
  *     owner_no: This one owns the object
- *     x, y, z:  Position
+ *     pos[3]:   Position (x, y, z)
  *     dir:      Direction
  *     mdl_no:   > 0: This model for 3D-Display 
  * Output:
  *     > 0: Number of valid object 
  */
-static int egomapCreateObject(char obj_type, int owner_no, float x, float y, float z, char dir, int mdl_no)
+static int egomapCreateObject(char obj_type, int owner_no, float pos[3], char dir, int mdl_no)
 {
     SDLGL3D_OBJECT info_obj;
     int tile_no;
 
 
     // Save the number of the actual tile
-    tile_no = (int)(floor(y) * Mesh.tiles_x) + (int)(floor(x));
-    // Change to 'absolute' position
-    x *= EGOMAP_TILEDIV;
-    y *= EGOMAP_TILEDIV;
+    tile_no = (int)(floor(pos[1]) * Mesh.tiles_x) + (int)(floor(pos[0]));
 
     // Clear the buffer
     memset(&info_obj, 0, sizeof(SDLGL3D_OBJECT));
@@ -727,10 +724,10 @@ static int egomapCreateObject(char obj_type, int owner_no, float x, float y, flo
     info_obj.obj_type = obj_type;
     info_obj.type_no  = mdl_no;
     info_obj.owner_no = owner_no;
-    // Set position
-    info_obj.pos[SDLGL3D_X] = x;
-    info_obj.pos[SDLGL3D_Y] = y;
-    info_obj.pos[SDLGL3D_Z] = z + egomapGetLevel(tile_no, x, y);
+    // Set position 'absolute'
+    info_obj.pos[SDLGL3D_X] = pos[SDLGL3D_X] * EGOMAP_TILEDIV;
+    info_obj.pos[SDLGL3D_Y] = pos[SDLGL3D_Y] * EGOMAP_TILEDIV;
+    info_obj.pos[SDLGL3D_Z] = pos[SDLGL3D_Z] + egomapGetLevel(tile_no, pos);
 
     // Set the rotation around y = Direction of
     if(dir > 3)
@@ -1039,9 +1036,9 @@ static void egomapCalcVrta(MESH_T *mesh)
         }
 
         // Now add the position from object
-        spt->x_pos = pobj->pos[SDLGL3D_X] / EGOMAP_TILEDIV;
-        spt->y_pos = pobj->pos[SDLGL3D_Y] / EGOMAP_TILEDIV;
-        spt->z_pos = pobj->pos[SDLGL3D_Z];
+        spt->pos[SDLGL3D_X] = pobj->pos[SDLGL3D_X] / EGOMAP_TILEDIV;
+        spt->pos[SDLGL3D_Y] = pobj->pos[SDLGL3D_Y] / EGOMAP_TILEDIV;
+        spt->pos[SDLGL3D_Z] = pobj->pos[SDLGL3D_Z];
     }
 }
 
@@ -1463,13 +1460,13 @@ int egomapGetChar(int tile_no)
  *     Usage: E.g. for dropping an item from inventory
  * Input:
  *     char_no:  Number of charactr to drop at this position
- *     x, y, z:  Number of tile to check for character
+ *     pos[3]:   Where to drop the character, position in tiles
  *     dir_code: Direction
  *     mdl_no:   Number of model to use for 3D-Object 
  * Output:
  *     Number of 3D-Object created
  */
-int egomapPutChar(int char_no, float x, float y, float z, char dir, int mdl_no)
+int egomapPutChar(int char_no, float pos[3], char dir, int mdl_no)
 {
     int obj_no;
     int tile_no;
@@ -1500,12 +1497,12 @@ int egomapPutChar(int char_no, float x, float y, float z, char dir, int mdl_no)
         dir_no = (char)(miscRandVal(4)-1);
     }
 
-    obj_no = egomapCreateObject(EGOMAP_OBJ_CHAR, char_no, x, y, z, dir_no, mdl_no);
+    obj_no = egomapCreateObject(EGOMAP_OBJ_CHAR, char_no, pos, dir_no, mdl_no);
 
     if(obj_no > 0)
     {
         // Put it to the map (todo: Only one object allowed per tile for the editor)
-        tile_no = (floor(y) * Mesh.tiles_x) + floor(x);
+        tile_no = (floor(pos[1]) * Mesh.tiles_x) + floor(pos[0]);
         // @todo: Create a linked list if needed (more then one object on tile)
         Mesh.fan[tile_no].obj_no = obj_no;
     }
@@ -1650,18 +1647,17 @@ void egomapPassageFunc(int psg_no, int action, int value, EDITFILE_PASSAGE_T *ps
  *     Success yes/no
  */
  int egomapSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action, int *crect)
- {
+ {  
     int tile_no;
-    int i;
 
 
     switch(action)
     {
         // @todo: Replace this code by one using the Objects on map instead of the spawn points
         case EGOMAP_NEW:
-            spt->x_pos = crect[0] + 0.5;
-            spt->y_pos = crect[1] + 0.5;
-            spt->z_pos = 0.5;
+            spt->pos[0] = crect[0] + 0.5;
+            spt->pos[1] = crect[1] + 0.5;
+            spt->pos[2] = 0.5;
 
             sp_no = charSpawnPoint(-1, spt, CHAR_SPTNEW);
             if(sp_no > 0)
@@ -1683,7 +1679,7 @@ void egomapPassageFunc(int psg_no, int action, int value, EDITFILE_PASSAGE_T *ps
             charSpawnPoint(sp_no, spt, CHAR_SPTSET);
             break;
         case EGOMAP_CLEAR:
-            tile_no = Mesh.tiles_x * floor(spt->y_pos) + floor(spt->x_pos);
+            tile_no = Mesh.tiles_x * floor(spt->pos[1]) + floor(spt->pos[0]);
             Mesh.fan[tile_no].obj_no = 0;       /* Remove it from map */
             // Now clear it from list
             charSpawnPoint(-1, spt, CHAR_SPTCLEAR);

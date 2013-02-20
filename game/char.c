@@ -1780,8 +1780,6 @@ void charSetValue(int char_no, int which, int sub_type, int amount)
             break;
         case CHAR_VAL_STR:
             break;
-        case CHAR_VAL_STRPERC:
-            break;
         case CHAR_VAL_INTEL:
             break;
         case CHAR_VAL_WIS:

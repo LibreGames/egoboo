@@ -57,7 +57,9 @@ static char *ScriptList[SCRIPT_MAX + 2] =
     ScriptCode      // Keep the compiler quiet
 };
 
-
+// Additional info used for decoding as values for script
+// E.g. 'Script_Target' is the sender of the message
+static Script_Target = 0;
 
 /*******************************************************************************
 * CODE                                                                         *
@@ -70,10 +72,11 @@ static char *ScriptList[SCRIPT_MAX + 2] =
  *     Evaluate the condition and set the code pointer (jump od no jump) to
  *     next code to execute  
  * Input:
- *     code *:  Pointer on next command to execute
- *     pchar *: Work with his one     
+ *     code *:    Pointer on next command to execute
+ *     pchar *:   Work with his one (is owner of the script)  
+ *     sender_no: Is the 'Target' in code 
  */
-static char *scriptFuncIF(char *code, CHAR_T *pchar)
+static char *scriptFuncIF(char *code, CHAR_T *pchar, int sender_no)
 {
     char func_no;
     int  cmp_stack[50]; // Stack for comparision values
@@ -109,7 +112,7 @@ static char *scriptFuncIF(char *code, CHAR_T *pchar)
                 if(s_idx > 0)   // For safety reasons
                 {
                     s_idx--;
-                    if( cmp_stack[s_idx])
+                    if(cmp_stack[s_idx])
                     {
                         // True
                         code += 2;  // Jump-Number is a short int, point on code to execute
@@ -186,19 +189,22 @@ void scriptRun(int char_no, int script_no, int why, int sender_no)
 	if(NULL == code) return;		// No script available
 	pchar = charGet(char_no);
 
-	while(*code != FUNC_END *code < 0 && *code > FUNC_END)
+    // Save the sender for checking target...
+    Script_Target = sender_no;
+    // Now decode
+	while(*code != FUNC_END && *code < 0 && *code >= FUNC_MAX)
 	{
 		func_no = *code;
 		code++;
+        
 		switch(func_no)
 		{
 			case FUNC_IF;
-				code = scriptFuncIF(code, pchar);		
+				code = scriptFuncIF(code, pchar, sender_no);		
 				break;
 			default:
 				// @todo:
 				return;
 		}
 	}
-
 }

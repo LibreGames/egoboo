@@ -288,7 +288,7 @@ typedef struct
 void charInit(void);
 CHAR_T *charGet(int char_no); 
 void charSpawnAll(void);
-void charSpawnOne(char *objname, float x, float y, float z, char dir);
+void charSpawnOne(char *objname, float pos[3], char dir);
 
 /* ================= General inventory functions ===================== */
 char charInventoryAdd(const int char_no, const int item_no, int inventory_slot);
@@ -296,7 +296,7 @@ int  charInventoryRemove(const int char_no, int inventory_slot, char ignorekurse
 char charInventorySwap(const int char_no, int inventory_slot, int grip_off);
 
 /* ============ Other functions ======================== */
-charSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action);
+int charSpawnPoint(int sp_no, EDITFILE_SPAWNPT_T *spt, char action);
 
 
 #endif  /* #define _CHAR_H_ */

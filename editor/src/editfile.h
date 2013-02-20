@@ -160,7 +160,7 @@ typedef struct
     char obj_name[24 + 1];      /* Name of object to load [obj_name].obj   */
     char item_name[24 + 1];     ///< Never used ???
     int  slot_no;               ///< Not used anymore (the slots are set by loading time) 
-    float x_pos, y_pos, z_pos;  
+    float pos[3];               /// x_pos, y_pos, z_pos;  
     char view_dir;
     int  money;
     char skin;

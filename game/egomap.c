@@ -1,9 +1,9 @@
 /*******************************************************************************
 *  EGOMAP.C                                                                    *
-*    - EGOBOO-Editor                                                           *
+*    - EGOBOO-Game                                                             *
 *                                                                              *
 *    - Managing the map and the objects on it                                  *
-*      (c)2011 Paul Mueller <pmtech@swissonline.ch>                            *
+*      (c) The Egoboo Team                                                     *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *
 *  it under the terms of the GNU General Public License as published by        *
@@ -22,7 +22,7 @@
 
 
 /*******************************************************************************
-* INCLUDES								                                       *
+* INCLUDES                                                                     *
 *******************************************************************************/
 
 #include <memory.h>
@@ -41,7 +41,7 @@
 #include "egomap.h"
 
 /*******************************************************************************
-* DEFINES								                                       *
+* DEFINES                                                                      *
 *******************************************************************************/
 
 /* -- Maximum-Values for files -- */
@@ -53,7 +53,7 @@
 #define EGOMAP_FADEBORDER   64      /* Darkness at the edge of map  */
 
 /*******************************************************************************
-* TYPEDEFS								                                       *
+* TYPEDEFS                                                                     *
 *******************************************************************************/
 
 typedef struct
@@ -1275,6 +1275,12 @@ static int egomapCreateSptList(void)
     // Initalize bump values
     bump_val[0] = bump_val[1] = bump_val[2] = 0;
     
+    // @todo: First check collision with object on same tile as this object
+    //        and send feedback to character charBumped(me->owner_no, pother->owner_no); 
+    //        Also check objects 'in Hand' me->attached_obj[];
+    //        And for objects 'in Hand' check their attached particles, if any
+    //        me->attached_obj[].attached_obj[0];
+    
     if(pobj->dir[0] < 0)
     {
         // Moves left in x-direction
@@ -1285,8 +1291,10 @@ static int egomapCreateSptList(void)
             bump_val[0] = tx;
             // Move pos to 'non-bumping position'
             pobj->pos[0] += tx;
+            // @todo: Let object react on bumping into wall (e.g. Particle deflects or dies)
             return EGOMAP_HIT_WALL;            
         }
+        // @todo: Check collision with objects on this tile
     }
     else if(pobj->dir[0] > 0)
     {
