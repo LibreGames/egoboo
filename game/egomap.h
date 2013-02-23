@@ -49,6 +49,17 @@
 #define EGOMAP_CLOSE  0x06  
 #define EGOMAP_SWITCH 0x06
 
+// Numbers of FX-flags (for script use)
+#define EGOMAP_FXREF       ((char)-1)   
+#define EGOMAP_FXSHA       ((char)0)    
+#define EGOMAP_FXDRAWREF   ((char)1)   
+#define EGOMAP_FXANIM      ((char)2)  
+#define EGOMAP_FXWATER     ((char)3)   
+#define EGOMAP_FXWALL      ((char)4) 
+#define EGOMAP_FXIMPASS    ((char)5)
+#define EGOMAP_FXDAMAGE    ((char)6)    
+#define EGOMAP_FXSLIPPY    ((char)7) 
+
 
 /*******************************************************************************
 * TYPEDESF							                                           *
@@ -85,15 +96,17 @@ void egomapGetAdjacentPos(int pos_x, int pos_y, EGOMAP_TILEINFO_T adjacent[4]);
 void egomapDraw(void);
 
 /* ============ OBJECT-FUNCTIONS ========== */
-void egomapNewObject(char *obj_name, float x, float y, float z, char dir_code);
+void egomapNewObject(char *obj_name, float pos[3], char dir_code);
 void egomapPutObject(int obj_no);       // Put this object to map
 void egomapDropObject(int obj_no);      // Drop this object to map (fall to bottom)
 void egomapDeleteObject(int obj_no);    // Delete this object from map
 int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
-void egomapDropChar(int char_no, float x, float y, float z, char dir); 
-void egomapMoveObjects(void);           // Manages the linked lists on tile and invokes passages
+void egomapDropChar(int char_no, float pos[3], char dir); 
+void egomapMoveObjects(void);           // Moves all objects on map
 
-/* ============  Game functions ========== */
+/* ============ Game (script) functions ========== */
 // @todo: void  egomapHandlePassage(int psg_no, int action);
+// @todo: int   egomapGlobalFlag(int action, int flag_no);
+// @todo: int   egomapHandleTile(int action, int x, int y, inv val1, int val2);
 
 #endif  /* #define _EGOMAP_H_ */

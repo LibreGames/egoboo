@@ -49,9 +49,10 @@ static char EgofileGameDir[128]   = "c:/egoboo/";
 // Directory name of actual game module
 static char EgoFileModule[34]     = "";
 static char EgoFileModuleDir[256] = "";
+// static char EgoFileObjectDir[256] = "";     // Directory of actual chosen object
 static char SavegameDir[120 + 2]  = "c:/egoboo/savegame/";
 // Where the editor works in the Egoboo-Directory
-static char EgofileWorkDir[256]   = "c:/egoboo/editor/test.mod/";
+static char EgofileEditDir[256]   = "c:/egoboo/editor/test.mod/";
 /* Directories to read from in Egoboo-Main-Directory */
 // static char EgofileMenuDir[]      = "basicdat/menu/";
 // static char EgofileMusicDir[]     = "basicdat/music/";
@@ -82,9 +83,9 @@ static SDLGLCFG_VALUE SpawnVal[] =
 	{ SDLGLCFG_VAL_STRING,  SpawnPt.obj_name, 24 },
 	{ SDLGLCFG_VAL_STRING,  SpawnPt.item_name, 24 },
 	{ SDLGLCFG_VAL_INT,     &SpawnPt.slot_no },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.x_pos },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.y_pos },
-	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.z_pos },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.pos[0] },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.pos[1] },
+	{ SDLGLCFG_VAL_FLOAT,   &SpawnPt.pos[2] },
 	{ SDLGLCFG_VAL_ONECHAR, &SpawnPt.view_dir },
 	{ SDLGLCFG_VAL_INT,     &SpawnPt.money },
 	{ SDLGLCFG_VAL_CHAR,    &SpawnPt.skin },
@@ -153,14 +154,14 @@ static SDLGLCFG_NAMEDVALUE ModuleVal[] =
     { SDLGLCFG_VAL_STRING,  ModDesc.mod_type, 11, "Module Type (MAINQUEST, SIDEQUEST or TOWN)" },  
     { SDLGLCFG_VAL_STRING,  &ModDesc.lev_rating, 8, "Level rating ( * to  ***** )" },
     { SDLGLCFG_VAL_LABEL, 0, 0, "//Module summary\n" }, /* Module summary */
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[0], 40 },   
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[1], 40 },
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[2], 40 },
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[3], 40 },
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[4], 40 },
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[5], 40 },
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[6], 40 },
-    { SDLGLCFG_VAL_STRING,  ModDesc.summary[7], 40 },
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.summary[0], 40 },   
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.summary[1], 40 },
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.summary[2], 40 },
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.summary[3], 40 },
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.summary[4], 40 },
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.summary[5], 40 },
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.summary[6], 40 },
+    { SDLGLCFG_VAL_EGOSTR,  ModDesc.summary[7], 40 },
     { SDLGLCFG_VAL_LABEL, 0, 0, "// Module expansion IDSZs ( with a colon in front )\n" }, 
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[0], 18 }, /*  */
     { SDLGLCFG_VAL_STRING, ModDesc.exp_idsz[1], 18 }, 
@@ -193,8 +194,8 @@ static unsigned char egofileGetFanTwist(MESH_T *mesh, int fan)
     vt2 = vt0 + 2;
     vt3 = vt0 + 3;
 
-    zx = (mesh-> vrt[vt0].z + mesh -> vrt[vt3].z - mesh -> vrt[vt1].z - mesh -> vrt[vt2].z) / EGOFILE_SLOPE;
-    zy = (mesh-> vrt[vt2].z + mesh -> vrt[vt3].z - mesh -> vrt[vt0].z - mesh -> vrt[vt1].z) / EGOFILE_SLOPE;
+    zx = (mesh-> vrt[vt0].v[3] + mesh -> vrt[vt3].v[3] - mesh -> vrt[vt1].v[3] - mesh -> vrt[vt2].v[3]) / EGOFILE_SLOPE;
+    zy = (mesh-> vrt[vt2].v[3] + mesh -> vrt[vt3].v[3] - mesh -> vrt[vt0].v[3] - mesh -> vrt[vt1].v[3]) / EGOFILE_SLOPE;
 
     /* x and y should be from -7 to 8   */
     if (zx < -7) zx = -7;
@@ -290,21 +291,21 @@ static int egofileLoadMapMesh(MESH_T *mesh, char *msg)
         for (cnt = 0; cnt < mesh -> numvert; cnt++)
         {
             fread(&ftmp, 4, 1, fileread);
-            mesh -> vrt[cnt].x = ftmp;
+            mesh -> vrt[cnt].v[0] = ftmp;
         }
 
         /* Load vertex y data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++)
         {
             fread(&ftmp, 4, 1, fileread);
-            mesh -> vrt[cnt].y = ftmp;
+            mesh -> vrt[cnt].v[1] = ftmp;
         }
 
         /* Load vertex z data   */
         for (cnt = 0; cnt < mesh -> numvert; cnt++)
         {
             fread(&ftmp, 4, 1, fileread);
-            mesh -> vrt[cnt].z = ftmp / EGOFILE_ZADJUST;  /* Z is fixpoint int in cartman (16)*/
+            mesh -> vrt[cnt].v[2] = ftmp / EGOFILE_ZADJUST;  /* Z is fixpoint int in cartman (16)*/
         }
 
         for (cnt = 0; cnt < mesh -> numvert; cnt++)
@@ -373,7 +374,7 @@ static int egofileSaveMapMesh(MESH_T *mesh, char *msg)
             for (cnt = 0; cnt < mesh -> numvert; cnt++)
             {
                 /* Change int to floatfor game */
-                ftmp = mesh -> vrt[cnt].x;
+                ftmp = mesh -> vrt[cnt].v[0];
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
             }
 
@@ -381,7 +382,7 @@ static int egofileSaveMapMesh(MESH_T *mesh, char *msg)
             for (cnt = 0; cnt < mesh -> numvert; cnt++)
             {
                 /* Change int to float for game */
-                ftmp = mesh -> vrt[cnt].y;
+                ftmp = mesh -> vrt[cnt].v[1];
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
             }
 
@@ -389,7 +390,7 @@ static int egofileSaveMapMesh(MESH_T *mesh, char *msg)
             for (cnt = 0; cnt < mesh -> numvert; cnt++)
             {
                 /* Change int to float for game */
-                ftmp = (mesh -> vrt[cnt].z * EGOFILE_ZADJUST);   /* Multiply it again to file format */
+                ftmp = (mesh -> vrt[cnt].v[2] * EGOFILE_ZADJUST);   /* Multiply it again to file format */
                 numwritten += fwrite(&ftmp, 4, 1, filewrite);
             }
 
@@ -455,12 +456,12 @@ void egofileSetDir(int which, char *dir_name)
             break;
 
         case EGOFILE_WORKDIR:
-            sprintf(EgofileWorkDir, "%s/", dir_name);
+            sprintf(EgofileEditDir, "%s/", dir_name);
             break;
 
         case EGOFILE_MODULEDIR:
             sprintf(EgoFileModule, "%s/", dir_name);
-            sprintf(EgoFileModuleDir, "%s/modules/%s.mod/", EgofileGameDir, dir_name);
+            sprintf(EgoFileModuleDir, "%s/modules/%s/", EgofileGameDir, dir_name);
             break;
             
         case EGOFILE_SAVEGAMEDIR:
@@ -546,7 +547,7 @@ char *egofileMakeFileName(int dir_no, char *fname)
             sprintf(file_name, "%s%s", EgoFileModuleDir, fname);
             break;
 
-        case EGOFILE_EGOBOODIR:
+        case EGOFILE_EGOBOODIR:        
             sprintf(file_name, "%s%s", EgofileGameDir, fname);
             break;
 

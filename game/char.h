@@ -85,8 +85,8 @@
 #define CHAR_CFMOUNT   ((char)0)       ///< Can you ride it?	// pcap->		// pchar->ismount
 #define CHAR_CFTOOBIG ((char)1)	        ///< For items // istoobig	 ///< Can't be put in pack
 #define CHAR_CFITEM   ((char)2)	        ///< Is it an item? // isitem	
-#define CHAR_FCANBECRUSHED ((char)3)    ///< Crush in a door?	// canbecrushed
-#define CHAR_FCANCHANNEL   ((char)4)    ///< Can it convert life to mana?	// 
+#define CHAR_CFCANBECRUSHED ((char)3)    ///< Crush in a door?	// canbecrushed
+#define CHAR_CFCANCHANNEL   ((char)4)    ///< Can it convert life to mana?	// 
 #define CHAR_CFEQUIPMENT ((char)5)	    ///< Behave in silly ways// pcap-> 	      
 #define CHAR_CFSTACKABLE ((char)6)	    ///< Is it arrowlike?// pcap->	
 #define CHAR_CFINVICTUS	((char)7)	    ///< Is it invincible?// pcap->	
@@ -114,6 +114,7 @@
 #define CHAR_TYPE_SHIELD 4 // pcap->weaponaction == ACTION_PA
 
 /// The possible damage types, as char for usage in scripts
+
 #define DAMAGE_NONE  ((char)0)
 #define DAMAGE_SLASH ((char)1)
 #define DAMAGE_CRUSH ((char)2)

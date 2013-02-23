@@ -35,6 +35,7 @@
 #include "sdlglcfg.h"       // Read configuration file
 #include "sdlglstr.h"
 #include "egofile.h"        // Set basic directories for the game
+#include "menu.h"           // Main menu, choose a module
 
 // #include "egofont.h"        // Draw strings for menu
 
@@ -145,7 +146,6 @@ static void egobooCalcMenuPos(SDLGL_FIELD *fields)
         ty += f->rect.h + 4;
         f++;
     }
-
 }
 
 /*
@@ -172,7 +172,6 @@ static void egobooDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     // @todo: Draw the menu fields using bitmapped font 'egofont'
     sdlglstrDrawField(fields);
-
 }
 
 /*
@@ -196,12 +195,15 @@ static int egobooInputHandler(SDLGL_EVENT *event)
         {
             case EGOBOO_NEWGAME:
                 // @todo: Choose modules with no IDSZ
+                menuMain(MENU_CHOOSEMODULE);
                 break;
             case EGOBOO_LOADGAME:
                 // @todo: Choose modules based on 'savegame'
+                // menuMain(MENU_CHOOSEPLAYER);
                 break;
             case EGOBOO_SETTINGS:
                 // @todo: Display menu for settings
+                // menuMain(MENU_OPTIONS);
                 break;
             case EGOBOO_EXIT:
                 return SDLGL_INPUT_EXIT;

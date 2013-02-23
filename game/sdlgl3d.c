@@ -1062,6 +1062,8 @@ void sdlgl3dMoveObjects(float secondspassed)
  *      from *: Pointer on list base where to move 'from'
  *      to *:   Pointer on list base where to move 'to
  *      obj_no: Number of object to handle
+ * Output:
+ *      Found the given object in 'from'
  */
 char sdlgl3dObjectList(int *from, int *to, int obj_no)
 {
@@ -1069,6 +1071,9 @@ char sdlgl3dObjectList(int *from, int *to, int obj_no)
     int oldbase;
     int act_obj_no;
     char found;
+
+
+    found = 0;
 
     if(from)
     {
@@ -1105,6 +1110,8 @@ char sdlgl3dObjectList(int *from, int *to, int obj_no)
         // Attach previous object(s) to base
         Obj3D[obj_no].next_obj = oldbase;
     }
+
+    return found;
 }
 
 

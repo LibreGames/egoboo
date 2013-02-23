@@ -66,7 +66,11 @@ typedef struct
 
 // Messages for the game: First: Global Tips, Second: 
 static MSG_T MsgList[MSG_MAX + 2];
-static MSG_STRLIST_T MsgStrList;
+static MSG_STRLIST_T MsgStrList = 
+{
+    0, 0, 0, 0, 0,
+    { "Don't die...\n" }
+};
 
 /*******************************************************************************
 * CODE                                                                         *
@@ -77,15 +81,16 @@ static MSG_STRLIST_T MsgStrList;
  *     msgExpand
  * Description:
  *     Puts the message into the message list for collection by the 'receiver'  
- *     The numbe rof the message is filled into the given info and then the 
+ *     The number of the message is filled into the given info and then the 
  *     message is added at the end of the message queue.
  *     Clears the message list, if the number of the message is < 0
  * Input:
- *     msg *:     Pointer on message with string to expand
- *     dest *:    Where to return the expanded string
+ *     msg *:     Pointer on message descriptor with info for expanding string
+ *     psrc *:    String to expand 
+ *     pdest *:   Where to return the expanded string
  *     dest_size: Maximum length of destination, including trailing 0
  */
-static void msgExpand(MSG_T *msg, char *dest, int dest_size)
+static void msgExpand(MSG_T *msg, char *psrc, char *pdest, int dest_size)
 {
     // @todo: Flesh this out / Port it
     // int  cnt;
@@ -633,17 +638,17 @@ void msgLoad(int which)
  * Description:
  *     Get a message of given type 
  * Input:
- *     which: Which kind of messate to get
+ *     which: Which kind of message to get
  * Output:
- *     Has at least one char in this string
+ *     Pointer on string
  */
-int msgGetText(int which, int text_no, char *str_buf, int buf_len)
+char *msgGetText(int which)
 {
+    const char *retval = "Don't die...\n";    
     int msg_no;
     
     
-    str_buf[0] = 0;     // Create an empty string
-    
+    // @todo: Return local hint, if available, else return global hint
     switch(which)
     {
         case MSG_TIP_GLOBAL:
@@ -651,17 +656,17 @@ int msgGetText(int which, int text_no, char *str_buf, int buf_len)
             msg_no = miscRandVal(MsgStrList.num_global_tips);
             msg_no += MsgStrList.first_global_tip;
             break;
+            
         case MSG_TIP_LOCAL:
             // Get a local tips string, random
             msg_no = miscRandVal(MsgStrList.num_local_tips);
             msg_no += MsgStrList.first_local_tip;
             break;
+        default:
+            return "Don't die...\n";
     }
     
-    strncpy(str_buf, MsgStrList.msg[msg_no], buf_len - 1);
-    str_buf[buf_len - 1] = 0;
-    
-    return str_buf[0];
+    return MsgStrList.msg[msg_no];
 }
 
 /*
@@ -682,7 +687,7 @@ int msgGetTextScript(MSG_T *pmsg, int msg_no, char *str_buf, int buf_len)
     str_buf[0] = 0;     // Create an empty string
     
     src_str = MsgStrList.msg[msg_no];
-    // msgExpand(MSG_T *msg, char *dest, int dest_size)
+    // msgExpand(pmsg, src_str, str_buf, buf_len);
     
     strncpy(str_buf, src_str, buf_len - 1);
     str_buf[buf_len - 1] = 0;

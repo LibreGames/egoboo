@@ -25,6 +25,7 @@
 *******************************************************************************/
 
 #include <stdio.h>
+#include <ctype.h>
 #include <memory.h>
 #include <string.h>
 #include <stdlib.h>      /* malloc(), free(), don't use alloc.h it's obsolete*/
@@ -349,10 +350,9 @@ static void sdlglcfgValToStr(char *val_str, char valtype, void *value, char vall
  */
 static void sdlglcfgGetNamedValue(char *line, SDLGLCFG_NAMEDVALUE *vallist)
 {
-
     char valstr[128];
     char namestr[128];
-    char *pval;
+    char *pval, *pstr;
 
 
     /* FIXME: Check for blocksign and return it, if needed */
@@ -368,7 +368,13 @@ static void sdlglcfgGetNamedValue(char *line, SDLGLCFG_NAMEDVALUE *vallist)
 
         if ( strcmp( pval, "" ) != 0 )
         {
-            strlwr(namestr); /* To lower for comparision */
+            pstr = namestr; /* To lower for comparision */
+
+            while(*pstr)
+            {
+                *pstr = (char)tolower(*pstr);
+	            pstr++;
+            }           
 
             while (vallist -> type)
             {
@@ -454,8 +460,7 @@ static void sdlglcfgRecordFromLine(char *line, SDLGLCFG_VALUE *rcf, int fixedpos
  */
 static int sdlglcfgCheckBlockName(char *line)
 {
-
-    char *pbs;
+    char *pbs, *pstr;
 
 
     BlockName[0] = 0;
@@ -480,7 +485,14 @@ static int sdlglcfgCheckBlockName(char *line)
             }
 
             sscanf(line, "%s", BlockName);
-            strlwr(BlockName);      /* To lower for comparision of names */
+            
+            pstr = BlockName; /* To lower for comparision */
+
+            while(*pstr)
+            {
+                *pstr = (char)tolower(*pstr);
+	            pstr++;
+            }             
 
             return 1;
         }
@@ -647,8 +659,6 @@ static void sdlglcfgWriteEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
     }
 }
 
-
-
 /* ========================================================================== */
 /* ========================= PUBLIC FUNCTIONS =============================== */
 /* ========================================================================== */
@@ -664,7 +674,6 @@ static void sdlglcfgWriteEgoboo(char *fname, SDLGLCFG_LINEINFO *lineinfo)
  */
 int sdlglcfgOpenFile(char *filename, char blocksigns[4])
 {
-
     TextFile = fopen(filename, "rt");
 
     if (TextFile)
@@ -712,16 +721,24 @@ int sdlglcfgSkipBlock(void)
  * Description:
  *     Returns TRUE if given name is actual block name
  * Input:
- *     name *:  Name to check
+ *     pname *:  Name to check
  * Output:
  *     Is this name yes/no
  */
-int sdlglcfgIsActualBlockName(char *name)
+int sdlglcfgIsActualBlockName(char *pname)
 {
+    char *pstr;
+    
+    
+    pstr = pname; /* To lower for comparision */
 
-    strlwr(name);       /* to lower for comparision */
+    while(*pstr)
+    {
+        *pstr = (char)tolower(*pstr);
+        pstr++;
+    }  
 
-    if (strcmp(name, BlockName) == 0)
+    if (strcmp(pname, BlockName) == 0)
     {
         return 1;
     }
@@ -742,7 +759,6 @@ int sdlglcfgIsActualBlockName(char *name)
  */
 int sdlglcfgReadNamedValues(SDLGLCFG_NAMEDVALUE *vallist)
 {
-
     char line[SDLGLCFG_LINELEN];
 
 
@@ -774,7 +790,6 @@ int sdlglcfgReadNamedValues(SDLGLCFG_NAMEDVALUE *vallist)
  */
 int sdlglcfgReadValues(SDLGLCFG_VALUE *vallist)
 {
-
     char line[SDLGLCFG_LINELEN];
 
 
@@ -811,7 +826,6 @@ int sdlglcfgReadValues(SDLGLCFG_VALUE *vallist)
  */
 int sdlglcfgReadRecordLines(SDLGLCFG_LINEINFO *lineinfo, int fixedpos)
 {
-
     char line[SDLGLCFG_LINELEN];
     char *pbaserec, *pactrec;
     int maxrec;
@@ -857,7 +871,6 @@ int sdlglcfgReadRecordLines(SDLGLCFG_LINEINFO *lineinfo, int fixedpos)
  */
 int sdlglcfgReadStrings(char *buffer, int bufsize)
 {
-
     char line[SDLGLCFG_LINELEN];
     char *ptarget;
     int  slen, spaceleft;
@@ -917,24 +930,20 @@ void sdlglcfgCloseFile(void)
  */
 void sdlglcfgReadSimple(char *filename, SDLGLCFG_NAMEDVALUE *vallist)
 {
-
     FILE *f;
     char line[SDLGLCFG_LINELEN];
 
 
     f = fopen(filename, "rt");
-    if (f) {
-
-        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, ';')) {
-
+    if (f)
+    {
+        while (sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, ';'))
+        {
             sdlglcfgGetNamedValue(line, vallist);
-
         }
 
         fclose(f);
-
     }
-
 }
 
 /*
@@ -949,44 +958,38 @@ void sdlglcfgReadSimple(char *filename, SDLGLCFG_NAMEDVALUE *vallist)
  */
 void sdlglcfgLoadFile(char *dir_name, SDLGLCFG_FILE *fdesc)
 {
-
     char file_name[512];
     FILE *f;
     
 
-    sprintf(file_name, "%s/%s", dir_name, fdesc -> filename);
+    sprintf(file_name, "%s/%s", dir_name, fdesc->fname);
 
-    if (file_name[0] > 0) {
-
+    if (file_name[0] > 0)
+    {
         f = fopen(file_name, "rt");
         
-        if (f) {
-
+        if (f)
+        {
             fseek(f, 0, SEEK_END);
 
             fdesc -> size = ftell(f);
 
-            if (fdesc -> size > 0) {
-            
+            if (fdesc -> size > 0)
+            {
                 fdesc -> buffer = (char *)malloc(fdesc -> size + 100);  /* Including some reserve */
                 
-                if (fdesc -> buffer != NULL) {
-
+                if (fdesc -> buffer != NULL)
+                {
                     fseek(f, 0, SEEK_SET);
                     fread(fdesc -> buffer, fdesc -> size, 1, f); 
                     /* Sign end of buffer */
                     fdesc -> buffer[fdesc -> size] = 0;
-                    
                 }
-                
             }
             
             fclose(f);
-        
         }
-
     }
-
 }
 
 /*
@@ -1000,18 +1003,15 @@ void sdlglcfgLoadFile(char *dir_name, SDLGLCFG_FILE *fdesc)
 void sdlglcfgFreeFile(SDLGLCFG_FILE *fdesc)
 {
 
-    while(fdesc -> filename[0] > 0) {
-    
-        if (fdesc -> buffer != NULL) {
-
+    while(fdesc -> fname[0] > 0)
+    {
+        if (fdesc -> buffer != NULL)
+        {
             free(fdesc -> buffer);
-            
         }
         
         fdesc++;
-    
     }
-
 }
 
 /*
@@ -1139,19 +1139,21 @@ char sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write)
  *     Reads in raw text lines from given file, if any exists, ignores the comment lines
  *     Reads maximum ((dest_size / line_len) - 1) Lines from given file
  *     Reads a maximum length of (line_len - 1) chars from a files line, terminates it with a 0   
+ *     Removes leading ':' while reading 
  * Input:
- *     fname *:    Name of file to read / write
- *     dest_buf *: Pointer on char buffer with values to read/write (End of list => Empty string)
- *     dest_size:  Size of destination buffer
- *     line_len:   Size of buffer to use per line   
- *     write:      Write it, yes / no  
+ *     fname *:   Name of file to read / write
+ *     pdest *:   Pointer on char buffer with values to read/write (End of list => Empty string)
+ *     dest_size: Size of destination buffer
+ *     line_len:  Size of buffer to use per line   
+ *     write:     Write it, yes / no
  * Output:
- *     Success yes/no 
+ *     Number of lines read, if read, else success yes/no
  */
-char sdlglcfgRawLines(char *fname, char *dest_buf, int dest_size, int line_len, char write)
+int sdlglcfgRawLines(char *fname, char *pdest, int dest_size, int line_len, char write)
 {
     FILE *f;
-    int  str_len;
+    char *psrc;
+    int  line_cnt;
     char line[SDLGLCFG_LINELEN];
     
     
@@ -1167,11 +1169,11 @@ char sdlglcfgRawLines(char *fname, char *dest_buf, int dest_size, int line_len, 
             // Write who has created it
             sdlglcfgWriteComment(f);           
             // Write it all to file
-            while(*dest_buf > 0 && dest_size > line_len)
+            while(*pdest > 0 && dest_size > line_len)
             {                
-                fprintf(f, "%s\n", dest_buf); 
+                fprintf(f, "%s\n", pdest); 
                 // Next string        
-                dest_buf += line_len;
+                pdest += line_len;
             }
             
             fputs("\n\n", f);
@@ -1189,29 +1191,40 @@ char sdlglcfgRawLines(char *fname, char *dest_buf, int dest_size, int line_len, 
         {
             // Safety
             dest_size -= line_len;
-            line_len = SDLGLCFG_LINELEN - 2;
+            line_cnt = 0;
             
             // Clear the destination buffer
-            memset(dest_buf, 0, dest_size);
-            
-            
-            while (dest_size > line_len && sdlglcfgGetValidLine(f, line, line_len, '/'))
-            {         
-                strcpy(dest_buf, line);
-                str_len = strlen(line) + 1;
+            memset(pdest, 0, dest_size);
+                        
+            while (dest_size > line_len && sdlglcfgGetValidLine(f, line, SDLGLCFG_LINELEN - 2, '/'))
+            {     
+                // Remove possible leading ':' (For reading Script messages and game tips)
+                psrc = strchr(line, ':');
+                if(psrc)
+                {
+                    psrc++;
+                }
+                else
+                {
+                    psrc = line;    
+                }
+                //
+                strncpy(pdest, psrc, line_len - 1);
+                pdest[line_len - 1] = 0;
                 // Pointer forward in buffer
-                dest_buf += str_len;
+                pdest += line_len;
                 // New size left
-                dest_size -= str_len;               
-                dest_buf += line_len;
+                dest_size -= line_len;
+                // Count number of lines read
+                line_cnt++;
             }
             
             // Sign end of buffer    
-            *dest_buf = 0;
+            *pdest = 0;
             
             fclose(f);
             
-            return 1;
+            return line_cnt;
         }
     }
     

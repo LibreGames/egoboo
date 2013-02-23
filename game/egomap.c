@@ -674,10 +674,10 @@ static float egomapGetLevel(int tile_no, float x, float y /* , char waterwalk */
 
     vert_base = Mesh.vrtstart[tile_no];
 
-    z0 = Mesh.vrt[vert_base + 0].z;
-    z1 = Mesh.vrt[vert_base + 1].z;
-    z2 = Mesh.vrt[vert_base + 2].z;
-    z3 = Mesh.vrt[vert_base + 3].z;
+    z0 = Mesh.vrt[vert_base + 0].v[3];
+    z1 = Mesh.vrt[vert_base + 1].v[3];
+    z2 = Mesh.vrt[vert_base + 2].v[3];
+    z3 = Mesh.vrt[vert_base + 3].v[3];
 
     zdone = (z0 + z1 + z2 + z3) / 4;
 
@@ -702,22 +702,19 @@ static float egomapGetLevel(int tile_no, float x, float y /* , char waterwalk */
  * Input:
  *     obj_type: Type of object
  *     type_no:  Number in list of 'obj_type'
- *     x, y, z:  Position
+ *     pos[3]:   Position X/Y/Z
  *     dir:      Direction
  * Output:
  *     > 0: Number of valid object 
  */
-static int egomapCreateObject(char obj_type, int type_no, float x, float y, float z, char dir)
+static int egomapCreateObject(char obj_type, int type_no, float pos[3], char dir)
 {
     SDLGL3D_OBJECT info_obj;
     int tile_no;
 
 
     // Save the number of the actual tile
-    tile_no = (int)(floor(y) * Mesh.tiles_x) + (int)(floor(x));
-    // Change to 'absolute' position
-    x *= EGOMAP_TILE_SIZE;
-    y *= EGOMAP_TILE_SIZE;
+    tile_no = (int)(floor(pos[1]) * Mesh.tiles_x) + (int)(floor(pos[0]));
 
     // Clear the buffer
     memset(&info_obj, 0, sizeof(SDLGL3D_OBJECT));
@@ -725,10 +722,10 @@ static int egomapCreateObject(char obj_type, int type_no, float x, float y, floa
     // Fill in the initalization data
     info_obj.obj_type = obj_type;
     info_obj.type_no  = type_no;
-    // Set position
-    info_obj.pos[SDLGL3D_X] = x;
-    info_obj.pos[SDLGL3D_Y] = y;
-    info_obj.pos[SDLGL3D_Z] = z + egomapGetLevel(tile_no, x, y);
+    // Set position absolte in units from tiles
+    info_obj.pos[SDLGL3D_X] = pos[0] * EGOMAP_TILE_SIZE;
+    info_obj.pos[SDLGL3D_Y] = pos[1] * EGOMAP_TILE_SIZE;
+    info_obj.pos[SDLGL3D_Z] = pos[2] + egomapGetLevel(tile_no, pos[0], pos[1]);
 
     // Set the rotation around y = Direction of
     if(dir > 3)
@@ -778,9 +775,9 @@ static int egomapSetVrta(MESH_T *mesh, int vert)
 	/* int brx, bry, dist; */ 
 
 	/* To make life easier  */
-	x = mesh->vrt[vert].x;
-	y = mesh->vrt[vert].y;
-	z = mesh->vrt[vert].z;
+	x = mesh->vrt[vert].v[0];
+	y = mesh->vrt[vert].v[1];
+	z = mesh->vrt[vert].v[2];
 
 	// Directional light
 	/*
@@ -1017,12 +1014,12 @@ static void egomapCalcVrta(MESH_T *mesh)
 
     if(char_no > 0)
     {
-        if(slot_no == 10 && spt->x_pos > 0 && spt->y_pos > 0)
+        if(slot_no == 10 && spt->pos[0] > 0 && spt->pos[1] > 0)
         {
             /* Inventory belongs to this character, if any */
             inv_char = char_no;
             // Is a character with an inventory -- Drop it to map
-            egomapDropChar(char_no, spt->x_pos, spt->y_pos, spt->z_pos, spt->view_dir);
+            egomapDropChar(char_no, spt->pos, spt->view_dir);
         }
         else
         {
@@ -1092,9 +1089,9 @@ static void egomapCalcVrta(MESH_T *mesh)
         }
 
         // Now add the position from object
-        spt->x_pos = pobj->pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
-        spt->y_pos = pobj->pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
-        spt->z_pos = pobj->pos[SDLGL3D_Z];
+        spt->pos[0] = pobj->pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
+        spt->pos[1] = pobj->pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
+        spt->pos[2] = pobj->pos[SDLGL3D_Z];
     }
 }
 
@@ -1144,9 +1141,9 @@ static void egomapCalcVrta(MESH_T *mesh)
         spt->lvl      = pchar->experience_level;
         spt->rec_no   = 0;
         // Now add the position from object
-        spt->x_pos = pobj->pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
-        spt->y_pos = pobj->pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
-        spt->z_pos = pobj->pos[SDLGL3D_Z];
+        spt->pos[0] = pobj->pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
+        spt->pos[1] = pobj->pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
+        spt->pos[2] = pobj->pos[SDLGL3D_Z];
         spt++;
         spt_cnt++;
 
@@ -1443,6 +1440,7 @@ char egomapLoad(char *mod_name, char *msg)
     {
         // Replace the actually loaded map
         memset(&Mesh, 0, sizeof(MESH_T));
+        
         if(egofileMapMesh(&Mesh, msg, 0))
         {
             Mesh.map_loaded = 1;
@@ -1663,10 +1661,10 @@ void egomapDraw2DMap(int mx, int my, int mw, int mh, int tw, int *crect)
  *     Adds an object to the map. Loads it from file if needed
  * Input:
  *     obj_name *: Name of object to load
- *     x, y, z:    Position
+ *     pos[3]:     Position
  *     dir_code:   Direction the object looks
  */
-void egomapNewObject(char *obj_name, float x, float y, float z, char dir_code)
+void egomapNewObject(char *obj_name, float pos[3], char dir_code)
 {
     int char_no;
 
@@ -1677,7 +1675,7 @@ void egomapNewObject(char *obj_name, float x, float y, float z, char dir_code)
     if(char_no > 0)
     {
         // Put the character as object to map
-        egomapDropChar(char_no, x, y, z, dir_code);
+        egomapDropChar(char_no, pos, dir_code);
     }
 }
 
@@ -1706,10 +1704,10 @@ void egomapDeleteObject(int obj_no)
  *     Usage: E.g. for dropping an item from inventory
  * Input:
  *     char_no:  Number of charactr to drop at this position
- *     x, y, z:  Number of tile to check for character
+ *     pos[3]:   Position where to drop the character on map, in tiles
  *     dir_code: Direction
  */
-void egomapDropChar(int char_no, float x, float y, float z, char dir)
+void egomapDropChar(int char_no, float pos[3], char dir)
 {
     CHAR_T *pchar;
     int obj_no;
@@ -1741,12 +1739,12 @@ void egomapDropChar(int char_no, float x, float y, float z, char dir)
         dir_no = 0;
     }
 
-    obj_no = egomapCreateObject(EGOMAP_OBJ_CHAR, char_no, x, y, z, dir_no);
+    obj_no = egomapCreateObject(EGOMAP_OBJ_CHAR, char_no, pos, dir_no);
 
     if(obj_no > 0)
     {
         // Put it to the map
-        tile_no = (floor(y) * Mesh.tiles_x) + floor(x);
+        tile_no = (floor(pos[1]) * Mesh.tiles_x) + floor(pos[0]);
         // @todo: Create a linked list if needed (more then one object on tile for collision detection)
         Mesh.fan[tile_no].obj_no = obj_no;
         
@@ -1774,23 +1772,6 @@ void egomapDropChar(int char_no, float x, float y, float z, char dir)
 }
 
 /* ============  Game functions ========== */
-
-/*
- * Name:
- *     egomapHandlePassage
- * Description:
- *     Does an action on a passage 
- * Input:
- *     psg_no: Number of passage to handle 
- *     action: Actin to apply  
- */
-/* @todo
-void egomapHandlePassage(int psg_no, int action)
-{
-
-    EGOFILE_PASSAGE_T *psg;
-}
-*/
 
 /*
  * Name:
@@ -1872,4 +1853,50 @@ void egomapHandlePassage(int psg_no, int action)
     }
  }
 
- 
+ /*
+ * Name:
+ *     egomapHandlePassage
+ * Description:
+ *     Does an action on a passage 
+ * Input:
+ *     psg_no: Number of passage to handle 
+ *     action: Actin to apply  
+ */
+/* @todo
+void egomapHandlePassage(int psg_no, int action)
+{
+
+    EGOFILE_PASSAGE_T *psg;
+}
+
+/*
+ * Name:
+ *     egomapGlobalFlag
+ * Description:
+ *     Handles the global flags of the map
+ * Input:
+ *     action:  What to do with the flag
+ *     flag_no: Which flag
+ */
+/*
+// @todo: 
+int egomapGlobalFlag(int action, int flag_no)
+{
+    switch(action)
+    {
+        case EGOMAP_GET:
+            return EGODEF_GET_FLAG(Mesh.flags, flag_no);
+            
+        case EGOMAP_SET:
+            EGODEF_SET_FLAG(Mesh.flags, flag_no);
+            break;
+            
+         case EGOMAP_CLEAR:
+            EGODEF_CLEAR_FLAG(Mesh.flags, flag_no);
+            break;
+    }
+    
+    return 0;
+}
+*/
+// @todo: int   egomapHandleTile(int action, int x, int y, inv val1, int val2);

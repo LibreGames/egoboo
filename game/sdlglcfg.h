@@ -83,7 +83,7 @@ typedef struct
 
 typedef struct
 {  
-    char *filename;
+    char *fname;
     char *buffer;        /* Pointer on buffer holding all file data as block  */
     int  size;           /* Size of data in 'buffer'                          */ 
 
@@ -93,7 +93,7 @@ typedef struct
 * CODE                                 				                           *
 *******************************************************************************/
 
-int  sdlglcfgOpenFile(char *filename, char blocksigns[4]);
+int  sdlglcfgOpenFile(char *fname, char blocksigns[4]);
 int  sdlglcfgSkipBlock(void);
 int  sdlglcfgIsActualBlockName(char *name);
 int  sdlglcfgReadNamedValues(SDLGLCFG_NAMEDVALUE *vallist);
@@ -101,12 +101,12 @@ int  sdlglcfgReadValues(SDLGLCFG_VALUE *vallist);
 int  sdlglcfgReadRecordLines(SDLGLCFG_LINEINFO *lineinfo, int fixedpos);
 int  sdlglcfgReadStrings(char *targetbuf, int bufsize);
 void sdlglcfgCloseFile(void);
-void sdlglcfgReadSimple(char *filename, SDLGLCFG_NAMEDVALUE *vallist);
+void sdlglcfgReadSimple(char *fname, SDLGLCFG_NAMEDVALUE *vallist);
 void sdlglcfgLoadFile(char *dir_name, SDLGLCFG_FILE *fdesc);
 void sdlglcfgFreeFile(SDLGLCFG_FILE *fdesc);
 
 void sdlglcfgEgobooRecord(char *fname, SDLGLCFG_LINEINFO *lineinfo, int write);
 char sdlglcfgEgobooValues(char *fname, SDLGLCFG_NAMEDVALUE *vallist, int write); 
-char sdlglcfgRawLines(char *filename, char *destbuffer, int dest_size, int line_len, char write);
+int sdlglcfgRawLines(char *fname, char *destbuffer, int dest_size, int line_len, char write);
 
 #endif

@@ -30,6 +30,8 @@
 #include <string.h>
 
 
+#include "egofile.h"    // Definition of a module description
+#include "sdlglcfg.h"   // Read raw text file with module Names
 #include "sdlglstr.h"
 
 /* ----- Own header --- */
@@ -59,7 +61,11 @@
 #define MENU_CHOOSEMODULE_FWD       ((char)113)
 #define MENU_CHOOSEMODULE_BACK      ((char)114)
 #define MENU_CHOOSEMODULE_SELECT    ((char)115)
-#define MENU_CHOOSEMODULE_EXIT      ((char)116)
+#define MENU_CHOOSEMODULE_CHOOSE    ((char)116)
+#define MENU_CHOOSEMODULE_EXIT      ((char)117)
+
+// Maximum number of modules
+#define MENU_MAX_MODULE 100
 
 /* Menu tree -->
     MenuMain[]
@@ -86,20 +92,32 @@ static int  menuInputHandler(SDLGL_EVENT *event);
 * DATA									                                       *
 *******************************************************************************/
 
+/* === Filter-Descriptions === */
+static char *FilterNames[] =
+{
+    "Main Quest",           // FILTER_MAIN
+    "Sidequests",           // FILTER_SIDE
+    "Towns and Cities",     // FILTER_TOWN
+    "Fun Modules",          // FILTER_FUN
+    "Starter Modules",      // FILTER_STARTER
+    "All Modules",          // FILTER_OFF
+    ""
+};
+                            
 /* === Types of Quests === */
 static char *QuestNames[] =
 {
-    "MAINQUEST",
-    "SIDEQUEST",
-    "TOWN",
+    "MAINQUEST",            // FILTER_MAIN
+    "SIDEQUEST",            // FILTER_SIDE
+    "TOWN",                 // FILTER_TOWN
     ""
 };
 
 static char *MenuDiffName[] =
 {
-    "FORGIVING (Easy)",
-    "CHALLENGING (Normal)",
-    "PUNISHING (Hard)",
+    "FORGIVING (Easy)",     // GAME_EASY
+    "CHALLENGING (Normal)", // GAME_NORMAL
+    "PUNISHING (Hard)",     // GAME_HARD
     ""
 };
 
@@ -155,9 +173,11 @@ static SDLGL_FIELD MenuChooseModule[16] =
     { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE, MENU_CHOOSEMODULE_FILTERFWD, ">" },
     { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE, MENU_CHOOSEMODULE_FWD, "->" },
     { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE, MENU_CHOOSEMODULE_BACK, "<-" },
+    { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE, 0, /* Number */ },  // @todo: Number/name of module
+    { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE, 1, /* Number */ },  // @todo: Number/name of module
+    { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE, 2, /* Number */ },  // @todo: Number/name of module
     { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE, MENU_CHOOSEMODULE_SELECT, "Select Module" },
     { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE, MENU_CHOOSEMODULE_EXIT, "Back" },
-    { SDLGL_TYPE_BUTTON, { 0, 0, 0, 0 }, MENU_CHOOSEMODULE /* Number */  },
     { 0 }
 };
 
@@ -262,19 +282,23 @@ static SDLGL_FIELD MenuGamePaused[] =
     { 0 }
 };
 
+// The module descriptors
+static NumModuleDesc = 0;
+static EGOFILE_MODULE_T ModuleDesc[MENU_MAX_MODULE + 2];
+
 /*******************************************************************************
 * CODE									                                       *
 *******************************************************************************/
 
 /*
  * Name:
- *     menuChooseModule
+ *     menuChooseModuleInput
  * Description:
  *     Handles the options for the single player menu
  * Input:
  *     event: To execute 
  */
-static int menuChooseModule(SDLGL_EVENT *event)
+static int menuChooseModuleInput(SDLGL_EVENT *event)
 {
 
     if (event -> code > 0)
@@ -310,13 +334,13 @@ static int menuChooseModule(SDLGL_EVENT *event)
 
 /*
  * Name:
- *     menuSinglePlayer
+ *     menuSinglePlayerInput
  * Description:
  *     Handles the options for the single player menu
  * Input:
  *     event: To execute 
  */
-static int menuSinglePlayer(SDLGL_EVENT *event)
+static int menuSinglePlayerInput(SDLGL_EVENT *event)
 {
     if (event -> code > 0)
     {
@@ -341,13 +365,13 @@ static int menuSinglePlayer(SDLGL_EVENT *event)
 
 /*
  * Name:
- *     menuOptions
+ *     menuOptionsInput
  * Description:
  *     Handles the options menu
  * Input:
  *     event: To execute 
  */
-static int menuOptions(SDLGL_EVENT *event)
+static int menuOptionsInput(SDLGL_EVENT *event)
 {
     if (event -> code > 0)
     {
@@ -400,7 +424,7 @@ static void menuDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     while(fields -> sdlgl_type  > 0)
     {
         sdlglstrDrawField(fields);
-
+        // @todo: Additional drawing functionality for special menus
         fields++;
     }
 
@@ -408,6 +432,48 @@ static void menuDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     event -> mou.w = 16;
     event -> mou.h = 16;
     sdlglstrDrawRectColNo(&event -> mou, SDLGL_COL_WHITE, 0);
+}
+
+/*
+ * Name:
+ *     menuLoadModuleDesc
+ * Description:
+ *     Load all the module descriptors
+ * Input:
+ *     None
+ * Output: Number of modules
+ */
+int menuLoadModuleDesc(void)
+{   
+    int i;
+    char *fname;    
+    char read_buf[MENU_MAX_MODULE + 2][24];
+    
+    
+    fname = egofileMakeFileName(EGOFILE_EGOBOODIR, "modlist.txt");
+    // Read in list of all module names
+    sdlglcfgRawLines(fname, read_buf[0], (MENU_MAX_MODULE * 24), 24, 0);
+    
+    for(i = 0; i < MENU_MAX_MODULE; i++)
+    {
+        if(read_buf[i][0] != 0)
+        {
+            // Set name of module to read the info for
+            egofileSetDir(EGOFILE_MODULEDIR, read_buf[i]);
+            // Now read the modules descriptor
+            egofileModuleDesc(&ModuleDesc[i + 1], EGOFILE_ACT_LOAD);
+            // Save the name of the directory
+            strcpy(ModuleDesc[i + 1].dir_name, read_buf[i]);
+            // @todo: Load the "title" texture for this module @note: (may be a 'png')
+            // Directory '/gamedat/title. (bmp | png)
+        }
+        else
+        {
+            return (i + 1); // Count starts at one
+        }
+    }
+    
+    return 0;
 }
 
 /* ========================================================================== */
@@ -479,10 +545,15 @@ int menuMain(char which)
     switch(which)
     {
         case MENU_CHOOSEMODULE:
+            // Load the module descriptors
+            if(!NumModuleDesc)
+            {
+                NumModuleDesc = menuLoadModuleDesc();
+            }
             /* -------- Create the choose module screen ---------- */
             /*
                 sdlglInputNew(menuDrawFunc,
-                            menuChooseModule,
+                            menuChooseModuleInput,
                             MenuChooseModule,
                             0,
                             0);
@@ -494,7 +565,7 @@ int menuMain(char which)
             /*
             menuAdjustPos(MenuSinglePlayer, 4);
             sdlglInputNew(menuDrawFunc,
-                          menuSinglePlayer,
+                          menuSinglePlayerInput,
                           MenuSinglePlayer,
                           0,
                           0);
@@ -505,7 +576,7 @@ int menuMain(char which)
             /* -------- Create the options screen ---------- */
             menuAdjustPos(MenuOptions, 4);
             sdlglInputNew(menuDrawFunc,
-                          menuOptions,
+                          menuOptionsInput,
                           MenuOptions,
                           0,
                           0);

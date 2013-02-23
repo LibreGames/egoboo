@@ -43,7 +43,7 @@
 typedef struct
 {
     unsigned int idsz;      // The IDSZ itself
-    int  level;             // Or value
+    int  level;             // value
 
 } IDSZ_T;
 

@@ -98,6 +98,7 @@ typedef enum
 #define MSG_TIP_GLOBAL  1
 #define MSG_TIP_LOCAL   2
 #define MSG_SCRIPT_LIST 3   // Is the list of messages for a script
+#define MSG_SCRIPT      4   // A message from the script 
 
 /*******************************************************************************
 * TYPEDEFS                                                                     *
@@ -128,7 +129,7 @@ char msgGet(int receiver, MSG_T *pmsg, int remove);
 int  msgGetNext(int prev_no, MSG_T *pmsg);
 char msgToString(MSG_T *pmsg, char *str_buf, int buf_len);
 void msgLoad(int which);        // Global and local tips, script messages
-int  msgGetText(int which, int msg_no, char *str_buf, int buf_len);
+char *msgGetText(int which);
 int  msgGetTextScript(MSG_T *pmsg, int msg_no, char *str_buf, int buf_len); 
 
 #endif  /* #define _MSG_H_ */

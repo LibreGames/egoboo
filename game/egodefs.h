@@ -1,9 +1,9 @@
 /*******************************************************************************
 *  EGODEFS.H                                                                   *
-*    - EGOBOO-Editor                                                           *     
+*    - EGOBOO-Game                                                             *
 *                                                                              *
 *    - Globally used definitions                                               *
-*      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
+*      (c) The Egoboo Team                                                     *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -24,7 +24,7 @@
 #define _EGODEFS_H_
 
 /*******************************************************************************
-* DEFINES 								                                       *
+* DEFINES                                                                      *
 *******************************************************************************/
 
 #define MPDFX_REF       0x00    /* MeshFX   */
@@ -52,6 +52,16 @@
 #define EGOMAP_HIT_OTHER 0x03      // Collsiion with other object detected
 
 #define EGOMAP_TILE_SIZE 128
+
+// Flag-Macros
+#define EGODEF_ISSET_FLAG(x, fno)  ((x) & (1 << fno))
+#define EGODEF_SET_FLAG(x, fno)    ((x) |= (1 << fno))
+#define EGODEF_GET_FLAG(x, fno)    (((x) & (1 << fno)) >> fno)
+#define EGODEF_CLEAR_FLAG(x, fno)  ((x) &= (~(1 << fno)))
+
+/*******************************************************************************
+* TYPEDEFS                                                                     *
+*******************************************************************************/
 
 /// Everything that is necessary to compute an objects interaction with the environment
 typedef struct

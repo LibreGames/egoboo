@@ -45,8 +45,8 @@
 #define EGOFILE_WORKDIR     1  /* Main directory for editor            */
 #define EGOFILE_BASICDATDIR 2  /* Basic data for game                  */
 #define EGOFILE_GAMEDATDIR  3  /* Gamedata directory in main directory */
-#define EGOFILE_OBJECTDIR   4  /* Directory for the objects            */
-#define EGOFILE_MODULEDIR   5  /* Directory for the modules            */
+#define EGOFILE_MODULEDIR   4  /* Directory for the objects            */
+#define EGOFILE_OBJECTDIR   5  /* Directory for the modules            */
 #define EGOFILE_EGOBOODIR   6  /* Main directory of game for globals   */
 #define EGOFILE_GLOBPARTDIR 7  /* Directory for global particles       */
 #define EGOFILE_SAVEGAMEDIR 8   // Directory for savegames
@@ -100,7 +100,7 @@ typedef struct
 
 typedef struct
 {
-    float x, y, z;          /* Vertex x / y / z                     */           
+    float v[3];             /* Vertex x / y / z                     */           
     unsigned char a;        /* Ambient lighting                     */
 
 } MESH_VTX_T;              
@@ -109,6 +109,7 @@ typedef struct
 {
     unsigned char map_loaded;   // A map is loaded  into this struct
     unsigned char draw_mode;    // Flags for display of map
+    int flags;                  // All purpose flags for game (script)
     int mem_size;               // Size of memory allocated (for editor)    
     
     int numvert;                // Number of vertices in map
@@ -157,7 +158,7 @@ typedef struct
     char obj_name[24 + 1];      /* Name of object to load [obj_name].obj   */
     char item_name[24 + 1];     ///< Never used ???
     int  slot_no;               ///< Not used anymore (the slots are set by loading time) 
-    float x_pos, y_pos, z_pos;  
+    float pos[3];               /// x, y, z
     char view_dir;
     int  money;
     char skin;
@@ -167,7 +168,7 @@ typedef struct
     char stt;       
     char gho;       ///< is T to make the character a ghost, F for default. Unused
     char team;                  
-    /* --- Info for editor -- */
+    // Info for edit and saving a character
     int  rec_no;
     int  inventory[12];   /* Number of characters attached to this for display  */      
     char *inv_name[12];   /* Object-Name of character in inventory              */
