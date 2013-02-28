@@ -26,7 +26,8 @@
 *******************************************************************************/
 
 #include <stdio.h>      /* sscanf() */
-#include <string.h>     /* strlwr() */
+#include <string.h>
+#include <ctype.h>      // tolower()
 
 #include "sdlglcfg.h"   /* Read egoboo text files eg. passage, spawn    */
 
@@ -48,7 +49,6 @@
 //Levels
 #define MAXBASELEVEL        6   ///< Basic Levels 0-5
 #define MAXLEVEL           20   ///< Absolute max level
-#define CAP_MAX_PRT        10   /// Maximum particles for character profile
 
 #define GRIP_VERTS          4
 
@@ -79,6 +79,12 @@
 // team
 #define TEAM_MAX            32  // Mum number of teams
 #define TEAM_MAX_MEMBER     6   // Maximum members of a team
+
+// Damage Flags
+#define DAMAGE_INVERT   0x01
+#define DAMAGE_CHARGE   0x02
+#define DAMAGE_MANA     0x04
+#define DAMAGE_INVICTUS 0x08
 
 /*******************************************************************************
 * ENUMS								                                           *
@@ -134,10 +140,10 @@ typedef struct
     // For graphics
     int            mdl_no;          /// < Display model for this character profile
     // skins
-    char           skinname[CHAR_MAX_SKIN][MAXCAPNAMESIZE];   ///< Skin name
-    unsigned short skincost[CHAR_MAX_SKIN];                   ///< Store prices
-    float          maxaccel[CHAR_MAX_SKIN];                   ///< Acceleration for each skin
-    unsigned char  skindressy;                           ///< Bits to tell whether the skins are "dressy"
+    char           skinname[CHAR_MAX_SKIN][MAXCAPNAMESIZE]; ///< Skin name
+    int            skincost[CHAR_MAX_SKIN];                 ///< Store prices
+    int            maxaccel[CHAR_MAX_SKIN];                 ///< Acceleration for each skin
+    char           skindressy;                              ///< Bits to tell whether the skins are "dressy"
 
     // overrides
     int           skin_override;                  ///< -1 or 0-3.. For import
@@ -145,7 +151,7 @@ typedef struct
     int           state_override;                 ///< 0 for normal
     int           content_override;               ///< 0 for normal
 
-    unsigned int  idsz[IDSZ_COUNT];                   ///< ID strings
+    IDSZ_T        idsz[IDSZ_COUNT];               ///< ID strings
 
     // inventory
     unsigned char ammo_max;                        ///< Ammo stuff
@@ -158,7 +164,7 @@ typedef struct
     // life
     CAP_STAT_T   life_stat;                     ///< Life statistics
     unsigned int life_return;                    ///< Life regeneration
-    unsigned int life_heal;
+    float        life_heal;
     unsigned int life_spawn;                     ///< Life left from last module
 
     // mana
@@ -194,34 +200,30 @@ typedef struct
     float anim_speed_sneak;             ///< Sneak threshold
     float anim_speed_walk;              ///< Walk threshold
     float anim_speed_run;               ///< Run threshold
-    unsigned char fly_height;           ///< Fly height
-    char  waterwalk;                    ///< Walk on water?
+    unsigned char fly_height;           ///< Fly height                     
 
     // status graphics
     unsigned char life_color;           ///< Life bar color
-    unsigned char mana_color;           ///< Mana bar color
-    char draw_icon;                     ///< Draw icon
+    unsigned char mana_color;           ///< Mana bar color                       
 
     // model graphics
-    unsigned char flashand;                      ///< Flashing rate
-    unsigned char alpha;                         ///< Transparency
-    unsigned char light;                         ///< Light blending
-    char          transferblend;                 ///< Transfer blending to rider/weapons
-    unsigned char sheen;                         ///< How shiny it is ( 0-15 )
-    char enviro;                        ///< Phong map this baby?
+    unsigned char flashand;             ///< Flashing rate
+    unsigned char alpha;                ///< Transparency
+    unsigned char light;                ///< Light blending    
+    unsigned char sheen;                ///< How shiny it is ( 0-15 )   
     int  uoffvel;                       ///< "horizontal" texture movement rate
     int  voffvel;                       ///< "vertical" texture movement rate
     char uniformlit;                    ///< Bad lighting?
-    char reflect;                        ///< Draw the reflection
-    char alwaysdraw;                     ///< Always render
-    char forceshadow;                    ///< Draw a shadow?
-    char ripple;                         ///< Spawn ripples?unsigned
+    char reflect;                       ///< Draw the reflection
+    char alwaysdraw;                    ///< Always render
+    char forceshadow;                   ///< Draw a shadow?
+    char ripple;                        ///< Spawn ripples? unsigned
 
     // attack blocking info
-    unsigned short iframefacing;                  ///< Invincibility frame
-    unsigned short iframeangle;
-    unsigned short nframefacing;                  ///< Normal frame
-    unsigned short nframeangle;
+    int iframefacing;                  ///< Invincibility frame
+    int iframeangle;
+    int nframefacing;                  ///< Normal frame
+    int nframeangle;
 
     // defense
     char          resistbumpspawn;                          ///< Don't catch fire
@@ -230,48 +232,28 @@ typedef struct
     unsigned char dmg_modify[DAMAGE_COUNT][CHAR_MAX_SKIN];
 
     // xp
-    int   experience_forlevel[MAXLEVEL];    ///< Experience needed for next level
+    int   exp_forlevel[MAXLEVEL];    ///< Experience needed for next level
     int   experience[2];                    ///< Starting experience
-    unsigned short experience_worth;               ///< Amount given to killer/user
-    float experience_exchange;            ///< Adds to worth
-    float experience_rate[XP_COUNT];
+    unsigned short exp_worth;        ///< Amount given to killer/user
+    float exp_exchange;              ///< Adds to worth
+    float exp_rate[XP_COUNT];
 
     // sound
     char  sound_index[SOUND_COUNT];       ///< a map for soundX.wav to sound types
 
-    // flags: @todo: Flags packed into one integer
-    int  fprops;                        ///< Properties as flags
-    char isequipment;                    ///< Behave in silly ways
-    char isitem;                         ///< Is it an item?
-    char ismount;                        ///< Can you ride it?
-    char isstackable;                    ///< Is it arrowlike?
-    char invictus;                       ///< Is it invincible?
-    char platform;                       ///< Can be stood on?
-    char canuseplatforms;                ///< Can use platforms?
-    char cangrabmoney;                   ///< Collect money?
-    char canopenstuff;                   ///< Open chests/doors?
-    char canbedazed;                     ///< Can it be dazed?
-    char canbegrogged;                   ///< Can it be grogged?
-    char istoobig;                       ///< Can't be put in pack
-    char isranged;                       ///< Flag for ranged weapon
-    char nameknown;                      ///< Is the class name known?
-    char usageknown;                     ///< Is its usage known
-    char cancarrytonextmodule;           ///< Take it with you?
-    unsigned char damagetargettype;      ///< For AI DamageTarget
-    char slotvalid[SLOT_COUNT];          ///< Left/Right hands valid
-    char ridercanattack;                 ///< Rider attack?
-    unsigned char kursechance;                    ///< Chance of being kursed
-    char hidestate;                      ///< Don't draw when...
-    char isvaluable;                     ///< Force to be valuable
+    // Booleans as flags packed into one integer    
+    int fprops;                        ///< Character-Profile properties as flags
+    
+    unsigned char damagetargettype;      ///< For AI DamageTarget   
+    char kursechance;                    ///< Chance of being kursed
+    char hidestate;                      ///< Don't draw when...                       
     int  spelleffect_type;               ///< is the object that a spellbook generates
 
-    // item usage
-    char          needskillidtouse;               ///< Check IDSZ first?
+    // item usage    
     unsigned char weaponaction;                   ///< Animation needed to swing
-    short int     manacost;                       ///< How much mana to use this object?
-    unsigned char attack_attached;                ///< Do we have attack particles?
+    float         manacost;                       ///< How much mana to use this object?
+    char          attack_attached;                ///< Do we have attack particles?
     char          attack_pip;                     ///< What kind of attack particles?
-    char          attack_fast;                    ///< Ignores the default reload time?
 
     float str_bonus;                      ///< Strength     damage factor
     float wis_bonus;                      ///< Wisdom       damage factor
@@ -279,27 +261,26 @@ typedef struct
     float dex_bonus;                      ///< dexterity    damage factor
 
     // special particle effects
-    unsigned char attachedprt_amount;             ///< Number of sticky particles
-    unsigned char attachedprt_reaffirmdamagetype; ///< Re-attach sticky particles? Relight that torch...
-    int           attachedprt_pip;                ///< Which kind of sticky particle
-    unsigned char gopoofprt_amount;               ///< Amount of poof particles
-    short int     gopoofprt_facingadd;            ///< Angular spread of poof particles
-    int           gopoofprt_pip;                  ///< Which poof particle
-    unsigned char blud_valid;                     ///< Has blud? ( yuck )
-    int           blud_pip;                       ///< What kind of blud?
+    char attachedprt_amount;                  ///< Number of sticky particles
+    char attachedprt_reaffirmdamagetype;      ///< Re-attach sticky particles? Relight that torch...
+    int       attachedprt_pip;                ///< Which kind of sticky particle
+    char      gopoofprt_amount;               ///< Amount of poof particles
+    int       gopoofprt_facingadd;            ///< Angular spread of poof particles
+    int       gopoofprt_pip;                  ///< Which poof particle                
+    int       blud_pip;                       ///< What kind of blud?
 
     // skill system
-    IDSZ_T       skills[MAX_IDSZ_MAP_SIZE];
-    int          see_invisible_level;             ///< Can it see invisible?
-
-    // random stuff
-    char       stickybutt;      ///< Stick to the ground?         
+    IDSZ_T      skills[MAX_IDSZ_MAP_SIZE];
+    int         see_invisible_level;             ///< Can it see invisible?
+    char        item_type;                     ///< New value to check for scripts     
     // particles for this profile, loaded in consecutive order
     int prt_first_no;           // Number of first particle
     int prt_cnt;                // Total number of particles
     int sound_first_no;         // Number of first local sound
     int sound_cnt;              // Number of local sounds
     int script_no;              // Number of script belonging to this one
+    // Unused data
+    char life_add, mana_add;
     
 } CAP_T;
 
@@ -308,6 +289,15 @@ typedef struct
 * DATA									                                   *
 *******************************************************************************/
 
+// Load-Buffer for 'raw' data which is converted into 'packed' data
+static char BoolVal[33];        // Boolean values
+static char Defenses[20][20];   // Differences to translate to values
+static char IdszStrings[8][10];
+static char ExpIdsz[15][18];
+static char DamageType[4]; 
+static char WeaponAction[20];
+
+// The different lists
 static TEAM_T TeamList[TEAM_MAX + 2];     
 static CAP_T  CapList[CHAR_MAX_CAP + 2];
 static CHAR_T CharList[CHAR_MAX + 2];
@@ -369,9 +359,151 @@ static SDLGLCFG_NAMEDVALUE CapVal[] =
     { SDLGLCFG_VAL_INT, &CapList[0].flashand },
     { SDLGLCFG_VAL_INT, &CapList[0].alpha },
     { SDLGLCFG_VAL_INT, &CapList[0].light },
-    { SDLGLCFG_VAL_BOOLEAN, &CapList[0].transferblend },
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFTRANSFERBLEND] },
     { SDLGLCFG_VAL_INT, &CapList[0].sheen },
-    { SDLGLCFG_VAL_BOOLEAN, &CapList[0].enviro },
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFENVIRO] },
+    { SDLGLCFG_VAL_FLOAT, &CapList[0].uoffvel },   // FLOAT_TO_FFFF( fTmp ); ??
+    { SDLGLCFG_VAL_FLOAT, &CapList[0].voffvel },   // FLOAT_TO_FFFF( fTmp ); ??
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFSTICKYBUTT] },
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFINVICTUS] },
+    { SDLGLCFG_VAL_INT, &CapList[0].nframefacing },
+    { SDLGLCFG_VAL_INT, &CapList[0].nframeangle },
+    { SDLGLCFG_VAL_INT, &CapList[0].iframefacing },
+    { SDLGLCFG_VAL_INT, &CapList[0].iframeangle },
+    // Skin defenses ( 4 skins )
+    { SDLGLCFG_VAL_STRING, Defenses[0], 20 },   // Base defense rating of skin
+    // Defense shifts for different damage types
+    { SDLGLCFG_VAL_STRING, Defenses[1], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[2], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[3], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[4], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[5], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[6], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[7], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[8], 20 },
+    // Inversion flag chars
+    { SDLGLCFG_VAL_STRING, Defenses[9], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[10], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[11], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[12], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[13], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[14], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[15], 20 },
+    { SDLGLCFG_VAL_STRING, Defenses[16], 20 },
+    // Acceleration rate
+    { SDLGLCFG_VAL_STRING, Defenses[17], 20 },
+    // Experience per level
+    { SDLGLCFG_VAL_INT, &CapList[0].exp_forlevel[1] },
+    { SDLGLCFG_VAL_INT, &CapList[0].exp_forlevel[2] },
+    { SDLGLCFG_VAL_INT, &CapList[0].exp_forlevel[3] },
+    { SDLGLCFG_VAL_INT, &CapList[0].exp_forlevel[4] },
+    { SDLGLCFG_VAL_INT, &CapList[0].exp_forlevel[5] },
+    // Starting experience
+    { SDLGLCFG_VAL_IPAIR, &CapList[0].experience[0] },
+    { SDLGLCFG_VAL_INT, &CapList[0].exp_worth },
+    { SDLGLCFG_VAL_FLOAT, &CapList[0].exp_exchange },
+    // Experience rate
+    { SDLGLCFG_VAL_FLOAT, &CapList[0].exp_rate[0] },
+    { SDLGLCFG_VAL_FLOAT, &CapList[1].exp_rate[0] },
+    { SDLGLCFG_VAL_FLOAT, &CapList[2].exp_rate[0] },
+    { SDLGLCFG_VAL_FLOAT, &CapList[3].exp_rate[0] },
+    { SDLGLCFG_VAL_FLOAT, &CapList[4].exp_rate[0] },
+    { SDLGLCFG_VAL_FLOAT, &CapList[5].exp_rate[0] },
+    { SDLGLCFG_VAL_FLOAT, &CapList[6].exp_rate[0] },
+    { SDLGLCFG_VAL_FLOAT, &CapList[7].exp_rate[0] },
+    // IDSZ Identification tags ( [NONE] is valid )    
+    { SDLGLCFG_VAL_STRING, IdszStrings[0], 10 },    // Parent ID
+    { SDLGLCFG_VAL_STRING, IdszStrings[1], 10 },    // Type ID
+    { SDLGLCFG_VAL_STRING, IdszStrings[2], 10 },    // Skill ID
+    { SDLGLCFG_VAL_STRING, IdszStrings[3], 10 },    // Special ID
+    { SDLGLCFG_VAL_STRING, IdszStrings[4], 10 },    // Hate group ID
+    { SDLGLCFG_VAL_STRING, IdszStrings[5], 10 },    // Vuilnerability ID
+    // Item and damage flags
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFITEM] },    // pcap->isitem
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFMOUNT] },   // pcap->ismount
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFSTACKABLE] },   // pcap->isstackable
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFNAMEKNOWN] },   // pcap->nameknown
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFUSAGEKNOWN] },   // pcap->usageknown
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFCANCARRYTONEXTMODULE] },   // pcap->cancarrytonextmodule
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFNEEDSKILLIDTOUSE] },   // pcap->needskillidtouse
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFPLATFORM] },   // pcap->platform
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFCANGRABMONEY] },   // pcap->cangrabmoney
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFCANOPENSTUFF] },   // pcap->canopenstuff
+    // Other item and damage stuff
+    // pcap->damagetargettype
+    { SDLGLCFG_VAL_ONECHAR, &DamageType[0] },  // fget_next_damage_type( fileread );
+    // pcap->weaponaction     = action_which( fget_next_char( fileread ) );    
+    { SDLGLCFG_VAL_STRING, WeaponAction, 20 },
+    // Particle attachments
+    { SDLGLCFG_VAL_INT, &CapList[0].attachedprt_amount },
+    // pcap->attachedprt_reaffirmdamagetype     
+    { SDLGLCFG_VAL_ONECHAR, &DamageType[1] },  // fget_next_damage_type( fileread );
+    { SDLGLCFG_VAL_INT, &CapList[0].attachedprt_pip },
+    // Character hands
+    { SDLGLCFG_VAL_INT, &CapList[0].attachedprt_pip },
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFLEFTGRIPVALID] },
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFRIGHTGRIPVALID] },
+    // Attack order ( weapon )
+    { SDLGLCFG_VAL_BOOLEAN, &CapList[0].attack_attached },
+    { SDLGLCFG_VAL_CHAR, &CapList[0].attack_pip },
+    // GoPoof
+    { SDLGLCFG_VAL_CHAR, &CapList[0].gopoofprt_amount },
+    { SDLGLCFG_VAL_INT, &CapList[0].gopoofprt_facingadd },
+    { SDLGLCFG_VAL_INT, &CapList[0].gopoofprt_pip },
+    // Blud 
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFBLUDVALID] },
+    { SDLGLCFG_VAL_INT, &CapList[0].blud_pip },
+    // Stuff I forgot
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFWATERWALK] },   // pcap->waterwalk
+    { SDLGLCFG_VAL_FLOAT, &CapList[0].dampen },             // pcap->dampen  
+    // More stuff I forgot
+    { SDLGLCFG_VAL_FLOAT, &CapList[0].life_heal },          // pcap->life_heal
+    { SDLGLCFG_VAL_FLOAT, &CapList[0].manacost },           // pcap->manacost
+    { SDLGLCFG_VAL_INT, &CapList[0].life_return },          // pcap->life_return
+    { SDLGLCFG_VAL_CHAR, &CapList[0].stoppedby },           // pcap->stoppedby
+    // Skin names
+    { SDLGLCFG_VAL_STRING, CapList[0].skinname[0], MAXCAPNAMESIZE },
+    { SDLGLCFG_VAL_STRING, CapList[0].skinname[1], MAXCAPNAMESIZE },
+    { SDLGLCFG_VAL_STRING, CapList[0].skinname[2], MAXCAPNAMESIZE },
+    { SDLGLCFG_VAL_STRING, CapList[0].skinname[3], MAXCAPNAMESIZE },
+    // Skin costs
+    { SDLGLCFG_VAL_INT, &CapList[0].skincost[0] },
+    { SDLGLCFG_VAL_INT, &CapList[0].skincost[1] },
+    { SDLGLCFG_VAL_INT, &CapList[0].skincost[2] },
+    { SDLGLCFG_VAL_INT, &CapList[0].skincost[3] },
+    /// \note ZF@> Deprecated, but keep here for backwards compatability
+    { SDLGLCFG_VAL_FLOAT, &CapList[0].str_bonus },          // pcap->str_bonus
+    // Another memory lapse
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFRIDERCANNOTATTACK] },    // !pcap->ridercanattack
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFCANBEDAZED] },          // pcap->canbedazed
+    { SDLGLCFG_VAL_BOOLEAN, &BoolVal[CHAR_CFCANBEGROGGED] },        // pcap->canbegrogged
+       
+    // Two unused slots
+    { SDLGLCFG_VAL_CHAR, &CapList[0].life_add },    // !!!BAD!!! Life add
+    { SDLGLCFG_VAL_CHAR, &CapList[0].mana_add },    // !!!BAD!!! Mana add
+    //
+    { SDLGLCFG_VAL_BOOLEAN, &CapList[0].see_invisible_level },  // 0 or 1
+    { SDLGLCFG_VAL_CHAR, &CapList[0].kursechance },     // pcap->kursechance
+    // Sounds
+    { SDLGLCFG_VAL_CHAR, &CapList[0].sound_index[SOUND_FOOTFALL] }, // Footfall sound
+    { SDLGLCFG_VAL_CHAR, &CapList[0].sound_index[SOUND_JUMP] },     // Jump sound
+    // Expansions
+    // IDSZ values (maximum 12 different IDSZs)
+    { SDLGLCFG_VAL_STRING, ExpIdsz[0], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[1], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[2], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[3], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[4], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[5], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[6], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[7], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[8], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[9], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[10], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[11], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[12], 18 },
+    { SDLGLCFG_VAL_STRING, ExpIdsz[13], 18 },
+    
 	{ 0 }
 };
 
@@ -399,10 +531,10 @@ static char charSetupXPTable(CAP_T *pcap)
     // Calculate xp needed
     for (level = MAXBASELEVEL; level < MAXLEVEL; level++ )
     {
-        xpneeded = pcap->experience_forlevel[MAXBASELEVEL - 1];
+        xpneeded = pcap->exp_forlevel[MAXBASELEVEL - 1];
         xpneeded += ( level * level * level * 15 );
         xpneeded -= (( MAXBASELEVEL - 1 ) * ( MAXBASELEVEL - 1 ) * ( MAXBASELEVEL - 1 ) * 15 );
-        pcap->experience_forlevel[level] = xpneeded;
+        pcap->exp_forlevel[level] = xpneeded;
     }
     
     return 1;
@@ -446,7 +578,7 @@ static int charNewCap(void)
 
             // Clear expansions...
             pcap->reflect = 1;
-            pcap->isvaluable = -1;
+            CHAR_BIT_CLEAR(pcap->fprops, CHAR_CFVALUABLE);
 
             // either these will be overridden by data in the data.txt, or
             // they will be limited by the spawning character's max stats
@@ -491,6 +623,240 @@ static int charNewChar(void)
     }
 
     return 0;
+}
+
+/*
+ * Name:
+ *     charCompleteCap
+ * Description:
+ *     Completes given 'pcap' by  data read in 'raw' from file 
+ * Input:
+ *     pcap *: Pointer on pcap-data to complete from 'raw' data
+ */
+void charCompleteCap(CAP_T *pcap)
+{
+    char * ptr, idsz_str[20];
+    IDSZ_T loc_idsz;
+    int i, dmg_type;
+    int ivalue[5];
+    char cvalue[5];
+    
+    
+    // Resist burning and stuck arrows with nframe angle of 1 or more
+    if(pcap->nframeangle > 0)
+    {
+        if (pcap->nframeangle == 1)
+        {
+            pcap->nframeangle = 0;
+        }
+    }
+    
+    // ** 'Translate' raw to profile data **
+    // Change booleans to flags
+    for (i = 0; i < 32; i++)
+    {
+        if(BoolVal[i] != 0)
+        {
+            pcap->fprops |= (int)(1 << i);
+        }
+    }
+
+    // Skin defenses ( 4 skins )
+    sscanf(Defenses[0], "%d%d%d%d", &ivalue[0], &ivalue[1], &ivalue[2], &ivalue[3]);
+    for(i = 0; i < CHAR_MAX_SKIN; i++)
+    {
+        pcap->defense[i] = (unsigned char)ivalue[i]; // CLIP( iTmp, 0, 0xFF );
+    }
+
+    for(dmg_type = 0; dmg_type < DAMAGE_COUNT; dmg_type++)
+    {
+        sscanf(Defenses[dmg_type + 1], "%d%d%d%d", &ivalue[0], &ivalue[1], &ivalue[2], &ivalue[3]);
+        for(i = 0; i < CHAR_MAX_SKIN; i++)
+        {
+            pcap->dmg_modify[dmg_type][i] = (unsigned char)ivalue[i];
+        }
+    }
+    
+    for(dmg_type = 0; dmg_type < DAMAGE_COUNT; dmg_type++)
+    {
+        sscanf(Defenses[dmg_type + 9], "%c%c%c%c", &cvalue[0], &cvalue[1], &cvalue[2], &cvalue[3]);
+
+        for(i = 0; i < CHAR_MAX_SKIN; i++ )
+        {
+            cvalue[i] = (char)toupper(cvalue[i]);
+            switch(cvalue[i])
+            {
+                case 'T': pcap->dmg_modify[dmg_type][i] |= DAMAGE_INVERT;   break;
+                case 'C': pcap->dmg_modify[dmg_type][i] |= DAMAGE_CHARGE;   break;
+                case 'M': pcap->dmg_modify[dmg_type][i] |= DAMAGE_MANA;     break;
+                case 'I': pcap->dmg_modify[dmg_type][i] |= DAMAGE_INVICTUS; break;
+                    // F is nothing
+                default: break;
+            }
+        }
+    }
+    
+    // Acceleration rate
+    sscanf(Defenses[17], "%d%d%d%d", &ivalue[0], &ivalue[1], &ivalue[2], &ivalue[3]);
+    for(i = 0; i < CHAR_MAX_SKIN; i++)
+    {
+        pcap->maxaccel[i] = ivalue[i]; 
+    }
+    
+    // Experience and level data
+    pcap->exp_forlevel[0] = 0;
+    pcap->experience[0] /= 256;
+    pcap->experience[1] /= 256;
+    
+    // IDSZ tags
+    for(i = 0; i < 6; i++)
+    {
+        idszStringtoIDSZ(IdszStrings[i], &pcap->idsz[i], NULL);
+    }    
+    // Other value adjustments
+    pcap->life_heal *= 256;
+    pcap->manacost  *= 256;
+    
+    // assume the normal dependence of ripple on isitem
+    if(CHAR_BIT_ISSET(pcap->fprops, CHAR_CFITEM))
+    {
+        CHAR_BIT_CLEAR(pcap->fprops, CHAR_CFRIPPLE);    // pcap->ripple = !pcap->isitem;
+    } 
+    
+    // assume a round object
+    pcap->bump_sizebig = pcap->bump_size * 1.414;
+    
+    if(CHAR_BIT_ISSET(pcap->fprops, CHAR_CFUSAGEKNOWN))
+    {
+         // assume the normal icon usage
+        CHAR_BIT_SET(pcap->fprops, CHAR_CFDRAWICON);    // pcap->draw_icon = pcap->usageknown;
+    }
+    
+    if(! CHAR_BIT_ISSET(pcap->fprops, CHAR_CFPLATFORM))
+    {   
+        // assume normal platform usage
+        CHAR_BIT_SET(pcap->fprops, CHAR_CFCANUSEPLATFORMS); // pcap->canuseplatforms = !pcap->platform;
+    }
+    
+    // Read expansions
+    for(i = 0; i < 13; i++)
+    {
+        idszStringtoIDSZ(ExpIdsz[i], &loc_idsz, idsz_str);
+        // Now react, epending on type of IDSZ
+        switch(loc_idsz.idsz)
+        {
+            case 'DRES':
+                CHAR_BIT_SET(pcap->skindressy, loc_idsz.value);                
+                break;
+            case 'GOLD':
+                pcap->money = loc_idsz.value;
+                break;
+            case 'STUK':
+                // pcap->resistbumpspawn = ( 0 != ( 1 - fget_int( fileread ) ) );
+                break;
+            case 'PACK':
+                // pcap->istoobig = !( 0 != fget_int( fileread ) );
+                break;
+            case 'VAMP':
+                // pcap->reflect = !( 0 != fget_int( fileread ) );
+                break;
+            case 'DRAW':
+                // pcap->alwaysdraw = ( 0 != fget_int( fileread ) );
+                break;
+            case 'RANG':
+                // pcap->isranged = ( 0 != fget_int( fileread ) );
+                break;
+            case 'HIDE':
+                // pcap->hidestate = fget_int( fileread );
+                break;
+            case 'EQUI':
+                // pcap->isequipment = ( 0 != fget_int( fileread ) );
+                break;
+            case 'SQUA':
+                // pcap->bump_sizebig = pcap->bump_size * 2;
+                break;
+            case 'ICON':
+                // pcap->draw_icon = ( 0 != fget_int( fileread ) );
+                break;
+            case 'SHAD':
+                // pcap->forceshadow = ( 0 != fget_int( fileread ) );
+                break;
+            case 'SKIN':
+                // pcap->skin_override = fget_int( fileread ) & 3;
+                break;
+            case 'CONT':
+                // pcap->content_override = fget_int( fileread );
+                break;
+            case 'STAT':
+                // pcap->state_override = fget_int( fileread );
+                break;
+            case 'LEVL':
+                // pcap->level_override = fget_int( fileread );
+                break;
+            case 'PLAT':
+                // pcap->canuseplatforms = ( 0 != fget_int( fileread ) );
+                break;
+            case 'RIPP':
+                // pcap->ripple = ( 0 != fget_int( fileread ) );
+                break;
+            case 'VALU':
+                // pcap->isvaluable = fget_int( fileread );
+                break;
+            case 'LIFE':
+                // pcap->life_spawn = 256.0f * fget_float( fileread );
+                break;
+            case 'MANA':
+                // pcap->mana_spawn = 256.0f * fget_float( fileread );
+                break;
+            case 'BOOK':
+                // pcap->spelleffect_type = fget_int( fileread ) % MAX_SKIN;
+                break;
+            case 'FAST':
+                // pcap->attack_fast = ( 0 != fget_int( fileread ) );
+                break;
+            // Damage bonuses from stats
+            case 'STRD':
+                // pcap->str_bonus = fget_float( fileread );
+                break;
+            case 'INTD':
+                // pcap->int_bonus = fget_float( fileread );
+                break;
+            case 'WISD':
+                // pcap->wis_bonus = fget_float( fileread );
+                break;
+            case 'DEXD':
+                // pcap->dex_bonus = fget_float( fileread );
+                break;
+            case 'MODL':
+                ptr = strpbrk(idsz_str, "SBH");
+                {
+                    while(NULL != ptr)
+                    {
+                        if('S' == *ptr)
+                        {
+                            // pcap->bump_override_size = 1;
+                        }
+                        else if('B' == *ptr)
+                        {
+                            // pcap->bump_override_sizebig = 1;
+                        }
+                        else if ('H' == *ptr)
+                        {
+                            // pcap->bump_override_height = 1;
+                        }
+
+                        ptr = strpbrk(idsz_str, "SBH" );
+                    }
+                }
+                break;
+                // If it is none of the predefined IDSZ extensions then add it as a new skill
+            default:
+                idszMapAdd(pcap->skills, MAX_IDSZ_MAP_SIZE, &loc_idsz);
+                break;
+        }
+    }
+     // @todo: Set itemtype
+    // item_type = ;
 }
 
 /*
@@ -586,7 +952,14 @@ static int charNewChar(void)
             strcpy(pcap->cap_name, objname);  
             // Read the basic profile
             sprintf(fname, "%sdata.txt", fdir); 
-            sdlglcfgEgobooValues(fname, CapVal, 0);
+            // Do the 'raw' loading
+            if(! sdlglcfgEgobooValues(fname, CapVal, 0))
+            {
+                // @todo: Mark 'pcap' as unused
+                charCompleteCap(pcap);
+                return 0;
+            }
+           
 
             /* @todo: Load the real data
             // @todo: Function for loading the naming data
@@ -651,7 +1024,7 @@ static void charDoLevelUp(const int char_no)
     if (curlevel < MAXLEVEL)
     {
         xpcurrent = pchar->experience;
-        xpneeded  = pcap->experience_forlevel[curlevel];
+        xpneeded  = pcap->exp_forlevel[curlevel];
 
         if ( xpcurrent >= xpneeded )
         {
@@ -708,7 +1081,7 @@ static void charGiveXPOne(CHAR_T *pchar, int amount, int xp_type)
     {
         pcap  = &CapList[pchar->cap_no];
         // Multiplier based on character profile
-        newamount = amount * pcap->experience_rate[xp_type];
+        newamount = amount * pcap->exp_rate[xp_type];
     }
 
     // Figure out how much experience to give
@@ -857,7 +1230,7 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
 
     pcap = &CapList[pchar->cap_no];      
 
-    CHAR_BIT_SET(pchar->var_props, CHAR_FKILLED);
+    msgSend(killer_no, char_no, MSG_KILLED, NULL);
     CHAR_BIT_SET(pchar->cap_props, CHAR_CFPLATFORM);
     CHAR_BIT_SET(pchar->cap_props, CHAR_CFCANUSEPLATFORMS);
 
@@ -870,7 +1243,7 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
     // chr_instance_set_action_keep( &( pchar->inst ), char );
 
     // Give kill experience
-    experience = pcap->experience_worth + (pchar->experience * pcap->experience_exchange);
+    experience = pcap->exp_worth + (pchar->experience * pcap->exp_exchange);
     pkiller = &CharList[killer_no];
 
     killer_team = pkiller->team[CHARSTAT_ACT];
@@ -1023,8 +1396,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             pcap  = &CapList[cap_no];
             pchar = &CharList[char_no];
 
-            // @todo: Complete creation of character profile
-            // @todo: Change boolean values to flags
+            // @todo: Complete creation of character profile           
             pchar->id      = char_no;         /* Number of slot > 0: Is occupied            */
             pchar->cap_no  = cap_no;          /* Has this character profile, this script_no */
             pchar->mdl_no  = pcap->mdl_no;    /* Number of model for display          */
@@ -1998,7 +2370,7 @@ int charGetSkill(int char_no, unsigned int whichskill)
     pskill = idszMapGet(pchar->skills, whichskill, CHAR_MAX_SKILL);
     if (pskill != NULL )
     {
-        return pskill->level;
+        return pskill->value;
     }
     
     // Truesight allows reading
@@ -2008,7 +2380,7 @@ int charGetSkill(int char_no, unsigned int whichskill)
 
         if (pskill != NULL && pchar->see_invisible_level > 0 )
         {
-            return pchar->see_invisible_level + pskill->level;
+            return pchar->see_invisible_level + pskill->value;
         }
     }
 
@@ -2061,7 +2433,7 @@ int charGetSkill(int char_no, unsigned int whichskill)
     }    
     
     // @todo: set the character's maximum acceleration
-    // chr_set_maxaccel( pchar, pcap->skin_info.maxaccel[lskin_no] );
+    // chr_set_maxaccel( pchar, pcap->skin_info.maxaccel[skin_no] );
     
     return skin_no; 
 }
@@ -2145,19 +2517,37 @@ void charUpdateAll(float sec_passed)
     if(stat_clock <= 0.0)
     {
         // Loop trough all characters in list, ignore items
+
+
         pchar = &CharList[1];
         
         while(pchar->cap_no != 0)
         {
+            // Countdown the 'time_out' timer and send a message if it's done
+            if(pchar->timer_set)
+            {
+                pchar->timer--;
+                
+                if(pchar->timer <= 0)
+                {
+                    pchar->timer_set = 0;
+                    pchar->timer     = 0;
+                    msgSend(0, pchar->id, MSG_TIMEOUT, NULL);
+                }
+
+            }
+
+            // And now the other timers and
             for(i = 0; i < CHAR_MAX_TIMER; i++)
             {
                 if(pchar->timers[i].which != 0)
-                {   
-                    pchar->timers[i].clock_sec--;;
-                    
+                {
+                    pchar->timers[i].clock_sec--;
+
                     if(pchar->timers[i].clock_sec <= 0)
                     {
                         // @todo: Do proper action if the time for this clock is over
+                        //        e. g. end of 'spell', send possible message
                         // Mark the clock as free slot
                         pchar->timers[i].which     = 0;
                         pchar->timers[i].clock_sec = 0;
@@ -2190,19 +2580,20 @@ void charCallForHelp(const int char_no)
     
     pchar = &CharList[char_no];
     team = pchar->team[CHARSTAT_ACT];
-    
-    
+
+
+    // @todo: Only call these for help which are on the teams list ?!
     TeamList[team].sissy_no = char_no;
-    
+
     friends = ~pchar->t_foes;
-    
+
     pother = &CharList[1];
-    
+
     while(pother->id != 0)
     {
         if(pother != pchar && (friends & ~pother->t_foes))
-        { 
-            msgSend(0, pother->id, MSG_CALLEDFORHELP, NULL);
+        {
+            msgSend(char_no, pother->id, MSG_CALLEDFORHELP, NULL);
         }
         pother++;
     }

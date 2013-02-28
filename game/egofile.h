@@ -116,7 +116,6 @@ typedef struct
     int numfreevert;            // Number of free vertices for edit
     int tiles_x, tiles_y;       // Size of mesh in tiles          
     int numfan;                 // Size of map in 'fans' (tiles_x * tiles_y)
-    int watershift;             // Depends on size of map
     
     float edgex;                // Borders of mesh
     float edgey;                

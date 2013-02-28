@@ -43,7 +43,7 @@
 typedef struct
 {
     unsigned int idsz;      // The IDSZ itself
-    int  level;             // value
+    int  value;             // level
 
 } IDSZ_T;
 
@@ -53,10 +53,10 @@ typedef struct
 
 /* ============ Tools for loading and saving ========== */
 void idszIDSZtoString(IDSZ_T *idsz, char *idsz_str);
-void idszStringtoIDSZ(char *idsz_str, IDSZ_T *idsz);
+void idszStringtoIDSZ(char *idsz_str, IDSZ_T *idsz, char *val_str);
 
 /* =========== Handling IDSZ-Lists ========================== */
-void idszMapAdd(IDSZ_T *idsz_list, unsigned int idsz, int list_len);
+void idszMapAdd(IDSZ_T *idsz_list, int list_len, IDSZ_T *add_idsz);
 IDSZ_T *idszMapGet(IDSZ_T *idsz_list, unsigned int idsz, int list_len);
 
 #endif  /* #define _IDSZ_H_ */

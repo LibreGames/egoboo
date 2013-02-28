@@ -852,13 +852,6 @@ static void egomapCompleteMapData(MESH_T *mesh)
 	mesh->edgey = (mesh->tiles_y * EGOMAP_TILE_SIZE) - 1;
 	mesh->edgez = 180 * 16;
 
-	mesh->watershift = 3;
-	if (mesh->tiles_x > 16)   mesh->watershift++;
-	if (mesh->tiles_x > 32)   mesh->watershift++;
-	if (mesh->tiles_x > 64)   mesh->watershift++;
-	if (mesh->tiles_x > 128)  mesh->watershift++;
-	if (mesh->tiles_x > 256)  mesh->watershift++;
-
 	/* Now set the number of first vertex for each fan */
 	egomapSetFanStart(mesh);
 
@@ -872,7 +865,7 @@ static void egomapCompleteMapData(MESH_T *mesh)
  * Name:
  *     egomapCalcVrta
  * Description:
- *     Generates the 'a'  numbers for all files
+ *     Generates the 'a' numbers for all files
  * Input:
  *     mesh*: Pointer on mesh to set twists for
  */

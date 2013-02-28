@@ -72,6 +72,7 @@ typedef enum
     MSG_THROWN,
     MSG_TOOMUCHBAGGAGE,
     MSG_USED,
+    MSG_TIMEOUT,    // Internal clock done, trigger script
 
     // add in some aliases
     MSG_PUTAWAY     = MSG_ATLASTWAYPOINT,

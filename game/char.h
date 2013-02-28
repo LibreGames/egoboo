@@ -72,14 +72,18 @@
 #define CHAR_FISHIDDEN	 ((char)0)	// is_hidden
 #define CHAR_FPLAYER     ((char)1)   // is a human player, attached to 'PLAYER_T'
 #define CHAR_FISLOCALPLAYER ((char)2)	///< btrue = local player char islocalplayer;    
-#define CHAR_FKILLED	 ((char)3)	///< Fix for network// waskilled	
-#define CHAR_FHITREADY   ((char)4)	///< Was it just dropped? // hitready
-#define CHAR_FISSHOPITEM ((char)5)	///< Spawned in a shop? // isshopitem
-#define CHAR_FSPARKLE	 ((char)6)	///< Sparkle the displayed icon? 0 for off// sparkle	
-#define CHAR_FINVISIBLE  ((char)7)
-#define CHAR_FTHROWN     ((char)8)  ///< This character is thrown
-#define CHAR_FMOUNTED    ((char)9)	// ptarget->attached_to->ismount
-#define CHAR_FDRAWSTATS  ((char)10)	///< Display stats?// draw_stats
+#define CHAR_FHITREADY   ((char)3)	///< Was it just dropped? // hitready
+#define CHAR_FISSHOPITEM ((char)4)	///< Spawned in a shop? // isshopitem
+#define CHAR_FSPARKLE	 ((char)5)	///< Sparkle the displayed icon? 0 for off// sparkle	
+#define CHAR_FINVISIBLE  ((char)6)
+#define CHAR_FTHROWN     ((char)7)  ///< This character is thrown
+#define CHAR_FMOUNTED    ((char)8)	///< ptarget->attached_to->ismount
+#define CHAR_FDRAWSTATS  ((char)9)	///< Display stats?// draw_stats
+#define CHAR_FATTACKFAST ((char)10)	///< Ignores the default reload time? -> 'attack_fast'
+// 
+// 
+// 	///< 
+// #define CHAR_F  ((char)xx)	///< blud_valid
 
 /// Fixed properties 'cap_props'
 #define CHAR_CFMOUNT   ((char)0)       ///< Can you ride it?	// pcap->		// pchar->ismount
@@ -99,13 +103,21 @@
 #define CHAR_CFCANBEGROGGED ((char)14)	// pcap->	///< Can it be grogged?
 #define CHAR_CFNAMEKNOWN	((char)15)	// pcap->	///< Is the class name known?
 #define CHAR_CFCANCARRYTONEXTMODULE ((char)16)	// pcap->  ///< Take it with you?
-#define CHAR_CFRIDERCANATTACK ((char)17)	// pcap->	///< Rider attack?
+#define CHAR_CFRIDERCANNOTATTACK ((char)17)	// pcap->ridercanattack	///< Rider attack?
 #define CHAR_CFVALUABLE ((char)18)	    // pcap->	///< Force to be valuable
 #define CHAR_CFSTICKYBUTT ((char)19)	// pcap->	///< Stick to the ground?
 #define CHAR_CFNEEDSKILLIDTOUSE ((char)20) // pcap->     ///< Check IDSZ first? 
 #define CHAR_CFWATERWALK ((char)21)	// pcap->	 ///< Walk on water
 #define CHAR_CFWEAPON    ((char)22)   // pcap->isranged || chr_has_idsz( pself->target, MAKE_IDSZ( 'X', 'W', 'E', 'P' ) );
 #define CHAR_CFKURSED   ((char)23)	///< For boots and rings and stuff // iskursed
+#define CHAR_CFRANGED   ((char)24)   ///< Flag for ranged weapon 'isranged'
+#define CHAR_CFTRANSFERBLEND ((char)25)   ///< Transfer blending to rider/weapons
+#define CHAR_CFENVIRO ((char)26)   ///< Phong map this baby?
+#define CHAR_CFLEFTGRIPVALID ((char)27)   ///< Character hands: Left ( or only ) grip valid
+#define CHAR_CFRIGHTGRIPVALID ((char)28)  ///< Character hands: Right grip valid
+#define CHAR_CFBLUDVALID  ((char)29)  ///< Has blud? ( yuck ) -> 'blud_valid'
+#define CHAR_CFRIPPLE  ((char)30)  ///< Does ripple if falls in water
+#define CHAR_CFDRAWICON   ((char)31)	///< Draw icon
 
 // @todo: Check Item-Type
 #define CHAR_TYPE_SPELL  1 // ppip->intdamagebonus || ppip->wisdamagebonus
@@ -289,7 +301,7 @@ typedef struct
     char inwhich_slot;  /// For hands, if attached
     char life_color,
          mana_color;    ///< Colors for displayed bars
-    // Belongs  to a passage, invokes code for this passage / For editor
+    // Belongs  to a passage, invokes code for this passage
     char psg_no;
     // name and gender
     char name[CHAR_NAMELEN + 1]; /* Name of this character                              */
@@ -334,7 +346,7 @@ typedef struct
     CHAR_TIMER_T timers[CHAR_MAX_TIMER];
     // Skills of character
     IDSZ_T skills[CHAR_MAX_SKILL + 1];
-    // Size of model
+    // Size of model: @todo: Move that to SDL3D_OBJECT
     float fat;                  ///< Character's size
     float fat_goto;             ///< Character's size goto
     float fat_goto_time;        ///< Time to go ot that size
@@ -343,14 +355,14 @@ typedef struct
     char jump_number;           ///< Number of jumps remaining
     char jump_power;            ///< Pwer for jump
     char jump_ready;            ///< For standing on a platform character
-    unsigned char fly_height;           ///< Fly height
+    unsigned char fly_height;   ///< Fly height
     // NEW: Properties as flags (saves saving space) and makes up for simpler script code
     // "variable" and "constant" properties       
     int var_props;              ///< Boolean values as flags
     int cap_props;              ///< PCAP: Boolean values as flags 
-    char item_type;             ///> Which kind of item, if item e.g. WEAPON
+    char item_type;             ///> Which kind of item, if item e.g. ITEMTYPE_WEAPON
     
-    // graphics info  
+    // graphics info: @todo: Move that to SDL3D_OBJECT
     float shadow_size[2];   ///< Current size of shadow  CHARSTAT_ACT / CHARSTAT_FULL
     int   ibillboard;       ///< The attached billboard @todo: replace by 'pstring*'
     
@@ -370,17 +382,22 @@ typedef struct
     /* Additional help info  */
     char *obj_name;     /* Pointer on the name of the object in CAP_T           */
     char *class_name;   /* @todo: Pointer on the classes name from CAP_T        */
-    // More flags from CAP_T for faster code and model graphics
+    // More flags from CAP_T for faster code and model graphics @todo: Move to SDL3D_OBJECT
     unsigned char flashand;
     unsigned char alpha_base;
     unsigned char light_base;
-    // physics
+    // physics @todo: Move that to object
     int   weight;             ///< Weight
-    float dampen;                     ///< Bounciness
-    float bumpdampen;                 ///< Mass
+    float dampen;             ///< Bounciness
+    float bumpdampen;         ///< Mass
     // Other stuff    
     short int act_action;   // action_which: Actual animation action
-    int target_no;          // Target for AI
+    int  target_no;         // Target for AI and script    
+    int  target_old_no;     // Target for AI and script    
+    char timer_set;         // Timer for AI (is it set at all ?)
+    int  timer;             // In seconds 
+    char content;           // Another script variable
+    char turnmode;          //
     
 } CHAR_T;
 

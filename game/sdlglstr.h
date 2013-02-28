@@ -2,7 +2,7 @@
 *  SDLGLSTR.H                                                                  *
 *      - Output of text in an OpenGL-Window.                                   *
 *                                                                              *
-*  Copyright (C) 2002-2010  Paul Müller <pmtech@swissonline.ch>                *
+*  Copyright (C) 2002-2013  Paul Müller <muellerp61@bluewin.ch>                *
 *                                                                              *
 *  This program is free software; you can redistribute it and/or modify        *
 *  it under the terms of the GNU General Public License as published by        *
@@ -23,31 +23,31 @@
 #define _SDLGLSTR_H_
 
 /*******************************************************************************
-* INCLUDES         							                                   *
+* INCLUDES                                                                     *
 *******************************************************************************/
 
 #include "sdlgl.h"
 
 /******************************************************************************
-* DEFINES								      								  *
+* DEFINES                                                                     *
 ******************************************************************************/
 
 #define SDLGLSTR_FONT6     0    /* Font 6 Points width and 8 Points height */
-#define SDLGLSTR_FONT8	   1	/* Font 8 Points width and 8 Points height */
+#define SDLGLSTR_FONT8     1    /* Font 8 Points width and 8 Points height */
 #define SDLGLSTR_FONTSPACE 2    /* Font 8 Points width and 8 Points height */
 
 /* Flags for drawing routines */
 #define SDLGLSTR_FINVISIBLE   0x80000000    /* Is invisible                 */
 #define SDLGLSTR_FHIGHLIGHT   0x40000000    /* is highlighted               */
-#define SDLGLSTR_FINVERTED    0x20000000	/* Draw an inverted button 	    */
-#define SDLGLSTR_FHIGHLIGHTED 0x10000000	/* Use highlight color for text	*/
-#define SDLGLSTR_FHCENTER     0x08000000	/* Center the text horizontally */
-                					        /* in given rectangle		    */
-#define SDLGLSTR_FVCENTER     0x04000000	/* Center the text vertically 	*/
+#define SDLGLSTR_FINVERTED    0x20000000    /* Draw an inverted button      */
+#define SDLGLSTR_FHIGHLIGHTED 0x10000000    /* Use highlight color for text */
+#define SDLGLSTR_FHCENTER     0x08000000    /* Center the text horizontally */
+                                            /* in given rectangle           */
+#define SDLGLSTR_FVCENTER     0x04000000    /* Center the text vertically   */
 #define SDLGLSTR_FRIGHTADJUST 0x02000000    /* Right adjust string          */
-#define SDLGLSTR_FHIDEBUTTON  0x01000000	/* Don't draw the button	    */
+#define SDLGLSTR_FHIDEBUTTON  0x01000000    /* Don't draw the button        */
 #define SDLGLSTR_FTEXTURED    0x00800000    /* Draw button with texture     */
-#define SDLGLSTR_FEMPTYBUTTON 0x00400000	/* Draw now middle color for button */
+#define SDLGLSTR_FEMPTYBUTTON 0x00400000    /* Draw now middle color for button */
 
 #define SDLGLSTR_FBUTTONSTATE 0x00400000        /* State for radio/push buttons */
 #define SDLGLSTR_FCENTERED    (SDLGLSTR_FHCENTER | SDLGLSTR_FVCENTER)
@@ -58,14 +58,14 @@
 #define SDLGLSTR_STYLEWOOD   2
 
 /******************************************************************************
-* TYPEDEFS    								      *
+* TYPEDEFS                                                                    *
 ******************************************************************************/
 
 typedef struct {
 
-    int fontno;				/* Font to use for drawing         */
+    int fontno;                     /* Font to use for drawing         */
     unsigned char buttonmid[3],		/* Color of buttons mid            */
-		  buttontop[3],		/* Color of buttons topside        */
+                  buttontop[3],		/* Color of buttons topside        */
                   buttonbottom[3];	/* Color of buttons bottomside     */
     unsigned char textlo[3],		/* Color of non highlighted text   */
                   hotkeylo[3];          /* Color of non highlighted hotkey */
@@ -76,14 +76,14 @@ typedef struct {
     unsigned char maplabel[3];		/* Color for labels in map	   */
     unsigned char maplabelshadow[3];	/* Color for the shadow for mapl.  */
     int           texbklistno;		/* Number of the texture which	   */
-					/* holds the background texture	   */
-    int 	  texbkno;		/* Number of texture in tex-list   */
+                  /* holds the background texture	   */
+    int           texbkno;		/* Number of texture in tex-list   */
 
 } SDLGLSTR_STYLE;
 
 
 /******************************************************************************
-* ROUTINES								      								  *
+* ROUTINES                                                                    *
 ******************************************************************************/
 
 /* Initializing an shutdown */

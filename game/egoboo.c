@@ -47,7 +47,7 @@
 * DEFINES								                                   *
 *******************************************************************************/
 
-#define EGOBOO_CAPTION "EGOBOO - V 0.2.0"
+#define EGOBOO_CAPTION "EGOBOO - V 0.2.1"
 
 #define EGOBOO_MAXFLD   10
 
@@ -85,7 +85,14 @@ static SDLGLCFG_NAMEDVALUE CfgValues[] =
     { SDLGLCFG_VAL_INT, &SdlGlConfig.debugmode, 1, "debugmode" },
     { SDLGLCFG_VAL_STRING, &GameDir[0], 120, "egoboodir"  },
     { SDLGLCFG_VAL_STRING, &ModuleDir[0], 32, "moduledir"  },
-    { SDLGLCFG_VAL_STRING, &ModuleDir[0], 32, "savegamedir"  },
+    { SDLGLCFG_VAL_STRING, &SavegameDir[0], 32, "savegamedir"  },
+    { 0 }
+};
+
+static SDLGL_FIELD GameTitle[] =
+{
+    { SDLGL_TYPE_LABEL,  {   0,  4,  48, 16 }, 0, 0, "EGOBOO" },
+    { SDLGL_TYPE_LABEL,  {   4, 20, 256, 16 }, 0, 0, "The Legend of the Sporks of Yore" },
     { 0 }
 };
 
@@ -172,6 +179,9 @@ static void egobooDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
     // @todo: Draw the menu fields using bitmapped font 'egofont'
     sdlglstrDrawField(fields);
+    // Write the title strings
+    sdlglSetColor(SDLGL_COL_BROWN);
+    sdlglstrDrawField(GameTitle);
 }
 
 /*
@@ -274,8 +284,12 @@ int main(int argc, char **argv)
 {
     /* Read configuration from file */
     sdlglcfgReadSimple("egoboo.cfg", CfgValues);
-
+    // Set the configuration and the directories
     sdlglInit(&SdlGlConfig);
+    
+    // Center the title strings
+    sdlglAdjustRectToScreen(&GameTitle[0].rect, &GameTitle[0].rect, SDLGL_FRECT_HCENTER);
+    sdlglAdjustRectToScreen(&GameTitle[1].rect, &GameTitle[1].rect, SDLGL_FRECT_HCENTER);
     /* Set the input handlers and do other stuff before  */
     egobooStart();
 

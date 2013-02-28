@@ -139,17 +139,17 @@ void idszIDSZtoString(IDSZ_T *idsz, char *idsz_str)
     IDSZ_CHAR_T idsz_char;
 
 
-    if(idsz -> idsz == 0)
+    if(idsz->idsz == 0)
     {
         idsz_char.value = 'NONE';
     }
     else
     {
-        idsz_char.value = idsz -> idsz;
+        idsz_char.value = idsz->idsz;
         idsz_char.val_str[4] = 0;
     }
 
-    sprintf(idsz_str, "[%s] %d", idsz_char.val_str, idsz -> level);
+    sprintf(idsz_str, "[%s] %d", idsz_char.val_str, idsz->value);
 }
 
 /*
@@ -160,31 +160,44 @@ void idszIDSZtoString(IDSZ_T *idsz, char *idsz_str)
  * Input:
  *     idsz_str *: idsz as string [#idsz] #value
  *     idsz *:     To convert to string
- *
+ *     val_str *:  Return here the value as string
  */
-void idszStringtoIDSZ(char *idsz_str, IDSZ_T *idsz)
+void idszStringtoIDSZ(char *idsz_str, IDSZ_T *idsz, char valstr[20])
 {
     char sidsz[20];
     char value[20];
+    char *pvalstr;
 
 
-    sscanf(idsz_str, "%s%s", sidsz, value);
-
+    if(NULL != valstr)
+    {
+        pvalstr = valstr;
+    }
+    else
+    {
+        pvalstr = value;
+    }
+    
+    pvalstr[0] = 0;
+    
+    sscanf(idsz_str, "%s%s", sidsz, pvalstr);
 
     if(strncmp(sidsz, "NONE", 4) == 0)
     {
-        idsz -> idsz = 0;
+        idsz->idsz  = 0;
+        idsz->value = 0;
     }
     else
     {
         // Now remove the leading bracket
-        idsz -> idsz = *(unsigned int *)&sidsz[1];
+        idsz->idsz = *(unsigned int *)&sidsz[1];
+        idsz->value = 0;
     }
 
-    if(isdigit(value[0]))
+    if(isdigit(pvalstr[0]))
     {
         // @todo: Handle other special cases
-        sscanf(value, "%d", &idsz -> level);
+        sscanf(value, "%d", &idsz->value);
     }
 }
 
@@ -198,7 +211,7 @@ void idszStringtoIDSZ(char *idsz_str, IDSZ_T *idsz)
  *     idsz:        Add this one to list IDSZ
  *     list_len:    Length of given list
  */
-void idszMapAdd(IDSZ_T *idsz_list, unsigned int idsz, int list_len)
+void idszMapAdd(IDSZ_T *idsz_list, int list_len, IDSZ_T *add_idsz)
 {
     int i;
 
@@ -207,7 +220,8 @@ void idszMapAdd(IDSZ_T *idsz_list, unsigned int idsz, int list_len)
     {
         if(idsz_list[i].idsz == 0)
         {
-            idsz_list[i].idsz = idsz;
+            idsz_list[i].idsz  = add_idsz->idsz;
+            idsz_list[i].value = add_idsz->value;
             return;
         }
     }
