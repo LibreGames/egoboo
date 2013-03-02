@@ -31,6 +31,7 @@
 
 #include "sdlgl.h"
 #include "sdlgltex.h"
+#include "egofile.h"    // Create filename using actual set directory for object
 
 // Own header
 #include "egomodel.h"       /* Own header   */
@@ -585,19 +586,19 @@ static void egomodelAdjustZPosToZero(MD2_MODEL *model)
 
 /*
  * Name:
- *     egomodelLoadModel
+ *     egomodelLoad
  * Description:
- *     Loads an MD2-Model.
+ *     Loads an MD2-Model. From actually set object directory
  * Input:
- *      fdir *:     Load from this directory
  *      bbox[2][3]: Where to return the bounding box values
  * Output:
  *      Number of model used for calling the draw function with
  *      0: Loading of model failed
  */
-int egomodelLoadModel(const char *fdir, float bbox[2][3])
+int egomodelLoad(float bbox[2][3])
 {
-    char file_name[256];
+    char *fname;
+    char file_name[64];
     unsigned char buffer[MD2_MAX_FRAMESIZE];
     MD2_ALIAS_FRAME *frame;
     MD2_MODEL *model;
@@ -605,6 +606,9 @@ int egomodelLoadModel(const char *fdir, float bbox[2][3])
     static char ver[5];
     int i, j, mdl_no;
 
+    
+    // Create filename
+    fname = egofileMakeFileName(EGOFILE_ACTOBJDIR, "tris.md2");
     
     mdl_no = egomodelNewModel();   /* Get buffer for model */
 
@@ -614,11 +618,8 @@ int egomodelLoadModel(const char *fdir, float bbox[2][3])
     }
 
     model = &Models[mdl_no];
-
-    // Create filename
-    sprintf(file_name, "%stris.md2", fdir);
     
-    md2file = fopen(file_name, "rb");
+    md2file = fopen(fname, "rb");
     if (NULL == md2file)
     {
         model->id = 0;
@@ -694,8 +695,7 @@ int egomodelLoadModel(const char *fdir, float bbox[2][3])
 
     fclose(md2file);
 
-    // sdlgllogClose();
-
+    // @todo: Calculate boundiing box using first frame of model
     /* Set the bounding box values */
     bbox[0][0] = -26.0;    /* X */
     bbox[0][1] = -26.0;    /* Y */
@@ -713,7 +713,9 @@ int egomodelLoadModel(const char *fdir, float bbox[2][3])
     for(i = 0; i < 4; i++)
     {   
         // Create filename
-        sprintf(file_name, "%stris%d.bmp");
+        sprintf(file_name, "tris%d.bmp");
+        fname = egofileMakeFileName(EGOFILE_ACTOBJDIR, file_name);
+       
         model->skin_tex[i] = sdlgltexLoadSingle(file_name);
         
         if(model->skin_tex[i])
@@ -734,6 +736,8 @@ int egomodelLoadModel(const char *fdir, float bbox[2][3])
     {
         // Create filename
         sprintf(file_name, "%sicon%d.bmp");
+        fname = egofileMakeFileName(EGOFILE_ACTOBJDIR, file_name);
+        
         model->icon_tex[i] = sdlgltexLoadSingle(file_name);
         
         if(model->icon_tex[i])

@@ -1,9 +1,9 @@
 /*******************************************************************************
-*  EGOMODEL.H                                                                  *
-*    - Load and display for Quake 2 Models                                     *
+*  SPELL.H                                                                     *
+*    - EGOBOO-Game                                                             *     
 *                                                                              *
-*   Copyright © 2000, by Mustata Bogdan (LoneRunner)                           *
-*   Adjusted for use with SDLGL Paul Mueller <bitnapper>                       *
+*    - [...]                                                                   *
+*      (c) 2013 Paul Mueller <muellerp61@bluewin.ch>                           *
 *                                                                              *
 *   This program is free software; you can redistribute it and/or modify       *
 *   it under the terms of the GNU General Public License as published by       *
@@ -20,36 +20,43 @@
 *   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *
 *******************************************************************************/
 
-#ifndef _EGOMODEL_H_
-#define _EGOMODEL_H_
+#ifndef _SPELL_H_
+#define _SPELL_H_
 
 /*******************************************************************************
 * INCLUDES                                                                     *
 *******************************************************************************/
 
-#include "sdlgl3d.h"        // SDLGL3D_OBJECT
 
 /*******************************************************************************
 * TYPEDEFS                                                                     *
 *******************************************************************************/
 
+// Description of values that can be set by a spell and are reset if spell expires
 typedef struct
 {
-    int x, y, w, h;
+    char which;     
+    char sub_code;      // Which damage modifier    <CHAR_VAL_DMGRESIST
+                        // Missile treatment as 'char' ( NORMAL, DEFLECT, REFLECT )
+    char inv_type;      // Type of inversion, if damage
+    short int value;
     
-} EGOMODEL_RECT;
+} SPELL_SET_T;
+
+// Description of values than can be modified by a spell and removed if it expires
+// These values are cumulative
+typedef struct
+{
+    char which;
+    float value;
+    
+} SPELL_ADD_T;
 
 /*******************************************************************************
 * CODE                                                                         *
 *******************************************************************************/
 
-int  egomodelLoad(float bbox[2][3]);
-void egomodelFreeAll(void);
-// Actions
-int  egomodelDraw(int mdl_no, int skin_no, int frame_no);
-void egomodelDrawObject(SDLGL3D_OBJECT *pobj);
-char egomodelSetAnimation(int obj_no, short int action);
+void spellInit(void);
+int  spellLoad(void);
 
-void egomodelDrawIcon(int mdl_no, int skin_no, int *crect /* x1, y1, x2, y2 */);
-
-#endif /* _EGOMODEL_H_ */
+#endif  /* #define _SPELL_H_ */

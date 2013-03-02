@@ -45,11 +45,11 @@
 #define EGOFILE_WORKDIR     1  /* Main directory for editor            */
 #define EGOFILE_BASICDATDIR 2  /* Basic data for game                  */
 #define EGOFILE_GAMEDATDIR  3  /* Gamedata directory in main directory */
-#define EGOFILE_MODULEDIR   4  /* Directory for the objects            */
-#define EGOFILE_OBJECTDIR   5  /* Directory for the modules            */
+#define EGOFILE_MODULEDIR   4  /* Directory for the modules            */
+#define EGOFILE_ACTOBJDIR   5  /* Directory for actual chosen object   */
 #define EGOFILE_EGOBOODIR   6  /* Main directory of game for globals   */
 #define EGOFILE_GLOBPARTDIR 7  /* Directory for global particles       */
-#define EGOFILE_SAVEGAMEDIR 8   // Directory for savegames
+#define EGOFILE_SAVEGAMEDIR 8  // Directory for savegames
 
 /*******************************************************************************
 * TYPEDEFS 								                                   *
@@ -201,7 +201,7 @@ typedef struct
 * CODE 								                                           *
 *******************************************************************************/
 
-void egofileSetDir(int which, char *dir_name);
+char egofileSetDir(int which, char *dir_name);
 char *egofileMakeFileName(int dir_no, char *fname);
 int  egofileMapMesh(MESH_T *mesh, char *msg, char save);
 int  egofileSpawn(EGOFILE_SPAWNPT_T *spt, char action, int max_rec);

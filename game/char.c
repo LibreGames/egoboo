@@ -875,10 +875,9 @@ void charCompleteCap(CAP_T *pcap)
  static int charReadCap(char *objname)
  {
     char name_buf[32];
+    char *pstr, *fname;
     int  player_no;
     int cno;
-    char *fdir;
-    char fname[512];
     CAP_T *pcap;
 
     
@@ -899,10 +898,25 @@ void charCompleteCap(CAP_T *pcap)
     // Remove leading and trailing spaces
     sscanf(objname, "%s", objname);    
     
+    // @todo: Check for '#' ==> 'dependency'
+    
     // Compare lower case except names for random treasure
     if('%' != objname[0])
     {
-        strlwr(objname);    
+        pstr = objname;
+        while(*pstr)
+        {
+            *pstr = tolower(*pstr);
+            pstr++;
+        }
+    }
+    else
+    {
+        /* @todo: Get random treasure object
+        if('%' == objname)
+        {
+        }        
+        */
     }
     
     // Skip "unknown"
@@ -910,8 +924,6 @@ void charCompleteCap(CAP_T *pcap)
     {
         return 0;
     }
-    
-    
 
     // Only read if 'cap_name' not available yet
     for(cno = 5; cno < CHAR_MAX_CAP; cno++)
@@ -930,43 +942,47 @@ void charCompleteCap(CAP_T *pcap)
         }
     }
 
-    cno = charNewCap();
+    // First check if object exists at all, set its directory for loading operations
+    if(egofileSetDir(EGOFILE_ACTOBJDIR, objname))
+    {
+        cno = charNewCap();
+    }
+    else
+    {
+        // Log error that given object doesn't exist
+        msgSend(MSG_REC_LOG, MSG_GAME_OBJNOTFOUND, 0, objname);
+        return 0;
+    }
 
     if(cno > 4)
     {
+        // Object exists and a slot is left to load it
         pcap = &CapList[cno];
-
-        /* @todo: // Load random treasure object
-        if('%' == objname)
-        {
-        }        
-        */
-        // Get the directory of this object        
-        fdir = egofileMakeFileName(EGOFILE_OBJECTDIR, objname);
         
-        // Read character profile        
-        if(fdir[0] != 0)
+        // Save name to prevent multiple loading of same profile and its data
+        strcpy(pcap->cap_name, objname);  
+       
+        // Get the filename for the data
+        fname = egofileMakeFileName(EGOFILE_ACTOBJDIR, "data.txt");
+        // Do the 'raw' loading of the character profile
+        if(! sdlglcfgEgobooValues(fname, CapVal, 0))
         {
-            // If object was found
-            // Save name to prevent multiple loading of same profile and its data
-            strcpy(pcap->cap_name, objname);  
-            // Read the basic profile
-            sprintf(fname, "%sdata.txt", fdir); 
-            // Do the 'raw' loading
-            if(! sdlglcfgEgobooValues(fname, CapVal, 0))
-            {
-                // @todo: Mark 'pcap' as unused
-                charCompleteCap(pcap);
-                return 0;
-            }
-           
-
+            // Mark 'pcap' as unused
+            pcap->cap_name[0] = 0;
+            return 0;
+        }
+        // Complete it
+        charCompleteCap(pcap);
+        charSetupXPTable(pcap);
+        
+        // @todo: Replace this be 'real' code
             /* @todo: Load the real data
             // @todo: Function for loading the naming data
             // sprintf(fname, "%snaming.txt", fdir);            
             // @todo: Load its particles
             // "part0.txt" - "part9.txt"
             // pcap->prt_first_no = particleLoad(fdir, &pcap->prt_cnt)
+            // @todo: Model loads is icons itself
             // sdlglmd2Load(fdir, cno); ==> egomodelLoad(fdir, cno);
             // sprintf(fname, "%stris.md2", fdir);
             // "icon0,bmp" - "icon4.bmp"
@@ -979,14 +995,8 @@ void charCompleteCap(CAP_T *pcap)
             // @todo: pscript->first_msg_no = msgObjectLoad(char *fname);
             // sprintf(fname, "%sscript.txt", fdir);
             */
-           charSetupXPTable(pcap);
-        }
-        else
-        {
-            msgSend(MSG_REC_LOG, MSG_GAME_OBJNOTFOUND, 0, objname);
-        }
         
-        // @todo: Replace this be 'real' code
+        
         return cno;
     }
 

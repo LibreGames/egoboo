@@ -231,6 +231,7 @@ enum
     CHAR_VAL_MANAFLOW,
     CHAR_VAL_DMGBOOST,  ///< Add to swipe damage  ///<damage_boost
     CHAR_VAL_DMGTHRES,  ///< Damage below this number is ignored
+    CHAR_VAL_DAMAGE,
     CHAR_VAL_XP,
     CHAR_VAL_XP_TEAM,
     CHAR_VAL_MORPH,
@@ -242,6 +243,7 @@ enum
     CHAR_VAL_SKLVL,     ///<see_kurse_level
     CHAR_VAL_SILVL,     ///<see_invisible_level
     CHAR_VAL_DMGRESIST, ///<dmg_resist    
+    CHAR_VAL_DMGMOD,    ///<Damage modification by spell
     CHAR_VAL_JUMPPOWER,
     CHAR_VAL_BUMPDAMPEN,
     CHAR_VAL_BOUNCINESS,    
@@ -263,7 +265,10 @@ enum
     CHAR_VAL_ALPHABLEND,///< Alpha
     CHAR_VAL_SHEEN,
     CHAR_VAL_LIFEBARCOL,
-    CHAR_VAL_MANABARCOL	
+    CHAR_VAL_MANABARCOL,
+    // Flags set by call to set value (for spells)    
+    CHAR_VAL_WALKWATER,
+    CHAR_VAL_SEEINVISI
     
 } E_CHAR_VALUE;
 

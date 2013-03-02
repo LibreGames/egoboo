@@ -49,7 +49,7 @@ static char EgofileGameDir[128]   = "c:/egoboo/";
 // Directory name of actual game module
 static char EgoFileModule[34]     = "";
 static char EgoFileModuleDir[256] = "";
-// static char EgoFileObjectDir[256] = "";     // Directory of actual chosen object
+static char EgoFileActObjDir[256] = "";     // Directory of actual chosen object
 static char SavegameDir[120 + 2]  = "c:/egoboo/savegame/";
 // Where the editor works in the Egoboo-Directory
 static char EgofileEditDir[256]   = "c:/egoboo/editor/test.mod/";
@@ -443,12 +443,17 @@ static void egofileSetUnderlines(char *text)
  *     which:      Which directory to set
  *     dir_name *: Direcory-Name to set (If EGOFILE_MODULEDIR only module name)
  * Output:
- *     Mesh could be loaded yes/no
+ *     Object-Directory is valid yes/no 
  */
-void egofileSetDir(int which, char *dir_name)
+char egofileSetDir(int which, char *dir_name)
 {
-    /* TODO: Check it, replace possible backslashes '\' with slashes forward    */
-    /* TODO: Check if there's already a slash attached to the given 'dir_name'  */
+    char obj_file_name[512];    // The objects directory with file name
+    int i;
+    FILE *f;                    // For looking up the objects directory local and global
+    
+    
+    /* @todo: Check it, replace possible backslashes '\' with slashes forward    */
+    /* @todo: Check if there's already a slash attached to the given 'dir_name'  */
     switch(which)
     {
         case EGOFILE_EGOBOODIR:
@@ -464,21 +469,55 @@ void egofileSetDir(int which, char *dir_name)
             sprintf(EgoFileModuleDir, "%s/modules/%s/", EgofileGameDir, dir_name);
             break;
             
+        case EGOFILE_ACTOBJDIR:
+            // Look up "data.txt" and return the directory without file name, because filename is the objects name
+            // In this case only return the directory without file name for reading all files from directory
+            sprintf(EgoFileActObjDir, "%sobjects/%s.obj/", EgoFileModuleDir, dir_name);
+            sprintf(obj_file_name, "%sdata.txt", EgoFileActObjDir);
+            f = fopen(obj_file_name, "r");
+            if (f)
+            {
+                // Object is in the modules local directory
+                fclose(f);
+                return 1;
+            }
+            else
+            {
+                /* Look for object in the GOR */
+                i = 0;
+                while(EgofileGORDir[i])
+                {
+                    sprintf(EgoFileActObjDir, "%sbasicdat/globalobjects/%s/%s.obj/", EgofileGameDir, EgofileGORDir[i], dir_name);
+                    sprintf(obj_file_name, "%sdata.txt", EgoFileActObjDir);
+                    
+                    f = fopen(obj_file_name, "r");
+                    if (f)
+                    {
+                        /* Directory found for this object */
+                        fclose(f);
+                        return 1;
+                    }
+
+                    i++;
+                }
+                // Object not found
+                EgoFileActObjDir[0] = 0;
+            }
+            break;
+            
         case EGOFILE_SAVEGAMEDIR:
             sprintf(SavegameDir, "%s/", dir_name);
             break;
     }
+    
+    return 1;
 }
 
 /*
  * Name:
  *     egofileMakeFileName
  * Description:
- *     Generates a filename with path.
- *     EGOFILE_OBJECTDIR:  
- *      Path for objects is taken from the list of the GOR, if the
- *      object is not found in the modules directory
- *      Looks for the file 'data.txt' to check if the object exists at all 
+ *     Generates a filename with path. Uses the directory set 
  * Input:
  *     dir_no:  Which directory to use for filename
  *     fname *: Name of file to create filename including path / name of object
@@ -488,10 +527,6 @@ void egofileSetDir(int which, char *dir_name)
 char *egofileMakeFileName(int dir_no, char *fname)
 {
     static char file_name[512];     // Here the filename is returned with path, except the objects directory
-    
-    char obj_file_name[512];        // The objects directory with file name
-    FILE *f;  
-    int i;
 
 
     file_name[0] = 0;
@@ -506,48 +541,19 @@ char *egofileMakeFileName(int dir_no, char *fname)
             sprintf(file_name, "%sbasicdat/%s", EgofileGameDir, fname);
             break;
 
-        case EGOFILE_OBJECTDIR:
+         case EGOFILE_MODULEDIR:
+            sprintf(file_name, "%s%s", EgoFileModuleDir, fname);
+            break;
+
+        case EGOFILE_ACTOBJDIR:
             // @todo: Look up basic data in game directory, if game-level is loaded for browsing
             // Look up "data.txt" and return the directory without file name, because filename is the objects name
             // In this case only return the directory without file name for reading all files from directory
             sprintf(file_name, "%sobjects/%s.obj/", EgoFileModuleDir, fname);
-            sprintf(obj_file_name, "%sdata.txt", file_name);
-            
-            f = fopen(obj_file_name, "r");
-            if (f)
-            {
-                /* Directory found for this object */
-                fclose(f);
-            }
-            else
-            {
-                /* Look for objects in the GOR */
-                i = 0;
-                while(EgofileGORDir[i])
-                {
-                    sprintf(file_name, "%sbasicdat/globalobjects/%s/%s.obj/", EgofileGameDir, EgofileGORDir[i], fname);
-                    sprintf(obj_file_name, "%sdata.txt", file_name);
-                    
-                    f = fopen(file_name, "r");
-                    if (f)
-                    {
-                        /* Directory found for this object */
-                        fclose(f);
-                        return file_name;
-                    }
-
-                    i++;
-                }
-
-                file_name[0] = 0;
-            }
+            sprintf(EgoFileActObjDir, "%s%s", fname);
             break;
 
-        case EGOFILE_MODULEDIR:
-            sprintf(file_name, "%s%s", EgoFileModuleDir, fname);
-            break;
-
-        case EGOFILE_EGOBOODIR:        
+        case EGOFILE_EGOBOODIR:
             sprintf(file_name, "%s%s", EgofileGameDir, fname);
             break;
 
