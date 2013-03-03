@@ -639,8 +639,7 @@ static COMMAND_T MeshCommand[MESH_MAXTYPE] =
 };
 
 /* --- Game objects buffer --- */
-static EGOFILE_PASSAGE_T Passages[EGOMAP_MAXPASSAGE + 2];
-static EGOFILE_SPAWNPT_T SpawnPts[EGOMAP_MAXSPAWN + 2];       // List of all spawn points
+static EGOFILE_PASSAGE_T Passages[EGOMAP_MAXPASSAGE + 2];    
 
 /* ---- Map data itself --- */
 static MESH_T Mesh;         /* Mesh of map                  */
@@ -910,18 +909,16 @@ static void egomapCalcVrta(MESH_T *mesh)
     set_fx = 0;
     
     if (psg->topleft[0] > 0 && psg->topleft[1] > 0)
-    {
-        psg->rec_no = p_no;   /* Save the number of the passage for the editor */
-
+    {   
         switch(action)
         {
             case EGOMAP_CLEAR:
                 // Mark the passage as deleted
-                psg->psg_no = -1;
+                psg->line_name[0] = 0;
                 // Remove this passage from map
                 p_no = 0;
                 break;
-            case EGOMAP_OPEN:
+            case EGOMAP_PSGOPEN:
                 if(psg->open)
                 {
                     //no need to do this if it already is open
@@ -933,7 +930,7 @@ static void egomapCalcVrta(MESH_T *mesh)
                     clear_fx = (char)~(MPDFX_IMPASS);
                 }
                 break;
-            case EGOMAP_CLOSE:
+            case EGOMAP_PSGCLOSE:
                 //is it already closed?
                 if(!psg->open)
                 {
@@ -969,278 +966,6 @@ static void egomapCalcVrta(MESH_T *mesh)
 }
 
 /* ============== Object-Functions ==================== */
-
-/*
- * Name:
- *     egomapSpawnObject
- * Description:
- *     Spawns an object on map
- * Input:
- *     spt *:  Description of spawn point
- */
- static void egomapSpawnObject(EGOFILE_SPAWNPT_T *spt)
- {
-    static inv_char = 0;   // Old character for inventory
-
-    int char_no;
-    char slot_no;           /* In inventory, if any */
-
-
-    if(spt->view_dir == 'R')
-    {
-        slot_no = 0;    /* Also for mounts */
-    }
-    else if(spt->view_dir == 'L')
-    {
-        slot_no = 1;
-    }
-    else if(spt->view_dir == 'I')
-    {
-        slot_no = -1;
-    }
-    else
-    {
-        slot_no = 10;   /* Is a character on map */
-    }
-
-    char_no = charCreate(spt->obj_name, spt->team, spt->stt, spt->money, spt->skin, spt->pas);
-
-    if(char_no > 0)
-    {
-        if(slot_no == 10 && spt->pos[0] > 0 && spt->pos[1] > 0)
-        {
-            /* Inventory belongs to this character, if any */
-            inv_char = char_no;
-            // Is a character with an inventory -- Drop it to map
-            egomapDropChar(char_no, spt->pos, spt->view_dir);
-        }
-        else
-        {
-            // Is an inventory object -- put it there
-            charInventoryAdd(inv_char, char_no, slot_no);
-        }
-        // Attach the character to a passage, if needed
-        if(spt->pas > 0)
-        {
-            Passages[spt->pas].char_no = char_no;
-        }
-    }
-}
-
-/*
- * Name:
- *     egomapObjToSpt
- * Description:
- *     Converts an object on the map into a spawn point with inventory info for editor
- * Input:
- *     obj_no: Which object
- *     spt *:  Fill in data about actual object in map  
- */
- static void egomapObjToSpt(int obj_no, EGOFILE_SPAWNPT_T *spt)
- {
-    int i, item_no;
-    SDLGL3D_OBJECT *pobj;
-    CHAR_T *pchar, *pitem;
-    
-
-    // Clear the destination buffer
-    memset(spt, 0, sizeof(EGOFILE_SPAWNPT_T));
-    
-    // Get pointer on object    
-    pobj = sdlgl3dGetObject(obj_no);
-    
-    if(pobj->obj_type == EGOMAP_OBJ_CHAR && pobj->type_no > 0)
-    {
-        // Get the info about the character
-        pchar = charGet(pobj->type_no);
-
-        // Get the characters profile name
-        strcpy(spt->obj_name, pchar->obj_name);
-
-        // Get some more info
-        spt->money    = pchar->money;
-        spt->view_dir = 'N';  // @todo: Get direction from object
-        spt->skin     = pchar->skin_no;
-        spt->pas      = pchar->psg_no;
-        spt->stt      = (char)CHAR_BIT_ISSET(pchar->var_props, CHAR_FDRAWSTATS);
-        spt->team     = pchar->team[CHARSTAT_ACT];
-        spt->lvl      = pchar->experience_level;
-        spt->rec_no   = 0;
-        // Get inventory info
-        for(i = 0; i < (INVEN_COUNT + SLOT_COUNT); i++)
-        {
-            item_no = pchar->inventory[i].item_no;
-
-            if(item_no > 0)
-            {
-                // Get the inventory item and the objects name
-                pitem = charGet(item_no);
-
-                spt->inventory[i] = pitem->icon_no;
-                spt->inv_name[i]  = pitem->obj_name;
-            }
-        }
-
-        // Now add the position from object
-        spt->pos[0] = pobj->pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
-        spt->pos[1] = pobj->pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
-        spt->pos[2] = pobj->pos[SDLGL3D_Z];
-    }
-}
-
-/*
- * Name:
- *     egomapObjToSptList
- * Description:
- *     Converts an object and its possible inventory into a spawn point list for export
- * Input:
- *     obj_no:  Which object
- *     spt *:   Fill in data about actual object in map
- *     spt_cnt: Number of actual line in spwanpoint list
- * Output:
- *     New counter into spawn-point list
- */
- static int egomapObjToSptList(int obj_no, EGOFILE_SPAWNPT_T *spt, int spt_cnt)
- {
-    int i, item_no;
-    SDLGL3D_OBJECT *pobj;
-    CHAR_T *pchar, *pitem;
-    char slot_sign;
-
-
-    // Clear the destination buffer
-    memset(spt, 0, sizeof(EGOFILE_SPAWNPT_T));
-
-    // Get pointer on object
-    pobj = sdlgl3dGetObject(obj_no);
-
-    if(pobj->obj_type == EGOMAP_OBJ_CHAR && pobj->type_no > 0)
-    {
-        // Create spawn point from character-object
-        pchar = charGet(pobj->type_no);
-
-        // Get the characters profile name
-        strcpy(spt->obj_name, pchar->obj_name);
-        strcpy(spt->item_name, "NONE");
-        // Get some more info
-        spt->slot_no  = spt_cnt;
-        spt->money    = pchar->money;
-        spt->view_dir = 'N';  // @todo: Get direction from object
-        spt->skin     = pchar->skin_no;
-        spt->pas      = pchar->psg_no;
-        spt->stt      = (char)CHAR_BIT_ISSET(pchar->var_props, CHAR_FDRAWSTATS);
-        spt->gho      = 'F';
-        spt->team     = (char)(pchar->team[CHARSTAT_ACT] + 'A');
-        spt->lvl      = pchar->experience_level;
-        spt->rec_no   = 0;
-        // Now add the position from object
-        spt->pos[0] = pobj->pos[SDLGL3D_X] / EGOMAP_TILE_SIZE;
-        spt->pos[1] = pobj->pos[SDLGL3D_Y] / EGOMAP_TILE_SIZE;
-        spt->pos[2] = pobj->pos[SDLGL3D_Z];
-        spt++;
-        spt_cnt++;
-
-        //  Create spawn points from inventory-objects
-        for(i = 0; i < (INVEN_COUNT + SLOT_COUNT); i++)
-        {
-            item_no = pchar->inventory[i].item_no;
-
-            if(item_no > 0)
-            {
-                // Check if theres a slot left
-                if(spt_cnt >= EGOMAP_MAXSPAWN)
-                {
-                    return spt_cnt;
-                }
-
-                // Get the inventory item and the objects name
-                pitem = charGet(item_no);
-
-                if(i == 0)
-                {
-                    slot_sign = 'R';
-                }
-                else if(i == 1)
-                {
-                    slot_sign = 'L';
-                }
-                else
-                {
-                    slot_sign = 'I';
-                }
-
-                memset(spt, 0, sizeof(EGOFILE_SPAWNPT_T));
-
-                // Get the items profile name
-                strcpy(spt->obj_name, pitem->obj_name);
-                strcpy(spt->item_name, "NONE");
-                spt->slot_no  = spt_cnt;
-                spt->view_dir = slot_sign;
-                spt->stt      = (char)CHAR_BIT_ISSET(pchar->var_props, CHAR_FDRAWSTATS);
-                spt->gho      = 'F';
-                spt->team     = 'N';
-                // Next buffer and count it
-                spt++;
-                spt_cnt++;
-            }
-        }
-    }
-
-    return spt_cnt;
-}
-
-/*
- * Name:
- *     egomapCreateSptList
- * Description:
- *     Creates a spawn list from objects
- * Input:
- *     None
- */
-static int egomapCreateSptList(void)
-{
-    EGOFILE_SPAWNPT_T *pspt;
-    SDLGL3D_OBJECT *pobj;
-    int obj_no;
-    int spt_cnt;
-
-
-    // Loop trough all objects
-    obj_no  = 1;
-    spt_cnt = 1;
-    pspt = &SpawnPts[spt_cnt];
-
-    while(obj_no)
-    {
-        // Get pointer on object
-        pobj = sdlgl3dGetObject(obj_no);
-
-        if(pobj->id != 0)
-        {
-            // Create a spawn points, get back the number of slots left
-            spt_cnt = egomapObjToSptList(obj_no, pspt, spt_cnt);
-
-            if(spt_cnt >= EGOMAP_MAXSPAWN)
-            {
-                return obj_no;
-            }
-
-            pspt = &SpawnPts[spt_cnt];
-        }
-        else
-        {
-            // End of object list
-            SpawnPts[spt_cnt].obj_name[0] = 0;
-            return obj_no;
-        }
-
-        obj_no++;
-    }
-
-    SpawnPts[spt_cnt].obj_name[0] = 0;
-
-    return obj_no;
-}
 
 /*
  * Name:
@@ -1407,15 +1132,15 @@ void egomapSetFanStart(MESH_T *mesh)
  * Description:
  *     Loads the map for the given module
  * Input:
- *     mod_name *: Name of the module 
- *     msg *:      Where to return a possible error message
+ *     mod_name *:  Name of the module 
+ *     savegame_no: Number of savegame to load, if any
+ *     msg *:       Where to return a possible error message
  */
-char egomapLoad(char *mod_name, char *msg)
+char egomapLoad(char *mod_name, int savegame_no, char *msg)
 {
     static char act_mod_name[32];       // Name of actually loaded module, if any
     
     EGOFILE_PASSAGE_T *psg;
-    EGOFILE_SPAWNPT_T *spt;
     int i;
 
 
@@ -1424,20 +1149,26 @@ char egomapLoad(char *mod_name, char *msg)
     // Set the module directory where to load data from
     egofileSetDir(EGOFILE_MODULEDIR, mod_name);
 
-    if(act_mod_name[0] == 0)
+
+    if(0 == act_mod_name[0] || strcmp(act_mod_name, mod_name) != 0)
     {
-        // We don't have to clear any buffers, but save the name for later
-        strcpy(act_mod_name, mod_name);
-    }
-    else if(strcmp(act_mod_name, mod_name) != 0)
-    {
-        // Replace the actually loaded map
-        memset(&Mesh, 0, sizeof(MESH_T));
-        
+        if(act_mod_name[0] == 0)
+        {
+            // We don't have to clear any buffers, but save the name for later
+            strcpy(act_mod_name, mod_name);
+        }
+        else
+        {
+            // Replace the actually loaded map
+            memset(&Mesh, 0, sizeof(MESH_T));
+        }
+
         if(egofileMapMesh(&Mesh, msg, 0))
         {
             Mesh.map_loaded = 1;
             render3dLoad(1);                    // Load the wall textures
+            // @note: For test purposes: Draw the map with maximum light
+            Mesh.draw_mode |= RENDER3D_LIGHTMAX;
             // @todo: render2dLoad();
         }
         else
@@ -1464,26 +1195,15 @@ char egomapLoad(char *mod_name, char *msg)
     egofilePassage(psg, EGOFILE_ACT_LOAD, EGOMAP_MAXPASSAGE);
     i = 0;
     while(psg->line_name[0] != 0)
-    {
-        psg->psg_no = 0;
-
+    {   
         egomapChangePassage((char)i, psg, EGOMAP_SET);
 
         psg++;
         i++;
     }
 
-    // Load spawn points and spawn characters
-    spt = &SpawnPts[1];
-    egofileSpawn(spt, EGOFILE_ACT_LOAD, EGOMAP_MAXSPAWN);
-
-    while(spt->obj_name[0] != 0)
-    {
-        // Spawn the object
-        egomapSpawnObject(spt);
-
-        spt++;
-    }
+    // Spawn all characters
+    charSpawnAll(savegame_no);    
 
     /* --- Success --- */
     return 1;
@@ -1649,31 +1369,6 @@ void egomapDraw2DMap(int mx, int my, int mw, int mh, int tw, int *crect)
 
 /*
  * Name:
- *     egomapNewObject
- * Description:
- *     Adds an object to the map. Loads it from file if needed
- * Input:
- *     obj_name *: Name of object to load
- *     pos[3]:     Position
- *     dir_code:   Direction the object looks
- */
-void egomapNewObject(char *obj_name, float pos[3], char dir_code)
-{
-    int char_no;
-
-
-    // Load the character object (if needed from file)
-    char_no = charCreate(obj_name, 0, 0, 0, 0, 0);
-    
-    if(char_no > 0)
-    {
-        // Put the character as object to map
-        egomapDropChar(char_no, pos, dir_code);
-    }
-}
-
-/*
- * Name:
  *     egomapDeleteObject
  * Description:
  *     Deletes an object from the map
@@ -1691,7 +1386,7 @@ void egomapDeleteObject(int obj_no)
 
 /*
  * Name:
- *     egomapDropChar
+ *     egomapPutChar
  * Description:
  *     Drops a character to the map at this position.
  *     Usage: E.g. for dropping an item from inventory
@@ -1699,8 +1394,9 @@ void egomapDeleteObject(int obj_no)
  *     char_no:  Number of charactr to drop at this position
  *     pos[3]:   Position where to drop the character on map, in tiles
  *     dir_code: Direction
+ *     mdl_no:   Number of model to use for drawing
  */
-void egomapDropChar(int char_no, float pos[3], char dir)
+int egomapPutChar(int char_no, float pos[3], char dir_code, int mdl_no)
 {
     CHAR_T *pchar;
     int obj_no;
@@ -1710,23 +1406,23 @@ void egomapDropChar(int char_no, float pos[3], char dir)
 
     dir_no = 0;    // Default direction
 
-    if('N' == dir)
+    if('N' == dir_code)
     {
         dir_no = 0;
     }
-    else if('E' == dir)
+    else if('E' == dir_code)
     {
         dir_no = 1;
     }
-    else if('S' == dir)
+    else if('S' == dir_code)
     {
         dir_no = 2;
     }
-    else if ('W' == dir)
+    else if ('W' == dir_code)
     {
 
     }
-    else if('?' == dir)
+    else if('?' == dir_code)
     {
         // @todo: Set random direction
         dir_no = 0;
@@ -1740,7 +1436,7 @@ void egomapDropChar(int char_no, float pos[3], char dir)
         tile_no = (floor(pos[1]) * Mesh.tiles_x) + floor(pos[0]);
         // @todo: Create a linked list if needed (more then one object on tile for collision detection)
         Mesh.fan[tile_no].obj_no = obj_no;
-        
+
         // Set backlink from character to object
         pchar = charGet(char_no);
         pchar->obj_no = obj_no;
@@ -1749,7 +1445,7 @@ void egomapDropChar(int char_no, float pos[3], char dir)
         {
             // @todo: Put shop items into shopkeepers inventory
             CHAR_BIT_CLEAR(pchar->cap_props, CHAR_FISSHOPITEM);
-            
+
             if(Mesh.fan[tile_no].psg_no > 0)
             {
                 if(Passages[Mesh.fan[tile_no].psg_no].ishop)
@@ -1760,8 +1456,11 @@ void egomapDropChar(int char_no, float pos[3], char dir)
                 }
             }
         }
-        
+        // Display-Object could be created
+        return obj_no;
     }
+    // Creation of display-object failed
+    return 0;
 }
 
 /* ============  Game functions ========== */
@@ -1771,7 +1470,7 @@ void egomapDropChar(int char_no, float pos[3], char dir)
  *     egomapMoveObjects
  * Description:
  *     Loops trough all objects which have moved at all and sets there tile position
- *     This function has to be called 'after' collision testing is done 
+ *     This function has to be called 'after' collision testing is done
  * Input:
  *     None
  */
@@ -1830,9 +1529,9 @@ void egomapDropChar(int char_no, float pos[3], char dir)
                 Mesh.fan[obj_list->old_tile].obj_no = 0;  
                 Mesh.fan[new_tile].obj_no = obj_list->id;                      
                 // @todo: Use linked list for multiple characters on tile
-                
+
                 // @todo: Trigger event (e.g. entering a passage if tile has changed
-                // if(obj_list->obj_type == EGOMAP_OBJ_CHAR) 
+                // if(obj_list->obj_type == EGOMAP_OBJ_CHAR)
                 //      Actions:
                 //          - 'leave' 'old_tile,
                 //          - 'enter' 'new_tile' (act_tile)
@@ -1848,18 +1547,26 @@ void egomapDropChar(int char_no, float pos[3], char dir)
 
  /*
  * Name:
- *     egomapHandlePassage
+ *     egomapPassageFunc
  * Description:
- *     Does an action on a passage 
+ *     Functions for working with passages
  * Input:
- *     psg_no: Number of passage to handle 
- *     action: Actin to apply  
+ *     psg_no:   Number of passage to handle, -1: Create a new passage
+ *     action:   What to do
+ *     value:    To set, if any is needed
  */
-/* @todo
-void egomapHandlePassage(int psg_no, int action)
+void egomapPassageFunc(int psg_no, int action, int value)
 {
-
-    EGOFILE_PASSAGE_T *psg;
+    switch(action)
+    {
+        case EGOMAP_PSGSETOWNER:
+            if(psg_no >= 0)
+            {
+                // Set the owner of the passage, can be 0
+                Passages[psg_no].char_no = value;
+            }
+            break;
+    }
 }
 
 /*

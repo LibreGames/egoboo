@@ -204,7 +204,7 @@ static int egobooInputHandler(SDLGL_EVENT *event)
         switch(event -> code)
         {
             case EGOBOO_NEWGAME:
-                // @todo: Choose modules with no IDSZ
+                // @todo: Choose modules with no IDSZ                
                 menuMain(MENU_CHOOSEMODULE);
                 break;
             case EGOBOO_LOADGAME:
@@ -239,7 +239,7 @@ static void egobooStart(void)
     egofileSetDir(EGOFILE_SAVEGAMEDIR, SavegameDir);
 
     // Calc absolute position of menu fields
-    egobooCalcMenuPos(&EgobooMenu);
+    egobooCalcMenuPos(EgobooMenu);
 
     // @todo: Load all basic stuff needed. Basic directory is known
 

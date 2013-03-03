@@ -550,6 +550,9 @@ int menuMain(char which)
             {
                 NumModuleDesc = menuLoadModuleDesc();
             }
+            // For test purposes, load the 'advent' module
+            gameMain("advent.mod", -1);
+            // @todo: Choose module using menu
             /* -------- Create the choose module screen ---------- */
             /*
                 sdlglInputNew(menuDrawFunc,

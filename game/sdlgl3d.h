@@ -283,9 +283,7 @@ typedef struct
     int     old_tile;       /* Object was on this tile before move  */
     int     act_tile;       /* Object is on this tile               */
     int     next_visi_obj;  // Next visible object in visible list
-    int     tags;           /* User defined flags                   */
-    int     t_foes;         /* Flags for team foes                  */
-    char    team_no;        /* Belongs to this Egoboo-Team          */
+    char    camera_no;      // @todo: if > 0, 'drag' this camera as moving
 
 } SDLGL3D_OBJECT;
 

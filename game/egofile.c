@@ -60,7 +60,7 @@ static char *EgofileGORDir[] =
 {
     "armor",
     "items",
-    "magic"
+    "magic",
     "magic_item",
     "misc",
     "monsters",
@@ -70,8 +70,8 @@ static char *EgofileGORDir[] =
     "scrolls",
     "traps",
     "unique",
-    "weapons"
-    ""
+    "weapons",
+    NULL
 };
 
 /* ============== Data for Spawn-Points ============== */
@@ -465,8 +465,8 @@ char egofileSetDir(int which, char *dir_name)
             break;
 
         case EGOFILE_MODULEDIR:
-            sprintf(EgoFileModule, "%s/", dir_name);
-            sprintf(EgoFileModuleDir, "%s/modules/%s/", EgofileGameDir, dir_name);
+            sprintf(EgoFileModule, "%s", dir_name);
+            sprintf(EgoFileModuleDir, "%smodules/%s/", EgofileGameDir, dir_name);
             break;
             
         case EGOFILE_ACTOBJDIR:
@@ -489,7 +489,7 @@ char egofileSetDir(int which, char *dir_name)
                 {
                     sprintf(EgoFileActObjDir, "%sbasicdat/globalobjects/%s/%s.obj/", EgofileGameDir, EgofileGORDir[i], dir_name);
                     sprintf(obj_file_name, "%sdata.txt", EgoFileActObjDir);
-                    
+
                     f = fopen(obj_file_name, "r");
                     if (f)
                     {
@@ -502,9 +502,9 @@ char egofileSetDir(int which, char *dir_name)
                 }
                 // Object not found
                 EgoFileActObjDir[0] = 0;
+                return 0;
             }
-            break;
-            
+
         case EGOFILE_SAVEGAMEDIR:
             sprintf(SavegameDir, "%s/", dir_name);
             break;

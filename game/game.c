@@ -165,10 +165,21 @@ static int gameInputHandler(SDLGL_EVENT *event)
     {
         switch(event -> code)
         {
-            /* @todo: Translate the other movements
+            // @todo: Support the other game commands, if in game-mode
+            /* Move the camera */
             case GAME_CAMERA:
+                if (event -> pressed)
+                {
+                    /* Start movement */
+                    sdlgl3dManageCamera(0, event -> sub_code, 1,
+                                        (char)(event -> modflags & KMOD_LSHIFT ? 3 : 1));
+                }
+                else
+                {
+                    /* Stop movement */
+                    sdlgl3dManageCamera(0, event -> sub_code, 0, 1);
+                }
                 break;
-            */
             case GAME_EXITMODULE:
                 return SDLGL_INPUT_EXIT;
         }
@@ -207,18 +218,17 @@ static void gameDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
     //        Applies physics 
     // collisionMain();
     
-    // @todo: void egomapMoveObjects(void);
+    // @todo: egomapMoveObjects(void);
     // Update of the linked lists on map, removing of killed objects
     // Applies environmental effects to all objects
     // Apply additional actions by 'particleUpdateOne()'
- 
+
     // @todo: Do all AI-Stuff using their scripts
-    // aiMain();        
+    // aiMain();
 
     /* -------------- Drawing section ---------- */
-    // Draw the 3D-View before the 2D-Screen 
-    // egomapDraw(&es -> ft, &es -> cm, es -> crect);
-    // void egomapDraw(FANDATA_T *fd, COMMAND_T *cd, int *crect);
+    // Draw the 3D-View before the 2D-Screen
+    egomapDraw();
     // render3dMain();
 
     /* ---- Prepare drawing in 2D-Mode ---- */
@@ -236,25 +246,40 @@ static void gameDrawFunc(SDLGL_FIELD *fields, SDLGL_EVENT *event)
 
 /*
  * Name:
- *     gamePlay
+ *     gameMain
  * Description:
- *     Plays the game using the default keys for the keyboard player
+ *     Starts the game, using the module given and the savegame, if its 
+ *     Number is > 0. 
+ *     If the number of the savegame is < 0, then the 'standard keys' for
+ *     exploring the map like in the editor are used.
  * Input:
- *     None
+ *     mod_name *:  Name of module to load
+ *     savegame_no: Number of savegame to load, if > 0, < 0: View map in explore-mode 
  */
-void gamePlay(void)
+void gameMain(char *mod_name, int savegame_no)
 {
-    /* -------- Initialize the 3D-Stuff --------------- */
-    sdlgl3dInitCamera(0, 310, 0, 90, 0.75);
-    /* Init Camera +Z is up, -Y is near plane, X is left/right */
-    sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
+    char err_msg[512];
+    
 
-    /* -------- Now create the output screen ---------- */
-    sdlglInputNew(gameDrawFunc,
-                  gameInputHandler,     /* Handler for input    */
-                  GameMenu,               /* Input-Fields (mouse) */
-                  GameCmd,              /* Keyboard-Commands    */
-                  GAME_MAXFLD);         /* Buffer size for dynamic menus    */
+    err_msg[0] = 0;
+    
+
+    // Load the map, sets the directory of the module
+    if(egomapLoad(mod_name, savegame_no, err_msg))
+    {
+        /* -------- Initialize the 3D-Stuff --------------- */
+        sdlgl3dInitCamera(0, 310, 0, 90, 0.75);
+        /* Init Camera +Z is up, -Y is near plane, X is left/right */
+        sdlgl3dMoveToPosCamera(0, 384.0, 384.0, 600.0, 0);
+
+        /* -------- Now create the output screen ---------- */
+        sdlglInputNew(gameDrawFunc,
+                      gameInputHandler,     /* Handler for input    */
+                      GameMenu,               /* Input-Fields (mouse) */
+                      GameCmd,              /* Keyboard-Commands    */
+                      GAME_MAXFLD);         /* Buffer size for dynamic menus    */
+    }
+    // @todo: Log message, if failed
 }
 
 
@@ -351,6 +376,7 @@ int gameGet(int which)
  */
  void gameShowBlipXY(int tx, int ty, int color_no)
  {
+    // @todo: Add object, which position has to be displayed every loop, in given color
     // Add a blip
     if(GameBlipCount < MAX_BLIP)
     {
@@ -359,9 +385,11 @@ int gameGet(int which)
         // {
             if(color_no >= 0)
             {
-                GameBlips[blip_count].x = tx;
-                GameBlips[blip_count].y = ty;
-                GameBlips[blip_count].c = color_no % COLOR_MAX;
+                // @todo: Take position from a given object-number, needs no clip to map
+                //        Move that to 'render2d'-Function
+                GameBlips[GameBlipCount].x = tx;
+                GameBlips[GameBlipCount].y = ty;
+                GameBlips[GameBlipCount].c = color_no % COLOR_MAX;
                 GameBlipCount++;
             }
         // }

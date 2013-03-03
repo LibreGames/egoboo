@@ -240,8 +240,7 @@ static void render3dSingleFan(MESH_T *mesh, int fan_no)
             for (tnc = 0; tnc < mc -> size[cnt]; tnc++)
             {
                 act_vtx = vertexno[entry]; 	/* Number of vertex to draw */
-
-                if (mesh -> draw_mode & RENDER3D_LIGHTMAX || mesh -> vrt[act_vtx].a == 0)
+                if (mesh->draw_mode & RENDER3D_LIGHTMAX || mesh -> vrt[act_vtx].a == 0)
                 {
                     color[0] = color[1] = color[2] = 255;
                 }
@@ -461,6 +460,7 @@ static void render3dMap(MESH_T *pmesh)
 
 
     // Get camera for drawing edges
+    sdlgl3dGetCameraInfo(0, &f);
     // Calculate edges in tiles
     tx1 = f.bf.min_x / EGOMAP_TILE_SIZE;
     if(tx1 < 0) tx1 = 0;
@@ -490,7 +490,7 @@ static void render3dMap(MESH_T *pmesh)
     {
         for(x = tx1; x < tx2; x++)
         {
-            fan_no = (y * pmesh->tiles_x) + y;
+            fan_no = (y * pmesh->tiles_x) + x;
 
             if (pmesh -> fan[fan_no].type == 0)
             {
@@ -525,7 +525,7 @@ static void render3dMap(MESH_T *pmesh)
     {
         for(x = tx1; x < tx2; x++)
         {
-            fan_no = (y * pmesh->tiles_x) + y;
+            fan_no = (y * pmesh->tiles_x) + x;
 
             if (pmesh -> fan[fan_no].type != 0)
             {

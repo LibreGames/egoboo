@@ -43,6 +43,6 @@ enum
 * CODE 								                                        *
 *******************************************************************************/
 
-void gameMain(void);
+void gameMain(char *mod_name, int savegame_no);
 
 #endif  /* #define _GAME_H_ */

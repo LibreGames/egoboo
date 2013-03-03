@@ -56,7 +56,7 @@ static char *EditFileGORDir[] =
 {
     "armor",
     "items",
-    "magic"
+    "magic",
     "magic_item",
     "misc",
     "monsters",
@@ -66,8 +66,8 @@ static char *EditFileGORDir[] =
     "scrolls",
     "traps",
     "unique",
-    "weapons"
-    ""
+    "weapons",
+    NULL
 };
 
 /* ============== Data for Spawn-Points ============== */

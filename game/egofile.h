@@ -146,9 +146,6 @@ typedef struct
     int  char_no;           ///< The character associated with this passage
     char state;             ///< State of passage in game -1: isopening / 0: inactive / 1: isclosing
     char ishop;             ///< This passage is a shop
-    /* --- Info for editor -- */
-    char psg_no;            ///< -1: Deleted
-    char rec_no;            
     
 } EGOFILE_PASSAGE_T;
 
@@ -156,7 +153,7 @@ typedef struct
 {
     char obj_name[24 + 1];      /* Name of object to load [obj_name].obj   */
     char item_name[24 + 1];     ///< Never used ???
-    int  slot_no;               ///< Not used anymore (the slots are set by loading time) 
+    int  slot_no;               ///< Used for script in 'dependency'
     float pos[3];               /// x, y, z
     char view_dir;
     int  money;
@@ -202,7 +199,7 @@ typedef struct
 *******************************************************************************/
 
 char egofileSetDir(int which, char *dir_name);
-char *egofileMakeFileName(int dir_no, char *fname);
+char *egofileMakeFileName(int which, char *fname);
 int  egofileMapMesh(MESH_T *mesh, char *msg, char save);
 int  egofileSpawn(EGOFILE_SPAWNPT_T *spt, char action, int max_rec);
 int  egofilePassage(EGOFILE_PASSAGE_T *psg, char action, int max_rec);

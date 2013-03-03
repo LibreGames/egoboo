@@ -45,9 +45,12 @@
 #define EGOMAP_SET    0x03
 #define EGOMAP_CLEAR  0x04
 // Actions for passage
-#define EGOMAP_OPEN   0x05  
-#define EGOMAP_CLOSE  0x06  
-#define EGOMAP_SWITCH 0x06
+#define EGOMAP_PSGOPEN   0x05  
+#define EGOMAP_PSGCLOSE  0x06  
+#define EGOMAP_PSGSWITCH 0x07
+
+// Actions for passage
+#define EGOMAP_PSGSETOWNER 0x08
 
 // Numbers of FX-flags (for script use)
 #define EGOMAP_FXREF       ((char)-1)   
@@ -86,7 +89,7 @@ typedef struct
 /* ============ Map functions ========== */
 void egomapInit(void);
 void egomapSetFanStart(MESH_T *mesh);
-char egomapLoad(char *mod_name, char *msg);
+char egomapLoad(char *mod_name, int savegame_no, char *msg);
 
 /* ============  Tile functions ========== */
 void egomapGetAdjacent(int tx, int ty, EGOMAP_TILEINFO_T adjacent[8]);
@@ -96,16 +99,15 @@ void egomapGetAdjacentPos(int pos_x, int pos_y, EGOMAP_TILEINFO_T adjacent[4]);
 void egomapDraw(void);
 
 /* ============ OBJECT-FUNCTIONS ========== */
-void egomapNewObject(char *obj_name, float pos[3], char dir_code);
 void egomapPutObject(int obj_no);       // Put this object to map
 void egomapDropObject(int obj_no);      // Drop this object to map (fall to bottom)
 void egomapDeleteObject(int obj_no);    // Delete this object from map
 int  egomapGetChar(int tile_no);        // Get character info from this tile (flags: GET, PEEK)
-void egomapDropChar(int char_no, float pos[3], char dir); 
+int  egomapPutChar(int char_no, float pos[3], char dir_code, int mdl_no);
 void egomapMoveObjects(void);           // Moves all objects on map
 
 /* ============ Game (script) functions ========== */
-// @todo: void  egomapHandlePassage(int psg_no, int action);
+void egomapPassageFunc(int psg_no, int action, int value);
 // @todo: int   egomapGlobalFlag(int action, int flag_no);
 // @todo: int   egomapHandleTile(int action, int x, int y, inv val1, int val2);
 

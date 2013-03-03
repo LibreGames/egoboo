@@ -33,6 +33,7 @@
 
 #include "egodefs.h"    /* MPDFX_IMPASS                                 */
 #include "egofile.h"    /* Get the work-directoires                     */
+#include "egomap.h"
 #include "idsz.h";
 #include "misc.h"       /* Random treasure objects                      */
 #include "msg.h"        /* Handle sending game messages                 */
@@ -79,6 +80,8 @@
 // team
 #define TEAM_MAX            32  // Mum number of teams
 #define TEAM_MAX_MEMBER     6   // Maximum members of a team
+// Spawn points
+#define CHAR_MAXSPAWN    500      /* Maximum Lines in spawn list          */
 
 // Damage Flags
 #define DAMAGE_INVERT   0x01
@@ -298,6 +301,7 @@ static char DamageType[4];
 static char WeaponAction[20];
 
 // The different lists
+static EGOFILE_SPAWNPT_T SpawnPts[CHAR_MAXSPAWN + 2];    // List of all spawn points
 static TEAM_T TeamList[TEAM_MAX + 2];     
 static CAP_T  CapList[CHAR_MAX_CAP + 2];
 static CHAR_T CharList[CHAR_MAX + 2];
@@ -1045,23 +1049,23 @@ static void charDoLevelUp(const int char_no)
 
             // Size
             valpair[0] = (10.0 * pcap->size_perlevel);
-            charAddValue(char_no, CHAR_VAL_SIZE, 0, valpair, 0);
+            charAddValue(pchar, CHAR_VAL_SIZE, 0, valpair, 0);
             // Strength
-            charAddValue(char_no, CHAR_VAL_STR, 0, pcap->strength_stat.perlevel, 0);
+            charAddValue(pchar, CHAR_VAL_STR, 0, pcap->strength_stat.perlevel, 0);
             // Wisdom
-            charAddValue(char_no, CHAR_VAL_WIS, 0, pcap->wisdom_stat.perlevel, 0);
+            charAddValue(pchar, CHAR_VAL_WIS, 0, pcap->wisdom_stat.perlevel, 0);
             // Intelligence
-            charAddValue(char_no, CHAR_VAL_INTEL, 0, pcap->intelligence_stat.perlevel, 0);
+            charAddValue(pchar, CHAR_VAL_INTEL, 0, pcap->intelligence_stat.perlevel, 0);
             // Dexterity
-            charAddValue(char_no, CHAR_VAL_DEX, 0, pcap->dexterity_stat.perlevel, 0);
+            charAddValue(pchar, CHAR_VAL_DEX, 0, pcap->dexterity_stat.perlevel, 0);
             // Life
-            charAddValue(char_no, CHAR_VAL_LIFE, 0, pcap->life_stat.perlevel, 0);
+            charAddValue(pchar, CHAR_VAL_LIFE, 0, pcap->life_stat.perlevel, 0);
             // Mana
-            charAddValue(char_no, CHAR_VAL_MANA, 0, pcap->mana_stat.perlevel, 0);
+            charAddValue(pchar, CHAR_VAL_MANA, 0, pcap->mana_stat.perlevel, 0);
             // Mana Return
-            charAddValue(char_no, CHAR_VAL_MANARET, 0, pcap->mana_return_stat.perlevel, 0);
+            charAddValue(pchar, CHAR_VAL_MANARET, 0, pcap->mana_return_stat.perlevel, 0);
             // Mana Flow
-            charAddValue(char_no, CHAR_VAL_MANAFLOW, 0, pcap->mana_flow_stat.perlevel, 0);            
+            charAddValue(pchar, CHAR_VAL_MANAFLOW, 0, pcap->mana_flow_stat.perlevel, 0);            
         }
     }
 }
@@ -1121,19 +1125,16 @@ static void charGiveXPOne(CHAR_T *pchar, int amount, int xp_type)
  * Description:
  *      Gives experence to the given characters team. Including given character. 
  * Input:
- *     char_no: Number of character to give experience
+ *     pchar *: Pointer on character to give it's team experience
  *     amount:  Amount of experience to give
  *     xp_type: Type of experience to give 
  */
-void charGiveXPTeam(int char_no, int amount, int xp_type)
+void charGiveXPTeam(CHAR_T *pchar, int amount, int xp_type)
 {
-    CHAR_T *pchar;
-    int team_no;
-    
-    
+    char team_no;
+
+
     if (0 == amount) return;    //No xp to give
-    
-    pchar = &CharList[char_no];
     
     // Give experience to whole team
     team_no = pchar->team[0];
@@ -1268,8 +1269,8 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
         if(pkiller->t_foes & (~pchar->t_foes))  // Team hates team
         {
             //Check for special hatred
-            if (charGetSkill(killer_no, IDSZ_HATE ) == charGetSkill(char_no, IDSZ_PARENT ) ||
-                 charGetSkill(killer_no, IDSZ_HATE ) == charGetSkill(char_no, IDSZ_TYPE ) )
+            if (charGetSkill(pkiller, IDSZ_HATE ) == charGetSkill(pchar, IDSZ_PARENT ) ||
+                 charGetSkill(pkiller, IDSZ_HATE ) == charGetSkill(pchar, IDSZ_TYPE ) )
             {
                 charGiveXPOne(pkiller, experience, XP_KILLHATED);
             }
@@ -1326,47 +1327,6 @@ static void charKill(const int char_no, const int killer_no, char ignore_invictu
     charCleanUp(pchar);
 }
 
-
-
-
-/* ========================================================================== */
-/* ============================= PUBLIC FUNCTION(S) ========================= */
-/* ========================================================================== */
-
-/* ================= Basic character functions =============== */
-
-/*
- * Name:
- *     charInit
- * Description:
- *     Initializes the character data buffers
- * Input:
- *     None
- */
-void charInit(void) 
-{       
-    int i;
-    unsigned int t_flag;
-    
-    
-    // Clear the buffer for the character profiles
-    memset(&CapList[0], 0, CHAR_MAX_CAP * sizeof(CAP_T)); 
-    // Clear the buffer for the characters
-    memset(&CharList[0], 0, CHAR_MAX * sizeof(CHAR_T)); 
-    
-    /* ----- Initalize the teams ------ */
-    memset(&TeamList[0], 0, TEAM_MAX * sizeof(TEAM_T)); 
-    for (i = 0; i < TEAM_MAX; i++)
-    {
-        t_flag = (1 << i);
-        // Preset before 'alliance.txt' data is loaded
-        TeamList[i].foes = ~t_flag;  // !friend == foe
-    }
-    
-    // The neutral team hates nobody
-    TeamList[('N' - 'A')].foes = 0;
-}
-
 /*
  * Name:
  *     charCreate
@@ -1385,7 +1345,7 @@ void charInit(void)
  * Output:
  *     Number of character, if any is created
  */
-int charCreate(char *objname, char team, char stt, int money, char skin, char psg)
+static int charCreate(EGOFILE_SPAWNPT_T *spt)
 {
     int i;
     int cap_no;
@@ -1395,7 +1355,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
     
 
     // @todo: Support Random Treasure
-    cap_no = charReadCap(objname);
+    cap_no = charReadCap(spt->obj_name);
 
     if(cap_no > 0)
     {
@@ -1410,10 +1370,10 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             pchar->id      = char_no;         /* Number of slot > 0: Is occupied            */
             pchar->cap_no  = cap_no;          /* Has this character profile, this script_no */
             pchar->mdl_no  = pcap->mdl_no;    /* Number of model for display          */
-            pchar->icon_no = skin;            /* Number of models icon for display    */
-            pchar->skin_no = skin;            /* Number of models skin for display    */
+            pchar->icon_no = spt->skin;       /* Number of models icon for display    */
+            pchar->skin_no = spt->skin;       /* Number of models skin for display    */
             // Attached to passage
-            pchar->psg_no  = psg;
+            pchar->psg_no  = spt->pas;
             // Gender
             pchar->gender = pcap->gender;       // As char
             if(pcap->gender == 'R')
@@ -1422,17 +1382,17 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             }
             
             // Team stuff
-            team = (char)(team - 'A');  // From 0 to ('Z' - 'A')
-            pchar->team[0] = team;    // Actual team
-            pchar->team[1] = team;    // Original team
+            spt->team = (char)(spt->team - 'A');  // From 0 to ('Z' - 'A')
+            pchar->team[0] = spt->team;    // Actual team
+            pchar->team[1] = spt->team;    // Original team
             
             // Firstborn becomes the leader
-            if (TeamList[team].leader_no == 0)
+            if (TeamList[spt->team].leader_no == 0)
             {
-                TeamList[team].leader_no = char_no;
+                TeamList[spt->team].leader_no = char_no;
             }
 
-            pchar->money = money;   
+            pchar->money = spt->money;   
 
             // Damage
             pchar->defense[0] = pchar->defense[1] = pcap->defense[pchar->skin_no];
@@ -1527,7 +1487,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             
             if(! CHAR_BIT_ISSET(pchar->cap_props, CHAR_CFINVICTUS))
             {
-                TeamList[team].morale++;
+                TeamList[spt->team].morale++;
             }
 
             /*
@@ -1558,7 +1518,7 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
             */
            // Shop thing is done as the character is dropped to the map
 
-            if(stt)  ///< Display stats?
+            if(spt->stt)  ///< Display stats?
             {
                 CHAR_BIT_SET(pchar->var_props, CHAR_FDRAWSTATS);
             }
@@ -1583,6 +1543,109 @@ int charCreate(char *objname, char team, char stt, int money, char skin, char ps
 
 /*
  * Name:
+ *     charInit
+ * Description:
+ *     Initializes the character data buffers and the teams
+ * Input:
+ *     None
+ */
+static void charInit(void) 
+{       
+    int i;
+    unsigned int t_flag;
+    
+    
+    // Clear the buffer for the character profiles
+    memset(&CapList[0], 0, CHAR_MAX_CAP * sizeof(CAP_T)); 
+    // Clear the buffer for the characters
+    memset(&CharList[0], 0, CHAR_MAX * sizeof(CHAR_T)); 
+    
+    /* ----- Initalize the teams ------ */
+    memset(&TeamList[0], 0, TEAM_MAX * sizeof(TEAM_T)); 
+    for (i = 0; i < TEAM_MAX; i++)
+    {
+        t_flag = (1 << i);
+        // Preset before 'alliance.txt' data is loaded
+        TeamList[i].foes = ~t_flag;  // !friend == foe
+    }
+    
+    // The neutral team hates nobody
+    TeamList[('N' - 'A')].foes = 0;
+    
+    // @todo: Load 'alliances.txt' from actual module directory and adjust the team flags
+}
+
+/*
+ * Name:
+ *     charSpawnFromSpt
+ * Description:
+ *     Spawns an object on map, based on given spawn point
+ * Input:
+ *     spt *:  Description of spawn point
+ */
+ static void charSpawnFromSpt(EGOFILE_SPAWNPT_T *spt)
+ {
+    static inv_char = 0;   // Old character for inventory
+
+    int char_no;
+    int obj_no;             // 3D-Object generated
+    char slot_no;           /* In inventory, if any */
+
+
+    // @todo: Support '#[objname] [slot_no] for dependency-objects
+    
+    if(spt->view_dir == 'R')
+    {
+        slot_no = 0;    /* Also for mounts */
+    }
+    else if(spt->view_dir == 'L')
+    {
+        slot_no = 1;
+    }
+    else if(spt->view_dir == 'I')
+    {
+        slot_no = -1;
+    }
+    else
+    {
+        slot_no = 10;   /* Is a character on map */
+    }
+
+    char_no = charCreate(spt);
+
+    if(char_no > 0)
+    {
+        if(slot_no == 10 && spt->pos[0] > 0 && spt->pos[1] > 0)
+        {
+            /* Inventory belongs to this character, if any */
+            inv_char = char_no;
+            // Is a character with an inventory -- Drop it to map
+            obj_no = egomapPutChar(char_no, spt->pos, spt->view_dir, CharList[char_no].mdl_no);
+            // Link back to object from character
+            CharList[char_no].obj_no = obj_no;
+        }
+        else
+        {
+            // Is an inventory object -- put it there
+            charInventoryAdd(inv_char, char_no, slot_no);
+        }
+        
+        // Attach the character to a passage, if needed
+        if(spt->pas > 0)
+        {
+            egomapPassageFunc(spt->pas, EGOMAP_PSGSETOWNER, char_no);
+        }
+    }
+}
+
+/* ========================================================================== */
+/* ============================= PUBLIC FUNCTION(S) ========================= */
+/* ========================================================================== */
+
+/* ================= Basic character functions =============== */
+
+/*
+ * Name:
  *     charGet
  * Description:
  *     Returns a pointer on a valid character, if available 
@@ -1595,7 +1658,75 @@ CHAR_T *charGet(int char_no)
 {
     // Return pointer on character description
     return &CharList[char_no];
+}
+
+/*
+ * Name:
+ *     charSpawnAll
+ * Description:
+ *     Spawns all characters for the actual set module directory
+ * Input:
+ *     savegame_no: Number of 'savegame' to load, if any
+ */
+void charSpawnAll(int savegame_no)
+{
+    EGOFILE_SPAWNPT_T *spt;
+
+
+    // Clear the buffers and initalize the teams
+    charInit();
+    
+    if(savegame_no > 0)
+    {
+        // @todo: Load the players character and it's inventory from 'savegame'
+    }
+
+    /* Load the spawn points */
+    spt = &SpawnPts[1];
+
+    egofileSpawn(spt, EGOFILE_ACT_LOAD, CHAR_MAXSPAWN);
+
+    while(spt->obj_name[0] != 0)
+    {
+        // Spawn the object
+        charSpawnFromSpt(spt);
+
+        spt++;
+    }
 } 
+
+/*
+ * Name:
+ *     charSpawnOne
+ * Description:
+ *     Spawns a single character at given position
+ * Input:
+ *     objname *: Name of object to spawn
+ *     pos[3]:    Where to spawn on map in tiles
+ *     dir:       Object should look into this direction   
+ */
+void charSpawnOne(char *objname, float pos[3], char dir)
+{
+    EGOFILE_SPAWNPT_T spt;
+    int i;
+
+
+    memset(&spt, 0, sizeof(EGOFILE_SPAWNPT_T));
+    // @todo: If 'objname' is numeric, then get name from cap with that 'slot_no'
+    //        Used for scripts loading objects with 'dependency' info 
+    // And create a spawn point
+    strcpy(spt.obj_name, objname);
+     
+    for(i = 0; i < 3; i++)
+    {
+       spt.pos[i] = pos[i];
+    }
+    // And the direction
+    spt.view_dir = dir;
+     
+    // Spawn the object
+    charSpawnFromSpt(&spt);
+}
 
 /* ================= inventory functions ===================== */
 
@@ -1905,13 +2036,10 @@ void charDamage(const char char_no, char dir_no, int valpair[2], char team,
  *     valpair[2]: For damage healing, Experience points are in 'valpair[0]', negative is damage
  *     duration_sec: > 0: Is a temporary effect 
  */
-void charAddValue(int char_no, int which, int sub_type, int valpair[2], int duration_sec)
+void charAddValue(CHAR_T *pchar, int which, int sub_type, int valpair[2], int duration_sec)
 {
-    CHAR_T *pchar;
     int amount;
 
-
-    pchar = &CharList[char_no];
 
     if(valpair[1] > 0)
     {
@@ -1933,9 +2061,9 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
             if(duration_sec > 0)
             {
                 // Temporary value
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
-                    pchar->life[0] += (short int)amount;
+                    pchar->life[0] += (short int)amount;           
                     return;
                 }
             }
@@ -1947,7 +2075,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_MANA:     ///< Mana stuff 
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->mana[0] += (short int)amount;
                     return;
@@ -1957,10 +2085,10 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
             pchar->mana[0] += (short int)amount;
             pchar->mana[1] += (short int)amount;
             break;
-        case CHAR_VAL_STR:      // strength   
+        case CHAR_VAL_STR:      // strength
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->str[0] += (char)amount;
                     return;
@@ -1973,7 +2101,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_INTEL:    // intelligence
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->itl[0] += (char)amount;
                     return;
@@ -1986,7 +2114,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_WIS:      // wisdom
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->wis[0] += (char)amount;
                     return;
@@ -1999,7 +2127,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_DEX:      // dexterity
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->dex[0] += (char)amount;
                     return;
@@ -2012,7 +2140,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_CON:
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->con[0] += (char)amount;
                     return;
@@ -2025,7 +2153,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_CHA:
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->cha[0] += (char)amount;
                     return;
@@ -2038,7 +2166,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_DEFENSE:
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->defense[0] += (char)amount;
                     return;
@@ -2058,7 +2186,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_DMGBOOST:
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->dmg_boost[0] += (char)amount;
                     return;
@@ -2071,7 +2199,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_DMGTHRES: ///< Damage below this number is ignored
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->dmg_threshold[0] += (char)amount;
                     return;
@@ -2086,7 +2214,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
             charGiveXPOne(pchar, amount, sub_type);
             break;
         case CHAR_VAL_XP_TEAM:
-            charGiveXPTeam(char_no, amount, sub_type);
+            charGiveXPTeam(pchar, amount, sub_type);
             break;
             // Skills
         case CHAR_VAL_DVLVL:
@@ -2127,7 +2255,7 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
         case CHAR_VAL_ACCEL:
             if(duration_sec > 0)
             {
-                if(charSetTimer(char_no, which, amount, duration_sec))
+                if(charSetTimer(pchar, which, amount, duration_sec))
                 {
                     pchar->max_accel[0] += (char)amount;
                     return;
@@ -2144,16 +2272,16 @@ void charAddValue(int char_no, int which, int sub_type, int valpair[2], int dura
  * Description:
  *     Sets the given value on character(s), using the given arguments
   * Input:
- *     char_no:    Number of character to handle 
+ *     pchar *:    Set value for this character
  *     which:      Which value to change 
  *     sub_type:   Of 'which', e.g. for damage resistance values, otherwise e.g. 'damage' for life
  *     amount:     Which value to set
  */
-void charSetValue(int char_no, int which, int sub_type, int amount)
+void charSetValue(CHAR_T *pchar, int which, int sub_type, int amount)
 {
-    CHAR_T *pchar;
     // CAP_T *pcap;
-    
+
+
     switch(which)
     {
         case CHAR_VAL_LIFE:
@@ -2344,20 +2472,17 @@ void charSetValue(int char_no, int which, int sub_type, int amount)
  *     This returns the skill level for the specified skill or 0 if the character doesn't
  *     have the skill. Also checks the skill IDSZ.
  * Input:
- *     char_no:    Number of character to give experience
+ *     pchar *:    Pointer on character to get skill for
  *     whichskill: Skill to look for (IDSZ)        
  */
-int charGetSkill(int char_no, unsigned int whichskill)
+int charGetSkill(CHAR_T *pchar, unsigned int whichskill)
 {
-    CHAR_T *pchar;
     IDSZ_T *pskill;
-    
-    
+
+
     //Any [NONE] IDSZ returns always "true"
     if (IDSZ_NONE == whichskill) return 1;
-    
-    pchar = &CharList[char_no];
-    
+        
     //Do not allow poison or backstab skill if we are restricted by code of conduct
     if ('POIS' == whichskill || 'STAB' == whichskill)
     {
@@ -2454,20 +2579,17 @@ int charGetSkill(int char_no, unsigned int whichskill)
  * Description:
  *     Sets a timer with given number, if possible
  * Input:
- *     char_no:      Number of character to set timer for
+ *     pchar *:      Pointer on character to set timer for
  *     which:        Which temporary value 
  *     add_val:      Temporary added value 
  *     duration_sec: Duration in seconds (< 0: Remove it)
  * Output:
  *     Clock could be set yes/no
  */
-char charSetTimer(int char_no, int which, int add_val, int duration_sec)
+char charSetTimer(CHAR_T *pchar, int which, int add_val, int duration_sec)
 {
     int i;
-    CHAR_T *pchar;
 
-
-    pchar = &CharList[char_no];
 
     // Only set timer if not already set
     for(i = 0; i < CHAR_MAX_TIMER; i++)

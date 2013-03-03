@@ -411,9 +411,9 @@ typedef struct
 *******************************************************************************/
 
 /* ================= Basic character functions =============== */
-void charInit(void);
-int  charCreate(char *objname, char team, char stt, int money, char skin, char psg);
 CHAR_T *charGet(int char_no); 
+void charSpawnAll(int savegame_no);
+void charSpawnOne(char *objname, float pos[3], char dir);
 
 /* ================= General inventory functions ===================== */
 char charInventoryAdd(const int char_no, const int item_no, int inventory_slot);
@@ -427,11 +427,11 @@ char charInventorySwap(const int char_no, int inventory_slot, int grip_off);
 void charInventoryFunc(int char_no, int func_no);
 void charDamage(const char char_no, char dir_no, int valpair[2], char team,
                 int attacker, int effects);
-void charAddValue(int char_no, int which, int sub_type, int valpair[2], int duration_sec);
-void charSetValue(int char_no, int which, int sub_type, int amount);
-int  charGetSkill(int char_no, unsigned int whichskill); /* IDSZ */
+void charAddValue(CHAR_T *pchar, int which, int sub_type, int valpair[2], int duration_sec);
+void charSetValue(CHAR_T *pchar, int which, int sub_type, int amount);
+int  charGetSkill(CHAR_T *pchar, unsigned int whichskill); /* IDSZ */
 
-char charSetTimer(int char_no, int which, int add_val, int duration_sec);
+char charSetTimer(CHAR_T *pchar, int which, int add_val, int duration_sec);
 void charUpdateAll(float sec_passed);
 
 #endif  /* #define _CHAR_H_ */
