@@ -4,67 +4,73 @@
 #!!!! if you want to specify a prefix, do it on the command line
 #For instance: "make PREFIX=$HOME/.local"
 
+#---------------------
+# some project definitions
+
+PROJ_NAME		:= egoboo
+PROJ_VERSION	:= 2.x
+
+#---------------------
+# the target names
+
+EGO_DIR	:= ./game
+EGO_TARGET	:= $(PROJ_NAME)-$(PROJ_VERSION)
+
+ENET_DIR			:= ./enet
+ENET_TARGET			:= libenet
+ENET_TARGET_EXTENSION	:= a
+
+ENET_LIBRARY            := $(ENET_DIR)/lib/$(ENET_TARGET).$(ENET_TARGET_EXTENSION)
+
+#------------------------------------
+# user defined macros
+
 ifndef ($(PREFIX),"")
 	# define a value for prefix assuming that the program will be installed in the root directory
 	PREFIX := /usr
 endif
 
+ifndef ($(INSTALL_DIR),"")
+	# the user can specify a non-standard location for "install"
+	INSTALL_DIR := ../install
+endif
 
-PROJ_NAME := egoboo-2.x
+#------------------------------------
+# definitions of the target projects
 
 .PHONY: all clean
 
 all: enet egoboo
 
+$(ENET_LIBRARY):
+	make -C $(ENET_DIR) all PREFIX=$(PREFIX)
+
 clean:
-	make -C ./enet clean
-	make -C ./game clean
+	make -C $(ENET_DIR) clean
+	make -C $(EGO_DIR) clean
 
-enet:
-	make -C ./enet all
+enet: $(ENET_LIBRARY)
 
-egoboo:
-	make -C ./game all PREFIX=$(PREFIX) PROJ_NAME=$(PROJ_NAME)
-	
-egoboo_lua:
-	make -F Makefile.lua -C game all PREFIX=$(PREFIX) PROJ_NAME=$(PROJ_NAME)
+egoboo: enet
+	make -C $(EGO_DIR) all PREFIX=$(PREFIX) EGO_TARGET=$(EGO_TARGET) ENET_LIB=$(ENET_LIBRARY)
+
+egoboo_lua: enet
+	make -F Makefile.lua -C game all PREFIX=$(PREFIX) PROJ_NAME=$(PROJ_NAME) ENET_LIB=$(ENET_LIBRARY)
 
 install:
 
 	######################################
-	# Thank you for installing egoboo! 
-	#
-	# The default install of egoboo will require the commandline 
-	#     "sudo make install"
-	# and the required password
-	#
-	# If you do not have root access on this machine, 
-	# you can specify a prefix on the command line: 
-	#     "make install PREFIX=$$HOME/.local"
-	# where the environment variable PREFIX specifies a
-	# virtual root for your installation. In this example,
-	# it is a local installation for this username only.
+	# This command will install egoboo using the
+	# directory structure currently used in svn repository
 	#
 
 #	copy the binary to the games folder
-	mkdir -p ${PREFIX}/games
-	install -m 755 ./game/${PROJ_NAME} ${PREFIX}/games
+	mkdir -p $(PREFIX)/games
+	install -m 755 $(EGO_DIR)/$(PROJ_NAME) $(PREFIX)/games
 
-#	copy the data to the games folder
-	mkdir -p ${PREFIX}/share/games/${PROJ_NAME}
-	cp -rdf ./basicdat ${PREFIX}/share/games/${PROJ_NAME}
-	cp -rdf ./modules ${PREFIX}/share/games/${PROJ_NAME}
-
-#	copy the players to the user's data folder
-	mkdir -p ${HOME}/.${PROJ_NAME}
-	cp -rdf ./players ${HOME}/.${PROJ_NAME}
-
-#	copy the basic configuration files to the config directory
-	mkdir -p ${PREFIX}/etc/${PROJ_NAME}
-	cp -rdf setup.txt ${PREFIX}/etc/${PROJ_NAME}/setup.txt
-	cp -rdf controls.txt ${PREFIX}/etc/${PROJ_NAME}/controls.txt
+#	call the installer in the required install directory
+	make -C INSTALL_DIR install
 
 	#####################################
 	# Egoboo installation is finished
 	#####################################
-
