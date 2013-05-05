@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -31,6 +31,9 @@
     <Filter Include="File System\Source">
       <UniqueIdentifier>{6a653bb4-77b5-4fa0-b881-b475b4aac71a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lua">
+      <UniqueIdentifier>{3399c957-e750-4f7a-b9d4-0db289400a03}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bbox.c">
@@ -52,9 +55,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="collision.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ego_wrap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="egoboo.c">
@@ -127,9 +127,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="log.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="lua_console.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mad.c">
@@ -282,6 +279,12 @@
     <ClCompile Include="file_formats\treasure_table_file.c">
       <Filter>File System\Source</Filter>
     </ClCompile>
+    <ClCompile Include="lua\ego_wrap.c">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua_console.c">
+      <Filter>lua</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bbox.h">
@@ -393,9 +396,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="log.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="lua_console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mad.h">
@@ -538,6 +538,9 @@
     </ClInclude>
     <ClInclude Include="file_formats\treasure_table_file.h">
       <Filter>File System\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua_console.h">
+      <Filter>lua</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

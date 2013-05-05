@@ -5,17 +5,7 @@ EGO_BIN := $(PROJ_NAME)
 #---------------------
 # the source files
 
-EGO_SRC  := \
-	bbox.c bsp.c camera.c char.c client.c clock.c collision.c \
-	egoboo_console.c egoboo_display.c egoboo_endian.c egoboo_fileutil.c \
-	egoboo_math.c egoboo_setup.c egoboo_strutil.c egoboo_typedef.c \
-	egoboo_vfs.c enchant.c file_common.c font_bmp.c font_ttf.c game.c \
-	graphic.c graphic_fan.c graphic_mad.c graphic_prt.c hash.c IDSZ_map.c \
-	input.c lighting.c link.c log.c mad.c md2.c menu.c mesh.c network.c \
-	particle.c passage.c profile.c quest.c script.c script_compile.c \
-	script_functions.c server.c sound.c texture.c ui.c egoboo.c physics.c\
-	egoboo_process.c ChrList.c EncList.c PrtList.c egoboo_object.c
-
+EGO_SRC         := $(wildcard *.c)
 EGO_PLATFORM    := platform/file_linux.c platform/sys_linux.c
 EGO_FILE_FORMAT := $(wildcard ./file_formats/*.c)
 EGO_EXTENSIONS  := $(wildcard ./extensions/*.c)

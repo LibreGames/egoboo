@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="game"
 	ProjectGUID="{E9988340-E474-4C0A-8496-EFF3296DE056}"
 	RootNamespace="game"
@@ -534,43 +534,11 @@
 			Name="lua_interface"
 			>
 			<File
-				RelativePath=".\ego.i"
+				RelativePath=".\lua\ego.i"
 				>
 			</File>
 			<File
-				RelativePath=".\ego_wrap.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\egoboo_console.c"
-				>
-			</File>
-			<File
-				RelativePath=".\egoboo_console.h"
-				>
-			</File>
-			<File
-				RelativePath=".\egoboo_console.inl"
-				>
-			</File>
-			<File
-				RelativePath=".\lua_console.c"
+				RelativePath=".\lua\ego_wrap.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -590,7 +558,27 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\lua_console.h"
+				RelativePath=".\lua\lua_console.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\lua\lua_console.h"
 				>
 			</File>
 		</Filter>
@@ -655,6 +643,14 @@
 			>
 			<File
 				RelativePath=".\clock.c"
+				>
+			</File>
+			<File
+				RelativePath=".\egoboo_console.c"
+				>
+			</File>
+			<File
+				RelativePath=".\egoboo_console.inl"
 				>
 			</File>
 			<File
@@ -755,6 +751,10 @@
 			</File>
 			<File
 				RelativePath=".\egoboo_config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\egoboo_console.h"
 				>
 			</File>
 			<File

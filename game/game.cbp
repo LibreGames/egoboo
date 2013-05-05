@@ -395,7 +395,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="collision.h" />
-		<Unit filename="ego_wrap.c">
+		<Unit filename="lua/ego_wrap.c">
 			<Option compilerVar="CC" />
 			<Option compile="0" />
 			<Option link="0" />
@@ -594,12 +594,12 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="log.h" />
-		<Unit filename="lua_console.c">
+		<Unit filename="lua/lua_console.c">
 			<Option compilerVar="CC" />
 			<Option compile="0" />
 			<Option link="0" />
 		</Unit>
-		<Unit filename="lua_console.h" />
+		<Unit filename="lua/lua_console.h" />
 		<Unit filename="mad.c">
 			<Option compilerVar="CC" />
 		</Unit>

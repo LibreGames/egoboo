@@ -155,6 +155,12 @@
 				RelativePath=".\clock.c">
 			</File>
 			<File
+				RelativePath=".\egoboo_console.c">
+			</File>
+			<File
+				RelativePath=".\egoboo_console.inl">
+			</File>
+			<File
 				RelativePath=".\egoboo_display_list.c">
 			</File>
 			<File
@@ -211,6 +217,9 @@
 			</File>
 			<File
 				RelativePath=".\egoboo_config.h">
+			</File>
+			<File
+				RelativePath=".\egoboo_console.h">
 			</File>
 			<File
 				RelativePath=".\egoboo_display_list.h">
@@ -514,10 +523,10 @@
 			Name="lua_interface"
 			Filter="">
 			<File
-				RelativePath=".\ego.i">
+				RelativePath=".\lua\ego.i">
 			</File>
 			<File
-				RelativePath=".\ego_wrap.c">
+				RelativePath=".\lua\ego_wrap.c">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -532,16 +541,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\egoboo_console.c">
-			</File>
-			<File
-				RelativePath=".\egoboo_console.h">
-			</File>
-			<File
-				RelativePath=".\egoboo_console.inl">
-			</File>
-			<File
-				RelativePath=".\lua_console.c">
+				RelativePath=".\lua\lua_console.c">
 				<FileConfiguration
 					Name="Debug|Win32"
 					ExcludedFromBuild="TRUE">
@@ -556,7 +556,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\lua_console.h">
+				RelativePath=".\lua\lua_console.h">
 			</File>
 		</Filter>
 		<Filter
