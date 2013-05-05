@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "fget_string:physfsc.c">
+         <PersistentStrings>
+            <PersistentString
+               value = "(char)c">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "fget_next_float:egoboo_pfileutil.c">
+      </ContextState>
+      <ContextState
+         contextName = "vfs_add_mount_point:egoboo_pvfs.c">
+         <PersistentStrings>
+            <PersistentString
+               value = "(char*)dirname">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "goto_delimiter:egoboo_pfileutil.c">
+         <PersistentStrings>
+            <PersistentString
+               value = "(char)cTmp">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
