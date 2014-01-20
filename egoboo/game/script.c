@@ -166,7 +166,8 @@ void scr_run_chr_script( const CHR_REF character )
 
     if ( debug_scripts )
     {
-        FILE * scr_file = ( NULL == debug_script_file ) ? stdout : debug_script_file;
+	// TODO: reenable debug_script_file
+        FILE * scr_file = stdout;
 
         fprintf( scr_file,  "\n\n--------\n%s\n", pscript->name );
         fprintf( scr_file,  "%d - %s\n", REF_TO_INT( script_error_model ), script_error_classname );
@@ -343,7 +344,8 @@ bool_t scr_run_operation( script_state_t * pstate, ai_state_t *pself, script_inf
     variable = "UNKNOWN";
     if ( debug_scripts )
     {
-        FILE * scr_file = ( NULL == debug_script_file ) ? stdout : debug_script_file;
+	// TODO: reenable debug_script_file
+        FILE * scr_file = stdout;
 
         for ( i = 0; i < pscript->indent; i++ ) { fprintf( scr_file, "  " ); }
 
@@ -372,7 +374,8 @@ bool_t scr_run_operation( script_state_t * pstate, ai_state_t *pself, script_inf
     }
     if ( debug_scripts )
     {
-        FILE * scr_file = ( NULL == debug_script_file ) ? stdout : debug_script_file;
+	// TODO: reenable debug_script_file
+        FILE * scr_file = stdout;
         fprintf( scr_file, " == %d \n", pstate->operationsum );
     }
 
@@ -405,7 +408,8 @@ Uint8 scr_run_function( script_state_t * pstate, ai_state_t *pself, script_info_
     if ( debug_scripts )
     {
         Uint32 i;
-        FILE * scr_file = ( NULL == debug_script_file ) ? stdout : debug_script_file;
+        // TODO: reenable debug_script_file
+        FILE * scr_file = stdout;
 
         for ( i = 0; i < pscript->indent; i++ ) { fprintf( scr_file,  "  " ); }
 
@@ -1508,7 +1512,8 @@ void scr_run_operand( script_state_t * pstate, ai_state_t * pself, script_info_t
 
     if ( debug_scripts )
     {
-        FILE * scr_file = ( NULL == debug_script_file ) ? stdout : debug_script_file;
+	// TODO: reenable debug_script_file
+        FILE * scr_file = stdout;
         fprintf( scr_file, "%s %s(%d) ", op, varname, iTmp );
     }
 }

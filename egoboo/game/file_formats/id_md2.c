@@ -69,7 +69,7 @@ id_md2_model_t * id_md2_load( const char *filename, id_md2_model_t * mdl )
     {
         /* Error! */
         fprintf( stderr, "Error: bad version or identifier\n" );
-        fclose( fp );
+        vfs_close( fp );
         return 0;
     }
 
