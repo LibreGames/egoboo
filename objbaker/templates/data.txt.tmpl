@@ -1,0 +1,195 @@
+// Real general data
+Object slot number ( 0 to 63, don't use twice )	: %d
+Object class name ( use underscore for spaces ) : %s
+Object is lit uniformly ( TRUE or FALSE )	: %s
+Maximum ammo ( 0 for doesn't matter )		: %d
+Starting ammo ( 0 for doesn't matter )		: %d
+Gender ( MALE or FEMALE or OTHER )		: %s
+
+
+// Object stats
+Life point bar color ( 0 to 5, 1 is red )	: %d
+Mana point bar color ( 0 to 5, 5 is purple )	: %d
+Life points ( eg. 3-5 )				: %s
+Life points increase per level ( eg. 1-3 )	: %s
+Mana points ( eg. 0-0 )				: %s
+Mana points increase per level ( eg. 1-1 )	: %s
+Mana return rate ( eg. 0-1 )			: %s
+Mana return increase per level ( eg. 0-1 )	: %s
+Mana flow rate ( eg. 0-1 )			: %s
+Mana flow increase per level ( eg. 0-1 )	: %s
+Strength ( eg. 3-18 )				: %s
+Strength increase per level ( eg. 0-1 )		: %s
+Wisdom ( eg. 3-18 )				: %s
+Wisdom increase per level ( eg. 0-1 )		: %s
+Intelligence ( eg. 3-18 )			: %s
+Intelligence increase per level ( eg. 0-1 )	: %s
+Dexterity ( eg. 3-18 )				: %s
+Dexterity increase per level ( eg. 0-1 )	: %s
+
+
+// More physical attributes
+Size ( eg. 1.0 )				: %f
+Size increase per level ( eg. 0.05 )		: %f
+Shadow size ( eg. 30, 0 is none )		: %d
+Bump size ( eg. 30 )				: %d
+Bump height ( eg. 70 )				: %d
+Bump dampen ( 0.0 to 1.0, lower is massive )	: %f
+Weight ( 0 to 255 )				: %d
+Jump power ( eg. 14.0 )				: %f
+Number of jumps ( eg. 1 )			: %d
+Sneak speed ( 1 to 20, 1 is good )		: %d
+Walk speed ( 1 to 20, 3 is good )		: %d
+Run speed ( 1 to 20, 5 is good )		: %d
+Fly to height ( 0 is none )			: %d
+Flashing AND ( 1, 3, 7, 15...  255 is don't )	: %d
+Transparency blending ( 255 is normal )		: %d
+Light blending ( 255 is normal )		: %d
+Transfer blending to weapons ( TRUE or FALSE )	: %s
+Sheen ( 0 - 15, 0 is dull, 15 is shiny )	: %d
+Phong mapping ( TRUE or FALSE )			: %s
+Texture X movement rate ( eg. 0.0 )		: %f
+Texture Y movement rate ( eg. 0.0 )		: %f
+Conform to hills like a chair ( TRUE or FALSE )	: %s
+
+
+// Invulnerability data
+Object is totally invincible ( TRUE or FALSE )	: %s
+NonIFrame Invulnerability facing ( 0 to 65535 )	: %d
+NonIFrame Invulnerability angle ( 0 to 32768 )	: %d
+IFrame Invulnerability facing ( 0 to 65535 )	: %d
+IFrame Invulnerability angle ( 0 to 32768 )	: %d
+
+
+// Skin defenses
+Base defense rating of skin ( eg. 2 5 10 17 )	: %d %d %d %d
+SLASH defense shift ( eg. 1 1 1 1 )		: %d %d %d %d
+CRUSH defense shift ( eg. 1 1 1 1 )		: %d %d %d %d
+POKE defense shift ( eg. 1 1 1 1 )		: %d %d %d %d
+HOLY defense shift ( eg. 1 1 1 1 )		: %d %d %d %d
+EVIL defense shift ( eg. 1 1 1 1 )		: %d %d %d %d
+FIRE defense shift ( eg. 1 1 1 1 )		: %d %d %d %d
+ICE defense shift ( eg. 1 1 1 1 )		: %d %d %d %d
+ZAP defense shift ( eg. 1 1 1 1 )		: %d %d %d %d
+SLASH inversion ( eg. F F F T )			: %s %s %s %s
+CRUSH inversion ( eg. F F F T )			: %s %s %s %s
+POKE inversion ( eg. F F F T )			: %s %s %s %s
+HOLY inversion ( eg. T T T T )			: %s %s %s %s
+EVIL inversion ( eg. F F F T )			: %s %s %s %s
+FIRE inversion ( eg. F F F T )			: %s %s %s %s
+ICE inversion ( eg. F F F T )			: %s %s %s %s
+ZAP inversion ( eg. F F F T )			: %s %s %s %s
+Acceleration rate ( eg. 40 38 30 20 )		: %d %d %d %d
+
+
+// Experience and level data
+Experience for level 1 ( 200 )			: %d
+Experience for level 2 ( 400 )			: %d
+Experience for level 3 ( 800 )			: %d
+Experience for level 4 ( 1600 )			: %d
+Experience for level 5 ( 3200 )			: %d
+Starting experience ( eg. 0-500 )		: %s
+Experience worth for this object ( 10 )		: %d
+Experience exchange for this object ( 0.001 )	: %f
+Experience rate... Finding secret ( 0.0 )	: %f
+Experience rate... Winning quest ( 1.0 )	: %f
+Experience rate... Using unknown ( 0.0 )	: %f
+Experience rate... Killing enemy ( 0.9 )	: %f
+Experience rate... Killing sleepy enemy ( 0.0 )	: %f
+Experience rate... Killing hated enemy ( 2.0 )	: %f
+Experience rate... Team kills enemy ( 0.1 )	: %f
+Experience rate... Talking in character ( 1.0 )	: %f
+
+
+// IDSZ Identification tags ( [NONE] is valid )
+Parent ID ( eg. [FROG] for Trogs )		: [%s]
+Type ID ( eg. [TROG] for Trogs )		: [%s]
+Skill ID ( eg. [WMAG] for wizard spells )	: [%s]
+Special ID ( eg. [SUM0] for animated bones )	: [%s]
+Hate group ID ( eg. [GOBL] for dwarves )	: [%s]
+Vuilnerability ID ( eg. [SILV] for werewolves )	: [%s]
+
+
+// Item and damage flags
+Object is an item ( TRUE or FALSE )		: %s
+Object is a mount ( TRUE or FALSE )		: %s
+Object is stackable ( TRUE or FALSE )		: %s
+Object's name is known ( TRUE or FALSE )	: %s
+Item of known usage ( TRUE or FALSE )		: %s
+Item carries to next module ( TRUE or FALSE )	: %s
+Item requires skill ID to use ( TRUE or FALSE )	: %s
+Object is a platform ( TRUE or FALSE)		: %s
+Object collects money ( TRUE or FALSE )		: %s
+Object can open chests/doors ( TRUE or FALSE )	: %s
+
+
+// Other item and damage stuff
+DamageTarget type ( SLASH, CRUSH, POKE, HOLY,
+                    EVIL, FIRE, ICE, or ZAP )	: %s
+Attack type if it's a weapon ( UNARMED, THRUST,
+                     SLICE, CHOP, BASH, LONGBOW,
+                     XBOW, FLINGED, PARRY, ZAP)	: %s
+
+
+// Particle attachments
+Number of particles to attach ( 0 )		: %d
+Reaffirm attachments when damaged ( NONE, SLASH,
+  CRUSH, POKE, HOLY, EVIL, FIRE, ICE, ZAP,)	: %s
+Particle type ( 0 to 3 )			: %d
+
+
+// Character hands
+Left ( or only ) grip valid ( TRUE or FALSE )	: %s
+Right grip valid ( TRUE or FALSE )		: %s
+
+
+// Particle spawning on attack order ( for weapon characters )
+Particle attached to weapon ( TRUE or FALSE )	: %s
+Particle type ( 0 to 3 )			: %d
+
+
+// Particle spawning for GoPoof
+Amount to spawn ( 0 to 10, 0 is NoPoof )	: %d
+Facing add for each one ( 0 to 65535 )		: %d
+Particle type ( 0 to 3 )			: %d
+
+
+// Particle spawning for Blud ( If you want it, you put it in... )
+Blud valid ( TRUE or FALSE )			: %s
+Particle type ( 0 to 3 )			: %d
+
+
+// Extra stuff I forgot 
+Character can walk on water ( TRUE or FALSE )	: %s
+Character bounciness ( 0.00 to 0.95 )		: %f
+
+
+// More stuff I forgot
+Life healing when used ( 0.0 to 100.0 )		: %f
+Mana cost to use ( 0.0 to 100.0 )		: %f
+Life return rate, ( 0 to 255 )			: %d
+Stoppedby mask ( 48 is the only one )		: %d
+Skin Name 0 ( use underscores for spaces )	: %s
+Skin Name 1 ( use underscores for spaces )	: %s
+Skin Name 2 ( use underscores for spaces )	: %s
+Skin Name 3 ( use underscores for spaces )	: %s
+Skin Cost 0 ( 0 to 65535 )			: %d
+Skin Cost 1 ( 0 to 65535 )			: %d
+Skin Cost 2 ( 0 to 65535 )			: %d
+Skin Cost 3 ( 0 to 65535 )			: %d
+Strength dampen for weapons ( 0.0 to 1.0 )	: %f
+
+
+// Another memory lapse
+Rider cannot attack ( TRUE or FALSE )		: %s
+Can be dazed ( TRUE or FALSE )			: %s
+Can be grogged ( TRUE or FALSE )		: %s
+Permanent life add when used ( -256 to 256 )	: %d
+Permanent mana add when used ( -256 to 256 )	: %d
+Can see invisible ( TRUE or FALSE )		: %s
+Chance of being cursed ( 0 to 100 )		: %d
+Sound of Footfall ( -1 for none )		: %d
+Sound of Jump ( -1 for none )			: %d
+
+
+// Expansions
