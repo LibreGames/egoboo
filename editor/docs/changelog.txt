@@ -1,0 +1,229 @@
+2010-10-30 <bitnapper>
+- More work towards display/editing passages and spawn points
+
+2010-10-10 <bitnapper>
+- Adjusted drawing code for 3D-Display. Draw bottom before walls 
+- Known bugs: Setting walls in 'simple mode' still doesn't work correct
+
+2010-10-10 <bitnapper>
+- Added code for visibility check in frustum
+
+2010-10-09 <bitnapper>
+- Prepared support for lights and calculation of lighting
+- Adjusted patterns for setting walls in 'simple mode'
+
+2010-10-08 <bitnapper>
+- Refactorized it code for setting data for chosen tile in 'free' mode
+- Prepared code for better rendering of 3D-View
+
+2010-10-07 <bitnapper>
+- Removed 'Update' from Tile-Properties-Dialog
+- Moved further checks about Edit-Mode of the editor-frontend
+- Compacted some code
+- Added work-directory in configuration-file 
+- Added grid in 2D-Map for easier creation of maps by concept maps
+- Update of How-To documentation
+
+2010-10-06 <bitnapper>
+- Adjusted code for choosing multiple fans
+- Adjusted editor code for choose dragging
+- Some more wallmaker code and patterns
+- Choosing and setting multiple floor tiles
+
+2010-10-05 <bitnapper>
+- Moved 'New Map' to 'File'-Menu
+- Added function for choosing/setting multiple tiles
+- Adjusted patterns for setting wall
+- Prepared editor code for choosing multiple tiles
+
+2010-10-04 <bitnapper>
+- 'Weld'-Code is OK. 
+- The generated texture values for the 'Inner Edge' are not correct :(
+- Worked on texture coordinates for sub-parts ('Inner edge' still doesn't fit well)
+
+2010-10-03 <bitnapper>
+- Some bugfixes in 'welding' code for simple Mode
+- Added edit modes for changes of multiple 'FX' and 'Texture' properties of fan(s)
+
+2010-10-02 <bitnapper>
+- Extended draw code for display of chosen passages and spawn points
+- Compacted the editor code for choosing a fan in minimap
+- Compacted code  for editor if 'EditState' is used
+- Border tiles can not be chosen in 'simple mode'
+- Border is drawn around minimap
+- Update of ToDo-List
+- Added 'Weld-Code' for map vertices which is used in 'simple' edit mode
+
+2010-10-01 <bitnapper>
+- Prepared display of multiple chosen fans in map
+- Further work on 'simple' edit mode
+- Bugfixes in code for 'simple' edit mode
+- 'Carve out' works from solid with floor, patterns have to be tested
+
+2010-09-20 <bitnapper>
+- Prepared code for choosing multiple tiles
+- Update of code for 'mouse-click' sensing
+- Fixed choosing of tiles, if map size is not a power of two (example 'Griffin Tower')
+
+2010-09-13 <bitnapper>
+- Additional wallmaker code
+- Bugfixes in code for creation of new maps
+- Some cleanup in code comments
+- Added 'Close'-Button to tile properties dialog
+- Added 'Tool'-Menu
+
+2010-09-11 <bitnapper>
+- Added data and further code for wallmaker functionality
+- Arrow keys now move the camera, too
+- LEFT-SHIFT speeds up the camera movement, if pressed before arrow key
+- Completed the basic code for 'simple' mode, it's ready for testing
+
+2010-09-09 <bitnapper>
+- Added code to read in spawn points and passages from file
+- Prepared code to draw spawn points and passages on map
+
+2010-09-08 <bitnapper>
+- Added code and struct definitions for later reading files 'SPAWN.TXT' and 'PASSAGE.TXT'
+
+2010-09-04 <bitnapper>
+- Choosen fan is now signed with transparent instead of full color
+- Editmode is automatically chosen, if a new map is generated
+- Adjusted calculation of texture positions
+- Choose and set fan direct in 'Free' mode with left mouse click
+- Bugfix about texturing in draw code for fans
+
+2010-09-02 <bitnapper>
+- Bugfix in fan rotation code 
+- Added code for 'Free' edit mode
+- Bugfix in code for saving file
+- 'Free' edit mode now works!
+
+2010-09-01 <bitnapper>
+- Further coding for editing of mesh
+- Fan-Browsing is now active in 'Edit-Mode'
+
+2010-08-31 <bitnapper>
+- Additional code for wallmaker
+- 'Fan-Browsing' reduced to 'Wallmake-Types'
+
+2010-08-30 <bitnapper>
+- Added changing of main texture to fan-dialog
+- Tile flags and texture data can be changed using the 'Update' button in the fan info dialog
+
+2010-08-28 <bitnapper>
+- Cleanup in main editor code
+- Activated the dialog for textures and flags
+- FX-Flags and textures now can be changed 'per tile' in map
+
+2010-08-27 <bitnapper>
+- Added simple base code for wallmaker
+
+2010-08-26 <bitnapper>
+- Added some more patterns for wallmaker
+
+2010-08-25 <bitnapper>
+- Added pattern data for wallmaker
+
+2010-08-24 <bitnapper>
+- Prepared to port the wallmaker-code from EgoMap
+- Added new module for wallmaker-code
+
+2010-08-22 <bitnapper>
+- Some code cleanup, preparation for input dialogs
+- Camera now supports combined keys
+- Added data for planned map dialog
+
+2010-08-21 <bitnapper>
+- Update of fan dialog
+- Streamlined and extended the map-edit commands
+- Camera follows now proper the chosen tile (keeps camera distance)
+- Worked on code for replacing fan types by others
+
+2010-08-20 <bitnapper>
+- Update of fan rotation code
+- Some Code-Reorganisation for automatic camera handling
+- Update of drawing code for camera in 2D
+- Fixed roation code and did some code cleanup
+
+2010-08-19 <bitnapper>
+- Moved choosing fan type to 'editmain'
+- Added rotating of chosen fan type (needs tests...)
+- New maps are 8 x 8 Tiles for test purposes
+- Added possibility of 'simple' edit (needs lot of tests...)
+- Some adjustements to code for auto-setting walls
+
+2010-08-18 <bitnapper>
+- Adjusted Look-up-Tables for 'auto'-walls
+- Added code for inserting / deleting vertices in map
+- Prepared rotating of chosen fan type
+
+2010-08-17 <bitnapper>
+- Built Look-up-Tables for 'auto'-walls
+- Basic rewrite of code for setting auto-walls
+- Some reorganisation of data 
+
+2010-08-16 <bitnapper>
+- Moved menu points for load/save of map to 'File'-Menu
+- Added menu point for edit-state (how to edit)
+- Prepared code for 'simple' editing
+
+2010-08-15 <bitnapper>
+- Added display of chosen Texture and it's part in 'Fan-Info'
+- Added info for 'preset' tiles 
+- 'solid' and 'flat' maps are now generated on click in menu
+
+2010-08-14 <bitnapper>
+- Added command 'B'rowsing trough fan types (displayed at chosen fan)
+- Added default fx-flags in fan types
+- Added display of name of chosen fan type in status bar
+- Prepared code for 'simple' mode for generation of maps
+- Added more data for 'fixed' fan sizes
+- Added code for choosing and displaying a fan type at a chosen position
+
+2010-08-13 <bitnapper>
+- Added names for fan types
+- Added display 'I'nfo for chosen fan, flags and Name of fan type 
+- Added some basic fans extents, save z-values
+- Added basic code for implementation of new key commands for map
+
+2010-08-12 <bitnapper>
+- Fixed displaying map 'swapped' in 3D-View
+- Added display of chosen fan in 3D-View
+
+2010-08-11 <bitnapper>
+- Extended map menu for new maps to "flat" and "solid"
+- Added points from the forum to my todo-list
+- Added display of camera frustum on 2D-Map
+- BUG: Left and right of map are swapped in 3D-View :-((
+
+2010-08-10 <bitnapper>
+- Fan can be chosen on 2D-Map
+- Fans are drawn with original ambient light
+- Camera moves near chosen fan/tile 
+- Fixex bug in code for combined command-keys
+
+2010-08-09 <bitnapper>
+- File functions return a message string on error
+- Added menu "Settings" for display
+- Added drawing of textures
+- Changed division of Z-height on load 
+- Changed start position of camera (view looks a little bit distorted)
+- Added display of map in 2D
+
+2010-08-08 <bitnapper>
+- Added possible bounding of camera to an x/y extent
+- Better view position for camera
+- Bound basic edit functions to menu
+- Bugfix in map data completion for loaded maps
+- Loading and drawing map, (only flat and wireframe)
+- There's a bug in the z-values for the fans
+
+2010-08-06 <bitnapper>
+- Read in Screen-Configuration from EDITOR.CFG
+- Menu-Bars are adjusted to screen size
+- Added some code from other editors for drawing of map
+- Added hard coded command definitions
+
+2010-08-05 <bitnapper>
+- Initial code with minimal menu and camera
+- Draws a simple mesh to show the cameras movement

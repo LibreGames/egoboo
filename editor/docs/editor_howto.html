@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+      "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+  <title>EGOBOO MAP EDITOR: How-To</title>
+  <meta name="generator" content="amaya 9.51, see http://www.w3.org/Amaya/">
+</head>
+
+<body>
+<h2>EGOBOO MAP EDITOR: How-To</h2>
+<br>
+
+
+<p>
+    <b>General info</b><br>
+    - At the moment the maximum map size supported is 128 x 128 tiles<br />
+    - Maps are loaded form the directory 'module' and must have the name 'level.mpd'<br />
+    - Maps are saved to the directory 'module' and and are named 'level.mpd'<br />
+    - Choosing and editing tiles is done in the 2D-Window, the changes are shown in the 3D-Window<br />
+    - For the map geometry, the data for the fan type is 'hard-coded' as 'preset' <br />
+    <br />
+    - Tile-Size is 128 Units<br>
+    - Map size for new maps is read from the configuration file but can be changed in the module description<br />
+    - Inital map size can be set in the CONFIG-File with the value "mapsize"<br>
+    - Tile flags and texture data can be changed using the 'Update' button in the 
+</p>
+<p>
+  <b>General Keyboard-Commands</b><br />
+    - ESC quits program<br />
+    - LEFT-CONTROL-m: Shows/hides 2D-Map, if a map is loaded<br />
+    <br />
+<p>
+  <b>Editing</b><br>
+  For editing, the dialog for the tile properties has to be open. 
+  Here it can be switched between the different edit modes.<br>
+  The following edit modes are available.
+</p>
+<p>
+   <b>Fan Info (No Edit)</b><br>
+   If a tile is chosen in the 2D-Map, the info about the tile with flags and textures are displayed.<br>
+   It works only in 'single-tile-mode'.
+</p>
+<p>
+  <b>Edit Simple Mode</b><br>
+  - Click/drag with right mouse button: Changes all chosen tiles to bottom tiles<br>
+  - Click/drag with left mouse button:  Changes all chosen tiles to wall tiles<br>
+  The adjacent tiles are adjusted as well as possible<br>
+</p>
+<p>
+  <b>Edit Single Fan</b><br>
+  - Click with right mouse button: Choose tile<br>
+  - Click with left mouse button: The chosen tile is set to the tile type with flags and texture as 
+    displayed in the properties dialog<br>
+  <br>
+  Commands for preparing / choosing tiles in free mode:<br>
+  SPACE-Key: Browses trough the five possible different tile types to set<br>
+  R-Key: Rotates the chosen tile type as needed<br>
+</p>
+<p>
+  <b>Edit Fan-FX</b><br>
+  - Click/drag with right mouse button: Set all chosen tiles to FX displayed in properties dialog<br>
+</p>
+<p>
+  <b>Edit Fan-Texture</b><br>
+  - Click/drag with right mouse button: Set all chosen tiles to Texture displayed in properties dialog<br>
+</p>
+
+
+<p><b>Camera movement commands</b><br>
+Keypad 8: Move ahead<br>
+Keypad 6: Move backward<br>
+Keypad 4: Move left<br>
+Keypad 6: Move right<br>
+Keypad 7: Turn left<br>
+Keypad 9: Turn right<br>
+Keypad+: Zoom in<br>
+Keypad-: Zoom out<br>
+Arrow Up: Move ahead<br>
+Arrow Down: Move backward<br>
+Arrow Left: Move left<br>
+Arrow Right: Move Right<br>
+<br>
+</p>
+
+<p><b>Directories</b><br>
+- 'data': Holds general data used by editor<br>
+- 'docs': Holds all documentation for the editor<br>
+- 'module': Holds the data of the module actually worked on. To be copied in
+'[module.obj]/gamedat' directory<br>
+- 'src': Holds the complete source code of the editor<br>
+</p>
+
+<p><b>Technical info</b><br>
+Fan-Commands used for 'simple' mode:<br>
+-  0: Floor<br>
+-  1: Top, impassable<br>
+-  8: Wall, looking north<br>
+- 16: Outer edge north-east<br>
+- 19: Inner edge north-west<br>
+<br>
+The vertices are 'rotated' in another direction, if needed<br>
+The 'tx_flags' of the fan are used to sign for the editor, which way a wall
+is oriented:<br>
+0: North<br>
+1: East<br>
+2: South<br>
+3: West</p>
+<br>
+Date: 2011-12-30 / bitnapper<br>
+<br>
+<br>
+</body>
+</html>

@@ -1,0 +1,678 @@
+F means function, C means constant, V means value, O means operator
+The number comes next ( The compiler replaces the symbol with this number )
+The symbol itself follows
+
+:F 000 IfSpawned            GetTrigger() = TR_SPAWNED
+:F 001 IfTimeOut            GetTrigger() = TR_TIMEOUT    
+:F 002 IfAtWaypoint         GetTrigger() = TR_ATWAYPOINT
+:F 003 IfAtLastWaypoint     GetTrigger() = TR_ATLASTWAYPOINT
+:F 003 IfPutAway            GetTrigger() = TR_PUTAWAY
+:F 004 IfAttacked           GetTrigger() = TR_ATTACKED
+:F 005 IfBumped             GetTrigger() = TR_BUMPED
+:F 006 IfOrdered            GetTrigger() = TR_ORDERED
+:F 007 IfCalledForHelp      GetTrigger() = TR_CALLEDFORHELP
+:F 008 SetContent           SetContent(char value)
+:F 009 IfKilled             GetTrigger() = TR_KILLED
+:F 010 IfTargetKilled       GetTrigger() = TR_TARGETKILLED
+:F 011 ClearWaypoints       ClearWaypoints()
+:F 012 AddWaypoint          AddWaypoint(int x, int y)
+:F 013 FindPath             FindPath(int distance)
+:F 014 Compass              Compass(int distance)
+:F 015 GetTargetArmorPrice  GetTargetArmorPrice(char which)
+:F 016 SetTime              SetTime(int amount)
+:F 017 GetContent           GetContent()
+:F 018 JoinTargetTeam       JoinTargetTeam()
+:F 019 SetTargetToNearbyEnemy           SetTargetTo(TARGET_NEARBYENEMY) 
+:F 020 SetTargetToTargetLeftHand        SetTargetTo(TARGET_LEFTHAND) 
+:F 021 SetTargetToTargetRightHand       SetTargetTo(TARGET_RIGHTHAND) 
+:F 022 SetTargetToWhoeverAttacked       SetTargetTo(TARGET_WHOEVERATTACKED) 
+:F 022 SetTargetToWhoeverHealed         SetTargetTo(TARGET_WHOEVERHEALED) 
+:F 023 SetTargetToWhoeverBumped         SetTargetTo(TARGET_WHOEVERBUMPED) 
+:F 024 SetTargetToWhoeverCalledForHelp  SetTargetTo(TARGET_WHOEVERCALLEDFORHELP) 
+:F 025 SetTargetToOldTarget             SetTargetTo(TARGET_OLDTARGET)
+:F 026 SetTurnModeToVelocity            SetTurnModeTo(TM_VELOCITY)
+:F 027 SetTurnModeToWatch               SetTurnModeTo(TM_WATCH)
+:F 028 SetTurnModeToSpin                SetTurnModeTo(TM_SPIN)
+:F 029 SetBumpHeight                    SetBumpHeight(int height)
+:F 030 IfTargetHasID                    TargetHasID(int IDSZ)
+:F 031 IfTargetHasItemID                IfTargetHasItemID(int IDSZ)
+:F 032 IfTargetHoldingItemID            IfTargetHoldingItemID(int IDSZ)
+:F 033 IfTargetHasSkillID               IfTargetHasSkillID(int IDSZ)
+:F 034 Else                             ELSE
+:F 035 Run                              CharSetAccel(CHR_RUN)
+:F 036 Walk                             CharSetAccel(CHR_WALK)
+:F 037 Sneak                            CharSetAccel(CHR_SNEAK)
+:F 038 DoAction
+:F 039 KeepAction
+:F 040 IssueOrder
+:F 041 DropWeapons
+:F 042 TargetDoAction
+:F 043 OpenPassage                      OpenPassage(int passageno)
+:F 044 ClosePassage                     ClosePassage(int passageno)
+:F 045 IfPassageOpen                    GetPassageState(int passageno) = STATE_OPEN
+:F 046 GoPoof                           GoPoof()
+:F 047 CostTargetItemID
+:F 048 DoActionOverride
+:F 049 IfHealed                         CharHasState(CHR_HEALED)
+:F 050 SendMessage                      SendMessage(messageno)
+:F 051 CallForHelp
+:F 052 AddIDSZ                          AddIDSZ(IDSZ)
+:F 053 End                              END     // End of script
+:F 054 SetState                         SetState(char stateno)
+:F 055 GetState                         GetState()
+:F 056 IfStateIs                        IF GetState() = STATE_... THEN
+:F 057 IfTargetCanOpenStuff
+:F 058 IfGrabbed                        CharHasState(CHR_GRABBED)
+:F 058 IfMounted                        CharHasState(CHR_MOUNTED)
+:F 059 IfDropped                        CharHasState(CHR_DROPPED)
+:F 059 IfDismounted                     CharHasState(CHR_DISMOUNTED)
+:F 060 SetTargetToWhoeverIsHolding      SetTargetTo(TARGET_WHOEVERISHOLDING) 
+:F 061 DamageTarget                     Damage(targetno)
+:F 062 IfXIsLessThanY                   // Replaced by conditional IF-Code
+:F 062 IfYIsMoreThanX                   // Replaced by conditional IF-Code
+:F 063 SetWeatherTime                   SetWeatherTime(int time)
+:F 064 GetBumpHeight                    GetBumpHeight()
+:F 065 IfReaffirmed                     CharHasState(CHR_REAFFIRMED)
+:F 066 UnkeepAction                     UnkeepAction()
+:F 067 IfTargetIsOnOtherTeam            TargetIs(TARGET_ONOTHERTEAM)    
+:F 068 IfTargetIsOnHatedTeam            TargetIs(TARGET_ONHATEDTEAM) 
+:F 069 PressLatchButton                 PressLatchButton(char which)    // e.g: LATCHBUTTONLEFT
+:F 070 SetTargetToTargetOfLeader        SetTargetTo(TARGET_TARGETOFLEADER) 
+:F 071 IfLeaderKilled                   LeaderState(LEADER_KILLED)
+:F 072 BecomeLeader                     Become(BECOME_LEADER)
+:F 073 ChangeTargetArmor
+:F 074 GiveMoneyToTarget
+:F 075 DropKeys                         DropKeys()
+:F 076 IfLeaderIsAlive                  LeaderState(LEADER_ALIVE)
+:F 077 IfTargetIsOldTarget              IfTargetIs(TARGET_OLDTARGET) 
+:F 078 SetTargetToLeader                SetTargetTo(TARGET_LEADER) 
+:F 079 SpawnCharacter                   SpawnCharacter(int x, int y, char dir, int velocity)
+:F 080 RespawnCharacter                 RespawnCharacter()    
+:F 081 ChangeTile                       ChangeTile(int number)    
+:F 082 IfUsed                       CharHasState(CHR_USED)
+:F 083 DropMoney                    DropMoney(int amount)
+:F 084 SetOldTarget
+:F 085 DetachFromHolder
+:F 086 IfTargetHasVulnerabilityID
+:F 087 CleanUp                      CleanUp()
+:F 088 IfCleanedUp                  CharHasState(CHR_CLEANEDUP)
+:F 089 IfSitting                    CharHasState(CHR_SITTING)
+:F 089 IfHeld                       CharHasState(CHR_HELD)
+:F 090 IfTargetIsHurt               TargetIs(TARGET_HURT)    
+:F 091 IfTargetIsAPlayer            TargetIs(TARGET_APLAYER)        
+:F 092 PlaySound                    PlaySound(int soundno)
+:F 093 SpawnParticle                SpawnParticle(char which, x, y, distance)
+:F 094 IfTargetIsAlive              TargetIs(TARGET_ALIVE)
+:F 095 Stop                         CharSetAccel(CHR_STOP)
+:F 096 DisaffirmCharacter
+:F 097 ReaffirmCharacter
+:F 098 IfTargetIsSelf               TargetIs(TARGET_SELF) 
+:F 099 IfTargetIsMale               TargetIs(TARGET_MALE) 
+:F 100 IfTargetIsFemale             TargetIs(TARGET_FEMALE) 
+:F 101 SetTargetToSelf              SetTargetTo(TARGET_SELF) 
+:F 102 SetTargetToRider             SetTargetTo(TARGET_RIDER) 
+:F 103 GetAttackTurn                GetAttackTurn()
+:F 104 GetDamageType                GetDamageType()
+:F 105 BecomeSpell                  Become(BECOME_SPELL)
+:F 106 BecomeSpellbook              Become(BECOME_SPELLBOOK)
+:F 107 IfScoredAHit                 CharHasState(CHR_SCOREDAHIT)
+:F 108 IfDisaffirmed                CharHasState(CHR_DISAFFIRMED)
+:F 109 TranslateOrder
+:F 110 SetTargetToWhoeverWasHit     SetTargetTo(TARGET_WHOEVERWASHIT) 
+:F 111 SetTargetToWideEnemy         SetTargetTo(TARGET_WIDEENEMY) 
+:F 112 IfChanged                    CharHasState(CHAR_CHANGED) 
+:F 113 IfInWater                    CharHasState(CHAR_INWATER)
+:F 114 IfBored                      CharHasState(CHAR_BORED) 
+:F 115 IfTooMuchBaggage             CharHasState(CHAR_TOOMUCHBAGGAGE) 
+:F 116 IfGrogged                    CharHasState(CHAR_GROGGED)
+:F 117 IfDazed                      CharHasState(CHAR_DAZED)  
+:F 118 IfTargetHasSpecialID         IF TargetHasSpecialID(IDSZ) THEN
+:F 119 PressTargetLatchButton       PressTargetLatchButton(char latchno) // LATCHLEFT   
+:F 120 IfInvisible                  CharHasState(CHAR_INVISIBLE)  
+:F 121 IfArmorIs                    CharArmorIs(armorno)
+:F 122 GetTargetGrogTime            GetTarget(TARGET_GROGTIME)    
+:F 123 GetTargetDazeTime            GetTarget(TARGET_DAZETIME)      
+:F 124 SetDamageType
+:F 125 SetWaterLevel                SetWaterLevel(int level)    
+:F 126 EnchantTarget
+:F 127 EnchantChild
+:F 128 TeleportTarget               TeleportTarget(SetTarget(TARGET_NEARESTENEMY), x, y)
+:F 129 GiveExperienceToTarget       GiveExperience(int targetno)
+:F 130 IncreaseAmmo
+:F 131 UnkurseTarget
+:F 132 GiveExperienceToTargetTeam   GiveExperience(char teamno)
+:F 133 IfUnarmed                    CharHasState(CHAR_UNARMED)  
+:F 134 RestockTargetAmmoIDAll
+:F 135 RestockTargetAmmoIDFirst
+:F 136 FlashTarget
+:F 137 SetRedShift                  SetCharDisplay(CHARDISP_SHIFTRED)
+:F 138 SetGreenShift                SetCharDisplay(CHARDISP_SHIFTGREEN)
+:F 139 SetBlueShift                 SetCharDisplay(CHARDISP_SHIFTBLUE)
+:F 140 SetLight                     SetCharDisplay(CHARDISP_LIGHT)        
+:F 141 SetAlpha                     SetCharDisplay(CHARDISP_LIGHT)      
+:F 142 IfHitFromBehind              IF CharHitFrom(HIT_BEHIND) THEN
+:F 143 IfHitFromFront               IF CharHitFrom(HIT_FRONT)  THEN 
+:F 144 IfHitFromLeft                IF CharHitFrom(HIT_LEFT)   THEN     
+:F 145 IfHitFromRight               IF CharHitFrom(HIT_RIGHT)  THEN                                         
+:F 146 IfTargetIsOnSameTeam         TargetIs(TARGET_ONSAMETEAM)
+:F 147 KillTarget
+:F 148 UndoEnchant
+:F 149 GetWaterLevel
+:F 150 CostTargetMana
+:F 151 IfTargetHasAnyID
+:F 152 SetBumpSize              SetBumpSize(int size)
+:F 153 IfNotDropped
+:F 154 IfYIsLessThanX           // Replaced by Conditional Statement
+:F 154 IfXIsMoreThanY           // Replaced by Conditional Statement
+:F 155 SetFlyHeight             SetFlyHeight(int height)
+:F 156 IfBlocked                CharHasState(CHAR_BLOCKED) 
+:F 157 IfTargetIsDefending      TargetIs(TARGET_DEFENDING)
+:F 158 IfTargetIsAttacking      TargetIs(TARGET_ATTACKING)
+:F 159 IfStateIs0               GetState() = STATE_PARRY
+:F 159 IfStateIsParry           GetState() = STATE_PARRY
+:F 160 IfStateIs1               GetState() = STATE_WANDER
+:F 160 IfStateIsWander          GetState() = STATE_WANDER
+:F 161 IfStateIs2               GetState() = STATE_GUARD
+:F 161 IfStateIsGuard           GetState() = STATE_GUARD
+:F 162 IfStateIs3               GetState() = STATE_FOLLOW
+:F 162 IfStateIsFollow          GetState() = STATE_FOLLOW
+:F 163 IfStateIs4               GetState() = STATE_SURROUND
+:F 163 IfStateIsSurround        GetState() = STATE_SURROUND   
+:F 164 IfStateIs5               GetState() = STATE_RETREAT   
+:F 164 IfStateIsRetreat         GetState() = STATE_RETREAT 
+:F 165 IfStateIs6               GetState() = STATE_CHARGE 
+:F 165 IfStateIsCharge          GetState() = STATE_CHARGE 
+:F 166 IfStateIs7               GetState() = STATE_COMBAT 
+:F 166 IfStateIsCombat          GetState() = STATE_COMBAT // IF GetState() = STATE_COMBAT THEN 
+:F 167 IfContentIs              GetContent() = {number} 
+:F 168 SetTurnModeToWatchTarget SetTurnModeTo(TM_WATCHTARGET)
+:F 169 IfStateIsNot             // IF GetState() <> STATE_COMBAT THEN 
+:F 170 IfXIsEqualToY            // E.g IF GetTargetDamageType() == DAMAGESLASH THEN
+:F 170 IfYIsEqualToX            // E.g IF GetTargetDamageType() == DAMAGESLASH THEN
+:F 171 DebugMessage             DebugMessage()
+:F 172 BlackTarget              // Flash_Target
+:F 173 SendMessageNear          SendMessageNear(char messageno)
+:F 174 IfHitGround              CharHasState(CHR_HITGROUND)
+:F 175 IfNameIsKnown            CharHasState(CHR_NAMEKNOWN)
+:F 176 IfUsageIsKnown           CharHasState(CHR_USAGEKNOWN)
+:F 177 IfHoldingItemID          CharHoldingItemID(IDSZ)     // e.g. [SWOR]
+:F 178 IfHoldingRangedWeapon    CharHasState(CHR_HOLDINGRANGEDWEAPON)
+:F 179 IfHoldingMeleeWeapon     CharHasState(CHR_HOLDINGMELEEWEAPON)
+:F 180 IfHoldingShield          CharHasState(CHR_HOLDINGSHIELD)
+:F 181 IfKursed                 CharHasState(CHR_KURSED)
+:F 182 IfTargetIsKursed         TargetIs(TARGET_KURSED)
+:F 183 IfTargetIsDressedUp      TargetIs(TARGET_DRESSEDUP)
+:F 184 IfOverWater              CharHasState(CHAR_OVERWATER) 
+:F 185 IfThrown                 CharHasState(CHAR_THROWN) 
+:F 186 MakeNameKnown            MakeKnown(KNOWN_NAME)
+:F 187 MakeUsageKnown           MakeKnown(KNOWN_USAGE)
+:F 188 StopTargetMovement       StopTargetMovement(targetno)
+:F 189 SetXY                    SetXY(char slotno, int x, int y)
+:F 190 GetXY                    GetXY(char slotno)
+:F 191 AddXY                    AddXY(char slotno, int x, int y)
+:F 192 MakeAmmoKnown            MakeKnown(KNOWN_AMMO)    
+:F 193 SpawnAttachedParticle
+:F 194 SpawnExactParticle
+:F 195 AccelerateTarget         AccelerateTarget(tagetno, accelx, accely)
+:F 196 IfDistanceIsMoreThanTurn // Replaced by conditional statement
+:F 197 IfCrushed                // IF CharHasState(CHR_CRUSHED) THEN
+:F 198 MakeCrushValid           MakeCrushValid(targetno)
+:F 199 SetTargetToLowestTarget          SetTargetTo(TARGET_LOWEST) 
+:F 200 IfNotPutAway                     CharHasState(CHR_NOTPUTAWAY)
+:F 200 IfNotTakenOut                    CharHasState(CHR_NOTTAKENOUT)
+:F 201 IfTakenOut                       CharHasState(CHR_TAKENOUT)
+:F 202 IfAmmoOut                        CharHasState(CHR_AMMOOUT)
+:F 203 PlaySoundLooped                  PlaySoundLooped(char soundno)
+:F 204 StopSound                        StopSound(char soundno)
+:F 205 HealSelf                         Heal(TARGET_SELF)
+:F 206 Equip
+:F 207 IfTargetHasItemIDEquipped
+:F 208 SetOwnerToTarget
+:F 209 SetTargetToOwner                 SetTargetTo(TARGET_OWNER) 
+:F 210 SetFrame                         SetFrame(int frameno)
+:F 211 BreakPassage
+:F 212 SetReloadTime
+:F 213 SetTargetToWideBlahID            SetTargetTo(TARGET_WIDEBLAHID) 
+:F 214 PoofTarget                       PoofTarget(targetno)    
+:F 215 ChildDoActionOverride
+:F 216 SpawnPoof                        SpawnPoof()
+:F 217 SetSpeedPercent                  SetSpeedPercent(value)
+:F 218 SetChildState                    SetChildState(stateno)
+:F 219 SpawnAttachedSizedParticle       SpawnAttachedSizedParticle(which, distance, direction)    
+:F 220 ChangeArmor                  ChangeArmor(newtype)
+:F 221 ShowTimer                    ShowTimer()
+:F 222 IfFacingTarget               CharHasState(CHR_FACINGTARGET)
+:F 223 PlaySoundVolume              PlaySoundVolume(soundno, volume, time)
+:F 224 SpawnAttachedFacedParticle
+:F 225 IfStateIsOdd                 GetState(char stateno) = STATE_ODD
+:F 226 SetTargetToDistantEnemy      SetTargetTo(TARGET_DISTANTENEMY) 
+:F 227 Teleport                     Teleport(TARGET_SELF, int destx, int desty)
+:F 228 GiveStrengthToTarget         GiveTarget(VALUE_STRENGHT, int amount)   
+:F 229 GiveWisdomToTarget           GiveTarget(VALUE_WISDOM, int amount)  
+:F 230 GiveIntelligenceToTarget     GiveTarget(VALUE_INTELLIGENCE, int amount) 
+:F 231 GiveDexterityToTarget        GiveTarget(VALUE_DEXTERITY, int amount)     
+:F 232 GiveLifeToTarget             GiveTarget(VALUE_LIFE, int amount) 
+:F 233 GiveManaToTarget             GiveTarget(VALUE_MANA, int amount) 
+:F 234 ShowMap                      ShowMap()
+:F 235 ShowYouAreHere               ShowYouAreHere()
+:F 236 ShowBlipXY                   ShowBlipXY()
+:F 237 HealTarget                   Heal(int targetno)
+:F 238 PumpTarget                   PumpTarget(int targetno)
+:F 239 CostAmmo
+:F 240 MakeSimilarNamesKnown
+:F 241 SpawnAttachedHolderParticle
+:F 242 SetTargetReloadTime
+:F 243 SetFogLevel                  SetFogLevel(int value)
+:F 244 GetFogLevel                  GetFogLevel(int value)
+:F 245 SetFogTAD                    SetFogTAD(int value)
+:F 246 SetFogBottomLevel            SetFogBottomLevel(int value)
+:F 247 GetFogBottomLevel            GetFogBottomLevel(int value)
+:F 248 CorrectActionForHand
+:F 249 IfTargetIsMounted            TargetIs(TARGET_MOUNTED)
+:F 250 SparkleIcon	            SparkleIcon(ENABLE)				
+:F 251 UnsparkleIcon		    SparkleIcon(DISABLE)	
+:F 252 GetTileXY		    		
+:F 253 SetTileXY
+:F 254 SetShadowSize
+:F 255 OrderTarget
+:F 256 SetTargetToWhoeverIsInPassage    SetTargetTo(TARGET_WHOEVERISINPASSAGE) 
+:F 257 IfCharacterWasABook
+:F 258 SetEnchantBoostValues
+:F 259 SpawnCharacterXYZ                SpawnCharacterXYZ(int x, int y, int z, char direction)
+:F 260 SpawnExactCharacterXYZ           SpawnCharacterXYZ(int which, int x, int y, int z, char direction)     
+:F 261 ChangeTargetClass
+:F 262 PlayFullSound                    PlayFullSound(int sound_no, int frequency)
+:F 263 SpawnExactChaseParticle
+:F 264 CreateOrder
+:F 265 OrderSpecialID
+:F 266 UnkurseTargetInventory
+:F 267 IfTargetIsSneaking               TargetIs(TARGET_SNEAKING)
+:F 268 DropItems
+:F 269 RespawnTarget
+:F 270 TargetDoActionSetFrame
+:F 271 IfTargetCanSeeInvisible
+:F 272 SetTargetToNearestBlahID         SetTargetTo(TARGET_NEARESTBLAHID) 
+:F 273 SetTargetToNearestEnemy          SetTargetTo(TARGET_NEARESTENEMY) 
+:F 274 SetTargetToNearestFriend         SetTargetTo(TARGET_NEARESTFRIEND) 
+:F 275 SetTargetToNearestLifeform       SetTargetTo(TARGET_NEARESTLIFEFORM) 
+:F 276 FlashPassage
+:F 277 FindTileInPassage
+:F 278 IfHeldInLeftHand                 CharHasState(CHR_INLEFTHAND)
+:F 279 NotAnItem
+:F 280 SetChildAmmo
+:F 281 IfHitVulnerable                  CharHasState(CHR_HITVULNERABLE)
+:F 282 IfTargetIsFlying                 TargetIs(TARGET_FLYING)
+:F 283 IdentifyTarget
+:F 284 BeatModule                       BeatModule()
+:F 285 EndModule                        EndModule()
+:F 286 DisableExport                    SetExport(EXPORT_DISABLE)
+:F 287 EnableExport                     SetExport(EXPORT_ENABLE)
+:F 288 GetTargetState
+:F 289 IfEquipped                       CharHasState(CHR_EQUIPPED)
+:F 290 DropTargetMoney
+:F 291 GetTargetContent
+:F 292 DropTargetKeys
+:F 293 JoinTeam
+:F 294 TargetJoinTeam
+:F 295 ClearMusicPassage
+:F 296 ClearEndMessage
+:F 297 AddEndMessage
+:F 298 PlayMusic
+:F 299 SetMusicPassage
+:F 300 MakeCrushInvalid
+:F 301 StopMusic
+:F 302 FlashVariable
+:F 303 AccelerateUp
+:F 304 FlashVariableHeight
+:F 305 SetDamageTime
+:F 306 IfStateIs8               IF GetState() = 8
+:F 307 IfStateIs9               IF GetState() = 9
+:F 308 IfStateIs10              IF GetState() = 10
+:F 309 IfStateIs11              IF GetState() = 11
+:F 310 IfStateIs12              IF GetState() = 12
+:F 311 IfStateIs13              IF GetState() = 13
+:F 312 IfStateIs14              IF GetState() = 14
+:F 313 IfStateIs15              IF GetState() = 15
+:F 314 IfTargetIsAMount         IF TargetIs(TARGET_AMOUNT)
+:F 315 IfTargetIsAPlatform      IF  TargetIs(TARGET_APLATFORM)
+:F 316 AddStat
+:F 317 DisenchantTarget         Disenchant(targetno)
+:F 318 DisenchantAll            Disenchant(DISENCHANT_ALL)
+:F 319 SetVolumeNearestTeammate
+:F 320 AddShopPassage
+:F 321 TargetPayForArmor
+:F 322 JoinEvilTeam             JoinTeam(TEAM_EVIL)
+:F 323 JoinNullTeam             JoinTeam(TEAM_NULL)
+:F 324 JoinGoodTeam             JoinTeam(TEAM_GOOD)
+:F 325 PitsKill
+:F 326 SetTargetToPassageID         SetTargetTo(TARGET_PASSAGEID) 
+:F 327 MakeNameUnknown
+:F 328 SpawnExactParticleEndSpawn
+:F 329 SpawnPoofSpeedSpacingDamage
+:F 330 GiveExperienceToGoodTeam     GiveExperience(TARGET_GOODTEAM)
+:F 331 DoNothing
+:F 332 GrogTarget                   SetTargetState(targetno, CHR_GROG)
+:F 333 DazeTarget                   SetTargetState(targetno, CHR_DAZE)
+:F 334 EnableRespawn                Respawn(ENABLE)
+:F 335 DisableRespawn               Respawn(DISABLE)
+:F 336 DispelTargetEnchantID
+:F 337 IfHolderBlocked
+:F 338 GetTargetShieldProfiency
+:F 339 IfTargetHasNotFullMana
+:F 340 EnableListenSkill
+:F 341 SetTargetToLastItemUsed      SetTargetTo(TARGET_LASTITEMUSED) 
+:F 342 FollowLink
+:F 343 IfOperatorIsLinux            OperatorIs(OPERATOR_LINUX)   
+:F 344 IfTargetIsAWeapon            TargetIs(TARGET_AWEAPON)
+:F 345 IfSomeoneIsStealing
+:F 346 IfTargetIsASpell             TargetIs(TARGET_ASPELL)
+:F 347 IfBackstabbed                CharHasState(CHR_BACKSTABBED)
+:F 348 GetTargetDamageType          GetTargetDamageType()
+:F 349 AddTargetQuest
+:F 350 BeatQuestAllPlayers
+:F 351 IfTargetHasQuest
+:F 352 SetTargetQuestLevel
+:F 353 AddQuestAllPlayers
+:F 354 AddBlipAllEnemies
+:F 355 PitsFall
+:F 356 IfTargetIsOwner              TargetIs(TARGET_OWNER)
+:F 357 SetSpeech
+:F 364 TakePicture
+:F 365 IfOperatorIsMacintosh        OperatorIs(OPERATOR_MACINTOSH)    
+:F 366 IfModuleHasIDSZ
+:F 367 MorphToTarget
+:F 368 GiveManaFlowToTarget
+:F 369 GiveManaReturnToTarget
+:F 370 SetMoney
+:F 371 IfTargetCanSeeKurses
+:F 372 SpawnAttachedCharacter
+:F 373 KurseTarget
+:F 374 SetChildContent
+:F 375 SetTargetToChild             SetTargetTo(TARGET_CHILD) 
+:F 376 SetDamageThreshold
+:F 377 AccelerateTargetUp
+:F 378 SetTargetAmmo
+:F 379 EnableInvictus               Invictus(ENABLE)
+:F 380 DisableInvictus              Invictus(DISABLE)
+:F 381 TargetDamageSelf
+:F 382 SetTargetSize                SetTargetSize(int size)
+:F 383 IfTargetIsFacingSelf         TargetIs(TARGET_FACINGSELF)
+:F 384 DrawBillboard
+:F 385 SetTargetToBlahInPassage     SetTargetTo(TARGET_BLAHINPASSAGE) 
+:F 386 IfLevelUp
+:F 387 GiveSkillToTarget
+// -------------------------------------------------------------
+:C 001 BLAHDEAD
+:C 002 BLAHENEMIES
+:C 004 BLAHFRIENDS
+:C 008 BLAHITEMS
+:C 016 BLAHINVERTID
+:C 032 BLAHPLAYERS
+:C 064 BLAHSKILL
+:C 128 BLAHQUEST
+:C 000 STATEPARRY
+:C 001 STATEWANDER
+:C 002 STATEGUARD
+:C 003 STATEFOLLOW
+:C 004 STATESURROUND
+:C 005 STATERETREAT
+:C 006 STATECHARGE
+:C 007 STATECOMBAT
+:C 004 GRIPONLY
+:C 004 GRIPLEFT
+:C 008 GRIPRIGHT
+:C 000 SPAWNORIGIN
+:C 001 SPAWNLAST
+:C 001 LATCHLEFT
+:C 002 LATCHRIGHT
+:C 004 LATCHJUMP
+:C 008 LATCHALTLEFT
+:C 016 LATCHALTRIGHT
+:C 032 LATCHPACKLEFT
+:C 064 LATCHPACKRIGHT
+:C 000 DAMAGESLASH
+:C 001 DAMAGECRUSH
+:C 002 DAMAGEPOKE
+:C 003 DAMAGEHOLY
+:C 004 DAMAGEEVIL
+:C 005 DAMAGEFIRE
+:C 006 DAMAGEICE
+:C 007 DAMAGEZAP
+:C 000 ACTIONDA
+:C 001 ACTIONDB
+:C 002 ACTIONDC
+:C 003 ACTIONDD
+:C 004 ACTIONUA
+:C 005 ACTIONUB
+:C 006 ACTIONUC
+:C 007 ACTIONUD
+:C 008 ACTIONTA
+:C 009 ACTIONTB
+:C 010 ACTIONTC
+:C 011 ACTIONTD
+:C 012 ACTIONCA
+:C 013 ACTIONCB
+:C 014 ACTIONCC
+:C 015 ACTIONCD
+:C 016 ACTIONSA
+:C 017 ACTIONSB
+:C 018 ACTIONSC
+:C 019 ACTIONSD
+:C 020 ACTIONBA
+:C 021 ACTIONBB
+:C 022 ACTIONBC
+:C 023 ACTIONBD
+:C 024 ACTIONLA
+:C 025 ACTIONLB
+:C 026 ACTIONLC
+:C 027 ACTIONLD
+:C 028 ACTIONXA
+:C 029 ACTIONXB
+:C 030 ACTIONXC
+:C 031 ACTIONXD
+:C 032 ACTIONFA
+:C 033 ACTIONFB
+:C 034 ACTIONFC
+:C 035 ACTIONFD
+:C 036 ACTIONPA
+:C 037 ACTIONPB
+:C 038 ACTIONPC
+:C 039 ACTIONPD
+:C 040 ACTIONEA
+:C 041 ACTIONEB
+:C 042 ACTIONRA
+:C 043 ACTIONZA
+:C 044 ACTIONZB
+:C 045 ACTIONZC
+:C 046 ACTIONZD
+:C 047 ACTIONWA
+:C 048 ACTIONWB
+:C 049 ACTIONWC
+:C 050 ACTIONWD
+:C 051 ACTIONJA
+:C 052 ACTIONJB
+:C 053 ACTIONJC
+:C 054 ACTIONHA
+:C 055 ACTIONHB
+:C 056 ACTIONHC
+:C 057 ACTIONHD
+:C 058 ACTIONKA
+:C 059 ACTIONKB
+:C 060 ACTIONKC
+:C 061 ACTIONKD
+:C 062 ACTIONMA
+:C 063 ACTIONMB
+:C 064 ACTIONMC
+:C 065 ACTIONMD
+:C 066 ACTIONME
+:C 067 ACTIONMF
+:C 068 ACTIONMG
+:C 069 ACTIONMH
+:C 070 ACTIONMI
+:C 071 ACTIONMJ
+:C 072 ACTIONMK
+:C 073 ACTIONML
+:C 074 ACTIONMM
+:C 075 ACTIONMN
+:C 000 EXPSECRET
+:C 001 EXPQUEST
+:C 002 EXPDARE
+:C 003 EXPKILL
+:C 004 EXPMURDER
+:C 005 EXPREVENGE
+:C 006 EXPTEAMWORK
+:C 007 EXPROLEPLAY
+:C 000 MESSAGEDEATH
+:C 001 MESSAGEHATE
+:C 002 MESSAGEOUCH
+:C 003 MESSAGEFRAG
+:C 004 MESSAGEACCIDENT
+:C 005 MESSAGECOSTUME
+:C 000 ORDERMOVE
+:C 001 ORDERATTACK
+:C 002 ORDERASSIST
+:C 003 ORDERSTAND
+:C 004 ORDERTERRAIN
+:C 000 WHITE
+:C 001 RED
+:C 002 YELLOW
+:C 003 GREEN
+:C 004 BLUE
+:C 005 PURPLE
+:C 001 FXNOREFLECT
+:C 002 FXDRAWREFLECT
+:C 004 FXANIM
+:C 008 FXWATER
+:C 016 FXBARRIER
+:C 032 FXIMPASS
+:C 064 FXDAMAGE
+:C 128 FXSLIPPY
+:C 300 MOVEMELEE
+:C 600 MOVERANGED
+:C 175 MOVEDISTANCE
+:C 900 MOVERETREAT
+:C 999 MOVECHARGE
+:C 000 TEAMA
+:C 001 TEAMB
+:C 002 TEAMC
+:C 003 TEAMD
+:C 004 TEAME
+:C 005 TEAMF
+:C 006 TEAMG
+:C 007 TEAMH
+:C 008 TEAMI
+:C 009 TEAMJ
+:C 010 TEAMK
+:C 011 TEAML
+:C 012 TEAMM
+:C 013 TEAMN
+:C 014 TEAMO
+:C 015 TEAMP
+:C 016 TEAMQ
+:C 017 TEAMR
+:C 018 TEAMS
+:C 019 TEAMT
+:C 020 TEAMV
+:C 021 TEAMW
+:C 022 TEAMX
+:C 023 TEAMY
+:C 024 TEAMZ
+:C 001 INVENTORY
+:C 002 LEFT
+:C 003 RIGHT
+:C 000 EASY
+:C 001 NORMAL
+:C 002 HARD
+:V 000 tmpx
+:V 001 tmpy
+:V 002 tmpdist
+:V 002 tmpdistance
+:V 003 tmpturn
+:V 004 tmpargument
+:V 005 rand
+:V 006 selfx
+:V 007 selfy
+:V 008 selfturn
+:V 009 selfcounter
+:V 010 selforder
+:V 011 selfmorale
+:V 012 selflife
+:V 013 targetx
+:V 014 targety
+:V 015 targetdistance
+:V 016 targetturn
+:V 017 leaderx
+:V 018 leadery
+:V 019 leaderdistance
+:V 020 leaderturn
+:V 021 gotox
+:V 022 gotoy
+:V 023 gotodistance
+:V 024 targetturnto
+:V 025 passage
+:V 026 weight
+:V 027 selfaltitude
+:V 028 selfid
+:V 029 selfhateid
+:V 030 selfmana
+:V 031 targetstr
+:V 032 targetwis
+:V 033 targetint
+:V 034 targetdex
+:V 035 targetlife
+:V 036 targetmana
+:V 037 targetlevel
+:V 038 targetspeedx
+:V 039 targetspeedy
+:V 040 targetspeedz
+:V 041 selfspawnx
+:V 042 selfspawny
+:V 043 selfstate
+:V 044 selfstr
+:V 045 selfwis
+:V 046 selfint
+:V 047 selfdex
+:V 048 selfmanaflow
+:V 049 targetmanaflow
+:V 050 selfattached
+:V 051 swingturn
+:V 052 xydistance
+:V 053 selfz
+:V 054 targetaltitude
+:V 055 targetz
+:V 056 selfindex
+:V 057 ownerx
+:V 058 ownery
+:V 059 ownerturn
+:V 060 ownerdistance
+:V 061 ownerturnto
+:V 062 xyturnto
+:V 063 selfmoney
+:V 064 selfaccel
+:V 065 targetexp
+:V 066 selfammo
+:V 067 targetammo
+:V 068 targetmoney
+:V 069 targetturnfrom
+:V 070 selflevel
+:V 071 targetreloadtime
+:V 072 selfcontent
+:V 073 spawndistance
+:V 074 targetmaxlife
+:V 075 targetteam
+:V 076 targetarmor
+:V 077 difficulty
+:V 078 timehours
+:V 079 timeminutes
+:V 080 timeseconds
+:V 081 datemonth
+:V 082 dateday
+:O 000 +
+:O 001 -
+:O 002 &
+:O 003 >
+:O 004 <
+:O 005 *
+:O 006 /
+:O 007 %
+:END

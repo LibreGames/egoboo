@@ -1,0 +1,287 @@
+Turbo Dump  Version 5.0.13.1 Copyright (c) 1988, 1997 Borland International
+                    Display of File LEVEL1.UNC
+
+000000: B1 0A ; List of event positions with trigger flags and code-start
+;---------------------------------
+000002: 6C 65 76 65 6C 31 2E 6D 61 7A 00 00 62 72 	 level1.maz..br 	==> VCN
+000010: 69 63 6B 00 2E 6D 61 7A  00 00 62 72 69 63 6B 00 ick..maz..brick.	==> VMP 
+000020: 2E 6D 61 7A 00 00 00 00  FF 03 00 00 00 00 00 01 .maz............ 
+000030: 6B 6F 62 6F 6C 64 00 6D  61 7A 00 00 00 6C 65 65 kobold.maz...lee 	==> monster0
+000040: 63 68 00 00 6D 61 7A 00  00 00 19 01 23 FF 01 00 ch..maz.....#... 	==> monster1
+000050: 14 01 04 02 00 00 06 00  04 00 00 00 02 00 F4 00 ................ 	==> Info about monsters (30)
+000060: 04 02 00 00 06 00 00 00  04 00 03 00 15 01 04 02 ................ 
+000070: 00 00 06 00 04 00 00 00  04 00 F5 00 04 02 00 00 ................ 
+000080: 06 00 04 00 37 00 05 00  B4 01 00 00 00 00 04 00 ....7........... 
+000090: 04 00 00 00 06 00 B4 01  01 00 00 00 04 00 00 00 ................ 
+0000A0: 04 00 07 00 B4 01 02 00  00 00 04 00 04 00 00 00 ................ 
+0000B0: 08 00 B4 01 03 00 00 00  04 00 04 00 00 00 09 00 ................ 
+0000C0: 4A 02 04 01 00 00 05 00  00 00 04 00 0A 00 4B 02 J.............K. 
+0000D0: 04 03 00 00 05 00 04 00  00 00 0B 00 4C 02 04 01 ............L... 
+0000E0: 00 00 05 00 04 00 00 00  0C 00 2C 03 02 02 00 00 ..........,..... 
+0000F0: 04 00 04 00 00 00 0D 00  2C 03 03 02 00 00 04 00 ........,....... 
+000100: 04 00 00 00 0E 00 59 02  02 02 00 00 04 00 00 00 ......Y......... 
+000110: 04 00 0F 00 59 02 03 02  00 00 04 00 04 00 00 00 ....Y........... 
+000120: 10 00 6B 02 04 01 00 00  06 00 04 00 3B 00 11 00 ..k.........;... 
+000130: 2C 02 04 02 00 00 06 00  00 00 00 00 12 00 8F 01 ,............... 
+000140: 04 02 00 00 01 00 00 00  00 00 13 01 86 03 04 00 ................ 
+000150: 01 01 01 00 00 00 00 00  14 01 66 03 04 00 01 01 ..........f..... 
+000160: 01 00 00 00 00 00 15 01  45 03 04 01 01 01 05 00 ........E....... 
+000170: 00 00 00 00 16 01 2A 03  04 00 01 01 01 00 00 00 ......*......... 
+000180: 00 00 17 01 E8 02 04 01  01 01 01 00 00 00 00 00 ................ 
+000190: 18 01 EF 02 04 03 01 01  01 00 00 00 00 00 00 00 ................ 
+0001A0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................ 
+0001B0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................ 
+0001C0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................ 
+0001D0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................ 
+0001E0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................ 
+0001F0: 00 00 1B 00 EC 62 72 69  63 6B 31 00 6D 61 7A 00 .....brick1.maz. ==> Decorations-File	
+000200: 00 62 72 69 63 6B 2E 64  61 74 00 00 00 FB 27 01 .brick.dat....'. ==> dat: Info about decoration
+000210: 00 03 04 FB 28 01 01 04  04 FB 3E 01 17 02 04 FB ....(.....>..... 
+000220: 2B 01 28 02 04 FB 3F 01  16 02 04 FB 32 01 04 02 +.(...?.....2... 
+000230: 04 FB 41 01 1A 02 04 FB  2F 01 30 02 04 FB 2C 01 ..A...../.0...,. 
+000240: 2F 02 04 FB 2A 01 31 02  04 EC 62 72 69 63 6B 32 /...*.1...brick2 ==> Decorations-File	
+000250: 00 61 74 00 00 00 62 72  69 63 6B 2E 64 61 74 00 .at...brick.dat. ==> dat: Info about decoration 
+000260: 00 00 FB 1A 00 1C 00 03  FB 17 04 21 00 05 FB 18 ...........!.... 
+000270: 05 22 00 05 FB 1C 00 1D  00 03 FB 19 00 FF 00 07 .".............. 
+000280: FB 3C 01 24 03 04 FB 3D  01 25 04 04 FB 37 01 1E .<.$...=.%...7.. 
+000290: 03 04 FB 38 01 1F 04 04  FB 1D 01 20 0A 84 FB 33 ...8....... ...3 
+0002A0: 01 26 02 04 FB 3A 01 23  00 04 EC 62 72 69 63 6B .&...:.#...brick ==> Decorations-File	 
+0002B0: 33 00 61 74 00 00 00 62  72 69 63 6B 2E 64 61 74 3.at...brick.dat ==> dat: Info about decoration 
+0002C0: 00 00 00 FB 45 00 27 02  04 FB 31 00 2D 02 04 
+; Start of first procedure 
+0002CF: EE E0 01 FF EE 		IF EventTriggerFlags() = 0 THEN
+	5A 03 			; Adress END IF 
+	   EE ED  01 FF EE 	IF PartyDirection() = 1 THEN
+	   08 03 			; Adress END IF 
+	     EE EF 1F 00 FF EE 		IF FlagGetLevel(31) = 0 THEN
+	     EA 02 			; Adress END IF 
+	       	E6 0A 		Wait(10) ?	
+		F7 EF 1F 	SetFlagLevel(31)	
+	     	F8 67 6F 69 6E 67 20 64 6F 77 6E 2E 2E 2E  00 05 00 
+	     	Message("going down...", 5)
+		F6 4F 00 00 		PlaySound(79, 0)
+		EC E5 02 F3 02 01 	ChangeLevelPlayer(2, 0x2F3, 1)
+		F2 5A 03  	ELSE 0x35A		
+	     LABEL_02EA ?	
+		F8 79 6F 75 20 63 61 6E 27 74 20 67 6F 20 74 68  61 74 20 77 61 79 2E 00 
+		0F 00 	
+		Message("you can't go that way.", 15) 	
+		F6 1D 00 00 
+		PlaySound(29, 0)
+		EE 01 00 FF EE 	IF 1 = 0 THEN
+		33 03 		; Adress END IF 
+		FA E8 00 00 12 03 EE 01 01 FF EE  40 03 FA 
+		CreateMonster([above arguments]);
+		E8 00 00 F1 02 
+		Throw ?? 
+	EE 01 02 FF EE 4D 03 FA  E8 00 00 D2 02 EE 01 03 .....M.......... 
+	FF EE 5A 03 FA E8 00 00  F3 02 EE E0 04 FF EE 95 ..Z............. 
+	03 EE 01 00 FF EE 6E 03  FA F5 F2 02 12 03 EE 01 ......n......... 
+	01 FF EE 7B 03 FA F5 F2  02 F1 02 EE 01 02 FF EE ...{............ 
+	88 03 FA F5 F2 02 D2 02  EE 01 03 FF EE 95 03 FA 
+	F5 F2 02 F3 02 F1 
+	EE EF 0A 00 FF EE A5 03 EB E2
+	40 06 F7 EF 0A F1 
+0003A6 (934): 
+	EB E2 10 27 	GiveExperience(0xE2, 10000)
+	F1 		END PROC		
+	 
+0003AB: EE EF 08 00 FF EE 	IF GetFlagLevel(8) = 0 THEN 
+	BA 03			; Adress END IF 
+	EB E2 40 06 		GiveExperience(0xE2, 1600)
+	F7 EF 08 		SetFlagLevel(8)	
+   LABEL_3BA:
+	F1 			END PROC
+0003BB: EE EF 04 00 FF EE 	IF GetFlagLevel(4) = 0 THEN 
+	CA 03 			; Adress END IF 
+	EB E2 90 01 		GiveExperience(0xE2, 400)
+	F7 EF 04 		SetFlagLevel(4)
+   LABEL_3CA:
+	F1 			END PROC
+0003CB: F6 01 AD 01 FE 
+	EA AE 01 
+	EE EF 01 00 FF EE 	IF GetFlagLevel(1) = 0 THEN 
+	E2 03 			; Adress END IF 
+	EB E2 20 03 
+	F7 EF 01
+   LABEL_3E2: 
+	F1 			END PROC
+0003E3: EE F7 75 01 01 FE EE F6 03 FF F7 11 02
+	01 FF F7 2E 03 01 EE EF 02 00 FF EE 05 04 EB E2  
+	90 01 F7 EF 02 F1 
+000406: EE F7  11 02 01 FE EE 1F 04 FF 
+	E9 C9 02 00 01 FF F7 75 01 01 FF F7 4D 03 01 F7 
+	EF 02 F1 
+000423: EE E9 00 B7 01 01 FE EE 44 04 F6 07 B7  
+	01 FE EA B6 01 EE EF 05 00 FF EE 44 04 EB E2 20 
+	03 F7 EF 05 F1 
+000445: EE F7 D6  01 1C FF EE 65 04 F6 0C 
+	D6 01 FE EA B6 01 EE EF 07 00 FF EE 65 04 EB E2 
+	20 03 F7 EF 07 F1 
+000466: EE E0 01 FF F5 FF 36 02 00 FF  
+	F9 E0 04 FF F5 FF 36 02 01 FF F9 F1 36 02 00 FF  
+	F9 F8 EE 8C 04 F6 0C 36 02 FD 76 02 EE E0 02 FF 
+	F5 FF 36 02 00 FF F9 E0 08 FF F5 FF 36 02 00 FF 
+0004A0: F9 F1 36 02 00 FF F9 F8 EE B2 04 F6 0C 36 02 FC  
+	76 02 F1 
+0004B3: F6 01 52 02 FE  EA 53 02 F1 
+0004BC: EE E9 01 6E 
+	02 01 FE EE DD 04 F6 07  6E 02 FE EA 4E 02 EE EF 
+	05 00 FF EE DD 04 EB E2  20 03 F7 EF 05 F1 
+0004DE: EE F7 
+	4D 02 1C FF EE FE 04 F6  0C 4D 02 FE EA 4E 02 EE
+	EF 07 00 FF EE FE 04 EB  E2 20 03 F7 EF 07 F1 
+0004FF: F6 
+	07 B2 02 F6 0D 93 02 FE  F7 93 02 00 01 FA F3 93 
+	02 73 02 EE EF 06 00 FF  EE 22 05 EB E2 40 06 F7 
+	EF 06 F1 
+000523: F6 07 BA 02 FA  F3 99 02 79 02 F6 0D 99 
+000530: 02 FE F7 99 02 00 01 EE  EF 06 00 FF EE 46 05 EB
+	E2 40 06 F7 EF 06 F1 
+000547: EE E9 01 E7 02 01 FE EE 68 
+	05 F6 07 E7 02 FE EA C8 02 EE EF 05 00 FF EE 68 
+	05 EB E2 20 03 F7 EF 05 F1 
+000569: F6 07 C9 02 EE E9 00 
+	C9 02 01 FE EE 90 05 FE EA C8 02 FF E9 E7 02 01 
+	01 EE EF 05 00 FF EE 90 05 EB E2 20 03 F7 EF 05 
+	F1 
+000591:	F6 0C 11 03 FD F1 02 F1 
+000599: EE E0 01 FF F5 FF F0 02 00 FF F9 EE 
+	AE 05 F6 0C F0 02 FC F1 02 EE E0 
+	04 FF F1 F0 02 00 FF F5 FF F0 02 02 FD F9 F9 EE
+	C9 05 F6 0C F0 02 FC F1 02 F1 
+0005CA: EE EF 00 00 FF EE  
+	F1 05 F8 69 74 20 73 6D 65 6C 6C 73 20 74 65 72 ...it smells ter 
+	72 69 62 6C 65 20 68 65 72 65 2E 00 02 00 F7 EF rible here...... 
+	00 F1 
+0005F2: F8 74 68 69 73 20 73 6C 69 6D 79 2C 20 73 	 ...this slimy, s 
+	6D 65 6C 6C 79 20 64 72 61 69 6E 20 70 69 70 65 melly drain pipe 
+	20 72 65 76 65 61 6C 73 20 6E 6F 74 68 69 6E 67  reveals nothing 
+	2E 00 02 00 EE EF 03 00 FF EE 33 06 EB E2 20 03 ..........3... . 
+	F7 EF 03 F1 
+000634: F8 74 68 65 72 65 20 69 73 20 61 20 		 .....there is a  
+	64 72 61 69 6E 61 67 65 20 67 72 61 74 65 20 68 drainage grate h 
+	65 72 65 2E 00 02 00 EE EF 03 00 FF EE 66 06 EB ere..........f.. 
+	E2 20 03 F7 EF 03 EE E7 F5 00 FF EF 01 00 FF F9 . .............. 
+	EE 7C 06 EA 3A 00 FF FF 00 F7 EF 01 F1 
+00067D: F8 74 68 					 .|..:.........th 
+	69 73 20 73 6C 69 6D 79 2C 20 73 6D 65 6C 6C 79 is slimy, smelly 
+	20 64 72 61 69 6E 20 70 69 70 65 20 72 65 76 65  drain pipe reve ==> strlen + color (short int)
+	61 6C 73 20 6E 6F 74 68 69 6E 67 2E 00 02 00 EE als nothing..... 
+	EF 03 00 FF EE BE 06 EB E2 20 03 F7 EF 03 F1 
+0006BF: F8 
+	74 68 65 72 65 20 69 73 20 61 20 64 72 61 69 6E there is a drain 
+	61 67 65 20 67 72 61 74 65 20 68 65 72 65 2E 00 age grate here.. 
+	02 00 EE EF 03 00 FF EE F1 06 EB E2 20 03 F7 EF ............ ... 
+	03 F1 
+0006F2: F8 74 68 65 72 65 20 69 73 20 61 20 64 72 	...there is a dr 
+	61 69 6E 61 67 65 20 67 72 61 74 65 20 68 65 72 ainage grate her 
+	65 2E 00 02 00 EE EF 03 00 FF EE 24 07 EB E2 20 e..........$...  
+	03 F7 EF 03 F1 
+000725: EE EF 03  00 FF EE 34 07 EB E2 20  
+	03 F7 EF 03 EE F1 CE 01  01 FF EE AF 07 EE E9 03 ................ 
+	CF 01 2C FF EE 89 07 F8  73 6F 6D 65 74 68 69 6E ..,.....somethin 
+	67 20 73 63 75 72 72 69  65 73 20 64 65 65 70 65 g scurries deepe 
+	72 20 69 6E 74 6F 20 74  68 65 20 66 6C 6F 6F 72 r into the floor 
+	20 64 72 61 69 6E 2E 00  02 00 FF E9 CF 01 03 3E  drain.........> 
+	FF E9 CF 01 01 2C F2 AC  07 F8 74 68 65 72 65 20 .....,....there  
+	69 73 20 61 20 64 72 61  69 6E 61 67 65 20 67 72 is a drainage gr 
+	61 74 65 20 68 65 72 65  2E 00 02 00 F2 1E 08 EE ate here........ 
+	E9 01 CF 01 2C FF EE FB  07 F8 73 6F 6D 65 74 68 ....,.....someth 
+	69 6E 67 20 73 63 75 72  72 69 65 73 20 64 65 65 ing scurries dee 
+	70 65 72 20 69 6E 74 6F  20 74 68 65 20 66 6C 6F per into the flo 
+	6F 72 20 64 72 61 69 6E  2E 00 02 00 FF E9 CF 01 or drain........ 
+	01 3E FF E9 CF 01 03 2C  F2 1E 08 F8 74 68 65 72 .>.....,....ther 
+	65 20 69 73 20 61 20 64  72 61 69 6E 61 67 65 20 e is a drainage  
+	67 72 61 74 65 20 68 65  72 65 2E 00 02 00 F1 	 grate here......
+00081F:	FF  
+	E9 CF 01 03 2C FF E9 CF  01 01 2C F1 
+00082C: F8 74 68 69 					 ....,.....,..thi 
+	73 20 73 6C 69 6D 79 2C  20 73 6D 65 6C 6C 79 20 s slimy, smelly  
+	64 72 61 69 6E 20 70 69  70 65 20 72 65 76 65 61 drain pipe revea 
+	6C 73 20 6E 6F 74 68 69  6E 67 2E 00 02 00 EE EF ls nothing...... 
+	03 00 FF EE 6D 08 EB E2  20 03 F7 EF 03 F1 
+00086E:	EE EF 
+	03 00 FF EE 7D 08 EB E2  20 03 F7 EF 03 EE DD 04 ....}... ....... 
+	01 FF EE A7 08 F8 6B 6F  62 6F 6C 64 20 72 75 6E ......kobold run 
+	65 20 66 6F 72 20 27 65  6E 74 72 61 6E 63 65 27 e for 'entrance' 
+	2E 00 02 00 F2 C5 08 F8  74 68 69 73 20 72 75 6E ........this run 
+	65 20 69 73 20 75 6E 72  65 63 6F 67 6E 69 7A 65 e is unrecognize 
+	64 2E 00 02 00 F1 
+0008C6: EE EF 03 00 FF EE D5 08 EB E2 
+	20 03 F7 EF 03 EE DD 04 01 FF EE FF 08 F8 6B 6F  .............ko 
+	62 6F 6C 64 20 72 75 6E 65 20 66 6F 72 20 27 65 bold rune for 'e 
+	6E 74 72 61 6E 63 65 27 2E 00 02 00 F2 1D 09 F8 ntrance'........ 
+	74 68 69 73 20 72 75 6E 65 20 69 73 20 75 6E 72 this rune is unr 
+	65 63 6F 67 6E 69 7A 65 64 2E 00 02 00 F1 	ecognized....... 
+00091E: EE F5 
+	05 0C 03 00 FB F0 01 00  FF F9 EE 62 09 F8 73 70 ...........b..sp 
+	65 63 69 61 6C 20 71 75  65 73 74 20 66 6F 72 20 ecial quest for  
+	74 68 69 73 20 6C 65 76  65 6C 21 00 03 00 F6 1C this level!..... 
+	00 00 F7 F0 01 ED 05 0C  03 EA 31 00 0C 03 08 F7 ..........1..... 
+	F0 01 EE EF 09 00 FF EE  71 09 EB E2 90 01 F7 EF ........q....... 
+	09 F1 
+000972: F8 66 61 6C 6C 65 6E 20 72 6F 63 6B 73 20 	 ...fallen rocks  
+	62 6C 6F 63 6B 20 74 68 65 20 77 61 79 2E 00 02 block the way... 
+	00 F1 
+000992: FF E9 CA 01 02 31 F1 
+000999: FF E9 CA 01 02 45 F1 
+0009A0: EE E9 03 62 00 08 FF EE  86 0A EE E7 E1 26 FF E7 ...b.........&.. 
+	F6 01 FF F9 EE C3 09 F6  0E 81 00 FD 62 00 ED FF ............b... 
+	F2 83 0A EE E7 E1 26 FF  EE E5 09 F8 69 74 20 64 ......&.....it d 
+	6F 65 73 6E 27 74 20 66  69 74 2E 00 06 00 F6 51 oesn't fit.....Q 
+	81 00 F2 83 0A EE E7 E1  1C FF EE 66 0A EE DC 08 ...........f.... 
+	01 FF EE 43 0A F6 51 81  00 F8 66 61 69 6C 65 64 ...C..Q...failed 
+	20 6C 6F 63 6B 20 70 69  63 6B 20 61 74 74 65 6D  lock pick attem 
+	70 74 2E 00 05 00 EE DB  01 64 00 01 FF EE 40 0A pt.......d....@. 
+	F6 52 00 00 F8 74 68 65  20 6C 6F 63 6B 20 70 69 .R...the lock pi 
+	63 6B 73 20 62 72 65 61  6B 21 2E 00 06 00 ED FF cks break!...... 
+	F2 63 0A F8 6F 6E 6C 79  20 61 20 74 68 69 65 66 .c..only a thief 
+	20 63 61 6E 20 70 69 63  6B 20 6C 6F 63 6B 73 2E  can pick locks. 
+	00 06 00 F2 83 0A F8 74  68 69 73 20 6C 6F 63 6B .......this lock 
+	20 72 65 71 75 69 72 65  73 20 61 20 6B 65 79 2E  requires a key. 
+	00 0F 00 F2 A2 0A F8 74  68 65 20 6C 6F 63 6B 20 .......the lock  
+	61 70 70 65 61 72 73 20  6A 61 6D 6D 65 64 2E 00 appears jammed.. 
+	06 00 F1 
+000AA3: FF E9 22 00 03 31 F1 
+000AAA: FF E9 22 00 03 45 F1 
+; Here is the list of functions for events 
+000AB1:	26 00 	==> Number of event positions: 38 Procedures
+000AB3:	F2 02 A8 CF 02 ==> short int pos, char trigger_flags, short int code
+	F1 02 08 96 03 (CodeAt918)
+	AA 01 08 A6 03 
+	96 02 08 AB 03 
+	CE 01 60 BB 03 
+	AD 01 00 CB 03 
+	50 01 08 E3 03 
+	91 01 08 06 04 
+	B7 01 00 23 04 
+	D6 01 08 45 04 
+	36 02 78 66 04 
+	52 02 00 B3 04 
+	6E 02 00 BC 04 
+	4D 02 08 DE 04 
+	B2 02 00 FF 04 
+	BA 02 00 23 05 
+	E7 02 00 47 05 
+	C9 02 00 69 05 
+	11 03 00 91 05 
+	F0 02 28 99 05 
+	79 02 08 CA 05 
+	07 03 00 F2 05 
+	CD 02 00 34 06 
+	14 03 00 7D 06 
+	B8 02 00 BF 06  
+	32 02 00 F2 06 
+	CF 01 00 25 07 
+	8E 01 08 1F 08 
+	94 01 00 2C 08 
+	93 01 00 6E 08 
+	CF 02 00 C6 08 
+	0C 03 60 1E 09 
+	CA 01 00 72 09  
+	EB 01 08 92 09 
+	EA 01 08 99 09 
+	81 00 00 A0 09 
+	41 00 08 A3 0A 
+	21 00 08 AA 0A 

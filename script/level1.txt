@@ -1,0 +1,341 @@
+PROC EventAt02F2()
+00FFFFFF8803FFFFFFFAFFFFFFF5FFFFFFF202FFFFFFD202FFFFFFEE01
+
+02CF: IF EventTriggerFlags() = 1  THEN (else/end-if-adr: 035A)
+02D6: IF PartyDirection() = 1  THEN (else/end-if-adr: 0308)
+02DD: IF FlagGetLevel(31) = 0  THEN (else/end-if-adr: 02EA)
+02E5: 02E6: 02E7: SetFlagLevel(31)
+02EA: Message("going down...", 5)
+02FB: PlaySound(79, 0)
+02FF: ChangeLevelParty(2, 755, 1)
+0305: ELSE (at adr: 035A)
+0308: Message("you can't go that way.", 15)
+0322: PlaySound(29, 0)
+0326: IF 1 = 0  THEN (else/end-if-adr: 0333)
+032D: TeleportParty(0, 786)
+0333: IF 1 = 1  THEN (else/end-if-adr: 0340)
+033A: TeleportParty(0, 753)
+0340: IF 1 = 2  THEN (else/end-if-adr: 034D)
+0347: TeleportParty(0, 722)
+034D: IF 1 = 3  THEN (else/end-if-adr: 035A)
+0354: TeleportParty(0, 755)
+035A: IF EventTriggerFlags() = 4  THEN (else/end-if-adr: 0395)
+0361: IF 1 = 0  THEN (else/end-if-adr: 036E)
+0368: TeleportItemNo(754, 18, -4605, 1, -255)
+0372: IF ItemNoCountMaze(754, 753) THEN (else/end-if-adr: 0201)
+037E: SetWall
+PROC EventAt02F1()
+0396: IF FlagGetLevel(10) = 0  THEN (else/end-if-adr: 03A5)
+039E: GiveExperience(-30, 1600)
+03A2: SetFlagLevel(10)
+03A5: END PROC
+
+PROC EventAt01AA()
+03A6: GiveExperience(-30, 10000)
+03AA: END PROC
+
+PROC EventAt0296()
+03AB: IF FlagGetLevel(8) = 0  THEN (else/end-if-adr: 03BA)
+03B3: GiveExperience(-30, 1600)
+03B7: SetFlagLevel(8)
+03BA: END PROC
+
+PROC EventAt01CE()
+03BB: IF FlagGetLevel(4) = 0  THEN (else/end-if-adr: 03CA)
+03C3: GiveExperience(-30, 400)
+03C7: SetFlagLevel(4)
+03CA: END PROC
+
+PROC EventAt01AD()
+03CB: PlaySound(1, 429)
+03CF: SwitchWallDoor(430)
+03D3: IF FlagGetLevel(1) = 0  THEN (else/end-if-adr: 03E2)
+03DB: GiveExperience(-30, 800)
+03DF: SetFlagLevel(1)
+03E2: END PROC
+
+PROC EventAt0150()
+03E3: IF MazeGetWall(373) <> 1  THEN (else/end-if-adr: 03F6)
+03EC: SetWallWhole(529, 1)
+03F1: SetWallWhole(814, 1)
+03F6: IF FlagGetLevel(2) = 0  THEN (else/end-if-adr: 0405)
+03FE: GiveExperience(-30, 400)
+0402: SetFlagLevel(2)
+0405: END PROC
+
+PROC EventAt0191()
+0406: IF MazeGetWall(529) <> 1  THEN (else/end-if-adr: 041F)
+040F: SetWallPart(713, 0, 1)
+0415: SetWallWhole(373, 1)
+041A: SetWallWhole(845, 1)
+041F: SetFlagLevel(2)
+0422: END PROC
+
+PROC EventAt01B7()
+0423: IF MazeGetWallSide(0, 439) <> 1  THEN (else/end-if-adr: 0444)
+042D: PlaySound(7, 439)
+0431: SwitchWallDoor(438)
+0435: IF FlagGetLevel(5) = 0  THEN (else/end-if-adr: 0444)
+043D: GiveExperience(-30, 800)
+0441: SetFlagLevel(5)
+0444: END PROC
+
+PROC EventAt01D6()
+0445: IF MazeGetWall(470) = 28  THEN (else/end-if-adr: 0465)
+044E: PlaySound(12, 470)
+0452: SwitchWallDoor(438)
+0456: IF FlagGetLevel(7) = 0  THEN (else/end-if-adr: 0465)
+045E: GiveExperience(-30, 800)
+0462: SetFlagLevel(7)
+0465: END PROC
+
+PROC EventAt0236()
+1104FFFFFFFFFFFFFFF5FFFFFFFF360201FFFFFFFFFFFFFFF9FFFFFFF1
+
+0466: IF PROC EventAt0252()
+04B3: PlaySound(1, 594)
+04B7: SwitchWallDoor(595)
+04BB: END PROC
+
+PROC EventAt026E()
+04BC: IF MazeGetWallSide(1, 622) <> 1  THEN (else/end-if-adr: 04DD)
+04C6: PlaySound(7, 622)
+04CA: SwitchWallDoor(590)
+04CE: IF FlagGetLevel(5) = 0  THEN (else/end-if-adr: 04DD)
+04D6: GiveExperience(-30, 800)
+04DA: SetFlagLevel(5)
+04DD: END PROC
+
+PROC EventAt024D()
+04DE: IF MazeGetWall(589) = 28  THEN (else/end-if-adr: 04FE)
+04E7: PlaySound(12, 589)
+04EB: SwitchWallDoor(590)
+04EF: IF FlagGetLevel(7) = 0  THEN (else/end-if-adr: 04FE)
+04F7: GiveExperience(-30, 800)
+04FB: SetFlagLevel(7)
+04FE: END PROC
+
+PROC EventAt02B2()
+04FF: PlaySound(7, 690)
+0503: PlaySound(13, 659)
+0507: SwitchWallWhole(659, 0, 1)
+050D: TeleportMonster(659, 627)
+0513: IF FlagGetLevel(6) = 0  THEN (else/end-if-adr: 0522)
+051B: GiveExperience(-30, 1600)
+051F: SetFlagLevel(6)
+0522: END PROC
+
+PROC EventAt02BA()
+0523: PlaySound(7, 698)
+0527: TeleportMonster(665, 633)
+052D: PlaySound(13, 665)
+0531: SwitchWallWhole(665, 0, 1)
+0537: IF FlagGetLevel(6) = 0  THEN (else/end-if-adr: 0546)
+053F: GiveExperience(-30, 1600)
+0543: SetFlagLevel(6)
+0546: END PROC
+
+PROC EventAt02E7()
+0547: IF MazeGetWallSide(1, 743) <> 1  THEN (else/end-if-adr: 0568)
+0551: PlaySound(7, 743)
+0555: SwitchWallDoor(712)
+0559: IF FlagGetLevel(5) = 0  THEN (else/end-if-adr: 0568)
+0561: GiveExperience(-30, 800)
+0565: SetFlagLevel(5)
+0568: END PROC
+
+PROC EventAt02C9()
+0569: PlaySound(7, 713)
+056D: IF MazeGetWallSide(0, 713) <> 1  THEN (else/end-if-adr: 0590)
+0577: SwitchWallDoor(712)
+057B: SetWallPart(743, 1, 1)
+0581: IF FlagGetLevel(5) = 0  THEN (else/end-if-adr: 0590)
+0589: GiveExperience(-30, 800)
+058D: SetFlagLevel(5)
+0590: END PROC
+
+PROC EventAt0311()
+0591: PlaySound(12, 785)
+0595: OpenDoor(753)
+0598: END PROC
+
+PROC EventAt02F0()
+11FFFFFFAE05FFFFFFF60CFFFFFFF002FFFFFFFCFFFFFFF102FFFFFFEE
+
+0599: IF PROC EventAt0279()
+05CA: IF FlagGetLevel(0) = 0  THEN (else/end-if-adr: 05F1)
+05D2: Message("it smells terrible here.", 2)
+05EE: SetFlagLevel(0)
+05F1: END PROC
+
+PROC EventAt0307()
+05F2: Message("this slimy, smelly drain pipe reveals nothing.", 2)
+0624: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 0633)
+062C: GiveExperience(-30, 800)
+0630: SetFlagLevel(3)
+0633: END PROC
+
+PROC EventAt02CD()
+0634: Message("there is a drainage grate here.", 2)
+0657: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 0666)
+065F: GiveExperience(-30, 800)
+0663: SetFlagLevel(3)
+0666: IF PartyUsedItemNo() = 0  AND FlagGetLevel(1) = 0   THEN (else/end-if-adr: 067C)
+0673: CreateItem(58, -1, 0, -9)
+067A: CALL SUB_FUNC-3839()
+
+067D: Message("this slimy, smelly drain pipe reveals nothing.", 2)
+06AF: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 06BE)
+06B7: GiveExperience(-30, 800)
+06BB: SetFlagLevel(3)
+06BE: END PROC
+
+PROC EventAt0314()
+067D: Message("this slimy, smelly drain pipe reveals nothing.", 2)
+06AF: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 06BE)
+06B7: GiveExperience(-30, 800)
+06BB: SetFlagLevel(3)
+06BE: END PROC
+
+PROC EventAt02B8()
+06BF: Message("there is a drainage grate here.", 2)
+06E2: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 06F1)
+06EA: GiveExperience(-30, 800)
+06EE: SetFlagLevel(3)
+06F1: END PROC
+
+PROC EventAt0232()
+06F2: Message("there is a drainage grate here.", 2)
+0715: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 0724)
+071D: GiveExperience(-30, 800)
+0721: SetFlagLevel(3)
+0724: END PROC
+
+PROC EventAt01CF()
+110101FFFFFFFFFFFFFFEEFFFFFFAF07FFFFFFEEFFFFFFE903FFFFFFCF
+
+0725: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 0734)
+072D: GiveExperience(-30, 800)
+0731: SetFlagLevel(3)
+0734: IF PROC EventAt018E()
+081F: SetWallPart(463, 3, 44)
+0825: SetWallPart(463, 1, 44)
+082B: END PROC
+
+PROC EventAt0194()
+082C: Message("this slimy, smelly drain pipe reveals nothing.", 2)
+085E: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 086D)
+0866: GiveExperience(-30, 800)
+086A: SetFlagLevel(3)
+086D: END PROC
+
+PROC EventAt0193()
+086E: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 087D)
+0876: GiveExperience(-30, 800)
+087A: SetFlagLevel(3)
+087D: IF PartyGetRace(4) = 1  THEN (else/end-if-adr: 08A7)
+0885: Message("kobold rune for 'entrance'.", 2)
+08A4: ELSE (at adr: 08C5)
+08A7: Message("this rune is unrecognized.", 2)
+08C5: END PROC
+
+PROC EventAt02CF()
+08C6: IF FlagGetLevel(3) = 0  THEN (else/end-if-adr: 08D5)
+08CE: GiveExperience(-30, 800)
+08D2: SetFlagLevel(3)
+08D5: IF PartyGetRace(4) = 1  THEN (else/end-if-adr: 08FF)
+08DD: Message("kobold rune for 'entrance'.", 2)
+08FC: ELSE (at adr: 091D)
+08FF: Message("this rune is unrecognized.", 2)
+091D: END PROC
+
+PROC EventAt030C()
+110100FFFFFFFFFFFFFFF9FFFFFFEE6209FFFFFFF87370
+
+091E: IF PROC EventAt01CA()
+0972: Message("fallen rocks block the way.", 2)
+0991: END PROC
+
+PROC EventAt01EB()
+0992: SetWallPart(458, 2, 49)
+0998: END PROC
+
+PROC EventAt01EA()
+0999: SetWallPart(458, 2, 69)
+099F: END PROC
+
+PROC EventAt0081()
+09A0: IF MazeGetWallSide(3, 98) = 8  THEN (else/end-if-adr: 0A86)
+09AA: IF PartyUsedItemType() = 38  AND PartyUsedItemValue() = 1   THEN (else/end-if-adr: 09C3)
+09B7: PlaySound(14, 129)
+09BB: OpenDoor(98)
+09BE: ItemConsumeHand()
+09C0: ELSE (at adr: 0A83)
+09C3: IF PartyUsedItemType() = 38  THEN (else/end-if-adr: 09E5)
+09CB: Message("it doesn't fit.", 6)
+09DE: PlaySound(81, 129)
+09E2: ELSE (at adr: 0A83)
+09E5: IF PartyUsedItemType() = 28  THEN (else/end-if-adr: 0A66)
+09ED: IF PartyGetClass(8) = 1  THEN (else/end-if-adr: 0A43)
+09F5: PlaySound(81, 129)
+09F9: Message("failed lock pick attempt.", 5)
+0A16: IF Random(1, 100, 0) = 1  THEN (else/end-if-adr: 0A40)
+0A20: PlaySound(82, 0)
+0A24: Message("the lock picks break!.", 6)
+0A3E: ItemConsumeHand()
+0A40: ELSE (at adr: 0A63)
+0A43: Message("only a thief can pick locks.", 6)
+0A63: ELSE (at adr: 0A83)
+0A66: Message("this lock requires a key.", 15)
+0A83: ELSE (at adr: 0AA2)
+0A86: Message("the lock appears jammed.", 6)
+0AA2: END PROC
+
+PROC EventAt0041()
+0AA3: SetWallPart(34, 3, 49)
+0AA9: END PROC
+
+PROC EventAt0021()
+0AAA: SetWallPart(34, 3, 69)
+0AB0: END PROC
+
+
+
+EventAt02F2, FFFFFFA8, 02CF (Pos: x:18 y:23)
+EventAt02F1, 08, 0396 (Pos: x:17 y:23)
+EventAt01AA, 08, 03A6 (Pos: x:10 y:13)
+EventAt0296, 08, 03AB (Pos: x:22 y:20)
+EventAt01CE, 60, 03BB (Pos: x:14 y:14)
+EventAt01AD, 00, 03CB (Pos: x:13 y:13)
+EventAt0150, 08, 03E3 (Pos: x:16 y:10)
+EventAt0191, 08, 0406 (Pos: x:17 y:12)
+EventAt01B7, 00, 0423 (Pos: x:23 y:13)
+EventAt01D6, 08, 0445 (Pos: x:22 y:14)
+EventAt0236, 78, 0466 (Pos: x:22 y:17)
+EventAt0252, 00, 04B3 (Pos: x:18 y:18)
+EventAt026E, 00, 04BC (Pos: x:14 y:19)
+EventAt024D, 08, 04DE (Pos: x:13 y:18)
+EventAt02B2, 00, 04FF (Pos: x:18 y:21)
+EventAt02BA, 00, 0523 (Pos: x:26 y:21)
+EventAt02E7, 00, 0547 (Pos: x:7 y:23)
+EventAt02C9, 00, 0569 (Pos: x:9 y:22)
+EventAt0311, 00, 0591 (Pos: x:17 y:24)
+EventAt02F0, 28, 0599 (Pos: x:16 y:23)
+EventAt0279, 08, 05CA (Pos: x:25 y:19)
+EventAt0307, 00, 05F2 (Pos: x:7 y:24)
+EventAt02CD, 00, 0634 (Pos: x:13 y:22)
+EventAt0314, 00, 067D (Pos: x:20 y:24)
+EventAt02B8, 00, 06BF (Pos: x:24 y:21)
+EventAt0232, 00, 06F2 (Pos: x:18 y:17)
+EventAt01CF, 00, 0725 (Pos: x:15 y:14)
+EventAt018E, 08, 081F (Pos: x:14 y:12)
+EventAt0194, 00, 082C (Pos: x:20 y:12)
+EventAt0193, 00, 086E (Pos: x:19 y:12)
+EventAt02CF, 00, 08C6 (Pos: x:15 y:22)
+EventAt030C, 60, 091E (Pos: x:12 y:24)
+EventAt01CA, 00, 0972 (Pos: x:10 y:14)
+EventAt01EB, 08, 0992 (Pos: x:11 y:15)
+EventAt01EA, 08, 0999 (Pos: x:10 y:15)
+EventAt0081, 00, 09A0 (Pos: x:1 y:4)
+EventAt0041, 08, 0AA3 (Pos: x:1 y:2)
+EventAt0021, 08, 0AAA (Pos: x:1 y:1)
